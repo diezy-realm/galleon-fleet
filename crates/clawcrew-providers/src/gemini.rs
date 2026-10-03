@@ -338,6 +338,13 @@ impl LoadCodeAssistResponse {
 /// Google AI Studio's Gemini endpoint.
 pub(crate) const BASE_URL: &str = "https://generativelanguage.googleapis.com/v1beta";
 
+/// Validate that a configured Gemini endpoint is permitted by steering policy.
+fn is_allowed_gemini_endpoint(endpoint: &str) -> bool {
+    let normalized = endpoint.trim_end_matches('/');
+    // Allow the public Gemini endpoints used by the provider.
+    normalized == BASE_URL || normalized == CLOUDCODE_PA_ENDPOINT || normalized == GOOGLE_TOKEN_ENDPOINT
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // TOKEN REFRESH
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1445,7 +1452,7 @@ impl GeminiModelProvider {
 impl ModelProvider for GeminiModelProvider {
     // ── ModelProvider-family defaults ──
     fn default_base_url(&self) -> Option<&str> {
-        Some(BASE_URL)
+        if is_allowed_gemini_endpoint(BASE_URL) { Some(BASE_URL) } else { None }
     }
 
     fn capabilities(&self) -> clawcrew_api::model_provider::ProviderCapabilities {
