@@ -421,6 +421,11 @@ func (s *toolService) ExecuteWithContext(ctx context.Context, execCtx *Execution
 		}
 	}
 
+	// Fail-closed gate: if tool requires SystemGateway and gateway is not wired, reject immediately
+	if toolDef.Source == "native" && s.gateway == nil {
+		return "", appErrors.New(appErrors.CodeUnavailable, fmt.Sprintf("native tool %s execution rejected: SystemGateway is not wired (fail-closed boundary enforced)", toolName), appErrors.LayerService)
+	}
+
 	// 3. Policy Engine Evaluation (FR-03, Level 2 maturity)
 	verdict, polErr := s.policy.Evaluate(ctx, execCtx, toolDef, args)
 	if polErr != nil {
@@ -510,6 +515,8 @@ func (s *toolService) ExecuteWithContext(ctx context.Context, execCtx *Execution
 			return "", encErr
 		}
 		output, err = s.gateway.ExecuteNativeTool(ctx, toolName, gwArgs)
+	} else if toolDef.Source == "native" {
+		return "", appErrors.New(appErrors.CodeUnavailable, fmt.Sprintf("native tool %s execution rejected: SystemGateway is not wired (fail-closed boundary enforced)", toolName), appErrors.LayerService)
 	} else {
 		output, artifactIDs, err = t.ExecuteWithContext(ctx, execCtx, args)
 	}

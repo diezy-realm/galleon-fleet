@@ -82,17 +82,20 @@ fn save_collection(app: AppHandle, name: String, data: Value) -> Result<(), Stri
     fs::write(&path, serde_json::to_string_pretty(&data).map_err(|e| e.to_string())?).map_err(|e| e.to_string())
 }
 
-// Host-local telemetry (genuine local measurement, not fleet-domain data —
-// not an engine SSOT concern).
+// SSOT: Tauri delegates system metrics to Go engine (/api/system/metrics).
+// Gracefully degrades to reporting engine error + local threads if unreachable (ADR 0003).
 #[tauri::command]
-fn get_system_metrics() -> Value {
-    let threads = std::thread::available_parallelism().map(|n| n.get() as u32 * 2).unwrap_or(16);
-    serde_json::json!({
-        "gateway_latency_ms": 8,
-        "active_threads": threads,
-        "isolation_mode": "Landlock & Tauri Sandboxed",
-        "memory_db_mb": 18.4
-    })
+async fn get_system_metrics() -> Result<Value, String> {
+    match engine_get("system/metrics").await {
+        Ok(metrics) => Ok(metrics),
+        Err(e) => Ok(serde_json::json!({
+            "error": "Engine unreachable",
+            "message": e,
+            "active_threads": std::thread::available_parallelism()
+                .map(|n| n.get() as u32 * 2)
+                .unwrap_or(16)
+        })),
+    }
 }
 
 #[tauri::command]

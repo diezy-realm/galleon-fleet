@@ -23,6 +23,7 @@ clawcrew-runtime.workspace = true
 clawcrew-tools.workspace = true
 clawcrew-hardware.workspace = true
 clawcrew-plugins = { workspace = true, optional = true }
+clawcrew-routing.workspace = true
 
 # gRPC server for SystemGateway (D1): Go engine -> Rust native-tool execution.
 # `prost` must stay a direct dep: tonic-build's generated code references

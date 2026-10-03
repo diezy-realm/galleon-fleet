@@ -1,8 +1,8 @@
-package llm
+package crew
 
 import (
 	"context"
-	"encoding/json/v2"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -11,6 +11,20 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/core/logger"
 	"github.com/diezy-labs/claw-crew/engine/pkg/client"
 )
+
+// ToolDefinition represents a function schema callable by the model
+type ToolDefinition struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Parameters  any    `json:"parameters"`
+}
+
+// ToolCall represents a structured tool call instruction returned by the LLM
+type ToolCall struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Arguments string `json:"arguments"`
+}
 
 // ToolExecutionResult represents the output of a dispatched tool
 type ToolExecutionResult struct {

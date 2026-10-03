@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -17,7 +18,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
+	"github.com/diezy-labs/claw-crew/engine/pkg/client"
+	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
 )
 
 var safeFilenameRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
@@ -26,7 +28,7 @@ type fleetService struct {
 	mu          sync.RWMutex
 	fleets      map[string]*Fleet
 	dataDir     string
-	llmProvider llm.Provider
+	gateway     client.SystemGatewayClient
 	diagnostics []DiagnosticItem
 	snapshots   []SnapshotItem
 	proposer    ObjectiveProposer
@@ -48,7 +50,7 @@ type ProposedFleetOrder struct {
 	Status      string `json:"status"` // awaiting_pirate_king_approval
 }
 
-func NewService(llmProvider llm.Provider) Service {
+func NewService(gateway client.SystemGatewayClient) Service {
 	// Look for web-2/data or fallback to local data dir
 	dataDir := filepath.Join("..", "web-2", "data")
 	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
@@ -89,7 +91,7 @@ func NewService(llmProvider llm.Provider) Service {
 	return &fleetService{
 		fleets:      make(map[string]*Fleet),
 		dataDir:     dataDir,
-		llmProvider: llmProvider,
+		gateway:     gateway,
 		diagnostics: initialDiags,
 		snapshots:   initialSnaps,
 	}
@@ -597,32 +599,34 @@ func (s *fleetService) objectiveAck(prompt string) *QuartermasterChatResponse {
 	}
 }
 
-// streamComplete runs a single-shot LLM completion by collecting the stream.
-// The producer goroutine owns closing chunkCh so the range terminates (no deadlock).
+// streamComplete runs a single-shot LLM completion by collecting the stream from Rust SystemGateway.
 func (s *fleetService) streamComplete(ctx context.Context, system, userMsg string) (string, error) {
-	if s.llmProvider == nil {
-		return "", errors.New("no llm provider configured")
+	if s.gateway == nil {
+		return "", errors.New("no system gateway configured")
 	}
-	req := &llm.ChatRequest{
-		Model:  "quartermaster-model",
-		System: system,
-		Messages: []llm.Message{
+	stream, err := s.gateway.ExecuteTurn(ctx, &pb.ExecuteTurnRequest{
+		Model:        "quartermaster-model",
+		SystemPrompt: system,
+		Messages: []*pb.TurnChatMessage{
 			{Role: "user", Content: userMsg},
 		},
+	})
+	if err != nil {
+		return "", err
 	}
-	chunkCh := make(chan *llm.ChatChunk)
-	errCh := make(chan error, 1)
-	go func() {
-		defer close(chunkCh)
-		errCh <- s.llmProvider.StreamChat(ctx, req, chunkCh)
-	}()
 
 	var sb strings.Builder
-	for chunk := range chunkCh {
-		sb.WriteString(chunk.ContentChunk)
-	}
-	if err := <-errCh; err != nil {
-		return "", err
+	for {
+		token, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return "", err
+		}
+		if ev, ok := token.Event.(*pb.TurnToken_Token); ok && !ev.Token.IsThought {
+			sb.WriteString(ev.Token.Delta)
+		}
 	}
 	return sb.String(), nil
 }

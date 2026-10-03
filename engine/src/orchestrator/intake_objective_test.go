@@ -4,15 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
 	"github.com/diezy-labs/claw-crew/engine/src/orchestrator"
 )
 
 // F2-3: an objective yields a gated FleetOrderProposal — never execution.
 func TestIntakeObjective_RawFallbackIsGated(t *testing.T) {
-	mockLLM := llm.NewMockProvider("test-model")
-	mockLLM.SetResponses([]string{"We will need a backend engineer and a QA specialist."})
-	svc := orchestrator.NewService(mockLLM, &mockFleet{})
+	gw, cleanup := startMockGateway(t, "We will need a backend engineer and a QA specialist.")
+	defer cleanup()
+	svc := orchestrator.NewService(gw, &mockFleet{})
 
 	p, err := svc.IntakeObjective(context.Background(), orchestrator.ObjectiveRequest{Objective: "ship the API"})
 	if err != nil {
@@ -31,9 +30,9 @@ func TestIntakeObjective_RawFallbackIsGated(t *testing.T) {
 
 // A clean JSON draft is parsed into structured proposed roles, still gated.
 func TestIntakeObjective_JSONDraftParsesRoles(t *testing.T) {
-	mockLLM := llm.NewMockProvider("test-model")
-	mockLLM.SetResponses([]string{`{"mission_name":"Launch","required_crew":[{"role":"Engineer","capabilities":["go","grpc"]}]}`})
-	svc := orchestrator.NewService(mockLLM, &mockFleet{})
+	gw, cleanup := startMockGateway(t, `{"mission_name":"Launch","required_crew":[{"role":"Engineer","capabilities":["go","grpc"]}]}`)
+	defer cleanup()
+	svc := orchestrator.NewService(gw, &mockFleet{})
 
 	p, err := svc.IntakeObjective(context.Background(), orchestrator.ObjectiveRequest{Objective: "launch it"})
 	if err != nil {
@@ -52,9 +51,9 @@ func TestIntakeObjective_JSONDraftParsesRoles(t *testing.T) {
 
 // ProposeFleetOrder adapts to the fleet-facing view, preserving the gate.
 func TestProposeFleetOrder_MapsAndGates(t *testing.T) {
-	mockLLM := llm.NewMockProvider("test-model")
-	mockLLM.SetResponses([]string{`{"mission_name":"Recon","required_crew":[]}`})
-	svc := orchestrator.NewService(mockLLM, &mockFleet{})
+	gw, cleanup := startMockGateway(t, `{"mission_name":"Recon","required_crew":[]}`)
+	defer cleanup()
+	svc := orchestrator.NewService(gw, &mockFleet{})
 
 	order, err := svc.ProposeFleetOrder(context.Background(), "scout the sector")
 	if err != nil {

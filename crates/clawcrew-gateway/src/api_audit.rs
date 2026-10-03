@@ -17,7 +17,7 @@ use std::io::{BufRead, BufReader};
 
 const MAX_AUDIT_PAGE: usize = 200;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct AuditQuery {
     pub limit: Option<usize>,
 }

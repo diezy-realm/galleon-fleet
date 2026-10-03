@@ -38,6 +38,7 @@ galleon-channel-core = { path = "crates/galleon-channel-core", version = "0.8.5"
 galleon-channel-signal = { path = "crates/galleon-channel-signal", version = "0.8.5" }
 galleon-channel-bluesky = { path = "crates/galleon-channel-bluesky", version = "0.8.5" }
 galleon-channel-imessage = { path = "crates/galleon-channel-imessage", version = "0.8.5" }
+clawcrew-routing = { path = "crates/clawcrew-routing", version = "0.8.5" }
 zerocode = { path = "apps/zerocode", version = "0.8.5" }
 directories = "6.0"
 sys-locale = "0.3"

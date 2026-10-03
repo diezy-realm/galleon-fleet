@@ -5,22 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/core/config"
-	"github.com/diezy-labs/claw-crew/engine/pkg/client"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
 )
 
 func TestCancellationPropagationToSubagents(t *testing.T) {
-	cfg := &config.AppConfig{}
-	gateway, err := client.NewSystemGatewayClient("")
-	if err != nil {
-		t.Fatalf("failed to create gateway: %v", err)
-	}
+	gateway, cleanup := startMockGatewayServer(t)
+	defer cleanup()
 
-	provider := llm.NewProvider(cfg, gateway)
-	dispatcher := llm.NewToolDispatcher(gateway)
-	orchestrator := crew.NewService(provider, dispatcher, gateway)
+	dispatcher := crew.NewToolDispatcher(gateway)
+	orchestrator := crew.NewService(dispatcher, gateway)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

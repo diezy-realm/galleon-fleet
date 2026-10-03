@@ -2,25 +2,43 @@
 
 This steering document governs how AI agents architect, implement, query, and navigate the Galleon Fleet AI codebase. It applies to all agent sessions (Antigravity, Claude Code, subagents).
 
-Related documents & skills:
-- Architecture & Layering Specification: [`.gemini/architecture.md`](architecture.md)
+## Fundamental Normative Standard: `standard-docs/tech-standart/`
+
+The **prescriptive Single Source of Truth (SSOT)** for architecture, boundaries, language conventions, and contracts is located in [`standard-docs/tech-standart/`](../standard-docs/tech-standart/):
+- **Architecture Overview:** [`standard-docs/tech-standart/architecture/00-overview.md`](../standard-docs/tech-standart/architecture/00-overview.md)
+- **Strict Boundary Policy:** [`standard-docs/tech-standart/architecture/01-boundary-policy.md`](../standard-docs/tech-standart/architecture/01-boundary-policy.md)
+- **Rust Conventions (2024 / MSRV 1.82+):** [`standard-docs/tech-standart/tech-stack/rust-conventions.md`](../standard-docs/tech-standart/tech-stack/rust-conventions.md)
+- **Go Conventions (1.25+):** [`standard-docs/tech-standart/tech-stack/go-conventions.md`](../standard-docs/tech-standart/tech-stack/go-conventions.md)
+- **Tauri Conventions (v2):** [`standard-docs/tech-standart/tech-stack/tauri-conventions.md`](../standard-docs/tech-standart/tech-stack/tauri-conventions.md)
+- **Web Conventions (React 19 / TS 5.7+ / Tailwind 4):** [`standard-docs/tech-standart/tech-stack/web-conventions.md`](../standard-docs/tech-standart/tech-stack/web-conventions.md)
+- **gRPC Contract (:50052 Rust):** [`standard-docs/tech-standart/api-contracts/grpc-system-gateway.md`](../standard-docs/tech-standart/api-contracts/grpc-system-gateway.md)
+- **HTTP Engine API (:9090 Go):** [`standard-docs/tech-standart/api-contracts/http-engine-api.md`](../standard-docs/tech-standart/api-contracts/http-engine-api.md)
+
+Related rules & skills:
 - Rust Standards: [`.gemini/rules/rust-standards.md`](rules/rust-standards.md)
 - Graph-First Codebase Navigation: [`.gemini/skills/graphify/SKILL.md`](skills/graphify/SKILL.md)
 
 ---
 
-## 1. 3-Tier Layering Governance (STRICT RULE)
+## 1. 4-Tier Layering Governance & Strict Boundary Policy
 
-All implementations MUST adhere to the following separation of concerns:
+All implementations and refactoring MUST adhere to the following separation of concerns:
 
-| Component | Lokasi | Bahasa & Runtime | Tugas Riil di Repo | Jalur Akses / Komunikasi |
+| Tier | Runtime | Port / Interface | Tanggung Jawab Resmi | Hal Dilarang (Forbidden) |
 |---|---|---|---|---|
-| **Desktop Shell** | `apps/tauri-2/` | Rust (Tauri v2 + WRY) | Window framing, system tray icon, OS dialogs/notifikasi, packaging desktop `.exe`. | **Tauri IPC** (`invoke`) dari webview React. |
-| **System Core** | `crates/` | Rust (2024 edition) | Security microkernel (`clawcrew-runtime`), Landlock LSM sandboxing, native tool execution (`clawcrew-tools`), mDNS/A2A network (`clawcrew-gateway`), channel adapters (`clawcrew-channels`), WASI plugins (`clawcrew-plugins`). | **gRPC Server** `SystemGateway` (:50052) dipanggil oleh Go; atau direct CLI. |
-| **AI Orchestrator** | `engine/` | Go 1.25+ / Go 1.27 | Agent Brain (`StartTurn`), Fleet governance (Quests, Ships, Squads, Crew, Approvals), vector memory RAG (`memory/`), persistensi kanonikal `DiskStore`. | **gRPC Server** `AgentEngine` (:50051) & **HTTP Gateway** (:9090). |
-| **Interface / UI** | `web-2/` | TypeScript, React 19 | Visual rendering, view-models (`useFleetStore`), client-bridge (`apiClient.ts`). Zero backend APIs. | HTTP reverse proxy ke Go (:9090) / Tauri IPC. |
+| **Desktop Shell** (`apps/tauri-2/`) | Tauri v2 (Rust) | IPC (`invoke`) | Window lifecycle, system tray, OS dialogs, packaging desktop `.exe`. | Dilarang memuat business logic, API logic, persistence, atau fake data (ADR 0003). |
+| **System Core** (`crates/`) | Rust (2024 edition, 25 crates) | gRPC Server (:50052) `SystemGateway` | Security microkernel (sandbox, vault AES-256-GCM), native tools (fs/shell), LLM execution SSOT (ADR 0001: OpenAI, Gemini, Bedrock, Anthropic), WASI runtime, channels, mDNS. | Dilarang mengelola fleet governance, crew turn orchestration, atau RAG memory (milik Go). Rust = leaf service. |
+| **AI Orchestrator** (`engine/`) | Go 1.25+ | gRPC (:50051) & HTTP (:9090) | Agent brain (`StartTurn`), fleet governance (crews, policies, risk tiers), vector memory RAG, SQLite/Postgres persistence. | Dilarang direct LLM API calling atau native tool exec langsung (wajib delegasi ke Rust gRPC :50052). |
+| **UI Layer** (`web-2/`) | React 19 + TS + Tailwind 4 | HTTP Proxy ke Go (:9090) | Visual rendering, view-models (`useFleetStore`), client-bridge (`apiClient.ts`). | Zero backend logic (ADR 0002). Dilarang membypass Go untuk memanggil Rust gRPC :50052 langsung. |
 
-*Detail arsitektur, boundary invariants, dan sequence diagram terdokumentasi lengkap di [`.gemini/architecture.md`](architecture.md).*
+### Core Invariants & SSOT Directives:
+1. **Frontend → Go → Rust (Never Frontend → Rust):** Go engine adalah gateway penegak kebijakan (*governance*). Frontend dilarang memanggil Rust gRPC secara langsung.
+2. **LLM SSOT = Rust `clawcrew-providers` (ADR 0001):** Semua vendor LLM dijalankan di Rust. Go murni bertindak sebagai orkestrator konteks turn.
+3. **Secrets SSOT = Rust Vault:** Disimpan di `~/.config/galleon/vault/`. Diakses via gRPC `GetSecret`/`SetSecret`. Wajib credential scrubbing di log.
+4. **Policy SSOT = Go Engine:** Aturan approval dan kalkulasi risk-tier hanya ada di Go (`fleet/policies.go`). Tauri/UI dilarang hardcoding policy.
+5. **No Shared Database:** Tiap tier mengisolasi storage miliknya sendiri (Tauri: `window.json`, Rust: `vault/`, Go: `engine/data/*.db`).
+6. **Rust Code Standards:** Crate baru memakai prefix `galleon-*`, shared dependencies di root `[workspace.dependencies]`, trait-driven (`Provider`, `ToolExecutor`), error handling dengan `thiserror` dan propagasi `?` (**strictly no `unwrap()` / `expect()` in production paths**).
+7. **Mandatory Rust Test Runner (`cargo-nextest`):** Seluruh eksekusi test Rust WAJIB menggunakan `cargo-nextest` (`cargo nextest run -p <crate>`, `cargo nextest run --workspace`) untuk isolasi proses dan eksekusi paralel cepat (ref: https://nexte.st/docs/installation/from-source/).
 
 ---
 

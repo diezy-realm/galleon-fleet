@@ -108,6 +108,12 @@ export const apiClient = {
     return res.json();
   },
 
+  async getNetworkQrCode(url?: string): Promise<{ url: string; dataUrl: string }> {
+    const query = url ? `?url=${encodeURIComponent(url)}` : '';
+    const res = await fetch(`/api/network/qrcode${query}`);
+    return res.json();
+  },
+
   async getExecutiveBriefing(): Promise<Record<string, unknown>[]> {
     if (this.isTauri()) {
       try {

@@ -14,7 +14,6 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/src/artifact"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
 	"github.com/diezy-labs/claw-crew/engine/src/fleet"
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
 	"github.com/diezy-labs/claw-crew/engine/src/memory"
 	qmorch "github.com/diezy-labs/claw-crew/engine/src/orchestrator"
 	"github.com/diezy-labs/claw-crew/engine/src/persistence"
@@ -34,9 +33,8 @@ func InitializeApp(cfg *config.AppConfig) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	provider := llm.NewProvider(cfg, systemGatewayClient)
-	toolDispatcher := llm.NewToolDispatcher(systemGatewayClient)
-	orchestrator := crew.NewService(provider, toolDispatcher, systemGatewayClient)
+	toolDispatcher := crew.NewToolDispatcher(systemGatewayClient)
+	orchestrator := crew.NewService(toolDispatcher, systemGatewayClient)
 	vectorStore := memory.NewVectorStore()
 	crewRegistry := crew.NewRegistry()
 	grpcHandler := crew.NewGRPCHandler(orchestrator, vectorStore, crewRegistry)
@@ -71,8 +69,8 @@ func InitializeApp(cfg *config.AppConfig) (*App, error) {
 	workflowRegistry := workflow.NewRegistry()
 	workflowService := workflow.NewService(workflowRegistry, taskService)
 	workflowHTTPHandler := workflow.NewHTTPHandler(workflowService)
-	fleetService := fleet.NewService(provider)
-	objectiveProposer := qmorch.NewService(provider, fleetService)
+	fleetService := fleet.NewService(systemGatewayClient)
+	objectiveProposer := qmorch.NewService(systemGatewayClient, fleetService)
 	fleetService.SetObjectiveProposer(objectiveProposer)
 	fleetHTTPHandler := fleet.NewHTTPHandler(fleetService)
 	app := NewApp(cfg, server, metricsServer, grpcHandler, runHTTPHandler, taskHTTPHandler, toolHTTPHandler, artifactHTTPHandler, workflowHTTPHandler, fleetHTTPHandler)

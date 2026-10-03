@@ -4,7 +4,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import http from 'http';
 import dotenv from 'dotenv';
-import qrcode from 'qrcode';
 import { spawn } from 'child_process';
 
 dotenv.config();
@@ -54,51 +53,8 @@ function getNetworkInterfaces(): NetworkAddress[] {
 }
 
 // -------------------------------------------------------------
-// HOST GATEWAY: Remote Access & Local Hardware Telemetry
+// HOST GATEWAY: Remote Access (Telemetry & QR delegated to Go Engine :9090 per ADR 0002)
 // -------------------------------------------------------------
-app.get('/api/network/qrcode', async (req: Request, res: Response) => {
-  const targetUrl = (req.query.url as string) || `http://localhost:${port}`;
-  try {
-    const qrDataUrl = await qrcode.toDataURL(targetUrl, {
-      margin: 2,
-      width: 320,
-      color: {
-        dark: '#0f172a',
-        light: '#f8fafc'
-      }
-    });
-    res.json({ url: targetUrl, dataUrl: qrDataUrl });
-  } catch (err: any) {
-    res.status(500).json({ error: 'Failed to generate QR code', message: err.message });
-  }
-});
-
-// Local host telemetry (CPU, RAM, Uptime) for browser mode
-app.get('/api/system/metrics', (_req: Request, res: Response) => {
-  const totalMem = os.totalmem();
-  const freeMem = os.freemem();
-  const usedMem = totalMem - freeMem;
-  const cpus = os.cpus();
-  const uptime = os.uptime();
-
-  const hours = Math.floor(uptime / 3600);
-  const minutes = Math.floor((uptime % 3600) / 60);
-
-  res.json({
-    cpuUsage: 1.8,
-    memoryUsage: {
-      usedMB: Math.round(usedMem / (1024 * 1024)),
-      totalMB: Math.round(totalMem / (1024 * 1024)),
-      percent: Math.round((usedMem / totalMem) * 100)
-    },
-    activeProcesses: cpus.length * 4,
-    uptime: `${hours}h ${minutes}m`,
-    platform: os.platform(),
-    arch: os.arch(),
-    nodeVersion: process.version
-  });
-});
-
 // Host network info — shape matches the frontend NetworkInfo contract (RemoteAccessModal)
 app.get('/api/system/network', (_req: Request, res: Response) => {
   const interfaces = getNetworkInterfaces().filter((a) => a.address !== '127.0.0.1');
