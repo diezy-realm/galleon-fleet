@@ -31,6 +31,13 @@ const CACHE_OPERATION_ADMIT_DIRECTORY: &str = "admit_cache_directory";
 const CACHE_OPERATION_PERSIST_ACCESS_TOKEN: &str = "persist_access_token";
 const CACHE_OPERATION_PERSIST_API_KEY: &str = "persist_api_key";
 
+/// Validate that a configured Copilot endpoint is allowed by steering policy.
+fn is_allowed_copilot_endpoint(endpoint: &str) -> bool {
+    let normalized = endpoint.trim_end_matches('/');
+    // Allow official GitHub Copilot endpoints only.
+    normalized == DEFAULT_API || normalized == "https://api.github.com"
+}
+
 // ── Token types ──────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
@@ -539,6 +546,10 @@ impl CopilotModelProvider {
                 .unwrap_or_else(|| DEFAULT_API.to_string());
             let token = info.token;
 
+            if !is_allowed_copilot_endpoint(&endpoint) {
+                anyhow::bail!("Configured Copilot endpoint '{}' is not permitted by steering policy", endpoint);
+            }
+
             *cached = Some(CachedApiKey {
                 token: token.clone(),
                 api_endpoint: endpoint.clone(),
@@ -556,6 +567,10 @@ impl CopilotModelProvider {
             .as_ref()
             .and_then(|e| e.api.clone())
             .unwrap_or_else(|| DEFAULT_API.to_string());
+
+        if !is_allowed_copilot_endpoint(&endpoint) {
+            anyhow::bail!("Configured Copilot endpoint '{}' is not permitted by steering policy", endpoint);
+        }
 
         *cached = Some(CachedApiKey {
             token: api_key_info.token.clone(),
