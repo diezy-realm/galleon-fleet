@@ -2,12 +2,12 @@ name: Engine CI
 
 on:
   push:
-    branches: [master]
+    branches: [main, master, testing]
     paths:
       - 'engine/**'
       - '.github/workflows/engine-ci.yml'
   pull_request:
-    branches: [master]
+    branches: [main, master, testing]
     paths:
       - 'engine/**'
       - '.github/workflows/engine-ci.yml'
@@ -23,7 +23,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.25'
           cache-dependency-path: engine/go.sum
 
       - name: Verify Go dependencies
