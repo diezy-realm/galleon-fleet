@@ -1,16 +1,31 @@
 [
   {
-    "id": "steering-1",
-    "name": "Zero Compromise on Production Safety",
-    "directive": "Never perform destructive file deletions or unauthenticated remote calls without explicit Owner sign-off.",
-    "priority": "critical",
-    "enforcement": "required",
-    "appliesTo": ["all-ships"],
+    "id": "dir-1",
+    "name": "Evidence Distinction Policy",
+    "targetType": "role",
+    "targetId": "crew-repo-analyst",
+    "guidance": "Always distinguish facts in the code from assumptions. Cite exact line numbers.",
+    "priority": 1,
+    "overridePolicy": "override",
     "status": "active",
     "version": 1,
-    "createdAt": "2026-03-01T00:00:00Z",
+    "createdAt": "2026-03-05T00:00:00Z",
     "createdBy": "Captain",
-    "updatedAt": "2026-03-20T00:00:00Z",
+    "updatedAt": "2026-03-22T00:00:00Z",
     "updatedBy": "Captain"
+  },
+  {
+    "id": "copilot-1",
+    "name": "GitHub Copilot Provider Steering",
+    "directive": "Model-provider integrations using GitHub Copilot MUST use the device-flow or managed API key only; persist tokens only in the project cache directory; requests must include required editor headers and only target allowed endpoints (https://api.githubcopilot.com and https://api.github.com). Tooling MUST never auto-execute destructive file operations without explicit Owner sign-off. Logging MUST redact tokens and API keys.",
+    "priority": "high",
+    "enforcement": "required",
+    "appliesTo": ["model-providers", "copilot"],
+    "status": "active",
+    "version": 1,
+    "createdAt": "2026-10-04T00:00:00Z",
+    "createdBy": "CopilotSteeringBot",
+    "updatedAt": "2026-10-04T00:00:00Z",
+    "updatedBy": "CopilotSteeringBot"
   }
 ]
