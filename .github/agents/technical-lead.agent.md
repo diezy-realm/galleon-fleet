@@ -7,6 +7,12 @@ tools:
   - "read"
   - "search"
   - "web"
+  - "execute"
+  - "edit"
+  - "browser"
+  - "agent"
+  - "todo"
+  - "vscode"
 ---
 
 # Role: Technical Lead (Galleon Fleet)
