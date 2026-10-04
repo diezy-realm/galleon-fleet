@@ -52,7 +52,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [x] **PR-19** `chore/legacy-removal-packaging-fixtures-i18n` · N-15, N-16, N-17 · GW-0 · PR-06 ⚑ · [Selesai] Hapus packaging warisan tidak terpakai (`nix/`, `deploy-k8s/`, `dist/freebsd/`) · M
 - [ ] **PR-20** `docs/drift-sync` · D-02, D-05, D-06, D-09, R-05 · GW-7 · PR-00 · selaraskan klaim usang (D1–D14), MSRV, jumlah crate, `.kiro`, otoritas `docs/README.md`, PRD · M
 - [ ] **PR-21** `docs/adr-errata-and-hygiene` · D-04, R-30, D-07, D-08, D-10 · GW-7 · PR-00 · errata ADR-001 (file baru), rapikan steering, kebersihan root, template ODR/ADR · M
-- [ ] **PR-22** `feat/tauri-csp-capabilities` · U-08, U-17 · GW-3,8 · PR-03 · hapus `unsafe-eval`, `connect-src` ke :9090, scope fs · S
+- [x] **PR-22** `feat/tauri-csp-capabilities` · U-08, U-17 · GW-3,8 · PR-03 · [Selesai] Hapus `unsafe-eval`, kunci `connect-src` ke :9090 & ipc, cabut plugin tak terpakai (shell, dialog, fs, notification) · S
 
 ### Gelombang 2 — pemecahan Rust, identitas, persistensi, protokol
 

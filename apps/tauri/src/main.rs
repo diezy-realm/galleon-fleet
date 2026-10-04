@@ -129,10 +129,6 @@ async fn chat_quartermaster(message: String, _context: Option<Value>) -> Result<
 
 fn main() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
             get_fleet_metrics, 
             ring_deck_bell, 
@@ -150,8 +146,8 @@ fn main() {
             chat_quartermaster
         ])
         .setup(|app| {
-            let quit_i = MenuItem::with_id(app, "quit", "Quit Fleet AI", true, None::<&str>)?;
-            let show_i = MenuItem::with_id(app, "show", "Open Quarterdeck", true, None::<&str>)?;
+            let quit_i = MenuItem::with_id(app, "quit", "Quit Galleon Fleet", true, None::<&str>)?;
+            let show_i = MenuItem::with_id(app, "show", "Open Galleon Fleet Deck", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
 
             let _tray = TrayIconBuilder::new()
@@ -171,5 +167,5 @@ fn main() {
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("error while running Fleet AI desktop application");
+        .expect("error while running Galleon Fleet desktop application");
 }
