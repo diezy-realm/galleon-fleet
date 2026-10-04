@@ -1,6 +1,6 @@
 # R-00 — Inventaris `clawcrew-runtime` terhadap Boundary Policy
 
-> **Status:** DRAF untuk sign-off Owner/Principle. Tidak ada kode yang diubah atau dihapus.
+> **Status:** Klasifikasi DISETUJUI Owner 2026-10-04 (keputusan terbuka ditutup ODR-21..25). Verifikasi per-modul §4 tetap wajib sebelum eksekusi. Tidak ada kode yang diubah atau dihapus.
 > **Metode:** ukuran (non-blank LOC per modul top-level di `crates/clawcrew-runtime/src`), jumlah referensi eksternal `clawcrew_runtime::<modul>` per konsumen (grep `*.rs` tracked, 2026-10-04), dan keterkaitan internal `crate::<modul>`. Klasifikasi = **usulan berbasis nama, ukuran, dan pola pemakai**; sebelum eksekusi tiap modul wajib dibaca isinya (kolom *Verifikasi*).
 > **Dasar:** `01-boundary-policy.md`, ODR-03/07/11/12/14, `foundation/05-orchestrator-placement-analysis.md`.
 

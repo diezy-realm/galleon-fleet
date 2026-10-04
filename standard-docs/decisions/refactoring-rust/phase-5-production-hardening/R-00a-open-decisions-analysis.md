@@ -1,6 +1,6 @@
 # R-00a — Analisis 3 Keputusan Terbuka Inventaris Runtime
 
-> Pelengkap `R-00-runtime-inventory.md` §6. Status: **DRAF — menunggu satu putaran persetujuan final** (bukan satu-satu). Tidak ada kode diubah.
+> Pelengkap `R-00-runtime-inventory.md` §6. Status: **DISETUJUI Owner 2026-10-04 (ODR-21..25)**. Tidak ada kode diubah. Detail `verifiable_intent`: `../../../research/verifiable-intent-assessment.md`.
 > Penyelarasan produk: ODR-03 (organisasi AI, Go = otak), ODR-07 (Go = security layer), ODR-06 (local-first + remote via Nginx/QR), ODR-12 (CLI Rust, klien Go), invarian F1 (Treasury read-only, tanpa perantara tagihan/komersial).
 
 ---
@@ -15,7 +15,7 @@
 
 **Analisis:** fitur setengah jadi (verifier tidak ada, tool disembunyikan), tanpa pemakai, dan tidak tercakup visi produk. Menyimpannya = 4,6k LOC kripto yang harus dirawat dan diaudit tanpa nilai. Risiko hapus rendah; satu-satunya efek: kunci konfigurasi `[verifiable_intent]` dan `vi_*` tool hilang.
 
-**Rekomendasi: HAPUS.** Hapus modul, tool `vi_*`, `VerifiableIntentConfig`, peringatan di `main.rs`/doctor; konfigurasi lama yang masih memuat bagian ini harus **diabaikan dengan peringatan** satu kali (bukan error) saat migrasi config. Pulihkan dari git tag `archive/pre-galleon` bila kelak dibutuhkan (agentic commerce = fitur baru dengan ADR sendiri).
+**Keputusan (ODR-21): HAPUS** setelah penilaian konsep untuk masa depan (`research/verifiable-intent-assessment.md`). Hapus modul, tool `vi_*`, `VerifiableIntentConfig`, peringatan di `main.rs`/doctor; konfigurasi lama yang masih memuat bagian ini harus **diabaikan dengan peringatan** satu kali (bukan error) saat migrasi config. Pulihkan dari git tag `archive/pre-galleon` bila kelak dibutuhkan (agentic commerce = fitur baru dengan ADR sendiri).
 Tiket: **R-38**.
 
 ---

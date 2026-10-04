@@ -40,3 +40,5 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 - [ ] **G-36 (P1, L) Server Galleon Client Protocol v1** (WS JSON-RPC 2.0) + spesifikasi `api-contracts/client-protocol.md` dari `rpc/types.rs`+`acp.rs`; tes kontrak. Dep: G-35, G-30.
 - [ ] **G-33 (P2, M) Sub-agent / handoff / A2A** sebagai Artifact reference antar Crew di Go. Dep: R-00.
 
+
+- [ ] **G-37 (P3, S) ADR opsional: Delegated Authority Chain** (wewenang bertingkat Quartermaster→Crew yang ditandatangani, attenuasi, fail-closed) — rujukan esearch/verifiable-intent-assessment.md §3. Dep: G-35, G-23. Bukan komitmen implementasi.
