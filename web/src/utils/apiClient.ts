@@ -228,14 +228,25 @@ export const apiClient = {
     }));
   },
 
-  async executeTerminalCommand(_command: string): Promise<{ stdout: string; exitCode: number; duration: string }> {
-    // Shell execution is temporarily locked pending Go Policy Gateway (PR-15 / BG-A4).
-    // Direct shell execution and fake simulations have been decommissioned for security.
-    return {
-      stdout: '[Terminal locked] Shell execution disabled pending Go Policy Gateway (PR-15). Direct execution decommissioned.',
-      exitCode: 1,
-      duration: '0ms'
-    };
+  async executeTerminalCommand(command: string, approved = false): Promise<{ stdout: string; stderr?: string; exitCode: number; duration: string; riskTier?: string; requiresApproval?: boolean }> {
+    try {
+      const res = await fetch(`${ENGINE_BASE}/api/terminal/exec`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command, approved, approved_by: 'web_terminal_ui' })
+      });
+      if (!res.ok && res.status !== 403) {
+        throw new Error(`Engine returned ${res.status}`);
+      }
+      return await res.json();
+    } catch (e: any) {
+      return {
+        stdout: '',
+        stderr: e.message || 'Failed to connect to Go Policy Gateway (:9090)',
+        exitCode: 1,
+        duration: '0ms'
+      };
+    }
   },
 
   async getFleetPolicies(): Promise<{ policies: Record<string, unknown>[]; riskTiers: Record<string, unknown>[] }> {

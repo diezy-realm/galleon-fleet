@@ -98,6 +98,8 @@ type Service interface {
 	SaveCollection(ctx context.Context, name string, rawJSON []byte) error
 	ChatQuartermaster(ctx context.Context, prompt string) (*QuartermasterChatResponse, error)
 	GetSeedData(ctx context.Context) (map[string]any, error)
+	ExecuteTerminal(ctx context.Context, req TerminalExecRequest) (*TerminalExecResponse, error)
+	GetTerminalAudit(ctx context.Context, limit int) ([]TerminalAuditRecord, error)
 	// SetObjectiveProposer injects the objective-branch dependency after
 	// construction (orchestrator imports fleet, so it is wired post-hoc).
 	SetObjectiveProposer(p ObjectiveProposer)

@@ -44,7 +44,9 @@ func (h *HTTPHandler) RegisterHTTP(server *metrics.Server) {
 	server.RegisterRouteFunc("/api/health", h.handleHealth)
 	server.RegisterRouteFunc("/api/system/network", h.handleNetwork)
 	server.RegisterRouteFunc("/api/engine/processes", h.handleEngineProcesses)
-	server.RegisterRouteFunc("/api/engine/execute", h.handleEngineExecute)
+	server.RegisterRouteFunc("/api/terminal/exec", h.handleTerminalExec)
+	server.RegisterRouteFunc("/api/terminal/audit", h.handleTerminalAudit)
+	server.RegisterRouteFunc("/api/engine/execute", h.handleTerminalExec)
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
@@ -376,22 +378,60 @@ func (h *HTTPHandler) handleEngineProcesses(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, processes)
 }
 
-func (h *HTTPHandler) handleEngineExecute(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPHandler) handleTerminalExec(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	var req struct {
-		Command string `json:"command"`
-	}
+	var req TerminalExecRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"stdout":   fmt.Sprintf("[executed: %s]\n", req.Command),
-		"exitCode": 0,
-		"duration": "10ms",
-	})
+	if strings.TrimSpace(req.Command) == "" {
+		http.Error(w, "command is required", http.StatusBadRequest)
+		return
+	}
+
+	if h.service == nil {
+		http.Error(w, "fleet service unavailable", http.StatusServiceUnavailable)
+		return
+	}
+
+	resp, err := h.service.ExecuteTerminal(r.Context(), req)
+	if err != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"error":    err.Error(),
+			"exitCode": 1,
+			"stdout":   "",
+			"stderr":   err.Error(),
+		})
+		return
+	}
+
+	if resp.RiskTier == RiskTierBlocked {
+		writeJSON(w, http.StatusForbidden, resp)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, resp)
 }
+
+func (h *HTTPHandler) handleTerminalAudit(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if h.service == nil {
+		writeJSON(w, http.StatusOK, []any{})
+		return
+	}
+	records, err := h.service.GetTerminalAudit(r.Context(), 100)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, records)
+}
+
 
