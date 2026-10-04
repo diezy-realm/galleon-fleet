@@ -13,6 +13,7 @@
 | U | [`U-ui-desktop.md`](U-ui-desktop.md) | `web/` dan `apps/tauri/` |
 | P | [`P-platform-release.md`](P-platform-release.md) | Workspace, Docker, CI, Nginx/VPS, rilis |
 | D | [`D-docs-hygiene.md`](D-docs-hygiene.md) | Drift dokumen, errata ADR, kebersihan repo |
+| N | [`N-rename-and-legacy-cleanup.md`](N-rename-and-legacy-cleanup.md) | Rebrand ke Galleon + hapus legacy (ODR-16) |
 
 ## Legenda
 
@@ -39,14 +40,15 @@ flowchart LR
 | Lane | Total | Selesai |
 |---|---|---|
 | R | 26 | 0 |
-| G | 19 | 0 |
+| G | 23 | 0 |
 | U | 14 | 0 |
 | P | 12 | 0 |
 | D | 10 | 0 |
+| N | 22 | 0 |
 
 ## Gelombang
 
-1. **Gelombang 0 (hari-hari pertama, P0):** U-01, U-06, G-01, P-01, R-00, D-01.
-2. **Gelombang 1:** gerbang kualitas (R-01..R-04, P-04, P-05), G-04, U-02/U-03/U-05, G-10.
+1. **Gelombang 0 (P0):** **R-00 (prioritas utama)**, N-00, N-01, N-10, U-01, U-06, G-01, P-01, D-01.
+2. **Gelombang 1 (hapus dulu, baru rename):** N-11..N-14 sebelum N-2x; gerbang kualitas (R-01..R-04, P-04, P-05), G-04, U-02/U-03/U-05, G-10.
 3. **Gelombang 2:** persistensi (G-11..), pairing (G-20..), pemecahan crate (R-10..), Nginx (P-10).
 4. **Gelombang 3:** WASI/plugin, rilis, pembelajaran memori.

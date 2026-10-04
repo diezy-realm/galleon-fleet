@@ -1,0 +1,47 @@
+# Lane N — Rebrand ke Galleon & Pembersihan Legacy
+
+Ref: ODR-16. Pola yang dicari: `zeroclaw`, `zerocode`, `zerorelay`, `claw-crew`, `clawcrew`, `ClawCrew`, `FleetAI`/`Fleet AI`/`fleet-ai`.
+**Skala terukur (file tracked, di luar docs/ADR/lock/i18n):** ±1.656 file, ±40.000 kemunculan. Terbesar: `clawcrew-channels` 9,1k, `clawcrew-runtime` 8,9k, `docs/_archive` 3,6k (216 file), `providers` 2,2k, `tools` 2,1k, `gateway` 1,8k, `config` 1,3k, **`bin/engine.exe` (biner ter-commit)**, `apps/zerocode` 627, `src/main.rs` 487, `scripts/ci` 439, `.claude/skills` 368, `xtask` 354, `.github/workflows` 294.
+
+**Aturan umum**
+- Satu PR = satu lapisan; tiap PR hijau (`cargo check/clippy/nextest`, `go test -race`, `npm run build`).
+- Rename mekanis lewat skrip (`scripts/rename/…`), bukan tangan; ada mode `--dry-run` dan laporan.
+- **Jangan ubah:** ADR/riwayat di `standard-docs/decisions/` (immutable), `CHANGELOG`, sertifikat/lisensi atribusi, data fixture bertanda tangan, path/ID yang dipakai format on-disk pengguna **tanpa jalur migrasi**.
+- Kompatibilitas data: nama direktori config (`~/.clawcrew`→`~/.config/galleon`), env var (`CLAWCREW_*`→`GALLEON_*`), nama service, WIT package. Wajib ada **migrasi sekali jalan + alias env var dengan peringatan deprecasi** (satu rilis).
+- Aturan penamaan baru crate: `galleon-*` (rust-conventions); legacy `clawcrew-*` diganti bertahap.
+
+## N-0x Keputusan & alat (wajib dulu)
+
+- [ ] **N-00 (P0, S) Matriks penamaan resmi** `standard-docs/tech-standart/naming/naming-map.md`: lama→baru untuk crate, binary (`clawcrew`→`galleon`; `zerocode`→`galleon-code`/dihapus?; `zerorelay`→`galleon-relay`), paket npm, env var, direktori config, service name, bundle id, WIT package, header HTTP, metric prefix, Docker image. Owner sign-off. Out: eksekusi.
+- [ ] **N-01 (P0, S) Inventaris klasifikasi** tiap hit: *rename* / *delete* / *keep (historis)* / *needs-migration*. Output CSV di `files/` + ringkasan; pakai pencarian case-insensitive untuk varian `Claw Crew`, `claw_crew`, `CLAWCREW`.
+- [ ] **N-02 (P1, M) Skrip rename mekanis + gerbang CI** yang gagal bila pola terlarang muncul di jalur non-whitelist (`scripts/ci/brand_gate.sh`). Dep: N-00, N-01.
+
+## N-1x Hapus yang tidak relevan (lakukan SEBELUM rename agar volume turun)
+
+- [ ] **N-10 (P0, S) Hapus `bin/engine.exe` dari git** + `.gitignore`; bersihkan riwayat hanya bila ada alasan (diskusikan, jangan force-push).
+- [ ] **N-11 (P1, M) `docs/_archive/` (307 file tracked)** — hapus atau pindah ke tag git `archive/clawcrew`; tinggalkan pointer. AGENTS.md merujuk `docs/book/...` yang sudah tidak ada → perbaiki.
+- [ ] **N-12 (P1, M) Hapus kode warisan tak terpakai** hasil R-00: REST/WS/A2A gateway (`api*.rs`, `ws.rs`, `a2a.rs`) bila tak ada pemakai; hardware/peripheral tak relevan; sub-sistem yang tidak masuk produk Galleon. Dep: R-00, sign-off Owner.
+- [ ] **N-13 (P1, S) `.claude/skills`, `.agents`, `.kiro`, `.gemini`, `.copilot`:** hapus skill khusus ClawCrew (changelog, feature-matrix-parity, github-issue-triage, pr-architecture-check, wit-breaking-change-check bila tak relevan); pertahankan yang netral. (Skill ini dimuat otomatis dan menyesatkan agent.)
+- [ ] **N-14 (P1, S) `.github/workflows` (39):** hapus workflow rilis/marketplace/docs-book/discord yang spesifik ClawCrew; yang dipertahankan di-rename.
+- [ ] **N-15 (P2, S) Packaging warisan:** `dist/` (AUR/Scoop/FreeBSD), `nix/`, `deploy-k8s/`, `Containerfile`, `setup.bat`, `install.*`, `Makefile` — putuskan keep/rewrite/delete per item (ikut P-lane).
+- [ ] **N-16 (P2, S) Fixture & contoh tak relevan** di `tests/`, `crates/*/tests/fixtures`, `examples/`.
+- [ ] **N-17 (P2, S) Terjemahan (`.ftl`/`.po`):** hapus locale/kunci yang tak dipakai; ganti merek di string sumber lalu regenerasi (`tools/fill-translations`).
+
+## N-2x Rename per lapisan
+
+- [ ] **N-20 (P1, M) Binary & CLI:** `clawcrew`→`galleon` (root `Cargo.toml` package/bin, `src/main.rs` string UX, help, completions); `apps/zerocode`→`apps/galleon-code` atau hapus (keputusan N-00); `apps/zerorelay`→`apps/galleon-relay` atau hapus. Alias biner lama 1 rilis.
+- [ ] **N-21 (P1, L) Crate `clawcrew-*` → `galleon-*`** (22 crate): urutan bawah→atas (api, infra, log, config, …, runtime, gateway); `[workspace.dependencies]`, `use clawcrew_*`, `Cargo.lock`. Satu crate per PR; gunakan `cargo-edit`/skrip. Dep: N-00, N-02, R-04 (arah dependensi) agar tidak mengacaukan pemecahan crate. Koordinasi dengan R-10..R-16: **rename setelah pecah/hapus** untuk crate yang akan diubah.
+- [ ] **N-22 (P1, M) Identifier & string di dalam kode:** tipe/ fungsi/ komentar/ doc comment (`ClawCrew*`, `zeroclaw`), log target, `tracing` span, metric prefix. Dep: N-21 per crate.
+- [ ] **N-23 (P1, M) Config & env:** `CLAWCREW_*`→`GALLEON_*`, direktori `~/.clawcrew`→`~/.config/galleon` (vault path sudah `galleon`); migrasi data + alias deprecasi. Dep: N-00. **Risiko data pengguna.**
+- [ ] **N-24 (P1, S) WIT/plugin:** `clawcrew:plugin@0.1.0`→ pertahankan v0 beku; paket baru `galleon:plugin@…` hanya di `wit/v1/` (tidak boleh edit breaking di v0). Keputusan di N-00.
+- [ ] **N-25 (P1, M) Go engine:** module path, package, string, header, log field (`engine/go.mod`, `app/`), tanda “FleetAI”. Dep: N-00.
+- [ ] **N-26 (P1, S) UI `web/`:** nama paket `react-example`→`galleon-web`, `Fleet AI` di title/teks/i18n, localStorage key dengan migrasi. (Tumpang tindih U-05.)
+- [ ] **N-27 (P1, S) Desktop `apps/tauri`:** `fleet-ai-desktop`→`galleon-desktop`, `productName`, `identifier` (`com.galleon.sovereign` — verifikasi), window title, tray, updater endpoint; perbarui CI (P-05).
+- [ ] **N-28 (P1, M) CI/scripts/Docker/Make:** `scripts/ci` (439), `xtask` (354), workflows, `Dockerfile*`, image name `ghcr.io/…/galleon`.
+- [ ] **N-29 (P2, S) Metadata repo:** `README.md`, `LICENSE` header attribution (**pertahankan atribusi lisensi upstream**), `CONTRIBUTING`, `SECURITY`, `CODE_OF_CONDUCT`, issue/PR template, repo description, URL `diezy-realm/galleon-fleet`.
+- [ ] **N-30 (P2, M) Dokumen normatif non-ADR:** `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `standard-docs/tech-standart`, `foundation` — pakai nama baru; ADR lama cukup diberi catatan alias di `naming-map.md`.
+
+## N-3x Verifikasi
+
+- [ ] **N-40 (P1, M) Gerbang akhir:** `brand_gate` hijau di CI, `cargo nextest run --workspace`, `go test -race ./...`, `npm run build`, build desktop; smoke test upgrade (data lama → baru).
+- [ ] **N-41 (P2, S) Catat sisa pengecualian** (atribusi/historis) di `naming-map.md` dengan alasan.
