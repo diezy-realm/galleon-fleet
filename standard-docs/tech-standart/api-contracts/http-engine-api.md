@@ -5,6 +5,9 @@
 **Base URL:** `http://localhost:9090`  
 **Protocol:** HTTP/1.1 REST + JSON
 
+> [!NOTE]
+> **Catatan Alias Kanonikal (ODR-01):** Berdasarkan [ODR-2026-10-04 (Product Direction)](../../decisions/owner-decisions/ODR-2026-10-04-product-direction.md), klien UI resmi berada di **`web/`** (`web-2` adalah alias lama) dan desktop berada di **`apps/tauri/`** (`tauri-2` adalah alias lama).
+
 ---
 
 ## Overview
@@ -15,8 +18,8 @@ Go engine exposes HTTP REST API on port :9090 for frontend-facing operations:
 - System telemetry (metrics, health, logs)
 
 **Clients:**
-- web-2 (React SPA, Vite dev server proxies `/api/*` to :9090)
-- Tauri desktop app (IPC commands forward to :9090)
+- `web/` (React SPA, alias historis: `web-2`; Vite dev server proxies `/api/*` to :9090)
+- `apps/tauri/` (Tauri desktop app, alias historis: `apps/tauri-2`; IPC commands forward to :9090)
 
 **NOT exposed:** gRPC :50051 (internal Go ↔ Rust only)
 

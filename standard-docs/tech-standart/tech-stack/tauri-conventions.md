@@ -4,6 +4,9 @@
 **Last updated:** 2026-10-03  
 **Tauri version:** v2
 
+> [!NOTE]
+> **Catatan Alias Kanonikal (ODR-01):** Berdasarkan [ODR-2026-10-04 (Product Direction)](../../decisions/owner-decisions/ODR-2026-10-04-product-direction.md), lokasi kanonikal desktop shell adalah **`apps/tauri/`** dan UI layer adalah **`web/`**. Semua kemunculan nama historis `apps/tauri-2/` dan `web-2` dalam dokumen normatif ini mengacu secara kanonikal ke `apps/tauri/` dan `web/`.
+
 ---
 
 ## Project Structure

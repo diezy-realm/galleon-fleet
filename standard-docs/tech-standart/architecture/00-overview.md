@@ -19,7 +19,10 @@
 
 ---
 
-> **Catatan verifikasi 2026-10-04:** antarmuka aktif = `web-2` + `apps/tauri-2`; persistensi Go saat ini JSON/JSONL di disk (bukan SQLite); 27 crate, Go 1.27.1; `ExecuteTurn` sudah ada. Rincian: `../../foundation/04-drift-register-and-hygiene.md`.`n`n## Tier Boundaries (STRICT)
+> [!NOTE]
+> **Catatan Alias Kanonikal (ODR-01) & Verifikasi 2026-10-04:** Sesuai [ODR-2026-10-04 (Product Direction)](../../decisions/owner-decisions/ODR-2026-10-04-product-direction.md), lokasi final antarmuka aktif adalah **`web/`** dan desktop adalah **`apps/tauri/`** (`web-2/` dan `apps/tauri-2/` adalah alias historis/migrasi). Persistensi Go saat ini JSON/JSONL di disk (menuju SQLite/Postgres per ODR-05); 27 crate Rust, Go 1.27.1; `ExecuteTurn` sudah tersedia. Rincian drift: [04-drift-register-and-hygiene.md](../../foundation/04-drift-register-and-hygiene.md).
+
+## Tier Boundaries (STRICT)
 
 ### 1. Desktop Shell (Tauri)
 - **Owned:** Window lifecycle, system tray, OS dialogs, native notifications, `.exe` packaging

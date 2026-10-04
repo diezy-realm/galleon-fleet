@@ -4,6 +4,9 @@
 **Last updated:** 2026-10-03  
 **Enforcement:** PR review gate + architecture audit
 
+> [!NOTE]
+> **Catatan Alias Kanonikal (ODR-01):** Berdasarkan [ODR-2026-10-04 (Product Direction)](../../decisions/owner-decisions/ODR-2026-10-04-product-direction.md), lokasi kanonikal UI Layer (Tier 4) adalah **`web/`** dan Desktop Shell (Tier 1) adalah **`apps/tauri/`**. Seluruh rujukan dalam dokumen ini yang menyebut `web-2/` atau `apps/tauri-2/` merupakan alias historis yang merujuk ke lokasi kanonikal tersebut.
+
 ---
 
 ## Purpose

@@ -31,7 +31,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 ### Gelombang 0 — dasar, keamanan P0
 
 - [ ] **PR-00** `feat/refactoring-rust` → main · D-01 (+ N-00 ✔, R-00 ✔ sebagai dokumen) · GW-0,7 · – · 13 commit lokal: penggantian `web/`+`apps/tauri/`, `standard-docs/` (foundation, product, roadmap, ODR, R-00/R-00a, naming, research), agent config. Principle: pastikan commit terpisah per concern, tidak ada rahasia · M
-- [ ] **PR-01** `docs/alias-notes-normative` · D-03 · GW-0,7 · PR-00 · catatan alias `web-2`/`tauri-2` di dokumen normatif (bukan ADR) · S
+- [x] **PR-01** `docs/alias-notes-normative` · D-03 · GW-0,7 · PR-00 · [Selesai] Catatan alias kanonikal ODR-01 (`web-2` = `web/`, `tauri-2` = `apps/tauri/`) di 5 dokumen normatif · S
 - [x] **PR-02** `chore/remove-engine-binary` · N-10 · GW-0 · – · [Selesai commit fabeb12c1] `bin/engine.exe` dihapus dari git tracking + `.gitignore` ignore /bin/ dan apps/tauri/target/ · S
 - [x] **PR-03** `fix/tauri-frontend-dist` · U-01, P-01 · GW-0,3 · – · [Selesai commit ec31d7562] `frontendDist=../../web/dist`; root Cargo.toml `exclude = ["apps/tauri"]`; `cargo metadata --no-deps` dan `cargo check` hijau · S
 - [x] **PR-04** `security/tauri-remove-terminal-and-fake-metrics` · U-06, U-07, U-16 · GW-3,4,8 · – · [Selesai commit 36e6774a8] Hapus `execute_terminal_command`, proxy `get_collection`/`save_collection` dan `get_engine_processes` ke Go :9090; `web/server.ts` matikan RCE `POST /api/engine/execute` & duplikat Ollama/processes; terminal dikunci · S

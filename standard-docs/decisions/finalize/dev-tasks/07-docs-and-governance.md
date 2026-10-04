@@ -3,7 +3,7 @@
 Gerbang: GW-7. ADR/ODR lama tidak diedit; koreksi lewat file baru (errata/addendum).
 
 - [ ] **GV-01 · D-01 · PR-00 (P0, S) Commit terpisah per concern** lalu PR dari `feat/refactoring-rust` (commit lokal sudah dipisah; belum di-push).
-- [ ] **GV-02 · D-03 · PR-01 (P1, S) Catatan alias `web-2`/`tauri-2`** di dokumen normatif (`web/tauri-conventions`, `00-overview`, `01-boundary-policy`). `finalize/` sudah diseragamkan ke `web/`/`apps/tauri/`.
+- [x] **GV-02 · D-03 · PR-01 (P1, S) Catatan alias `web-2`/`tauri-2`** di 5 dokumen normatif (`tauri-conventions`, `web-conventions`, `00-overview`, `01-boundary-policy`, `http-engine-api.md`) merujuk ODR-01. `finalize/` sudah diseragamkan ke `web/`/`apps/tauri/`.
 - [ ] **GV-03 · D-02 · PR-20 (P1, M) Sinkron drift D1–D14** (`foundation/04`).
 - [ ] **GV-04 · D-05 · PR-20 (P1, S) `.kiro/steering`:** rujukan `docs/finalize`/`docs/fundamental` → `standard-docs/`.
 - [ ] **GV-05 · D-06 · PR-20 (P2, S) `docs/README.md`:** nyatakan `standard-docs/` = SSOT Galleon.

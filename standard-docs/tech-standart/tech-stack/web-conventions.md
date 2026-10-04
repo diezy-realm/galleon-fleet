@@ -4,6 +4,9 @@
 **Last updated:** 2026-10-03  
 **Stack:** React 19, TypeScript 5.7+, Vite 6, Tailwind CSS 4
 
+> [!NOTE]
+> **Catatan Alias Kanonikal (ODR-01):** Berdasarkan [ODR-2026-10-04 (Product Direction)](../../decisions/owner-decisions/ODR-2026-10-04-product-direction.md), lokasi kanonikal UI layer adalah **`web/`** dan desktop shell adalah **`apps/tauri/`**. Semua kemunculan nama historis `web-2/` dan `apps/tauri-2/` dalam dokumen normatif ini mengacu secara kanonikal ke `web/` dan `apps/tauri/`.
+
 ---
 
 ## Project Structure
