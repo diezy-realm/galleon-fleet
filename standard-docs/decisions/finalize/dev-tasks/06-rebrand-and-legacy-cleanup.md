@@ -15,7 +15,7 @@ Acuan: `tech-standart/naming/naming-map.md` (disetujui), ODR-16/17/19. Aturan: *
 - [ ] **RB-12 · N-12 · PR-62 (P1, M) ⚑ Hapus kode warisan tak terpakai** hasil R-00 (REST/WS/A2A, hardware/peripheral). Terkait 08 §C.
 - [x] **RB-13 · N-13 · PR-18 (P1, S) ⚑ Skill agent khusus ClawCrew.** [Selesai PR-18] Skill khusus ClawCrew di `.claude/skills/` (`clawcrew`, `changelog-generation`, `feature-matrix-parity`, `github-issue-triage`, `pr-architecture-check`, `wit-breaking-change-check`) telah dihapus; skill workflow git netral dipertahankan.
 - [x] **RB-14 · N-14 · PR-18 (P1, S) ⚑ Workflow CI khusus ClawCrew.** [Selesai PR-18] Workflow usang khusus ClawCrew (`docs-deploy.yml`, `discord-release.yml`, `tweet-release.yml`) telah dihapus.
-- [ ] **RB-15 · N-15 · PR-19 (P2, S) ⚑ Packaging warisan** (`dist/`, `nix/`, `deploy-k8s/`, `Containerfile`, `setup.bat`, `install.*`).
+- [x] **RB-15 · N-15 · PR-19 (P2, S) ⚑ Packaging warisan** [Selesai PR-19] Packaging warisan tidak terpakai (`nix/`, `deploy-k8s/`, `dist/freebsd/`) telah dihapus via `git rm`.
 - [ ] **RB-16 · N-16 · PR-19 (P2, S) Fixture & contoh tak relevan.**
 - [ ] **RB-17 · N-17 · PR-19 (P2, S) Terjemahan tak terpakai;** regenerasi `.ftl/.po`.
 

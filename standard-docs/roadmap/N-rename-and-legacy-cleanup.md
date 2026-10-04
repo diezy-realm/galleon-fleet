@@ -23,7 +23,7 @@ Ref: ODR-16. Pola yang dicari: `zeroclaw`, `zerocode`, `zerorelay`, `claw-crew`,
 - [ ] **N-12 (P1, M) Hapus kode warisan tak terpakai** hasil R-00: REST/WS/A2A gateway (`api*.rs`, `ws.rs`, `a2a.rs`) bila tak ada pemakai; hardware/peripheral tak relevan; sub-sistem yang tidak masuk produk Galleon. Dep: R-00, sign-off Owner.
 - [x] **N-13 (P1, S) `.claude/skills`, `.agents`, `.kiro`, `.gemini`, `.copilot`:** [Selesai PR-18] Skill khusus ClawCrew (`clawcrew`, `changelog-generation`, `feature-matrix-parity`, `github-issue-triage`, `pr-architecture-check`, `wit-breaking-change-check`) telah dihapus; skill workflow git netral dipertahankan.
 - [x] **N-14 (P1, S) `.github/workflows` (39):** [Selesai PR-18] Workflow usang khusus ClawCrew (`docs-deploy.yml`, `discord-release.yml`, `tweet-release.yml`) telah dihapus.
-- [ ] **N-15 (P2, S) Packaging warisan:** `dist/` (AUR/Scoop/FreeBSD), `nix/`, `deploy-k8s/`, `Containerfile`, `setup.bat`, `install.*`, `Makefile` — putuskan keep/rewrite/delete per item (ikut P-lane).
+- [x] **N-15 (P2, S) Packaging warisan:** [Selesai PR-19] Packaging warisan tidak terpakai (`nix/`, `deploy-k8s/`, `dist/freebsd/`) telah dihapus via `git rm`.
 - [ ] **N-16 (P2, S) Fixture & contoh tak relevan** di `tests/`, `crates/*/tests/fixtures`, `examples/`.
 - [ ] **N-17 (P2, S) Terjemahan (`.ftl`/`.po`):** hapus locale/kunci yang tak dipakai; ganti merek di string sumber lalu regenerasi (`tools/fill-translations`).
 
