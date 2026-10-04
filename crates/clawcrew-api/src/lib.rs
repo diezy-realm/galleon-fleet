@@ -30,6 +30,7 @@ pub mod schema;
 pub mod session_keys;
 pub mod sop;
 pub mod tool;
+pub mod skill;
 pub mod vad;
 pub mod webhook;
 

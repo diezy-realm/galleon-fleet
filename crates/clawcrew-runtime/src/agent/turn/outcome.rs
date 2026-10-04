@@ -40,20 +40,7 @@ where
     MODEL_SWITCH_REQUEST.scope(state, future).await
 }
 
-#[derive(Debug)]
-pub struct ToolLoopCancelled;
-
-impl std::fmt::Display for ToolLoopCancelled {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("tool loop cancelled")
-    }
-}
-
-impl std::error::Error for ToolLoopCancelled {}
-
-pub fn is_tool_loop_cancelled(err: &anyhow::Error) -> bool {
-    err.chain().any(|source| source.is::<ToolLoopCancelled>())
-}
+pub use clawcrew_api::agent::{ToolLoopCancelled, is_tool_loop_cancelled};
 
 #[derive(Debug)]
 pub(crate) struct StreamInterruptedAfterOutput {
@@ -378,30 +365,7 @@ impl std::error::Error for StreamCancelledWithUsage {
     }
 }
 
-#[derive(Debug)]
-pub struct ModelSwitchRequested {
-    pub model_provider: String,
-    pub model: String,
-}
-
-impl std::fmt::Display for ModelSwitchRequested {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "model switch requested to {} {}",
-            self.model_provider, self.model
-        )
-    }
-}
-
-impl std::error::Error for ModelSwitchRequested {}
-
-pub fn is_model_switch_requested(err: &anyhow::Error) -> Option<(String, String)> {
-    err.chain()
-        .filter_map(|source| source.downcast_ref::<ModelSwitchRequested>())
-        .map(|e| (e.model_provider.clone(), e.model.clone()))
-        .next()
-}
+pub use clawcrew_api::agent::{ModelSwitchRequested, is_model_switch_requested};
 
 #[cfg(test)]
 mod tests {

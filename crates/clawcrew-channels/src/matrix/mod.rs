@@ -33,7 +33,7 @@ use clawcrew_api::channel::{
     DraftProgressKind, RoomCreationOptions, RoomVisibility, SendMessage,
 };
 use clawcrew_config::schema::{MatrixConfig, MatrixStreamMode};
-use clawcrew_runtime::agent::loop_::DRAFT_PLACEHOLDER;
+use clawcrew_api::channel::DRAFT_PLACEHOLDER;
 
 // ─── markers ───────────────────────────────────────────────────────────────
 mod markers {
@@ -411,7 +411,7 @@ mod streaming {
 
     use anyhow::{Result, bail};
     use matrix_sdk::ruma::{OwnedEventId, OwnedRoomId};
-    use clawcrew_runtime::agent::loop_::{
+    use clawcrew_api::channel::{
         DRAFT_PLACEHOLDER, REASONING_FULL_PREFIX, is_thinking_status_text, thinking_status_round,
     };
 

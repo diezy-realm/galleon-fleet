@@ -234,3 +234,38 @@ pub trait SopEngineHandle: Send + Sync {
     /// Check whether the engine is active.
     fn is_active(&self) -> bool;
 }
+
+/// Result of dispatching an untrusted fan-in event into the SOP engine.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct SopFanInResult {
+    /// True when backpressure / deferred admission requires the transport to
+    /// requeue or redeliver the event (e.g. AMQP durable ack).
+    pub needs_redelivery: bool,
+}
+
+/// Untrusted fan-in dispatcher for channels and transports.
+///
+/// Decouples channel adapters (AMQP, Filesystem, MQTT, etc.) from the
+/// concrete `SopEngine` and `SopAuditLogger` implementation in `clawcrew-runtime`.
+#[async_trait::async_trait]
+pub trait SopFanInDispatcher: Send + Sync {
+    /// Dispatch an untrusted event from an external source.
+    async fn dispatch_untrusted(
+        &self,
+        source: SopTriggerSource,
+        topic: Option<&str>,
+        payload: Option<&str>,
+        target_sop: Option<&str>,
+        dedup: Option<(String, bool)>,
+    ) -> SopFanInResult;
+
+    /// Resolve a long-lived gate prompt answered from a channel.
+    async fn resolve_gate(
+        &self,
+        _msg: &crate::channel::ChannelMessage,
+        _gate_prompt_channels: &[std::sync::Arc<dyn crate::channel::Channel>],
+        _gate_channel_route_keys: &[String],
+    ) -> bool {
+        false
+    }
+}

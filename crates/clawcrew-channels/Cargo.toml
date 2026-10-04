@@ -16,7 +16,6 @@ clawcrew-config = { workspace = true, default-features = false }
 clawcrew-log.workspace = true
 clawcrew-memory.workspace = true
 clawcrew-providers.workspace = true
-clawcrew-runtime.workspace = true
 clawcrew-tool-call-parser.workspace = true
 clawcrew-tools.workspace = true
 galleon-i18n.workspace = true
@@ -120,6 +119,7 @@ serde_json = { version = "1.0", default-features = false, features = ["std"] }
 sha2 = "0.10"
 tokio = { version = "1.50", default-features = false, features = [
   "fs",
+  "io-std",
   "io-util",
   "macros",
   "net",

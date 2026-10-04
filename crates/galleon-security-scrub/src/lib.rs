@@ -41,6 +41,53 @@ pub fn redact(value: &str) -> String {
     }
 }
 
+pub static SENSITIVE_KEY_REGEX: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
+    regex::Regex::new(r#"(?i)(authorization|token|api[_-]?key|password|secret|user[_-]?key|bearer|credential|set[_-]?cookie|cookie)"#)
+        .expect("static sensitive-key regex must compile")
+});
+pub const REDACTED_CREDENTIAL_VALUE: &str = "[REDACTED]";
+
+pub fn looks_like_secret_key(key: &str) -> bool {
+    let lower = key.to_lowercase();
+    lower.contains("secret")
+        || lower.contains("token")
+        || lower.contains("password")
+        || lower.contains("api_key")
+        || lower.contains("apikey")
+        || lower.contains("auth")
+        || lower.contains("credential")
+}
+
+pub fn is_credential_key(key: &str) -> bool {
+    looks_like_secret_key(key) || SENSITIVE_KEY_REGEX.is_match(key)
+}
+
+pub fn scrub_credentials_value(value: serde_json::Value) -> serde_json::Value {
+    match value {
+        serde_json::Value::Object(map) => {
+            let scrubbed = map
+                .into_iter()
+                .map(|(key, val)| {
+                    if is_credential_key(&key) {
+                        (
+                            key,
+                            serde_json::Value::String(REDACTED_CREDENTIAL_VALUE.to_string()),
+                        )
+                    } else {
+                        (key, scrub_credentials_value(val))
+                    }
+                })
+                .collect();
+            serde_json::Value::Object(scrubbed)
+        }
+        serde_json::Value::Array(items) => {
+            serde_json::Value::Array(items.into_iter().map(scrub_credentials_value).collect())
+        }
+        serde_json::Value::String(s) => serde_json::Value::String(scrub(&s)),
+        other => other,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

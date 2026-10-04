@@ -9,7 +9,7 @@ use uuid::Uuid;
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 use clawcrew_config::schema::{Config, LineDmPolicy, LineGroupPolicy};
 use galleon_i18n as i18n;
-use clawcrew_runtime::security::pairing::PairingGuard;
+use clawcrew_config::pairing::PairingGuard;
 
 type HmacSha256 = Hmac<Sha256>;
 

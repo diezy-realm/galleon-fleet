@@ -3093,7 +3093,7 @@
         };
         use clawcrew_api::channel::{Channel, DraftProgress, DraftProgressKind, SendMessage};
         use clawcrew_config::schema::{MatrixConfig, MatrixStreamMode};
-        use clawcrew_runtime::agent::loop_::{
+        use clawcrew_api::channel::{
             DRAFT_PLACEHOLDER, REASONING_FULL_PREFIX, THINKING_STATUS_PREFIX, thinking_status_text,
         };
 

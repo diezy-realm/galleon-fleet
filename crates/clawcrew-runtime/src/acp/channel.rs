@@ -13,7 +13,7 @@ use clawcrew_api::elicitation::{
 };
 use galleon_i18n as i18n;
 
-use crate::orchestrator::acp_server::RpcOutbound;
+use clawcrew_api::jsonrpc::RpcOutbound;
 
 /// Per-session ACP back-channel. One instance is registered into each tool's
 /// channel map at session/new time and torn down on session/stop.

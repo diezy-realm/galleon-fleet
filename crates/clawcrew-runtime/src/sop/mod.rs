@@ -24,6 +24,7 @@ pub mod wire;
 
 pub use approval::ApprovalDecision;
 pub use audit::SopAuditLogger;
+pub use dispatch::SopRuntimeDispatcher;
 #[allow(unused_imports)]
 pub use binding::{
     BindingContext, BindingRef, BindingScope, ExtractedBinding, extract_bindings, remap_step_refs,

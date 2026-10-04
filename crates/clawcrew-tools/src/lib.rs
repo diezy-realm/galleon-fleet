@@ -25,6 +25,7 @@ pub mod coding_cli;
 pub mod composio;
 pub mod content_search;
 pub mod data_management;
+pub mod deliver_file;
 pub mod discord_search;
 pub mod email_imap;
 pub mod email_read;

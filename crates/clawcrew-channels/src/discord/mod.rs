@@ -4804,8 +4804,8 @@ mod tests {
         assert!(err.to_string().contains("unknown or expired"));
     }
 
-    fn skill(name: &str, description: &str, tags: &[&str]) -> clawcrew_runtime::skills::Skill {
-        clawcrew_runtime::skills::Skill {
+    fn skill(name: &str, description: &str, tags: &[&str]) -> clawcrew_api::skill::Skill {
+        clawcrew_api::skill::Skill {
             name: name.to_string(),
             description: description.to_string(),
             description_localizations: Default::default(),

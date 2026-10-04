@@ -1948,6 +1948,7 @@ dependencies = [
  "parking_lot",
  "portable-atomic",
  "rusqlite",
+ "schemars",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -4335,6 +4336,7 @@ version = "0.8.5"
 dependencies = [
  "clawcrew-config",
  "regex",
+ "serde_json",
 ]
 
 [[package]]

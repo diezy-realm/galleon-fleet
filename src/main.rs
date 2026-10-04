@@ -4838,7 +4838,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
         } => {
             #[cfg(feature = "channel-acp-server")]
             {
-                let mut acp_config = channels::acp_server::AcpServerConfig {
+                let mut acp_config = clawcrew_runtime::acp::AcpServerConfig {
                     max_sessions: config.acp.max_sessions,
                     session_timeout_secs: config.acp.session_timeout_secs,
                 };
@@ -4865,9 +4865,9 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         })
                         .ok();
                 let server = if let Some(store) = store {
-                    channels::acp_server::AcpServer::new_with_store(config, acp_config, store)
+                    clawcrew_runtime::acp::AcpServer::new_with_store(config, acp_config, store)
                 } else {
-                    channels::acp_server::AcpServer::new(config, acp_config)
+                    clawcrew_runtime::acp::AcpServer::new(config, acp_config)
                 }
                 .with_connection_default_agent(agent);
                 std::sync::Arc::new(server).run().await
@@ -5319,10 +5319,12 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         let audit = audit.clone();
                         Box::pin(async move {
                             if let (Some(engine), Some(audit)) = (engine, audit) {
+                                let dispatcher = std::sync::Arc::new(
+                                    clawcrew_runtime::sop::SopRuntimeDispatcher::new(engine, audit),
+                                );
                                 clawcrew_channels::orchestrator::mqtt::run_mqtt_sop_listener(
                                     &mqtt_config,
-                                    engine,
-                                    audit,
+                                    dispatcher,
                                 )
                                 .await
                             } else {

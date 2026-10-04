@@ -5,6 +5,8 @@
 
 use serde_json::json;
 
+use clawcrew_api::skill::Skill;
+
 use super::slash_options::{Choice, OptKind, OptionSpec};
 use super::types::{DiscordSlashCommandSpec, ReconcileOutcome, SlashScope};
 
@@ -31,9 +33,9 @@ pub(crate) fn discord_command_slug(name: &str) -> String {
 }
 
 pub fn discord_slash_specs_from_skills(
-    skills: &[clawcrew_runtime::skills::Skill],
+    skills: &[Skill],
 ) -> Vec<DiscordSlashCommandSpec> {
-    let mut candidates: Vec<&clawcrew_runtime::skills::Skill> = skills
+    let mut candidates: Vec<&Skill> = skills
         .iter()
         .filter(|s| s.tags.iter().any(|t| t == "slash"))
         .filter(|s| !s.tags.iter().any(|t| t == "open-skills"))
@@ -91,7 +93,7 @@ pub fn discord_slash_specs_from_skills(
     specs
 }
 
-fn map_skill_slash_options(skill: &clawcrew_runtime::skills::Skill) -> Vec<OptionSpec> {
+fn map_skill_slash_options(skill: &Skill) -> Vec<OptionSpec> {
     let mut options = Vec::new();
     let mut seen = std::collections::HashSet::new();
     for decl in &skill.slash_options {
@@ -153,7 +155,7 @@ fn map_skill_slash_options(skill: &clawcrew_runtime::skills::Skill) -> Vec<Optio
     options
 }
 
-fn warn_drop_option(skill: &clawcrew_runtime::skills::Skill, option: &str, reason: &str) {
+fn warn_drop_option(skill: &Skill, option: &str, reason: &str) {
     ::clawcrew_log::record!(
         WARN,
         ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
@@ -868,7 +870,7 @@ mod typed_option_tests {
         let tmp = tempfile::tempdir().unwrap();
         let skill_dir = tmp.path().join("draft");
         std::fs::create_dir_all(&skill_dir).unwrap();
-        let md = r#"---
+        let _md = r#"---
 name: draft
 description: Draft content to a spec.
 tags: [slash]
@@ -887,9 +889,53 @@ slash_options:
 
 Write it.
 "#;
-        std::fs::write(skill_dir.join("SKILL.md"), md).unwrap();
-
-        let (skills, _) = clawcrew_runtime::skills::load_skills_from_directory(tmp.path(), false);
+        let skills = vec![Skill {
+            name: "draft".to_string(),
+            description: "Draft short-form copy with custom length".to_string(),
+            description_localizations: Default::default(),
+            version: "0".to_string(),
+            author: None,
+            tags: vec!["slash".to_string()],
+            tools: Vec::new(),
+            prompts: Vec::new(),
+            slash_options: vec![
+                clawcrew_api::skill::SkillSlashOption {
+                    name: "format".to_string(),
+                    description: "Output format".to_string(),
+                    kind: "string".to_string(),
+                    required: true,
+                    description_localizations: Default::default(),
+                    choices: vec![
+                        clawcrew_api::skill::SkillSlashChoice {
+                            name: "Email".to_string(),
+                            value: "email".to_string(),
+                        },
+                        clawcrew_api::skill::SkillSlashChoice {
+                            name: "Tweet".to_string(),
+                            value: "tweet".to_string(),
+                        },
+                    ],
+                    min: None,
+                    max: None,
+                    min_length: None,
+                    max_length: None,
+                },
+                clawcrew_api::skill::SkillSlashOption {
+                    name: "words".to_string(),
+                    description: "Word limit".to_string(),
+                    kind: "integer".to_string(),
+                    required: false,
+                    description_localizations: Default::default(),
+                    choices: Vec::new(),
+                    min: Some(10.0),
+                    max: Some(2000.0),
+                    min_length: None,
+                    max_length: None,
+                },
+            ],
+            always: false,
+            location: None,
+        }];
         let specs = discord_slash_specs_from_skills(&skills);
         assert_eq!(
             specs.len(),
@@ -938,7 +984,7 @@ Write it.
 
     #[test]
     fn map_drops_unknown_kinds_and_sorts_required_first() {
-        let skill = clawcrew_runtime::skills::Skill {
+        let skill = clawcrew_api::skill::Skill {
             name: "s".to_string(),
             description: "d".to_string(),
             description_localizations: Default::default(),
@@ -948,7 +994,7 @@ Write it.
             tools: Vec::new(),
             prompts: Vec::new(),
             slash_options: vec![
-                clawcrew_runtime::skills::SkillSlashOption {
+                clawcrew_api::skill::SkillSlashOption {
                     name: "opt".to_string(),
                     description: "o".to_string(),
                     kind: "string".to_string(),
@@ -960,7 +1006,7 @@ Write it.
                     min_length: None,
                     max_length: None,
                 },
-                clawcrew_runtime::skills::SkillSlashOption {
+                clawcrew_api::skill::SkillSlashOption {
                     name: "Req".to_string(),
                     description: "r".to_string(),
                     kind: "integer".to_string(),
@@ -972,7 +1018,7 @@ Write it.
                     min_length: None,
                     max_length: None,
                 },
-                clawcrew_runtime::skills::SkillSlashOption {
+                clawcrew_api::skill::SkillSlashOption {
                     name: "bad".to_string(),
                     description: "b".to_string(),
                     kind: "bogus".to_string(),
@@ -995,8 +1041,8 @@ Write it.
         assert_eq!(mapped[1].name, "opt");
     }
 
-    fn sso(name: &str, kind: &str) -> clawcrew_runtime::skills::SkillSlashOption {
-        clawcrew_runtime::skills::SkillSlashOption {
+    fn sso(name: &str, kind: &str) -> clawcrew_api::skill::SkillSlashOption {
+        clawcrew_api::skill::SkillSlashOption {
             name: name.to_string(),
             description: "d".to_string(),
             description_localizations: Default::default(),
@@ -1011,9 +1057,9 @@ Write it.
     }
 
     fn skill_with(
-        slash_options: Vec<clawcrew_runtime::skills::SkillSlashOption>,
-    ) -> clawcrew_runtime::skills::Skill {
-        clawcrew_runtime::skills::Skill {
+        slash_options: Vec<clawcrew_api::skill::SkillSlashOption>,
+    ) -> clawcrew_api::skill::Skill {
+        clawcrew_api::skill::Skill {
             name: "s".to_string(),
             description: "d".to_string(),
             description_localizations: Default::default(),
@@ -1044,11 +1090,11 @@ Write it.
     fn map_drops_a_nonparsing_numeric_choice() {
         let mut o = sso("n", "integer");
         o.choices = vec![
-            clawcrew_runtime::skills::SkillSlashChoice {
+            clawcrew_api::skill::SkillSlashChoice {
                 name: "ok".to_string(),
                 value: "10".to_string(),
             },
-            clawcrew_runtime::skills::SkillSlashChoice {
+            clawcrew_api::skill::SkillSlashChoice {
                 name: "bad".to_string(),
                 value: "3.14".to_string(),
             },

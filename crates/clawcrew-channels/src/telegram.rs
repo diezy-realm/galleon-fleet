@@ -14,7 +14,7 @@ use clawcrew_config::schema::{
     Config, DEFAULT_MULTI_MESSAGE_DELAY_MS, StreamMode, TELEGRAM_OFFICIAL_API_BASE_URL,
 };
 use galleon_i18n as i18n;
-use clawcrew_runtime::security::pairing::PairingGuard;
+use clawcrew_config::pairing::PairingGuard;
 
 /// How long a successful `getUpdates` exchange stays evidence that the listener
 /// is working.
@@ -978,6 +978,8 @@ pub struct TelegramChannel {
     fixture_http_client: Option<reqwest::Client>,
     /// Pre-computed tool command specs (name, description) for bot command registration.
     tool_command_specs: Vec<(String, String)>,
+    skills: Vec<clawcrew_api::skill::Skill>,
+    skills_resolver: Option<Arc<dyn Fn(&std::path::Path) -> Vec<clawcrew_api::skill::Skill> + Send + Sync>>,
     /// Pending approval requests: callback_data key → oneshot sender.
     /// `listen()` resolves these when a matching `callback_query` arrives.
     pending_approvals:
@@ -2583,6 +2585,8 @@ impl TelegramChannel {
             #[cfg(test)]
             fixture_http_client: None,
             tool_command_specs: Vec::new(),
+            skills: Vec::new(),
+            skills_resolver: None,
             pending_approvals: Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::new())),
             pending_model_pickers: tokio::sync::Mutex::new(HashMap::new()),
             approval_timeout_secs: 120,
@@ -2720,6 +2724,21 @@ impl TelegramChannel {
     /// Configure workspace directory for saving downloaded attachments.
     pub fn with_workspace_dir(mut self, dir: std::path::PathBuf) -> Self {
         self.workspace_dir = Some(dir);
+        self
+    }
+
+    /// Configure skills for bot command registration.
+    pub fn with_skills(mut self, skills: Vec<clawcrew_api::skill::Skill>) -> Self {
+        self.skills = skills;
+        self
+    }
+
+    /// Configure dynamic skills resolver for bot command registration.
+    pub fn with_skills_resolver(
+        mut self,
+        resolver: Arc<dyn Fn(&std::path::Path) -> Vec<clawcrew_api::skill::Skill> + Send + Sync>,
+    ) -> Self {
+        self.skills_resolver = Some(resolver);
         self
     }
 
@@ -3688,9 +3707,17 @@ impl TelegramChannel {
             .collect();
 
         // Collect commands from installed skills.
-        if let Some(ref workspace_dir) = self.workspace_dir {
-            let skills = clawcrew_runtime::skills::load_skills(workspace_dir);
+        let skills = if let Some(ref resolver) = self.skills_resolver {
+            if let Some(ref workspace_dir) = self.workspace_dir {
+                resolver(workspace_dir)
+            } else {
+                self.skills.clone()
+            }
+        } else {
+            self.skills.clone()
+        };
 
+        if !skills.is_empty() {
             for skill in &skills {
                 let sanitized = sanitize_telegram_command_name(&skill.name);
                 if sanitized.is_empty() {

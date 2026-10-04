@@ -6433,7 +6433,7 @@
         use clawcrew_api::ingress::{
             IngressDecision, SourceClass, Transport, TrustClass, TurnOrigin,
         };
-        use clawcrew_runtime::security::ingress::{IngressPolicy, ingress_policy};
+        use clawcrew_api::ingress::{IngressPolicy, ingress_policy};
 
         let channel = TelegramChannel::new(
             "token".into(),
@@ -9912,7 +9912,7 @@
     /// Read from the compiled-in source so the assertion tracks the file
     /// rather than a copy that can drift.
     fn callback_ack_source_region() -> &'static str {
-        const SRC: &str = include_str!("telegram.rs");
+        const SRC: &str = include_str!("../telegram.rs");
         let start = SRC
             .find("let answer_text = match (action, resolution) {")
             .expect("callback ack arm: `let answer_text = match (action, resolution) {` not found");

@@ -14,7 +14,7 @@ use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 use clawcrew_config::paths::{normalize_lexical, resolve_under};
 use clawcrew_config::schema::Config;
 use galleon_i18n as i18n;
-use clawcrew_runtime::security::pairing::PairingGuard;
+use clawcrew_config::pairing::PairingGuard;
 
 const DEFAULT_API_BASE_URL: &str = "https://ilinkai.weixin.qq.com";
 const CDN_BASE_URL: &str = "https://novac2c.cdn.weixin.qq.com/c2c";

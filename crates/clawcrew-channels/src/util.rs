@@ -29,6 +29,14 @@ pub fn truncate_with_ellipsis(s: &str, max_chars: usize) -> String {
     }
 }
 
+/// Checks if a text matches the canonical breadcrumb or the localized breadcrumb.
+pub fn is_history_trim_breadcrumb_text(text: &str) -> bool {
+    if text == clawcrew_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL {
+        return true;
+    }
+    text == galleon_i18n::get_required_cli_string("history-trim-breadcrumb")
+}
+
 /// Returns the largest UTF-8 character boundary at or before `max_bytes`.
 ///
 /// This compatibility wrapper preserves the previously exported helper while
@@ -1448,11 +1456,8 @@ mod tests {
             include_str!("telegram.rs"),
             include_str!("discord/mod.rs"),
             include_str!("discord/approval.rs"),
-            include_str!("slack.rs"),
-            include_str!("matrix.rs"),
             include_str!("whatsapp.rs"),
             include_str!("whatsapp_web.rs"),
-            include_str!("acp_channel.rs"),
             include_str!("util.rs"),
         ];
         let mut keys = std::collections::BTreeSet::new();

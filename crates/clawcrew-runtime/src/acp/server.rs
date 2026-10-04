@@ -21,11 +21,11 @@ use clawcrew_api::model_provider::{ChatMessage, ConversationMessage, ToolCall};
 use clawcrew_api::plan::PlanEntry;
 use clawcrew_config::schema::Config;
 use clawcrew_infra::acp_session_store::AcpSessionStore;
-use clawcrew_runtime::agent::agent::{Agent, TurnEvent};
-use clawcrew_runtime::tools::CanvasStore;
+use crate::agent::agent::{Agent, TurnEvent};
+use clawcrew_tools::canvas::CanvasStore;
 
-use super::acp_embedded;
-use crate::acp_channel::AcpChannel;
+use super::channel::AcpChannel;
+use super::embedded as acp_embedded;
 
 /// Tool name of the structured, replay-only cancellation event a client-cancel
 /// leaves in a persisted transcript. It is a sentinel — recognised structurally
@@ -157,8 +157,8 @@ pub struct AcpServer {
     canvas_store: Option<CanvasStore>,
     /// Shared SOP engine from the daemon. `None` in standalone mode — agents
     /// build their own engine from config.
-    sop_engine: Option<Arc<std::sync::Mutex<clawcrew_runtime::sop::SopEngine>>>,
-    sop_audit: Option<Arc<clawcrew_runtime::sop::SopAuditLogger>>,
+    sop_engine: Option<Arc<std::sync::Mutex<crate::sop::SopEngine>>>,
+    sop_audit: Option<Arc<crate::sop::SopAuditLogger>>,
     /// Process- or connection-scoped default agent alias (`--agent` for
     /// standalone ACP or `?agent=` on the gateway endpoint). Slots into the
     /// `session/new` alias precedence chain between an explicit `agentAlias`
@@ -403,8 +403,8 @@ impl AcpServer {
     /// this server share a single SOP engine with the rest of the daemon.
     pub fn with_sop_engine(
         mut self,
-        sop_engine: Option<Arc<std::sync::Mutex<clawcrew_runtime::sop::SopEngine>>>,
-        sop_audit: Option<Arc<clawcrew_runtime::sop::SopAuditLogger>>,
+        sop_engine: Option<Arc<std::sync::Mutex<crate::sop::SopEngine>>>,
+        sop_audit: Option<Arc<crate::sop::SopAuditLogger>>,
     ) -> Self {
         self.sop_engine = sop_engine;
         self.sop_audit = sop_audit;
@@ -1262,7 +1262,7 @@ impl AcpServer {
             && seed_pairs.first().is_some_and(|(message, _)| {
                 if let ConversationMessage::Chat(chat) = message {
                     chat.role == "user"
-                        && clawcrew_runtime::agent::history::is_history_trim_breadcrumb_text(
+                        && crate::util::is_history_trim_breadcrumb_text(
                             &chat.content,
                         )
                 } else {
@@ -1867,12 +1867,12 @@ impl AcpServer {
         let (event_tx, mut event_rx) = tokio::sync::mpsc::channel::<TurnEvent>(100);
 
         let config = self.config_snapshot();
-        let cost_tracker = clawcrew_runtime::cost::CostTracker::get_or_init_global(
+        let cost_tracker = crate::cost::CostTracker::get_or_init_global(
             config.cost.clone(),
             &config.data_dir,
         );
         let cost_pricing = std::sync::Arc::new(
-            clawcrew_runtime::agent::cost::build_model_provider_pricing(&config),
+            crate::agent::cost::build_model_provider_pricing(&config),
         );
 
         // Move the Arc into the spawned task and lock inside it.  The inner
@@ -1892,7 +1892,7 @@ impl AcpServer {
             // Stamp the resolved per-turn alias so `/api/cost?agent=<alias>`
             // attributes this spend.
             let cost_context = cost_tracker.map(|tracker| {
-                clawcrew_runtime::agent::cost::ToolLoopCostTrackingContext::new(
+                crate::agent::cost::ToolLoopCostTrackingContext::new(
                     tracker,
                     cost_pricing,
                 )
@@ -1910,9 +1910,9 @@ impl AcpServer {
                     model = %turn_model,
                     channel = "acp",
                 );
-                clawcrew_runtime::agent::loop_::scope_session_key(
+                crate::agent::loop_::scope_session_key(
                     Some(session_id_for_task),
-                    clawcrew_runtime::agent::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
+                    crate::agent::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
                         cost_context,
                         session
                             .agent
@@ -1932,7 +1932,7 @@ impl AcpServer {
             // Per ACP spec a cancelled turn is a terminal outcome, not an error.
             // Detect via ToolLoopCancelled propagated through anyhow.
             let was_cancelled = match &result {
-                Err(e) => clawcrew_runtime::agent::loop_::is_tool_loop_cancelled(&e.error),
+                Err(e) => crate::agent::loop_::is_tool_loop_cancelled(&e.error),
                 Ok(_) => false,
             };
 
@@ -2536,7 +2536,7 @@ impl AcpServer {
     /// projected to its localized marker by `project_failure_sentinels` before
     /// the seed reaches the agent.
     fn degrade_failed_turn_media(seed: &mut [SeededMessage]) {
-        let is_turn_opening = clawcrew_runtime::agent::is_turn_opening_user_message;
+        let is_turn_opening = crate::agent::is_turn_opening_user_message;
 
         let failure_marks: Vec<usize> = seed
             .iter()
@@ -2551,7 +2551,7 @@ impl AcpServer {
                 .rposition(|(message, _)| is_turn_opening(message))
                 .unwrap_or_default();
             for (message, _) in &mut seed[start..end] {
-                clawcrew_runtime::agent::degrade_media_in_message(message);
+                crate::agent::degrade_media_in_message(message);
             }
         }
     }
@@ -3210,7 +3210,7 @@ fn deliver_file_tool_result_content(
     // replaces the content-addressed file between the tool's write and this read
     // can never load an unbounded blob into memory, and a replacement symlink is
     // refused, not followed. On any mismatch, fall back to text-only content.
-    let bytes = clawcrew_runtime::tools::read_delivered_artifact_bounded(Path::new(path)).ok()?;
+    let bytes = clawcrew_tools::deliver_file::read_delivered_artifact_bounded(Path::new(path)).ok()?;
     // The typed `uri` is a content hash the tool computed over the same file. Recompute
     // it from the bytes we just read and require an exact match: if the file was swapped
     // between the tool's validation and this read, the hash differs and we fall back to
@@ -3220,7 +3220,7 @@ fn deliver_file_tool_result_content(
         .extension()
         .and_then(|e| e.to_str())
         .unwrap_or_default();
-    let expected_uri = clawcrew_runtime::tools::attachment_deliver_uri(
+    let expected_uri = clawcrew_tools::deliver_file::attachment_deliver_uri(
         &acp_embedded::content_hash_name(&bytes, ext),
     );
     if artifact.uri != expected_uri {
@@ -3659,7 +3659,7 @@ impl RpcError {
 /// exposed through the ACP JSON-RPC boundary.
 fn acp_turn_failure(error: &anyhow::Error) -> (String, RpcError) {
     let diagnostic = error.to_string();
-    let user_message = clawcrew_runtime::agent::terminal_completion_error_message(error, None);
+    let user_message = crate::agent::terminal_completion_error_message(error, None);
     (
         diagnostic.clone(),
         acp_turn_failure_from_parts(&diagnostic, user_message.as_deref()),
@@ -3906,11 +3906,11 @@ mod tests {
         Agent::builder()
             .model_provider(Box::new(EmptyTerminalProvider))
             .tools(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(Vec::new()),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(Vec::new()).into(),
             )
-            .observer(Arc::from(clawcrew_runtime::observability::NoopObserver {}))
+            .observer(Arc::from(clawcrew_api::observability_traits::NoopObserver))
             .tool_dispatcher(Box::new(
-                clawcrew_runtime::agent::dispatcher::NativeToolDispatcher,
+                crate::agent::dispatcher::NativeToolDispatcher,
             ))
             .workspace_dir(workspace_dir)
             .exclude_memory(true)
@@ -3971,7 +3971,7 @@ mod tests {
         assert_eq!(error.code, INTERNAL_ERROR);
         assert_eq!(
             error.message,
-            clawcrew_runtime::agent::semantic_empty_terminal_completion_message(None)
+            crate::agent::semantic_empty_terminal_completion_message(None)
         );
         assert_ne!(
             error.message, "provider completed without final text or tool calls",
@@ -4029,7 +4029,7 @@ mod tests {
         assert_eq!(error["code"], INTERNAL_ERROR);
         assert_eq!(
             error["message"],
-            clawcrew_runtime::agent::semantic_empty_terminal_completion_message(None)
+            crate::agent::semantic_empty_terminal_completion_message(None)
         );
         assert_ne!(
             error["message"], "provider completed without final text or tool calls",
@@ -5597,7 +5597,7 @@ mod tests {
             .iter()
             .find_map(|content| content.pointer("/content/resource"))
             .expect("outbound resource blob");
-        let expected_uri = clawcrew_runtime::tools::attachment_deliver_uri(
+        let expected_uri = clawcrew_tools::deliver_file::attachment_deliver_uri(
             &acp_embedded::content_hash_name(outbound, "pdf"),
         );
         assert_eq!(resource["uri"], expected_uri);
@@ -6053,7 +6053,7 @@ mod tests {
                 .extension()
                 .and_then(|e| e.to_str())
                 .unwrap_or_default();
-            clawcrew_runtime::tools::attachment_deliver_uri(&acp_embedded::content_hash_name(
+            clawcrew_tools::deliver_file::attachment_deliver_uri(&acp_embedded::content_hash_name(
                 &bytes, ext,
             ))
         } else {
@@ -6201,7 +6201,7 @@ mod tests {
         // opaque content hash, never the filename stem.
         let path = dir.path().join("a1b2c3d4e5f6.pdf");
         std::fs::write(&path, b"%PDF").unwrap();
-        let expected = clawcrew_runtime::tools::attachment_deliver_uri(
+        let expected = clawcrew_tools::deliver_file::attachment_deliver_uri(
             &acp_embedded::content_hash_name(b"%PDF", "pdf"),
         );
 
@@ -6235,7 +6235,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("x.pdf");
         std::fs::write(&path, b"%PDF").unwrap();
-        let expected = clawcrew_runtime::tools::attachment_deliver_uri(
+        let expected = clawcrew_tools::deliver_file::attachment_deliver_uri(
             &acp_embedded::content_hash_name(b"%PDF", "pdf"),
         );
 
@@ -6300,7 +6300,7 @@ mod tests {
         let path = dir.path().join("big.bin");
         std::fs::write(
             &path,
-            vec![0u8; (clawcrew_runtime::tools::MAX_DELIVER_FILE_BYTES as usize) + 1],
+            vec![0u8; (clawcrew_tools::deliver_file::MAX_DELIVER_FILE_BYTES as usize) + 1],
         )
         .unwrap();
         let event = TurnEvent::ToolResult {
@@ -6909,7 +6909,7 @@ mod tests {
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
             .unwrap();
         let crumb = ConversationMessage::Chat(ChatMessage::user(
-            clawcrew_runtime::agent::history::HISTORY_TRIM_BREADCRUMB_CANONICAL.to_string(),
+            clawcrew_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL.to_string(),
         ));
         store
             .append_turn(session_id, std::slice::from_ref(&crumb))
@@ -7419,7 +7419,7 @@ mod tests {
             .unwrap();
         let before = vec![
             ConversationMessage::Chat(ChatMessage::user(
-                clawcrew_runtime::agent::history::HISTORY_TRIM_BREADCRUMB_CANONICAL,
+                clawcrew_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL,
             )),
             ConversationMessage::Chat(ChatMessage::user("old request")),
             ConversationMessage::Chat(ChatMessage::assistant("old answer")),

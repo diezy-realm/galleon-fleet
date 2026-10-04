@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
@@ -9,32 +9,27 @@ use sha2::{Digest, Sha256};
 use tokio::sync::mpsc;
 
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use clawcrew_api::sop::{FilesystemEventKind, SopFanInDispatcher, SopTriggerSource};
 use clawcrew_config::schema::FilesystemConfig;
-use clawcrew_runtime::sop::audit::SopAuditLogger;
-use clawcrew_runtime::sop::dispatch::dispatch_untrusted_fan_in;
-use clawcrew_runtime::sop::engine::SopEngine;
-use clawcrew_runtime::sop::types::{FilesystemEventKind, SopTriggerSource};
 
 /// Filesystem change source as a `Channel`.
 ///
 /// Watches configured paths with a `notify` watcher and routes each file
-/// create/modify/delete/rename to the SOP engine via `dispatch_untrusted_fan_in`.
+/// create/modify/delete/rename to the SOP engine via `SopFanInDispatcher`.
 /// It is an input-only source: `Channel::send` has no outbound surface, and
 /// `listen` never feeds the chat-loop `tx` — file events drive SOP triggers,
 /// not agent turns.
 pub struct FilesystemChannel {
     config: FilesystemConfig,
     alias: String,
-    engine: Arc<Mutex<SopEngine>>,
-    audit: Arc<SopAuditLogger>,
+    dispatcher: Arc<dyn SopFanInDispatcher>,
 }
 
 /// Construction parameters for [`FilesystemChannel`].
 pub struct FilesystemChannelConfig {
     pub config: FilesystemConfig,
     pub alias: String,
-    pub engine: Arc<Mutex<SopEngine>>,
-    pub audit: Arc<SopAuditLogger>,
+    pub dispatcher: Arc<dyn SopFanInDispatcher>,
 }
 
 impl FilesystemChannel {
@@ -42,8 +37,7 @@ impl FilesystemChannel {
         Self {
             config: cfg.config,
             alias: cfg.alias,
-            engine: cfg.engine,
-            audit: cfg.audit,
+            dispatcher: cfg.dispatcher,
         }
     }
 
@@ -108,7 +102,7 @@ impl FilesystemChannel {
             );
         }
 
-        clawcrew_runtime::health::mark_component_ok("filesystem");
+        clawcrew_infra::health::mark_component_ok("filesystem");
 
         self.dispatch_loop(raw_rx, tx, &include, &exclude).await
     }
@@ -184,15 +178,15 @@ impl FilesystemChannel {
                 "Filesystem channel: dispatching '' ''"
             );
 
-            dispatch_untrusted_fan_in(
-                &self.engine,
-                &self.audit,
-                SopTriggerSource::Filesystem,
-                Some(&path_str),
-                Some(&payload.to_string()),
-                None,
-            )
-            .await;
+            self.dispatcher
+                .dispatch_untrusted(
+                    SopTriggerSource::Filesystem,
+                    Some(&path_str),
+                    Some(&payload.to_string()),
+                    None,
+                    None,
+                )
+                .await;
         }
     }
 }
@@ -888,16 +882,26 @@ mod tests {
         assert_eq!(payload["content"], "{\"id\":1}");
     }
 
-    fn test_channel(config: FilesystemConfig, alias: &str) -> FilesystemChannel {
-        use std::sync::Arc;
-        use clawcrew_runtime::sop::engine::SopEngine;
+    struct TestSopDispatcher;
+    #[async_trait::async_trait]
+    impl SopFanInDispatcher for TestSopDispatcher {
+        async fn dispatch_untrusted(
+            &self,
+            _source: SopTriggerSource,
+            _topic: Option<&str>,
+            _payload: Option<&str>,
+            _target_sop: Option<&str>,
+            _dedup: Option<(String, bool)>,
+        ) -> clawcrew_api::sop::SopFanInResult {
+            clawcrew_api::sop::SopFanInResult::default()
+        }
+    }
 
-        let memory = Arc::new(clawcrew_memory::NoneMemory::new(alias));
+    fn test_channel(config: FilesystemConfig, alias: &str) -> FilesystemChannel {
         FilesystemChannel::new(FilesystemChannelConfig {
             config,
             alias: alias.into(),
-            engine: Arc::new(Mutex::new(SopEngine::new(Default::default()))),
-            audit: Arc::new(SopAuditLogger::new(memory)),
+            dispatcher: Arc::new(TestSopDispatcher),
         })
     }
 
@@ -972,7 +976,6 @@ mod tests {
     #[tokio::test]
     async fn invalid_glob_rejection_is_span_attributed() {
         use std::sync::Arc;
-        use clawcrew_runtime::sop::engine::SopEngine;
 
         let _writer_guard = clawcrew_log::__private_test_writer_lock();
         let _hook_guard = clawcrew_log::__private_test_hook_lock();
@@ -986,12 +989,10 @@ mod tests {
             include: vec!["**/[broken".into()],
             ..FilesystemConfig::default()
         };
-        let memory = Arc::new(clawcrew_memory::NoneMemory::new("fs-proof"));
         let channel = FilesystemChannel::new(FilesystemChannelConfig {
             config,
             alias: "fs-proof".into(),
-            engine: Arc::new(Mutex::new(SopEngine::new(Default::default()))),
-            audit: Arc::new(SopAuditLogger::new(memory)),
+            dispatcher: Arc::new(TestSopDispatcher),
         });
 
         let (probe_tx, _probe_rx) = mpsc::channel(1);

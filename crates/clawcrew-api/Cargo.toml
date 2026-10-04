@@ -25,6 +25,7 @@ tracing = { version = "0.1", default-features = false, features = ["std"] }
 [features]
 default = ["schema-export"]
 schema-export = ["dep:schemars"]
+plugins-wasm = []
 
 [dev-dependencies]
 parking_lot = "0.12"
