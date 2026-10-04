@@ -285,14 +285,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_register_core_handlers_and_collision_rejection() {
+    async fn test_register_core_handlers_and_collision_rejection() -> Result<(), Box<dyn std::error::Error>> {
         let state = mock_app_state();
         let router = DynamicRouter::new();
 
         // 1. Register 5 core handlers
-        register_core_handlers(&router, state.clone())
-            .await
-            .expect("register core handlers should succeed");
+        register_core_handlers(&router, state.clone()).await?;
         assert_eq!(router.len().await, 5);
 
         // 2. Collision rejection: Attempting to register another handler on /api/config must fail
@@ -316,47 +314,47 @@ mod tests {
 
         let collision_res = router.register(Box::new(RoguePluginHandler)).await;
         assert!(collision_res.is_err(), "Collision with core /api/config must be rejected");
-        assert!(
-            collision_res.unwrap_err().contains("Route collision"),
-            "Error message must specify route collision"
-        );
+        match collision_res {
+            Err(msg) => assert!(msg.contains("Route collision"), "Error message must specify route collision"),
+            Ok(_) => panic!("expected collision rejection error"),
+        }
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_core_handlers_dispatch_responses() {
+    async fn test_core_handlers_dispatch_responses() -> Result<(), Box<dyn std::error::Error>> {
         let state = mock_app_state();
         let router = DynamicRouter::new();
-        register_core_handlers(&router, state).await.unwrap();
+        register_core_handlers(&router, state).await?;
 
         // Check /api/auth/ratelimit
         let req = Request::builder()
             .method(Method::GET)
             .uri("/api/auth/ratelimit")
-            .body(Body::empty())
-            .unwrap();
+            .body(Body::empty())?;
 
-        let resp = router.dispatch(req).await.expect("dispatch to /api/auth/ratelimit");
+        let resp = router.dispatch(req).await.map_err(|e| format!("dispatch error: {e}"))?;
         assert_eq!(resp.status(), StatusCode::OK);
 
         // Check /api/webauthn
         let req = Request::builder()
             .method(Method::GET)
             .uri("/api/webauthn")
-            .body(Body::empty())
-            .unwrap();
+            .body(Body::empty())?;
 
-        let resp = router.dispatch(req).await.expect("dispatch to /api/webauthn");
+        let resp = router.dispatch(req).await.map_err(|e| format!("dispatch error: {e}"))?;
         assert_eq!(resp.status(), StatusCode::OK);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_dynamic_router_as_axum_fallback() {
+    async fn test_dynamic_router_as_axum_fallback() -> Result<(), Box<dyn std::error::Error>> {
         use axum::routing::get;
         use tower::ServiceExt;
 
         let state = mock_app_state();
         let router = Arc::new(DynamicRouter::new());
-        register_core_handlers(&router, state).await.unwrap();
+        register_core_handlers(&router, state).await?;
 
         let app = axum::Router::new()
             .route("/api/ping", get(|| async { "pong" }))
@@ -369,11 +367,9 @@ mod tests {
             .oneshot(
                 Request::builder()
                     .uri("/api/ping")
-                    .body(Body::empty())
-                    .unwrap(),
+                    .body(Body::empty())?,
             )
-            .await
-            .unwrap();
+            .await?;
         assert_eq!(res.status(), StatusCode::OK);
 
         // Dynamic fallback route (/api/auth/ratelimit)
@@ -381,11 +377,10 @@ mod tests {
             .oneshot(
                 Request::builder()
                     .uri("/api/auth/ratelimit")
-                    .body(Body::empty())
-                    .unwrap(),
+                    .body(Body::empty())?,
             )
-            .await
-            .unwrap();
+            .await?;
         assert_eq!(res.status(), StatusCode::OK);
+        Ok(())
     }
 }

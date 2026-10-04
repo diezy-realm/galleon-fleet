@@ -16,3 +16,4 @@ anyhow = "1.0"
 futures = "0.3"
 async-trait = "0.1"
 clawcrew-plugins = { workspace = true }
+clawcrew-log = { workspace = true }

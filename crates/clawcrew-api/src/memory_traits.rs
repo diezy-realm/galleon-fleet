@@ -143,7 +143,7 @@ impl<'de> serde::Deserialize<'de> for MemoryCategory {
 }
 
 /// Defines the ownership and isolation boundary for a memory entry.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum MemoryScope {
     /// Global memory belonging to the user across all contexts.
@@ -153,13 +153,8 @@ pub enum MemoryScope {
     /// Memory isolated to a particular project or repository.
     Project,
     /// Memory isolated to an active workspace/session.
+    #[default]
     Workspace,
-}
-
-impl Default for MemoryScope {
-    fn default() -> Self {
-        Self::Workspace
-    }
 }
 
 impl std::fmt::Display for MemoryCategory {

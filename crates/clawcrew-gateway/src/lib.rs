@@ -115,10 +115,18 @@ pub(crate) fn register_cancel_token(
     session_key: &str,
     cancel_token: Arc<tokio_util::sync::CancellationToken>,
 ) {
-    let previous_token = cancel_tokens
-        .lock()
-        .expect("cancel_tokens lock poisoned")
-        .insert(session_key.to_owned(), cancel_token);
+    let mut guard = match cancel_tokens.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                "cancel_tokens mutex was poisoned, recovering guard"
+            );
+            poisoned.into_inner()
+        }
+    };
+    let previous_token = guard.insert(session_key.to_owned(), cancel_token);
     if let Some(previous_token) = previous_token {
         previous_token.cancel();
     }
@@ -134,7 +142,17 @@ pub(crate) fn remove_cancel_token_if_current(
     session_key: &str,
     cancel_token: &Arc<tokio_util::sync::CancellationToken>,
 ) {
-    let mut tokens = cancel_tokens.lock().expect("cancel_tokens lock poisoned");
+    let mut tokens = match cancel_tokens.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                "cancel_tokens mutex was poisoned, recovering guard"
+            );
+            poisoned.into_inner()
+        }
+    };
     if tokens
         .get(session_key)
         .is_some_and(|current| Arc::ptr_eq(current, cancel_token))
@@ -234,7 +252,7 @@ pub(crate) async fn persist_pairing_tokens(
 
 pub fn needs_quickstart_for(model: &str) -> Option<anyhow::Error> {
     if model.trim().is_empty() {
-        Some(anyhow::anyhow!("needs_quickstart: gateway has no model configured"))
+        Some(anyhow::Error::msg("needs_quickstart: gateway has no model configured"))
     } else {
         None
     }

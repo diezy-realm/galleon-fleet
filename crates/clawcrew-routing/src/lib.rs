@@ -5,7 +5,6 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{error, info, warn};
 use axum::{extract::Request, response::Response};
 pub use clawcrew_plugins::PluginCapability;
 
@@ -36,7 +35,11 @@ pub struct DynamicRouter {
 impl DynamicRouter {
     /// Creates a new empty DynamicRouter.
     pub fn new() -> Self {
-        info!("Creating new DynamicRouter");
+        ::clawcrew_log::record!(
+            INFO,
+            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            "Creating new DynamicRouter"
+        );
         Self {
             routes: Arc::new(RwLock::new(HashMap::new())),
             fallback: None,
@@ -54,19 +57,31 @@ impl DynamicRouter {
 
         if routes.contains_key(&path) {
             let err = format!("Route collision: handler '{}' for '{}' already registered", name, path);
-            error!("{}", err);
+            ::clawcrew_log::record!(
+                ERROR,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                err.clone()
+            );
             return Err(err);
         }
 
         routes.insert(path.clone(), handler);
-        info!("Registered handler '{}' for '{}'", name, path);
+        ::clawcrew_log::record!(
+            INFO,
+            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            format!("Registered handler '{name}' for '{path}'")
+        );
         Ok(())
     }
 
     /// Sets a fallback handler for unmatched routes.
     pub async fn set_fallback(&mut self, handler: Box<dyn RouteHandler>) {
         self.fallback = Some(handler);
-        info!("Fallback handler set");
+        ::clawcrew_log::record!(
+            INFO,
+            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            "Fallback handler set"
+        );
     }
 
     /// Dispatches a request to the appropriate handler.
@@ -79,19 +94,31 @@ impl DynamicRouter {
         {
             let routes = self.routes.read().await;
             if let Some(handler) = routes.get(&path) {
-                info!("Dispatching {} {} to handler '{}'", method, path, handler.name());
+                ::clawcrew_log::record!(
+                    INFO,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    format!("Dispatching {method} {path} to handler '{}'", handler.name())
+                );
                 return handler.handle(req).await;
             }
         }
 
         // No exact match found
         if let Some(ref fallback) = self.fallback {
-            warn!("No handler for '{}', using fallback '{}'", path, fallback.name());
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                format!("No handler for '{path}', using fallback '{}'", fallback.name())
+            );
             return fallback.handle(req).await;
         }
 
         let err = format!("No handler registered for path '{}'", path);
-        error!("{}", err);
+        ::clawcrew_log::record!(
+            ERROR,
+            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            err.clone()
+        );
         Err(err)
     }
 
@@ -227,7 +254,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_stream_response_handler() {
+    async fn test_stream_response_handler() -> Result<(), Box<dyn std::error::Error>> {
         let router = DynamicRouter::new();
         let handler = Box::new(StreamHandler {
             name: "stream-test".to_string(),
@@ -235,18 +262,21 @@ mod tests {
         });
         assert_eq!(handler.capability(), Some(PluginCapability::Channel));
 
-        router.register(handler).await.unwrap();
+        router.register(handler).await?;
 
-        let uri = Uri::try_from("/api/stream").unwrap();
+        let uri = Uri::try_from("/api/stream")?;
         let req = Request::builder()
             .method(Method::GET)
             .uri(uri)
-            .body(Body::empty())
-            .unwrap();
+            .body(Body::empty())?;
 
-        let resp = router.dispatch(req).await.expect("dispatch to stream handler");
-        let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
-        let text = String::from_utf8(bytes.to_vec()).unwrap();
+        let resp = match router.dispatch(req).await {
+            Ok(r) => r,
+            Err(e) => return Err(format!("dispatch failed: {e}").into()),
+        };
+        let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await?;
+        let text = String::from_utf8(bytes.to_vec())?;
         assert_eq!(text, "data: chunk1\n\ndata: chunk2\n\n");
+        Ok(())
     }
 }

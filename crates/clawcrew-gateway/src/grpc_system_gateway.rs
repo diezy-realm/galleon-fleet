@@ -5,7 +5,7 @@
 tonic::include_proto!("clawcrew.agent");
 
 use serde_json::json;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use system_gateway_server::SystemGateway;
 use tonic::{Request, Response, Status};
 
@@ -88,16 +88,9 @@ impl SystemGatewayService {
             .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
     }
 
-    /// Validate that a path is within the workspace root (no path traversal).
-    /// Wrapper that uses the service's default workspace_root.
-    fn validate_path(&self, path: &str) -> Result<PathBuf, String> {
-        let workspace_root = self.workspace_root();
-        self.validate_path_with_workspace(path, &workspace_root)
-    }
-
     /// Validate that a path is within the specified workspace root (no path traversal).
     /// Returns the canonicalized path if valid.
-    fn validate_path_with_workspace(&self, path: &str, workspace_root: &PathBuf) -> Result<PathBuf, String> {
+    fn validate_path_with_workspace(&self, path: &str, workspace_root: &Path) -> Result<PathBuf, String> {
         let requested = PathBuf::from(path);
 
         // Canonicalize the provided workspace root
@@ -207,7 +200,7 @@ impl SystemGatewayService {
     }
 
     /// Read a file from the workspace.
-    async fn read_file_with_workspace(&self, path: &str, workspace_root: &PathBuf) -> Result<String, String> {
+    async fn read_file_with_workspace(&self, path: &str, workspace_root: &Path) -> Result<String, String> {
         let validated_path = self.validate_path_with_workspace(path, workspace_root)?;
         tokio::fs::read_to_string(&validated_path)
             .await
@@ -215,7 +208,7 @@ impl SystemGatewayService {
     }
 
     /// Write a file to the workspace.
-    async fn write_file_with_workspace(&self, path: &str, contents: &str, workspace_root: &PathBuf) -> Result<String, String> {
+    async fn write_file_with_workspace(&self, path: &str, contents: &str, workspace_root: &Path) -> Result<String, String> {
         let validated_path = self.validate_path_with_workspace(path, workspace_root)?;
 
         // Ensure parent directory exists.
@@ -280,7 +273,7 @@ impl SystemGateway for SystemGatewayService {
 
         // Apply timeout if specified (default 60s, clamp 1-300s)
         let timeout_seconds = req.timeout_seconds.unwrap_or(60);
-        let timeout_duration = std::time::Duration::from_secs(timeout_seconds.max(1).min(300) as u64);
+        let timeout_duration = std::time::Duration::from_secs(timeout_seconds.clamp(1, 300) as u64);
 
         // Execute based on tool type
         let result = match req.tool_name.as_str() {
@@ -424,7 +417,7 @@ impl SystemGateway for SystemGatewayService {
         let (tx, rx) = tokio::sync::mpsc::channel(32);
         let model_provider = self.model_provider.clone();
 
-        tokio::spawn(async move {
+        ::clawcrew_spawn::spawn!(async move {
             if let Some(provider) = model_provider {
                 use futures_util::StreamExt;
                 let chat_messages: Vec<clawcrew_api::model_provider::ChatMessage> = req.messages
@@ -688,8 +681,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn vault_secret_lifecycle_stores_and_decrypts() {
-        let temp_dir = tempfile::tempdir().unwrap();
+    async fn vault_secret_lifecycle_stores_and_decrypts() -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir = tempfile::tempdir()?;
         let svc = SystemGatewayService::new(Some(temp_dir.path().to_path_buf()));
 
         // 1. Secret that does not exist -> found: false
@@ -697,39 +690,39 @@ mod tests {
             .get_decrypted_secret(Request::new(SecretRequest {
                 key_name: "openai_api_key".to_string(),
             }))
-            .await
-            .unwrap()
+            .await?
             .into_inner();
         assert!(!resp.found);
         assert_eq!(resp.value, "");
 
         // 2. Store secret via set_secret
-        svc.set_secret("openai_api_key", "sk-proj-test123456789")
-            .expect("set_secret succeeds");
+        svc.set_secret("openai_api_key", "sk-proj-test123456789")?;
 
         // 3. Fetch secret -> found: true, decrypted value matches
         let resp = svc
             .get_decrypted_secret(Request::new(SecretRequest {
                 key_name: "openai_api_key".to_string(),
             }))
-            .await
-            .unwrap()
+            .await?
             .into_inner();
         assert!(resp.found);
         assert_eq!(resp.value, "sk-proj-test123456789");
 
         // 4. Empty key name returns InvalidArgument
-        let err = svc
+        let res = svc
             .get_decrypted_secret(Request::new(SecretRequest {
                 key_name: "   ".to_string(),
             }))
-            .await
-            .expect_err("empty key rejected");
-        assert_eq!(err.code(), tonic::Code::InvalidArgument);
+            .await;
+        match res {
+            Ok(_) => return Err("expected empty key to be rejected".into()),
+            Err(err) => assert_eq!(err.code(), tonic::Code::InvalidArgument),
+        }
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_execute_turn_success() {
+    async fn test_execute_turn_success() -> Result<(), Box<dyn std::error::Error>> {
         use futures_util::StreamExt;
 
         let svc = SystemGatewayService::new(None);
@@ -748,7 +741,7 @@ mod tests {
             max_tokens: Some(100),
         };
 
-        let response = svc.execute_turn(Request::new(req)).await.expect("execute_turn succeeds");
+        let response = svc.execute_turn(Request::new(req)).await?;
         let mut stream = response.into_inner();
 
         let mut received_thought = false;
@@ -756,7 +749,7 @@ mod tests {
         let mut received_complete = false;
 
         while let Some(item) = stream.next().await {
-            let token = item.expect("valid token in stream");
+            let token = item?;
             match token.event {
                 Some(turn_token::Event::Token(chunk)) => {
                     if chunk.is_thought {
@@ -770,7 +763,7 @@ mod tests {
                     received_complete = true;
                 }
                 Some(turn_token::Event::Error(err)) => {
-                    panic!("unexpected error event in stream: {:?}", err);
+                    return Err(format!("unexpected error event in stream: {:?}", err).into());
                 }
                 _ => {}
             }
@@ -779,5 +772,7 @@ mod tests {
         assert!(received_thought, "expected at least one thought chunk");
         assert!(received_delta, "expected at least one text delta chunk");
         assert!(received_complete, "expected turn complete event");
+        Ok(())
     }
 }
+
