@@ -44,7 +44,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [ ] **PR-11** `ci/boundary-gates` · P-07 · GW-4,6 · PR-05 · `tests/architecture/` (UI tanpa backend, Tauri tanpa shell, Go tanpa exec/vendor LLM) · M
 - [ ] **PR-12** `ci/web-and-desktop` · P-04, P-05, U-12 · GW-3 · PR-03 · CI `web/` & `fleet-ai-desktop`, skrip `typecheck/lint/test`, TS strict · M
 - [ ] **PR-13** `ci/engine` · P-06 · GW-2 · – · `go test -race`, vet, staticcheck, cek `wire_gen` · S
-- [ ] **PR-14** `chore/web-remove-aistudio-artifacts` · U-05, U-15 · GW-3 · PR-12 · `@google/genai`, `better-sqlite3`, `metadata.json`, `bun.lock`, dll.; audit pemakaian dulu · S
+- [x] **PR-14** `chore/web-remove-aistudio-artifacts` · U-05, U-15 · GW-3 · PR-12 · [Selesai] Copot `@google/genai`, `better-sqlite3`, `qrcode`; hapus `metadata.json`, `bun.lock`, `web/.github/`, `web/Dockerfile`, `seedData.ts`; deklarasikan `@tauri-apps/api` di web; rename `galleon-web` · S
 - [ ] **PR-15** `feat/go-terminal-policy-endpoint` · G-04 · GW-2,4,8 · PR-05 · risk-tier + approval + audit; test injeksi ditolak · M
 - [ ] **PR-16** `fix/go-remove-ollama-probe` · G-02 · GW-2,4 · PR-05 · LLM/discovery milik Rust · S
 - [ ] **PR-17** `chore/legacy-removal-docs-archive` · N-11 · GW-0 · PR-06 ⚑ · buat tag `archive/pre-galleon`; hapus `docs/_archive`; perbaiki rujukan `docs/book` di AGENTS.md · M

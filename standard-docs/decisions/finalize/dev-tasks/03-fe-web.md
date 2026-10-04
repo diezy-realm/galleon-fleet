@@ -5,13 +5,13 @@ Konvensi: `tech-stack/web-conventions.md`, ADR 0002 (zero backend logic). Gerban
 
 ## A. Bersihkan Artefak & Server Lama
 
-- [ ] **FW-A0 · U-15 · PR-14 (P1, S) Deklarasikan `@tauri-apps/api` di `web/package.json`.** Saat ini hanya di `package.json` root (ter-hoist; `npm run build` dan `lint` hijau), sehingga web tidak mandiri. Pindahkan ke dependensi `web` dan pastikan `tauriBridge` dimuat dinamis agar mode browser tidak membawanya.
-- [ ] **FW-A1 · U-05 · PR-14 (P1, S) Bersihkan artefak AI Studio:** `@google/genai`, `better-sqlite3`, `qrcode`, `@types/qrcode` (`package.json`), `metadata.json`, `bun.lock`, `web/.github/`, `web/Dockerfile`. Audit (2026-10-04): `qrcode` hanya dipakai `RemoteAccessModal.tsx` (QR kini dari Go → ganti `<img>`/data URL, lalu hapus dep); `@google/genai` dan `better-sqlite3` tidak diimpor di `src/` maupun `server.ts`.
+- [x] **FW-A0 · U-15 · PR-14 (P1, S) Deklarasikan `@tauri-apps/api` di `web/package.json`.** [Selesai PR-14] `@tauri-apps/api: ^2.0.0` dideklarasikan langsung di `web/package.json`; invoke Tauri dimuat dinamis (dynamic import `invokeTauri`), browser bundle tidak memuat `@tauri-apps/api` saat startup.
+- [x] **FW-A1 · U-05 · PR-14 (P1, S) Bersihkan artefak AI Studio:** [Selesai PR-14] `@google/genai`, `better-sqlite3`, `qrcode`, `@types/qrcode` dicopot dari `package.json` & lockfile; `metadata.json`, `bun.lock`, `web/.github/`, `web/Dockerfile` dihapus via `git rm`; QR code di `RemoteAccessModal.tsx` menggunakan `apiClient.getNetworkQrCode()`; nama paket diganti ke `galleon-web`.
 - [x] **FW-A2a · U-16 · PR-04 (P0, S) ⚑ Matikan `POST /api/engine/execute` di `server.ts` sekarang.** [Selesai PR-04] RCE endpoint `POST /api/engine/execute` beserta middleware token/gate dihapus dari `web/server.ts`. Route duplikat `/api/providers/ollama/*` dan `/api/engine/processes` dihapus (sekarang di-proxy langsung ke Go :9090). Eksekusi terminal di `apiClient.ts` dikunci pending Go Policy Gateway (PR-15).
 - [ ] **FW-A2 · U-02 · PR-70 (P1, M) Hapus `web/server.ts` (Express)** (masih menghitung memori via `os.totalmem`); skrip `dev` `tsx watch server.ts` → `vite`. Dep: BG-C4b. *Acceptance:* `npm run dev` hanya Vite.
 - [x] **FW-A3 · U-03 (sebagian) · T-2.3 QR dihapus dari server Express;** UI memakai `apiClient.getNetworkQrCode()` → Go.
 - [ ] **FW-A4 · U-03/U-04 · PR-70 (P1, M) QR pairing berotorisasi & telemetri OS dari Go;** hapus derivasi lokal tersisa. Dep: BG-C2, BG-C4b.
-- [ ] **FW-A5 · (turunan T-1.3) · PR-14 (P2, S) Hapus `src/utils/seedData.ts` yatim** (store sudah hydrate dari API, file tidak diimpor); pastikan `hydrateSeedData` diganti nama netral (`hydrateFleet`).
+- [x] **FW-A5 · (turunan T-1.3) · PR-14 (P2, S) Hapus `src/utils/seedData.ts` yatim** [Selesai PR-14] File `src/utils/seedData.ts` dihapus via `git rm`; `hydrateFleet` ditambahkan di `fleetStore.ts` dengan alias backward `hydrateSeedData`.
 
 ## B. Kualitas & Kontrak
 

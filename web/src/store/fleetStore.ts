@@ -130,6 +130,7 @@ interface FleetState {
   addNotification: (notification: Omit<NotificationItem, 'id' | 'createdAt' | 'read'>) => void;
   simulateVoyageTick: () => void;
   fetchRealData: () => Promise<void>;
+  hydrateFleet: () => Promise<void>;
   hydrateSeedData: () => Promise<void>;
   ringDeckBell: () => Promise<string>;
 
@@ -401,7 +402,7 @@ export const useFleetStore = create<FleetState>((set, get) => ({
     }
   },
 
-  hydrateSeedData: async () => {
+  hydrateFleet: async () => {
     try {
       // API response type for /api/fleet/seed
       interface SeedResponse {
@@ -450,9 +451,13 @@ export const useFleetStore = create<FleetState>((set, get) => ({
         }
       }
     } catch (err) {
-      console.error('[Store] hydrateSeedData API error, fleet offline:', err);
+      console.error('[Store] hydrateFleet API error, fleet offline:', err);
       // No mock fallback - SSOT from engine only
     }
+  },
+
+  hydrateSeedData: async () => {
+    return get().hydrateFleet();
   },
 
   ringDeckBell: async () => {

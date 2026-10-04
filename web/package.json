@@ -1,5 +1,5 @@
 {
-  "name": "react-example",
+  "name": "galleon-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,16 +12,13 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.3.3",
-    "@types/qrcode": "^1.5.6",
+    "@tauri-apps/api": "^2.0.0",
     "@vitejs/plugin-react": "^6.1.1",
-    "better-sqlite3": "^13.0.3",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
-    "qrcode": "^1.5.4",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "vite": "^8.3.0",

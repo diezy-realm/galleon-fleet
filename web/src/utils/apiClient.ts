@@ -1,5 +1,9 @@
-import { invoke } from '@tauri-apps/api/core';
 import { isTauriEnvironment } from './tauriBridge';
+
+async function invokeTauri<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  const { invoke } = await import('@tauri-apps/api/core');
+  return invoke<T>(cmd, args);
+}
 
 export interface ToolDefinition {
   id: string;
@@ -37,7 +41,7 @@ export const apiClient = {
   async getCollection<T>(name: string): Promise<T[]> {
     if (this.isTauri()) {
       try {
-        const data = await invoke<T[]>('get_collection', { name });
+        const data = await invokeTauri<T[]>('get_collection', { name });
         if (data && Array.isArray(data) && data.length > 0) {
           return data;
         }
@@ -55,7 +59,7 @@ export const apiClient = {
   async saveCollection<T>(name: string, data: T[]): Promise<void> {
     if (this.isTauri()) {
       try {
-        await invoke('save_collection', { name, data });
+        await invokeTauri('save_collection', { name, data });
         return;
       } catch (err) {
         console.warn(`[API] Tauri save_collection("${name}") fallback to HTTP:`, err);
@@ -74,7 +78,7 @@ export const apiClient = {
   async getFleetMetrics(): Promise<Record<string, unknown>> {
     if (this.isTauri()) {
       try {
-        return await invoke('get_fleet_metrics');
+        return await invokeTauri('get_fleet_metrics');
       } catch (e) {
         console.warn('[API] Tauri get_fleet_metrics fallback:', e);
       }
@@ -86,7 +90,7 @@ export const apiClient = {
   async ringDeckBell(): Promise<string> {
     if (this.isTauri()) {
       try {
-        return await invoke<string>('ring_deck_bell');
+        return await invokeTauri<string>('ring_deck_bell');
       } catch (e) {
         console.warn('[API] Tauri ring_deck_bell fallback:', e);
       }
@@ -99,7 +103,7 @@ export const apiClient = {
   async getSystemMetrics(): Promise<Record<string, unknown>> {
     if (this.isTauri()) {
       try {
-        return await invoke('get_system_metrics');
+        return await invokeTauri('get_system_metrics');
       } catch (e) {
         console.warn('[API] Tauri get_system_metrics fallback:', e);
       }
@@ -117,7 +121,7 @@ export const apiClient = {
   async getExecutiveBriefing(): Promise<Record<string, unknown>[]> {
     if (this.isTauri()) {
       try {
-        return await invoke<Record<string, unknown>[]>('get_executive_briefing');
+        return await invokeTauri<Record<string, unknown>[]>('get_executive_briefing');
       } catch (e) {
         console.warn('[API] Tauri get_executive_briefing fallback:', e);
       }
@@ -129,7 +133,7 @@ export const apiClient = {
   async getHarborProviders(): Promise<Record<string, unknown>[]> {
     if (this.isTauri()) {
       try {
-        return await invoke<Record<string, unknown>[]>('get_harbor_providers');
+        return await invokeTauri<Record<string, unknown>[]>('get_harbor_providers');
       } catch (e) {
         console.warn('[API] Tauri get_harbor_providers fallback:', e);
       }
@@ -141,7 +145,7 @@ export const apiClient = {
   async getDiagnostics(): Promise<Record<string, unknown>[]> {
     if (this.isTauri()) {
       try {
-        return await invoke<Record<string, unknown>[]>('get_diagnostics');
+        return await invokeTauri<Record<string, unknown>[]>('get_diagnostics');
       } catch (e) {
         console.warn('[API] Tauri get_diagnostics fallback:', e);
       }
@@ -153,7 +157,7 @@ export const apiClient = {
   async applyRemedy(): Promise<Record<string, unknown>> {
     if (this.isTauri()) {
       try {
-        return await invoke('apply_remedy');
+        return await invokeTauri('apply_remedy');
       } catch (e) {
         console.warn('[API] Tauri apply_remedy fallback:', e);
       }
@@ -165,7 +169,7 @@ export const apiClient = {
   async getSnapshots(): Promise<Record<string, unknown>[]> {
     if (this.isTauri()) {
       try {
-        return await invoke<Record<string, unknown>[]>('get_snapshots');
+        return await invokeTauri<Record<string, unknown>[]>('get_snapshots');
       } catch (e) {
         console.warn('[API] Tauri get_snapshots fallback:', e);
       }
@@ -177,7 +181,7 @@ export const apiClient = {
   async createSnapshot(title?: string): Promise<Record<string, unknown>> {
     if (this.isTauri()) {
       try {
-        return await invoke('create_snapshot', { title: title || 'Manual Sovereign Fleet Snapshot' });
+        return await invokeTauri('create_snapshot', { title: title || 'Manual Sovereign Fleet Snapshot' });
       } catch (e) {
         console.warn('[API] Tauri create_snapshot fallback:', e);
       }
@@ -193,7 +197,7 @@ export const apiClient = {
   async getEngineProcesses(): Promise<ProcessItem[]> {
     if (this.isTauri()) {
       try {
-        const data = await invoke<Array<{ pid: number; name: string; memory: number; cpu: number }>>('get_engine_processes');
+        const data = await invokeTauri<Array<{ pid: number; name: string; memory: number; cpu: number }>>('get_engine_processes');
         // Map backend response {pid,name,memory,cpu} to ProcessItem interface
         return data.map((item) => ({
           id: String(item.pid), // pid -> id
@@ -237,7 +241,7 @@ export const apiClient = {
   async getFleetPolicies(): Promise<{ policies: Record<string, unknown>[]; riskTiers: Record<string, unknown>[] }> {
     if (this.isTauri()) {
       try {
-        return await invoke('get_fleet_policies');
+        return await invokeTauri('get_fleet_policies');
       } catch (e) {
         console.warn('[API] Tauri get_fleet_policies fallback:', e);
       }
@@ -253,7 +257,7 @@ export const apiClient = {
   }> {
     if (this.isTauri()) {
       try {
-        return await invoke('chat_quartermaster', { message, context });
+        return await invokeTauri('chat_quartermaster', { message, context });
       } catch (e) {
         console.warn('[API] Tauri chat_quartermaster fallback:', e);
       }
@@ -284,7 +288,7 @@ export const apiClient = {
   async get<T>(path: string): Promise<T> {
     if (this.isTauri()) {
       try {
-        return await invoke('get_api', { path });
+        return await invokeTauri('get_api', { path });
       } catch (e) {
         console.warn(`[API] Tauri get("${path}") fallback:`, e);
       }

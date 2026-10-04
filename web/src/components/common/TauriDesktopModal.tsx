@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
 import {
   Monitor,
   Laptop,
@@ -56,6 +55,7 @@ export const TauriDesktopModal: React.FC<TauriDesktopModalProps> = ({ isOpen, on
 
   const handleSimulateIPC = async (command: string) => {
     try {
+      const { invoke } = await import('@tauri-apps/api/core');
       if (command === 'get_fleet_metrics') {
         setIpcLog((prev) => [...prev, `> invoke("get_fleet_metrics")`]);
         // Call real rust backend

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import QRCode from 'qrcode';
+import { apiClient } from '../../utils/apiClient';
 import {
   Wifi,
   Smartphone,
@@ -125,21 +125,19 @@ export const RemoteAccessModal: React.FC<RemoteAccessModalProps> = ({
     }
   }, [isOpen]);
 
-  // Generate QR Code when selected URL changes
+  // Fetch QR Code data URL from Go engine when selected URL changes
   useEffect(() => {
     const urlToEncode = customUrl.trim() || selectedUrl || window.location.origin;
     if (!urlToEncode) return;
 
-    QRCode.toDataURL(urlToEncode, {
-      width: 240,
-      margin: 1.5,
-      color: {
-        dark: '#0f766e',
-        light: '#ffffff'
-      }
-    })
-      .then((dataUrl) => setQrCodeDataUrl(dataUrl))
-      .catch((err) => console.error('Failed to generate QR code', err));
+    apiClient
+      .getNetworkQrCode(urlToEncode)
+      .then((res) => {
+        if (res && res.dataUrl) {
+          setQrCodeDataUrl(res.dataUrl);
+        }
+      })
+      .catch((err) => console.error('Failed to generate QR code from engine:', err));
   }, [selectedUrl, customUrl]);
 
   if (!isOpen) return null;
