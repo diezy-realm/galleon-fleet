@@ -934,7 +934,7 @@ mod streaming {
     }
 
     fn oversized_progress_alert(unit: &VisibleProgressUnit) -> String {
-        let alert = clawcrew_runtime::i18n::get_required_cli_string(
+        let alert = galleon_i18n::get_required_cli_string(
             "channel-runtime-matrix-progress-item-too-large",
         );
         if unit.reasoning {

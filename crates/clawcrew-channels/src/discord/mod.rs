@@ -16,7 +16,7 @@ use clawcrew_api::channel::{
 use clawcrew_api::media::{
     MarkerKind, MediaAttachment, RenderedMarker, provider_loadable_image_mime_for,
 };
-use clawcrew_runtime::i18n;
+use galleon_i18n as i18n;
 
 // Contract tier: `embed` holds the embed value object that `types`'
 // `DiscordOutgoing` envelope carries; both are contract modules (no impl

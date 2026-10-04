@@ -88,7 +88,7 @@ impl ApprovalDecision {
             ApprovalDecision::AllowAlways => ButtonStyle::Secondary,
             ApprovalDecision::Deny => ButtonStyle::Danger,
         };
-        (clawcrew_runtime::i18n::get_required_cli_string(key), style)
+        (galleon_i18n::get_required_cli_string(key), style)
     }
 }
 

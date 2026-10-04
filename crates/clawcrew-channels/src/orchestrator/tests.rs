@@ -4958,13 +4958,13 @@ api_key = "anthropic-key"
         }
 
         async fn send(&self, message: &SendMessage) -> anyhow::Result<()> {
-            let busy = clawcrew_runtime::i18n::get_required_cli_string(
+            let busy = galleon_i18n::get_required_cli_string(
                 "channel-runtime-conversation-busy",
             );
             let stop_sent =
-                clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+                galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
             let stop_no_task =
-                clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+                galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
             if message.content == busy
                 || message.content == stop_sent
                 || message.content == stop_no_task
@@ -11260,7 +11260,7 @@ BTC is currently around $65,000 based on latest tool output."#
 
         let sent = channel_impl.sent_messages.lock().await;
         assert_eq!(sent.len(), 1);
-        let expected_reply = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+        let expected_reply = galleon_i18n::get_required_cli_string_with_args(
             "channel-runtime-set-provider-switched",
             &[
                 ("provider", "openrouter.default"),
@@ -12931,9 +12931,9 @@ BTC is currently around $65,000 based on latest tool output."#
             .unwrap();
 
         let folded =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-folded-followup");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-folded-followup");
         let no_task =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
         let observed = tokio::time::timeout(Duration::from_secs(3), async {
             loop {
                 let sent = channel_impl.sent_messages.lock().await.clone();
@@ -13074,7 +13074,7 @@ BTC is currently around $65,000 based on latest tool output."#
         // follow-up yet — cannot leave it uncancelled: that stop is a no-op for
         // the scope, and the follow-up keeps its place in the lane.
         let stop_sent =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         tokio::time::timeout(Duration::from_secs(2), async {
             loop {
                 tx.send(clawcrew_api::channel::ChannelMessage {
@@ -13120,7 +13120,7 @@ BTC is currently around $65,000 based on latest tool output."#
             .expect("dispatch loop must finish after the root turn")
             .unwrap();
 
-        let stop_ack = clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+        let stop_ack = galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         let sent_messages = channel_impl.sent_messages.lock().await;
         assert!(
             sent_messages.iter().any(|m| m.contains("response-1")),
@@ -13217,7 +13217,7 @@ BTC is currently around $65,000 based on latest tool output."#
         // The acknowledgement is produced after the payload is retired (both
         // happen in the receiver), so waiting for it pins the retirement before
         // the reply below reuses the stopped turn's bucket.
-        let stop_ack = clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+        let stop_ack = galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         tokio::time::timeout(Duration::from_secs(2), async {
             loop {
                 let sent = channel_impl.sent_messages.lock().await;
@@ -13377,7 +13377,7 @@ BTC is currently around $65,000 based on latest tool output."#
         // Wait for the acknowledgement before releasing the root: it is sent
         // after the scope's cancellations and their bucket retirement, so the
         // reply's bucket is already open when the stop is processed.
-        let stop_ack = clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+        let stop_ack = galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         tokio::time::timeout(Duration::from_secs(2), async {
             loop {
                 let sent = channel_impl.sent_messages.lock().await;
@@ -18111,9 +18111,9 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let stop_no_task =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
         let stop_sent =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
 
         let sent = channel_impl.sent_messages.lock().await;
         assert!(
@@ -18235,9 +18235,9 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let stop_sent =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         let stop_no_task =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
 
         let sent = channel_impl.sent_messages.lock().await;
         assert!(
@@ -18309,9 +18309,9 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let stop_sent =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         let stop_no_task =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
 
         let sent = channel_impl.sent_messages.lock().await;
         assert!(
@@ -18417,7 +18417,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let busy =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-conversation-busy");
+            galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
 
         let sent = channel_impl.sent_messages.lock().await;
         let refused = sent.iter().filter(|m| m.ends_with(&busy)).count();
@@ -18493,9 +18493,9 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let busy =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-conversation-busy");
+            galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
         let stop_sent =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         let sent = channel_impl.sent_messages.lock().await;
         let refused = sent
             .iter()
@@ -18584,7 +18584,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let busy =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-conversation-busy");
+            galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
         let sent = channel_impl.sent_messages.lock().await;
         let combined_echo = sent
             .iter()
@@ -18719,7 +18719,7 @@ BTC is currently around $65,000 based on latest tool output."#
         busy_tasks.wait_drained().await;
 
         let busy =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-conversation-busy");
+            galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
         let sent = channel_impl.sent_messages.lock().await;
         assert_eq!(
             sent.iter()
@@ -18773,7 +18773,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let stop_no_task =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
         let sent = channel_impl.sent_messages.lock().await;
         let acknowledged = sent
             .iter()
@@ -18899,7 +18899,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let new_session =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-new-session");
+            galleon_i18n::get_required_cli_string("channel-runtime-new-session");
         let sent = channel_impl.sent_messages.lock().await;
         assert!(
             sent.iter().any(|m| m.contains(&new_session)),
@@ -19062,7 +19062,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let stop_sent =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         let sent = channel_impl.sent_messages.lock().await;
         assert!(
             sent.iter().any(|message| message.ends_with(&stop_sent)),
@@ -20159,7 +20159,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let stop_no_task =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
         for _ in 0..100 {
             if channel_impl
                 .sent_messages
@@ -20315,7 +20315,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let busy =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-conversation-busy");
+            galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
         let sent = channel_impl.sent_messages.lock().await;
         let busy_messages: Vec<&String> = sent
             .iter()
@@ -24347,7 +24347,7 @@ BTC is currently around $65,000 based on latest tool output."#
 
         let sent_messages = channel_impl.sent_messages.lock().await;
         let new_session_reply =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-new-session");
+            galleon_i18n::get_required_cli_string("channel-runtime-new-session");
         assert!(
             sent_messages
                 .iter()

@@ -1698,6 +1698,7 @@ dependencies = [
  "galleon-channel-bluesky",
  "galleon-channel-imessage",
  "galleon-channel-signal",
+ "galleon-i18n",
  "glob",
  "hex",
  "hmac 0.12.1",

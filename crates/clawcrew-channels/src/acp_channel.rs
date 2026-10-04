@@ -11,7 +11,7 @@ use clawcrew_api::elicitation::{
     ElicitationCapabilities, ElicitationMode, ElicitationRequest, ElicitationResponse,
     multi_select_schema, single_select_schema,
 };
-use clawcrew_runtime::i18n;
+use galleon_i18n as i18n;
 
 use crate::orchestrator::acp_server::RpcOutbound;
 
@@ -1014,7 +1014,7 @@ mod tests {
         // Locale-aware: resolve the expected title through the same Fluent
         // key the implementation uses, rather than hardcoding the `en` text,
         // so this test doesn't desync from a future wording change.
-        let expected_title = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+        let expected_title = galleon_i18n::get_required_cli_string_with_args(
             "channel-approval-title",
             &[("tool", "git")],
         );

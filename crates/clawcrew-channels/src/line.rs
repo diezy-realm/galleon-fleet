@@ -8,7 +8,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 use clawcrew_config::schema::{Config, LineDmPolicy, LineGroupPolicy};
-use clawcrew_runtime::i18n;
+use galleon_i18n as i18n;
 use clawcrew_runtime::security::pairing::PairingGuard;
 
 type HmacSha256 = Hmac<Sha256>;
@@ -2665,7 +2665,7 @@ mod tests {
         assert_eq!(body["replyToken"], "rt-bind");
         assert_eq!(
             body["messages"][0]["text"],
-            clawcrew_runtime::i18n::get_required_cli_string("channel-line-bind-success")
+            galleon_i18n::get_required_cli_string("channel-line-bind-success")
         );
 
         api_server.verify().await;
@@ -2761,7 +2761,7 @@ mod tests {
         let body: serde_json::Value = serde_json::from_slice(&reply_req.body).unwrap();
         assert_eq!(
             body["messages"][0]["text"],
-            clawcrew_runtime::i18n::get_required_cli_string("channel-line-bind-denied"),
+            galleon_i18n::get_required_cli_string("channel-line-bind-denied"),
             "the refusal is reported, not a success reply"
         );
 
@@ -2857,7 +2857,7 @@ mod tests {
         let body: serde_json::Value = serde_json::from_slice(&reply_req.body).unwrap();
         assert_eq!(
             body["messages"][0]["text"],
-            clawcrew_runtime::i18n::get_required_cli_string("channel-line-bind-not-saved"),
+            galleon_i18n::get_required_cli_string("channel-line-bind-not-saved"),
             "the failure is reported, not the success message"
         );
 
@@ -2913,7 +2913,7 @@ mod tests {
         assert_eq!(body["replyToken"], "rt-bad");
         assert_eq!(
             body["messages"][0]["text"],
-            clawcrew_runtime::i18n::get_required_cli_string("channel-line-bind-invalid-code")
+            galleon_i18n::get_required_cli_string("channel-line-bind-invalid-code")
         );
 
         api_server.verify().await;

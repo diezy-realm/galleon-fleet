@@ -13,7 +13,7 @@ use std::time::Duration;
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 use clawcrew_config::paths::{normalize_lexical, resolve_under};
 use clawcrew_config::schema::Config;
-use clawcrew_runtime::i18n;
+use galleon_i18n as i18n;
 use clawcrew_runtime::security::pairing::PairingGuard;
 
 const DEFAULT_API_BASE_URL: &str = "https://ilinkai.weixin.qq.com";

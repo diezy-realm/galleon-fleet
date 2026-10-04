@@ -13,7 +13,7 @@ use clawcrew_api::channel::{
 use clawcrew_config::schema::{
     Config, DEFAULT_MULTI_MESSAGE_DELAY_MS, StreamMode, TELEGRAM_OFFICIAL_API_BASE_URL,
 };
-use clawcrew_runtime::i18n;
+use galleon_i18n as i18n;
 use clawcrew_runtime::security::pairing::PairingGuard;
 
 /// How long a successful `getUpdates` exchange stays evidence that the listener

@@ -58,7 +58,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 
 **Rust — kualitas & kontrak**
 - [ ] **PR-30** `refactor/rust-unwrap-burndown-<crate>` (berseri) · R-02 · GW-1 · PR-10 · satu PR per crate (gateway, channels, runtime…), nol hit produksi · L
-- [ ] **PR-31** `refactor/extract-i18n` · R-10 · GW-1 · PR-10 · 87 ref channels → crate kecil · M
+- [x] **PR-31** `refactor/extract-i18n` · R-10 · GW-1 · PR-10 · [Selesai] 87 ref channels diarahkan langsung ke crate `galleon-i18n` · M
 - [ ] **PR-32** `refactor/extract-scrub` · R-11 · GW-1,8 · PR-10 · 36 ref; scrubbing log tetap · M
 - [ ] **PR-33** `refactor/api-traits-for-channels` · R-12 · GW-1,5 · PR-10 · tools-scoped/memory_strategy/hooks/sop::types → trait di `api` · L
 - [ ] **PR-34** `refactor/channels-decouple-runtime` · R-13 · GW-1,6 · PR-31, PR-32, PR-33 · 677 ref → 0; gerbang R-04 mengunci · L

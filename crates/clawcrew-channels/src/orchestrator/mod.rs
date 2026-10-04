@@ -357,11 +357,11 @@ enum OverrideScope {
 }
 
 fn channel_runtime_cli_string(key: &str) -> String {
-    clawcrew_runtime::i18n::get_required_cli_string(key)
+    galleon_i18n::get_required_cli_string(key)
 }
 
 fn channel_runtime_cli_string_with_args(key: &str, args: &[(&str, &str)]) -> String {
-    clawcrew_runtime::i18n::get_required_cli_string_with_args(key, args)
+    galleon_i18n::get_required_cli_string_with_args(key, args)
 }
 
 fn append_provider_fallback_footer(
@@ -1339,7 +1339,7 @@ fn send_conversation_busy(
     };
     if let Some(channel) = find_channel_for_message(&ctx.channels_by_name, msg).cloned() {
         let reply =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-conversation-busy");
+            galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
         let reply_target = msg.reply_target.clone();
         let thread_ts = msg.thread_ts.clone();
         let tracked_task = busy_notice_tasks.track();
@@ -4960,7 +4960,7 @@ async fn handle_runtime_command_for_delivery(
                         })),
                     "agent-scope /model override rejected"
                 );
-                clawcrew_runtime::i18n::get_required_cli_string_with_args(
+                galleon_i18n::get_required_cli_string_with_args(
                     "channel-runtime-agent-scope-rejected",
                     &[
                         ("sender", msg.sender.as_str()),
@@ -9280,7 +9280,7 @@ async fn process_channel_message_body(
             .filter(|channel| channel.supports_outbound_send())
             && let Some(notice_key) = kind.notice_key()
         {
-            let notice_text = clawcrew_runtime::i18n::get_required_cli_string(notice_key);
+            let notice_text = galleon_i18n::get_required_cli_string(notice_key);
             let send_result = channel
                 .send(&build_no_reply_notice(&msg, notice_text.clone()))
                 .await;
@@ -10571,7 +10571,7 @@ async fn process_channel_message_body(
                 // Localized error text (master) delivered with suppress_voice
                 // (RFCerror-path fix): cancel the draft, then send as
                 // text so a timeout notice is never read aloud on a voice peer.
-                let error_text = clawcrew_runtime::i18n::get_required_cli_string(
+                let error_text = galleon_i18n::get_required_cli_string(
                     "channel-runtime-request-timeout",
                 );
                 if let Some(draft_id) = draft_message_id.as_deref() {
@@ -11497,13 +11497,13 @@ async fn run_message_dispatch_loop(
                     });
 
             let reply = if had_registered_turn || cancelled_bucket {
-                clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent")
+                galleon_i18n::get_required_cli_string("channel-runtime-stop-sent")
             } else if folded_into_another_scope {
-                clawcrew_runtime::i18n::get_required_cli_string(
+                galleon_i18n::get_required_cli_string(
                     "channel-runtime-stop-folded-followup",
                 )
             } else {
-                clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task")
+                galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task")
             };
             let channel = find_channel_for_message(&ctx.channels_by_name, &msg).cloned();
             if let Some(channel) = channel {
@@ -15744,8 +15744,8 @@ pub async fn start_channels_with_plugin_webhooks(
         .as_deref()
         .filter(|s| !s.is_empty())
         .map(ToString::to_string)
-        .unwrap_or_else(clawcrew_runtime::i18n::detect_locale);
-    clawcrew_runtime::i18n::init(&i18n_locale);
+        .unwrap_or_else(galleon_i18n::detect_locale);
+    galleon_i18n::init(&i18n_locale);
 
     // Single session backend shared across agents — they're scoped by
     // `session_key` (which already encodes `<channel_type>.<alias>`), so

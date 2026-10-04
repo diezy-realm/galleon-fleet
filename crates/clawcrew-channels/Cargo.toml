@@ -19,6 +19,7 @@ clawcrew-providers.workspace = true
 clawcrew-runtime.workspace = true
 clawcrew-tool-call-parser.workspace = true
 clawcrew-tools.workspace = true
+galleon-i18n.workspace = true
 # RF-B1: the Signal channel is split into its own feature-crate. The monolith
 # re-exports it (`pub use galleon_channel_signal as signal`) so existing callers
 # (`crate::signal::SignalChannel`) keep compiling. Optional, behind

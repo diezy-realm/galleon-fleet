@@ -15,7 +15,7 @@ Build Windows: `$env:CARGO_TARGET_DIR="target/agent"`; test: `cargo nextest run 
 
 ## R-1x Putus kopling & pecah crate (setelah R-00)
 
-- [ ] **R-10 (P1, L) Ekstrak `i18n`** dari runtime (87 ref dari channels) ke crate kecil. Dep: R-00, R-04. *Status 2026-10-04: crate `galleon-i18n` sudah ada; sisa repoint 87 ref di channels.*
+- [x] **R-10 (P1, L) Ekstrak `i18n`** [Selesai PR-31] Dependensi `galleon-i18n` dikonfigurasi di `clawcrew-channels` dan seluruh 87 pemanggilan dialihkan dari runtime ke `galleon_i18n`.
 - [ ] **R-11 (P1, L) Ekstrak `security::scrub`** (36 ref) ke crate/ke `clawcrew-infra`. Dep: R-00.
 - [ ] **R-12 (P1, L) Pisahkan kontrak tools-scoped / memory_strategy / hooks / sop::types** yang dipakai channels menjadi trait di `clawcrew-api`. Dep: R-00.
 - [ ] **R-13 (P1, L) `channels` tidak bergantung ke `runtime`** (677 ref → 0). Dep: R-10..R-12. Acceptance: edge dihapus di `cargo metadata`; gerbang R-04 mengunci.

@@ -2389,7 +2389,7 @@ impl AcpServer {
     /// persisted inline. The stored transcript keeps the sentinel; client
     /// replay projects it separately (`history_notifications_for_message`).
     fn project_failure_sentinels(seed: &mut [SeededMessage]) {
-        let localized = clawcrew_runtime::i18n::get_required_cli_string("turn-failed");
+        let localized = galleon_i18n::get_required_cli_string("turn-failed");
         for (message, _) in seed {
             if Self::is_failure_sentinel(message) {
                 *message = ConversationMessage::Chat(ChatMessage::assistant(localized.clone()));
@@ -2411,7 +2411,7 @@ impl AcpServer {
         mut messages: Vec<ConversationMessage>,
     ) -> Vec<ConversationMessage> {
         let interrupted =
-            clawcrew_runtime::i18n::get_required_cli_string("turn-interrupted-by-user");
+            galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
         if let Some(ConversationMessage::Chat(chat)) = messages.last_mut()
             && chat.role == "assistant"
         {
@@ -2741,7 +2741,7 @@ impl AcpServer {
     }
 
     fn cancelled_prompt_result(session_id: String, accumulated_text: &str) -> Value {
-        let marker = clawcrew_runtime::i18n::get_required_cli_string("turn-cancelled-client-rpc");
+        let marker = galleon_i18n::get_required_cli_string("turn-cancelled-client-rpc");
         let content = if accumulated_text.is_empty() {
             marker
         } else {
@@ -2751,7 +2751,7 @@ impl AcpServer {
     }
 
     fn turn_cancelled_notification(session_id: &str) -> JsonRpcNotification {
-        let marker = clawcrew_runtime::i18n::get_required_cli_string("turn-cancelled-client-rpc");
+        let marker = galleon_i18n::get_required_cli_string("turn-cancelled-client-rpc");
         JsonRpcNotification {
             jsonrpc: "2.0",
             method: "session/update",
@@ -3531,7 +3531,7 @@ fn history_notifications_for_message(
             // locale replays with the current locale's `[turn failed]` text
             // instead of leaking the raw sentinel to the client.
             if AcpServer::is_failure_sentinel(msg) {
-                let localized = clawcrew_runtime::i18n::get_required_cli_string("turn-failed");
+                let localized = galleon_i18n::get_required_cli_string("turn-failed");
                 return vec![JsonRpcNotification {
                     jsonrpc: "2.0",
                     method: "session/update",
@@ -5778,14 +5778,14 @@ mod tests {
             with_partial["content"],
             format!(
                 "partial text\n\n{}",
-                clawcrew_runtime::i18n::get_required_cli_string("turn-cancelled-client-rpc")
+                galleon_i18n::get_required_cli_string("turn-cancelled-client-rpc")
             )
         );
 
         let marker_only = AcpServer::cancelled_prompt_result("test-sid".to_string(), "");
         assert_eq!(
             marker_only["content"],
-            clawcrew_runtime::i18n::get_required_cli_string("turn-cancelled-client-rpc")
+            galleon_i18n::get_required_cli_string("turn-cancelled-client-rpc")
         );
     }
 
@@ -7074,7 +7074,7 @@ mod tests {
                 );
                 assert_ne!(
                     chat.content,
-                    clawcrew_runtime::i18n::get_required_cli_string("turn-failed"),
+                    galleon_i18n::get_required_cli_string("turn-failed"),
                     "the durable boundary must not be the localized rendering"
                 );
             }
@@ -7832,7 +7832,7 @@ mod tests {
             .await
             .expect("the next prompt must reach the provider");
 
-        let marker = clawcrew_runtime::i18n::get_required_cli_string("turn-interrupted-by-user");
+        let marker = galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
         let requests = requests.lock();
         assert_eq!(requests.len(), 1, "expected exactly one provider request");
         assert!(
@@ -7885,7 +7885,7 @@ mod tests {
             .unwrap();
         // ...and a later turn was client-cancelled (structured sentinel stored).
         let interrupted =
-            clawcrew_runtime::i18n::get_required_cli_string("turn-interrupted-by-user");
+            galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
         store
             .append_turn(
                 session_id,
@@ -8119,7 +8119,7 @@ mod tests {
             );
         }
         let omitted =
-            clawcrew_runtime::i18n::get_required_cli_string("turn-failed-attachment-omitted");
+            galleon_i18n::get_required_cli_string("turn-failed-attachment-omitted");
         assert!(
             requests[0]
                 .iter()
@@ -8183,7 +8183,7 @@ mod tests {
         );
         assert_ne!(
             stored_marker,
-            clawcrew_runtime::i18n::get_required_cli_string("turn-failed"),
+            galleon_i18n::get_required_cli_string("turn-failed"),
             "the durable boundary must not be the active locale's rendering"
         );
 
@@ -8206,7 +8206,7 @@ mod tests {
         while let Ok(msg) = writer_rx.try_recv() {
             notifications.push(msg);
         }
-        let localized = clawcrew_runtime::i18n::get_required_cli_string("turn-failed");
+        let localized = galleon_i18n::get_required_cli_string("turn-failed");
         assert!(
             notifications.iter().any(|n| n.contains("cross-locale.png")),
             "the client must still replay the attachment the user sent: {notifications:?}"
@@ -8256,7 +8256,7 @@ mod tests {
             );
         }
         let omitted =
-            clawcrew_runtime::i18n::get_required_cli_string("turn-failed-attachment-omitted");
+            galleon_i18n::get_required_cli_string("turn-failed-attachment-omitted");
         assert!(
             requests[0]
                 .iter()
@@ -8425,7 +8425,7 @@ mod tests {
             );
         }
         let omitted =
-            clawcrew_runtime::i18n::get_required_cli_string("turn-failed-attachment-omitted");
+            galleon_i18n::get_required_cli_string("turn-failed-attachment-omitted");
         assert!(
             requests[1]
                 .iter()
@@ -8543,7 +8543,7 @@ mod tests {
             .expect("the next prompt must reach the provider");
 
         let omitted =
-            clawcrew_runtime::i18n::get_required_cli_string("turn-failed-attachment-omitted");
+            galleon_i18n::get_required_cli_string("turn-failed-attachment-omitted");
         {
             let restore_requests = restore_requests.lock();
             assert_eq!(restore_requests.len(), 1, "expected one provider request");
@@ -8826,7 +8826,7 @@ mod tests {
         while let Ok(message) = writer_rx.try_recv() {
             notifications.push(serde_json::from_str::<serde_json::Value>(&message).unwrap());
         }
-        let old_sentinel = clawcrew_runtime::i18n::get_required_cli_string("turn-failed");
+        let old_sentinel = galleon_i18n::get_required_cli_string("turn-failed");
         let replayed_text = |notifications: &[serde_json::Value]| {
             notifications
                 .iter()
@@ -8946,7 +8946,7 @@ mod tests {
         use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
 
         let interrupted =
-            clawcrew_runtime::i18n::get_required_cli_string("turn-interrupted-by-user");
+            galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
 
         // The runtime tags a cancelled turn with a standalone generic marker.
         let standalone = AcpServer::cancelled_turn_transcript(vec![
@@ -9154,9 +9154,9 @@ mod tests {
         use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
 
         let interrupted =
-            clawcrew_runtime::i18n::get_required_cli_string("turn-interrupted-by-user");
+            galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
         let client_cancel =
-            clawcrew_runtime::i18n::get_required_cli_string("turn-cancelled-client-rpc");
+            galleon_i18n::get_required_cli_string("turn-cancelled-client-rpc");
 
         let cwd = tempfile::tempdir().unwrap();
         let store =

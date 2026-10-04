@@ -13304,7 +13304,7 @@
         entries
             .into_iter()
             .map(|(command, key)| {
-                let description = clawcrew_runtime::i18n::get_required_cli_string(key);
+                let description = galleon_i18n::get_required_cli_string(key);
                 assert!(
                     !description.starts_with('{'),
                     "description for /{command} resolved to the missing-key sentinel: {description}"
@@ -13391,7 +13391,7 @@
     #[tokio::test]
     #[ignore = "subprocess helper for process-global French locale"]
     async fn register_bot_commands_french_payload_helper() {
-        clawcrew_runtime::i18n::init("fr");
+        galleon_i18n::init("fr");
 
         use wiremock::matchers::{body_json, method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
