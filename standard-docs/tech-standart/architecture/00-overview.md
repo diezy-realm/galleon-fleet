@@ -19,7 +19,7 @@
 
 ---
 
-## Tier Boundaries (STRICT)
+> **Catatan verifikasi 2026-10-04:** antarmuka aktif = `web-2` + `apps/tauri-2`; persistensi Go saat ini JSON/JSONL di disk (bukan SQLite); 27 crate, Go 1.27.1; `ExecuteTurn` sudah ada. Rincian: `../../foundation/04-drift-register-and-hygiene.md`.`n`n## Tier Boundaries (STRICT)
 
 ### 1. Desktop Shell (Tauri)
 - **Owned:** Window lifecycle, system tray, OS dialogs, native notifications, `.exe` packaging

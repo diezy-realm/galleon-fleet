@@ -2,7 +2,9 @@
 
 **Single source of truth for architecture, conventions, and design standards.**
 
-Last updated: 2026-10-03
+Last updated: 2026-10-04
+
+> **Alias (ODR-01):** `web-2` dan `tauri-2` = `web/` dan `apps/tauri/`. Lihat `../decisions/owner-decisions/ODR-2026-10-04-product-direction.md`.
 
 ---
 
@@ -19,7 +21,7 @@ These docs are **prescriptive** (how things SHOULD be), not descriptive (how thi
 
 ---
 
-## Directory Structure
+> Fondasi deskriptif repo (peta, permukaan aktif web-2/tauri-2, drift register): [`../foundation/`](../foundation/README.md).`n`n## Directory Structure
 
 ```
 standard-docs/
@@ -37,6 +39,10 @@ standard-docs/
 │   ├── rust-conventions.md
 │   ├── tauri-conventions.md
 │   └── web-conventions.md
+├── code-quality/               # Batas ukuran file/crate, arah dependency, lint produksi (Rust)
+│   └── rust-module-size-and-decomposition-standard.md
+├── plugin-standard/            # Standar codebase plugin & channel (Tier A/B/C, WASI, manifest)
+│   └── plugin-codebase-standard.md
 ├── design-system/              # UI standards
 │   ├── colors.md
 │   ├── typography.md
