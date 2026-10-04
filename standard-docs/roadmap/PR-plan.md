@@ -47,7 +47,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [x] **PR-14** `chore/web-remove-aistudio-artifacts` · U-05, U-15 · GW-3 · PR-12 · [Selesai] Copot `@google/genai`, `better-sqlite3`, `qrcode`; hapus `metadata.json`, `bun.lock`, `web/.github/`, `web/Dockerfile`, `seedData.ts`; deklarasikan `@tauri-apps/api` di web; rename `galleon-web` · S
 - [x] **PR-15** `feat/go-terminal-policy-endpoint` · G-04 · GW-2,4,8 · PR-05 · [Selesai] `POST /api/terminal/exec` & alias `/api/engine/execute`: risk-tier, approval gate, routing ke SystemGateway `bash`, audit log (`/api/terminal/audit`), web `apiClient` terhubung · M
 - [x] **PR-16** `fix/go-remove-ollama-probe` · G-02 · GW-2,4 · PR-05 · [Selesai] Hapus route & handler `/api/providers/ollama/status`, hapus probe HTTP `checkOllama` (11434), selaraskan `d-3` ke System Gateway (:50052), hapus `getOllamaStatus` di web · S
-- [ ] **PR-17** `chore/legacy-removal-docs-archive` · N-11 · GW-0 · PR-06 ⚑ · buat tag `archive/pre-galleon`; hapus `docs/_archive`; perbaiki rujukan `docs/book` di AGENTS.md · M
+- [x] **PR-17** `chore/legacy-removal-docs-archive` · N-11 · GW-0 · PR-06 ⚑ · [Selesai] Tag `archive/pre-galleon` dibuat; hapus `docs/_archive` (307 file); perbaiki rujukan `docs/book` di `AGENTS.md` · M
 - [ ] **PR-18** `chore/legacy-removal-agent-skills-and-workflows` · N-13, N-14 · GW-0 · PR-06 ⚑ · skill & workflow khusus ClawCrew · S
 - [ ] **PR-19** `chore/legacy-removal-packaging-fixtures-i18n` · N-15, N-16, N-17 · GW-0 · PR-06 ⚑ · `dist/`, `nix/`, `deploy-k8s/`, fixture, locale tak terpakai · M
 - [ ] **PR-20** `docs/drift-sync` · D-02, D-05, D-06, D-09, R-05 · GW-7 · PR-00 · selaraskan klaim usang (D1–D14), MSRV, jumlah crate, `.kiro`, otoritas `docs/README.md`, PRD · M

@@ -11,7 +11,7 @@ Acuan: `tech-standart/naming/naming-map.md` (disetujui), ODR-16/17/19. Aturan: *
 ## B. Hapus Legacy (Gelombang 1)
 
 - [x] **RB-10 · N-10 · PR-02 (P0, S) Hapus `bin/engine.exe`** [Selesai PR-02] Binary 40MB `bin/engine.exe` dihapus dari git tracking (`git rm bin/engine.exe`) dan `.gitignore` diperbarui mengabaikan `/bin/` dan `apps/tauri/target/`.
-- [ ] **RB-11 · N-11 · PR-17 (P1, M) ⚑ `docs/_archive` (307 file):** tag `archive/pre-galleon`, hapus, perbaiki rujukan `docs/book` di `AGENTS.md`.
+- [x] **RB-11 · N-11 · PR-17 (P1, M) ⚑ `docs/_archive` (307 file):** [Selesai PR-17] Tag `archive/pre-galleon` dibuat, direktori `docs/_archive` (307 file) dihapus dari git tracking (`git rm -r docs/_archive`), dan rujukan `docs/book` di `AGENTS.md` diperbarui ke path canonical `standard-docs/`.
 - [ ] **RB-12 · N-12 · PR-62 (P1, M) ⚑ Hapus kode warisan tak terpakai** hasil R-00 (REST/WS/A2A, hardware/peripheral). Terkait 08 §C.
 - [ ] **RB-13 · N-13 · PR-18 (P1, S) ⚑ Skill agent khusus ClawCrew.**
 - [ ] **RB-14 · N-14 · PR-18 (P1, S) ⚑ Workflow CI khusus ClawCrew.**
