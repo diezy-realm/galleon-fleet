@@ -1,6 +1,6 @@
 # Naming Map — Lama → Galleon (draf untuk sign-off Owner)
 
-> **Status:** DRAF (N-00). Berlaku setelah Owner menyetujui. Basis: ODR-16, ODR-17, ODR-18.
+> **Status:** DISETUJUI Owner 2026-10-04 (N-00). Berlaku. Basis: ODR-16, ODR-17, ODR-18.
 > Fakta diambil dari kode 2026-10-04. Kolom *Strategi* menentukan apakah perlu migrasi data.
 
 ## 1. Binary & aplikasi

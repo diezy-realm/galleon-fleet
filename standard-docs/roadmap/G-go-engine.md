@@ -35,5 +35,6 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 - [ ] **G-30 (P1, L) Agent loop/turn orchestration** lengkap di Go (tool-call loop, kompaksi, batas iterasi) di atas ExecuteTurn Rust. Dep: R-00.
 - [ ] **G-31 (P1, L) SOP engine**: definisi, eksekusi, approval gate di Go. Dep: R-00.
 - [ ] **G-32 (P2, M) Skills & scheduler (cron)** di Go terikat Squad/Crew. Dep: R-00.
+- [ ] **G-34 (P2, M) Padanan `control_plane` & `approval`** di Go (fleet governance, approval gate) — cek duplikasi dengan `fleet/policies.go`. Dep: R-00.
 - [ ] **G-33 (P2, M) Sub-agent / handoff / A2A** sebagai Artifact reference antar Crew di Go. Dep: R-00.
 

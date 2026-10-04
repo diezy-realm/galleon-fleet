@@ -12,7 +12,7 @@ Ref: ODR-16. Pola yang dicari: `zeroclaw`, `zerocode`, `zerorelay`, `claw-crew`,
 
 ## N-0x Keputusan & alat (wajib dulu)
 
-- [ ] **N-00 (P0, S) Matriks penamaan resmi** — *ODR-19: tanpa alias; draf selesai: `tech-standart/naming/naming-map.md`; menunggu sign-off Owner (3 pertanyaan terbuka §8).* `standard-docs/tech-standart/naming/naming-map.md`: lama→baru untuk crate, binary (`clawcrew`→`galleon`; `zerocode`→`galleoncode`; `zerorelay`→`galleonrelay`), paket npm, env var, direktori config, service name, bundle id, WIT package (v0 beku; v1 = `galleon:plugin`), header HTTP, metric prefix, Docker image. Owner sign-off. Out: eksekusi.
+- [x] **N-00 (P0, S) Matriks penamaan resmi** — *DISETUJUI Owner 2026-10-04. ODR-19: tanpa alias; draf selesai: `tech-standart/naming/naming-map.md`; menunggu sign-off Owner (3 pertanyaan terbuka §8).* `standard-docs/tech-standart/naming/naming-map.md`: lama→baru untuk crate, binary (`clawcrew`→`galleon`; `zerocode`→`galleoncode`; `zerorelay`→`galleonrelay`), paket npm, env var, direktori config, service name, bundle id, WIT package (v0 beku; v1 = `galleon:plugin`), header HTTP, metric prefix, Docker image. Owner sign-off. Out: eksekusi.
 - [ ] **N-01 (P0, S) Inventaris klasifikasi** tiap hit: *rename* / *delete* / *keep (historis)* / *needs-migration*. Output CSV di `files/` + ringkasan; pakai pencarian case-insensitive untuk varian `Claw Crew`, `claw_crew`, `CLAWCREW`.
 - [ ] **N-02 (P1, M) Skrip rename mekanis + gerbang CI** yang gagal bila pola terlarang muncul di jalur non-whitelist (`scripts/ci/brand_gate.sh`). Dep: N-00, N-01.
 

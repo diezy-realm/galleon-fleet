@@ -31,7 +31,7 @@ Format: `[ ] PR-xx  branch · tiket · gerbang · Dep · fokus review Principle`
 - [ ] **PR-02** `chore/remove-engine-binary` · N-10 · GW-0 · – · `.gitignore`, tidak force-push
 - [ ] **PR-03** `fix/tauri-frontend-dist` · U-01, P-01 · GW-0,3 · – · `frontendDist=../../web/dist`; `cargo check -p fleet-ai-desktop`; workspace hijau
 - [ ] **PR-04** `security/remove-tauri-terminal-and-fake-metrics` · U-06, U-07 · GW-3,4,8 · (G-04 untuk pengganti; sementara UI nonaktif) · tidak ada eksekusi shell di Tauri; tidak ada data palsu
-- [ ] **PR-05** `docs/runtime-inventory` · R-00 · GW-0,7 · – · **tabel keputusan per modul + pemanggil**; belum ada penghapusan kode
+- [ ] **PR-05** `docs/runtime-inventory` · R-00 (draf: `R-00-runtime-inventory.md`) · GW-0,7 · – · **tabel keputusan per modul + pemanggil**; belum ada penghapusan kode
 - [ ] **PR-06** `security/go-fail-closed-tools` · G-01, G-03, G-05 · GW-2,4,8 · – · tidak ada `os/exec`/fs lokal; test fail-closed
 - [ ] **PR-07** `docs/inventory-brand-hits` · N-01 · GW-0 · PR-01 · klasifikasi rename/delete/keep/migrate
 
@@ -55,7 +55,7 @@ Format: `[ ] PR-xx  branch · tiket · gerbang · Dep · fokus review Principle`
 - [ ] **PR-22** `refactor/api-traits-for-channels` · R-12 · GW-1,5 · PR-05
 - [ ] **PR-23** `refactor/channels-decouple-runtime` · R-13 · GW-1,6 · PR-20..22
 - [ ] **PR-24** `refactor/gateway-decouple-runtime-remove-rest` · R-14, N-12 (bagian gateway) · GW-1,5,6 · PR-05, sign-off Owner
-- [ ] **PR-25** `refactor/runtime-shrink` · R-16, R-17 · GW-1,6 · PR-05, **sign-off Owner per modul**
+- [ ] **PR-25** `refactor/runtime-shrink-<modul>` (1 PR per modul, urutan di R-00 §3) · R-16, R-17 · GW-1,6 · PR-05, **sign-off Owner per modul**
 - [ ] **PR-26** `refactor/split-channels` · R-15, R-32 · GW-1 · PR-23 (satu PR per kelompok channel)
 - [ ] **PR-27** `fix/grpc-execute-task` · R-20, R-21, R-22, R-23, R-24 · GW-1,5,6,8 · –
 - [ ] **PR-28** `docs/adr-persistence` · G-10 · GW-7 · –

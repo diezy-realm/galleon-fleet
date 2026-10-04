@@ -44,11 +44,11 @@ flowchart LR
 | Lane | Total | Selesai |
 |---|---|---|
 | R | 29 | 0 |
-| G | 23 | 0 |
+| G | 24 | 0 |
 | U | 14 | 0 |
 | P | 12 | 0 |
 | D | 10 | 0 |
-| N | 22 | 0 |
+| N | 22 | 1 |
 
 ## Gelombang
 
