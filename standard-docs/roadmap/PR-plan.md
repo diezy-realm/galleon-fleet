@@ -32,10 +32,10 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 
 - [ ] **PR-00** `feat/refactoring-rust` → main · D-01 (+ N-00 ✔, R-00 ✔ sebagai dokumen) · GW-0,7 · – · 13 commit lokal: penggantian `web/`+`apps/tauri/`, `standard-docs/` (foundation, product, roadmap, ODR, R-00/R-00a, naming, research), agent config. Principle: pastikan commit terpisah per concern, tidak ada rahasia · M
 - [ ] **PR-01** `docs/alias-notes-normative` · D-03 · GW-0,7 · PR-00 · catatan alias `web-2`/`tauri-2` di dokumen normatif (bukan ADR) · S
-- [ ] **PR-02** `chore/remove-engine-binary` · N-10 · GW-0 · – · `bin/engine.exe` + `.gitignore`; tanpa force-push · S
-- [ ] **PR-03** `fix/tauri-frontend-dist` · U-01, P-01 · GW-0,3 · – · `frontendDist=../../web/dist`; `cargo metadata` hijau (saat ini gagal: *multiple workspace roots*, lihat FD-A1b); `cargo check` di `apps/tauri` · S
-- [ ] **PR-04** `security/tauri-remove-terminal-and-fake-metrics` · U-06, U-07, U-16 · GW-3,4,8 · – · tak ada eksekusi shell/koleksi lokal/metrik palsu di Tauri, `server.ts` tanpa `/api/engine/execute`; terminal UI dinonaktifkan sementara ⚑ · S
-- [ ] **PR-05** `security/go-fail-closed-tools` · G-01, G-03, G-05, G-38 · GW-2,4,8 · – · tak ada `os/exec`/fs lokal; test fail-closed saat Rust mati; gerbang import · M
+- [x] **PR-02** `chore/remove-engine-binary` · N-10 · GW-0 · – · [Selesai commit fabeb12c1] `bin/engine.exe` dihapus dari git tracking + `.gitignore` ignore /bin/ dan apps/tauri/target/ · S
+- [x] **PR-03** `fix/tauri-frontend-dist` · U-01, P-01 · GW-0,3 · – · [Selesai commit ec31d7562] `frontendDist=../../web/dist`; root Cargo.toml `exclude = ["apps/tauri"]`; `cargo metadata --no-deps` dan `cargo check` hijau · S
+- [x] **PR-04** `security/tauri-remove-terminal-and-fake-metrics` · U-06, U-07, U-16 · GW-3,4,8 · – · [Selesai commit 36e6774a8] Hapus `execute_terminal_command`, proxy `get_collection`/`save_collection` dan `get_engine_processes` ke Go :9090; `web/server.ts` matikan RCE `POST /api/engine/execute` & duplikat Ollama/processes; terminal dikunci · S
+- [x] **PR-05** `security/go-fail-closed-tools` · G-01, G-03, G-38 · GW-2,4,8 · – · [Selesai commit 131930265] Hapus sisa eksekusi shell/fs lokal di `services.go`, `sandbox.go`, hapus `plugin.go` & `mcp_client.go`; grep os/exec = 0; fail-closed direct dispatch denial test pass; `resolveDataDir` (`GALLEON_DATA_DIR`) + test path traversal · M
 - [ ] **PR-06** `docs/brand-hit-inventory` · N-01 · GW-0 · PR-00 · klasifikasi rename/delete/keep/migrate (CSV + ringkasan) · S
 
 ### Gelombang 1 — gerbang kualitas & pembersihan

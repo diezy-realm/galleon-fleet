@@ -12,7 +12,7 @@ Gerbang: GW-0, GW-6 (integrasi), GW-8. Prinsip: Nginx hanya reverse proxy + TLS 
 
 ## B. Build, Docker, Workspace
 
-- [ ] **PL-B1 · P-01 · PR-03 (P0, S) Workspace Cargo hijau** pasca-migrasi (lihat FD-A1).
+- [x] **PL-B1 · P-01 · PR-03 (P0, S) Workspace Cargo hijau** [Selesai PR-03] `exclude = ["apps/tauri"]` ditambahkan di root Cargo.toml, `frontendDist` diarahkan ke `../../web/dist`. `cargo metadata --no-deps` dan `cargo check` hijau.
 - [ ] **PL-B2 · P-02 + P-03 · PR-90 (P1, M) Dockerfile & `include` `/web/dist`:** sesuaikan stub `apps/tauri`; putuskan UI di-embed vs disajikan Nginx (ADR kecil); target server Go + Rust gateway.
 
 ## C. Deploy Remote

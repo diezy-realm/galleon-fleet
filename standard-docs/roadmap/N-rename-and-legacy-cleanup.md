@@ -18,7 +18,7 @@ Ref: ODR-16. Pola yang dicari: `zeroclaw`, `zerocode`, `zerorelay`, `claw-crew`,
 
 ## N-1x Hapus yang tidak relevan (lakukan SEBELUM rename agar volume turun)
 
-- [ ] **N-10 (P0, S) Hapus `bin/engine.exe` dari git** + `.gitignore`; bersihkan riwayat hanya bila ada alasan (diskusikan, jangan force-push).
+- [x] **N-10 (P0, S) Hapus `bin/engine.exe` dari git** [Selesai PR-02] Binary 40MB `bin/engine.exe` dihapus dari git tracking (`git rm bin/engine.exe`) dan `.gitignore` diperbarui mengabaikan `/bin/` dan `apps/tauri/target/`.
 - [ ] **N-11 (P1, M) `docs/_archive/` (307 file tracked)** — hapus atau pindah ke tag git `archive/clawcrew`; tinggalkan pointer. AGENTS.md merujuk `docs/book/...` yang sudah tidak ada → perbaiki.
 - [ ] **N-12 (P1, M) Hapus kode warisan tak terpakai** hasil R-00: REST/WS/A2A gateway (`api*.rs`, `ws.rs`, `a2a.rs`) bila tak ada pemakai; hardware/peripheral tak relevan; sub-sistem yang tidak masuk produk Galleon. Dep: R-00, sign-off Owner.
 - [ ] **N-13 (P1, S) `.claude/skills`, `.agents`, `.kiro`, `.gemini`, `.copilot`:** hapus skill khusus ClawCrew (changelog, feature-matrix-parity, github-issue-triage, pr-architecture-check, wit-breaking-change-check bila tak relevan); pertahankan yang netral. (Skill ini dimuat otomatis dan menyesatkan agent.)
