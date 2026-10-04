@@ -3,7 +3,7 @@
 **Status:** Normative (code MUST follow this)  
 **Last updated:** 2026-10-03  
 **Rust edition:** 2024  
-**MSRV:** 1.82+
+**MSRV:** 1.96.0
 
 ---
 
@@ -16,7 +16,7 @@ crates/
 ├── clawcrew-providers/       # LLM vendor APIs (SSOT ADR 0001)
 ├── clawcrew-channel-*/       # Channel plugins (Discord, Telegram, etc.)
 ├── clawcrew-tools-*/         # Native tools (filesystem, shell, network)
-└── [25 total crates]
+└── [27 total crates]
 ```
 
 **Root `Cargo.toml`:**
@@ -33,7 +33,7 @@ resolver = "2"
 
 [workspace.package]
 edition = "2024"
-rust-version = "1.82"
+rust-version = "1.96.0"
 license = "Apache-2.0"
 
 [workspace.dependencies]

@@ -10,7 +10,7 @@ Build Windows: `$env:CARGO_TARGET_DIR="target/agent"`; test: `cargo nextest run 
 - [ ] **R-02 (P1, M) Burn-down `unwrap/expect` produksi** (±400 hit; runtime 237). Per crate, mulai `gateway`, `channels`. Dep: R-01. Acceptance: nol hit di jalur produksi atau invariant terdokumentasi.
 - [ ] **R-03 (P1, S) Gerbang ukuran file/crate** di `tests/architecture/` sesuai `rust-module-size-and-decomposition-standard.md`; daftar pengecualian bertanggal. Acceptance: CI gagal bila file baru melewati batas.
 - [ ] **R-04 (P1, S) Gerbang arah dependency antar-crate** (`cargo metadata`); larang `plugins→runtime`, `channels→runtime` baru, dst. Acceptance: test gagal pada edge terlarang.
-- [ ] **R-05 (P2, S) Selaraskan `rust-conventions.md`** (MSRV 1.96, jumlah crate 27). Dep: –.
+- [x] **R-05 (P2, S) Selaraskan `rust-conventions.md`** [Selesai PR-20] MSRV 1.96.0 dan jumlah 27 crates diselaraskan dengan root `Cargo.toml`. Dep: –.
 - [ ] **R-06 (P2, S) Ukur waktu build/test baseline** (cold/warm, `nextest`) dan simpan di `foundation/03`.
 
 ## R-1x Putus kopling & pecah crate (setelah R-00)

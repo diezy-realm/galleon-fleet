@@ -4,10 +4,10 @@ Gerbang: GW-7. ADR/ODR lama tidak diedit; koreksi lewat file baru (errata/addend
 
 - [ ] **GV-01 · D-01 · PR-00 (P0, S) Commit terpisah per concern** lalu PR dari `feat/refactoring-rust` (commit lokal sudah dipisah; belum di-push).
 - [x] **GV-02 · D-03 · PR-01 (P1, S) Catatan alias `web-2`/`tauri-2`** di 5 dokumen normatif (`tauri-conventions`, `web-conventions`, `00-overview`, `01-boundary-policy`, `http-engine-api.md`) merujuk ODR-01. `finalize/` sudah diseragamkan ke `web/`/`apps/tauri/`.
-- [ ] **GV-03 · D-02 · PR-20 (P1, M) Sinkron drift D1–D14** (`foundation/04`).
-- [ ] **GV-04 · D-05 · PR-20 (P1, S) `.kiro/steering`:** rujukan `docs/finalize`/`docs/fundamental` → `standard-docs/`.
-- [ ] **GV-05 · D-06 · PR-20 (P2, S) `docs/README.md`:** nyatakan `standard-docs/` = SSOT Galleon.
-- [ ] **GV-06 · D-09 · PR-20 (P2, M) `prd-hybrid-engine.md`:** perbarui atau tandai superseded.
+- [x] **GV-03 · D-02 · PR-20 (P1, M) Sinkron drift D1–D14** (`foundation/04`): [Selesai PR-20] Klaim MSRV (1.96.0), jumlah crate (27), Go 1.27+, dan rujukan SSOT disinkronkan.
+- [x] **GV-04 · D-05 · PR-20 (P1, S) `.kiro/steering`:** [Selesai PR-20] Rujukan `docs/finalize`/`docs/fundamental` diarahkan ke kanonikal `standard-docs/`.
+- [x] **GV-05 · D-06 · PR-20 (P2, S) `docs/README.md`:** [Selesai PR-20] Dibuat `docs/README.md` menyatakan `standard-docs/` = SSOT Galleon Fleet, dan `docs/` berisi lineage historis.
+- [x] **GV-06 · D-09 · PR-20 (P2, M) `prd-hybrid-engine.md`:** [Selesai PR-20] Diberi notice tegas superseded oleh `product/galleon-product-definition.md`.
 - [ ] **GV-07 · D-04 · PR-21 (P1, S) Errata ADR-001** (file baru).
 - [ ] **GV-08 · D-07 · PR-21 (P2, M) Rapikan steering agent:** satu sumber, lainnya pointer.
 - [ ] **GV-09 · D-08 · PR-21 (P2, S) Kebersihan root** & putuskan `decisions/bug-fix/`.

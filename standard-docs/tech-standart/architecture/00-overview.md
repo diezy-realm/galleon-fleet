@@ -13,8 +13,8 @@
 | Tier | Runtime | Port/Interface | Responsibility |
 |------|---------|----------------|----------------|
 | **Desktop Shell** | Tauri v2 (Rust) | IPC | OS integration (window, tray, dialog, packaging) |
-| **System Core** | Rust 2024 (25 crates) | gRPC :50052 | Security microkernel, sandbox, tools, LLM execution, channels |
-| **AI Orchestrator** | Go 1.25+ | gRPC :50051 + HTTP :9090 | Agent brain, fleet governance, RAG, persistensi |
+| **System Core** | Rust 2024 (27 crates) | gRPC :50052 | Security microkernel, sandbox, tools, LLM execution, channels |
+| **AI Orchestrator** | Go 1.27+ | gRPC :50051 + HTTP :9090 | Agent brain, fleet governance, RAG, persistensi |
 | **UI Layer** | React 19 + TS | HTTP reverse-proxy | Rendering, view-model, **zero backend logic** |
 
 ---
@@ -42,13 +42,13 @@
   - gRPC server `AgentEngineService` :50051 (internal control plane, NOT exposed to frontend)
   - HTTP server :9090 (frontend-facing REST API)
 
-### 4. UI Layer (web-2)
+### 4. UI Layer (`web/`)
 - **Owned:** React components, Tailwind styling, client-side routing, `apiClient.ts` HTTP calls
 - **Forbidden:** Backend logic, business rules, persistence, QR generation, OS telemetry (ADR 0002)
 - **Protocol:** HTTP GET/POST → Go :9090 or Tauri IPC
 
 **Temporary violations (ADR 0002 deferred):**
-- `web-2/server.ts` currently has QR generation + system telemetry (should be Go HTTP endpoints + Nginx auto-start)
+- `web/server.ts` currently has QR generation + system telemetry (should be Go HTTP endpoints + Nginx auto-start)
 
 ---
 
