@@ -4,7 +4,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import http from 'http';
 import dotenv from 'dotenv';
-import { spawn } from 'child_process';
 
 dotenv.config();
 
@@ -71,111 +70,7 @@ app.get('/api/system/network', (_req: Request, res: Response) => {
   });
 });
 
-// Local Ollama bridge — probes the host Ollama daemon (never the Go engine)
-const ollamaHost = process.env.OLLAMA_HOST || 'http://127.0.0.1:11434';
 
-app.get('/api/providers/ollama/status', async (_req: Request, res: Response) => {
-  try {
-    const r = await fetch(`${ollamaHost}/api/tags`);
-    if (!r.ok) return res.json({ available: false, host: ollamaHost });
-    const data: any = await r.json();
-    res.json({ available: true, host: ollamaHost, models: data.models ?? [] });
-  } catch {
-    res.json({ available: false, host: ollamaHost });
-  }
-});
-
-app.post('/api/providers/ollama/generate', async (req: Request, res: Response) => {
-  try {
-    const r = await fetch(`${ollamaHost}/api/generate`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ ...req.body, stream: false })
-    });
-    if (!r.ok) return res.status(r.status).json({ error: `Ollama ${r.statusText}` });
-    res.json(await r.json());
-  } catch (err: any) {
-    res.status(503).json({ error: 'Ollama unavailable', detail: err?.message });
-  }
-});
-
-// Local process monitor
-app.get('/api/engine/processes', (_req: Request, res: Response) => {
-  res.json([
-    { id: 'proc-1', name: 'galleon-agent-engine', command: 'engine/cmd/agent-engine --grpc-port 50051', pid: 1420, cpu: 1.8, memoryMB: 54.2, uptime: '4h 12m', status: 'running' },
-    { id: 'proc-2', name: 'mesh-discovery-mdns', command: 'galleon-mesh-mdns --zone sovereign.local', pid: 1892, cpu: 0.2, memoryMB: 12.4, uptime: '4h 12m', status: 'running' },
-    { id: 'proc-3', name: 'tauri-core-guard', command: 'kernel-lsm-guard --root workspace --mode enforce', pid: 2040, cpu: 0.1, memoryMB: 8.9, uptime: '4h 12m', status: 'running' },
-    { id: 'proc-4', name: 'sqlite-fts5-worker', command: 'wasmtime /plugins/fts5.wasm --max-mem 32MB', pid: 2410, cpu: 0.0, memoryMB: 28.5, uptime: '2h 15m', status: 'idle' },
-  ]);
-});
-
-// bearer token validation for /api/engine/execute
-function verifyExecuteToken(req: Request): { valid: boolean; error?: string } {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return { valid: false, error: 'Missing Authorization header' };
-  }
-  const token = authHeader.replace('Bearer ', '');
-  const expectedToken = process.env.EXECUTE_TOKEN;
-  if (!expectedToken) {
-    return { valid: false, error: 'Server not configured for execute token' };
-  }
-  if (token !== expectedToken) {
-    return { valid: false, error: 'Invalid authorization token' };
-  }
-  return { valid: true };
-}
-
-// execute gate middleware: checks Tauri or HTTP bearer token
-function executeGateMiddleware(req: Request, res: Response, next: () => void): void {
-  // In Tauri environment, allow execution (already verified by Tauri security)
-  if (req.headers['x-tauri-environment'] === 'true') {
-    next();
-    return;
-  }
-  // HTTP: require bearer token
-  const validation = verifyExecuteToken(req);
-  if (!validation.valid) {
-    res.status(401).json({ error: 'Unauthorized', message: validation.error });
-    return;
-  }
-  next();
-}
-
-// Shell execution in browser fallback
-app.post('/api/engine/execute', executeGateMiddleware, (req: Request, res: Response) => {
-  const { command } = req.body;
-  if (!command || typeof command !== 'string') {
-    return res.status(400).json({ error: 'Command required' });
-  }
-
-  const isWindows = process.platform === 'win32';
-  const shell = isWindows ? 'powershell.exe' : '/bin/sh';
-  const args = isWindows ? ['-NoProfile', '-Command', command] : ['-c', command];
-
-  const child = spawn(shell, args, { cwd: process.cwd() });
-  let stdout = '';
-  let stderr = '';
-
-  child.stdout?.on('data', (d) => { stdout += d.toString(); });
-  child.stderr?.on('data', (d) => { stderr += d.toString(); });
-
-  child.on('close', (code) => {
-    res.json({
-      stdout: stdout.trim() || (code === 0 ? '✔ Command completed successfully.' : ''),
-      stderr: stderr.trim(),
-      exitCode: code ?? 0
-    });
-  });
-
-  child.on('error', (err) => {
-    res.json({
-      stdout: '',
-      stderr: err.message,
-      exitCode: 1
-    });
-  });
-});
 
 // -------------------------------------------------------------
 // REVERSE PROXY TO GO ORCHESTRATOR (All Fleet & Business APIs)

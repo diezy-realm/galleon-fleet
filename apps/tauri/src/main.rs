@@ -1,11 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::fs;
-use std::path::PathBuf;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
-    AppHandle, Manager,
+    Manager,
 };
 use serde_json::Value;
 
@@ -41,14 +39,6 @@ async fn engine_post(path: &str, body: Value) -> Result<Value, String> {
     res.json::<Value>().await.map_err(|e| format!("invalid engine response: {e}"))
 }
 
-// Data Store Path Helper
-fn get_store_path(app: &AppHandle, filename: &str) -> PathBuf {
-    let mut path = app.path().app_data_dir().unwrap_or_else(|_| std::env::temp_dir());
-    fs::create_dir_all(&path).ok();
-    path.push(filename);
-    path
-}
-
 // Commands
 #[tauri::command]
 async fn get_fleet_metrics() -> Result<Value, String> {
@@ -61,25 +51,19 @@ async fn ring_deck_bell() -> Result<Value, String> {
 }
 
 #[tauri::command]
-fn get_collection(app: AppHandle, name: String) -> Result<Value, String> {
-    let filename = format!("{}.json", name);
-    let path = get_store_path(&app, &filename);
-    
-    if !path.exists() {
-        let initial = serde_json::json!([]);
-        fs::write(&path, serde_json::to_string_pretty(&initial).unwrap()).ok();
-        return Ok(initial);
+async fn get_collection(name: String) -> Result<Value, String> {
+    if name.is_empty() || name.contains('/') || name.contains('\\') || name.contains("..") {
+        return Err("invalid collection name".into());
     }
-    
-    let data = fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    serde_json::from_str(&data).map_err(|e| e.to_string())
+    engine_get(&format!("collections/{}", name)).await
 }
 
 #[tauri::command]
-fn save_collection(app: AppHandle, name: String, data: Value) -> Result<(), String> {
-    let filename = format!("{}.json", name);
-    let path = get_store_path(&app, &filename);
-    fs::write(&path, serde_json::to_string_pretty(&data).map_err(|e| e.to_string())?).map_err(|e| e.to_string())
+async fn save_collection(name: String, data: Value) -> Result<(), String> {
+    if name.is_empty() || name.contains('/') || name.contains('\\') || name.contains("..") {
+        return Err("invalid collection name".into());
+    }
+    engine_post(&format!("collections/{}", name), data).await.map(|_| ())
 }
 
 // SSOT: Tauri delegates system metrics to Go engine (/api/system/metrics).
@@ -129,56 +113,8 @@ async fn create_snapshot(title: Option<String>) -> Result<Value, String> {
 }
 
 #[tauri::command]
-fn get_engine_processes() -> Value {
-    serde_json::json!([
-        {
-            "id": "proc-1",
-            "name": "fleet-ai-desktop",
-            "command": "fleet-ai-desktop.exe",
-            "pid": std::process::id(),
-            "cpu": 0.4,
-            "memoryMB": 24,
-            "uptime": "1h 20m",
-            "status": "running"
-        },
-        {
-            "id": "proc-2",
-            "name": "webview-runtime",
-            "command": "wry-edge-runtime",
-            "pid": std::process::id() + 1,
-            "cpu": 0.8,
-            "memoryMB": 68,
-            "uptime": "1h 20m",
-            "status": "running"
-        },
-        {
-            "id": "proc-3",
-            "name": "ollama-bridge",
-            "command": "ollama serve",
-            "pid": 2048,
-            "cpu": 1.1,
-            "memoryMB": 180,
-            "uptime": "4h",
-            "status": "idle"
-        }
-    ])
-}
-
-#[tauri::command]
-fn execute_terminal_command(command: String) -> Value {
-    let cmd = command.trim();
-    let stdout = match cmd {
-        "fleet status" => "✔ 3 Ships anchored\n✔ 5 Crew specialists active\n✔ Landlock OS Sandbox: Active\n✔ Memory Database: Healthy".to_string(),
-        "fleet bell" => "🔔 Chime sounded on Quarterdeck!".to_string(),
-        "fleet check" => "✔ Zero secret leak detected\n✔ Scoped directory sandbox active".to_string(),
-        _ if cmd.starts_with("echo ") => cmd[5..].to_string(),
-        _ => format!("[Tauri IPC] Executed: {}\nOutput processed safely within sandboxed host layer.", cmd)
-    };
-    serde_json::json!({
-        "stdout": stdout,
-        "exit_code": 0,
-        "duration": "14ms"
-    })
+async fn get_engine_processes() -> Result<Value, String> {
+    engine_get("engine/processes").await
 }
 
 #[tauri::command]
@@ -210,7 +146,6 @@ fn main() {
             get_snapshots,
             create_snapshot,
             get_engine_processes,
-            execute_terminal_command,
             get_fleet_policies,
             chat_quartermaster
         ])

@@ -224,25 +224,14 @@ export const apiClient = {
     }));
   },
 
-  async executeTerminalCommand(command: string): Promise<{ stdout: string; exitCode: number; duration: string }> {
-    if (this.isTauri()) {
-      try {
-        return await invoke('execute_terminal_command', { command });
-      } catch (e) {
-        console.warn('[API] Tauri execute_terminal_command fallback:', e);
-      }
-    }
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const executeToken = process.env.EXECUTE_TOKEN;
-    if (executeToken) {
-      headers['Authorization'] = `Bearer ${executeToken}`;
-    }
-    const res = await fetch('/api/engine/execute', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ command })
-    });
-    return res.json();
+  async executeTerminalCommand(_command: string): Promise<{ stdout: string; exitCode: number; duration: string }> {
+    // Shell execution is temporarily locked pending Go Policy Gateway (PR-15 / BG-A4).
+    // Direct shell execution and fake simulations have been decommissioned for security.
+    return {
+      stdout: '[Terminal locked] Shell execution disabled pending Go Policy Gateway (PR-15). Direct execution decommissioned.',
+      exitCode: 1,
+      duration: '0ms'
+    };
   },
 
   async getFleetPolicies(): Promise<{ policies: Record<string, unknown>[]; riskTiers: Record<string, unknown>[] }> {
