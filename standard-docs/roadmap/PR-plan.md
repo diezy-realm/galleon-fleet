@@ -41,7 +41,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 ### Gelombang 1 — gerbang kualitas & pembersihan
 
 - [ ] **PR-10** `ci/rust-workspace-lints-and-gates` · R-01, R-03, R-04, R-06 · GW-1 · PR-00 · `[workspace.lints]`, gerbang ukuran, gerbang arah dependensi, baseline waktu build · M
-- [ ] **PR-11** `ci/boundary-gates` · P-07 · GW-4,6 · PR-05 · `tests/architecture/` (UI tanpa backend, Tauri tanpa shell, Go tanpa exec/vendor LLM) · M
+- [x] **PR-11** `ci/boundary-gates` · P-07 · GW-4,6 · PR-05 · [Selesai] `tests/architecture/tier_boundaries.rs` mengunci isolasi 4-tier (UI tanpa backend, Tauri tanpa shell, Go tanpa exec/vendor LLM); pembersihan visibilitas Cli di main; test lolos 100% · M
 - [ ] **PR-12** `ci/web-and-desktop` · P-04, P-05, U-12 · GW-3 · PR-03 · CI `web/` & `fleet-ai-desktop`, skrip `typecheck/lint/test`, TS strict · M
 - [ ] **PR-13** `ci/engine` · P-06 · GW-2 · – · `go test -race`, vet, staticcheck, cek `wire_gen` · S
 - [x] **PR-14** `chore/web-remove-aistudio-artifacts` · U-05, U-15 · GW-3 · PR-12 · [Selesai] Copot `@google/genai`, `better-sqlite3`, `qrcode`; hapus `metadata.json`, `bun.lock`, `web/.github/`, `web/Dockerfile`, `seedData.ts`; deklarasikan `@tauri-apps/api` di web; rename `galleon-web` · S

@@ -63,6 +63,24 @@ mod webhook_ingress;
 pub mod api_audit;
 pub mod api_providers;
 pub mod ws;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum WebDashboardAvailability {
+    Embedded,
+    Filesystem(std::path::PathBuf),
+}
+
+pub fn resolve_web_dashboard_availability(config: &clawcrew_config::schema::Config) -> Option<WebDashboardAvailability> {
+    #[cfg(feature = "embedded-web")]
+    {
+        let _ = config;
+        Some(WebDashboardAvailability::Embedded)
+    }
+    #[cfg(not(feature = "embedded-web"))]
+    {
+        config.gateway.web_dist_dir.as_ref().map(std::path::PathBuf::from).map(WebDashboardAvailability::Filesystem)
+    }
+}
 pub mod ws_approval;
 pub mod ws_sop_runs;
 pub mod handlers;

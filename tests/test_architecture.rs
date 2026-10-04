@@ -29,3 +29,6 @@ mod publish_contract;
 
 #[path = "architecture/ci_runner_labels.rs"]
 mod ci_runner_labels;
+
+#[path = "architecture/tier_boundaries.rs"]
+mod tier_boundaries;

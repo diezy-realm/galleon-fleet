@@ -7,7 +7,7 @@ Gerbang: GW-0, GW-6 (integrasi), GW-8. Prinsip: Nginx hanya reverse proxy + TLS 
 - [ ] **PL-A1 · P-04 · PR-12 (P1, M) CI `web/`:** install, typecheck, lint, test, build. Dep: FW-B1.
 - [ ] **PL-A2 · P-05 · PR-12 (P1, M) CI desktop:** perbarui `desktop-check.yml` & `tests/architecture/desktop_release.rs` ke nama baru.
 - [ ] **PL-A3 · P-06 · PR-13 (P1, S) CI engine:** `go test -race`, `go vet`, `staticcheck`, cek `wire_gen`.
-- [ ] **PL-A4 · P-07 · PR-11 (P1, M) Gerbang boundary tier** di `tests/architecture/` (UI tanpa backend, Tauri tanpa shell, Go tanpa exec/vendor LLM). Dep: BG-A3, FW-A2.
+- [x] **PL-A4 · P-07 · PR-11 (P1, M) Gerbang boundary tier** di `tests/architecture/` [Selesai PR-11] Modul `tests/architecture/tier_boundaries.rs` ditambahkan mengunci isolasi 4-tier secara otomatis di suite arsitektur: UI tier terisolasi tanpa import Tauri IPC/backend direct, Desktop tier tanpa eksekusi shell/terminal langsung di IPC app handler, dan Go Engine tanpa import `os/exec` maupun direct SDK vendor LLM. CLI root struct & method visibilitas dibersihkan. Test `tier_boundaries` lulus 100%. Dep: BG-A3, FW-A2.
 - [ ] **PL-A5 · P-08 · PR-93 (P2, M) Pangkas workflow warisan** (39) & tandai required checks.
 
 ## B. Build, Docker, Workspace

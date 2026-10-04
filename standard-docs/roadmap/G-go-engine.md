@@ -8,7 +8,7 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 - [x] **G-02 (P1, S) Hapus route Ollama palsu** [Selesai PR-16] Route `/api/providers/ollama/status` dan handler dihapus dari `delivery.go`; unit test dihapus; probe HTTP `checkOllama` (port 11434) dihapus dari `services.go`; diagnostik `d-3` didelegasikan ke System Gateway (:50052); method `getOllamaStatus` dan UI test dihapus dari `web/`.
 - [x] **G-03 (P1, S) Koreksi komentar/fallback di `wire_gen.go`** [Selesai PR-05] Komentar di `wire_gen.go` dan `services.go` diperbarui menegaskan batasan fail-closed (nil gateway langsung menolak eksekusi).
 - [ ] **G-04 (P0, L) Endpoint terminal ber-policy** `POST /api/terminal/exec`: policy risk-tier → approval → `ExecuteNativeTool` (sandbox). Audit log tiap eksekusi. Dep: G-01. Acceptance: perintah berisiko tinggi minta approval; injeksi tidak lolos allowlist.
-- [ ] **G-05 (P1, M) Gerbang boundary otomatis** (test arsitektur Go: larang import `os/exec`, SDK vendor LLM). Dep: G-01.
+- [x] **G-05 (P1, M) Gerbang boundary otomatis** [Selesai PR-11] Test arsitektur Go di `tests/architecture/tier_boundaries.rs` (`test_go_engine_tier_boundaries`) melarang import `os/exec` dan SDK vendor LLM di `engine/src/`; test lolos 100%. Dep: G-01.
 
 ## G-1x Persistensi (ODR-05)
 
