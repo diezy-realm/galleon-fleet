@@ -39,7 +39,7 @@ flowchart LR
 
 | Lane | Total | Selesai |
 |---|---|---|
-| R | 26 | 0 |
+| R | 28 | 0 |
 | G | 23 | 0 |
 | U | 14 | 0 |
 | P | 12 | 0 |
