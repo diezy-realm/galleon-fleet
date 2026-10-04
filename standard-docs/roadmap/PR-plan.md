@@ -48,7 +48,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [x] **PR-15** `feat/go-terminal-policy-endpoint` · G-04 · GW-2,4,8 · PR-05 · [Selesai] `POST /api/terminal/exec` & alias `/api/engine/execute`: risk-tier, approval gate, routing ke SystemGateway `bash`, audit log (`/api/terminal/audit`), web `apiClient` terhubung · M
 - [x] **PR-16** `fix/go-remove-ollama-probe` · G-02 · GW-2,4 · PR-05 · [Selesai] Hapus route & handler `/api/providers/ollama/status`, hapus probe HTTP `checkOllama` (11434), selaraskan `d-3` ke System Gateway (:50052), hapus `getOllamaStatus` di web · S
 - [x] **PR-17** `chore/legacy-removal-docs-archive` · N-11 · GW-0 · PR-06 ⚑ · [Selesai] Tag `archive/pre-galleon` dibuat; hapus `docs/_archive` (307 file); perbaiki rujukan `docs/book` di `AGENTS.md` · M
-- [ ] **PR-18** `chore/legacy-removal-agent-skills-and-workflows` · N-13, N-14 · GW-0 · PR-06 ⚑ · skill & workflow khusus ClawCrew · S
+- [x] **PR-18** `chore/legacy-removal-agent-skills-and-workflows` · N-13, N-14 · GW-0 · PR-06 ⚑ · [Selesai] Hapus skill khusus ClawCrew di `.claude/skills/` dan workflow usang (`docs-deploy.yml`, `discord-release.yml`, `tweet-release.yml`) · S
 - [ ] **PR-19** `chore/legacy-removal-packaging-fixtures-i18n` · N-15, N-16, N-17 · GW-0 · PR-06 ⚑ · `dist/`, `nix/`, `deploy-k8s/`, fixture, locale tak terpakai · M
 - [ ] **PR-20** `docs/drift-sync` · D-02, D-05, D-06, D-09, R-05 · GW-7 · PR-00 · selaraskan klaim usang (D1–D14), MSRV, jumlah crate, `.kiro`, otoritas `docs/README.md`, PRD · M
 - [ ] **PR-21** `docs/adr-errata-and-hygiene` · D-04, R-30, D-07, D-08, D-10 · GW-7 · PR-00 · errata ADR-001 (file baru), rapikan steering, kebersihan root, template ODR/ADR · M
