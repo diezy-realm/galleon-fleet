@@ -1,6 +1,6 @@
 # Lane P — Platform, CI, Deploy, Rilis
 
-- [ ] **P-01 (P0, S) Pastikan workspace Cargo hijau** pasca-migrasi: `cargo metadata`, `cargo check -p fleet-ai-desktop`, `Cargo.lock` konsisten (commit terpisah dari refactor Rust).
+- [ ] **P-01 (P0, S) Pastikan workspace Cargo hijau** pasca-migrasi: `cargo metadata`, `apps/tauri` standalone (`exclude` di root; Q-1) agar tak ada *multiple workspace roots*, `cargo check` di `apps/tauri`, `Cargo.lock` konsisten (commit terpisah dari refactor Rust).
 - [ ] **P-02 (P1, M) Dockerfile\*:** sesuaikan stub `apps/tauri/{src/main.rs,build.rs}` dan copy `web/dist`; pertimbangkan target server (Go + Rust gateway + statis UI) terpisah dari desktop. Dep: U-01.
 - [ ] **P-03 (P1, S) `Cargo.toml` `include`** `/web/dist/**/*`: putuskan — UI di-embed ke binary server atau disajikan Nginx; ADR kecil.
 - [ ] **P-04 (P1, M) CI `web/`:** install, typecheck, lint, test, build. Dep: U-12.

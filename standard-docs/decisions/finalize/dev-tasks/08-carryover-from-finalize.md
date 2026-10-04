@@ -34,9 +34,9 @@ Hasil analisis 2026-10-04: status tiap task `T-*` dibandingkan dengan kode aktua
 Rekomendasi (menunggu persetujuan): **jangan migrasi handler yang akan dihapus/dipindah**. Hanya handler yang bertahan sebagai host lokal Rust (mis. `webhook_ingress`, `plugin_webhook`, `tls`, `version`, `node_tool`/`nodes`, `hardware_context`) yang dimigrasi ke `RouteHandler`; sisanya masuk R-14/R-41/N-12.
 - [x] **CO-09 · Owner: DISETUJUI 2026-10-04.** Hanya handler yang bertahan di Rust (`webhook_ingress`, `tls`, `version`, `node_tool`, `hardware_context`, dan sejenisnya sesuai R-00 §4) yang dimigrasi ke `RouteHandler`; CO-05/CO-06 dikerjakan hanya untuk itu. Jika disetujui: tutup CO-01..CO-04 sebagai *superseded* dan pecah CO-05/CO-06 hanya untuk handler yang bertahan (daftar final dari verifikasi R-00 §4).
 
-## D. Pertanyaan final untuk Owner (dikumpulkan; jawab sekaligus)
+## D. Keputusan Owner 2026-10-04 (Q-1..Q-4 disetujui sesuai rekomendasi; roadmap diselaraskan)
 
-- [ ] **Q-1 Cargo Tauri:** (a) standalone, `exclude` dari root *(rekomendasi)* atau (b) member workspace (hapus `[workspace]` di Tauri). Lihat FD-A1b.
-- [ ] **Q-2 `tool/plugin.go` & `tool/mcp_client.go`:** hapus *(rekomendasi; tanpa pemanggil, tidak digerbang)* atau pindah ke Rust plugin host. MCP client dibuat ulang di Rust bila dibutuhkan.
-- [ ] **Q-3 Ollama:** hapus route palsu di Go *(rekomendasi)*; discovery lokal nanti RPC baru di Rust provider (tiket terpisah).
-- [ ] **Q-4 `web/server.ts`:** matikan `/api/engine/execute` sekarang (FW-A2a, P0) dan hapus file penuh di PR-70 *(rekomendasi)*.
+- [x] **Q-1 Cargo Tauri:** (a) standalone, `exclude` dari root *(rekomendasi)* atau (b) member workspace (hapus `[workspace]` di Tauri). Lihat FD-A1b.
+- [x] **Q-2 `tool/plugin.go` & `tool/mcp_client.go`:** hapus *(rekomendasi; tanpa pemanggil, tidak digerbang)* atau pindah ke Rust plugin host. MCP client dibuat ulang di Rust bila dibutuhkan.
+- [x] **Q-3 Ollama:** hapus route palsu di Go *(rekomendasi)*; discovery lokal nanti RPC baru di Rust provider (tiket terpisah).
+- [x] **Q-4 `web/server.ts`:** matikan `/api/engine/execute` sekarang (FW-A2a, P0) dan hapus file penuh di PR-70 *(rekomendasi)*.

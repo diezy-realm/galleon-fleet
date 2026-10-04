@@ -4,8 +4,8 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 
 ## G-0x Fail-closed & boundary
 
-- [ ] **G-01 (P0, M) Hapus eksekusi shell/fs lokal** di `engine/src/tool/{services,sandbox,plugin,mcp_client,builtin_workspace}.go`; semua lewat `ExecuteNativeTool` (Rust). Acceptance: grep `os/exec`/`os.Open*` di jalur tool = nol (kecuali store); test fail-closed saat Rust mati. *Status 2026-10-04: parsial — `builtin_*` sudah via gateway; sisa `exec` di `tool/{services,sandbox,plugin,mcp_client}.go`.*
-- [ ] **G-02 (P1, S) Hapus probe Ollama** di `engine/src/fleet/services.go` (LLM/discovery = Rust). Dep: R-lane discovery RPC bila perlu.
+- [ ] **G-01 (P0, M) Hapus eksekusi shell/fs lokal** di `engine/src/tool/{services,sandbox,plugin,mcp_client,builtin_workspace}.go`; semua lewat `ExecuteNativeTool` (Rust). Acceptance: grep `os/exec`/`os.Open*` di jalur tool = nol (kecuali store); test fail-closed saat Rust mati. *Status 2026-10-04 (diverifikasi): kode laten — `ExecuteWithContext` sudah fail-closed untuk tool `native`; `os/exec`/fs di `services.go`, `sandbox.go`, cabang fs `builtin_workspace.go` tak terjangkau; `plugin.go`/`mcp_client.go` tak digerbang tetapi tanpa pemanggil. Aksi = hapus body eksekusi lokal; `plugin.go` & `mcp_client.go` dihapus (Q-2, MCP dibuat ulang di Rust bila perlu).*
+- [ ] **G-02 (P1, S) Hapus route Ollama palsu** `/api/providers/ollama/status` di `engine/src/fleet/delivery.go` (JSON statis, bukan probe; web tidak memanggil) dan diagnostik `d-3` yang tak berbasis sinyal (Q-3). Discovery nyata = RPC baru di Rust (tiket terpisah bila diminta).
 - [ ] **G-03 (P1, S) Koreksi komentar/fallback di `wire_gen.go`** agar sesuai fail-closed.
 - [ ] **G-04 (P0, L) Endpoint terminal ber-policy** `POST /api/terminal/exec`: policy risk-tier → approval → `ExecuteNativeTool` (sandbox). Audit log tiap eksekusi. Dep: G-01. Acceptance: perintah berisiko tinggi minta approval; injeksi tidak lolos allowlist.
 - [ ] **G-05 (P1, M) Gerbang boundary otomatis** (test arsitektur Go: larang import `os/exec`, SDK vendor LLM). Dep: G-01.
@@ -29,6 +29,8 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 - [ ] **G-26 (P2, M) Audit trail & policy SSOT** (`fleet/policies.go`) diekspos read-only ke UI/Tauri.
 - [ ] **G-27 (P2, M) CLI API:** endpoint streaming stabil untuk CLI tipis (A1). Dep: R-34.
 - [ ] **G-28 (P3, M) Observabilitas:** zap terstruktur + request-id lintas Go→Rust; scrubbing.
+- [ ] **G-29 (P0, L) Kontrak native tool Go↔Rust (SSOT tunggal).** Rust `ALLOWED_TOOLS=[bash,read_file,write_file,git]` (arg `command/args/path/contents`) vs 19 tool Go (`workspace.*`, `execute_command`, `git.*`, `code.*`, `sandbox.run_code`, `web.fetch`, `browser.*`, `edit_file`...); hanya `write_file` sama nama dan kunci argumennya beda (`content`/`contents`). Isi `workspace_path` di proto (kini tak diisi `ExecuteNativeTool`). Daftar tool + skema argumen di `proto/`, dipakai kedua sisi; test kontrak. Dep: G-01. Pasangan Rust: R-21 (perluas cakupan).
+- [ ] **G-30 (P1, S) Ganti path stale `filepath.Join("..","web-2","data")`** di `engine/src/fleet/services.go` (±55, ±313) dengan direktori data eksplisit (config/env, default `engine/data`); test traversal nama koleksi (`safeFilenameRegex` sudah ada).
 
 ## G-3x Menyerap fungsi orkestrasi dari Rust (hasil R-00, ODR-11)
 

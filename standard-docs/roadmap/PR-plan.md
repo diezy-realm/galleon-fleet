@@ -1,6 +1,6 @@
 # PR Plan & Branch-Gateway DoD (untuk koordinasi dengan Principle)
 
-> **Satu dokumen untuk seluruh PR** (121 tiket → PR, matriks cakupan di §5). Setiap PR memetakan tiket roadmap (`R-`, `G-`, `U-`, `P-`, `D-`, `N-`) ke satu branch dan satu review Principle.
+> **Satu dokumen untuk seluruh PR** (126 tiket → PR, matriks cakupan di §5). Setiap PR memetakan tiket roadmap (`R-`, `G-`, `U-`, `P-`, `D-`, `N-`) ke satu branch dan satu review Principle.
 > Aturan repo: branch bukan `main`; PR ke `main`; conventional commits; satu concern per PR; deklarasikan `Depends on #…`.
 > Kotak `[ ]` diisi nomor PR dan dicentang hanya setelah **seluruh gerbang** di bagian 1 lulus dan Principle approve.
 
@@ -34,8 +34,8 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [ ] **PR-01** `docs/alias-notes-normative` · D-03 · GW-0,7 · PR-00 · catatan alias `web-2`/`tauri-2` di dokumen normatif (bukan ADR) · S
 - [ ] **PR-02** `chore/remove-engine-binary` · N-10 · GW-0 · – · `bin/engine.exe` + `.gitignore`; tanpa force-push · S
 - [ ] **PR-03** `fix/tauri-frontend-dist` · U-01, P-01 · GW-0,3 · – · `frontendDist=../../web/dist`; `cargo metadata` hijau (saat ini gagal: *multiple workspace roots*, lihat FD-A1b); `cargo check` di `apps/tauri` · S
-- [ ] **PR-04** `security/tauri-remove-terminal-and-fake-metrics` · U-06, U-07 · GW-3,4,8 · – · tak ada eksekusi shell/koleksi lokal/metrik palsu di Tauri; terminal UI dinonaktifkan sementara ⚑ · S
-- [ ] **PR-05** `security/go-fail-closed-tools` · G-01, G-03, G-05 · GW-2,4,8 · – · tak ada `os/exec`/fs lokal; test fail-closed saat Rust mati; gerbang import · M
+- [ ] **PR-04** `security/tauri-remove-terminal-and-fake-metrics` · U-06, U-07, U-16 · GW-3,4,8 · – · tak ada eksekusi shell/koleksi lokal/metrik palsu di Tauri, `server.ts` tanpa `/api/engine/execute`; terminal UI dinonaktifkan sementara ⚑ · S
+- [ ] **PR-05** `security/go-fail-closed-tools` · G-01, G-03, G-05, G-30 · GW-2,4,8 · – · tak ada `os/exec`/fs lokal; test fail-closed saat Rust mati; gerbang import · M
 - [ ] **PR-06** `docs/brand-hit-inventory` · N-01 · GW-0 · PR-00 · klasifikasi rename/delete/keep/migrate (CSV + ringkasan) · S
 
 ### Gelombang 1 — gerbang kualitas & pembersihan
@@ -44,7 +44,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [ ] **PR-11** `ci/boundary-gates` · P-07 · GW-4,6 · PR-05 · `tests/architecture/` (UI tanpa backend, Tauri tanpa shell, Go tanpa exec/vendor LLM) · M
 - [ ] **PR-12** `ci/web-and-desktop` · P-04, P-05, U-12 · GW-3 · PR-03 · CI `web/` & `fleet-ai-desktop`, skrip `typecheck/lint/test`, TS strict · M
 - [ ] **PR-13** `ci/engine` · P-06 · GW-2 · – · `go test -race`, vet, staticcheck, cek `wire_gen` · S
-- [ ] **PR-14** `chore/web-remove-aistudio-artifacts` · U-05 · GW-3 · PR-12 · `@google/genai`, `better-sqlite3`, `metadata.json`, `bun.lock`, dll.; audit pemakaian dulu · S
+- [ ] **PR-14** `chore/web-remove-aistudio-artifacts` · U-05, U-15 · GW-3 · PR-12 · `@google/genai`, `better-sqlite3`, `metadata.json`, `bun.lock`, dll.; audit pemakaian dulu · S
 - [ ] **PR-15** `feat/go-terminal-policy-endpoint` · G-04 · GW-2,4,8 · PR-05 · risk-tier + approval + audit; test injeksi ditolak · M
 - [ ] **PR-16** `fix/go-remove-ollama-probe` · G-02 · GW-2,4 · PR-05 · LLM/discovery milik Rust · S
 - [ ] **PR-17** `chore/legacy-removal-docs-archive` · N-11 · GW-0 · PR-06 ⚑ · buat tag `archive/pre-galleon`; hapus `docs/_archive`; perbaiki rujukan `docs/book` di AGENTS.md · M
@@ -52,7 +52,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [ ] **PR-19** `chore/legacy-removal-packaging-fixtures-i18n` · N-15, N-16, N-17 · GW-0 · PR-06 ⚑ · `dist/`, `nix/`, `deploy-k8s/`, fixture, locale tak terpakai · M
 - [ ] **PR-20** `docs/drift-sync` · D-02, D-05, D-06, D-09, R-05 · GW-7 · PR-00 · selaraskan klaim usang (D1–D14), MSRV, jumlah crate, `.kiro`, otoritas `docs/README.md`, PRD · M
 - [ ] **PR-21** `docs/adr-errata-and-hygiene` · D-04, R-30, D-07, D-08, D-10 · GW-7 · PR-00 · errata ADR-001 (file baru), rapikan steering, kebersihan root, template ODR/ADR · M
-- [ ] **PR-22** `feat/tauri-csp-capabilities` · U-08 · GW-3,8 · PR-03 · hapus `unsafe-eval`, `connect-src` ke :9090, scope fs · S
+- [ ] **PR-22** `feat/tauri-csp-capabilities` · U-08, U-17 · GW-3,8 · PR-03 · hapus `unsafe-eval`, `connect-src` ke :9090, scope fs · S
 
 ### Gelombang 2 — pemecahan Rust, identitas, persistensi, protokol
 
@@ -123,6 +123,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [ ] **PR-97** `refactor/rust-heavy-crates-audit` · R-18 · GW-1,7 · PR-60 · audit `tools`/`config`/`providers`; tanpa pemecahan spekulatif · M
 - [ ] **PR-98** `feat/web-i18n-a11y` · U-14 · GW-3 · PR-72 · M
 - [ ] **PR-99** `docs/adr-delegated-authority-chain` · G-37 · GW-7 · PR-44, PR-53 · ADR opsional; rujukan `research/verifiable-intent-assessment.md` · S
+- [ ] **PR-100** `feat/native-tool-contract` · G-29 · GW-1,2,4,8 · PR-05 · SSOT daftar tool + skema argumen di `proto/`, `workspace_path` terisi, test kontrak Go↔Rust; ⚑ · L
 
 ## 4. Branch integrasi (GW-6) & checklist Principle
 
@@ -142,7 +143,7 @@ Checklist reviewer (salin ke tiap PR):
 - [ ] PR ⚑: sign-off Owner terlampir
 ## 5. Matriks cakupan tiket → PR
 
-121 tiket, seluruhnya terpetakan (diverifikasi skrip). Tiket yang dipecah ke beberapa PR terdaftar semuanya.
+126 tiket, seluruhnya terpetakan (diverifikasi skrip). Tiket yang dipecah ke beberapa PR terdaftar semuanya.
 
 | Tiket | PR |
 |---|---|
@@ -175,6 +176,8 @@ Checklist reviewer (salin ke tiap PR):
 | G-26 | PR-54 |
 | G-27 | PR-52 |
 | G-28 | PR-96 |
+| G-29 | PR-100 |
+| G-30 | PR-05 |
 | G-30 | PR-47 |
 | G-31 | PR-48 |
 | G-32 | PR-49 |
@@ -267,3 +270,6 @@ Checklist reviewer (salin ke tiap PR):
 | U-12 | PR-12 |
 | U-13 | PR-72 |
 | U-14 | PR-98 |
+| U-15 | PR-14 |
+| U-16 | PR-04 |
+| U-17 | PR-22 |
