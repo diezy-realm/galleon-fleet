@@ -1,0 +1,84 @@
+# Naming Map — Lama → Galleon (draf untuk sign-off Owner)
+
+> **Status:** DRAF (N-00). Berlaku setelah Owner menyetujui. Basis: ODR-16, ODR-17, ODR-18.
+> Fakta diambil dari kode 2026-10-04. Kolom *Strategi* menentukan apakah perlu migrasi data.
+
+## 1. Binary & aplikasi
+
+| Lama | Baru | Strategi |
+|---|---|---|
+| `clawcrew` (root bin) | `galleon` | alias `clawcrew` 1 rilis + peringatan deprecasi |
+| `clawcrew-acp-bridge` (`src/bin/`) | `galleon-acp-bridge` | rename |
+| `zerocode` (`apps/zerocode`, TUI CLI) | `galleoncode` | ODR-17; env `ZEROCODE_*`→`GALLEONCODE_*` |
+| `zerorelay` (`apps/zerorelay`) | `galleonrelay` | ODR-17; env `ZERORELAY_*`→`GALLEONRELAY_*` |
+| `fleet-ai-desktop` (`apps/tauri`) | `galleon-desktop` | rename paket |
+| `react-example` (`web/`) | `galleon-web` | rename paket |
+| `xtask`, `tools/fill-translations` | tetap | hanya ubah string merek di dalamnya |
+
+## 2. Crate Rust (27)
+
+Aturan: `clawcrew-X` → `galleon-X`. Crate yang sudah `galleon-*` tetap. Urutan eksekusi bawah→atas (N-21).
+
+| Lama | Baru | Catatan |
+|---|---|---|
+| `clawcrew-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | `galleon-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | rename langsung |
+| `clawcrew-config` `-memory` `-providers` `-tools` `-tool-call-parser` `-routing` `-eval` `-sop-graph` | `galleon-*` | `sop-graph` & `eval` menunggu hasil R-00 (mungkin dihapus/dipindah) |
+| `clawcrew-channels` | `galleon-channels` | lalu dipecah per channel (R-15) menjadi `galleon-channel-<nama>` |
+| `clawcrew-runtime` | `galleon-runtime` | **rename ditunda sampai R-00/R-16** (isi akan menyusut/dipindah) |
+| `clawcrew-gateway` | `galleon-gateway` | setelah R-14 |
+| `clawcrew-plugins` | `galleon-plugins` | |
+| `clawcrew-relay-proto` | `galleon-relay-proto` | ikut `galleonrelay` |
+| `galleon-channel-{core,signal,bluesky,imessage}`, `galleon-i18n` | tetap | sudah sesuai |
+
+Identifier Rust: `clawcrew_*` → `galleon_*`; tipe `ClawCrew*` → `Galleon*`.
+
+## 3. Environment variable
+
+| Lama (kemunculan di kode) | Baru | Strategi |
+|---|---|---|
+| `CLAWCREW_*` (±400; mis. `WORKSPACE`, `CONFIG_DIR`, `AUDIT_SIGNING_KEY`, `DATA_DIR`, `SOCKET`, `SLACK_BOT_TOKEN`, `ACP_BRIDGE_TOKEN`) | `GALLEON_*` | baca baru dulu, fallback ke lama + log deprecasi (hapus 1 rilis kemudian). **Jangan log nilai.** |
+| `ZEROCODE_*` (20), `ZERORELAY_*` (7) | `GALLEONCODE_*`, `GALLEONRELAY_*` | idem |
+| `GALLEON_*` (3, sudah ada) | tetap | |
+| `CLAWCREW_TEST_*`, `CLAWCREW_APT_TEST_CALLS`, `CLAWCREW_PARALLEL_TEST_RUNS` | `GALLEON_TEST_*` dst. | khusus test, tanpa fallback |
+
+## 4. Path & data pengguna (butuh migrasi)
+
+| Lama | Baru | Strategi |
+|---|---|---|
+| `~/.clawcrew/` (+ `config`) | `~/.config/galleon/` (Windows: `%APPDATA%\galleon\`) | pada boot: bila baru kosong & lama ada → salin atomik + tanda `.migrated`; **tidak menghapus** lama; vault sudah di `~/.config/galleon/vault/` |
+| `.clawcrew_config`, `.clawcrew_plugin_channel`, `.clawcrew_plugin_memory`, `.clawcrew_pane` (nama file/dir internal/fixture) | `.galleon_*` | rename; cek apakah on-disk persisten (butuh migrasi) atau hanya test |
+| Socket/IPC (`CLAWCREW_SOCKET`) | `GALLEON_SOCKET` | rename + fallback |
+
+## 5. Kontrak & identitas teknis
+
+| Lama | Baru | Catatan |
+|---|---|---|
+| WIT `clawcrew:plugin@0.1.0` (v0, beku) | v0 tetap; **v1 = `galleon:plugin@1.0.0`** (`wit/v1/`) | ODR-18, N-24, R-35 |
+| Go module `github.com/diezy-labs/claw-crew/engine` | `github.com/diezy-realm/galleon-fleet/engine` | ubah semua import + `wire` regen |
+| gRPC package/service di `proto/agent_service.proto` | tetap `SystemGateway`/`AgentEngine`; ganti nama package proto bila memuat merek lama | perubahan wire-compatible; regen kedua sisi dalam satu PR |
+| Header HTTP/WS, prefix metrik | `X-Galleon-*`, `galleon_*` | |
+| Tauri `productName` "Fleet AI", title "Fleet AI - Autonomous Fleet" | "Galleon" | `identifier` `com.galleon.sovereign` sudah sesuai — pertahankan |
+| Docker image `ghcr.io/clawcrew-labs/clawcrew` | `ghcr.io/diezy-realm/galleon-fleet` (server) | tag lama deprecated |
+| Nama service OS (systemd/launchd/Windows Service) | `galleon` | `galleon service install` migrasi unit lama |
+
+## 6. Teks & istilah
+
+| Lama | Baru |
+|---|---|
+| ClawCrew, Claw Crew, claw-crew, zeroclaw | Galleon |
+| Fleet AI, FleetAI, fleet-ai | Galleon (nama repo/organisasi: `galleon-fleet`) |
+| Istilah lore (Ship, Quartermaster, Squad, Crew) | tetap untuk UX; kode netral (`fleet/ship/squad/crew`) |
+
+## 7. Pengecualian (JANGAN diubah)
+
+- `standard-docs/decisions/**` (ADR/ODR immutable), `CHANGELOG`, riwayat git.
+- Atribusi lisensi upstream & `NOTICE`.
+- Fixture bertanda tangan/hash tetap, data uji historis.
+- WIT v0 (`clawcrew:plugin@0.1.0`) — beku.
+- Format on-disk lama selama jalur migrasi belum ada.
+
+## 8. Pertanyaan terbuka untuk Owner
+
+1. Apakah alias biner & env lama dipertahankan **satu rilis** (usulan) atau langsung dihapus (repo belum dirilis publik?)
+2. Nama org GHCR final (`diezy-realm`?) dan registry.
+3. Apakah `clawcrew-sop-graph` dan `clawcrew-eval` tetap di produk? (Diputuskan lewat R-00.)

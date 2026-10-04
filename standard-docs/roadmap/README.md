@@ -15,6 +15,10 @@
 | D | [`D-docs-hygiene.md`](D-docs-hygiene.md) | Drift dokumen, errata ADR, kebersihan repo |
 | N | [`N-rename-and-legacy-cleanup.md`](N-rename-and-legacy-cleanup.md) | Rebrand ke Galleon + hapus legacy (ODR-16) |
 
+## Rencana PR & gerbang review
+
+[`PR-plan.md`](PR-plan.md) memetakan semua tiket ke PR/branch, gerbang DoD (GW-0..GW-9), branch integrasi per gelombang, dan checklist Principle.
+
 ## Legenda
 
 - ID: `<lane>-<nn>`. Prioritas **P0** (keamanan/rusak) → **P1** (fondasi produk) → **P2** (kualitas) → **P3** (lanjutan).
