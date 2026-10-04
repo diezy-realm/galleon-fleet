@@ -8,9 +8,9 @@ Gerbang: GW-7. ADR/ODR lama tidak diedit; koreksi lewat file baru (errata/addend
 - [x] **GV-04 · D-05 · PR-20 (P1, S) `.kiro/steering`:** [Selesai PR-20] Rujukan `docs/finalize`/`docs/fundamental` diarahkan ke kanonikal `standard-docs/`.
 - [x] **GV-05 · D-06 · PR-20 (P2, S) `docs/README.md`:** [Selesai PR-20] Dibuat `docs/README.md` menyatakan `standard-docs/` = SSOT Galleon Fleet, dan `docs/` berisi lineage historis.
 - [x] **GV-06 · D-09 · PR-20 (P2, M) `prd-hybrid-engine.md`:** [Selesai PR-20] Diberi notice tegas superseded oleh `product/galleon-product-definition.md`.
-- [ ] **GV-07 · D-04 · PR-21 (P1, S) Errata ADR-001** (file baru).
-- [ ] **GV-08 · D-07 · PR-21 (P2, M) Rapikan steering agent:** satu sumber, lainnya pointer.
-- [ ] **GV-09 · D-08 · PR-21 (P2, S) Kebersihan root** & putuskan `decisions/bug-fix/`.
-- [ ] **GV-10 · D-10 · PR-21 (P3, S) Template ODR/ADR/tiket** di `standard-docs/templates/`.
+- [x] **GV-07 · D-04 · PR-21 (P1, S) Errata ADR-001** (file baru): [Selesai PR-21] Dibuat `standard-docs/decisions/refactoring-rust/phase-2/ADR-001-errata.md` meratifikasi WhatsApp Tier A, WIT v0 beku, dan Bluesky native crate.
+- [x] **GV-08 · D-07 · PR-21 (P2, M) Rapikan steering agent:** [Selesai PR-21] `.gemini/steering.md` ditegaskan sebagai satu SSOT operasional; `.kiro`, `.claude`, `.copilot`, `.agents` merujuk ke sana dan `standard-docs/`.
+- [x] **GV-09 · D-08 · PR-21 (P2, S) Kebersihan root** & putuskan `decisions/bug-fix/`: [Selesai PR-21] Root repo bersih (untracked = 0); `standard-docs/decisions/bug-fix/` ditetapkan sebagai audit quality gate review resmi.
+- [x] **GV-10 · D-10 · PR-21 (P3, S) Template ODR/ADR/tiket** di `standard-docs/templates/`: [Selesai PR-21] Dibuat `template-odr.md`, `template-adr.md`, dan `template-task.md`.
 - [ ] **GV-11 · Sign-off Owner ⚑** untuk PR bertanda ⚑ sebelum merge (PR-04, 17–19, 55, 59–62).
 - [ ] **GV-12 · Principle re-verify** semua `[x]` di `finalize/task-breakdown.md` memakai `testing-gate-checklist.md` (gate G0–G8 masih kosong) sebelum ditutup resmi.
