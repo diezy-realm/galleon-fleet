@@ -3,9 +3,11 @@ name = "clawcrew-routing"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Routing subsystem for ClawCrew."
 repository.workspace = true
 homepage.workspace = true
 rust-version.workspace = true
+publish = true
 
 [dependencies]
 axum = "0.8"

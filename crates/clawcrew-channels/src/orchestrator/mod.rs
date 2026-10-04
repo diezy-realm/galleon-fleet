@@ -4788,7 +4788,7 @@ fn is_bare_model_picker_command(content: &str) -> bool {
 }
 
 fn scrub_native_model_picker_error(error: &anyhow::Error) -> String {
-    clawcrew_runtime::security::scrub(&error.to_string())
+    galleon_security_scrub::scrub(&error.to_string())
 }
 
 #[cfg(test)]
@@ -7174,7 +7174,7 @@ fn log_worker_join_result(result: Result<(), tokio::task::JoinError>) {
 }
 
 fn scrub_typing_error(error: &anyhow::Error) -> String {
-    clawcrew_runtime::security::scrub(&error.to_string())
+    galleon_security_scrub::scrub(&error.to_string())
 }
 
 fn spawn_scoped_typing_task(
@@ -8188,17 +8188,17 @@ fn matrix_normalize_display(value: &str) -> String {
 }
 
 fn matrix_scrub_display(value: &str) -> String {
-    matrix_normalize_display(&scrub_credentials(&clawcrew_runtime::security::scrub(
+    matrix_normalize_display(&scrub_credentials(&galleon_security_scrub::scrub(
         value,
     )))
 }
 
 fn matrix_scrub_structured_display(value: &str) -> String {
-    matrix_normalize_display(&clawcrew_runtime::security::scrub(value))
+    matrix_normalize_display(&galleon_security_scrub::scrub(value))
 }
 
 fn matrix_scrub_progress_text(value: &str) -> String {
-    scrub_credentials(&clawcrew_runtime::security::scrub(
+    scrub_credentials(&galleon_security_scrub::scrub(
         &strip_think_tags_inline(value),
     ))
 }
@@ -8229,7 +8229,7 @@ fn matrix_progress_text(
     // the shared authority for serialized tool arguments.
     Some(DraftProgress {
         kind: progress.kind,
-        text: clawcrew_runtime::security::scrub(&progress.text),
+        text: galleon_security_scrub::scrub(&progress.text),
     })
 }
 

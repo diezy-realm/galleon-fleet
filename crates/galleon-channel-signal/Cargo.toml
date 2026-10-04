@@ -6,7 +6,7 @@ license.workspace = true
 description = "Signal channel feature-crate (RF-B1 split; signal-cli JSON-RPC/SSE body ported from clawcrew-channels)."
 repository.workspace = true
 homepage.workspace = true
-publish = false
+publish = true
 
 [dependencies]
 # RF-B1: the ported Signal body is a signal-cli JSON-RPC/SSE HTTP client, so it

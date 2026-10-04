@@ -16,7 +16,7 @@ Build Windows: `$env:CARGO_TARGET_DIR="target/agent"`; test: `cargo nextest run 
 ## R-1x Putus kopling & pecah crate (setelah R-00)
 
 - [x] **R-10 (P1, L) Ekstrak `i18n`** [Selesai PR-31] Dependensi `galleon-i18n` dikonfigurasi di `clawcrew-channels` dan seluruh 87 pemanggilan dialihkan dari runtime ke `galleon_i18n`.
-- [ ] **R-11 (P1, L) Ekstrak `security::scrub`** (36 ref) ke crate/ke `clawcrew-infra`. Dep: R-00.
+- [x] **R-11 (P1, L) Ekstrak `security::scrub`** [Selesai PR-32] 36 ref di channels dan gateway diekstrak ke crate `galleon-security-scrub`; runtime men-reexport untuk backward-compatibility.
 - [ ] **R-12 (P1, L) Pisahkan kontrak tools-scoped / memory_strategy / hooks / sop::types** yang dipakai channels menjadi trait di `clawcrew-api`. Dep: R-00.
 - [ ] **R-13 (P1, L) `channels` tidak bergantung ke `runtime`** (677 ref → 0). Dep: R-10..R-12. Acceptance: edge dihapus di `cargo metadata`; gerbang R-04 mengunci.
 - [ ] **R-14 (P1, L) `gateway` tidak bergantung ke `runtime`; hapus REST/WS/A2A lama bila tak ada pemakai (ODR-14)** (426 ref; cron, observability). Dep: R-00. Bila cron pindah ke Go: koordinasi G-lane.

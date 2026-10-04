@@ -230,7 +230,7 @@
     #[test]
     fn scrub_masks_poll_error_url() {
         let raw = "error sending request for url (https://api.telegram.org/bot123456:ABC-def_GHI/getUpdates)";
-        let redacted = clawcrew_runtime::security::scrub(raw);
+        let redacted = galleon_security_scrub::scrub(raw);
         assert!(!redacted.contains("123456:ABC-def_GHI"));
         assert!(redacted.contains("[REDACTED_BOT_TOKEN]"));
     }
@@ -238,7 +238,7 @@
     #[test]
     fn scrub_leaves_unrelated_text_untouched() {
         let raw = "connection reset by peer";
-        assert_eq!(clawcrew_runtime::security::scrub(raw), raw);
+        assert_eq!(galleon_security_scrub::scrub(raw), raw);
     }
 
     #[test]

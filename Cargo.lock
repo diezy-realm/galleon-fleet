@@ -1699,6 +1699,7 @@ dependencies = [
  "galleon-channel-imessage",
  "galleon-channel-signal",
  "galleon-i18n",
+ "galleon-security-scrub",
  "glob",
  "hex",
  "hmac 0.12.1",
@@ -1863,6 +1864,7 @@ dependencies = [
  "clawcrew-tools",
  "directories",
  "futures-util",
+ "galleon-security-scrub",
  "hex",
  "hmac 0.12.1",
  "http 1.5.0",
@@ -2164,6 +2166,7 @@ dependencies = [
  "fluent",
  "futures-util",
  "galleon-i18n",
+ "galleon-security-scrub",
  "glob",
  "hex",
  "hmac 0.12.1",
@@ -4324,6 +4327,14 @@ dependencies = [
  "serde_json",
  "sys-locale",
  "toml 1.1.2+spec-1.1.0",
+]
+
+[[package]]
+name = "galleon-security-scrub"
+version = "0.8.5"
+dependencies = [
+ "clawcrew-config",
+ "regex",
 ]
 
 [[package]]

@@ -24,7 +24,7 @@ Prinsip: **verifikasi per modul (R-00 §4) wajib sebelum modul runtime dipindah/
 ## C. Dekoplasi Crate (pecah kode besar)
 
 - [x] **BR-C1 · R-10 · PR-31 (P1, M) Selesaikan ekstraksi `i18n`:** [Selesai PR-31] Dependensi `galleon-i18n` ditambahkan langsung ke `crates/clawcrew-channels/Cargo.toml` dan seluruh 87 referensi `clawcrew_runtime::i18n` di channels di-repoint ke `galleon_i18n`, diverifikasi lolos `cargo check -p clawcrew-channels` dan uji arsitektur dependency direction.
-- [ ] **BR-C2 · R-11 · PR-32 (P1, L) Ekstrak `security::scrub`** (36 ref).
+- [x] **BR-C2 · R-11 · PR-32 (P1, L) Ekstrak `security::scrub`:** [Selesai PR-32] Diekstrak ke crate `galleon-security-scrub`; 36 pemanggilan di `clawcrew-channels` dan 2 di `clawcrew-gateway` di-repoint ke `galleon_security_scrub::scrub`; unit tests (37 test) dan gate arsitektur lolos.
 - [ ] **BR-C3 · R-12 · PR-33 (P1, L) tools-scoped / memory_strategy / hooks / sop::types → trait di `clawcrew-api`.**
 - [ ] **BR-C4 · R-13 · PR-34 (P1, L) `channels` tidak bergantung ke `runtime`** (677 ref → 0); gerbang BR-A3 mengunci. Dep: BR-C1..C3.
 - [ ] **BR-C5 · R-14 · PR-61 (P1, L) ⚑ `gateway` tidak bergantung ke `runtime`** (426 ref → 0). Dep: BR-D1 (cron). Terkait keputusan 08 §C.

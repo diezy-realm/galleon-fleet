@@ -149,7 +149,7 @@ pub async fn handle_upload(
             WARN,
             ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                 .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{e}"))})),
+                .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{e}"))})),
             "Failed to create webui_uploads directory"
         );
         return Err(err(
@@ -168,7 +168,7 @@ pub async fn handle_upload(
             WARN,
             ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                 .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{e}"))})),
+                .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{e}"))})),
             "Failed to save webui upload"
         );
         return Err(err(

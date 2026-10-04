@@ -919,7 +919,7 @@ impl AcpServer {
                     .model_provider_for_agent(&agent_alias)
                     .and_then(|mp| mp.model.clone())
                     .unwrap_or_default();
-                let error = clawcrew_runtime::security::scrub(
+                let error = galleon_security_scrub::scrub(
                     &clawcrew_providers::sanitize_api_error(&e.to_string()),
                 );
                 ::clawcrew_log::scope!(
