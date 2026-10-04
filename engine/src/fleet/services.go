@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -73,7 +72,7 @@ func NewService(gateway client.SystemGatewayClient) Service {
 	initialDiags := []DiagnosticItem{
 		{ID: "d-1", Component: "Sovereign Gateway (Warp Engine)", Status: "unknown", Latency: "unknown", Detail: "Gateway status not checked."},
 		{ID: "d-2", Component: "Kernel Landlock LSM Sandboxing", Status: "unknown", Latency: "unknown", Detail: "Landlock check requires system-specific tools."},
-		{ID: "d-3", Component: "Ollama Local LLM Bridge", Status: "unknown", Latency: "unknown", Detail: "Ollama ping pending."},
+		{ID: "d-3", Component: "System Gateway LLM Provider Core", Status: "unknown", Latency: "unknown", Detail: "LLM execution delegated to System Gateway (:50052)."},
 		{ID: "d-4", Component: "SQLite FTS5 Semantic Memory", Status: "unknown", Latency: "unknown", Detail: "Memory stats pending runtime read."},
 		{ID: "d-5", Component: "Disaster Recovery Daemon", Status: "unknown", Latency: "unknown", Detail: "Snapshot integrity check pending."},
 	}
@@ -288,23 +287,6 @@ func (s *fleetService) GetHarborProviders(ctx context.Context) ([]HarborProvider
 	}, nil
 }
 
-// checkOllama pings the Ollama endpoint with a 100ms timeout. Returns status, latency, detail.
-func checkOllama(ctx context.Context) (status, latency, detail string) {
-	client := &http.Client{Timeout: 100 * time.Millisecond}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost:11434/api/tags", nil)
-	if err != nil {
-		return "error", "0ms", fmt.Sprintf("Ollama check failed: %v", err)
-	}
-	start := time.Now()
-	resp, err := client.Do(req)
-	if err != nil {
-		return "unavailable", "0ms", "Ollama not responding (daemon may be offline)."
-	}
-	defer resp.Body.Close()
-	lat := time.Since(start)
-	return "healthy", fmt.Sprintf("%dms", lat.Milliseconds()), fmt.Sprintf("Ollama API accessible (%d models).", resp.StatusCode)
-}
-
 // checkGateway checks if the gRPC server is listening on :50052 (100ms dial timeout).
 func checkGateway(ctx context.Context) (status, latency, detail string) {
 	dialer := &net.Dialer{Timeout: 100 * time.Millisecond}
@@ -347,10 +329,10 @@ func (s *fleetService) GetDiagnostics(ctx context.Context) ([]DiagnosticItem, er
 	copy(out, s.diagnostics)
 
 	// Check d-1: Gateway (port 50052)
-	status, latency, detail := checkGateway(ctx)
+	gwStatus, gwLatency, gwDetail := checkGateway(ctx)
 	for i := range out {
 		if out[i].ID == "d-1" {
-			out[i].Status, out[i].Latency, out[i].Detail = status, latency, detail
+			out[i].Status, out[i].Latency, out[i].Detail = gwStatus, gwLatency, gwDetail
 			break
 		}
 	}
@@ -358,11 +340,18 @@ func (s *fleetService) GetDiagnostics(ctx context.Context) ([]DiagnosticItem, er
 	// Check d-2: Landlock — keep as-is (system-dependent, no portable way)
 	// (d-2 remains "unknown" with explanatory detail)
 
-	// Check d-3: Ollama
-	status, latency, detail = checkOllama(ctx)
+	// Check d-3: LLM Provider Core (delegated to Rust System Gateway :50052 per ADR 0001)
 	for i := range out {
 		if out[i].ID == "d-3" {
-			out[i].Status, out[i].Latency, out[i].Detail = status, latency, detail
+			if gwStatus == "healthy" {
+				out[i].Status = "healthy"
+				out[i].Latency = gwLatency
+				out[i].Detail = "LLM execution ready via System Gateway (:50052)."
+			} else {
+				out[i].Status = "unavailable"
+				out[i].Latency = "0ms"
+				out[i].Detail = "System Gateway (:50052) offline - LLM execution unavailable."
+			}
 			break
 		}
 	}
@@ -383,10 +372,10 @@ func (s *fleetService) GetDiagnostics(ctx context.Context) ([]DiagnosticItem, er
 	}
 
 	// Check d-5: Disaster Recovery (snapshots)
-	status, latency, detail = checkSnapshots()
+	snapStatus, snapLatency, snapDetail := checkSnapshots()
 	for i := range out {
 		if out[i].ID == "d-5" {
-			out[i].Status, out[i].Latency, out[i].Detail = status, latency, detail
+			out[i].Status, out[i].Latency, out[i].Detail = snapStatus, snapLatency, snapDetail
 			break
 		}
 	}

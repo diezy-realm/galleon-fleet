@@ -5,7 +5,7 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 ## G-0x Fail-closed & boundary
 
 - [x] **G-01 (P0, M) Hapus eksekusi shell/fs lokal** [Selesai PR-05] Body eksekusi lokal pada `WriteFileTool`, `EditFileTool`, `ExecuteCommandTool`, `GitDiffTool`, dan `SandboxedCodeRunnerTool` telah diganti dengan fail-closed `executeViaGateway` ke Rust. `plugin.go` dan `mcp_client.go` dihapus. `grep os/exec engine/src` = 0.
-- [ ] **G-02 (P1, S) Hapus route Ollama palsu** `/api/providers/ollama/status` di `engine/src/fleet/delivery.go` (JSON statis, bukan probe; web tidak memanggil) dan diagnostik `d-3` yang tak berbasis sinyal (Q-3). Discovery nyata = RPC baru di Rust (tiket terpisah bila diminta).
+- [x] **G-02 (P1, S) Hapus route Ollama palsu** [Selesai PR-16] Route `/api/providers/ollama/status` dan handler dihapus dari `delivery.go`; unit test dihapus; probe HTTP `checkOllama` (port 11434) dihapus dari `services.go`; diagnostik `d-3` didelegasikan ke System Gateway (:50052); method `getOllamaStatus` dan UI test dihapus dari `web/`.
 - [x] **G-03 (P1, S) Koreksi komentar/fallback di `wire_gen.go`** [Selesai PR-05] Komentar di `wire_gen.go` dan `services.go` diperbarui menegaskan batasan fail-closed (nil gateway langsung menolak eksekusi).
 - [ ] **G-04 (P0, L) Endpoint terminal ber-policy** `POST /api/terminal/exec`: policy risk-tier → approval → `ExecuteNativeTool` (sandbox). Audit log tiap eksekusi. Dep: G-01. Acceptance: perintah berisiko tinggi minta approval; injeksi tidak lolos allowlist.
 - [ ] **G-05 (P1, M) Gerbang boundary otomatis** (test arsitektur Go: larang import `os/exec`, SDK vendor LLM). Dep: G-01.

@@ -280,11 +280,6 @@ export const apiClient = {
     return res.json();
   },
 
-  async getOllamaStatus(): Promise<Record<string, unknown>> {
-    const res = await fetch('/api/providers/ollama/status');
-    return res.json();
-  },
-
   async get<T>(path: string): Promise<T> {
     if (this.isTauri()) {
       try {

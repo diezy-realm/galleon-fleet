@@ -45,7 +45,6 @@ func (h *HTTPHandler) RegisterHTTP(server *metrics.Server) {
 	server.RegisterRouteFunc("/api/system/network", h.handleNetwork)
 	server.RegisterRouteFunc("/api/engine/processes", h.handleEngineProcesses)
 	server.RegisterRouteFunc("/api/engine/execute", h.handleEngineExecute)
-	server.RegisterRouteFunc("/api/providers/ollama/status", h.handleOllamaStatus)
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
@@ -393,18 +392,6 @@ func (h *HTTPHandler) handleEngineExecute(w http.ResponseWriter, r *http.Request
 		"stdout":   fmt.Sprintf("[executed: %s]\n", req.Command),
 		"exitCode": 0,
 		"duration": "10ms",
-	})
-}
-
-func (h *HTTPHandler) handleOllamaStatus(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"status":    "standby",
-		"endpoint":  "http://localhost:11434",
-		"available": true,
 	})
 }
 

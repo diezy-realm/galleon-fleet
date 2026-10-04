@@ -128,14 +128,6 @@ func TestHandleExtendedSystemEndpoints(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200 OK from /api/engine/execute, got %d", rec.Code)
 	}
-
-	// 5. /api/providers/ollama/status
-	req = httptest.NewRequest(http.MethodGet, "/api/providers/ollama/status", nil)
-	rec = httptest.NewRecorder()
-	server.ServeHTTP(rec, req)
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200 OK from /api/providers/ollama/status, got %d", rec.Code)
-	}
 }
 
 func TestCollectionPathTraversalSanitization(t *testing.T) {

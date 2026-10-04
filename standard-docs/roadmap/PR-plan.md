@@ -46,7 +46,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [ ] **PR-13** `ci/engine` · P-06 · GW-2 · – · `go test -race`, vet, staticcheck, cek `wire_gen` · S
 - [x] **PR-14** `chore/web-remove-aistudio-artifacts` · U-05, U-15 · GW-3 · PR-12 · [Selesai] Copot `@google/genai`, `better-sqlite3`, `qrcode`; hapus `metadata.json`, `bun.lock`, `web/.github/`, `web/Dockerfile`, `seedData.ts`; deklarasikan `@tauri-apps/api` di web; rename `galleon-web` · S
 - [ ] **PR-15** `feat/go-terminal-policy-endpoint` · G-04 · GW-2,4,8 · PR-05 · risk-tier + approval + audit; test injeksi ditolak · M
-- [ ] **PR-16** `fix/go-remove-ollama-probe` · G-02 · GW-2,4 · PR-05 · LLM/discovery milik Rust · S
+- [x] **PR-16** `fix/go-remove-ollama-probe` · G-02 · GW-2,4 · PR-05 · [Selesai] Hapus route & handler `/api/providers/ollama/status`, hapus probe HTTP `checkOllama` (11434), selaraskan `d-3` ke System Gateway (:50052), hapus `getOllamaStatus` di web · S
 - [ ] **PR-17** `chore/legacy-removal-docs-archive` · N-11 · GW-0 · PR-06 ⚑ · buat tag `archive/pre-galleon`; hapus `docs/_archive`; perbaiki rujukan `docs/book` di AGENTS.md · M
 - [ ] **PR-18** `chore/legacy-removal-agent-skills-and-workflows` · N-13, N-14 · GW-0 · PR-06 ⚑ · skill & workflow khusus ClawCrew · S
 - [ ] **PR-19** `chore/legacy-removal-packaging-fixtures-i18n` · N-15, N-16, N-17 · GW-0 · PR-06 ⚑ · `dist/`, `nix/`, `deploy-k8s/`, fixture, locale tak terpakai · M

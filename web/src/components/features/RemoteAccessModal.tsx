@@ -52,25 +52,7 @@ export const RemoteAccessModal: React.FC<RemoteAccessModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeGuideTab, setActiveGuideTab] = useState<'mobile' | 'lan' | 'nginx' | 'docker'>('mobile');
-  const [ollamaStatus, setOllamaStatus] = useState<{ available: boolean; host: string; models?: any[] } | null>(null);
   const modalCardRef = useRef<HTMLDivElement>(null);
-  const handleTestOllama = async () => {
-    try {
-      const res = await fetch('/api/providers/ollama/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: ollamaStatus?.models?.[0]?.name || 'llama3', prompt: 'Hello', stream: false })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        alert('Ollama Response: ' + data.response);
-      } else {
-        alert('Error: ' + res.statusText);
-      }
-    } catch (e) {
-      alert('Error testing Ollama: ' + e);
-    }
-  };
 
   // Close on Escape key press
   useEffect(() => {
@@ -103,13 +85,6 @@ export const RemoteAccessModal: React.FC<RemoteAccessModalProps> = ({
       } else {
         // Fallback to current browser URL
         setSelectedUrl(window.location.origin);
-      }
-
-      // 2. Fetch Ollama status
-      const olRes = await fetch('/api/providers/ollama/status');
-      if (olRes.ok) {
-        const olData = await olRes.json();
-        setOllamaStatus(olData);
       }
     } catch (e) {
       console.warn('Network discovery fallback:', e);
@@ -215,13 +190,13 @@ export const RemoteAccessModal: React.FC<RemoteAccessModalProps> = ({
             </div>
 
             <div className="p-3 rounded-xl bg-neutral-950/80 border border-neutral-800 flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-lg ${ollamaStatus?.available ? 'bg-teal-500/15 text-teal-400' : 'bg-neutral-800 text-neutral-500'} flex items-center justify-center shrink-0`}>
+              <div className="w-8 h-8 rounded-lg bg-teal-500/15 text-teal-400 flex items-center justify-center shrink-0">
                 <Layers className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <div className="text-[10px] font-mono uppercase text-neutral-500">Ollama Local Bridge</div>
+                <div className="text-[10px] font-mono uppercase text-neutral-500">Galleon Orchestrator</div>
                 <div className="text-xs font-semibold truncate text-neutral-200">
-                  {ollamaStatus?.available ? 'Connected (Port 11434)' : 'Standalone / Cloud Mode'}
+                  Engine Active (:9090)
                 </div>
               </div>
             </div>
