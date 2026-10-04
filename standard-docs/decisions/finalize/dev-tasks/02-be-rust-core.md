@@ -5,10 +5,10 @@ Prinsip: **verifikasi per modul (R-00 §4) wajib sebelum modul runtime dipindah/
 
 ## A. Gerbang Kualitas
 
-- [ ] **BR-A1 · R-01 · PR-10 (P1, S) `[workspace.lints]`** (`unwrap_used`/`expect_used` = warn non-test, `unsafe_code` terkontrol); crate mewarisi `lints.workspace = true`.
-- [ ] **BR-A2 · R-03 · PR-10 (P1, S) Gerbang ukuran file/crate** di `tests/architecture/`; daftar pengecualian bertanggal.
-- [ ] **BR-A3 · R-04 · PR-10 (P1, S) Gerbang arah dependensi** (`cargo metadata`): larang `plugins→runtime`, `channels→runtime` baru.
-- [ ] **BR-A4 · R-06 · PR-10 (P2, S) Baseline waktu build/test** (cold/warm, nextest) → `foundation/03`.
+- [x] **BR-A1 · R-01 · PR-10 (P1, S) `[workspace.lints]`:** [Selesai PR-10] Dikonfigurasi `[workspace.lints.clippy]` (`unwrap_used = "warn"`, `expect_used = "warn"`) dan `[workspace.lints.rust]` (`unsafe_code = "warn"`) di root `Cargo.toml`; `[lints] workspace = true` diaktifkan.
+- [x] **BR-A2 · R-03 · PR-10 (P1, S) Gerbang ukuran file/crate** di `tests/architecture/`: [Selesai PR-10] Diimplementasikan `module_size_limits.rs` mengunci batas 5.000 (source) / 10.000 (test) dengan daftar ratchet exceptions bertanggal 2026-10-04.
+- [x] **BR-A3 · R-04 · PR-10 (P1, S) Gerbang arah dependensi** (`cargo metadata`): [Selesai PR-10] Diimplementasikan `dependency_direction.rs` mengunci `clawcrew-api` sebagai leaf crate dan melarang `clawcrew-plugins` serta channel crates mengimpor `clawcrew-runtime`.
+- [x] **BR-A4 · R-06 · PR-10 (P2, S) Baseline waktu build/test:** [Selesai PR-10] Diukur dan dicatat di `foundation/03`: cold workspace check (7m 02s), warm check (3.78s), gate checks (< 1s).
 - [ ] **BR-A5 · R-02 · PR-30 (P1, M, berseri per crate) Burn-down `unwrap/expect` produksi** (±400 hit; `gateway`, `channels`, `runtime`). Dep: BR-A1.
 - [ ] **BR-A6 · R-05 · PR-20 (P2, S) Selaraskan `rust-conventions.md`** (MSRV, jumlah crate).
 

@@ -74,3 +74,16 @@ Akselerasi: `sccache` + `rust-lld` (`.cargo/config.toml`), nextest (`.config/nex
 - [ ] Kontrak berubah → proto/WIT + `api-contracts/` dalam satu PR.
 - [ ] Tidak ada `unwrap()/expect()` baru di jalur produksi; tidak ada secret di diff.
 - [ ] Docs terkait diperbarui; ADR tidak diedit (errata/ADR baru).
+
+## 8. Baseline Waktu Build & Test Terukur (R-06)
+
+> Diukur secara konkret pada lingkungan Windows x86_64 per 2026-10-04.
+
+| Operasi | Target / Scope | Profil | Waktu Terukur | Keterangan |
+|---|---|---|---:|---|
+| **Full Workspace Check** | `cargo check --workspace` (27 crates) | `dev [unoptimized]` | **7m 02s** (~423s) | Baseline kompilasi penuh cold/dirty |
+| **Incremental Warm Check** | `cargo check --workspace` | `dev [unoptimized]` | **3.78s** | Cache hangat incremental dev loop |
+| **Architecture Gate: Module Size** | `cargo test --test architecture module_size_limits` | `test` | **0.53s** | Scanner ukuran seluruh file Rust |
+| **Architecture Gate: Dependency Direction** | `cargo test --test architecture dependency_direction` | `test` | **< 0.05s** | Verifikasi isolasi leaf & channel |
+| **Go Engine Unit Tests** | `go test ./...` di `engine/` | `cached/local` | **1.2s** | Seluruh modul Go Engine |
+

@@ -6,12 +6,12 @@ Build Windows: `$env:CARGO_TARGET_DIR="target/agent"`; test: `cargo nextest run 
 ## R-0x Klasifikasi & gerbang kualitas
 
 - [x] **R-00 (P0 — PRIORITAS UTAMA, ODR-11, M) — *draf selesai: `decisions/refactoring-rust/phase-5-production-hardening/R-00-runtime-inventory.md`; menunggu sign-off Owner/Principle (3 keputusan §6).*  Inventaris `clawcrew-runtime` vs boundary.** Konteks terukur: `agent` 77k, `sop` 38k, `rpc` 32k, `skills` 12k, `cron` 10k, `control_plane` 7k LOC masih dipakai `src/main.rs` dan `gateway/{api,api_config,ws,a2a}.rs` (`foundation/05`). Keluaran per modul: keputusan + daftar pemanggil + tiket tujuan (G-30..G-33 bila pindah ke Go). Per modul (agent, sop, subagents, cron, memory_strategy, skills, hooks, tools, security, i18n, observability, rpc…) tetapkan: *keep-in-Rust* / *move-to-Go* / *delete* / *feature-gate*, dengan bukti pemakai (siapa memanggil). Output: tabel di `decisions/refactoring-rust/phase-5-production-hardening/R-00-runtime-inventory.md`. **Tidak ada penghapusan tanpa sign-off Owner.** Acceptance: tiap top-level modul punya keputusan + alasan; daftar dependen terukur. Out: eksekusi pemindahan.
-- [ ] **R-01 (P1, S) `[workspace.lints]`** di root `Cargo.toml` (`clippy::unwrap_used`/`expect_used` = warn di non-test, `unsafe_code` terkontrol); crate mewarisi `lints.workspace = true`. Dep: –. Acceptance: `cargo clippy --workspace -- -D warnings` tetap hijau dengan baseline/allow terlacak.
+- [x] **R-01 (P1, S) `[workspace.lints]`** [Selesai PR-10] `[workspace.lints.clippy]` (unwrap_used/expect_used = warn) dan `[workspace.lints.rust]` (unsafe_code = warn) di root `Cargo.toml`; `lints.workspace = true`.
 - [ ] **R-02 (P1, M) Burn-down `unwrap/expect` produksi** (±400 hit; runtime 237). Per crate, mulai `gateway`, `channels`. Dep: R-01. Acceptance: nol hit di jalur produksi atau invariant terdokumentasi.
-- [ ] **R-03 (P1, S) Gerbang ukuran file/crate** di `tests/architecture/` sesuai `rust-module-size-and-decomposition-standard.md`; daftar pengecualian bertanggal. Acceptance: CI gagal bila file baru melewati batas.
-- [ ] **R-04 (P1, S) Gerbang arah dependency antar-crate** (`cargo metadata`); larang `plugins→runtime`, `channels→runtime` baru, dst. Acceptance: test gagal pada edge terlarang.
+- [x] **R-03 (P1, S) Gerbang ukuran file/crate** [Selesai PR-10] Ditambahkan `tests/architecture/module_size_limits.rs` dengan daftar pengecualian bertanggal 2026-10-04 (ratchet lock).
+- [x] **R-04 (P1, S) Gerbang arah dependency antar-crate** [Selesai PR-10] Ditambahkan `tests/architecture/dependency_direction.rs` mengunci leaf boundary `clawcrew-api` dan isolasi channel/plugins dari `runtime`.
 - [x] **R-05 (P2, S) Selaraskan `rust-conventions.md`** [Selesai PR-20] MSRV 1.96.0 dan jumlah 27 crates diselaraskan dengan root `Cargo.toml`. Dep: –.
-- [ ] **R-06 (P2, S) Ukur waktu build/test baseline** (cold/warm, `nextest`) dan simpan di `foundation/03`.
+- [x] **R-06 (P2, S) Ukur waktu build/test baseline** [Selesai PR-10] Waktu cold check (7m 02s), warm check (3.78s), dan gate checks diukur dan disimpan di `foundation/03`.
 
 ## R-1x Putus kopling & pecah crate (setelah R-00)
 

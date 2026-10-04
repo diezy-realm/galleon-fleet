@@ -32,3 +32,9 @@ mod ci_runner_labels;
 
 #[path = "architecture/tier_boundaries.rs"]
 mod tier_boundaries;
+
+#[path = "architecture/module_size_limits.rs"]
+mod module_size_limits;
+
+#[path = "architecture/dependency_direction.rs"]
+mod dependency_direction;

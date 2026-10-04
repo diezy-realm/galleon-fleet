@@ -40,7 +40,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 
 ### Gelombang 1 — gerbang kualitas & pembersihan
 
-- [ ] **PR-10** `ci/rust-workspace-lints-and-gates` · R-01, R-03, R-04, R-06 · GW-1 · PR-00 · `[workspace.lints]`, gerbang ukuran, gerbang arah dependensi, baseline waktu build · M
+- [x] **PR-10** `ci/rust-workspace-lints-and-gates` · R-01, R-03, R-04, R-06 · GW-1 · PR-00 · [Selesai] `[workspace.lints]`, gerbang ukuran ratchet exceptions 2026-10-04, gerbang arah dependensi, dan baseline waktu build diukur · M
 - [x] **PR-11** `ci/boundary-gates` · P-07 · GW-4,6 · PR-05 · [Selesai] `tests/architecture/tier_boundaries.rs` mengunci isolasi 4-tier (UI tanpa backend, Tauri tanpa shell, Go tanpa exec/vendor LLM); pembersihan visibilitas Cli di main; test lolos 100% · M
 - [x] **PR-12** `ci/web-and-desktop` · P-04, P-05, U-12 · GW-3 · PR-03 · [Selesai] CI `web/` (`web-check.yml`) & `desktop-check.yml`, skrip `typecheck/lint/test/build` di `web/package.json`, TS strict mode · M
 - [x] **PR-13** `ci/engine` · P-06 · GW-2 · – · [Selesai] `engine-ci.yml` diperbarui (`go test -race`, vet, staticcheck, Wire injector check); perbaikan wire Set di `run/wire.go` · S

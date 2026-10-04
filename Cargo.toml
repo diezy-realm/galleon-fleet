@@ -44,6 +44,13 @@ zerocode = { path = "apps/zerocode", version = "0.8.5" }
 directories = "6.0"
 sys-locale = "0.3"
 
+[workspace.lints.rust]
+unsafe_code = "warn"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+
 [package]
 name = "clawcrew"
 # Workspace crates are publish = false during microkernel transition.
@@ -71,6 +78,9 @@ include = [
   "/web/dist/**/*",
   "/locales/**/*",
 ]
+
+[lints]
+workspace = true
 
 [[bin]]
 name = "clawcrew"
