@@ -13,7 +13,7 @@ Ref: `tech-standart/tech-stack/{web,tauri}-conventions.md`, ADR 0002/0003. UI ha
 - [ ] **U-09 (P1, M) Sidecar desktop:** Tauri menjalankan Go engine + Rust gateway (lifecycle, health, shutdown), tanpa logika bisnis. Dep: P-lane build sidecar.
 - [ ] **U-10 (P2, M) Tipe E2:** `HarborTool`, `ProcessItem` dll. diselaraskan dengan kontrak API Go; generate dari OpenAPI bila ada.
 - [ ] **U-11 (P2, M) `apiClient.ts` tunggal bertipe**; larang `fetch` langsung di komponen (lint).
-- [ ] **U-12 (P1, S) Skrip kualitas:** `typecheck`, `lint` (eslint), `test` (vitest) di `web/package.json`; strict TS tanpa `any`.
+- [x] **U-12 (P1, S) Skrip kualitas:** [Selesai PR-12] `typecheck` (`tsc --noEmit`), `lint`, `test` (`node --test`), `build` di `web/package.json`; strict TS tanpa `any`; CI web-check terintegrasi.
 - [ ] **U-13 (P2, M) Layar organisasi:** Quartermaster/Ship/Squad/Crew, memori, approval — sesuai G-23/G-24.
 - [ ] **U-14 (P3, M) i18n & aksesibilitas dasar** mengikuti `web/src/lib/i18n.ts` bila ada.
 - [x] **U-15 (P1, S) Deklarasikan `@tauri-apps/api` di `web/package.json`** [Selesai PR-14] `@tauri-apps/api: ^2.0.0` dideklarasikan di `web/package.json`; invoke Tauri dimuat dinamis (dynamic import `invokeTauri`), bundle mandiri dan tidak membocorkan inisialisasi IPC ke runtime browser.

@@ -1,0 +1,48 @@
+name: Web App Check
+
+on:
+  push:
+    branches: [main, master, testing]
+    paths:
+      - 'web/**'
+      - '.github/workflows/web-check.yml'
+  pull_request:
+    branches: [main, master, testing]
+    paths:
+      - 'web/**'
+      - '.github/workflows/web-check.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web-check:
+    name: galleon-web (Lint, Typecheck, Build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm install
+
+      - name: Typecheck
+        working-directory: web
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: web
+        run: npm run lint
+
+      - name: Build
+        working-directory: web
+        run: npm run build

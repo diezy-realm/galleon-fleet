@@ -230,7 +230,7 @@ export const apiClient = {
 
   async executeTerminalCommand(command: string, approved = false): Promise<{ stdout: string; stderr?: string; exitCode: number; duration: string; riskTier?: string; requiresApproval?: boolean }> {
     try {
-      const res = await fetch(`${ENGINE_BASE}/api/terminal/exec`, {
+      const res = await fetch('/api/terminal/exec', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command, approved, approved_by: 'web_terminal_ui' })
