@@ -57,6 +57,12 @@ Format: `[ ] PR-xx  branch · tiket · gerbang · Dep · fokus review Principle`
 - [ ] **PR-24** `refactor/gateway-decouple-runtime-remove-rest` · R-14, N-12 (bagian gateway) · GW-1,5,6 · PR-05, sign-off Owner
 - [ ] **PR-25** `refactor/runtime-shrink-<modul>` (1 PR per modul, urutan di R-00 §3) · R-16, R-17 · GW-1,6 · PR-05, **sign-off Owner per modul**
 - [ ] **PR-26** `refactor/split-channels` · R-15, R-32 · GW-1 · PR-23 (satu PR per kelompok channel)
+- [ ] **PR-26b** `refactor/remove-verifiable-intent` · R-38 · GW-1,7 · PR-05 + sign-off
+- [ ] **PR-26c** `feat/go-identity-access` · G-35 · GW-2,8 · – · principal/WebAuthn/pairing, test negatif
+- [ ] **PR-26d** `docs/client-protocol-v1` + `feat/go-client-protocol` · G-36 · GW-2,5,6 · PR-26c
+- [ ] **PR-26e** `refactor/rust-caller-auth` · R-39 · GW-1,8 · PR-26c
+- [ ] **PR-26f** `refactor/tui-acp-retarget` · R-40 · GW-1,6 · PR-26d
+- [ ] **PR-26g** `refactor/remove-rpc-legacy-gateway` · R-41 · GW-1,5,6 · PR-26f
 - [ ] **PR-27** `fix/grpc-execute-task` · R-20, R-21, R-22, R-23, R-24 · GW-1,5,6,8 · –
 - [ ] **PR-28** `docs/adr-persistence` · G-10 · GW-7 · –
 - [ ] **PR-29** `feat/go-sqlite-store` · G-11, G-13, G-14 · GW-2,6,9 · PR-28 (migrasi data + rollback)

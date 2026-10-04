@@ -92,7 +92,7 @@ Urutan modul yang disarankan (risiko rendah→tinggi): `calendar`/`subagent`/`co
 | `N-*` | **Jangan rename `clawcrew-runtime` sebelum R-16** (isi berubah); `eval` & `sop-graph` rename biasa |
 | `PR-plan.md` | PR-05 = dokumen ini; PR-25 dipecah per modul (1 PR per modul, urutan §3) |
 
-## 6. Keputusan yang dibutuhkan (hanya yang tidak bisa dijawab dari kode)
+## 6. Keputusan terbuka — dianalisis di `R-00a-open-decisions-analysis.md`
 
 1. **`verifiable_intent` (4,6k)** — fitur produk yang diinginkan? Bila tidak: hapus.
 2. **Batas "keamanan sebagai mekanisme vs kebijakan"** untuk `security::{principal_resolver,auth_provider,webauthn}` — usulan: mekanisme di Rust, keputusan policy di Go.

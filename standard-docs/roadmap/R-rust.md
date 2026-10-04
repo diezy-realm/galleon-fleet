@@ -42,4 +42,8 @@ Build Windows: `$env:CARGO_TARGET_DIR="target/agent"`; test: `cargo nextest run 
 - [ ] **R-34 (P1, M) CLI (`galleon`, `galleoncode` TUI) = binary Rust, klien Go untuk orkestrasi (ODR-12)** — `chat/run/approve/status` memanggil Go :9090 (SSE/WS); `service/doctor/onboard/vault` tetap lokal Rust; tanpa agent loop lokal. Desain di `foundation/05`. Dep: R-00, G-lane API.
 
 - [ ] **R-37 (P2, M) Retarget `galleon-eval`** (replay deterministik) dari `runtime::agent::Agent` ke jalur Go (`StartTurn` + mock `ExecuteTurn`) setelah G-30; pertahankan fixture trace. `galleon-sop-graph` mengikuti keputusan modul `sop` di R-00 (tipe wire → kontrak proto bila SOP pindah). Dep: R-00, G-30.
+- [ ] **R-38 (P2, S) Hapus `verifiable_intent`** (modul, tool `vi_*`, `VerifiableIntentConfig`, peringatan di `main.rs`/doctor); config lama diabaikan dengan peringatan sekali. Dep: sign-off Owner. Ref R-00a §1.
+- [ ] **R-39 (P1, M) Auth pemanggil Go di Rust:** satu provider (loopback token/peer-uid/mTLS) menggantikan `principal_resolver`/`auth_provider`/`webauthn` setelah G-35. Dep: G-35. Ref R-00a §2.
+- [ ] **R-40 (P1, L) Retarget `galleoncode` (TUI) & `galleon-acp-bridge`** ke Galleon Client Protocol (Go); matikan mode agent daemon-ephemeral. Dep: G-36.
+- [ ] **R-41 (P2, L) Hapus `rpc` + REST/WS/A2A lama** setelah parity (eval + test kontrak). Dep: R-40, R-14.
 - [ ] **R-36 (P1, M) Audit galleoncode (TUI) & galleonrelay:** petakan tiap pemanggilan ke daemon/runtime Rust (chat, ACP, agent sidebar, enroll) → endpoint Go; TUI tetap sebagai antarmuka CLI. Relay: jelaskan peran vs Nginx (relay = tembus NAT tanpa dekripsi; Nginx = TLS terminator di VPS) dan masuk P-11 panduan deploy.

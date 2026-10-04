@@ -36,5 +36,7 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 - [ ] **G-31 (P1, L) SOP engine**: definisi, eksekusi, approval gate di Go. Dep: R-00.
 - [ ] **G-32 (P2, M) Skills & scheduler (cron)** di Go terikat Squad/Crew. Dep: R-00.
 - [ ] **G-34 (P2, M) Padanan `control_plane` & `approval`** di Go (fleet governance, approval gate) — cek duplikasi dengan `fleet/policies.go`. Dep: R-00.
+- [ ] **G-35 (P1, L) Identity & akses di Go:** principal resolver (provider → identitas → grants, deny-by-default, generasi policy), WebAuthn, pairing perangkat; dasar G-20/G-21. Dep: R-00a.
+- [ ] **G-36 (P1, L) Server Galleon Client Protocol v1** (WS JSON-RPC 2.0) + spesifikasi `api-contracts/client-protocol.md` dari `rpc/types.rs`+`acp.rs`; tes kontrak. Dep: G-35, G-30.
 - [ ] **G-33 (P2, M) Sub-agent / handoff / A2A** sebagai Artifact reference antar Crew di Go. Dep: R-00.
 
