@@ -36,7 +36,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [x] **PR-03** `fix/tauri-frontend-dist` · U-01, P-01 · GW-0,3 · – · [Selesai commit ec31d7562] `frontendDist=../../web/dist`; root Cargo.toml `exclude = ["apps/tauri"]`; `cargo metadata --no-deps` dan `cargo check` hijau · S
 - [x] **PR-04** `security/tauri-remove-terminal-and-fake-metrics` · U-06, U-07, U-16 · GW-3,4,8 · – · [Selesai commit 36e6774a8] Hapus `execute_terminal_command`, proxy `get_collection`/`save_collection` dan `get_engine_processes` ke Go :9090; `web/server.ts` matikan RCE `POST /api/engine/execute` & duplikat Ollama/processes; terminal dikunci · S
 - [x] **PR-05** `security/go-fail-closed-tools` · G-01, G-03, G-38 · GW-2,4,8 · – · [Selesai commit 131930265] Hapus sisa eksekusi shell/fs lokal di `services.go`, `sandbox.go`, hapus `plugin.go` & `mcp_client.go`; grep os/exec = 0; fail-closed direct dispatch denial test pass; `resolveDataDir` (`GALLEON_DATA_DIR`) + test path traversal · M
-- [ ] **PR-06** `docs/brand-hit-inventory` · N-01 · GW-0 · PR-00 · klasifikasi rename/delete/keep/migrate (CSV + ringkasan) · S
+- [x] **PR-06** `docs/brand-hit-inventory` · N-01 · GW-0 · PR-00 · [Selesai] 1.709 file diklasifikasikan ke rename/delete/keep/needs-migration di `files/brand-hit-inventory.csv` + ringkasan · S
 
 ### Gelombang 1 — gerbang kualitas & pembersihan
 

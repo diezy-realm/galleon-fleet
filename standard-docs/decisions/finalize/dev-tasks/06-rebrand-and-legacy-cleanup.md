@@ -5,7 +5,7 @@ Acuan: `tech-standart/naming/naming-map.md` (disetujui), ODR-16/17/19. Aturan: *
 ## A. Persiapan
 
 - [x] **RB-00 · N-00:** matriks penamaan resmi `naming-map.md` (disetujui Owner).
-- [ ] **RB-01 · N-01 · PR-06 (P0, S) Inventaris klasifikasi hit** (rename/delete/keep/needs-migration) → CSV + ringkasan.
+- [x] **RB-01 · N-01 · PR-06 (P0, S) Inventaris klasifikasi hit** [Selesai PR-06] 1.709 file dan 40.422 hit diklasifikasikan ke `rename` (1.400), `delete` (246), `keep` (43), `needs-migration` (20) di `files/brand-hit-inventory.csv` + ringkasan.
 - [ ] **RB-02 · N-02 · PR-80 (P1, M) Skrip rename + `brand_gate.sh`.**
 
 ## B. Hapus Legacy (Gelombang 1)
