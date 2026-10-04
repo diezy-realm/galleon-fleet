@@ -41,4 +41,5 @@ Build Windows: `$env:CARGO_TARGET_DIR="target/agent"`; test: `cargo nextest run 
 - [ ] **R-33 (P2, M) Pasang mekanisme pilih-Tier-B saat instalasi** (feature flags / installer). Dep: P-lane installer.
 - [ ] **R-34 (P1, M) CLI (`galleon`, `galleoncode` TUI) = binary Rust, klien Go untuk orkestrasi (ODR-12)** — `chat/run/approve/status` memanggil Go :9090 (SSE/WS); `service/doctor/onboard/vault` tetap lokal Rust; tanpa agent loop lokal. Desain di `foundation/05`. Dep: R-00, G-lane API.
 
+- [ ] **R-37 (P2, M) Retarget `galleon-eval`** (replay deterministik) dari `runtime::agent::Agent` ke jalur Go (`StartTurn` + mock `ExecuteTurn`) setelah G-30; pertahankan fixture trace. `galleon-sop-graph` mengikuti keputusan modul `sop` di R-00 (tipe wire → kontrak proto bila SOP pindah). Dep: R-00, G-30.
 - [ ] **R-36 (P1, M) Audit galleoncode (TUI) & galleonrelay:** petakan tiap pemanggilan ke daemon/runtime Rust (chat, ACP, agent sidebar, enroll) → endpoint Go; TUI tetap sebagai antarmuka CLI. Relay: jelaskan peran vs Nginx (relay = tembus NAT tanpa dekripsi; Nginx = TLS terminator di VPS) dan masuk P-11 panduan deploy.

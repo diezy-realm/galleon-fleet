@@ -71,7 +71,7 @@ Format: `[ ] PR-xx  branch · tiket · gerbang · Dep · fokus review Principle`
 ### Gelombang 3 — rename (setelah hapus/pecah)
 
 - [ ] **PR-40** `chore/brand-gate-and-rename-script` · N-02 · GW-0 · PR-07
-- [ ] **PR-41** `refactor/rename-env-and-config-paths` · N-23 · GW-1,9 · PR-40 · migrasi `~/.clawcrew`→`galleon`, alias env + deprecasi
+- [ ] **PR-41** `refactor/rename-env-and-config-paths` · N-23 · GW-1,9 · PR-40 · migrasi data `~/.clawcrew`→`galleon`; env diganti langsung (ODR-19)
 - [ ] **PR-42** `refactor/rename-crates-<batch>` · N-21, N-22 · GW-1,6 · PR-40; **bawah→atas, tiap batch 3–5 crate**; `runtime` setelah PR-25
 - [ ] **PR-43** `refactor/rename-binaries` · N-20 (`galleon`, `galleoncode`, `galleonrelay`, `galleon-acp-bridge`) · GW-1,9 · PR-42
 - [ ] **PR-44** `refactor/rename-go-module` · N-25 · GW-2 · PR-40

@@ -7,12 +7,12 @@ Ref: ODR-16. Pola yang dicari: `zeroclaw`, `zerocode`, `zerorelay`, `claw-crew`,
 - Satu PR = satu lapisan; tiap PR hijau (`cargo check/clippy/nextest`, `go test -race`, `npm run build`).
 - Rename mekanis lewat skrip (`scripts/rename/…`), bukan tangan; ada mode `--dry-run` dan laporan.
 - **Jangan ubah:** ADR/riwayat di `standard-docs/decisions/` (immutable), `CHANGELOG`, sertifikat/lisensi atribusi, data fixture bertanda tangan, path/ID yang dipakai format on-disk pengguna **tanpa jalur migrasi**.
-- Kompatibilitas data: nama direktori config (`~/.clawcrew`→`~/.config/galleon`), env var (`CLAWCREW_*`→`GALLEON_*`), nama service, WIT package. Wajib ada **migrasi sekali jalan + alias env var dengan peringatan deprecasi** (satu rilis).
+- Kompatibilitas data: nama direktori config (`~/.clawcrew`→`~/.config/galleon`), env var (`CLAWCREW_*`→`GALLEON_*`), nama service, WIT package. Wajib ada **migrasi data sekali jalan** untuk path pengguna; env var diganti langsung, tanpa alias (ODR-19).
 - Aturan penamaan baru crate: `galleon-*` (rust-conventions); legacy `clawcrew-*` diganti bertahap.
 
 ## N-0x Keputusan & alat (wajib dulu)
 
-- [ ] **N-00 (P0, S) Matriks penamaan resmi** — *draf selesai: `tech-standart/naming/naming-map.md`; menunggu sign-off Owner (3 pertanyaan terbuka §8).* `standard-docs/tech-standart/naming/naming-map.md`: lama→baru untuk crate, binary (`clawcrew`→`galleon`; `zerocode`→`galleoncode`; `zerorelay`→`galleonrelay`), paket npm, env var, direktori config, service name, bundle id, WIT package (v0 beku; v1 = `galleon:plugin`), header HTTP, metric prefix, Docker image. Owner sign-off. Out: eksekusi.
+- [ ] **N-00 (P0, S) Matriks penamaan resmi** — *ODR-19: tanpa alias; draf selesai: `tech-standart/naming/naming-map.md`; menunggu sign-off Owner (3 pertanyaan terbuka §8).* `standard-docs/tech-standart/naming/naming-map.md`: lama→baru untuk crate, binary (`clawcrew`→`galleon`; `zerocode`→`galleoncode`; `zerorelay`→`galleonrelay`), paket npm, env var, direktori config, service name, bundle id, WIT package (v0 beku; v1 = `galleon:plugin`), header HTTP, metric prefix, Docker image. Owner sign-off. Out: eksekusi.
 - [ ] **N-01 (P0, S) Inventaris klasifikasi** tiap hit: *rename* / *delete* / *keep (historis)* / *needs-migration*. Output CSV di `files/` + ringkasan; pakai pencarian case-insensitive untuk varian `Claw Crew`, `claw_crew`, `CLAWCREW`.
 - [ ] **N-02 (P1, M) Skrip rename mekanis + gerbang CI** yang gagal bila pola terlarang muncul di jalur non-whitelist (`scripts/ci/brand_gate.sh`). Dep: N-00, N-01.
 
@@ -29,10 +29,10 @@ Ref: ODR-16. Pola yang dicari: `zeroclaw`, `zerocode`, `zerorelay`, `claw-crew`,
 
 ## N-2x Rename per lapisan
 
-- [ ] **N-20 (P1, M) Binary & CLI:** `clawcrew`→`galleon` (root `Cargo.toml` package/bin, `src/main.rs` string UX, help, completions); `apps/zerocode`→`apps/galleoncode` (biner `galleoncode`, TUI CLI: chat, ACP, agent sidebar, config manager) dan `apps/zerorelay`→`apps/galleonrelay` (biner `galleonrelay`, blind mTLS relay untuk perangkat di balik NAT) — **keduanya dipertahankan, hanya rename + penyesuaian** (ODR-17). Alias biner lama 1 rilis.
+- [ ] **N-20 (P1, M) Binary & CLI:** `clawcrew`→`galleon` (root `Cargo.toml` package/bin, `src/main.rs` string UX, help, completions); `apps/zerocode`→`apps/galleoncode` (biner `galleoncode`, TUI CLI: chat, ACP, agent sidebar, config manager) dan `apps/zerorelay`→`apps/galleonrelay` (biner `galleonrelay`, blind mTLS relay untuk perangkat di balik NAT) — **keduanya dipertahankan, hanya rename + penyesuaian** (ODR-17). Tanpa alias (ODR-19).
 - [ ] **N-21 (P1, L) Crate `clawcrew-*` → `galleon-*`** (22 crate): urutan bawah→atas (api, infra, log, config, …, runtime, gateway); `[workspace.dependencies]`, `use clawcrew_*`, `Cargo.lock`. Satu crate per PR; gunakan `cargo-edit`/skrip. Dep: N-00, N-02, R-04 (arah dependensi) agar tidak mengacaukan pemecahan crate. Koordinasi dengan R-10..R-16: **rename setelah pecah/hapus** untuk crate yang akan diubah.
 - [ ] **N-22 (P1, M) Identifier & string di dalam kode:** tipe/ fungsi/ komentar/ doc comment (`ClawCrew*`, `zeroclaw`), log target, `tracing` span, metric prefix. Dep: N-21 per crate.
-- [ ] **N-23 (P1, M) Config & env:** `CLAWCREW_*`→`GALLEON_*`, direktori `~/.clawcrew`→`~/.config/galleon` (vault path sudah `galleon`); migrasi data + alias deprecasi. Dep: N-00. **Risiko data pengguna.**
+- [ ] **N-23 (P1, M) Config & env:** `CLAWCREW_*`→`GALLEON_*`, direktori `~/.clawcrew`→`~/.config/galleon` (vault path sudah `galleon`); migrasi data (tanpa alias env). Dep: N-00. **Risiko data pengguna.**
 - [ ] **N-24 (P1, M) WIT v1 (ODR-17):** v0 (`clawcrew:plugin@0.1.0`) tetap beku. Buat `wit/v1/` dengan paket `galleon:plugin@1.0.0` sebagai versi aktif; host mendukung v0 dan v1 selama masa transisi; fixture dan `plugin-codebase-standard.md` pindah ke v1; breaking-change check memakai marker `.frozen` per versi. Dep: N-00, R-30.
 - [ ] **N-25 (P1, M) Go engine:** module path, package, string, header, log field (`engine/go.mod`, `app/`), tanda “FleetAI”. Dep: N-00.
 - [ ] **N-26 (P1, S) UI `web/`:** nama paket `react-example`→`galleon-web`, `Fleet AI` di title/teks/i18n, localStorage key dengan migrasi. (Tumpang tindih U-05.)
