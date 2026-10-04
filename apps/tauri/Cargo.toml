@@ -1,36 +1,25 @@
 [package]
-name = "clawcrew-desktop"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-description = "ClawCrew Desktop — Tauri-powered system tray app"
-publish = false
+name = "fleet-ai-desktop"
+version = "2.4.0"
+description = "Fleet AI Desktop Environment"
+authors = ["Captain & Sovereign Crew"]
+edition = "2021"
+
+# tauri-2 is a standalone app, not a member of the root Rust workspace.
+[workspace]
 
 [build-dependencies]
 tauri-build = { version = "2.0", features = [] }
 
 [dependencies]
-tauri = { version = "2.0", features = ["tray-icon", "image-png"] }
-tauri-plugin-store = "2.0"
-tauri-plugin-single-instance = "2.0"
+tauri = { version = "2.0", features = ["tray-icon", "image-ico", "image-png"] }
+tauri-plugin-shell = "2.0"
+tauri-plugin-dialog = "2.0"
+tauri-plugin-fs = "2.0"
+tauri-plugin-notification = "2.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls-webpki-roots"] }
-tokio = { version = "1.50", features = ["rt-multi-thread", "macros", "sync", "time"] }
-anyhow = "1.0"
-base64 = "0.22"
+tokio = { version = "1.36", features = ["full"] }
+# Proxy fleet-domain Tauri commands to the Go engine (SSOT: engine is the single source).
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 
-[dev-dependencies]
-tauri-utils = { version = "2.0", features = ["build-2"] }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-objc2 = "0.6"
-objc2-app-kit = { version = "0.3", features = ["NSApplication", "NSImage", "NSRunningApplication"] }
-objc2-foundation = { version = "0.3", features = ["NSData"] }
-
-[target.'cfg(windows)'.dependencies]
-process-wrap = { version = "=9.0.0", default-features = false, features = ["job-object", "kill-on-drop", "tokio1"] }
-
-[features]
-default = ["custom-protocol"]
-custom-protocol = ["tauri/custom-protocol"]
