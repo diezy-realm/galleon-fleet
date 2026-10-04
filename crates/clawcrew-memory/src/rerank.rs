@@ -319,6 +319,7 @@ mod tests {
             key: id.into(),
             content: content.into(),
             category: MemoryCategory::Daily,
+            scope: Default::default(),
             timestamp: Utc::now().to_rfc3339(),
             session_id: None,
             score: Some(score),

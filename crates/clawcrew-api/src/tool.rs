@@ -439,6 +439,67 @@ pub trait Tool: Send + Sync + crate::attribution::Attributable {
     }
 }
 
+/// Trait for querying and accessing a set of registered tools.
+pub trait ToolRegistry: Send + Sync {
+    /// Return the slice of boxed tools registered in this scope.
+    fn tools(&self) -> &[Box<dyn Tool>];
+
+    /// Look up a tool by name within this registry.
+    fn find_tool(&self, name: &str) -> Option<&(dyn Tool + 'static)> {
+        self.tools()
+            .iter()
+            .find(|tool| tool.name() == name)
+            .map(|tool| tool.as_ref())
+    }
+}
+
+/// A per-agent tool registry that has been scoped and gated.
+/// The inner tools vector is private and callers read tools via [`std::ops::Deref`].
+#[derive(Default)]
+pub struct ScopedToolRegistry(Vec<Box<dyn Tool>>);
+
+impl std::ops::Deref for ScopedToolRegistry {
+    type Target = [Box<dyn Tool>];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ToolRegistry for ScopedToolRegistry {
+    fn tools(&self) -> &[Box<dyn Tool>] {
+        &self.0
+    }
+}
+
+impl ScopedToolRegistry {
+    /// Wrap a vector of tools into a scoped registry.
+    pub fn new(tools: Vec<Box<dyn Tool>>) -> Self {
+        Self(tools)
+    }
+
+    /// Consume the assembled registry into the owned `Vec`.
+    pub fn into_inner(self) -> Vec<Box<dyn Tool>> {
+        self.0
+    }
+
+    /// Narrow an already-sealed registry in place.
+    pub fn retain(&mut self, f: impl FnMut(&Box<dyn Tool>) -> bool) {
+        self.0.retain(f);
+    }
+
+    /// Test or fixture constructor that mints a registry directly from raw tools.
+    pub fn from_raw_for_test(tools: Vec<Box<dyn Tool>>) -> Self {
+        Self(tools)
+    }
+}
+
+impl From<Vec<Box<dyn Tool>>> for ScopedToolRegistry {
+    fn from(tools: Vec<Box<dyn Tool>>) -> Self {
+        Self(tools)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

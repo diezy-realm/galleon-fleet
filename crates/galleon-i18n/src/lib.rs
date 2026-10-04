@@ -106,8 +106,7 @@ fn cli_ftl_sources() -> &'static CliFtlSources {
     CLI_FTL_SOURCES.get_or_init(|| load_cli_ftl_sources(active_locale()))
 }
 
-#[cfg(test)]
-pub(crate) fn get_english_cli_string_with_args(key: &str, args: &[(&str, &str)]) -> String {
+pub fn get_english_cli_string_with_args(key: &str, args: &[(&str, &str)]) -> String {
     let english = CliFtlSources {
         locale: "en".to_string(),
         disk: None,
@@ -118,8 +117,7 @@ pub(crate) fn get_english_cli_string_with_args(key: &str, args: &[(&str, &str)])
 
 /// Render a key from a caller-supplied disk override without changing the
 /// process-global locale. This keeps locale-sensitive boundary tests isolated.
-#[cfg(test)]
-pub(crate) fn get_disk_override_cli_string_for_test(
+pub fn get_disk_override_cli_string_for_test(
     locale: &str,
     disk_ftl: &str,
     key: &str,

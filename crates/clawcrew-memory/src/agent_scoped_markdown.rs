@@ -412,6 +412,7 @@ mod tests {
             key: key.into(),
             content: "needle".into(),
             category: MemoryCategory::Custom("family".into()),
+            scope: Default::default(),
             timestamp: "2026-08-24T00:00:00Z".into(),
             session_id: None,
             score: Some(1.0),

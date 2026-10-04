@@ -47,6 +47,7 @@ mod tests {
             key: "test".into(),
             content: "value".into(),
             category,
+            scope: Default::default(),
             timestamp: timestamp.into(),
             session_id: None,
             score,

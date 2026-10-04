@@ -350,6 +350,7 @@ mod tests {
             config: serde_json::json!({"enabled": true}),
             ui_routes: HashMap::new(),
             lifecycle_hooks: vec!["on_enable".into()],
+            mcp_server: None,
         }
     }
 

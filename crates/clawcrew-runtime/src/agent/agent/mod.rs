@@ -4209,11 +4209,11 @@ pub async fn run(
 // safety net (child module so fixtures can reach Agent internals the
 // same way `mod tests` does).
 #[cfg(test)]
-#[path = "safety_net.rs"]
+#[path = "../safety_net.rs"]
 mod safety_net;
 
 #[cfg(test)]
-#[path = "parity.rs"]
+#[path = "../parity.rs"]
 mod parity;
 
 // Live-config plugin regression (child module so it can read the constructed
@@ -4221,7 +4221,7 @@ mod parity;
 // on the host: `WasmTool::from_wasm` refuses to register a tool it cannot load,
 // so a runtime-only plugin backend has no plugin tool to execute.
 #[cfg(all(test, feature = "plugins-wasm-cranelift"))]
-#[path = "plugin_live_config.rs"]
+#[path = "../plugin_live_config.rs"]
 mod plugin_live_config;
 
 #[cfg(test)]

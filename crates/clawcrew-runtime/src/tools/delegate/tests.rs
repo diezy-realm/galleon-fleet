@@ -10255,7 +10255,6 @@ command = "rm independent-delegate-marker"
             "non-OAuth target without api_key must fall back to global credential"
         );
     }
-}
 
 #[cfg(test)]
 mod tool_arc_ref_spec_tests {
@@ -10390,3 +10389,5 @@ mod tool_arc_ref_spec_tests {
             "wrapped trigger vocabulary must survive bounded delegation"
         );
     }
+}
+
