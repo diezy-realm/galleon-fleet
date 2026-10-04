@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -133,5 +135,43 @@ func TestHandleExtendedSystemEndpoints(t *testing.T) {
 	server.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200 OK from /api/providers/ollama/status, got %d", rec.Code)
+	}
+}
+
+func TestCollectionPathTraversalSanitization(t *testing.T) {
+	tempDir := t.TempDir()
+	t.Setenv("GALLEON_DATA_DIR", tempDir)
+
+	svc := NewService(nil)
+	handler := NewHTTPHandler(svc)
+	server := metrics.NewServer(0)
+	handler.RegisterHTTP(server)
+
+	// Save collection with path traversal in URL: /api/collections/../../evil
+	req := httptest.NewRequest(http.MethodPost, "/api/collections/../../evil", strings.NewReader(`[{"name":"test"}]`))
+	rec := httptest.NewRecorder()
+	handler.handleCollections(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK from save collection, got %d", rec.Code)
+	}
+
+	// Verify that the file was written INSIDE tempDir and sanitized to evil.json, NOT outside tempDir
+	expectedFile := filepath.Join(tempDir, "evil.json")
+	if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+		t.Fatalf("expected file to be safely saved at %s", expectedFile)
+	}
+
+	// Verify that reading with path traversal retrieves the sanitized collection
+	req = httptest.NewRequest(http.MethodGet, "/api/collections/../../evil", nil)
+	rec = httptest.NewRecorder()
+	handler.handleCollections(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK from get collection, got %d", rec.Code)
+	}
+	var items []map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &items); err != nil || len(items) == 0 {
+		t.Fatalf("expected non-empty items, got error %v", err)
 	}
 }

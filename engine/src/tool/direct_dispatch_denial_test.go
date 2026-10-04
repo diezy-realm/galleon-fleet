@@ -114,6 +114,11 @@ func TestDirectDispatchDenial(t *testing.T) {
 			&tool.GitCreateBranchTool{},
 			&tool.GitCommitTool{},
 			tool.NewWebFetchTool(),
+			&tool.WriteFileTool{},
+			&tool.EditFileTool{},
+			&tool.ExecuteCommandTool{},
+			&tool.GitDiffTool{},
+			&tool.SandboxedCodeRunnerTool{},
 		}
 
 		for _, b := range builtins {

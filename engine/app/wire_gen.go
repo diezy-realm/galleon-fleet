@@ -54,10 +54,9 @@ func InitializeApp(cfg *config.AppConfig) (*App, error) {
 	taskHTTPHandler := task.NewHTTPHandler(taskService)
 	toolRegistry := tool.NewRegistry()
 	toolGate := tool.NewApprovalGate(runService)
-	// F3-1: route native builtin tool execution through the Rust SystemGateway
+	// F3-1 / Fail-Closed: route native builtin tool execution through the Rust SystemGateway
 	// (:50052) so bash/read_file/write/git run inside the Landlock sandbox, not
-	// in-process. The client structurally satisfies tool.SystemGateway; a nil/
-	// unavailable gateway falls back to in-process execution inside the client.
+	// in-process. A nil/unavailable gateway fails closed and rejects execution (BG-A2 / G-03).
 	toolService := tool.NewService(toolRegistry, toolGate, runService).WithSystemGateway(systemGatewayClient)
 	toolHTTPHandler := tool.NewHTTPHandler(toolService)
 	artifactRepo, err := persistence.NewDiskArtifactStore(cfg.DataDir)

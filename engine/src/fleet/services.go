@@ -50,12 +50,23 @@ type ProposedFleetOrder struct {
 	Status      string `json:"status"` // awaiting_pirate_king_approval
 }
 
-func NewService(gateway client.SystemGatewayClient) Service {
-	// Look for web-2/data or fallback to local data dir
-	dataDir := filepath.Join("..", "web-2", "data")
-	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
-		dataDir = filepath.Join("data")
+// resolveDataDir determines the canonical data directory for fleet collections and snapshots (BG-A6 / G-38).
+func resolveDataDir() string {
+	if env := os.Getenv("GALLEON_DATA_DIR"); env != "" {
+		return env
 	}
+	if env := os.Getenv("FLEET_DATA_DIR"); env != "" {
+		return env
+	}
+	// Prefer engine/data if running from repo root, else fallback to data
+	if fi, err := os.Stat("engine"); err == nil && fi.IsDir() {
+		return filepath.Join("engine", "data")
+	}
+	return filepath.Join("data")
+}
+
+func NewService(gateway client.SystemGatewayClient) Service {
+	dataDir := resolveDataDir()
 	_ = os.MkdirAll(dataDir, 0755)
 
 	// Initial diagnostics use mock status. GetDiagnostics() overlays real signals.
@@ -310,10 +321,7 @@ func checkGateway(ctx context.Context) (status, latency, detail string) {
 // checkSnapshots checks if snapshot directory exists with at least one recent file.
 func checkSnapshots() (status, latency, detail string) {
 	start := time.Now()
-	dataDir := filepath.Join("..", "web-2", "data")
-	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
-		dataDir = filepath.Join("data")
-	}
+	dataDir := resolveDataDir()
 	// Look for files matching snap-* pattern
 	matches, _ := filepath.Glob(filepath.Join(dataDir, "snap-*"))
 	lat := time.Since(start)
@@ -461,6 +469,9 @@ func (s *fleetService) GetFleetPolicies(ctx context.Context) (map[string]any, er
 
 func (s *fleetService) getCollectionPath(name string) string {
 	safeName := safeFilenameRegex.ReplaceAllString(name, "")
+	if safeName == "" {
+		safeName = "invalid"
+	}
 	return filepath.Join(s.dataDir, safeName+".json")
 }
 
