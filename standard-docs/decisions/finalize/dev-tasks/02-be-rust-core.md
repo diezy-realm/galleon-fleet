@@ -23,7 +23,7 @@ Prinsip: **verifikasi per modul (R-00 §4) wajib sebelum modul runtime dipindah/
 
 ## C. Dekoplasi Crate (pecah kode besar)
 
-- [ ] **BR-C1 · R-10 · PR-31 (P1, M) Selesaikan ekstraksi `i18n`.** *Status: parsial* — crate `galleon-i18n` sudah ada (RF-B, ±2.160 LOC) tetapi `clawcrew-channels` masih 87 ref ke `runtime::i18n`. Repoint ke `galleon-i18n`, hapus duplikasi di runtime.
+- [ ] **BR-C1 · R-10 · PR-31 (P1, M) Selesaikan ekstraksi `i18n`.** *Status: parsial* — crate `galleon-i18n` sudah ada (RF-B, ±2.160 LOC) tetapi `clawcrew-channels` masih 87 ref ke `runtime::i18n`. Koreksi fakta: `clawcrew-runtime/src/lib.rs:30` sudah `pub use galleon_i18n as i18n;`, jadi 87 ref itu alias (bukan duplikasi kode); sebaran: tests 29, acp_server 20, mod 14, util 11, line 5, sisanya 1–2. Yang tersisa hanya edge `channels→runtime`. Aksi: ganti `clawcrew_runtime::i18n` → `galleon_i18n`, tambah dep `galleon-i18n` di channels; edge penuh baru lepas setelah BR-C2..C4.
 - [ ] **BR-C2 · R-11 · PR-32 (P1, L) Ekstrak `security::scrub`** (36 ref).
 - [ ] **BR-C3 · R-12 · PR-33 (P1, L) tools-scoped / memory_strategy / hooks / sop::types → trait di `clawcrew-api`.**
 - [ ] **BR-C4 · R-13 · PR-34 (P1, L) `channels` tidak bergantung ke `runtime`** (677 ref → 0); gerbang BR-A3 mengunci. Dep: BR-C1..C3.

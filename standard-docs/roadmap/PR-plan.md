@@ -33,7 +33,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [ ] **PR-00** `feat/refactoring-rust` → main · D-01 (+ N-00 ✔, R-00 ✔ sebagai dokumen) · GW-0,7 · – · 13 commit lokal: penggantian `web/`+`apps/tauri/`, `standard-docs/` (foundation, product, roadmap, ODR, R-00/R-00a, naming, research), agent config. Principle: pastikan commit terpisah per concern, tidak ada rahasia · M
 - [ ] **PR-01** `docs/alias-notes-normative` · D-03 · GW-0,7 · PR-00 · catatan alias `web-2`/`tauri-2` di dokumen normatif (bukan ADR) · S
 - [ ] **PR-02** `chore/remove-engine-binary` · N-10 · GW-0 · – · `bin/engine.exe` + `.gitignore`; tanpa force-push · S
-- [ ] **PR-03** `fix/tauri-frontend-dist` · U-01, P-01 · GW-0,3 · – · `frontendDist=../../web/dist`; `cargo check -p fleet-ai-desktop`; workspace hijau · S
+- [ ] **PR-03** `fix/tauri-frontend-dist` · U-01, P-01 · GW-0,3 · – · `frontendDist=../../web/dist`; `cargo metadata` hijau (saat ini gagal: *multiple workspace roots*, lihat FD-A1b); `cargo check` di `apps/tauri` · S
 - [ ] **PR-04** `security/tauri-remove-terminal-and-fake-metrics` · U-06, U-07 · GW-3,4,8 · – · tak ada eksekusi shell/koleksi lokal/metrik palsu di Tauri; terminal UI dinonaktifkan sementara ⚑ · S
 - [ ] **PR-05** `security/go-fail-closed-tools` · G-01, G-03, G-05 · GW-2,4,8 · – · tak ada `os/exec`/fs lokal; test fail-closed saat Rust mati; gerbang import · M
 - [ ] **PR-06** `docs/brand-hit-inventory` · N-01 · GW-0 · PR-00 · klasifikasi rename/delete/keep/migrate (CSV + ringkasan) · S
