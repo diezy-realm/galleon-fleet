@@ -67,7 +67,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 
 **Go — persistensi, identitas, orkestrasi, protokol**
 - [x] **PR-40** `docs/adr-persistence` · G-10 · GW-7 · – · [Selesai] Diterbitkan ADR-005: Store per agregat, SQLite pure-Go WAL, Postgres pgvector, migrasi DiskStore, enkripsi, backup · S
-- [ ] **PR-41** `feat/go-sqlite-store` · G-11 · GW-2,6,9 · PR-40 · migrasi DiskStore idempoten + rollback · L
+- [x] **PR-41** `feat/go-sqlite-store` · G-11 · GW-2,6,9 · PR-40 · [Selesai] SQLite pure-Go WAL mode, RunStore, TaskStore, migrasi idempoten DiskStore · L
 - [ ] **PR-42** `feat/go-postgres-store` · G-12 · GW-2,6 · PR-40 · test container · L
 - [ ] **PR-43** `feat/go-vector-memory-and-retention` · G-13, G-14 · GW-2,6 · PR-41 · RAG per scope; retensi/ekspor/hapus · L
 - [ ] **PR-44** `feat/go-identity-access` · G-35 · GW-2,8 · PR-05 · principal resolver, WebAuthn, pairing; deny-by-default; test negatif · L

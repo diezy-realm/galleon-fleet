@@ -13,7 +13,7 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 ## G-1x Persistensi (ODR-05)
 
 - [x] **G-10 (P1, M) ADR desain store:** [Selesai PR-40] Diratifikasi di `standard-docs/decisions/finalize/ADR-005-persistence-store-design.md`: interface `Store` per agregat, dialek SQLite pure-Go WAL & Postgres pgvector, migrasi idempoten DiskStore, enkripsi at-rest, dan backup online.
-- [ ] **G-11 (P1, L) Implementasi SQLite** (pure-Go driver, WAL) + migrasi dari DiskStore JSON/JSONL (satu arah, idempoten). Dep: G-10.
+- [x] **G-11 (P1, L) Implementasi SQLite:** [Selesai PR-41] Diimplementasikan di `engine/pkg/store/sqlite` (pure-Go WAL mode) dengan implementasi `RunStore` & `TaskStore` dan migrasi satu arah idempoten dari DiskStore legacy.
 - [ ] **G-12 (P2, L) Implementasi PostgreSQL** + test dengan container. Dep: G-10.
 - [ ] **G-13 (P1, M) Memori vektor/RAG** pada store baru; scope Fleet/Ship/Squad/Crew/Run. Dep: G-11.
 - [ ] **G-14 (P2, M) Retensi, ekspor, hapus (privasi)** per scope. Dep: G-11.

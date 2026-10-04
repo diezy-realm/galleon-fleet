@@ -15,7 +15,7 @@ Konvensi: `tech-stack/go-conventions.md`. Gerbang: GW-2 (+GW-4/8 untuk keamanan)
 ## B. Persistensi (SQLite/Postgres, ODR-05)
 
 - [x] **BG-B1 · G-10 · PR-40 (P1, M) ADR desain store:** [Selesai PR-40] Dibuat `standard-docs/decisions/finalize/ADR-005-persistence-store-design.md` menetapkan interface `Store` per agregat, dialek SQLite (pure-Go WAL) & Postgres (pgvector), alur migrasi idempoten DiskStore, enkripsi at-rest, isolasi multi-scope RAG, dan backup online.
-- [ ] **BG-B2 · G-11 · PR-41 (P1, L) Store SQLite** (pure-Go, WAL) + migrasi satu arah idempoten dari DiskStore JSON/JSONL; rollback tertulis. Dep: BG-B1.
+- [x] **BG-B2 · G-11 · PR-41 (P1, L) Store SQLite:** [Selesai PR-41] Diimplementasikan di `engine/pkg/store/sqlite` menggunakan `modernc.org/sqlite` (pure-Go, CGO-free, WAL mode) dengan implementasi `RunStore` (`run.Store`, `run.ResumableStore`) dan `TaskStore` (`task.Store`), serta migrator idempoten dari DiskStore legacy. Unit test 100% pass.
 - [ ] **BG-B3 · G-12 · PR-42 (P2, L) Store PostgreSQL** + test container. Dep: BG-B1.
 - [ ] **BG-B4 · G-13 · PR-43 (P1, M) Memori vektor/RAG** per scope Fleet/Ship/Squad/Crew/Run. Dep: BG-B2.
 - [ ] **BG-B5 · G-14 · PR-43 (P2, M) Retensi, ekspor, hapus (privasi)** per scope. Dep: BG-B2.
