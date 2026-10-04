@@ -56,3 +56,8 @@ flowchart LR
 2. **Gelombang 1 (hapus dulu, baru rename):** N-11..N-14 sebelum N-2x; gerbang kualitas (R-01..R-04, P-04, P-05), G-04, U-02/U-03/U-05, G-10.
 3. **Gelombang 2:** persistensi (G-11..), pairing (G-20..), pemecahan crate (R-10..), Nginx (P-10).
 4. **Gelombang 3:** WASI/plugin, rilis, pembelajaran memori.
+
+
+## Tampilan kerja tim
+
+Task per tim BE/FE/Platform (checkbox kosong, status terverifikasi dari kode) ada di [../decisions/finalize/dev-tasks/](../decisions/finalize/dev-tasks/README.md), termasuk sisa task inalize/ (T-6.5..6.10, T-9.1).

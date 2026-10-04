@@ -15,7 +15,7 @@ Build Windows: `$env:CARGO_TARGET_DIR="target/agent"`; test: `cargo nextest run 
 
 ## R-1x Putus kopling & pecah crate (setelah R-00)
 
-- [ ] **R-10 (P1, L) Ekstrak `i18n`** dari runtime (87 ref dari channels) ke crate kecil. Dep: R-00, R-04.
+- [ ] **R-10 (P1, L) Ekstrak `i18n`** dari runtime (87 ref dari channels) ke crate kecil. Dep: R-00, R-04. *Status 2026-10-04: crate `galleon-i18n` sudah ada; sisa repoint 87 ref di channels.*
 - [ ] **R-11 (P1, L) Ekstrak `security::scrub`** (36 ref) ke crate/ke `clawcrew-infra`. Dep: R-00.
 - [ ] **R-12 (P1, L) Pisahkan kontrak tools-scoped / memory_strategy / hooks / sop::types** yang dipakai channels menjadi trait di `clawcrew-api`. Dep: R-00.
 - [ ] **R-13 (P1, L) `channels` tidak bergantung ke `runtime`** (677 ref → 0). Dep: R-10..R-12. Acceptance: edge dihapus di `cargo metadata`; gerbang R-04 mengunci.
@@ -37,7 +37,7 @@ Build Windows: `$env:CARGO_TARGET_DIR="target/agent"`; test: `cargo nextest run 
 
 - [ ] **R-30 (P1, S) Errata ADR-001** (WhatsApp → Tier A, WIT v0 beku, bluesky) — lihat D-04; perbarui `plugin-codebase-standard.md`.
 - [ ] **R-35 (P1, M) Dukungan WIT v1** di host plugin (dual v0/v1) — pasangan N-24.
-- [ ] **R-31 (P2, L) Pilot channel Tier C WASI** end-to-end (host, signature, capability) pada fixture; ukur batas `wasi:http` outbound.
+- [ ] **R-31 (P2, L) Pilot channel Tier C WASI** end-to-end (host, signature, capability) pada fixture; ukur batas `wasi:http` outbound. *Status 2026-10-04: fixture `channel-nostr-pilot` + `wit/v0/.frozen` ada; sisa e2e & ukur `wasi:http`.*
 - [ ] **R-32 (P2, S) WeChat/QQ/dst. = Tier B** (ODR-13, regional): buat crate `galleon-channel-<nama>` + feature flag; catat di errata ADR-001.
 - [ ] **R-33 (P2, M) Pasang mekanisme pilih-Tier-B saat instalasi** (feature flags / installer). Dep: P-lane installer.
 - [ ] **R-34 (P1, M) CLI (`galleon`, `galleoncode` TUI) = binary Rust, klien Go untuk orkestrasi (ODR-12)** — `chat/run/approve/status` memanggil Go :9090 (SSE/WS); `service/doctor/onboard/vault` tetap lokal Rust; tanpa agent loop lokal. Desain di `foundation/05`. Dep: R-00, G-lane API.

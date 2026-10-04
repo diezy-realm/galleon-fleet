@@ -7,8 +7,8 @@ Ref: `tech-standart/tech-stack/{web,tauri}-conventions.md`, ADR 0002/0003. UI ha
 - [ ] **U-03 (P1, M) QR pairing di UI** memakai endpoint Go (G-20); tanpa paket `qrcode` di server. Dep: G-20.
 - [ ] **U-04 (P1, M) Telemetri OS dari Go** (G-22), hapus dummy/derivasi lokal di UI.
 - [ ] **U-05 (P1, S) Bersihkan artefak AI Studio:** `@google/genai`, `better-sqlite3`, `metadata.json`, `bun.lock`, `web/.github/`, `web/Dockerfile`, `docker-compose.yml`, `nginx.conf`, `DEPLOYMENT.md`, `web/data/`, `web/docs/`; ganti nama paket `react-example`→`galleon-web`. Audit pemakaian dulu (pastikan tidak ada panggilan LLM langsung). Acceptance: `npm ci && npm run build` hijau.
-- [ ] **U-06 (P0, S) Hapus `execute_terminal_command`** dari `apps/tauri/src/main.rs`; ganti perintah IPC `async fn → Result<T,String>` yang memanggil Go G-04. Dep: G-04 (hapus dulu, UI terminal dinonaktifkan sementara bila G-04 belum siap).
-- [ ] **U-07 (P0, S) Hapus `get_system_metrics` palsu** & koleksi lokal (`get_collection/save_collection`, `get_engine_processes` yang berlogika); proxy ke Go.
+- [ ] **U-06 (P0, S) Hapus `execute_terminal_command`** dari `apps/tauri/src/main.rs`; ganti perintah IPC `async fn → Result<T,String>` yang memanggil Go G-04. Dep: G-04 (hapus dulu, UI terminal dinonaktifkan sementara bila G-04 belum siap). *Status 2026-10-04: command ini simulasi output palsu, bukan shell nyata.*
+- [ ] **U-07 (P0, S) Hapus `get_system_metrics` palsu** & koleksi lokal (`get_collection/save_collection`, `get_engine_processes` yang berlogika); proxy ke Go. *Status 2026-10-04: `get_system_metrics` sudah nyata (T-0.1); sisa koleksi lokal & `get_engine_processes`.*
 - [ ] **U-08 (P1, S) CSP & capabilities ketat:** hapus `unsafe-eval`, batasi `connect-src` ke `http://127.0.0.1:9090`, scope fs `$APPDATA/galleon/*`.
 - [ ] **U-09 (P1, M) Sidecar desktop:** Tauri menjalankan Go engine + Rust gateway (lifecycle, health, shutdown), tanpa logika bisnis. Dep: P-lane build sidecar.
 - [ ] **U-10 (P2, M) Tipe E2:** `HarborTool`, `ProcessItem` dll. diselaraskan dengan kontrak API Go; generate dari OpenAPI bila ada.

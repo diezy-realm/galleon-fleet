@@ -1,4 +1,6 @@
 # Galleon Fleet — Analisis & Kesimpulan Observasi
+
+> **Pembaruan 2026-10-04:** isi di bawah adalah snapshot saat observasi awal. Status terkini diverifikasi dari kode di [dev-tasks/README.md](./dev-tasks/README.md) (Kondisi Terakhir): Lane D & ADR 0001/0002/0003 sisi Go sudah selesai sebagian besar; sisa pekerjaan di dev-tasks/.
 > **Scope:** Phase 2 (SSOT Migration) → Phase 3 (DynamicRouter) → Phase 4 (ADR 0001/0002/0003)  
 > **Branch:** `feat/refactoring-rust`  
 > **Tanggal observasi:** 2026-10-04  
@@ -14,7 +16,7 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 - **Phase 2 Lane D (Go→Rust sandboxed tool execution)** adalah satu-satunya lane yang belum dimulai, namun teknisnya sudah *unblocked* (Rust `SystemGatewayService.execute_native_tool` aktif di `:50052`, Go `WithSystemGateway` sudah terpasang di `wire_gen.go`).
 - **Phase 3 (DynamicRouter)** memiliki fondasi prototipe yang sudah ada (`clawcrew-routing` dengan 3 unit test lolos), namun belum di-wire sama sekali ke `clawcrew-gateway`.
 - **ADR 0001 (LLM SSOT Rust)** — sudah diterima prinsipnya, tetapi `ExecuteTurn` di proto belum ada, Go `engine/src/llm/` masih aktif, tidak ada wiring Rust ke gRPC LLM sama sekali.
-- **ADR 0002 & ADR 0003** — diterima, namun pelanggaran kode aktif masih ada: QR + telemetri di `web-2/server.ts`, dan `get_system_metrics()` di `apps/tauri-2/src/main.rs` masih mengembalikan konstanta palsu.
+- **ADR 0002 & ADR 0003** — diterima, namun pelanggaran kode aktif masih ada: QR + telemetri di `web/server.ts`, dan `get_system_metrics()` di `apps/tauri/src/main.rs` masih mengembalikan konstanta palsu.
 
 ---
 
@@ -104,10 +106,10 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 
 **Ini adalah item implementasi terbesar dan paling fundamental** karena menyentuh path eksekusi utama (`crew.StartTurn`).
 
-#### ADR 0002 — web-2 Zero Backend Logic
+#### ADR 0002 — web Zero Backend Logic
 | Kondisi Dokumen | Kondisi Kode Aktual |
 |---|---|
-| `web-2` dilarang memuat logika backend | `web-2/server.ts:7` masih `import qrcode from 'qrcode'` |
+| `web` dilarang memuat logika backend | `web/server.ts:7` masih `import qrcode from 'qrcode'` |
 | QR code → Go HTTP endpoint | `server.ts:59-75` masih generator QR aktif di Express |
 | System telemetry → Go HTTP endpoint | `server.ts:77-95` masih membaca `os.totalmem()`, `os.cpus()` langsung |
 
@@ -116,7 +118,7 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 #### ADR 0003 — Tauri: Real API, Bukan Fake Data
 | Kondisi Dokumen | Kondisi Kode Aktual |
 |---|---|
-| `get_system_metrics()` harus baca dari Go `:9090/api/system/metrics` | `apps/tauri-2/src/main.rs:88-96` masih mengembalikan `gateway_latency_ms: 8` dan `memory_db_mb: 18.4` sebagai konstanta palsu |
+| `get_system_metrics()` harus baca dari Go `:9090/api/system/metrics` | `apps/tauri/src/main.rs:88-96` masih mengembalikan `gateway_latency_ms: 8` dan `memory_db_mb: 18.4` sebagai konstanta palsu |
 | Perintah Tauri lain sudah ter-migrasi | ✅ Betul: `get_executive_briefing`, `get_harbor_providers`, `get_diagnostics`, `get_fleet_policies`, `chat_quartermaster` semuanya sudah `engine_get(...)` |
 
 **Ini adalah item terisolasi paling kecil** — hanya satu fungsi di satu file, bisa diselesaikan < 1 jam.
@@ -126,7 +128,7 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 ## 3. Peta Ketergantungan (Dependency Map)
 
 ```
-ADR 0002 (web-2 zero logic)
+ADR 0002 (web zero logic)
     └── Phase 1: Go engine QR endpoint
             └── ADR 0003 (Tauri real metrics)
                     └── Phase 1: Go /api/system/metrics (depends ADR 0002 Phase 1)

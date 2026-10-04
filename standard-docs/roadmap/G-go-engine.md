@@ -4,7 +4,7 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 
 ## G-0x Fail-closed & boundary
 
-- [ ] **G-01 (P0, M) Hapus eksekusi shell/fs lokal** di `engine/src/tool/{services,sandbox,plugin,mcp_client,builtin_workspace}.go`; semua lewat `ExecuteNativeTool` (Rust). Acceptance: grep `os/exec`/`os.Open*` di jalur tool = nol (kecuali store); test fail-closed saat Rust mati.
+- [ ] **G-01 (P0, M) Hapus eksekusi shell/fs lokal** di `engine/src/tool/{services,sandbox,plugin,mcp_client,builtin_workspace}.go`; semua lewat `ExecuteNativeTool` (Rust). Acceptance: grep `os/exec`/`os.Open*` di jalur tool = nol (kecuali store); test fail-closed saat Rust mati. *Status 2026-10-04: parsial — `builtin_*` sudah via gateway; sisa `exec` di `tool/{services,sandbox,plugin,mcp_client}.go`.*
 - [ ] **G-02 (P1, S) Hapus probe Ollama** di `engine/src/fleet/services.go` (LLM/discovery = Rust). Dep: R-lane discovery RPC bila perlu.
 - [ ] **G-03 (P1, S) Koreksi komentar/fallback di `wire_gen.go`** agar sesuai fail-closed.
 - [ ] **G-04 (P0, L) Endpoint terminal ber-policy** `POST /api/terminal/exec`: policy risk-tier → approval → `ExecuteNativeTool` (sandbox). Audit log tiap eksekusi. Dep: G-01. Acceptance: perintah berisiko tinggi minta approval; injeksi tidak lolos allowlist.
@@ -22,7 +22,7 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 
 - [ ] **G-20 (P1, L) Pairing perangkat via QR:** buat token sekali pakai terikat perangkat, ekspirasi, daftar perangkat, revoke; endpoint `/api/pairing/*`. Acceptance: tanpa token valid, perangkat lain ditolak; rate-limit. (Menggantikan QR di `web/server.ts`.)
 - [ ] **G-21 (P1, M) Autentikasi perangkat/sesi** untuk akses remote (middleware) — dasar Nginx/VPS. Dep: G-20.
-- [ ] **G-22 (P1, M) Endpoint metrik sistem nyata** (proses, CPU/mem) — via Rust bila butuh OS; menggantikan `get_system_metrics` palsu.
+- [ ] **G-22 (P1, M) Endpoint metrik sistem nyata** (proses, CPU/mem) — via Rust bila butuh OS; menggantikan `get_system_metrics` palsu. *Status 2026-10-04: endpoint `/api/system/metrics` & `/api/network/qrcode` di Go sudah ada; sisa metrik OS via Rust.*
 - [ ] **G-23 (P1, L) Model organisasi:** Quartermaster→Ship→Squad→Crew sebagai agregat persisten + API CRUD + validasi kuota/budget. Ref GRUP 4.
 - [ ] **G-24 (P2, L) Learning by consent (C5):** umpan balik → kandidat memori → persetujuan Owner → versi/rollback. Dep: G-13.
 - [ ] **G-25 (P2, M) Kontrak rute QM two-layer (C4)** + test. Ref GRUP 3.
@@ -41,4 +41,5 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 - [ ] **G-33 (P2, M) Sub-agent / handoff / A2A** sebagai Artifact reference antar Crew di Go. Dep: R-00.
 
 
-- [ ] **G-37 (P3, S) ADR opsional: Delegated Authority Chain** (wewenang bertingkat Quartermaster→Crew yang ditandatangani, attenuasi, fail-closed) — rujukan esearch/verifiable-intent-assessment.md §3. Dep: G-35, G-23. Bukan komitmen implementasi.
+- [ ] **G-37 (P3, S) ADR opsional: Delegated Authority Chain** (wewenang bertingkat Quartermaster→Crew yang ditandatangani, attenuasi, fail-closed) — rujukan 
+esearch/verifiable-intent-assessment.md §3. Dep: G-35, G-23. Bukan komitmen implementasi.

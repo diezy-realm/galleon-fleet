@@ -1,6 +1,8 @@
 # Frontend↔Engine Route Map Documentation (C4)
 
-Dokumen ini memetakan seluruh kontrak antarmuka API antara frontend (`web-2/src/utils/apiClient.ts`) dan Go Engine (`engine/src/fleet/delivery.go`, `engine/src/crew/delivery.go`, `engine/src/tool/delivery.go`).
+> **Pembaruan 2026-10-04:** web-2/ kini web/. Rute baru yang direncanakan (pairing /api/pairing/*, /api/terminal/exec, Client Protocol WS) belum terdaftar; lihat dev-tasks/01-be-go-engine.md (BG-A4, BG-C2, BG-E1) dan perbarui peta ini saat rute dibuat.
+
+Dokumen ini memetakan seluruh kontrak antarmuka API antara frontend (`web/src/utils/apiClient.ts`) dan Go Engine (`engine/src/fleet/delivery.go`, `engine/src/crew/delivery.go`, `engine/src/tool/delivery.go`).
 
 ## 1. Status Pemetaan Rute
 
@@ -31,4 +33,4 @@ Semua panggilan `/api/*` dari klien web browser dilayani oleh Node/Vite developm
 
 ## 3. Hasil Pengujian & Verifikasi
 - Pengujian Go Engine: `go test -v ./src/fleet/...` (100% PASS, Exit code 0).
-- Pengujian Frontend TypeScript: `npm run lint` (`tsc --noEmit`) pada `web-2` (100% PASS, Exit code 0).
+- Pengujian Frontend TypeScript: `npm run lint` (`tsc --noEmit`) pada `web` (100% PASS, Exit code 0).

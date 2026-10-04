@@ -1,5 +1,7 @@
 # Testing Gate Checklist — Finalize (Phase 2 → Phase 3 → Phase 4)
 
+> **Pembaruan 2026-10-04:** gerbang G0–G8 untuk task yang sudah [x] belum dicentang Principle (GV-12). Gerbang untuk pekerjaan baru ada di oadmap/PR-plan.md (GW-0..GW-9). G6 (T-6.5..6.10) ditahan sampai keputusan CO-09.
+
 - **Status:** Siap pakai — berlaku untuk SETIAP PR dari `task-breakdown.md` (Grup 0–9), branch `feat/refactoring-rust`.
 - **Author:** squad-lead
 - **Tanggal:** 2026-10-04
@@ -31,14 +33,14 @@ cargo nextest run --workspace
 cargo nextest run -p galleon-architecture-tests   # SSOT & invariant gate
 
 # Web
-cd web-2; npm run lint; npm run build; cd ..
+cd web; npm run lint; npm run build; cd ..
 ```
 
 ---
 
 ## Gate G0: Quick Win — ADR 0003 Tauri Real Metrics (T-0.1)
 
-- [ ] `get_system_metrics()` di `apps/tauri-2/src/main.rs` memanggil `engine_get(...)` — grep untuk konstanta lama (`gateway_latency_ms: 8`, `memory_db_mb: 18.4`) harus **KOSONG** di file tersebut.
+- [ ] `get_system_metrics()` di `apps/tauri/src/main.rs` memanggil `engine_get(...)` — grep untuk konstanta lama (`gateway_latency_ms: 8`, `memory_db_mb: 18.4`) harus **KOSONG** di file tersebut.
 - [ ] Ada fallback graceful eksplisit (bukan `panic`/`unwrap`) saat engine Go tidak terjangkau.
 - [ ] `cargo check -p <tauri-crate>` hijau.
 
@@ -50,21 +52,21 @@ cd web-2; npm run lint; npm run build; cd ..
 
 - [ ] Tipe `ToolDefinition`/`ProcessItem` diimpor dari sumber tunggal (`apiClient.ts`), tidak didefinisikan ulang duplikat di komponen (`HarborView.tsx`, `EngineRoomView.tsx`).
 - [ ] `npm run lint` (`tsc --noEmit`) hijau — **0 error type**, bukan cuma berkurang.
-- [ ] `seedData.ts` tidak lagi diimpor oleh `fleetStore.ts` (grep `seedData` di `web-2/src/store/` = kosong), store hidrasi dari `apiClient.getCollection()`/endpoint nyata.
+- [ ] `seedData.ts` tidak lagi diimpor oleh `fleetStore.ts` (grep `seedData` di `web/src/store/` = kosong), store hidrasi dari `apiClient.getCollection()`/endpoint nyata.
 - [ ] `npm run build` (`vite build`) sukses, exit code 0.
 
 **Reject jika:** lint hijau dicapai dengan `@ts-ignore`/`any` baru alih-alih shape mapping yang benar.
 
 ---
 
-## Gate G2: ADR 0002 — Backend Logic Pindah dari web-2 ke Go (T-2.1 – T-2.3)
+## Gate G2: ADR 0002 — Backend Logic Pindah dari web ke Go (T-2.1 – T-2.3)
 
 - [ ] Endpoint `/api/network/qrcode` dan `/api/system/metrics` **ter-registrasi di Go** (`engine/src/fleet/delivery.go` atau setara) dan punya unit test (`TestHandleNetworkQRCode`, `TestHandleSystemMetrics`) yang lolos.
-- [ ] `grep "qrcode"` dan `grep "os.totalmem\|os.cpus"` di `web-2/server.ts` = **0 match** setelah PR. Principle re-run grep ini sendiri, jangan percaya klaim.
-- [ ] `web-2/src/utils/apiClient.ts` menambahkan method pemanggil endpoint baru (`getNetworkQrCode(url)`), bukan memanggil Node API langsung dari browser/server.ts.
+- [ ] `grep "qrcode"` dan `grep "os.totalmem\|os.cpus"` di `web/server.ts` = **0 match** setelah PR. Principle re-run grep ini sendiri, jangan percaya klaim.
+- [ ] `web/src/utils/apiClient.ts` menambahkan method pemanggil endpoint baru (`getNetworkQrCode(url)`), bukan memanggil Node API langsung dari browser/server.ts.
 - [ ] `go test ./...` dan `npm run build` keduanya hijau pasca-pemindahan (bukti tidak ada regresi fungsional, QR code & metrics tetap tampil di UI).
 
-**Reject jika:** `web-2/server.ts` masih memuat logika generate QR/metrics dalam bentuk apapun (termasuk versi "disederhanakan" yang tidak full delegate ke Go) — ADR 0002 melarang **semua** backend logic di web-2, bukan hanya sebagian.
+**Reject jika:** `web/server.ts` masih memuat logika generate QR/metrics dalam bentuk apapun (termasuk versi "disederhanakan" yang tidak full delegate ke Go) — ADR 0002 melarang **semua** backend logic di web, bukan hanya sebagian.
 
 ---
 
