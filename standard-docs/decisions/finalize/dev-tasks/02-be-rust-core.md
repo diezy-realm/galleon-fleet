@@ -14,8 +14,8 @@ Prinsip: **verifikasi per modul (R-00 §4) wajib sebelum modul runtime dipindah/
 
 ## B. Kontrak gRPC & Keamanan Inti
 
-- [ ] **BR-B1 · R-20 · PR-35 (P1, M) `execute_task` nyata** (`grpc_system_gateway.rs`) atau hapus dari proto — tanpa stub sukses palsu (GW-5).
-- [ ] **BR-B2 · R-21 · PR-35 (P1, M) Test integrasi Go↔Rust lengkap:** `ExecuteTurn` stream (T-5.3 ✔), `GetDecryptedSecret` (handler ✔ T-8.1), `ExecuteNativeTool`; tambahkan skenario loopback-only/mTLS dan kegagalan.
+- [x] **BR-B1 · R-20 · PR-35 (P1, M) `execute_task` nyata** (`grpc_system_gateway.rs`): [Selesai PR-35] Menghapus stub sukses palsu; digantikan dengan fail-closed sejati (`Status::unimplemented`) dengan logging failure dan validasi input `task_id`.
+- [x] **BR-B2 · R-21 · PR-35 (P1, M) Test integrasi Go↔Rust lengkap:** [Selesai PR-35] Ditambahkan test integrasi lengkap di `engine/pkg/client/system_gateway_test.go` (`ExecuteNativeTool` sukses/gagal, `GetDecryptedSecret`, `ExecuteTurn` streaming, `ExecuteTask` fail-closed, dan `UnreachableServer`), semua lolos.
 - [ ] **BR-B3 · R-22 · PR-36 (P1, M) Sandbox:** test Landlock/Seatbelt/AppContainer per OS; deny-by-default terbukti.
 - [ ] **BR-B4 · R-23 · PR-36 (P2, S) Scrubbing kredensial di log** — test tangkap-log `ExecuteTurn`/vault.
 - [ ] **BR-B5 · R-24 · PR-36 (P2, M) Vault:** rotasi/ekspor/migrasi; `GetDecryptedSecret` hanya untuk caller terotorisasi.

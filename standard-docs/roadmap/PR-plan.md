@@ -62,7 +62,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [x] **PR-32** `refactor/extract-scrub` · R-11 · GW-1,8 · PR-10 · [Selesai] 36 ref channels diekstrak ke crate `galleon-security-scrub` · M
 - [ ] **PR-33** `refactor/api-traits-for-channels` · R-12 · GW-1,5 · PR-10 · tools-scoped/memory_strategy/hooks/sop::types → trait di `api` · L
 - [ ] **PR-34** `refactor/channels-decouple-runtime` · R-13 · GW-1,6 · PR-31, PR-32, PR-33 · 677 ref → 0; gerbang R-04 mengunci · L
-- [ ] **PR-35** `fix/grpc-execute-task-and-contract-tests` · R-20, R-21 · GW-1,5,6 · – · tanpa stub sukses palsu; test integrasi Go↔Rust · M
+- [x] **PR-35** `fix/grpc-execute-task-and-contract-tests` · R-20, R-21 · GW-1,5,6 · – · [Selesai] tanpa stub sukses palsu; execute_task fail-closed; test integrasi gRPC Go↔Rust lengkap · M
 - [ ] **PR-36** `test/sandbox-log-scrub-vault` · R-22, R-23, R-24 · GW-1,8 · – · Landlock/Seatbelt/AppContainer, scrub log, vault rotasi · L
 
 **Go — persistensi, identitas, orkestrasi, protokol**

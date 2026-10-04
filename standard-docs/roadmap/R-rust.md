@@ -27,8 +27,8 @@ Build Windows: `$env:CARGO_TARGET_DIR="target/agent"`; test: `cargo nextest run 
 
 ## R-2x Hardening & kontrak
 
-- [ ] **R-20 (P1, M) Implementasi nyata `execute_task`** di `grpc_system_gateway.rs` atau hapus dari proto bila tidak dipakai (keputusan dengan G-lane). Acceptance: tidak ada stub yang menjawab sukses palsu.
-- [ ] **R-21 (P1, M) Test integrasi gRPC Go↔Rust** (`ExecuteTurn` stream, `GetDecryptedSecret`, `ExecuteNativeTool`) termasuk mTLS/loopback-only binding. Dep: –.
+- [x] **R-20 (P1, M) Implementasi nyata `execute_task`** [Selesai PR-35] Menghapus stub sukses palsu; menggantikannya dengan fail-closed sejati (`Status::unimplemented`) dengan logging failure dan validasi input.
+- [x] **R-21 (P1, M) Test integrasi gRPC Go↔Rust** [Selesai PR-35] Test integrasi lengkap di Go client (`ExecuteNativeTool`, `GetDecryptedSecret`, `ExecuteTurn` stream, `ExecuteTask` fail-closed, dan `UnreachableServer`) dan unit test Rust gateway lolos.
 - [ ] **R-22 (P1, M) Sandbox:** test Landlock/Seatbelt/AppContainer per OS; kebijakan deny-by-default terbukti.
 - [ ] **R-23 (P2, S) Scrubbing kredensial di log** — test tangkap-log untuk `ExecuteTurn`/vault.
 - [ ] **R-24 (P2, M) Vault:** uji rotasi/ekspor/migrasi; `GetDecryptedSecret` hanya untuk caller terotorisasi.

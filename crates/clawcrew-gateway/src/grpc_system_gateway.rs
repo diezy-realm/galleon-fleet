@@ -397,14 +397,28 @@ impl SystemGateway for SystemGatewayService {
         &self,
         request: Request<TaskExecutionRequest>,
     ) -> Result<Response<TaskExecutionResponse>, Status> {
-        // ponytail: stub — external task-executor dispatch is a separate ticket.
-        // For now, accept and queue (no real execution).
-        let task_id = request.into_inner().task_id;
-        Ok(Response::new(TaskExecutionResponse {
-            success: true,
-            output: format!("task '{}' queued for execution", task_id),
-            error: String::new(),
-        }))
+        let req = request.into_inner();
+        let task_id = req.task_id.trim();
+        if task_id.is_empty() {
+            return Err(Status::invalid_argument("task_id must not be empty"));
+        }
+
+        // Fail-closed enforcement (GW-5 / R-20 / ODR-07):
+        // External task dispatch is not implemented on the native host.
+        // Returning fake success is strictly forbidden.
+        ::clawcrew_log::record!(
+            WARN,
+            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                .with_attrs(::serde_json::json!({
+                    "task_id": task_id,
+                    "error": "ExecuteTask is not implemented: external task executor backend not configured"
+                })),
+            "ExecuteTask rejected: fail-closed boundary enforced"
+        );
+        Err(Status::unimplemented(format!(
+            "ExecuteTask for task '{task_id}' is not implemented on native host: fail-closed boundary enforced"
+        )))
     }
 
     type ExecuteTurnStream = tokio_stream::wrappers::ReceiverStream<Result<TurnToken, Status>>;
@@ -773,6 +787,31 @@ mod tests {
         assert!(received_delta, "expected at least one text delta chunk");
         assert!(received_complete, "expected turn complete event");
         Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_execute_task_fails_closed() {
+        let svc = SystemGatewayService::new(None);
+        let req = TaskExecutionRequest {
+            task_id: "task-test-999".to_string(),
+            task_data: "{}".to_string(),
+        };
+
+        let err = svc.execute_task(Request::new(req)).await.unwrap_err();
+        assert_eq!(err.code(), tonic::Code::Unimplemented);
+        assert!(err.message().contains("fail-closed boundary enforced"));
+    }
+
+    #[tokio::test]
+    async fn test_execute_task_rejects_empty_id() {
+        let svc = SystemGatewayService::new(None);
+        let req = TaskExecutionRequest {
+            task_id: "   ".to_string(),
+            task_data: "{}".to_string(),
+        };
+
+        let err = svc.execute_task(Request::new(req)).await.unwrap_err();
+        assert_eq!(err.code(), tonic::Code::InvalidArgument);
     }
 }
 
