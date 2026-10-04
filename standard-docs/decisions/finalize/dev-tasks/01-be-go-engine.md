@@ -10,7 +10,7 @@ Konvensi: `tech-stack/go-conventions.md`. Gerbang: GW-2 (+GW-4/8 untuk keamanan)
 - [ ] **BG-A3 · G-05 · PR-11 (P1, M) Test arsitektur Go:** larang import `os/exec` dan SDK vendor LLM di `engine/`. Dep: BG-A1.
 - [ ] **BG-A4 · G-04 · PR-15 (P0, L) Endpoint terminal ber-policy** `POST /api/terminal/exec` (ODR-07): risk-tier → approval → `ExecuteNativeTool` → audit log. *Acceptance:* perintah berisiko tinggi minta approval; injeksi/allowlist-bypass ditolak (test negatif). Dep: BG-A1.
 - [ ] **BG-A5 · G-02 · PR-16 (P1, S) Hapus route Ollama palsu** `/api/providers/ollama/status` (`fleet/delivery.go:48`, handler ±399): bukan probe, hanya JSON statis (`standby`, `available:true`). Web tidak memanggilnya. Hapus route + test; discovery nyata (jika diinginkan) lewat RPC baru di Rust provider. Juga `diagnostics` `d-3` "Ollama ping pending" di `fleet/services.go` harus dari sinyal nyata atau dibuang.
-- [ ] **BG-A6 · G-30 · PR-05 (P1, S) Ganti path `filepath.Join("..","web-2","data")`** (`fleet/services.go:55,313`) dengan direktori data eksplisit (config/env, default `engine/data`). Pembersihan nama koleksi di Go sudah ada (`safeFilenameRegex`); tambah test traversal.
+- [ ] **BG-A6 · G-38 · PR-05 (P1, S) Ganti path `filepath.Join("..","web-2","data")`** (`fleet/services.go:55,313`) dengan direktori data eksplisit (config/env, default `engine/data`). Pembersihan nama koleksi di Go sudah ada (`safeFilenameRegex`); tambah test traversal.
 
 ## B. Persistensi (SQLite/Postgres, ODR-05)
 

@@ -35,7 +35,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [ ] **PR-02** `chore/remove-engine-binary` · N-10 · GW-0 · – · `bin/engine.exe` + `.gitignore`; tanpa force-push · S
 - [ ] **PR-03** `fix/tauri-frontend-dist` · U-01, P-01 · GW-0,3 · – · `frontendDist=../../web/dist`; `cargo metadata` hijau (saat ini gagal: *multiple workspace roots*, lihat FD-A1b); `cargo check` di `apps/tauri` · S
 - [ ] **PR-04** `security/tauri-remove-terminal-and-fake-metrics` · U-06, U-07, U-16 · GW-3,4,8 · – · tak ada eksekusi shell/koleksi lokal/metrik palsu di Tauri, `server.ts` tanpa `/api/engine/execute`; terminal UI dinonaktifkan sementara ⚑ · S
-- [ ] **PR-05** `security/go-fail-closed-tools` · G-01, G-03, G-05, G-30 · GW-2,4,8 · – · tak ada `os/exec`/fs lokal; test fail-closed saat Rust mati; gerbang import · M
+- [ ] **PR-05** `security/go-fail-closed-tools` · G-01, G-03, G-05, G-38 · GW-2,4,8 · – · tak ada `os/exec`/fs lokal; test fail-closed saat Rust mati; gerbang import · M
 - [ ] **PR-06** `docs/brand-hit-inventory` · N-01 · GW-0 · PR-00 · klasifikasi rename/delete/keep/migrate (CSV + ringkasan) · S
 
 ### Gelombang 1 — gerbang kualitas & pembersihan
@@ -177,7 +177,7 @@ Checklist reviewer (salin ke tiap PR):
 | G-27 | PR-52 |
 | G-28 | PR-96 |
 | G-29 | PR-100 |
-| G-30 | PR-05 |
+| G-38 | PR-05 |
 | G-30 | PR-47 |
 | G-31 | PR-48 |
 | G-32 | PR-49 |

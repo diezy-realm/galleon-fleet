@@ -30,7 +30,7 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 - [ ] **G-27 (P2, M) CLI API:** endpoint streaming stabil untuk CLI tipis (A1). Dep: R-34.
 - [ ] **G-28 (P3, M) Observabilitas:** zap terstruktur + request-id lintas Go→Rust; scrubbing.
 - [ ] **G-29 (P0, L) Kontrak native tool Go↔Rust (SSOT tunggal).** Rust `ALLOWED_TOOLS=[bash,read_file,write_file,git]` (arg `command/args/path/contents`) vs 19 tool Go (`workspace.*`, `execute_command`, `git.*`, `code.*`, `sandbox.run_code`, `web.fetch`, `browser.*`, `edit_file`...); hanya `write_file` sama nama dan kunci argumennya beda (`content`/`contents`). Isi `workspace_path` di proto (kini tak diisi `ExecuteNativeTool`). Daftar tool + skema argumen di `proto/`, dipakai kedua sisi; test kontrak. Dep: G-01. Pasangan Rust: R-21 (perluas cakupan).
-- [ ] **G-30 (P1, S) Ganti path stale `filepath.Join("..","web-2","data")`** di `engine/src/fleet/services.go` (±55, ±313) dengan direktori data eksplisit (config/env, default `engine/data`); test traversal nama koleksi (`safeFilenameRegex` sudah ada).
+- [ ] **G-38 (P1, S) Ganti path stale `filepath.Join("..","web-2","data")`** di `engine/src/fleet/services.go` (±55, ±313) dengan direktori data eksplisit (config/env, default `engine/data`); test traversal nama koleksi (`safeFilenameRegex` sudah ada).
 
 ## G-3x Menyerap fungsi orkestrasi dari Rust (hasil R-00, ODR-11)
 
