@@ -36,7 +36,8 @@ Build Windows: `$env:CARGO_TARGET_DIR="target/agent"`; test: `cargo nextest run 
 ## R-3x Plugin & channel tier
 
 - [ ] **R-30 (P1, S) Errata ADR-001** (WhatsApp → Tier A, WIT v0 beku, bluesky) — lihat D-04; perbarui `plugin-codebase-standard.md`.
-- [ ] **R-35 (P1, M) Dukungan WIT v1** di host plugin (dual v0/v1) — pasangan N-24.`n- [ ] **R-31 (P2, L) Pilot channel Tier C WASI** end-to-end (host, signature, capability) pada fixture; ukur batas `wasi:http` outbound.
+- [ ] **R-35 (P1, M) Dukungan WIT v1** di host plugin (dual v0/v1) — pasangan N-24.
+- [ ] **R-31 (P2, L) Pilot channel Tier C WASI** end-to-end (host, signature, capability) pada fixture; ukur batas `wasi:http` outbound.
 - [ ] **R-32 (P2, S) WeChat/QQ/dst. = Tier B** (ODR-13, regional): buat crate `galleon-channel-<nama>` + feature flag; catat di errata ADR-001.
 - [ ] **R-33 (P2, M) Pasang mekanisme pilih-Tier-B saat instalasi** (feature flags / installer). Dep: P-lane installer.
 - [ ] **R-34 (P1, M) CLI (`galleon`, `galleoncode` TUI) = binary Rust, klien Go untuk orkestrasi (ODR-12)** — `chat/run/approve/status` memanggil Go :9090 (SSE/WS); `service/doctor/onboard/vault` tetap lokal Rust; tanpa agent loop lokal. Desain di `foundation/05`. Dep: R-00, G-lane API.

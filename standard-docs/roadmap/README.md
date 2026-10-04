@@ -48,7 +48,7 @@ flowchart LR
 | U | 14 | 0 |
 | P | 12 | 0 |
 | D | 10 | 0 |
-| N | 22 | 1 |
+| N | 24 | 1 |
 
 ## Gelombang
 

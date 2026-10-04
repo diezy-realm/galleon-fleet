@@ -56,7 +56,9 @@ Total ± 1,0 juta baris Rust. File >10k baris sudah turun di sisi test (RF-A0/A2
 
 ---
 
-> **Koreksi 2026-10-04:** `get_decrypted_secret` sudah nyata dan `ExecuteTurn` sudah terimplementasi; klaim sebelumnya disalin dari `finalize/analysis-conclusion.md` yang basi. Lihat `standard-docs/foundation/04-drift-register-and-hygiene.md`. UI/desktop aktif = `web-2` + `tauri-2` (`foundation/02`).`n`n## 2. Pendapat saya (jawaban atas pertanyaan)
+> **Koreksi 2026-10-04:** `get_decrypted_secret` sudah nyata dan `ExecuteTurn` sudah terimplementasi; klaim sebelumnya disalin dari `finalize/analysis-conclusion.md` yang basi. Lihat `standard-docs/foundation/04-drift-register-and-hygiene.md`. UI/desktop aktif = `web-2` + `tauri-2` (`foundation/02`).
+
+## 2. Pendapat saya (jawaban atas pertanyaan)
 
 **Q1 — Apa langkah berikutnya untuk memecah kode besar?**
 Jangan lanjut "pecah file" dulu. Tahap-1 (test-split) sudah memberi manfaat yang bisa didapat dengan murah. Dua hal yang tersisa punya karakter berbeda:
