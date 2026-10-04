@@ -5,7 +5,7 @@
   "identifier": "com.galleon.sovereign",
   "build": {
     "devUrl": "http://localhost:3000",
-    "frontendDist": "../../web-2/dist"
+    "frontendDist": "../../web/dist"
   },
   "app": {
     "windows": [
