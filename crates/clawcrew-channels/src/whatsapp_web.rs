@@ -14,7 +14,7 @@ use clawcrew_api::channel::{
 };
 #[cfg(feature = "whatsapp-web")]
 use clawcrew_api::media::MediaAttachment;
-use clawcrew_runtime::i18n;
+use galleon_i18n as i18n;
 
 /// What a pending approval token is bound to.
 ///

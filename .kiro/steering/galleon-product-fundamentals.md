@@ -1,15 +1,15 @@
 ---
 title: Galleon — product fundamentals
 inclusion: fileMatch
-fileMatchPattern: "docs/**/*.md"
+fileMatchPattern: "standard-docs/**/*.md"
 ---
 
 # Galleon — dasar produk
 
-Ringkasan `docs/finalize/*` (SSOT phase-4) + `docs/fundamental/*` (dasar). Dipakai saat merancang fitur, menamai entitas, atau memutuskan boundary. **Jika bentrok, `docs/finalize/` menang.**
+Ringkasan `standard-docs/` (SSOT: `standard-docs/decisions/finalize/` dan `standard-docs/foundation/`). Dipakai saat merancang fitur, menamai entitas, atau memutuskan boundary. **Jika bentrok, `standard-docs/decisions/finalize/` menang.**
 
 ## Apa produknya
-Galleon = **local-first, self-hosted AI organization workspace**. Owner ("Pirate King") membangun Fleet berisi Ship (tim AI spesialis persisten); **Quartermaster** = fleet coordinator / **router dua-lapis** (jawab chat ringan langsung + rutekan quest), ber-authority terbatas — **bukan super-agent** (lihat `docs/finalize/01`). Promise: **"Your Fleet. Your Rules."** — BYOK/BYOM/BYOI (user bawa key/model/infra sendiri, bayar provider langsung).
+Galleon = **local-first, self-hosted AI organization workspace**. Owner ("Pirate King") membangun Fleet berisi Ship (tim AI spesialis persisten); **Quartermaster** = fleet coordinator / **router dua-lapis** (jawab chat ringan langsung + rutekan quest), ber-authority terbatas — **bukan super-agent** (lihat `standard-docs/decisions/finalize/01-be-go-engine.md`). Promise: **"Your Fleet. Your Rules."** — BYOK/BYOM/BYOI (user bawa key/model/infra sendiri, bayar provider langsung).
 
 Produk ini **bukan**: reseller kredit, chatbot generik, no-code workflow builder, atau sistem otonom tanpa batas Owner.
 

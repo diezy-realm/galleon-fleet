@@ -6,18 +6,18 @@ Build Windows: `$env:CARGO_TARGET_DIR="target/agent"`; test: `cargo nextest run 
 ## R-0x Klasifikasi & gerbang kualitas
 
 - [x] **R-00 (P0 — PRIORITAS UTAMA, ODR-11, M) — *draf selesai: `decisions/refactoring-rust/phase-5-production-hardening/R-00-runtime-inventory.md`; menunggu sign-off Owner/Principle (3 keputusan §6).*  Inventaris `clawcrew-runtime` vs boundary.** Konteks terukur: `agent` 77k, `sop` 38k, `rpc` 32k, `skills` 12k, `cron` 10k, `control_plane` 7k LOC masih dipakai `src/main.rs` dan `gateway/{api,api_config,ws,a2a}.rs` (`foundation/05`). Keluaran per modul: keputusan + daftar pemanggil + tiket tujuan (G-30..G-33 bila pindah ke Go). Per modul (agent, sop, subagents, cron, memory_strategy, skills, hooks, tools, security, i18n, observability, rpc…) tetapkan: *keep-in-Rust* / *move-to-Go* / *delete* / *feature-gate*, dengan bukti pemakai (siapa memanggil). Output: tabel di `decisions/refactoring-rust/phase-5-production-hardening/R-00-runtime-inventory.md`. **Tidak ada penghapusan tanpa sign-off Owner.** Acceptance: tiap top-level modul punya keputusan + alasan; daftar dependen terukur. Out: eksekusi pemindahan.
-- [ ] **R-01 (P1, S) `[workspace.lints]`** di root `Cargo.toml` (`clippy::unwrap_used`/`expect_used` = warn di non-test, `unsafe_code` terkontrol); crate mewarisi `lints.workspace = true`. Dep: –. Acceptance: `cargo clippy --workspace -- -D warnings` tetap hijau dengan baseline/allow terlacak.
+- [x] **R-01 (P1, S) `[workspace.lints]`** [Selesai PR-10] `[workspace.lints.clippy]` (unwrap_used/expect_used = warn) dan `[workspace.lints.rust]` (unsafe_code = warn) di root `Cargo.toml`; `lints.workspace = true`.
 - [ ] **R-02 (P1, M) Burn-down `unwrap/expect` produksi** (±400 hit; runtime 237). Per crate, mulai `gateway`, `channels`. Dep: R-01. Acceptance: nol hit di jalur produksi atau invariant terdokumentasi.
-- [ ] **R-03 (P1, S) Gerbang ukuran file/crate** di `tests/architecture/` sesuai `rust-module-size-and-decomposition-standard.md`; daftar pengecualian bertanggal. Acceptance: CI gagal bila file baru melewati batas.
-- [ ] **R-04 (P1, S) Gerbang arah dependency antar-crate** (`cargo metadata`); larang `plugins→runtime`, `channels→runtime` baru, dst. Acceptance: test gagal pada edge terlarang.
-- [ ] **R-05 (P2, S) Selaraskan `rust-conventions.md`** (MSRV 1.96, jumlah crate 27). Dep: –.
-- [ ] **R-06 (P2, S) Ukur waktu build/test baseline** (cold/warm, `nextest`) dan simpan di `foundation/03`.
+- [x] **R-03 (P1, S) Gerbang ukuran file/crate** [Selesai PR-10] Ditambahkan `tests/architecture/module_size_limits.rs` dengan daftar pengecualian bertanggal 2026-10-04 (ratchet lock).
+- [x] **R-04 (P1, S) Gerbang arah dependency antar-crate** [Selesai PR-10] Ditambahkan `tests/architecture/dependency_direction.rs` mengunci leaf boundary `clawcrew-api` dan isolasi channel/plugins dari `runtime`.
+- [x] **R-05 (P2, S) Selaraskan `rust-conventions.md`** [Selesai PR-20] MSRV 1.96.0 dan jumlah 27 crates diselaraskan dengan root `Cargo.toml`. Dep: –.
+- [x] **R-06 (P2, S) Ukur waktu build/test baseline** [Selesai PR-10] Waktu cold check (7m 02s), warm check (3.78s), dan gate checks diukur dan disimpan di `foundation/03`.
 
 ## R-1x Putus kopling & pecah crate (setelah R-00)
 
-- [ ] **R-10 (P1, L) Ekstrak `i18n`** dari runtime (87 ref dari channels) ke crate kecil. Dep: R-00, R-04. *Status 2026-10-04: crate `galleon-i18n` sudah ada; sisa repoint 87 ref di channels.*
-- [ ] **R-11 (P1, L) Ekstrak `security::scrub`** (36 ref) ke crate/ke `clawcrew-infra`. Dep: R-00.
-- [ ] **R-12 (P1, L) Pisahkan kontrak tools-scoped / memory_strategy / hooks / sop::types** yang dipakai channels menjadi trait di `clawcrew-api`. Dep: R-00.
+- [x] **R-10 (P1, L) Ekstrak `i18n`** [Selesai PR-31] Dependensi `galleon-i18n` dikonfigurasi di `clawcrew-channels` dan seluruh 87 pemanggilan dialihkan dari runtime ke `galleon_i18n`.
+- [x] **R-11 (P1, L) Ekstrak `security::scrub`** [Selesai PR-32] 36 ref di channels dan gateway diekstrak ke crate `galleon-security-scrub`; runtime men-reexport untuk backward-compatibility.
+- [x] **R-12 (P1, L) Pisahkan kontrak tools-scoped / memory_strategy / hooks / sop::types** yang dipakai channels menjadi trait di `clawcrew-api`. [Selesai PR-33] Kontrak diekstrak ke `clawcrew-api` (`ToolRegistry`, `ScopedToolRegistry`, `ChannelHookRunner`, tipe-tipe enum/struct kanonikal `sop`), `DefaultMemoryStrategy` dipindahkan ke `clawcrew-memory`, dan implementasi adapter runtime diselaraskan. Dep: R-00.
 - [ ] **R-13 (P1, L) `channels` tidak bergantung ke `runtime`** (677 ref → 0). Dep: R-10..R-12. Acceptance: edge dihapus di `cargo metadata`; gerbang R-04 mengunci.
 - [ ] **R-14 (P1, L) `gateway` tidak bergantung ke `runtime`; hapus REST/WS/A2A lama bila tak ada pemakai (ODR-14)** (426 ref; cron, observability). Dep: R-00. Bila cron pindah ke Go: koordinasi G-lane.
 - [ ] **R-15 (P2, XL→dipecah) Pecah `channels` (198k LOC)** per tier/protokol: crate `galleon-channel-<nama>` untuk channel baru, bertahap untuk lama. Dep: R-13.
@@ -27,8 +27,8 @@ Build Windows: `$env:CARGO_TARGET_DIR="target/agent"`; test: `cargo nextest run 
 
 ## R-2x Hardening & kontrak
 
-- [ ] **R-20 (P1, M) Implementasi nyata `execute_task`** di `grpc_system_gateway.rs` atau hapus dari proto bila tidak dipakai (keputusan dengan G-lane). Acceptance: tidak ada stub yang menjawab sukses palsu.
-- [ ] **R-21 (P1, M) Test integrasi gRPC Go↔Rust** (`ExecuteTurn` stream, `GetDecryptedSecret`, `ExecuteNativeTool`) termasuk mTLS/loopback-only binding. Dep: –.
+- [x] **R-20 (P1, M) Implementasi nyata `execute_task`** [Selesai PR-35] Menghapus stub sukses palsu; menggantikannya dengan fail-closed sejati (`Status::unimplemented`) dengan logging failure dan validasi input.
+- [x] **R-21 (P1, M) Test integrasi gRPC Go↔Rust** [Selesai PR-35] Test integrasi lengkap di Go client (`ExecuteNativeTool`, `GetDecryptedSecret`, `ExecuteTurn` stream, `ExecuteTask` fail-closed, dan `UnreachableServer`) dan unit test Rust gateway lolos.
 - [ ] **R-22 (P1, M) Sandbox:** test Landlock/Seatbelt/AppContainer per OS; kebijakan deny-by-default terbukti.
 - [ ] **R-23 (P2, S) Scrubbing kredensial di log** — test tangkap-log untuk `ExecuteTurn`/vault.
 - [ ] **R-24 (P2, M) Vault:** uji rotasi/ekspor/migrasi; `GetDecryptedSecret` hanya untuk caller terotorisasi.

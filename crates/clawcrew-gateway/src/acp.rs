@@ -13,8 +13,8 @@ use futures_util::{SinkExt, StreamExt};
 use serde::Deserialize;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use clawcrew_channels::orchestrator::acp_server::{AcpServer, AcpServerConfig};
 use clawcrew_infra::acp_session_store::AcpSessionStore;
+use clawcrew_runtime::acp::{AcpServer, AcpServerConfig};
 
 const ACP_WS_PROTOCOL: &str = "clawcrew.acp.v1";
 

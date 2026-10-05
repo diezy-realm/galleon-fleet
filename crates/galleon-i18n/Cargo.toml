@@ -6,7 +6,7 @@ license.workspace = true
 description = "Fluent-based i18n (tool descriptions + CLI strings) extracted from clawcrew-runtime (RF-B) so channels/gateway localize without the runtime crate."
 repository.workspace = true
 homepage.workspace = true
-publish = false
+publish = true
 
 [dependencies]
 # RF-B: the body moved verbatim from clawcrew-runtime::i18n. Its real deps are

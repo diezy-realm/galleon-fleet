@@ -230,7 +230,7 @@
     #[test]
     fn scrub_masks_poll_error_url() {
         let raw = "error sending request for url (https://api.telegram.org/bot123456:ABC-def_GHI/getUpdates)";
-        let redacted = clawcrew_runtime::security::scrub(raw);
+        let redacted = galleon_security_scrub::scrub(raw);
         assert!(!redacted.contains("123456:ABC-def_GHI"));
         assert!(redacted.contains("[REDACTED_BOT_TOKEN]"));
     }
@@ -238,7 +238,7 @@
     #[test]
     fn scrub_leaves_unrelated_text_untouched() {
         let raw = "connection reset by peer";
-        assert_eq!(clawcrew_runtime::security::scrub(raw), raw);
+        assert_eq!(galleon_security_scrub::scrub(raw), raw);
     }
 
     #[test]
@@ -6433,7 +6433,7 @@
         use clawcrew_api::ingress::{
             IngressDecision, SourceClass, Transport, TrustClass, TurnOrigin,
         };
-        use clawcrew_runtime::security::ingress::{IngressPolicy, ingress_policy};
+        use clawcrew_api::ingress::{IngressPolicy, ingress_policy};
 
         let channel = TelegramChannel::new(
             "token".into(),
@@ -9912,7 +9912,7 @@
     /// Read from the compiled-in source so the assertion tracks the file
     /// rather than a copy that can drift.
     fn callback_ack_source_region() -> &'static str {
-        const SRC: &str = include_str!("telegram.rs");
+        const SRC: &str = include_str!("../telegram.rs");
         let start = SRC
             .find("let answer_text = match (action, resolution) {")
             .expect("callback ack arm: `let answer_text = match (action, resolution) {` not found");
@@ -13304,7 +13304,7 @@
         entries
             .into_iter()
             .map(|(command, key)| {
-                let description = clawcrew_runtime::i18n::get_required_cli_string(key);
+                let description = galleon_i18n::get_required_cli_string(key);
                 assert!(
                     !description.starts_with('{'),
                     "description for /{command} resolved to the missing-key sentinel: {description}"
@@ -13391,7 +13391,7 @@
     #[tokio::test]
     #[ignore = "subprocess helper for process-global French locale"]
     async fn register_bot_commands_french_payload_helper() {
-        clawcrew_runtime::i18n::init("fr");
+        galleon_i18n::init("fr");
 
         use wiremock::matchers::{body_json, method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
@@ -13852,7 +13852,12 @@
             mention_only,
         )
         .with_mock_api_base(mock_server.uri())
-        .with_workspace_dir(workspace.path().to_path_buf());
+        .with_workspace_dir(workspace.path().to_path_buf())
+        .with_skills(vec![clawcrew_api::skill::Skill {
+            name: "weather".to_string(),
+            description: "Check the weather forecast".to_string(),
+            ..Default::default()
+        }]);
 
         ch.register_bot_commands().await;
     }

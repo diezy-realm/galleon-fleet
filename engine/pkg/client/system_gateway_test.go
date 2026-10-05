@@ -184,3 +184,116 @@ func TestSystemGatewayClient_ExecuteTurn(t *testing.T) {
 		t.Errorf("expected to receive complete token from Rust gateway stream")
 	}
 }
+
+func (s *testVaultGatewayServer) ExecuteNativeTool(ctx context.Context, req *pb.ToolCallRequest) (*pb.ToolCallResponse, error) {
+	if req.ToolName == "rejected_tool" {
+		return &pb.ToolCallResponse{
+			Success: false,
+			Error:   "tool execution rejected: tool not allowed",
+		}, nil
+	}
+	return &pb.ToolCallResponse{
+		Success: true,
+		Output:  "native tool output for " + req.ToolName,
+	}, nil
+}
+
+func (s *testVaultGatewayServer) ExecuteTask(ctx context.Context, req *pb.TaskExecutionRequest) (*pb.TaskExecutionResponse, error) {
+	return nil, appErrors.New(appErrors.CodeInternal, "ExecuteTask is not implemented on native host: fail-closed boundary enforced", appErrors.LayerExternal)
+}
+
+func TestSystemGatewayClient_ExecuteNativeTool(t *testing.T) {
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("failed to listen on random port: %v", err)
+	}
+	grpcServer := grpc.NewServer()
+	mockSrv := &testVaultGatewayServer{}
+	pb.RegisterSystemGatewayServer(grpcServer, mockSrv)
+
+	go func() {
+		_ = grpcServer.Serve(lis)
+	}()
+	defer grpcServer.Stop()
+
+	gwClient, err := NewSystemGatewayClient(lis.Addr().String())
+	if err != nil {
+		t.Fatalf("failed to create system gateway client: %v", err)
+	}
+	defer gwClient.Close()
+
+	ctx := context.Background()
+
+	// 1. Success case: Allowed native tool executes
+	out, err := gwClient.ExecuteNativeTool(ctx, "bash", `{"command":"echo hello"}`)
+	if err != nil {
+		t.Fatalf("expected successful execution, got err: %v", err)
+	}
+	if out != "native tool output for bash" {
+		t.Errorf("unexpected output: %s", out)
+	}
+
+	// 2. Failure case: Tool rejected by gate
+	_, err = gwClient.ExecuteNativeTool(ctx, "rejected_tool", `{}`)
+	if err == nil {
+		t.Fatalf("expected error for rejected tool, got nil")
+	}
+	appErr, ok := err.(*appErrors.AppError)
+	if !ok {
+		t.Fatalf("expected AppError, got %T: %v", err, err)
+	}
+	if appErr.Code != appErrors.CodeToolFailed {
+		t.Errorf("expected CodeToolFailed, got %v", appErr.Code)
+	}
+}
+
+func TestSystemGatewayClient_ExecuteTask_FailsClosed(t *testing.T) {
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("failed to listen on random port: %v", err)
+	}
+	grpcServer := grpc.NewServer()
+	mockSrv := &testVaultGatewayServer{}
+	pb.RegisterSystemGatewayServer(grpcServer, mockSrv)
+
+	go func() {
+		_ = grpcServer.Serve(lis)
+	}()
+	defer grpcServer.Stop()
+
+	gwClient, err := NewSystemGatewayClient(lis.Addr().String())
+	if err != nil {
+		t.Fatalf("failed to create system gateway client: %v", err)
+	}
+	defer gwClient.Close()
+
+	ctx := context.Background()
+
+	// Verify fail-closed: external task execution is rejected, not given fake success
+	_, err = gwClient.ExecuteTask(ctx, "task-123", `{"payload":"any"}`)
+	if err == nil {
+		t.Fatalf("expected ExecuteTask to fail-closed, got unexpected success")
+	}
+}
+
+func TestSystemGatewayClient_UnreachableServer(t *testing.T) {
+	// Attempt connecting to a port that is immediately closed
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("failed to listen: %v", err)
+	}
+	addr := lis.Addr().String()
+	_ = lis.Close() // closed immediately so it is unreachable
+
+	gwClient, err := NewSystemGatewayClient(addr)
+	if err != nil {
+		t.Fatalf("failed to construct client: %v", err)
+	}
+	defer gwClient.Close()
+
+	ctx := context.Background()
+	_, err = gwClient.ExecuteNativeTool(ctx, "bash", `{}`)
+	if err == nil {
+		t.Fatalf("expected error when server is unreachable, got nil")
+	}
+}

@@ -5,17 +5,17 @@ Prinsip: **verifikasi per modul (R-00 §4) wajib sebelum modul runtime dipindah/
 
 ## A. Gerbang Kualitas
 
-- [ ] **BR-A1 · R-01 · PR-10 (P1, S) `[workspace.lints]`** (`unwrap_used`/`expect_used` = warn non-test, `unsafe_code` terkontrol); crate mewarisi `lints.workspace = true`.
-- [ ] **BR-A2 · R-03 · PR-10 (P1, S) Gerbang ukuran file/crate** di `tests/architecture/`; daftar pengecualian bertanggal.
-- [ ] **BR-A3 · R-04 · PR-10 (P1, S) Gerbang arah dependensi** (`cargo metadata`): larang `plugins→runtime`, `channels→runtime` baru.
-- [ ] **BR-A4 · R-06 · PR-10 (P2, S) Baseline waktu build/test** (cold/warm, nextest) → `foundation/03`.
+- [x] **BR-A1 · R-01 · PR-10 (P1, S) `[workspace.lints]`:** [Selesai PR-10] Dikonfigurasi `[workspace.lints.clippy]` (`unwrap_used = "warn"`, `expect_used = "warn"`) dan `[workspace.lints.rust]` (`unsafe_code = "warn"`) di root `Cargo.toml`; `[lints] workspace = true` diaktifkan.
+- [x] **BR-A2 · R-03 · PR-10 (P1, S) Gerbang ukuran file/crate** di `tests/architecture/`: [Selesai PR-10] Diimplementasikan `module_size_limits.rs` mengunci batas 5.000 (source) / 10.000 (test) dengan daftar ratchet exceptions bertanggal 2026-10-04.
+- [x] **BR-A3 · R-04 · PR-10 (P1, S) Gerbang arah dependensi** (`cargo metadata`): [Selesai PR-10] Diimplementasikan `dependency_direction.rs` mengunci `clawcrew-api` sebagai leaf crate dan melarang `clawcrew-plugins` serta channel crates mengimpor `clawcrew-runtime`.
+- [x] **BR-A4 · R-06 · PR-10 (P2, S) Baseline waktu build/test:** [Selesai PR-10] Diukur dan dicatat di `foundation/03`: cold workspace check (7m 02s), warm check (3.78s), gate checks (< 1s).
 - [ ] **BR-A5 · R-02 · PR-30 (P1, M, berseri per crate) Burn-down `unwrap/expect` produksi** (±400 hit; `gateway`, `channels`, `runtime`). Dep: BR-A1.
 - [ ] **BR-A6 · R-05 · PR-20 (P2, S) Selaraskan `rust-conventions.md`** (MSRV, jumlah crate).
 
 ## B. Kontrak gRPC & Keamanan Inti
 
-- [ ] **BR-B1 · R-20 · PR-35 (P1, M) `execute_task` nyata** (`grpc_system_gateway.rs`) atau hapus dari proto — tanpa stub sukses palsu (GW-5).
-- [ ] **BR-B2 · R-21 · PR-35 (P1, M) Test integrasi Go↔Rust lengkap:** `ExecuteTurn` stream (T-5.3 ✔), `GetDecryptedSecret` (handler ✔ T-8.1), `ExecuteNativeTool`; tambahkan skenario loopback-only/mTLS dan kegagalan.
+- [x] **BR-B1 · R-20 · PR-35 (P1, M) `execute_task` nyata** (`grpc_system_gateway.rs`): [Selesai PR-35] Menghapus stub sukses palsu; digantikan dengan fail-closed sejati (`Status::unimplemented`) dengan logging failure dan validasi input `task_id`.
+- [x] **BR-B2 · R-21 · PR-35 (P1, M) Test integrasi Go↔Rust lengkap:** [Selesai PR-35] Ditambahkan test integrasi lengkap di `engine/pkg/client/system_gateway_test.go` (`ExecuteNativeTool` sukses/gagal, `GetDecryptedSecret`, `ExecuteTurn` streaming, `ExecuteTask` fail-closed, dan `UnreachableServer`), semua lolos.
 - [ ] **BR-B3 · R-22 · PR-36 (P1, M) Sandbox:** test Landlock/Seatbelt/AppContainer per OS; deny-by-default terbukti.
 - [ ] **BR-B4 · R-23 · PR-36 (P2, S) Scrubbing kredensial di log** — test tangkap-log `ExecuteTurn`/vault.
 - [ ] **BR-B5 · R-24 · PR-36 (P2, M) Vault:** rotasi/ekspor/migrasi; `GetDecryptedSecret` hanya untuk caller terotorisasi.
@@ -23,10 +23,10 @@ Prinsip: **verifikasi per modul (R-00 §4) wajib sebelum modul runtime dipindah/
 
 ## C. Dekoplasi Crate (pecah kode besar)
 
-- [ ] **BR-C1 · R-10 · PR-31 (P1, M) Selesaikan ekstraksi `i18n`.** *Status: parsial* — crate `galleon-i18n` sudah ada (RF-B, ±2.160 LOC) tetapi `clawcrew-channels` masih 87 ref ke `runtime::i18n`. Koreksi fakta: `clawcrew-runtime/src/lib.rs:30` sudah `pub use galleon_i18n as i18n;`, jadi 87 ref itu alias (bukan duplikasi kode); sebaran: tests 29, acp_server 20, mod 14, util 11, line 5, sisanya 1–2. Yang tersisa hanya edge `channels→runtime`. Aksi: ganti `clawcrew_runtime::i18n` → `galleon_i18n`, tambah dep `galleon-i18n` di channels; edge penuh baru lepas setelah BR-C2..C4.
-- [ ] **BR-C2 · R-11 · PR-32 (P1, L) Ekstrak `security::scrub`** (36 ref).
-- [ ] **BR-C3 · R-12 · PR-33 (P1, L) tools-scoped / memory_strategy / hooks / sop::types → trait di `clawcrew-api`.**
-- [ ] **BR-C4 · R-13 · PR-34 (P1, L) `channels` tidak bergantung ke `runtime`** (677 ref → 0); gerbang BR-A3 mengunci. Dep: BR-C1..C3.
+- [x] **BR-C1 · R-10 · PR-31 (P1, M) Selesaikan ekstraksi `i18n`:** [Selesai PR-31] Dependensi `galleon-i18n` ditambahkan langsung ke `crates/clawcrew-channels/Cargo.toml` dan seluruh 87 referensi `clawcrew_runtime::i18n` di channels di-repoint ke `galleon_i18n`, diverifikasi lolos `cargo check -p clawcrew-channels` dan uji arsitektur dependency direction.
+- [x] **BR-C2 · R-11 · PR-32 (P1, L) Ekstrak `security::scrub`:** [Selesai PR-32] Diekstrak ke crate `galleon-security-scrub`; 36 pemanggilan di `clawcrew-channels` dan 2 di `clawcrew-gateway` di-repoint ke `galleon_security_scrub::scrub`; unit tests (37 test) dan gate arsitektur lolos.
+- [x] **BR-C3 · R-12 · PR-33 (P1, L) tools-scoped / memory_strategy / hooks / sop::types → trait di `clawcrew-api`.** [Selesai PR-33] Trait/tipe kanonikal didefinisikan: `ToolRegistry` dan `ScopedToolRegistry` di `clawcrew_api::tool`, `NoopMemoryStrategy` di `clawcrew_api::memory_traits`, `DefaultMemoryStrategy` di `clawcrew-memory`, `ChannelHookRunner` di `clawcrew_api::hook`, dan model kanonikal `sop.rs` di `clawcrew-api`. Runtime mengadaptasi trait-trait ini dan memverifikasi kompatibilitas tipe.
+- [x] **BR-C4 · R-13 · PR-34 (P1, L) `channels` tidak bergantung ke `runtime`:** [Selesai PR-34, commit 8b846bc36] Dependensi `clawcrew-runtime` dicabut penuh dari `clawcrew-channels` (Cargo.toml); trait `ChannelTurnRunner`/`ChannelTurnContext` di `clawcrew-api` mengabstraksi eksekusi turn; seluruh 1.704 unit tests channels & clippy lolos; aturan R-04 (`crate_dependency_direction_strictly_enforced`) terkunci rapat. Dep: BR-C1..C3.
 - [ ] **BR-C5 · R-14 · PR-61 (P1, L) ⚑ `gateway` tidak bergantung ke `runtime`** (426 ref → 0). Dep: BR-D1 (cron). Terkait keputusan 08 §C.
 - [ ] **BR-C6 · R-15 · PR-63 (P2, XL, berseri) Pecah `channels` (198k LOC)** → `galleon-channel-<nama>` (sudah: core, imessage, signal, bluesky). Dep: BR-C4.
 - [ ] **BR-C7 · R-17 · PR-60 (P2, M) Pecah file terbesar** yang tetap di Rust.

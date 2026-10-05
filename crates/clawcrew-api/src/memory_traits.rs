@@ -722,6 +722,29 @@ pub trait MemoryStrategy: Send + Sync {
     async fn run_governance(&self) -> anyhow::Result<()>;
 }
 
+/// A no-op implementation of [`MemoryStrategy`] that performs no consolidation or governance.
+#[derive(Debug, Default, Clone)]
+pub struct NoopMemoryStrategy;
+
+#[async_trait]
+impl MemoryStrategy for NoopMemoryStrategy {
+    async fn consolidate_turn(
+        &self,
+        _user_message: &str,
+        _assistant_response: &str,
+        _provider: &dyn crate::model_provider::ModelProvider,
+        _model: &str,
+        _temperature: Option<f64>,
+    ) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    async fn run_governance(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;

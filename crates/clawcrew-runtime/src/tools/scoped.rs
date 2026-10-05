@@ -33,7 +33,7 @@ use crate::tools::{
 /// registry is a compile error, not a review-checklist item. Read sites are
 /// unchanged: the registry [`std::ops::Deref`]s to the same `[Box<dyn Tool>]`
 /// slice the raw `Vec` used to expose.
-pub struct ScopedToolRegistry(Vec<Box<dyn Tool>>);
+pub struct ScopedToolRegistry(clawcrew_api::tool::ScopedToolRegistry);
 
 impl std::ops::Deref for ScopedToolRegistry {
     type Target = [Box<dyn Tool>];
@@ -43,10 +43,20 @@ impl std::ops::Deref for ScopedToolRegistry {
 }
 
 impl ScopedToolRegistry {
+    /// Wrap a vector of boxed tools into the runtime's scoped registry.
+    pub fn new(tools: Vec<Box<dyn Tool>>) -> Self {
+        Self(clawcrew_api::tool::ScopedToolRegistry::new(tools))
+    }
+
     /// Consume the assembled registry into the owned `Vec` for non-turn
     /// consumers such as the gateway's listing-only registry. Turn carriers
     /// accept only the sealed type.
     pub fn into_inner(self) -> Vec<Box<dyn Tool>> {
+        self.0.into_inner()
+    }
+
+    /// Extract the underlying API-level `ScopedToolRegistry`.
+    pub fn into_api_scoped(self) -> clawcrew_api::tool::ScopedToolRegistry {
         self.0
     }
 
@@ -69,7 +79,19 @@ impl ScopedToolRegistry {
     /// in shipped builds and the seal holds where it matters.
     #[cfg(any(test, feature = "test-util"))]
     pub fn from_raw_for_test(tools: Vec<Box<dyn Tool>>) -> Self {
-        Self(tools)
+        Self(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(tools))
+    }
+}
+
+impl From<clawcrew_api::tool::ScopedToolRegistry> for ScopedToolRegistry {
+    fn from(inner: clawcrew_api::tool::ScopedToolRegistry) -> Self {
+        Self(inner)
+    }
+}
+
+impl From<ScopedToolRegistry> for clawcrew_api::tool::ScopedToolRegistry {
+    fn from(outer: ScopedToolRegistry) -> Self {
+        outer.0
     }
 }
 
@@ -617,7 +639,7 @@ impl ScopedToolRegistry {
         }
 
         ScopedAssembled {
-            registry: ScopedToolRegistry(tools_registry),
+            registry: ScopedToolRegistry::new(tools_registry),
             delegate_handle,
             ask_user_handle,
             reaction_handle,
@@ -1538,7 +1560,7 @@ mod tests {
 
     fn assembled_with_sections(deferred: &str, pinned: &str) -> ScopedAssembled {
         ScopedAssembled {
-            registry: ScopedToolRegistry(Vec::new()),
+            registry: ScopedToolRegistry::new(Vec::new()),
             delegate_handle: None,
             ask_user_handle: None,
             reaction_handle: Arc::new(parking_lot::RwLock::new(std::collections::HashMap::new())),

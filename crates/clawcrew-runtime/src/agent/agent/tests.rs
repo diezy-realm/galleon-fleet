@@ -11801,7 +11801,6 @@ model_provider = "custom.only"
             "streamed and non-streamed enrichment must be byte-identical for the same clock and message"
         );
     }
-}
 
 #[cfg(test)]
 mod approval_route_tests {
@@ -12054,3 +12053,5 @@ mod approval_route_tests {
             "no originator to inherit; gate applies the non-interactive auto-deny"
         );
     }
+}
+

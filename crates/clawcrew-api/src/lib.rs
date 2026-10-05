@@ -28,7 +28,9 @@ pub mod runtime_status;
 pub mod runtime_traits;
 pub mod schema;
 pub mod session_keys;
+pub mod sop;
 pub mod tool;
+pub mod skill;
 pub mod vad;
 pub mod webhook;
 

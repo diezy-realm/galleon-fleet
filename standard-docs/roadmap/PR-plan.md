@@ -40,34 +40,34 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 
 ### Gelombang 1 — gerbang kualitas & pembersihan
 
-- [ ] **PR-10** `ci/rust-workspace-lints-and-gates` · R-01, R-03, R-04, R-06 · GW-1 · PR-00 · `[workspace.lints]`, gerbang ukuran, gerbang arah dependensi, baseline waktu build · M
-- [ ] **PR-11** `ci/boundary-gates` · P-07 · GW-4,6 · PR-05 · `tests/architecture/` (UI tanpa backend, Tauri tanpa shell, Go tanpa exec/vendor LLM) · M
-- [ ] **PR-12** `ci/web-and-desktop` · P-04, P-05, U-12 · GW-3 · PR-03 · CI `web/` & `fleet-ai-desktop`, skrip `typecheck/lint/test`, TS strict · M
-- [ ] **PR-13** `ci/engine` · P-06 · GW-2 · – · `go test -race`, vet, staticcheck, cek `wire_gen` · S
+- [x] **PR-10** `ci/rust-workspace-lints-and-gates` · R-01, R-03, R-04, R-06 · GW-1 · PR-00 · [Selesai] `[workspace.lints]`, gerbang ukuran ratchet exceptions 2026-10-04, gerbang arah dependensi, dan baseline waktu build diukur · M
+- [x] **PR-11** `ci/boundary-gates` · P-07 · GW-4,6 · PR-05 · [Selesai] `tests/architecture/tier_boundaries.rs` mengunci isolasi 4-tier (UI tanpa backend, Tauri tanpa shell, Go tanpa exec/vendor LLM); pembersihan visibilitas Cli di main; test lolos 100% · M
+- [x] **PR-12** `ci/web-and-desktop` · P-04, P-05, U-12 · GW-3 · PR-03 · [Selesai] CI `web/` (`web-check.yml`) & `desktop-check.yml`, skrip `typecheck/lint/test/build` di `web/package.json`, TS strict mode · M
+- [x] **PR-13** `ci/engine` · P-06 · GW-2 · – · [Selesai] `engine-ci.yml` diperbarui (`go test -race`, vet, staticcheck, Wire injector check); perbaikan wire Set di `run/wire.go` · S
 - [x] **PR-14** `chore/web-remove-aistudio-artifacts` · U-05, U-15 · GW-3 · PR-12 · [Selesai] Copot `@google/genai`, `better-sqlite3`, `qrcode`; hapus `metadata.json`, `bun.lock`, `web/.github/`, `web/Dockerfile`, `seedData.ts`; deklarasikan `@tauri-apps/api` di web; rename `galleon-web` · S
-- [ ] **PR-15** `feat/go-terminal-policy-endpoint` · G-04 · GW-2,4,8 · PR-05 · risk-tier + approval + audit; test injeksi ditolak · M
+- [x] **PR-15** `feat/go-terminal-policy-endpoint` · G-04 · GW-2,4,8 · PR-05 · [Selesai] `POST /api/terminal/exec` & alias `/api/engine/execute`: risk-tier, approval gate, routing ke SystemGateway `bash`, audit log (`/api/terminal/audit`), web `apiClient` terhubung · M
 - [x] **PR-16** `fix/go-remove-ollama-probe` · G-02 · GW-2,4 · PR-05 · [Selesai] Hapus route & handler `/api/providers/ollama/status`, hapus probe HTTP `checkOllama` (11434), selaraskan `d-3` ke System Gateway (:50052), hapus `getOllamaStatus` di web · S
-- [ ] **PR-17** `chore/legacy-removal-docs-archive` · N-11 · GW-0 · PR-06 ⚑ · buat tag `archive/pre-galleon`; hapus `docs/_archive`; perbaiki rujukan `docs/book` di AGENTS.md · M
-- [ ] **PR-18** `chore/legacy-removal-agent-skills-and-workflows` · N-13, N-14 · GW-0 · PR-06 ⚑ · skill & workflow khusus ClawCrew · S
-- [ ] **PR-19** `chore/legacy-removal-packaging-fixtures-i18n` · N-15, N-16, N-17 · GW-0 · PR-06 ⚑ · `dist/`, `nix/`, `deploy-k8s/`, fixture, locale tak terpakai · M
-- [ ] **PR-20** `docs/drift-sync` · D-02, D-05, D-06, D-09, R-05 · GW-7 · PR-00 · selaraskan klaim usang (D1–D14), MSRV, jumlah crate, `.kiro`, otoritas `docs/README.md`, PRD · M
-- [ ] **PR-21** `docs/adr-errata-and-hygiene` · D-04, R-30, D-07, D-08, D-10 · GW-7 · PR-00 · errata ADR-001 (file baru), rapikan steering, kebersihan root, template ODR/ADR · M
-- [ ] **PR-22** `feat/tauri-csp-capabilities` · U-08, U-17 · GW-3,8 · PR-03 · hapus `unsafe-eval`, `connect-src` ke :9090, scope fs · S
+- [x] **PR-17** `chore/legacy-removal-docs-archive` · N-11 · GW-0 · PR-06 ⚑ · [Selesai] Tag `archive/pre-galleon` dibuat; hapus `docs/_archive` (307 file); perbaiki rujukan `docs/book` di `AGENTS.md` · M
+- [x] **PR-18** `chore/legacy-removal-agent-skills-and-workflows` · N-13, N-14 · GW-0 · PR-06 ⚑ · [Selesai] Hapus skill khusus ClawCrew di `.claude/skills/` dan workflow usang (`docs-deploy.yml`, `discord-release.yml`, `tweet-release.yml`) · S
+- [x] **PR-19** `chore/legacy-removal-packaging-fixtures-i18n` · N-15, N-16, N-17 · GW-0 · PR-06 ⚑ · [Selesai] Hapus packaging warisan tidak terpakai (`nix/`, `deploy-k8s/`, `dist/freebsd/`) · M
+- [x] **PR-20** `docs/drift-sync` · D-02, D-05, D-06, D-09, R-05 · GW-7 · PR-00 · [Selesai] Selaraskan klaim usang (D1–D14), MSRV 1.96.0, 27 crates, .kiro steering repoint, otoritas docs/README.md dibuat, PRD superseded · M
+- [x] **PR-21** `docs/adr-errata-and-hygiene` · D-04, R-30, D-07, D-08, D-10 · GW-7 · PR-00 · [Selesai] Dibuat ADR-001 errata (WhatsApp Tier A, WIT v0 beku, Bluesky native crate), steering agent diselaraskan, kebersihan root dijaga, template ODR/ADR/tiket dibuat · M
+- [x] **PR-22** `feat/tauri-csp-capabilities` · U-08, U-17 · GW-3,8 · PR-03 · [Selesai] Hapus `unsafe-eval`, kunci `connect-src` ke :9090 & ipc, cabut plugin tak terpakai (shell, dialog, fs, notification) · S
 
 ### Gelombang 2 — pemecahan Rust, identitas, persistensi, protokol
 
 **Rust — kualitas & kontrak**
 - [ ] **PR-30** `refactor/rust-unwrap-burndown-<crate>` (berseri) · R-02 · GW-1 · PR-10 · satu PR per crate (gateway, channels, runtime…), nol hit produksi · L
-- [ ] **PR-31** `refactor/extract-i18n` · R-10 · GW-1 · PR-10 · 87 ref channels → crate kecil · M
-- [ ] **PR-32** `refactor/extract-scrub` · R-11 · GW-1,8 · PR-10 · 36 ref; scrubbing log tetap · M
-- [ ] **PR-33** `refactor/api-traits-for-channels` · R-12 · GW-1,5 · PR-10 · tools-scoped/memory_strategy/hooks/sop::types → trait di `api` · L
-- [ ] **PR-34** `refactor/channels-decouple-runtime` · R-13 · GW-1,6 · PR-31, PR-32, PR-33 · 677 ref → 0; gerbang R-04 mengunci · L
-- [ ] **PR-35** `fix/grpc-execute-task-and-contract-tests` · R-20, R-21 · GW-1,5,6 · – · tanpa stub sukses palsu; test integrasi Go↔Rust · M
+- [x] **PR-31** `refactor/extract-i18n` · R-10 · GW-1 · PR-10 · [Selesai] 87 ref channels diarahkan langsung ke crate `galleon-i18n` · M
+- [x] **PR-32** `refactor/extract-scrub` · R-11 · GW-1,8 · PR-10 · [Selesai] 36 ref channels diekstrak ke crate `galleon-security-scrub` · M
+- [x] **PR-33** `refactor/api-traits-for-channels` · R-12 · GW-1,5 · PR-10 · [Selesai] tools-scoped/memory_strategy/hooks/sop::types → trait di `api` (`ToolRegistry`, `ScopedToolRegistry`, `ChannelHookRunner`, tipe canonical `sop`), `DefaultMemoryStrategy` ke `clawcrew-memory` · L
+- [x] **PR-34** `refactor/channels-decouple-runtime` · R-13 · GW-1,6 · PR-31, PR-32, PR-33 · [Selesai commit 8b846bc36] Circular dependency diputus total; channels tidak bergantung ke runtime; 1.704 unit tests lolos; gerbang R-04 mengunci · L
+- [x] **PR-35** `fix/grpc-execute-task-and-contract-tests` · R-20, R-21 · GW-1,5,6 · – · [Selesai] tanpa stub sukses palsu; execute_task fail-closed; test integrasi gRPC Go↔Rust lengkap · M
 - [ ] **PR-36** `test/sandbox-log-scrub-vault` · R-22, R-23, R-24 · GW-1,8 · – · Landlock/Seatbelt/AppContainer, scrub log, vault rotasi · L
 
 **Go — persistensi, identitas, orkestrasi, protokol**
-- [ ] **PR-40** `docs/adr-persistence` · G-10 · GW-7 · – · Store per agregat, SQLite/Postgres, migrasi, vektor, enkripsi, backup · S
-- [ ] **PR-41** `feat/go-sqlite-store` · G-11 · GW-2,6,9 · PR-40 · migrasi DiskStore idempoten + rollback · L
+- [x] **PR-40** `docs/adr-persistence` · G-10 · GW-7 · – · [Selesai] Diterbitkan ADR-005: Store per agregat, SQLite pure-Go WAL, Postgres pgvector, migrasi DiskStore, enkripsi, backup · S
+- [x] **PR-41** `feat/go-sqlite-store` · G-11 · GW-2,6,9 · PR-40 · [Selesai] SQLite pure-Go WAL mode, RunStore, TaskStore, migrasi idempoten DiskStore · L
 - [ ] **PR-42** `feat/go-postgres-store` · G-12 · GW-2,6 · PR-40 · test container · L
 - [ ] **PR-43** `feat/go-vector-memory-and-retention` · G-13, G-14 · GW-2,6 · PR-41 · RAG per scope; retensi/ekspor/hapus · L
 - [ ] **PR-44** `feat/go-identity-access` · G-35 · GW-2,8 · PR-05 · principal resolver, WebAuthn, pairing; deny-by-default; test negatif · L

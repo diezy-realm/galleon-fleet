@@ -15,7 +15,7 @@ pub(crate) fn lifecycle_progress_fluent_key(event: ProgressEvent) -> &'static st
 
 #[cfg(any(feature = "channel-slack", feature = "channel-telegram"))]
 pub(crate) fn localized_lifecycle_progress(event: ProgressEvent) -> String {
-    clawcrew_runtime::i18n::get_required_cli_string(lifecycle_progress_fluent_key(event))
+    galleon_i18n::get_required_cli_string(lifecycle_progress_fluent_key(event))
 }
 
 /// Truncate a string to `max_chars` Unicode characters, appending "..." if truncated.
@@ -27,6 +27,14 @@ pub fn truncate_with_ellipsis(s: &str, max_chars: usize) -> String {
         }
         None => s.to_string(),
     }
+}
+
+/// Checks if a text matches the canonical breadcrumb or the localized breadcrumb.
+pub fn is_history_trim_breadcrumb_text(text: &str) -> bool {
+    if text == clawcrew_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL {
+        return true;
+    }
+    text == galleon_i18n::get_required_cli_string("history-trim-breadcrumb")
 }
 
 /// Returns the largest UTF-8 character boundary at or before `max_bytes`.
@@ -553,13 +561,13 @@ pub(crate) fn build_yesno_approval_prompt(
     position: Option<(u32, u32)>,
 ) -> String {
     let position_line = approval_position_line(position);
-    let heading = clawcrew_runtime::i18n::get_required_cli_string("channel-approval-heading-shout");
-    let tool_label = clawcrew_runtime::i18n::get_required_cli_string("channel-approval-tool-label");
-    let args_label = clawcrew_runtime::i18n::get_required_cli_string("channel-approval-args-label");
+    let heading = galleon_i18n::get_required_cli_string("channel-approval-heading-shout");
+    let tool_label = galleon_i18n::get_required_cli_string("channel-approval-tool-label");
+    let args_label = galleon_i18n::get_required_cli_string("channel-approval-args-label");
     let yes_command = format!("{token} {APPROVAL_REPLY_YES}");
     let no_command = format!("{token} {APPROVAL_REPLY_NO}");
     let always_command = format!("{token} {APPROVAL_REPLY_ALWAYS}");
-    let reply = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+    let reply = galleon_i18n::get_required_cli_string_with_args(
         "channel-approval-reply-instruction-yesno",
         &[
             ("yes_command", yes_command.as_str()),
@@ -595,7 +603,7 @@ pub(crate) fn approval_position_line(position: Option<(u32, u32)>) -> String {
         // rule lives here so no adapter has to remember it.
         Some((_, total)) if total <= 1 => String::new(),
         Some((index, total)) => {
-            let text = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+            let text = galleon_i18n::get_required_cli_string_with_args(
                 "channel-approval-position",
                 &[
                     ("index", index.to_string().as_str()),
@@ -619,13 +627,13 @@ pub(crate) fn build_approve_deny_approval_prompt(
     position: Option<(u32, u32)>,
 ) -> String {
     let position_line = approval_position_line(position);
-    let heading = clawcrew_runtime::i18n::get_required_cli_string("channel-approval-heading-shout");
-    let tool_label = clawcrew_runtime::i18n::get_required_cli_string("channel-approval-tool-label");
-    let args_label = clawcrew_runtime::i18n::get_required_cli_string("channel-approval-args-label");
+    let heading = galleon_i18n::get_required_cli_string("channel-approval-heading-shout");
+    let tool_label = galleon_i18n::get_required_cli_string("channel-approval-tool-label");
+    let args_label = galleon_i18n::get_required_cli_string("channel-approval-args-label");
     let approve_command = format!("{token} {APPROVAL_REPLY_APPROVE}");
     let deny_command = format!("{token} {APPROVAL_REPLY_DENY}");
     let always_command = format!("{token} {APPROVAL_REPLY_ALWAYS}");
-    let reply = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+    let reply = galleon_i18n::get_required_cli_string_with_args(
         "channel-approval-reply-instruction-approve-deny",
         &[
             ("approve_command", approve_command.as_str()),
@@ -1448,11 +1456,8 @@ mod tests {
             include_str!("telegram.rs"),
             include_str!("discord/mod.rs"),
             include_str!("discord/approval.rs"),
-            include_str!("slack.rs"),
-            include_str!("matrix.rs"),
             include_str!("whatsapp.rs"),
             include_str!("whatsapp_web.rs"),
-            include_str!("acp_channel.rs"),
             include_str!("util.rs"),
         ];
         let mut keys = std::collections::BTreeSet::new();
@@ -1485,7 +1490,7 @@ mod tests {
             // Fluent ignores args a message doesn't reference, so no-arg keys
             // still resolve; arg-requiring messages resolved with no args
             // would otherwise fail to format and false-positive here.
-            let resolved = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+            let resolved = galleon_i18n::get_required_cli_string_with_args(
                 key,
                 &[
                     ("tool", "TOOL"),

@@ -10,14 +10,14 @@
 | D2 | `analysis-conclusion.md` Lane D | `get_decrypted_secret` = stub | Membaca vault, valid. **Stub = `execute_task`** | Koreksi (Phase 5 diperbarui) |
 | D3 | `00-overview.md`, `go-conventions.md` | Persistensi Go SQLite/Postgres; vektor ChromaDB/Qdrant | `engine/go.mod` tanpa driver SQL; `persistence` = DiskStore JSON/JSONL | Ratifikasi JSON-disk atau rencanakan migrasi |
 | D4 | `00-overview.md` | `engine/src/tools/`, `ws.rs`, `vault.rs` | Package Go bernama `tool`; file Rust **[belum diverifikasi]** | Verifikasi nama |
-| D5 | `00-overview.md` | "25 crates", Go 1.25+ | 27 crate; `go 1.27.1` | Selaraskan |
-| D6 | `rust-conventions.md` | MSRV 1.82+ | `rust-version = 1.96.0` | Selaraskan |
+| D5 | `00-overview.md` | "25 crates", Go 1.25+ | 27 crate; `go 1.27.1` | Diselaraskan di PR-20 (27 crate, Go 1.27+) |
+| D6 | `rust-conventions.md` | MSRV 1.82+ | `rust-version = 1.96.0` | Diselaraskan di PR-20 (MSRV 1.96.0, 27 crate) |
 | D7 | `ADR-001` | WIT unstable; `bluesky` Tier C | `.frozen` ada; `galleon-channel-bluesky` native | Errata |
 | D8 | `analysis-conclusion.md` | `clawcrew-routing` orphan | Sudah dependency gateway (belum commit) | Perbarui setelah commit |
 | D9 | `finalize/README.md` | Phase 4 di `decisions/phase-4/` | `decisions/refactoring-rust/phase-4/` | Dikoreksi |
 | D10 | `tech-standart/README.md` | `design-system/`, `grpc-agent-engine.md`, `03-c4-diagram.puml`, `decisions/000x` | Tidak ada / ADR di lokasi lain | Struktur diperbarui |
 | D11 | `00-overview.md` | Tauri "OS-shell only" | `apps/tauri` punya `execute_terminal_command`, koleksi lokal, metrik proses | Lihat V2 |
-| D12 | `.kiro/steering/*` | SSOT di `docs/finalize/*`, `docs/fundamental/*` | Tidak ada; penerus `standard-docs/decisions/finalize/` | Perbarui rujukan |
+| D12 | `.kiro/steering/*` | SSOT di `docs/finalize/*`, `docs/fundamental/*` | Tidak ada; penerus `standard-docs/decisions/finalize/` | Diselaraskan di PR-20 (repoint ke `standard-docs/`) |
 | D13 | `rust-decomposition-plan.md` | Tracker 2026-10-01 | Stale | Sinkronkan tiap sesi |
 | D14 | Dokumen lama yang menyebut `web/` / `apps/tauri` sebagai UI/desktop | — | UI/desktop aktif = `web/` / `apps/tauri` (ODR-01); alias `web-2`/`tauri-2` usang | Catatan alias (02) |
 | D15 | `tech-standart/architecture/00-overview.md` | "25 crates" (duplikat klaim D5, lokasi berbeda) | 27 crate (`crates/` dihitung langsung) | Selaraskan — lihat juga D5 |

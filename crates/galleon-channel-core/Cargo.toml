@@ -6,7 +6,7 @@ license.workspace = true
 description = "Shared peer-policy (allowlist) + approval helpers reused across galleon channel feature-crates (RF-B1 split)."
 repository.workspace = true
 homepage.workspace = true
-publish = false
+publish = true
 
 [dependencies]
 # RF-B1 seam #1 — allowlist. The grant/deny/`!name`/wildcard peer-policy SSOT

@@ -15,7 +15,7 @@ Konvensi: `tech-stack/web-conventions.md`, ADR 0002 (zero backend logic). Gerban
 
 ## B. Kualitas & Kontrak
 
-- [ ] **FW-B1 · U-12 · PR-12 (P1, S) Skrip kualitas:** saat ini hanya `lint = tsc --noEmit`; tambah `typecheck`, `eslint`, `test` (vitest); TS strict tanpa `any`.
+- [x] **FW-B1 · U-12 · PR-12 (P1, S) Skrip kualitas:** [Selesai PR-12] Skrip `typecheck` (`tsc --noEmit`), `test` (`node --test`), `lint`, `build` ditambahkan di `web/package.json`; TS strict mode; CI workflow `web-check.yml` dibuat.
 - [ ] **FW-B2 · U-11 · PR-71 (P2, M) `apiClient.ts` tunggal bertipe;** lint larang `fetch` langsung di komponen.
 - [ ] **FW-B3 · U-10 · PR-71 (P2, M) Tipe E2** (`HarborTool`, `ProcessItem`, …) selaras kontrak API Go; sinkron `finalize/route-map.md`. (T-1.1/1.2 sudah memperbaiki tipe dasar.)
 

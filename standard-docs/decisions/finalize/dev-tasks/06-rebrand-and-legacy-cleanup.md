@@ -11,11 +11,11 @@ Acuan: `tech-standart/naming/naming-map.md` (disetujui), ODR-16/17/19. Aturan: *
 ## B. Hapus Legacy (Gelombang 1)
 
 - [x] **RB-10 · N-10 · PR-02 (P0, S) Hapus `bin/engine.exe`** [Selesai PR-02] Binary 40MB `bin/engine.exe` dihapus dari git tracking (`git rm bin/engine.exe`) dan `.gitignore` diperbarui mengabaikan `/bin/` dan `apps/tauri/target/`.
-- [ ] **RB-11 · N-11 · PR-17 (P1, M) ⚑ `docs/_archive` (307 file):** tag `archive/pre-galleon`, hapus, perbaiki rujukan `docs/book` di `AGENTS.md`.
+- [x] **RB-11 · N-11 · PR-17 (P1, M) ⚑ `docs/_archive` (307 file):** [Selesai PR-17] Tag `archive/pre-galleon` dibuat, direktori `docs/_archive` (307 file) dihapus dari git tracking (`git rm -r docs/_archive`), dan rujukan `docs/book` di `AGENTS.md` diperbarui ke path canonical `standard-docs/`.
 - [ ] **RB-12 · N-12 · PR-62 (P1, M) ⚑ Hapus kode warisan tak terpakai** hasil R-00 (REST/WS/A2A, hardware/peripheral). Terkait 08 §C.
-- [ ] **RB-13 · N-13 · PR-18 (P1, S) ⚑ Skill agent khusus ClawCrew.**
-- [ ] **RB-14 · N-14 · PR-18 (P1, S) ⚑ Workflow CI khusus ClawCrew.**
-- [ ] **RB-15 · N-15 · PR-19 (P2, S) ⚑ Packaging warisan** (`dist/`, `nix/`, `deploy-k8s/`, `Containerfile`, `setup.bat`, `install.*`).
+- [x] **RB-13 · N-13 · PR-18 (P1, S) ⚑ Skill agent khusus ClawCrew.** [Selesai PR-18] Skill khusus ClawCrew di `.claude/skills/` (`clawcrew`, `changelog-generation`, `feature-matrix-parity`, `github-issue-triage`, `pr-architecture-check`, `wit-breaking-change-check`) telah dihapus; skill workflow git netral dipertahankan.
+- [x] **RB-14 · N-14 · PR-18 (P1, S) ⚑ Workflow CI khusus ClawCrew.** [Selesai PR-18] Workflow usang khusus ClawCrew (`docs-deploy.yml`, `discord-release.yml`, `tweet-release.yml`) telah dihapus.
+- [x] **RB-15 · N-15 · PR-19 (P2, S) ⚑ Packaging warisan** [Selesai PR-19] Packaging warisan tidak terpakai (`nix/`, `deploy-k8s/`, `dist/freebsd/`) telah dihapus via `git rm`.
 - [ ] **RB-16 · N-16 · PR-19 (P2, S) Fixture & contoh tak relevan.**
 - [ ] **RB-17 · N-17 · PR-19 (P2, S) Terjemahan tak terpakai;** regenerasi `.ftl/.po`.
 

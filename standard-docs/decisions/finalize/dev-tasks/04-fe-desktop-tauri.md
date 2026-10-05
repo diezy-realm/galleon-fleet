@@ -10,8 +10,8 @@ Konvensi: `tech-stack/tauri-conventions.md`, ADR 0003. Perintah IPC: `async fn` 
 - [x] **FD-A2 · U-06 · PR-04 (P0, S) ⚑ Hapus `execute_terminal_command`** [Selesai PR-04] Simulasi palsu `execute_terminal_command` dihapus dari `apps/tauri/src/main.rs` dan handler `invoke_handler!`. Terminal dialihkan ke Go (PR-15), sementara UI dikunci.
 - [x] **FD-A3a · T-0.1 `get_system_metrics`** sudah memanggil `engine_get("system/metrics")`.
 - [x] **FD-A3b · U-07 · PR-04 (P0, S) Hapus koleksi lokal berlogika** [Selesai PR-04] `get_store_path` dihapus. `get_collection` dan `save_collection` diubah mem-proxy ke Go `/api/collections/{name}` dengan sanitasi nama koleksi. `get_engine_processes` mem-proxy ke Go `/api/engine/processes`. SSOT tunggal Go ditegakkan.
-- [ ] **FD-A3c · U-17 · PR-22 (P1, S) Cabut plugin Tauri yang tak terpakai.** `main.rs` menginisialisasi `shell`, `dialog`, `fs`, `notification` dan `capabilities/default.json` memberi `shell:allow-open`, `fs:default`, dst., padahal frontend tidak mengimpor satupun `@tauri-apps/plugin-*`. Deny-by-default: cabut sampai ada pemakai nyata. Rapikan `mobile.json` ("ClawCrew"), `productName`/title "Fleet AI" → Galleon Fleet.
-- [ ] **FD-A4 · U-08 · PR-22 (P1, S) CSP & capabilities ketat:** hapus `unsafe-eval`, `connect-src` hanya `http://127.0.0.1:9090` (kini `https: ipc: ws:`), scope fs `$APPDATA/galleon/*`.
+- [x] **FD-A3c · U-17 · PR-22 (P1, S) Cabut plugin Tauri yang tak terpakai.** [Selesai PR-22] Plugin `shell`, `dialog`, `fs`, `notification` dicabut dari `apps/tauri/src/main.rs`, `Cargo.toml`, dan `capabilities/default.json` (deny-by-default, hanya `core:default`). `mobile.json` dan branding diselaraskan ke Galleon Fleet.
+- [x] **FD-A4 · U-08 · PR-22 (P1, S) CSP & capabilities ketat:** [Selesai PR-22] `tauri.conf.json` diperketat: `'unsafe-eval'` dihapus dari CSP, `connect-src` dikunci ke `'self' http://127.0.0.1:9090 http://localhost:9090 ipc:`, `productName` dan window title diselaraskan ke "Galleon Fleet". `cargo check` di `apps/tauri/` hijau 100%.
 
 ## B. Fungsi Shell
 

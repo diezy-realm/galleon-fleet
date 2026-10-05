@@ -84,7 +84,12 @@ func TestHandleSystemMetrics(t *testing.T) {
 }
 
 func TestHandleExtendedSystemEndpoints(t *testing.T) {
-	h := NewHTTPHandler(nil)
+	mockGw := &mockGatewayClient{
+		respSuccess: true,
+		respOutput:  `{"stdout":"test output","exit_code":0}`,
+	}
+	svc := NewService(mockGw)
+	h := NewHTTPHandler(svc)
 	server := metrics.NewServer(0)
 	h.RegisterHTTP(server)
 

@@ -7,19 +7,15 @@ use std::sync::{Arc, Mutex};
 use anyhow::Result;
 use rumqttc::{AsyncClient, Event, MqttOptions, Packet, QoS, Transport};
 
+use clawcrew_api::sop::{SopFanInDispatcher, SopTriggerSource};
 use clawcrew_config::schema::MqttConfig;
-use clawcrew_runtime::sop::audit::SopAuditLogger;
-use clawcrew_runtime::sop::dispatch::SopIngress;
-use clawcrew_runtime::sop::engine::SopEngine;
-use clawcrew_runtime::sop::types::SopTriggerSource;
 
 /// Run the MQTT SOP listener loop.
 /// Subscribes to configured topics and dispatches incoming publishes
-/// to the SOP engine. Blocks until disconnected or cancelled.
+/// to the SOP engine via SopFanInDispatcher. Blocks until disconnected or cancelled.
 pub async fn run_mqtt_sop_listener(
     config: &MqttConfig,
-    engine: Arc<Mutex<SopEngine>>,
-    audit: Arc<SopAuditLogger>,
+    dispatcher: Arc<dyn SopFanInDispatcher>,
 ) -> Result<()> {
     config.validate()?;
 
@@ -63,14 +59,14 @@ pub async fn run_mqtt_sop_listener(
         );
     }
 
-    clawcrew_runtime::health::mark_component_ok("mqtt");
+    clawcrew_infra::health::mark_component_ok("mqtt");
 
     loop {
         match eventloop.poll().await {
             Ok(Event::Incoming(Packet::Publish(msg))) => {
                 let payload_raw = String::from_utf8_lossy(&msg.payload);
-                SopIngress::new(Some(&engine), Some(audit.as_ref()))
-                    .dispatch(
+                dispatcher
+                    .dispatch_untrusted(
                         SopTriggerSource::Mqtt,
                         Some(&msg.topic),
                         Some(&payload_raw),
@@ -80,7 +76,7 @@ pub async fn run_mqtt_sop_listener(
                     .await;
             }
             Ok(Event::Incoming(Packet::ConnAck(_))) => {
-                clawcrew_runtime::health::mark_component_ok("mqtt");
+                clawcrew_infra::health::mark_component_ok("mqtt");
                 ::clawcrew_log::record!(
                     INFO,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
@@ -91,7 +87,7 @@ pub async fn run_mqtt_sop_listener(
                 // Other events (PingResp, SubAck, etc.) — ignore
             }
             Err(e) => {
-                clawcrew_runtime::health::mark_component_error("mqtt", e.to_string());
+                clawcrew_infra::health::mark_component_error("mqtt", e.to_string());
                 ::clawcrew_log::record!(
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)

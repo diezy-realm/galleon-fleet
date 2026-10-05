@@ -1,9 +1,13 @@
 # Product Requirements Document (PRD) — ClawCrew Phase 2
 ## Multi-Agent Orchestration, Transparent Execution & Hybrid Evolution
 
-> **Branch Context**: `feat/enhance-agent-phase2`  
-> **Status**: Approved for Architecture Implementation  
-> **Related Documents**: [README](./README.md) | [Technical Specification](./tech-spec.md) | [API Specification](./api-spec.md) | [Task Breakdown](./task-breakdown.md)
+> [!IMPORTANT]
+> **SUPERSEDED**: Dokumen PRD historis ini (ClawCrew Phase 2) telah digantikan oleh definisi produk kanonikal Galleon Fleet di [`galleon-product-definition.md`](./galleon-product-definition.md).
+> Dokumen ini dipertahankan hanya sebagai catatan historis lineage arsitektur hybrid. Rujuk `galleon-product-definition.md` dan `standard-docs/foundation/` untuk spesifikasi produk normatif aktif.
+
+> **Branch Context**: `feat/enhance-agent-phase2` (Historis)  
+> **Status**: Superseded by Galleon Fleet PRD  
+> **Related Documents**: [Galleon Product Definition](./galleon-product-definition.md) | [README](./README.md)
 
 ---
 

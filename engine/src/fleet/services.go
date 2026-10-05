@@ -31,6 +31,7 @@ type fleetService struct {
 	diagnostics []DiagnosticItem
 	snapshots   []SnapshotItem
 	proposer    ObjectiveProposer
+	terminalAudit *TerminalAuditLedger
 }
 
 // ObjectiveProposer is the objective-branch dependency the Quartermaster router
@@ -99,11 +100,12 @@ func NewService(gateway client.SystemGatewayClient) Service {
 	}
 
 	return &fleetService{
-		fleets:      make(map[string]*Fleet),
-		dataDir:     dataDir,
-		gateway:     gateway,
-		diagnostics: initialDiags,
-		snapshots:   initialSnaps,
+		fleets:        make(map[string]*Fleet),
+		dataDir:       dataDir,
+		gateway:       gateway,
+		diagnostics:   initialDiags,
+		snapshots:     initialSnaps,
+		terminalAudit: NewTerminalAuditLedger(1000),
 	}
 }
 
@@ -674,3 +676,175 @@ func (s *fleetService) GetSeedData(ctx context.Context) (map[string]any, error) 
 
 	return seedData, nil
 }
+
+func (s *fleetService) ExecuteTerminal(ctx context.Context, req TerminalExecRequest) (*TerminalExecResponse, error) {
+	start := time.Now()
+	riskTier, reason, evalErr := EvaluateTerminalCommand(req.Command)
+
+	// Injeksi atau syntax terlarang langsung ditolak
+	if evalErr != nil || riskTier == RiskTierBlocked {
+		auditID := ""
+		if s.terminalAudit != nil {
+			auditID = s.terminalAudit.Record(TerminalAuditRecord{
+				Timestamp:  start,
+				Command:    req.Command,
+				RiskTier:   riskTier,
+				Approved:   req.Approved,
+				ApprovedBy: req.ApprovedBy,
+				Success:    false,
+				ExitCode:   1,
+				Duration:   time.Since(start).String(),
+				Error:      reason,
+			})
+		}
+		return &TerminalExecResponse{
+			Stdout:           "",
+			Stderr:           fmt.Sprintf("Security policy rejection: %s", reason),
+			ExitCode:         1,
+			Duration:         time.Since(start).String(),
+			RiskTier:         riskTier,
+			RequiresApproval: false,
+			AuditID:          auditID,
+			Error:            reason,
+		}, nil
+	}
+
+	// High risk command wajib mendapat approval
+	if riskTier == RiskTierHighRisk && !req.Approved {
+		auditID := ""
+		if s.terminalAudit != nil {
+			auditID = s.terminalAudit.Record(TerminalAuditRecord{
+				Timestamp:  start,
+				Command:    req.Command,
+				RiskTier:   riskTier,
+				Approved:   false,
+				ApprovedBy: req.ApprovedBy,
+				Success:    false,
+				ExitCode:   1,
+				Duration:   time.Since(start).String(),
+				Error:      "approval required",
+			})
+		}
+		return &TerminalExecResponse{
+			Stdout:           "[Approval required: high risk command requires explicit approval]",
+			Stderr:           reason,
+			ExitCode:         1,
+			Duration:         time.Since(start).String(),
+			RiskTier:         riskTier,
+			RequiresApproval: true,
+			AuditID:          auditID,
+			Error:            "approval required",
+		}, nil
+	}
+
+	// Fail-closed gate: SystemGateway wajib ada
+	if s.gateway == nil {
+		if s.terminalAudit != nil {
+			s.terminalAudit.Record(TerminalAuditRecord{
+				Timestamp:  start,
+				Command:    req.Command,
+				RiskTier:   riskTier,
+				Approved:   req.Approved,
+				ApprovedBy: req.ApprovedBy,
+				Success:    false,
+				ExitCode:   1,
+				Duration:   time.Since(start).String(),
+				Error:      "SystemGateway unavailable (fail-closed)",
+			})
+		}
+		return nil, fmt.Errorf("fail-closed boundary enforced: system gateway unavailable")
+	}
+
+	// Encode JSON arguments envelope for SystemGateway "bash" tool
+	argsPayload, err := json.Marshal(map[string]string{
+		"command": req.Command,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode command arguments: %w", err)
+	}
+
+	rawResp, err := s.gateway.ExecuteNativeTool(ctx, "bash", string(argsPayload))
+	durationStr := time.Since(start).String()
+	if err != nil {
+		auditID := ""
+		if s.terminalAudit != nil {
+			auditID = s.terminalAudit.Record(TerminalAuditRecord{
+				Timestamp:  start,
+				Command:    req.Command,
+				RiskTier:   riskTier,
+				Approved:   req.Approved,
+				ApprovedBy: req.ApprovedBy,
+				Success:    false,
+				ExitCode:   1,
+				Duration:   durationStr,
+				Error:      err.Error(),
+			})
+		}
+		return &TerminalExecResponse{
+			Stdout:           "",
+			Stderr:           err.Error(),
+			ExitCode:         1,
+			Duration:         durationStr,
+			RiskTier:         riskTier,
+			RequiresApproval: false,
+			AuditID:          auditID,
+			Error:            err.Error(),
+		}, nil
+	}
+
+	// Parse gateway response wrapper
+	var gwWrap struct {
+		Success bool   `json:"success"`
+		Output  string `json:"output"`
+		Error   string `json:"error"`
+	}
+	if err := json.Unmarshal([]byte(rawResp), &gwWrap); err != nil {
+		return nil, fmt.Errorf("malformed gateway response: %w", err)
+	}
+
+	var inner struct {
+		Stdout   string `json:"stdout"`
+		Stderr   string `json:"stderr"`
+		ExitCode int    `json:"exit_code"`
+	}
+	if gwWrap.Output != "" {
+		_ = json.Unmarshal([]byte(gwWrap.Output), &inner)
+	}
+	if !gwWrap.Success && inner.Stderr == "" {
+		inner.Stderr = gwWrap.Error
+	}
+
+	auditID := ""
+	if s.terminalAudit != nil {
+		auditID = s.terminalAudit.Record(TerminalAuditRecord{
+			Timestamp:  start,
+			Command:    req.Command,
+			RiskTier:   riskTier,
+			Approved:   req.Approved,
+			ApprovedBy: req.ApprovedBy,
+			Success:    gwWrap.Success,
+			ExitCode:   inner.ExitCode,
+			Duration:   durationStr,
+			Error:      gwWrap.Error,
+		})
+	}
+
+	return &TerminalExecResponse{
+		Stdout:           inner.Stdout,
+		Stderr:           inner.Stderr,
+		ExitCode:         inner.ExitCode,
+		Duration:         durationStr,
+		RiskTier:         riskTier,
+		RequiresApproval: false,
+		AuditID:          auditID,
+		Error:            gwWrap.Error,
+	}, nil
+}
+
+func (s *fleetService) GetTerminalAudit(ctx context.Context, limit int) ([]TerminalAuditRecord, error) {
+	if s.terminalAudit == nil {
+		return []TerminalAuditRecord{}, nil
+	}
+	return s.terminalAudit.List(limit), nil
+}
+

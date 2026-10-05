@@ -1,13 +1,9 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default permissions for Fleet AI v2",
+  "description": "Default permissions for Galleon Fleet Desktop",
   "windows": ["main"],
   "permissions": [
-    "core:default",
-    "shell:allow-open",
-    "dialog:default",
-    "fs:default",
-    "notification:default"
+    "core:default"
   ]
 }

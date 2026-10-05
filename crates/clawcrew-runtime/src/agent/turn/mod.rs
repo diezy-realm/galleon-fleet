@@ -7119,6 +7119,7 @@ mod tool_lifecycle_abandonment_tests {
                 context_limits_resolver: None,
                 receipt_generator: None,
                 knobs: &LoopKnobs::default(),
+                app_registry: None,
             },
             history,
             history_has_trim_breadcrumb: &mut crumb_present,

@@ -16,7 +16,7 @@ use clawcrew_api::channel::{
     SendMessage,
 };
 use clawcrew_api::media::MediaAttachment;
-use clawcrew_runtime::i18n;
+use galleon_i18n as i18n;
 
 #[derive(Clone)]
 struct CachedSlackDisplayName {

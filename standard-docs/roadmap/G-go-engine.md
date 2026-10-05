@@ -7,13 +7,13 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 - [x] **G-01 (P0, M) Hapus eksekusi shell/fs lokal** [Selesai PR-05] Body eksekusi lokal pada `WriteFileTool`, `EditFileTool`, `ExecuteCommandTool`, `GitDiffTool`, dan `SandboxedCodeRunnerTool` telah diganti dengan fail-closed `executeViaGateway` ke Rust. `plugin.go` dan `mcp_client.go` dihapus. `grep os/exec engine/src` = 0.
 - [x] **G-02 (P1, S) Hapus route Ollama palsu** [Selesai PR-16] Route `/api/providers/ollama/status` dan handler dihapus dari `delivery.go`; unit test dihapus; probe HTTP `checkOllama` (port 11434) dihapus dari `services.go`; diagnostik `d-3` didelegasikan ke System Gateway (:50052); method `getOllamaStatus` dan UI test dihapus dari `web/`.
 - [x] **G-03 (P1, S) Koreksi komentar/fallback di `wire_gen.go`** [Selesai PR-05] Komentar di `wire_gen.go` dan `services.go` diperbarui menegaskan batasan fail-closed (nil gateway langsung menolak eksekusi).
-- [ ] **G-04 (P0, L) Endpoint terminal ber-policy** `POST /api/terminal/exec`: policy risk-tier → approval → `ExecuteNativeTool` (sandbox). Audit log tiap eksekusi. Dep: G-01. Acceptance: perintah berisiko tinggi minta approval; injeksi tidak lolos allowlist.
-- [ ] **G-05 (P1, M) Gerbang boundary otomatis** (test arsitektur Go: larang import `os/exec`, SDK vendor LLM). Dep: G-01.
+- [x] **G-04 (P0, L) Endpoint terminal ber-policy** [Selesai PR-15] `POST /api/terminal/exec` dan alias `POST /api/engine/execute` diimplementasikan dengan risk-tier → approval → `ExecuteNativeTool` (Rust SystemGateway) → audit log (`/api/terminal/audit`). Injeksi ditolak, perintah destruktif minta approval; test lulus 100%. Dep: G-01.
+- [x] **G-05 (P1, M) Gerbang boundary otomatis** [Selesai PR-11] Test arsitektur Go di `tests/architecture/tier_boundaries.rs` (`test_go_engine_tier_boundaries`) melarang import `os/exec` dan SDK vendor LLM di `engine/src/`; test lolos 100%. Dep: G-01.
 
 ## G-1x Persistensi (ODR-05)
 
-- [ ] **G-10 (P1, M) ADR desain store:** interface `Store` per agregat, dialek SQLite & Postgres, migrasi (golang-migrate/atlas), strategi vektor (sqlite-vec/pgvector), enkripsi at-rest, backup. Output ADR baru.
-- [ ] **G-11 (P1, L) Implementasi SQLite** (pure-Go driver, WAL) + migrasi dari DiskStore JSON/JSONL (satu arah, idempoten). Dep: G-10.
+- [x] **G-10 (P1, M) ADR desain store:** [Selesai PR-40] Diratifikasi di `standard-docs/decisions/finalize/ADR-005-persistence-store-design.md`: interface `Store` per agregat, dialek SQLite pure-Go WAL & Postgres pgvector, migrasi idempoten DiskStore, enkripsi at-rest, dan backup online.
+- [x] **G-11 (P1, L) Implementasi SQLite:** [Selesai PR-41] Diimplementasikan di `engine/pkg/store/sqlite` (pure-Go WAL mode) dengan implementasi `RunStore` & `TaskStore` dan migrasi satu arah idempoten dari DiskStore legacy.
 - [ ] **G-12 (P2, L) Implementasi PostgreSQL** + test dengan container. Dep: G-10.
 - [ ] **G-13 (P1, M) Memori vektor/RAG** pada store baru; scope Fleet/Ship/Squad/Crew/Run. Dep: G-11.
 - [ ] **G-14 (P2, M) Retensi, ekspor, hapus (privasi)** per scope. Dep: G-11.

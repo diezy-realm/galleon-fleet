@@ -9,6 +9,5 @@ var Set = wire.NewSet(
 	NewEventHub,
 	wire.Bind(new(EventHub), new(*MemoryEventHub)),
 	NewService,
-	wire.Bind(new(Service), new(*Service)),
 	NewHTTPHandler,
 )

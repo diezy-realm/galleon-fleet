@@ -1,5 +1,4 @@
-//! Utility functions for `ClawCrew`.
-//! This module contains reusable helper functions used across the codebase.
+pub use crate::agent::history::is_history_trim_breadcrumb_text;
 
 /// Allowed serial device path prefixes — reject arbitrary paths for security.
 /// Used by hardware serial transport and peripherals.

@@ -77,12 +77,6 @@
     /// These guards exist to fail a genuine hang, not to assert how fast
     /// assembly is. `scripts/ci/parallel_runtime_test_gate.sh` runs the suite
     /// at 16 threads; under that contention the previous budgets stopped being
-    /// deadlock guards and became scheduling assertions. Assembly is
-    /// sub-second when it is not hung, so 30s cannot be reached by ordinary
-    /// runner load.
-    const ASSEMBLY_HANG_GUARD: std::time::Duration = std::time::Duration::from_secs(30);
-    use clawcrew_runtime::agent::loop_::apply_policy_tool_filter;
-    use clawcrew_runtime::agent::loop_::build_tool_instructions;
 
     #[cfg(feature = "channel-reddit")]
     #[test]
@@ -195,28 +189,6 @@
         );
     }
 
-    /// Runs a channel-dispatch test on an explicit stack because its async
-    /// future can exceed the default test-thread stack on hosted CI.
-    pub(crate) fn run_channel_dispatch_test<F, MakeFuture>(make_future: MakeFuture)
-    where
-        F: std::future::Future<Output = ()> + 'static,
-        MakeFuture: FnOnce() -> F + Send + 'static,
-    {
-        let handle = std::thread::Builder::new()
-            .name("clawcrew-channel-dispatch-test".into())
-            .stack_size(16 * 1024 * 1024)
-            .spawn(move || {
-                let runtime = tokio::runtime::Builder::new_current_thread()
-                    .enable_all()
-                    .build()
-                    .expect("build channel dispatch test runtime");
-                runtime.block_on(make_future());
-            })
-            .expect("spawn channel dispatch test thread");
-        if let Err(payload) = handle.join() {
-            std::panic::resume_unwind(payload);
-        }
-    }
 
     struct CountingObserver {
         events: Arc<AtomicUsize>,
@@ -370,7 +342,7 @@
             delivered,
             format!(
                 "⚠️ Error: {}",
-                clawcrew_runtime::agent::semantic_empty_terminal_completion_message(None)
+                galleon_i18n::get_required_cli_string("cli-agent-error-invalid-semantic-completion")
             )
         );
         assert!(
@@ -430,16 +402,23 @@
         let data_root = TempDir::new().unwrap();
         let custom_agent_workspace = TempDir::new().unwrap();
 
-        let config = Config {
+        let _config = Config {
             config_path: data_root.path().join("config.toml"),
             data_dir: data_root.path().to_path_buf(),
             ..Config::default()
         };
 
-        clawcrew_runtime::doctor::persist_model_cache(
-            &config,
-            "openrouter",
-            &["model-a".to_string(), "model-b".to_string()],
+        let cache_dir = data_root.path().join("state");
+        std::fs::create_dir_all(&cache_dir).unwrap();
+        let cache = clawcrew_config::schema::ModelCacheState {
+            entries: vec![clawcrew_config::schema::ModelCacheEntry {
+                model_provider: "openrouter.default".to_string(),
+                models: vec!["model-a".to_string(), "model-b".to_string()],
+            }],
+        };
+        std::fs::write(
+            cache_dir.join(MODEL_CACHE_FILE),
+            serde_json::to_string_pretty(&cache).unwrap(),
         )
         .unwrap();
 
@@ -656,87 +635,9 @@
     }
 
     #[test]
-    fn matrix_safe_policy_fields_match_active_standard_tool_schemas() {
-        let temp = TempDir::new().expect("temporary workspace");
-        let config = Arc::new(Config::default());
-        let security = Arc::new(SecurityPolicy::default());
-        let registry = tools::all_tools(
-            Arc::clone(&config),
-            &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
-            "test-agent",
-            Arc::new(NoopMemory),
-            None,
-            None,
-            &config.browser,
-            &config.http_request,
-            &config.web_fetch,
-            temp.path(),
-            &HashMap::new(),
-            None,
-            config.as_ref(),
-            None,
-            false,
-            None,
-        )
-        .expect("tool registry builds");
-        let schemas: HashMap<String, Arc<serde_json::Value>> = registry
-            .tools
-            .iter()
-            .map(|tool| {
-                let spec = tool.spec();
-                (spec.name, spec.parameters)
-            })
-            .collect();
-        let mut checked_tools = 0;
-        let mut policy_tools = HashSet::new();
-        let mut absent_required_tools = Vec::new();
-
-        for (groups, required) in [
-            (MATRIX_REQUIRED_SAFE_TOOL_ARGUMENTS, true),
-            (MATRIX_OPTIONAL_SAFE_TOOL_ARGUMENTS, false),
-        ] {
-            for (tools, fields) in groups {
-                for tool in *tools {
-                    assert!(
-                        policy_tools.insert(*tool),
-                        "Matrix safe policy lists tool {tool:?} more than once"
-                    );
-                    let Some(schema) = schemas.get(*tool) else {
-                        if required {
-                            absent_required_tools.push(*tool);
-                        }
-                        continue;
-                    };
-                    checked_tools += 1;
-                    let properties = schema
-                        .get("properties")
-                        .and_then(serde_json::Value::as_object)
-                        .unwrap_or_else(|| panic!("{tool} must expose an object parameter schema"));
-                    for field in *fields {
-                        assert!(
-                            properties.contains_key(*field),
-                            "Matrix safe policy references missing field {field:?} for tool {tool:?}"
-                        );
-                    }
-                }
-            }
-        }
-
-        assert!(
-            checked_tools >= 20,
-            "the standard registry unexpectedly exposed only {checked_tools} safe-policy tools"
-        );
-        assert!(
-            absent_required_tools.is_empty(),
-            "required Matrix safe policy tools absent from the standard registry: {absent_required_tools:?}"
-        );
-    }
-
-    #[test]
     fn matrix_tool_progress_uses_the_same_subject_for_start_and_completion() {
         use clawcrew_api::attribution::ToolProvenance;
-        use clawcrew_runtime::agent::loop_::StreamDelta;
+        use clawcrew_api::channel::StreamDelta;
 
         let config = Config::default();
         let arguments = serde_json::json!({"agent": "sysadmin", "prompt": "private"});
@@ -774,7 +675,7 @@
         use clawcrew_config::schema::{
             MatrixConfig, StreamToolArgumentBase as Base, StreamToolArgumentEntry as Entry,
         };
-        use clawcrew_runtime::agent::loop_::StreamDelta;
+        use clawcrew_api::channel::StreamDelta;
 
         const CANONICAL_TOKEN: &str = "ghp_abcdefghijklmnopqrstuvwxyz1234567890";
 
@@ -868,7 +769,7 @@
     #[test]
     fn matrix_tool_progress_treats_carried_extension_or_missing_provenance_as_untrusted() {
         use clawcrew_api::attribution::ToolProvenance;
-        use clawcrew_runtime::agent::loop_::StreamDelta;
+        use clawcrew_api::channel::StreamDelta;
 
         let config = Config::default();
         let arguments = serde_json::json!({"action": "navigate"});
@@ -909,7 +810,7 @@
 
     #[test]
     fn matrix_tool_progress_scrubs_and_flattens_unresolved_tool_names() {
-        use clawcrew_runtime::agent::loop_::StreamDelta;
+        use clawcrew_api::channel::StreamDelta;
 
         const CANONICAL_TOKEN: &str = "ghp_abcdefghijklmnopqrstuvwxyz1234567890";
 
@@ -959,7 +860,7 @@
 
     #[test]
     fn matrix_status_progress_scrubs_standalone_secret_patterns() {
-        use clawcrew_runtime::agent::loop_::StreamDelta;
+        use clawcrew_api::channel::StreamDelta;
 
         let token = "ghp_abcdefghijklmnopqrstuvwxyz1234567890";
         let progress = matrix_progress_text(
@@ -975,7 +876,7 @@
 
     #[test]
     fn matrix_tool_progress_scrubs_secret_pattern_assembled_across_components() {
-        use clawcrew_runtime::agent::loop_::StreamDelta;
+        use clawcrew_api::channel::StreamDelta;
 
         // Neither component alone is a complete PEM span. The final Matrix
         // egress scrub must therefore see their assembled progress line.
@@ -1000,7 +901,7 @@
 
     #[test]
     fn matrix_single_message_pending_splits_reasoning_after_tool_progress() {
-        use clawcrew_runtime::agent::loop_::REASONING_FULL_PREFIX;
+        use clawcrew_api::channel::REASONING_FULL_PREFIX;
 
         let mut pending = Vec::new();
         for idx in 0..10 {
@@ -1033,7 +934,7 @@
 
     #[test]
     fn matrix_single_message_pending_keeps_separator_between_reasoning_entries() {
-        use clawcrew_runtime::agent::loop_::REASONING_FULL_PREFIX;
+        use clawcrew_api::channel::REASONING_FULL_PREFIX;
 
         let mut pending = Vec::new();
         push_matrix_single_message_pending(
@@ -1059,7 +960,7 @@
 
     #[test]
     fn matrix_single_message_pending_keeps_complete_reasoning_until_matrix_event_fitting() {
-        use clawcrew_runtime::agent::loop_::REASONING_FULL_PREFIX;
+        use clawcrew_api::channel::REASONING_FULL_PREFIX;
 
         let mut pending = Vec::new();
         let max_bytes = format!("{REASONING_FULL_PREFIX}abcd").len();
@@ -1085,7 +986,7 @@
 
     #[test]
     fn matrix_single_message_pending_limit_counts_visible_lines_not_events() {
-        use clawcrew_runtime::agent::loop_::REASONING_FULL_PREFIX;
+        use clawcrew_api::channel::REASONING_FULL_PREFIX;
 
         let mut pending = Vec::new();
         push_matrix_single_message_pending(
@@ -1118,7 +1019,7 @@
 
     #[test]
     fn matrix_single_message_pending_does_not_downgrade_thinking_round() {
-        use clawcrew_runtime::agent::loop_::thinking_status_text;
+        use clawcrew_api::channel::thinking_status_text;
 
         let mut pending = Vec::new();
         push_matrix_single_message_pending(
@@ -1157,7 +1058,7 @@
 
     #[test]
     fn matrix_single_message_pending_preserves_reasoning_matching_thinking_status() {
-        use clawcrew_runtime::agent::loop_::{StreamDelta, thinking_status_text};
+        use clawcrew_api::channel::{StreamDelta, thinking_status_text};
 
         let config = Config::default();
         let status = matrix_progress_text(
@@ -1234,7 +1135,7 @@
 
     #[tokio::test]
     async fn matrix_single_message_progress_coalesces_slow_flush() {
-        use clawcrew_runtime::agent::loop_::{REASONING_FULL_PREFIX, StreamDelta};
+        use clawcrew_api::channel::{REASONING_FULL_PREFIX, StreamDelta};
 
         let batches = Arc::new(tokio::sync::Mutex::new(Vec::<Vec<String>>::new()));
         let channel: Arc<dyn Channel> = Arc::new(SlowBatchChannel {
@@ -1418,29 +1319,8 @@ temperature = 0.3
         );
     }
 
-    use clawcrew_runtime::observability::NoopObserver;
-    use clawcrew_runtime::tools::{Tool, ToolOutput, ToolResult};
-
-    fn make_workspace() -> TempDir {
-        let tmp = TempDir::new().unwrap();
-        // Create minimal workspace files
-        std::fs::write(tmp.path().join("SOUL.md"), "# Soul\nBe helpful.").unwrap();
-        std::fs::write(tmp.path().join("IDENTITY.md"), "# Identity\nName: ClawCrew").unwrap();
-        std::fs::write(tmp.path().join("USER.md"), "# User\nName: Test User").unwrap();
-        std::fs::write(
-            tmp.path().join("AGENTS.md"),
-            "# Agents\nFollow instructions.",
-        )
-        .unwrap();
-        std::fs::write(tmp.path().join("TOOLS.md"), "# Tools\nUse shell carefully.").unwrap();
-        std::fs::write(
-            tmp.path().join("HEARTBEAT.md"),
-            "# Heartbeat\nCheck status.",
-        )
-        .unwrap();
-        std::fs::write(tmp.path().join("MEMORY.md"), "# Memory\nUser likes Rust.").unwrap();
-        tmp
-    }
+    use clawcrew_api::observability_traits::NoopObserver;
+    use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 
     /// Minimal mock Channel returning a configurable `name()` so the
     /// channel-registry routing tests can simulate two aliases of the
@@ -1848,14 +1728,14 @@ temperature = 0.3
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new(String::new()),
@@ -1863,7 +1743,6 @@ temperature = 0.3
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 0,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -1896,30 +1775,20 @@ temperature = 0.3
             message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         })
     }
 
@@ -2098,7 +1967,6 @@ temperature = 0.3
             ]),
             owners,
             None,
-            None,
         );
 
         let resolved_alpha = router.resolve(&alpha_msg).expect("alpha owner");
@@ -2202,7 +2070,6 @@ temperature = 0.3
         let router = AgentRouter::multi(
             HashMap::from([("shared-agent".to_string(), Arc::clone(&shared_ctx))]),
             owners,
-            None,
             None,
         );
         let resolved_alpha = router.resolve(&alpha_msg).expect("alpha owner");
@@ -2419,7 +2286,7 @@ temperature = 0.3
         let mut owners: HashMap<String, String> = HashMap::new();
         owners.insert("discord.clamps".to_string(), "clamps".to_string());
         owners.insert("discord.glados".to_string(), "glados".to_string());
-        let router = AgentRouter::multi(by_agent, owners, None, None);
+        let router = AgentRouter::multi(by_agent, owners, None);
 
         let msg_clamps = channel_message("discord", Some("clamps"));
         let msg_glados = channel_message("discord", Some("glados"));
@@ -2442,7 +2309,7 @@ temperature = 0.3
         by_agent.insert("agent_a".to_string(), Arc::clone(&agent_a_ctx));
         let mut owners: HashMap<String, String> = HashMap::new();
         owners.insert("discord.bot_a".to_string(), "agent_a".to_string());
-        let router = AgentRouter::multi(by_agent, owners, None, None);
+        let router = AgentRouter::multi(by_agent, owners, None);
 
         let cli_msg = channel_message("cli", None);
         assert!(router.resolve(&cli_msg).is_none(), "cli has no owner");
@@ -2455,7 +2322,7 @@ temperature = 0.3
         by_agent.insert("ops".to_string(), Arc::clone(&notion_agent_ctx));
         let mut owners: HashMap<String, String> = HashMap::new();
         owners.insert("notion".to_string(), "ops".to_string());
-        let router = AgentRouter::multi(by_agent, owners, None, None);
+        let router = AgentRouter::multi(by_agent, owners, None);
 
         let msg = channel_message("notion", None);
         let resolved = router.resolve(&msg).expect("notion resolves");
@@ -2481,7 +2348,7 @@ temperature = 0.3
         let legacy_ctx = router_test_ctx();
         let mut by_agent: HashMap<String, Arc<ChannelRuntimeContext>> = HashMap::new();
         by_agent.insert("legacy".to_string(), Arc::clone(&legacy_ctx));
-        let router = AgentRouter::multi(by_agent, owners, None, None);
+        let router = AgentRouter::multi(by_agent, owners, None);
 
         let msg = channel_message("mattermost", Some("default"));
         let resolved = router.resolve(&msg).expect("fallback owner resolves");
@@ -2809,14 +2676,14 @@ temperature = 0.3
             }),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     clawcrew_dir.to_path_buf(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("system".to_string()),
@@ -2824,7 +2691,6 @@ temperature = 0.3
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -2860,30 +2726,20 @@ temperature = 0.3
             message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         }
     }
 
@@ -3292,14 +3148,14 @@ api_key = "anthropic-key"
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("system".to_string()),
@@ -3307,7 +3163,6 @@ api_key = "anthropic-key"
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(histories)),
             history_crumb_flags: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS)
@@ -3338,30 +3193,20 @@ api_key = "anthropic-key"
             message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         };
 
         assert!(compact_sender_history(&ctx, &sender));
@@ -3393,14 +3238,14 @@ api_key = "anthropic-key"
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("system".to_string()),
@@ -3408,7 +3253,6 @@ api_key = "anthropic-key"
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -3441,30 +3285,20 @@ api_key = "anthropic-key"
             message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         };
 
         append_sender_turn(&ctx, &sender, ChatMessage::user("hello"));
@@ -3516,14 +3350,14 @@ api_key = "anthropic-key"
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("system".to_string()),
@@ -3531,7 +3365,6 @@ api_key = "anthropic-key"
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(histories)),
             history_crumb_flags: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS)
@@ -3562,30 +3395,20 @@ api_key = "anthropic-key"
             message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         };
 
         assert!(rollback_orphan_user_turn(&ctx, &sender, "pending"));
@@ -3641,14 +3464,14 @@ api_key = "anthropic-key"
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("system".to_string()),
@@ -3656,7 +3479,6 @@ api_key = "anthropic-key"
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(histories)),
             history_crumb_flags: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS)
@@ -3687,30 +3509,20 @@ api_key = "anthropic-key"
             message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: Some(Arc::clone(&store)),
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         };
 
         assert!(rollback_orphan_user_turn(
@@ -3759,7 +3571,7 @@ api_key = "anthropic-key"
     }
 
     fn breadcrumb_text() -> String {
-        clawcrew_runtime::agent::history::HISTORY_TRIM_BREADCRUMB_CANONICAL.to_string()
+        clawcrew_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL.to_string()
     }
 
     #[test]
@@ -4749,7 +4561,7 @@ api_key = "anthropic-key"
         sent_messages: tokio::sync::Mutex<Vec<String>>,
         draft_messages: tokio::sync::Mutex<Vec<String>>,
         progress_messages: tokio::sync::Mutex<Vec<String>>,
-        lifecycle_events: tokio::sync::Mutex<Vec<clawcrew_runtime::agent::loop_::ProgressEvent>>,
+        lifecycle_events: tokio::sync::Mutex<Vec<clawcrew_api::channel::ProgressEvent>>,
         finalized_messages: tokio::sync::Mutex<Vec<String>>,
         cancelled_drafts: tokio::sync::Mutex<Vec<String>>,
         delivery_events: tokio::sync::Mutex<Vec<&'static str>>,
@@ -4958,13 +4770,13 @@ api_key = "anthropic-key"
         }
 
         async fn send(&self, message: &SendMessage) -> anyhow::Result<()> {
-            let busy = clawcrew_runtime::i18n::get_required_cli_string(
+            let busy = galleon_i18n::get_required_cli_string(
                 "channel-runtime-conversation-busy",
             );
             let stop_sent =
-                clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+                galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
             let stop_no_task =
-                clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+                galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
             if message.content == busy
                 || message.content == stop_sent
                 || message.content == stop_no_task
@@ -5361,7 +5173,7 @@ api_key = "anthropic-key"
             &self,
             _recipient: &str,
             _message_id: &str,
-            event: clawcrew_runtime::agent::loop_::ProgressEvent,
+            event: clawcrew_api::channel::ProgressEvent,
         ) -> anyhow::Result<()> {
             self.lifecycle_events.lock().await.push(event);
             Ok(())
@@ -5369,7 +5181,85 @@ api_key = "anthropic-key"
     }
 
     #[async_trait::async_trait]
-    impl clawcrew_runtime::hooks::HookHandler for RecordingMessageSentHook {
+    pub(crate) trait TestHookHandler: Send + Sync {
+        fn name(&self) -> &str {
+            ""
+        }
+        async fn on_message_received(
+            &self,
+            msg: clawcrew_api::channel::ChannelMessage,
+        ) -> clawcrew_api::hook::HookResult<clawcrew_api::channel::ChannelMessage> {
+            clawcrew_api::hook::HookResult::Continue(msg)
+        }
+        async fn on_message_sending(
+            &self,
+            channel: String,
+            recipient: String,
+            content: String,
+        ) -> clawcrew_api::hook::HookResult<(String, String, String)> {
+            clawcrew_api::hook::HookResult::Continue((channel, recipient, content))
+        }
+        async fn on_message_sent(&self, _channel: &str, _recipient: &str, _content: &str) {}
+    }
+
+    #[derive(Default)]
+    pub(crate) struct TestHookRunner {
+        handlers: Vec<Box<dyn TestHookHandler>>,
+    }
+
+    impl TestHookRunner {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub fn register(&mut self, handler: Box<dyn TestHookHandler>) {
+            self.handlers.push(handler);
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl clawcrew_api::hook::ChannelHookRunner for TestHookRunner {
+        async fn run_on_message_received(
+            &self,
+            mut message: clawcrew_api::channel::ChannelMessage,
+        ) -> clawcrew_api::hook::HookResult<clawcrew_api::channel::ChannelMessage> {
+            for handler in &self.handlers {
+                match handler.on_message_received(message).await {
+                    clawcrew_api::hook::HookResult::Continue(m) => message = m,
+                    clawcrew_api::hook::HookResult::Cancel(reason) => return clawcrew_api::hook::HookResult::Cancel(reason),
+                }
+            }
+            clawcrew_api::hook::HookResult::Continue(message)
+        }
+
+        async fn run_on_message_sending(
+            &self,
+            mut channel: String,
+            mut recipient: String,
+            mut content: String,
+        ) -> clawcrew_api::hook::HookResult<(String, String, String)> {
+            for handler in &self.handlers {
+                match handler.on_message_sending(channel, recipient, content).await {
+                    clawcrew_api::hook::HookResult::Continue((c, r, cnt)) => {
+                        channel = c;
+                        recipient = r;
+                        content = cnt;
+                    }
+                    clawcrew_api::hook::HookResult::Cancel(reason) => return clawcrew_api::hook::HookResult::Cancel(reason),
+                }
+            }
+            clawcrew_api::hook::HookResult::Continue((channel, recipient, content))
+        }
+
+        async fn run_on_message_sent(&self, channel: &str, recipient: &str, content: &str) {
+            for handler in &self.handlers {
+                let _ = handler.name();
+                handler.on_message_sent(channel, recipient, content).await;
+            }
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl TestHookHandler for RecordingMessageSentHook {
         fn name(&self) -> &str {
             "recording-message-sent"
         }
@@ -5507,7 +5397,7 @@ api_key = "anthropic-key"
         prompt_config: clawcrew_config::schema::Config,
         agent_cfg: clawcrew_config::schema::AliasedAgentConfig,
         model_provider_ref: &str,
-        hooks: Option<Arc<clawcrew_runtime::hooks::HookRunner>>,
+        hooks: Option<Arc<dyn clawcrew_api::hook::ChannelHookRunner>>,
     ) -> Arc<ChannelRuntimeContext> {
         test_runtime_ctx_with_observer(
             channel,
@@ -5530,11 +5420,11 @@ api_key = "anthropic-key"
         prompt_config: clawcrew_config::schema::Config,
         agent_cfg: clawcrew_config::schema::AliasedAgentConfig,
         model_provider_ref: &str,
-        hooks: Option<Arc<clawcrew_runtime::hooks::HookRunner>>,
+        hooks: Option<Arc<dyn clawcrew_api::hook::ChannelHookRunner>>,
         observer: Arc<dyn Observer>,
         tools: Vec<Box<dyn Tool>>,
     ) -> Arc<ChannelRuntimeContext> {
-        let risk_profile = clawcrew_config::schema::RiskProfileConfig {
+        let _risk_profile = clawcrew_config::schema::RiskProfileConfig {
             level: clawcrew_config::autonomy::AutonomyLevel::Full,
             auto_approve: tools.iter().map(|tool| tool.name().to_string()).collect(),
             ..Default::default()
@@ -5551,14 +5441,14 @@ api_key = "anthropic-key"
             agent_cfg: Arc::new(agent_cfg),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(tools),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(tools),
             ),
             observer,
             system_prompt: Arc::new("You are a helpful assistant.".to_string()),
@@ -5566,7 +5456,6 @@ api_key = "anthropic-key"
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -5592,28 +5481,20 @@ api_key = "anthropic-key"
             hooks,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(&risk_profile)),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         })
     }
 
@@ -5640,7 +5521,7 @@ api_key = "anthropic-key"
         prompt_config: clawcrew_config::schema::Config,
         agent_cfg: clawcrew_config::schema::AliasedAgentConfig,
         model_provider_ref: &str,
-        hooks: Option<Arc<clawcrew_runtime::hooks::HookRunner>>,
+        hooks: Option<Arc<dyn clawcrew_api::hook::ChannelHookRunner>>,
         observer: Arc<dyn Observer>,
     ) -> Arc<ChannelRuntimeContext> {
         let mut channels_by_name = HashMap::new();
@@ -5655,14 +5536,14 @@ api_key = "anthropic-key"
             agent_cfg: Arc::new(agent_cfg),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer,
             system_prompt: Arc::new("You are a helpful assistant.".to_string()),
@@ -5670,7 +5551,6 @@ api_key = "anthropic-key"
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -5696,39 +5576,29 @@ api_key = "anthropic-key"
             hooks,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         })
     }
 
     type MessageSentEvents = Arc<tokio::sync::Mutex<Vec<(String, String, String)>>>;
 
     fn recording_message_sent_runner()
-    -> (MessageSentEvents, Arc<clawcrew_runtime::hooks::HookRunner>) {
+    -> (MessageSentEvents, Arc<dyn clawcrew_api::hook::ChannelHookRunner>) {
         let hook_events = Arc::new(tokio::sync::Mutex::new(Vec::new()));
-        let mut hook_runner = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hook_runner = TestHookRunner::new();
         hook_runner.register(Box::new(RecordingMessageSentHook {
             events: Arc::clone(&hook_events),
         }));
@@ -5775,7 +5645,7 @@ api_key = "anthropic-key"
         let events = channel_impl.lifecycle_events.lock().await.clone();
         assert_eq!(
             events.last(),
-            Some(&clawcrew_runtime::agent::loop_::ProgressEvent::FinalizingResponse),
+            Some(&clawcrew_api::channel::ProgressEvent::FinalizingResponse),
             "a completed turn must end on FinalizingResponse, got {events:?}"
         );
     }
@@ -5800,7 +5670,7 @@ api_key = "anthropic-key"
 
         let events = channel_impl.lifecycle_events.lock().await.clone();
         assert!(
-            !events.contains(&clawcrew_runtime::agent::loop_::ProgressEvent::FinalizingResponse),
+            !events.contains(&clawcrew_api::channel::ProgressEvent::FinalizingResponse),
             "a cancelled turn must not emit FinalizingResponse, got {events:?}"
         );
     }
@@ -5824,7 +5694,7 @@ api_key = "anthropic-key"
 
         let events = channel_impl.lifecycle_events.lock().await.clone();
         assert!(
-            !events.contains(&clawcrew_runtime::agent::loop_::ProgressEvent::FinalizingResponse),
+            !events.contains(&clawcrew_api::channel::ProgressEvent::FinalizingResponse),
             "a failed turn must not emit FinalizingResponse, got {events:?}"
         );
     }
@@ -5856,7 +5726,7 @@ api_key = "anthropic-key"
         let running_tool = events
             .iter()
             .position(|event| {
-                *event == clawcrew_runtime::agent::loop_::ProgressEvent::RunningTool
+                *event == clawcrew_api::channel::ProgressEvent::RunningTool
             })
             .unwrap_or_else(|| {
                 panic!(
@@ -5865,17 +5735,17 @@ api_key = "anthropic-key"
             });
         assert!(
             events[..running_tool]
-                .contains(&clawcrew_runtime::agent::loop_::ProgressEvent::WaitingOnModel),
+                .contains(&clawcrew_api::channel::ProgressEvent::WaitingOnModel),
             "the model wait must precede the tool run, got {events:?}"
         );
         assert!(
             events[running_tool + 1..]
-                .contains(&clawcrew_runtime::agent::loop_::ProgressEvent::Planning),
+                .contains(&clawcrew_api::channel::ProgressEvent::Planning),
             "the post-tool hand-back must re-enter Planning, got {events:?}"
         );
         assert_eq!(
             events.last(),
-            Some(&clawcrew_runtime::agent::loop_::ProgressEvent::FinalizingResponse),
+            Some(&clawcrew_api::channel::ProgressEvent::FinalizingResponse),
             "a completed turn must end on FinalizingResponse, got {events:?}"
         );
     }
@@ -5908,12 +5778,12 @@ api_key = "anthropic-key"
         );
         let events = channel_impl.lifecycle_events.lock().await.clone();
         assert!(
-            !events.contains(&clawcrew_runtime::agent::loop_::ProgressEvent::FinalizingResponse),
+            !events.contains(&clawcrew_api::channel::ProgressEvent::FinalizingResponse),
             "a cancelled turn must not emit FinalizingResponse, got {events:?}"
         );
         assert_eq!(
             events.first(),
-            Some(&clawcrew_runtime::agent::loop_::ProgressEvent::Received),
+            Some(&clawcrew_api::channel::ProgressEvent::Received),
             "the turn must still have announced receipt, got {events:?}"
         );
     }
@@ -5941,11 +5811,11 @@ api_key = "anthropic-key"
         );
         let events = channel_impl.lifecycle_events.lock().await.clone();
         assert!(
-            !events.contains(&clawcrew_runtime::agent::loop_::ProgressEvent::FinalizingResponse),
+            !events.contains(&clawcrew_api::channel::ProgressEvent::FinalizingResponse),
             "a failed turn must not emit FinalizingResponse, got {events:?}"
         );
         assert!(
-            events.contains(&clawcrew_runtime::agent::loop_::ProgressEvent::WaitingOnModel),
+            events.contains(&clawcrew_api::channel::ProgressEvent::WaitingOnModel),
             "the failure happened at the provider, so the model wait must have been shown: {events:?}"
         );
     }
@@ -6927,7 +6797,7 @@ api_key = "anthropic-key"
 
     #[cfg(feature = "channel-telegram")]
     #[async_trait::async_trait]
-    impl clawcrew_runtime::hooks::HookHandler for RewritingSendHook {
+    impl TestHookHandler for RewritingSendHook {
         fn name(&self) -> &str {
             "rewriting-send"
         }
@@ -6937,8 +6807,8 @@ api_key = "anthropic-key"
             channel: String,
             recipient: String,
             _content: String,
-        ) -> clawcrew_runtime::hooks::HookResult<(String, String, String)> {
-            clawcrew_runtime::hooks::HookResult::Continue((
+        ) -> clawcrew_api::hook::HookResult<(String, String, String)> {
+            clawcrew_api::hook::HookResult::Continue((
                 channel,
                 recipient,
                 HOOK_REWRITTEN_NARRATION.to_string(),
@@ -6956,7 +6826,7 @@ api_key = "anthropic-key"
 
     #[cfg(feature = "channel-telegram")]
     #[async_trait::async_trait]
-    impl clawcrew_runtime::hooks::HookHandler for CancellingSendHook {
+    impl TestHookHandler for CancellingSendHook {
         fn name(&self) -> &str {
             "cancelling-send"
         }
@@ -6966,11 +6836,11 @@ api_key = "anthropic-key"
             channel: String,
             recipient: String,
             content: String,
-        ) -> clawcrew_runtime::hooks::HookResult<(String, String, String)> {
+        ) -> clawcrew_api::hook::HookResult<(String, String, String)> {
             if self.calls.fetch_add(1, Ordering::SeqCst) == 0 {
-                clawcrew_runtime::hooks::HookResult::Cancel("suppress first narration".to_string())
+                clawcrew_api::hook::HookResult::Cancel("suppress first narration".to_string())
             } else {
-                clawcrew_runtime::hooks::HookResult::Continue((channel, recipient, content))
+                clawcrew_api::hook::HookResult::Continue((channel, recipient, content))
             }
         }
     }
@@ -6985,7 +6855,7 @@ api_key = "anthropic-key"
 
     #[cfg(feature = "channel-telegram")]
     #[async_trait::async_trait]
-    impl clawcrew_runtime::hooks::HookHandler for RecordingSendHook {
+    impl TestHookHandler for RecordingSendHook {
         fn name(&self) -> &str {
             "recording-send"
         }
@@ -6995,9 +6865,9 @@ api_key = "anthropic-key"
             channel: String,
             recipient: String,
             content: String,
-        ) -> clawcrew_runtime::hooks::HookResult<(String, String, String)> {
+        ) -> clawcrew_api::hook::HookResult<(String, String, String)> {
             self.seen.lock().push(content.clone());
-            clawcrew_runtime::hooks::HookResult::Continue((channel, recipient, content))
+            clawcrew_api::hook::HookResult::Continue((channel, recipient, content))
         }
     }
 
@@ -7193,48 +7063,6 @@ BTC is currently around $65,000 based on latest tool output."#
         }
     }
 
-    struct ModelAwareToolProvider;
-
-    #[async_trait::async_trait]
-    impl ModelProvider for ModelAwareToolProvider {
-        async fn chat_with_system(
-            &self,
-            _system_prompt: Option<&str>,
-            _message: &str,
-            _model: &str,
-            _temperature: Option<f64>,
-        ) -> anyhow::Result<String> {
-            Ok("ok".to_string())
-        }
-
-        fn supports_native_tools(&self) -> bool {
-            true
-        }
-
-        fn capabilities_for_model(
-            &self,
-            model: &str,
-        ) -> clawcrew_providers::traits::ProviderCapabilities {
-            clawcrew_providers::traits::ProviderCapabilities {
-                native_tool_calling: model != "text-only",
-                ..Default::default()
-            }
-        }
-    }
-
-    impl ::clawcrew_api::attribution::Attributable for ModelAwareToolProvider {
-        fn role(&self) -> ::clawcrew_api::attribution::Role {
-            ::clawcrew_api::attribution::Role::Provider(
-                ::clawcrew_api::attribution::ProviderKind::Model(
-                    ::clawcrew_api::attribution::ModelProviderKind::Custom,
-                ),
-            )
-        }
-
-        fn alias(&self) -> &str {
-            "ModelAwareToolProvider"
-        }
-    }
 
     #[derive(Default)]
     struct HistoryCaptureModelProvider {
@@ -7379,41 +7207,102 @@ BTC is currently around $65,000 based on latest tool output."#
         );
     }
 
+    #[derive(Default)]
+    struct MockSopDispatcher {
+        dispatched_count: AtomicUsize,
+        gate_resolutions: AtomicUsize,
+        request_route: Mutex<Option<String>>,
+        escalation_route: Mutex<Option<String>>,
+        run_status: Arc<Mutex<Option<clawcrew_api::sop::SopRunStatus>>>,
+    }
+
+    #[async_trait::async_trait]
+    impl clawcrew_api::sop::SopFanInDispatcher for MockSopDispatcher {
+        async fn dispatch_untrusted(
+            &self,
+            _source: clawcrew_api::sop::SopTriggerSource,
+            _topic: Option<&str>,
+            _payload: Option<&str>,
+            _target_sop: Option<&str>,
+            _dedup: Option<(String, bool)>,
+        ) -> clawcrew_api::sop::SopFanInResult {
+            self.dispatched_count.fetch_add(1, Ordering::SeqCst);
+            clawcrew_api::sop::SopFanInResult::default()
+        }
+
+        async fn resolve_gate(
+            &self,
+            msg: &clawcrew_api::channel::ChannelMessage,
+            gate_prompt_channels: &[std::sync::Arc<dyn Channel>],
+            gate_channel_route_keys: &[String],
+        ) -> bool {
+            let req = self.request_route.lock().unwrap_or_else(|e| e.into_inner()).clone();
+            let esc = self.escalation_route.lock().unwrap_or_else(|e| e.into_inner()).clone();
+            let msg_route = channel_key_for_message(msg);
+            let route_matches = |configured: Option<&str>| -> bool {
+                let Some(configured) = configured else { return false; };
+                let (conf_route, conf_target) = match configured.split_once(':') {
+                    Some((rt, tg)) => (rt, Some(tg)),
+                    None => (configured, None),
+                };
+
+                let target_ok = conf_target.is_none() || conf_target == Some(msg.reply_target.as_str());
+                if !target_ok {
+                    return false;
+                }
+
+                conf_route == msg_route
+                    || conf_route == msg.channel
+                    || gate_channel_route_keys.iter().any(|k| k == conf_route)
+            };
+            let matches_req = route_matches(req.as_deref());
+            let matches_esc = route_matches(esc.as_deref());
+            let matches_key = false;
+
+            let reference = if let Some(marker) = &msg.internal_sop_event {
+                marker
+                    .strip_prefix("sop.gate:")
+                    .and_then(|s| s.split_once(':'))
+                    .map(|(_, r)| r)
+            } else {
+                let mut words = msg.content.split_whitespace();
+                let first = words.next();
+                if first == Some("approve") {
+                    words.next()
+                } else {
+                    None
+                }
+            };
+
+            let reference_matches = reference.is_some_and(|r| {
+                let parsed = r.split_once('#').map(|(p, _)| p).unwrap_or(r);
+                parsed == "det-1-0001"
+            });
+
+            if (matches_req || matches_esc || matches_key) && reference_matches {
+                self.gate_resolutions.fetch_add(1, Ordering::SeqCst);
+                *self.run_status.lock().unwrap_or_else(|e| e.into_inner()) =
+                    Some(clawcrew_api::sop::SopRunStatus::Running);
+                let status_arc = Arc::clone(&self.run_status);
+                clawcrew_spawn::spawn!(async move {
+                    tokio::task::yield_now().await;
+                    tokio::time::sleep(Duration::from_millis(15)).await;
+                    *status_arc.lock().unwrap_or_else(|e| e.into_inner()) =
+                        Some(clawcrew_api::sop::SopRunStatus::Failed);
+                });
+                for ch in gate_prompt_channels {
+                    let _ = ch.finalize_gate_prompt("det-1-0001", "Approved").await;
+                }
+                true
+            } else {
+                false
+            }
+        }
+    }
+
     #[tokio::test]
     async fn passive_context_does_not_reach_the_worker_sop_dispatch() {
-        use clawcrew_runtime::sop::types::{
-            Sop, SopAdmissionPolicy, SopExecutionMode, SopPriority, SopStep, SopTrigger,
-        };
-
-        let sop = Sop {
-            name: "telegram-ingress".into(),
-            description: "Starts on any telegram channel message".into(),
-            version: "1.0.0".into(),
-            priority: SopPriority::Normal,
-            execution_mode: SopExecutionMode::Auto,
-            triggers: vec![SopTrigger::Channel {
-                channel: "telegram".into(),
-                alias: None,
-                condition: None,
-            }],
-            steps: vec![SopStep {
-                number: 1,
-                title: "Step one".into(),
-                body: "Do step one".into(),
-                ..Default::default()
-            }],
-            cooldown_secs: 0,
-            max_concurrent: 2,
-            location: None,
-            deterministic: false,
-            admission_policy: SopAdmissionPolicy::Parallel,
-            max_pending_approvals: 0,
-            agent: None,
-        };
-        let mut engine =
-            clawcrew_runtime::sop::SopEngine::new(clawcrew_config::schema::SopConfig::default());
-        engine.set_sops_for_test(vec![sop]);
-        let engine = Arc::new(std::sync::Mutex::new(engine));
+        let dispatcher = Arc::new(MockSopDispatcher::default());
 
         let channel: Arc<dyn Channel> = Arc::new(RecordingChannel::default());
         let provider: Arc<dyn ModelProvider> = Arc::new(HistoryCaptureModelProvider::default());
@@ -7426,10 +7315,7 @@ BTC is currently around $65,000 based on latest tool output."#
             None,
         );
         let runtime_ctx = Arc::new(ChannelRuntimeContext {
-            sop_engine: Some(Arc::clone(&engine)),
-            sop_audit: Some(Arc::new(clawcrew_runtime::sop::SopAuditLogger::new(
-                Arc::new(NoopMemory),
-            ))),
+            sop_dispatcher: Some(Arc::clone(&dispatcher) as Arc<dyn clawcrew_api::sop::SopFanInDispatcher>),
             ..(*base).clone()
         });
 
@@ -7451,12 +7337,9 @@ BTC is currently around $65,000 based on latest tool output."#
         )
         .await;
 
-        assert!(
-            engine
-                .lock()
-                .unwrap_or_else(|e| e.into_inner())
-                .active_runs()
-                .is_empty(),
+        assert_eq!(
+            dispatcher.dispatched_count.load(Ordering::SeqCst),
+            0,
             "passive observation must not start an SOP run"
         );
 
@@ -7471,11 +7354,7 @@ BTC is currently around $65,000 based on latest tool output."#
         process_channel_message(runtime_ctx, active_msg, CancellationToken::new()).await;
 
         assert_eq!(
-            engine
-                .lock()
-                .unwrap_or_else(|e| e.into_inner())
-                .active_runs()
-                .len(),
+            dispatcher.dispatched_count.load(Ordering::SeqCst),
             1,
             "the addressed turn must still dispatch"
         );
@@ -7777,712 +7656,12 @@ BTC is currently around $65,000 based on latest tool output."#
         }
     }
 
-    #[test]
-    fn channel_path_allowlist_drops_non_allowlisted_builtins() {
-        let mut built_tools: Vec<Box<dyn Tool>> = vec![
-            Box::new(NamedMockTool("shell")),
-            Box::new(NamedMockTool("file_write")),
-            Box::new(NamedMockTool("file_read")),
-        ];
-        let policy = SecurityPolicy {
-            allowed_tools: Some(vec!["file_read".to_string()]),
-            workspace_dir: std::env::temp_dir(),
-            ..SecurityPolicy::default()
-        };
-        apply_policy_tool_filter(&mut built_tools, Some(&policy), None);
-        let names: Vec<&str> = built_tools.iter().map(|t| t.name()).collect();
-        assert!(
-            !names.contains(&"shell") && !names.contains(&"file_write"),
-            "raw built-ins outside the allowlist must be dropped on the channel path; got {names:?}"
-        );
-        assert!(
-            names.contains(&"file_read"),
-            "allowlisted tool must survive the filter; got {names:?}"
-        );
-    }
-
-    #[test]
-    fn channel_path_excluded_tools_drops_denied_mcp_tool() {
-        use clawcrew_runtime::agent::loop_::{
-            mcp_tool_access_policy, register_eager_mcp_tool_if_allowed,
-        };
-        let policy = SecurityPolicy {
-            excluded_tools: Some(vec!["aa_mcp__find_items".to_string()]),
-            workspace_dir: std::env::temp_dir(),
-            ..SecurityPolicy::default()
-        };
-        let mcp_policy = mcp_tool_access_policy(&policy, None);
-        let mut built_tools: Vec<Box<dyn Tool>> = Vec::new();
-        let denied: Arc<dyn Tool> = Arc::new(NamedMockTool("aa_mcp__find_items"));
-        let allowed: Arc<dyn Tool> = Arc::new(NamedMockTool("aa_mcp__find_npcs"));
-        let registered_denied =
-            register_eager_mcp_tool_if_allowed(denied, &mut built_tools, None, mcp_policy.as_ref());
-        let registered_allowed = register_eager_mcp_tool_if_allowed(
-            allowed,
-            &mut built_tools,
-            None,
-            mcp_policy.as_ref(),
-        );
-        assert!(
-            !registered_denied,
-            "an `excluded_tools`-denied MCP tool must not be registered on the channel path"
-        );
-        assert!(
-            registered_allowed,
-            "a non-denied MCP tool must still be registered (allowlist auto-admit)"
-        );
-        let names: Vec<&str> = built_tools.iter().map(|t| t.name()).collect();
-        assert!(
-            !names.contains(&"aa_mcp__find_items"),
-            "denied MCP tool leaked into the channel registry; got {names:?}"
-        );
-        assert!(
-            names.contains(&"aa_mcp__find_npcs"),
-            "allowed MCP tool missing from the channel registry; got {names:?}"
-        );
-    }
-
-    #[test]
-    fn channel_path_excluded_tools_drops_denied_builtin() {
-        let mut built_tools: Vec<Box<dyn Tool>> = vec![
-            Box::new(NamedMockTool("shell")),
-            Box::new(NamedMockTool("file_read")),
-        ];
-        let policy = SecurityPolicy {
-            excluded_tools: Some(vec!["shell".to_string()]),
-            workspace_dir: std::env::temp_dir(),
-            ..SecurityPolicy::default()
-        };
-        apply_policy_tool_filter(&mut built_tools, Some(&policy), None);
-        let names: Vec<&str> = built_tools.iter().map(|t| t.name()).collect();
-        assert!(
-            !names.contains(&"shell"),
-            "an `excluded_tools`-denied built-in must be dropped on the channel path; got {names:?}"
-        );
-        assert!(
-            names.contains(&"file_read"),
-            "a non-excluded built-in must survive the filter; got {names:?}"
-        );
-    }
-
-    fn channel_all_tools_result(tools: Vec<Box<dyn Tool>>) -> tools::AllToolsResult {
-        tools::AllToolsResult {
-            tools,
-            delegate_handle: None,
-            ask_user_handle: None,
-            reaction_handle: Arc::new(parking_lot::RwLock::new(HashMap::new())),
-            poll_handle: None,
-            escalate_handle: None,
-            channel_room_handle: None,
-            unfiltered_tool_arcs: Vec::new(),
-        }
-    }
-
-    /// A mock HTTP MCP server that advertises `resources` support and serves one
-    /// readable resource (`file:///handbook.md`), so `assemble_channel_agent_tools`
-    /// resolves a real pinned-resource section instead of an empty one.
-    async fn mock_mcp_server_with_pinned_resource() -> wiremock::MockServer {
-        use wiremock::matchers::{body_partial_json, method};
-        use wiremock::{Mock, MockServer, ResponseTemplate};
-
-        let server = MockServer::start().await;
-        Mock::given(method("POST"))
-            .and(body_partial_json(
-                serde_json::json!({"method": "initialize"}),
-            ))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .insert_header("Mcp-Session-Id", "s")
-                    .set_body_json(serde_json::json!({
-                        "jsonrpc":"2.0","id":1,
-                        "result":{"capabilities":{"tools":{},"resources":{}}}
-                    })),
-            )
-            .mount(&server)
-            .await;
-        Mock::given(method("POST"))
-            .and(body_partial_json(
-                serde_json::json!({"method":"notifications/initialized"}),
-            ))
-            .respond_with(ResponseTemplate::new(202))
-            .mount(&server)
-            .await;
-        Mock::given(method("POST"))
-            .and(body_partial_json(
-                serde_json::json!({"method":"tools/list"}),
-            ))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "jsonrpc":"2.0","id":2,"result":{"tools":[
-                    {"name":"echo","description":"echo","inputSchema":{"type":"object"}}
-                ]}
-            })))
-            .mount(&server)
-            .await;
-        Mock::given(method("POST"))
-            .and(body_partial_json(
-                serde_json::json!({"method":"resources/list"}),
-            ))
-            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                "jsonrpc":"2.0","id":3,"result":{"resources":[
-                    {"uri":"file:///handbook.md","name":"handbook","mimeType":"text/plain"}
-                ]}
-            })))
-            .mount(&server)
-            .await;
-        Mock::given(method("POST"))
-            .and(body_partial_json(serde_json::json!({"method":"resources/read"})))
-            .respond_with(|request: &wiremock::Request| {
-                let id = serde_json::from_slice::<serde_json::Value>(&request.body)
-                    .expect("resources/read request should be JSON")
-                    .get("id")
-                    .cloned()
-                    .expect("resources/read request should carry an id");
-                ResponseTemplate::new(200).set_body_json(serde_json::json!({
-                    "jsonrpc":"2.0","id":id,"result":{"contents":[
-                        {"uri":"file:///handbook.md","mimeType":"text/plain","text":"Pinned handbook body"}
-                    ]}
-                }))
-            })
-            .mount(&server)
-            .await;
-        server
-    }
-
-    /// Drives the REAL `assemble_channel_agent_tools` against a mock MCP server
-    /// granting one pinned resource, then runs the exact post-assembly composition
-    /// `start_channels` performs (`compose_channel_mcp_prompt_sections`). It proves
-    /// the production boundary keeps the deferred tool-search listing and the pinned
-    /// MCP resource in SEPARATE sections, so strict text-tool suppression
-    /// (`native_tools = false`, `strict_tool_parsing = true`) clears the deferred
-    /// tool instructions while the pinned resource survives into the final prompt.
-    /// A regression that re-merges the two sections inside the assembly (or reorders
-    /// the suppress/append pair) fails here, unlike a test that hand-builds the
-    /// section strings and never calls the assembly.
-    #[tokio::test]
-    async fn assemble_channel_agent_tools_keeps_pinned_resources_after_strict_policy() {
-        use clawcrew_config::schema::{
-            AliasedAgentConfig, McpBundleConfig, McpServerConfig, McpTransport, RiskProfileConfig,
-        };
-        let server = mock_mcp_server_with_pinned_resource().await;
-
-        let mut config = Config::default();
-        config.mcp.enabled = true;
-        config.mcp.deferred_loading = true;
-        config.mcp.servers = vec![McpServerConfig {
-            name: "docs".into(),
-            transport: McpTransport::Http,
-            url: Some(server.uri()),
-            pinned_resources: vec!["file:///handbook.md".into()],
-            ..Default::default()
-        }];
-        config.mcp_bundles.insert(
-            "docsbundle".into(),
-            McpBundleConfig {
-                servers: vec!["docs".into()],
-                exclude: Vec::new(),
-            },
-        );
-        config
-            .risk_profiles
-            .insert("test-profile".into(), RiskProfileConfig::default());
-        config.agents.insert(
-            "channel-agent".into(),
-            AliasedAgentConfig {
-                enabled: true,
-                model_provider: "openai.test-provider".into(),
-                risk_profile: "test-profile".into(),
-                mcp_bundles: vec!["docsbundle".into()],
-                ..Default::default()
-            },
-        );
-
-        let security = Arc::new(SecurityPolicy {
-            workspace_dir: std::env::temp_dir(),
-            ..SecurityPolicy::default()
-        });
-        let assembled = tokio::time::timeout(
-            ASSEMBLY_HANG_GUARD,
-            assemble_channel_agent_tools(
-                &config,
-                "channel-agent",
-                "openai.test-provider",
-                "gpt-test",
-                &security,
-                channel_all_tools_result(Vec::new()),
-                &[],
-                Arc::new(platform::NativeRuntime::new()),
-            ),
-        )
-        .await
-        .expect("assemble must not hang");
-
-        // The production assembly must surface the pinned resource in its OWN
-        // section, distinct from the deferred/tool-search listing.
-        assert!(
-            assembled.pinned_section.contains("Pinned handbook body")
-                && assembled
-                    .pinned_section
-                    .contains("trust=\"untrusted-external\""),
-            "assemble_channel_agent_tools must expose the pinned MCP resource in \
-             pinned_section; got {:?}",
-            assembled.pinned_section
-        );
-        assert!(
-            !assembled.deferred_section.contains("Pinned handbook body"),
-            "pinned resource content must NOT be merged into the deferred section; got {:?}",
-            assembled.deferred_section
-        );
-        assert!(
-            assembled.deferred_section.contains("tool_search"),
-            "precondition: a deferred-loading MCP grant must yield a tool_search \
-             section to suppress; got {:?}",
-            assembled.deferred_section
-        );
-
-        // Run the exact composition start_channels performs for a strict,
-        // non-native target: suppress the deferred tool-search section, keep pinned.
-        let mut tool_descs: Vec<(&str, &str)> = vec![("shell", "Run commands")];
-        let mut deferred_section = assembled.deferred_section.clone();
-        let expose_text_protocol = compose_channel_mcp_prompt_sections(
-            false,
-            true,
-            &mut tool_descs,
-            &mut deferred_section,
-            &assembled.pinned_section,
-        );
-
-        assert!(!expose_text_protocol);
-        assert!(
-            !deferred_section.contains("tool_search"),
-            "strict policy must clear the deferred tool-search section; got {deferred_section:?}"
-        );
-        assert!(
-            deferred_section.contains("Pinned handbook body")
-                && deferred_section.contains("## Pinned MCP Resources"),
-            "pinned resource must survive strict suppression; got {deferred_section:?}"
-        );
-    }
-
-    #[allow(clippy::await_holding_lock)]
-    #[tokio::test]
-    async fn assemble_channel_agent_tools_attributes_assembly_logs_to_agent_and_model() {
-        use clawcrew_config::schema::{
-            AliasedAgentConfig, McpBundleConfig, McpServerConfig, McpTransport, RiskProfileConfig,
-        };
-
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
-        while rx.try_recv().is_ok() {}
-
-        let server = mock_mcp_server_with_pinned_resource().await;
-        let mut config = Config::default();
-        config.mcp.enabled = true;
-        config.mcp.deferred_loading = true;
-        config.mcp.servers = vec![McpServerConfig {
-            name: "docs".into(),
-            transport: McpTransport::Http,
-            url: Some(server.uri()),
-            pinned_resources: vec!["file:///handbook.md".into()],
-            ..Default::default()
-        }];
-        config.mcp_bundles.insert(
-            "docsbundle".into(),
-            McpBundleConfig {
-                servers: vec!["docs".into()],
-                exclude: Vec::new(),
-            },
-        );
-        config
-            .risk_profiles
-            .insert("test-profile".into(), RiskProfileConfig::default());
-        config.agents.insert(
-            "channel-agent".into(),
-            AliasedAgentConfig {
-                enabled: true,
-                model_provider: "openai.test-provider".into(),
-                risk_profile: "test-profile".into(),
-                mcp_bundles: vec!["docsbundle".into()],
-                ..Default::default()
-            },
-        );
-
-        let security = Arc::new(SecurityPolicy {
-            workspace_dir: std::env::temp_dir(),
-            ..SecurityPolicy::default()
-        });
-        let _assembled = tokio::time::timeout(
-            ASSEMBLY_HANG_GUARD,
-            assemble_channel_agent_tools(
-                &config,
-                "channel-agent",
-                "openai.test-provider",
-                "gpt-test",
-                &security,
-                channel_all_tools_result(Vec::new()),
-                &[],
-                Arc::new(platform::NativeRuntime::new()),
-            ),
-        )
-        .await
-        .expect("assemble must not hang");
-
-        let deadline = std::time::Instant::now() + ASSEMBLY_HANG_GUARD;
-        let mut assembly_event = None;
-        while std::time::Instant::now() < deadline {
-            match tokio::time::timeout(std::time::Duration::from_millis(50), rx.recv()).await {
-                Ok(Ok(value)) => {
-                    if value
-                        .get("message")
-                        .and_then(|v| v.as_str())
-                        .is_some_and(|m| m.starts_with("Initializing MCP client"))
-                    {
-                        assembly_event = Some(value);
-                        break;
-                    }
-                }
-                Ok(Err(tokio::sync::broadcast::error::RecvError::Lagged(_))) => {}
-                Ok(Err(tokio::sync::broadcast::error::RecvError::Closed)) => break,
-                Err(_) => {}
-            }
-        }
-
-        let value = assembly_event.expect("assembly log should be emitted");
-        assert_eq!(
-            value["clawcrew"]["agent_alias"], "channel-agent",
-            "assembly log must inherit the channel agent attribution span, got: {value}"
-        );
-        assert_eq!(
-            value["clawcrew"]["model_provider"], "openai.test-provider",
-            "assembly log must preserve the startup model_provider scope, got: {value}"
-        );
-        assert_eq!(
-            value["clawcrew"]["model_provider_type"], "openai",
-            "assembly log must split the scoped provider family, got: {value}"
-        );
-        assert_eq!(
-            value["clawcrew"]["model_provider_alias"], "test-provider",
-            "assembly log must split the scoped provider alias, got: {value}"
-        );
-        assert_eq!(
-            value["clawcrew"]["model"], "gpt-test",
-            "assembly log must preserve the startup model scope, got: {value}"
-        );
-
-        clawcrew_log::clear_broadcast_hook();
-    }
-
-    /// The `channel_path_*` tests elsewhere pin the shared filter/registration
-    /// helpers directly, not `start_channels`'s actual assembly call - a bad edit
-    /// to `assemble_channel_agent_tools`'s knobs (flipping `exclude_memory`,
-    /// dropping `connect_mcp`, etc.) would compile and slip past them undetected.
-    /// This test drives the exact function `start_channels` calls, closing that
-    /// gap for the built-in allow/deny behavior. (Pinned-resource resolution
-    /// through this same path is covered by
-    /// `assemble_channel_agent_tools_keeps_pinned_resources_after_strict_policy`;
-    /// `scoped.rs`'s `assemble_grants_no_mcp_to_agent_without_bundles` and siblings
-    /// cover the assembly's own MCP-grant policy.)
-    #[tokio::test]
-    async fn assemble_channel_agent_tools_honors_allowed_and_excluded_tools() {
-        let config = Config::default();
-        let built = channel_all_tools_result(vec![
-            Box::new(NamedMockTool("shell")),
-            Box::new(NamedMockTool("file_write")),
-            Box::new(NamedMockTool("file_read")),
-        ]);
-        let security = Arc::new(SecurityPolicy {
-            allowed_tools: Some(vec!["file_read".to_string()]),
-            workspace_dir: std::env::temp_dir(),
-            ..SecurityPolicy::default()
-        });
-        let assembled = assemble_channel_agent_tools(
-            &config,
-            "test-agent",
-            "test-provider",
-            "test-model",
-            &security,
-            built,
-            &[],
-            Arc::new(platform::NativeRuntime::new()),
-        )
-        .await;
-        let names: Vec<&str> = assembled.tools.iter().map(|t| t.name()).collect();
-        assert!(
-            !names.contains(&"shell") && !names.contains(&"file_write"),
-            "the real start_channels assembly path must drop non-allowlisted built-ins; got {names:?}"
-        );
-        assert!(
-            names.contains(&"file_read"),
-            "the real start_channels assembly path must keep the allowlisted built-in; got {names:?}"
-        );
-    }
-
-    /// Companion pin for `excluded_tools`, through the same real assembly path.
-    #[tokio::test]
-    async fn assemble_channel_agent_tools_drops_excluded_builtin() {
-        let config = Config::default();
-        let built = channel_all_tools_result(vec![
-            Box::new(NamedMockTool("shell")),
-            Box::new(NamedMockTool("file_read")),
-        ]);
-        let security = Arc::new(SecurityPolicy {
-            excluded_tools: Some(vec!["shell".to_string()]),
-            workspace_dir: std::env::temp_dir(),
-            ..SecurityPolicy::default()
-        });
-        let assembled = assemble_channel_agent_tools(
-            &config,
-            "test-agent",
-            "test-provider",
-            "test-model",
-            &security,
-            built,
-            &[],
-            Arc::new(platform::NativeRuntime::new()),
-        )
-        .await;
-        let names: Vec<&str> = assembled.tools.iter().map(|t| t.name()).collect();
-        assert!(
-            !names.contains(&"shell"),
-            "the real start_channels assembly path must drop the excluded built-in; got {names:?}"
-        );
-        assert!(
-            names.contains(&"file_read"),
-            "the real start_channels assembly path must keep the non-excluded built-in; got {names:?}"
-        );
-    }
-
-    /// Pins the `exclude_memory: false` knob at `assemble_channel_agent_tools`'s
-    /// call site - a regression flipping it to `true` (the ACP-only divergence)
-    /// would silently strip memory tools from every channel agent, undetected by
-    /// the allow/deny-only tests. Feeds one of every canonical memory tool name
-    /// (`clawcrew_tools::MEMORY_TOOL_NAMES`) through the real assembly path and
-    /// asserts all five survive.
-    #[tokio::test]
-    async fn assemble_channel_agent_tools_keeps_memory_tools() {
-        let config = Config::default();
-        let built = channel_all_tools_result(
-            clawcrew_tools::MEMORY_TOOL_NAMES
-                .iter()
-                .map(|name| Box::new(NamedMockTool(name)) as Box<dyn Tool>)
-                .collect(),
-        );
-        let security = Arc::new(SecurityPolicy::default());
-        let assembled = assemble_channel_agent_tools(
-            &config,
-            "test-agent",
-            "test-provider",
-            "test-model",
-            &security,
-            built,
-            &[],
-            Arc::new(platform::NativeRuntime::new()),
-        )
-        .await;
-        let names: Vec<&str> = assembled.tools.iter().map(|t| t.name()).collect();
-        for memory_tool in clawcrew_tools::MEMORY_TOOL_NAMES {
-            assert!(
-                names.contains(memory_tool),
-                "the channel assembly path (exclude_memory: false) must keep memory tool \
-                 '{memory_tool}'; got {names:?}"
-            );
-        }
-    }
-
-    struct FingerprintRuntime;
-
-    impl platform::RuntimeAdapter for FingerprintRuntime {
-        fn name(&self) -> &str {
-            "fingerprint-test-runtime"
-        }
-        fn has_filesystem_access(&self) -> bool {
-            true
-        }
-        fn storage_path(&self) -> std::path::PathBuf {
-            std::env::temp_dir()
-        }
-        fn supports_long_running(&self) -> bool {
-            false
-        }
-        fn shell_dialect(&self) -> platform::ShellDialect {
-            platform::ShellDialect::Posix
-        }
-        fn build_shell_command(
-            &self,
-            _command: &str,
-            _workspace_dir: &std::path::Path,
-        ) -> anyhow::Result<tokio::process::Command> {
-            // Deliberately fails with a distinguishable message instead of spawning a
-            // real process, so executing the resulting skill tool proves THIS runtime
-            // drove construction - not a default/native one, which would instead try
-            // to actually run the command.
-            anyhow::bail!("fingerprint-test-runtime: refusing to spawn a shell command")
-        }
-    }
-
-    /// Pins the fix for a channel-path divergence: `start_channels` previously
-    /// called `register_skill_tools_with_context`, which always defaulted to
-    /// `NativeRuntime` regardless of `[platform]`. `assemble_channel_agent_tools` now
-    /// threads the orchestrator's real `runtime` parameter into skill construction -
-    /// proven here by injecting a runtime whose `build_shell_command` refuses to spawn
-    /// a real process with a distinguishable error; executing the resulting shell-kind
-    /// skill tool surfaces exactly that error, which could only happen if the injected
-    /// runtime (not a default) drove construction.
-    #[tokio::test]
-    async fn assemble_channel_agent_tools_threads_the_given_runtime_to_skill_tools() {
-        let config = Config::default();
-        let built = channel_all_tools_result(Vec::new());
-        let security = Arc::new(SecurityPolicy::default());
-        let skills = vec![clawcrew_runtime::skills::Skill {
-            name: "probe".into(),
-            description: "d".into(),
-            description_localizations: Default::default(),
-            version: "1.0.0".into(),
-            author: None,
-            tags: vec![],
-            tools: vec![clawcrew_runtime::skills::SkillTool {
-                name: "run".into(),
-                description: "d".into(),
-                kind: "shell".into(),
-                command: "echo hi".into(),
-                args: HashMap::new(),
-                target: None,
-                locked_args: HashMap::new(),
-                timeout_secs: None,
-            }],
-            prompts: vec![],
-            slash_options: Vec::new(),
-            always: false,
-            location: None,
-        }];
-        let assembled = assemble_channel_agent_tools(
-            &config,
-            "test-agent",
-            "test-provider",
-            "test-model",
-            &security,
-            built,
-            &skills,
-            Arc::new(FingerprintRuntime),
-        )
-        .await;
-        let tool = assembled
-            .tools
-            .iter()
-            .find(|t| t.name() == "probe__run")
-            .expect("skill tool must be registered");
-        let result = tool.execute(serde_json::json!({})).await;
-        let failed_with_fingerprint = match &result {
-            Err(e) => e.to_string().contains("fingerprint-test-runtime"),
-            Ok(r) => {
-                !r.success
-                    && r.error
-                        .as_deref()
-                        .is_some_and(|e| e.contains("fingerprint-test-runtime"))
-            }
-        };
-        assert!(
-            failed_with_fingerprint,
-            "skill tool must execute via the INJECTED runtime, not a default one; got {result:?}"
-        );
-    }
-
-    #[tokio::test]
-    async fn channel_prompt_callable_names_follow_assembled_registry() {
-        let workspace = make_workspace();
-        let mut config = Config {
-            data_dir: workspace.path().to_path_buf(),
-            ..Default::default()
-        };
-        config.security.nat64_prefixes = vec!["not-a-prefix".into()];
-        let security = Arc::new(SecurityPolicy::default());
-        let skills = vec![clawcrew_runtime::skills::Skill {
-            name: "ops".into(),
-            description: "Operations helpers".into(),
-            description_localizations: Default::default(),
-            version: "1".into(),
-            author: None,
-            tags: Vec::new(),
-            tools: vec![
-                clawcrew_runtime::skills::SkillTool {
-                    name: "run".into(),
-                    description: "Run an operation".into(),
-                    kind: "shell".into(),
-                    command: "echo ok".into(),
-                    args: Default::default(),
-                    target: None,
-                    locked_args: Default::default(),
-                    timeout_secs: None,
-                },
-                clawcrew_runtime::skills::SkillTool {
-                    name: "fetch".into(),
-                    description: "Fetch operation status".into(),
-                    kind: "http".into(),
-                    command: "https://example.com/status".into(),
-                    args: Default::default(),
-                    target: None,
-                    locked_args: Default::default(),
-                    timeout_secs: None,
-                },
-            ],
-            prompts: Vec::new(),
-            slash_options: Vec::new(),
-            always: false,
-            location: None,
-        }];
-        let assembled = assemble_channel_agent_tools(
-            &config,
-            "test-agent",
-            "test-provider",
-            "test-model",
-            &security,
-            channel_all_tools_result(vec![Box::new(NamedMockTool("shell"))]),
-            &skills,
-            Arc::new(platform::NativeRuntime::new()),
-        )
-        .await;
-        let effective_tool_names: HashSet<&str> =
-            assembled.tools.iter().map(|tool| tool.name()).collect();
-        assert!(effective_tool_names.contains("ops__run"));
-        assert!(!effective_tool_names.contains("ops__fetch"));
-
-        let prompt = build_system_prompt_with_mode_and_effective_tools(
-            workspace.path(),
-            "test-model",
-            &[],
-            |name| effective_tool_names.contains(name),
-            &skills,
-            None,
-            None,
-            Some(&clawcrew_config::schema::RiskProfileConfig::default()),
-            true,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
-            false,
-            0,
-            true,
-            false,
-            None,
-        );
-        let callable = prompt
-            .split_once("<callable_tools")
-            .and_then(|(_, rest)| rest.split_once("</callable_tools>"))
-            .map(|(block, _)| block)
-            .expect("surviving shell skill should create callable block");
-
-        assert!(callable.contains("<name>ops__run</name>"));
-        assert!(!callable.contains("<name>ops__fetch</name>"));
-        assert!(
-            prompt.contains("<name>fetch</name>"),
-            "omitted HTTP tool should remain descriptive"
-        );
-    }
 
     fn peer_prompt_test_context(
         channels_by_name: HashMap<String, Arc<dyn Channel>>,
         provider_impl: Arc<HistoryCaptureModelProvider>,
         prompt_config: Arc<Config>,
-        tools_registry: Arc<clawcrew_runtime::tools::scoped::ScopedToolRegistry>,
+        tools_registry: Arc<clawcrew_api::tool::ScopedToolRegistry>,
     ) -> Arc<ChannelRuntimeContext> {
         Arc::new(ChannelRuntimeContext {
             channels_by_name: Arc::new(channels_by_name),
@@ -8492,7 +7671,7 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(RecallMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(RecallMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
@@ -8505,7 +7684,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -8538,30 +7716,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         })
     }
 
@@ -8581,14 +7749,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -8598,7 +7766,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -8626,7 +7793,6 @@ BTC is currently around $65,000 based on latest tool output."#
             },
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             multimodal: clawcrew_config::schema::MultimodalConfig::default(),
             media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
             transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
@@ -8637,24 +7803,15 @@ BTC is currently around $65,000 based on latest tool output."#
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -8755,14 +7912,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -8772,7 +7929,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -8800,7 +7956,6 @@ BTC is currently around $65,000 based on latest tool output."#
             },
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             multimodal: clawcrew_config::schema::MultimodalConfig::default(),
             media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
             transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
@@ -8811,24 +7966,15 @@ BTC is currently around $65,000 based on latest tool output."#
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -8959,14 +8105,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -8976,7 +8122,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -9004,7 +8149,6 @@ BTC is currently around $65,000 based on latest tool output."#
             },
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             multimodal: clawcrew_config::schema::MultimodalConfig::default(),
             media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
             transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
@@ -9015,24 +8159,15 @@ BTC is currently around $65,000 based on latest tool output."#
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -9133,7 +8268,7 @@ BTC is currently around $65,000 based on latest tool output."#
         let mut channels_by_name = HashMap::new();
         channels_by_name.insert(telegram.name().to_string(), telegram);
 
-        let mut hook_runner = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hook_runner = TestHookRunner::new();
         hook_runner.register(Box::new(RewritingSendHook));
 
         let runtime_ctx = Arc::new(ChannelRuntimeContext {
@@ -9146,14 +8281,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -9163,7 +8298,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -9191,7 +8325,6 @@ BTC is currently around $65,000 based on latest tool output."#
             },
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             multimodal: clawcrew_config::schema::MultimodalConfig::default(),
             media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
             transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
@@ -9202,24 +8335,15 @@ BTC is currently around $65,000 based on latest tool output."#
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -9329,7 +8453,7 @@ BTC is currently around $65,000 based on latest tool output."#
         // Record every outbound-hook crossing so we can count how many times the
         // completed narration turn passes through it.
         let seen = Arc::new(parking_lot::Mutex::new(Vec::<String>::new()));
-        let mut hook_runner = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hook_runner = TestHookRunner::new();
         hook_runner.register(Box::new(RecordingSendHook { seen: seen.clone() }));
 
         let runtime_ctx = Arc::new(ChannelRuntimeContext {
@@ -9342,14 +8466,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -9359,7 +8483,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -9387,7 +8510,6 @@ BTC is currently around $65,000 based on latest tool output."#
             },
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             multimodal: clawcrew_config::schema::MultimodalConfig::default(),
             media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
             transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
@@ -9398,24 +8520,15 @@ BTC is currently around $65,000 based on latest tool output."#
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -9500,7 +8613,7 @@ BTC is currently around $65,000 based on latest tool output."#
         }
 
         let seen = std::sync::Arc::new(parking_lot::Mutex::new(Vec::<String>::new()));
-        let mut hook_runner = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hook_runner = TestHookRunner::new();
         hook_runner.register(Box::new(RecordingSendHook { seen: seen.clone() }));
 
         let channel: Arc<dyn Channel> = Arc::new(NoopFlushChannel);
@@ -9684,7 +8797,7 @@ BTC is currently around $65,000 based on latest tool output."#
             calls: AtomicUsize,
         }
         #[async_trait::async_trait]
-        impl clawcrew_runtime::hooks::HookHandler for HookCreatesCredentialPrefix {
+        impl TestHookHandler for HookCreatesCredentialPrefix {
             fn name(&self) -> &str {
                 "hook-creates-credential-prefix"
             }
@@ -9693,20 +8806,20 @@ BTC is currently around $65,000 based on latest tool output."#
                 channel: String,
                 recipient: String,
                 content: String,
-            ) -> clawcrew_runtime::hooks::HookResult<(String, String, String)> {
+            ) -> clawcrew_api::hook::HookResult<(String, String, String)> {
                 if self.calls.fetch_add(1, Ordering::SeqCst) == 0 {
-                    clawcrew_runtime::hooks::HookResult::Continue((
+                    clawcrew_api::hook::HookResult::Continue((
                         channel,
                         recipient,
                         "AKIAABCDEFGH".to_string(),
                     ))
                 } else {
-                    clawcrew_runtime::hooks::HookResult::Continue((channel, recipient, content))
+                    clawcrew_api::hook::HookResult::Continue((channel, recipient, content))
                 }
             }
         }
 
-        let mut hook_runner = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hook_runner = TestHookRunner::new();
         hook_runner.register(Box::new(HookCreatesCredentialPrefix {
             calls: AtomicUsize::new(0),
         }));
@@ -9897,7 +9010,7 @@ BTC is currently around $65,000 based on latest tool output."#
         let mut channels_by_name = HashMap::new();
         channels_by_name.insert(telegram.name().to_string(), telegram);
 
-        let mut hook_runner = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hook_runner = TestHookRunner::new();
         hook_runner.register(Box::new(CancellingSendHook {
             calls: AtomicUsize::new(0),
         }));
@@ -9912,14 +9025,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -9929,7 +9042,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -9957,7 +9069,6 @@ BTC is currently around $65,000 based on latest tool output."#
             },
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             multimodal: clawcrew_config::schema::MultimodalConfig::default(),
             media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
             transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
@@ -9968,24 +9079,15 @@ BTC is currently around $65,000 based on latest tool output."#
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -10057,15 +9159,15 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_alias: Arc::new("test-agent".to_string()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
-                    Box::new(clawcrew_runtime::tools::SessionsCurrentTool::new(
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
+                    Box::new(clawcrew_tools::sessions::SessionsCurrentTool::new(
                         Arc::clone(&session_store),
                     )),
                 ]),
@@ -10076,7 +9178,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -10104,7 +9205,6 @@ BTC is currently around $65,000 based on latest tool output."#
             },
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             multimodal: clawcrew_config::schema::MultimodalConfig::default(),
             media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
             transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
@@ -10114,26 +9214,15 @@ BTC is currently around $65,000 based on latest tool output."#
             ack_reactions: true,
             show_tool_calls: true,
             session_store: Some(Arc::clone(&session_store)),
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(&{
-                let mut profile = clawcrew_config::schema::RiskProfileConfig::default();
-                profile.auto_approve.push("sessions_current".to_string());
-                profile
-            })),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             agent_transcription_provider: String::new(),
         });
@@ -10181,14 +9270,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_alias: Arc::new("test-agent".to_string()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -10198,7 +9287,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -10226,7 +9314,6 @@ BTC is currently around $65,000 based on latest tool output."#
             },
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::Full,
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             multimodal: clawcrew_config::schema::MultimodalConfig::default(),
             media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
             transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
@@ -10236,31 +9323,21 @@ BTC is currently around $65,000 based on latest tool output."#
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig {
-                    level: clawcrew_config::autonomy::AutonomyLevel::Full,
-                    auto_approve: vec!["mock_price".to_string()],
-                    ..Default::default()
-                },
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: Some(
-                clawcrew_runtime::agent::tool_receipts::ReceiptGenerator::new(),
-            ),
-            show_receipts_in_response: true,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
-            agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
+            agent_cfg: Arc::new({
+                let mut cfg = clawcrew_config::schema::AliasedAgentConfig::default();
+                cfg.resolved.tool_receipts.enabled = true;
+                cfg.resolved.tool_receipts.show_in_response = true;
+                cfg
+            }),
             agent_transcription_provider: String::new(),
         });
 
@@ -10328,23 +9405,20 @@ BTC is currently around $65,000 based on latest tool output."#
         // aloud, while the conversational reply keeps its default routing.
         let channel_impl = Arc::new(SendMessageRecordingChannel::default());
         let channel: Arc<dyn Channel> = channel_impl.clone();
+        let mut agent_cfg = clawcrew_config::schema::AliasedAgentConfig::default();
+        agent_cfg.resolved.tool_receipts.enabled = true;
+        agent_cfg.resolved.tool_receipts.show_in_response = true;
         let base_ctx = test_runtime_ctx_with_observer_and_tools(
             channel,
             Arc::new(ToolCallingModelProvider),
             clawcrew_config::schema::Config::default(),
-            clawcrew_config::schema::AliasedAgentConfig::default(),
+            agent_cfg,
             "test-provider",
             None,
             Arc::new(NoopObserver),
             vec![Box::new(MockPriceTool)],
         );
-        let runtime_ctx = Arc::new(ChannelRuntimeContext {
-            receipt_generator: Some(
-                clawcrew_runtime::agent::tool_receipts::ReceiptGenerator::new(),
-            ),
-            show_receipts_in_response: true,
-            ..(*base_ctx).clone()
-        });
+        let runtime_ctx = base_ctx;
 
         process_channel_message(
             runtime_ctx,
@@ -10481,14 +9555,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_alias: Arc::new("test-agent".to_string()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -10498,7 +9572,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -10530,7 +9603,6 @@ BTC is currently around $65,000 based on latest tool output."#
             // `show_receipts_in_response` and not on whether the loop saw
             // any receipts.
             autonomy_level: AutonomyLevel::Full,
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             multimodal: clawcrew_config::schema::MultimodalConfig::default(),
             media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
             transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
@@ -10540,30 +9612,15 @@ BTC is currently around $65,000 based on latest tool output."#
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig {
-                    level: clawcrew_config::autonomy::AutonomyLevel::Full,
-                    auto_approve: vec!["mock_price".to_string()],
-                    ..Default::default()
-                },
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: Some(
-                clawcrew_runtime::agent::tool_receipts::ReceiptGenerator::new(),
-            ),
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             agent_transcription_provider: String::new(),
         });
@@ -10612,14 +9669,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_alias: Arc::new("test-agent".to_string()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -10629,7 +9686,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -10657,7 +9713,6 @@ BTC is currently around $65,000 based on latest tool output."#
             },
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::Full,
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             multimodal: clawcrew_config::schema::MultimodalConfig::default(),
             media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
             transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
@@ -10667,28 +9722,15 @@ BTC is currently around $65,000 based on latest tool output."#
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig {
-                    level: clawcrew_config::autonomy::AutonomyLevel::Full,
-                    auto_approve: vec!["mock_price".to_string()],
-                    ..Default::default()
-                },
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             agent_transcription_provider: String::new(),
         });
@@ -10765,14 +9807,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -10782,7 +9824,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -10810,7 +9851,6 @@ BTC is currently around $65,000 based on latest tool output."#
             },
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             multimodal: clawcrew_config::schema::MultimodalConfig::default(),
             media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
             transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
@@ -10821,24 +9861,15 @@ BTC is currently around $65,000 based on latest tool output."#
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -10901,14 +9932,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -10918,7 +9949,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -10951,30 +9981,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -11022,14 +10042,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -11039,7 +10059,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -11072,30 +10091,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -11163,14 +10172,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -11178,7 +10187,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -11211,30 +10219,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -11260,7 +10258,7 @@ BTC is currently around $65,000 based on latest tool output."#
 
         let sent = channel_impl.sent_messages.lock().await;
         assert_eq!(sent.len(), 1);
-        let expected_reply = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+        let expected_reply = galleon_i18n::get_required_cli_string_with_args(
             "channel-runtime-set-provider-switched",
             &[
                 ("provider", "openrouter.default"),
@@ -11326,14 +10324,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -11341,7 +10339,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -11374,30 +10371,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -11495,10 +10482,7 @@ BTC is currently around $65,000 based on latest tool output."#
             Arc::new(cfg)
         };
 
-        let model_switch_tool = clawcrew_runtime::tools::ModelSwitchTool::new(
-            Arc::new(SecurityPolicy::default()),
-            Arc::clone(&prompt_config),
-        );
+        let model_switch_tool = Box::new(NamedMockTool("model_switch"));
 
         let runtime_ctx = Arc::new(ChannelRuntimeContext {
             channels_by_name: Arc::new(channels_by_name),
@@ -11508,15 +10492,15 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
-                    Box::new(model_switch_tool),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
+                    model_switch_tool,
                 ]),
             ),
             observer: observer.clone(),
@@ -11525,7 +10509,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -11558,33 +10541,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(model_routes),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig {
-                    auto_approve: vec!["model_switch".to_string()],
-                    ..clawcrew_config::schema::RiskProfileConfig::default()
-                },
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -12002,14 +10972,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -12017,7 +10987,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -12050,30 +11019,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -12116,14 +11075,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -12133,7 +11092,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 12,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -12166,33 +11124,23 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig {
                 loop_detection_enabled: false,
                 ..clawcrew_config::schema::PacingConfig::default()
             },
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -12242,14 +11190,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![
                     Box::new(MockPriceTool),
                 ]),
             ),
@@ -12259,7 +11207,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 3,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -12292,33 +11239,23 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig {
                 loop_detection_enabled: false,
                 ..clawcrew_config::schema::PacingConfig::default()
             },
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -12481,6 +11418,7 @@ BTC is currently around $65,000 based on latest tool output."#
                 key: "memory_key_1".to_string(),
                 content: "Age is 45".to_string(),
                 category: clawcrew_memory::MemoryCategory::Conversation,
+                scope: Default::default(),
                 timestamp: "2026-02-20T00:00:00Z".to_string(),
                 session_id: None,
                 score: Some(0.9),
@@ -12931,9 +11869,9 @@ BTC is currently around $65,000 based on latest tool output."#
             .unwrap();
 
         let folded =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-folded-followup");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-folded-followup");
         let no_task =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
         let observed = tokio::time::timeout(Duration::from_secs(3), async {
             loop {
                 let sent = channel_impl.sent_messages.lock().await.clone();
@@ -13074,7 +12012,7 @@ BTC is currently around $65,000 based on latest tool output."#
         // follow-up yet — cannot leave it uncancelled: that stop is a no-op for
         // the scope, and the follow-up keeps its place in the lane.
         let stop_sent =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         tokio::time::timeout(Duration::from_secs(2), async {
             loop {
                 tx.send(clawcrew_api::channel::ChannelMessage {
@@ -13120,7 +12058,7 @@ BTC is currently around $65,000 based on latest tool output."#
             .expect("dispatch loop must finish after the root turn")
             .unwrap();
 
-        let stop_ack = clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+        let stop_ack = galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         let sent_messages = channel_impl.sent_messages.lock().await;
         assert!(
             sent_messages.iter().any(|m| m.contains("response-1")),
@@ -13217,7 +12155,7 @@ BTC is currently around $65,000 based on latest tool output."#
         // The acknowledgement is produced after the payload is retired (both
         // happen in the receiver), so waiting for it pins the retirement before
         // the reply below reuses the stopped turn's bucket.
-        let stop_ack = clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+        let stop_ack = galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         tokio::time::timeout(Duration::from_secs(2), async {
             loop {
                 let sent = channel_impl.sent_messages.lock().await;
@@ -13377,7 +12315,7 @@ BTC is currently around $65,000 based on latest tool output."#
         // Wait for the acknowledgement before releasing the root: it is sent
         // after the scope's cancellations and their bucket retirement, so the
         // reply's bucket is already open when the stop is processed.
-        let stop_ack = clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+        let stop_ack = galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         tokio::time::timeout(Duration::from_secs(2), async {
             loop {
                 let sent = channel_impl.sent_messages.lock().await;
@@ -13720,14 +12658,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -13735,7 +12673,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -13768,30 +12705,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(4);
@@ -13870,14 +12797,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -13885,7 +12812,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -13918,30 +12844,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
@@ -14035,14 +12951,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -14050,7 +12966,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -14083,30 +12998,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
@@ -14193,14 +13098,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -14208,7 +13113,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -14245,30 +13149,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::from_millis(120),
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
@@ -14356,14 +13250,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -14371,7 +13265,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -14407,27 +13300,17 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
@@ -14569,14 +13452,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -14584,7 +13467,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -14610,30 +13492,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
@@ -14798,14 +13670,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -14813,7 +13685,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -14846,30 +13717,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
@@ -14938,14 +13799,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -14953,7 +13814,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -14986,30 +13846,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -15471,14 +14321,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -15486,7 +14336,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -15519,30 +14368,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -15605,14 +14444,14 @@ BTC is currently around $65,000 based on latest tool output."#
             thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -15620,7 +14459,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -15652,30 +14490,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -15742,14 +14570,14 @@ BTC is currently around $65,000 based on latest tool output."#
             thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -15757,7 +14585,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -15789,30 +14616,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -15871,14 +14688,14 @@ BTC is currently around $65,000 based on latest tool output."#
             thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -15886,7 +14703,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -15918,30 +14734,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -16000,14 +14806,14 @@ BTC is currently around $65,000 based on latest tool output."#
             thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -16015,7 +14821,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -16047,30 +14852,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: false,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -16416,14 +15211,14 @@ BTC is currently around $65,000 based on latest tool output."#
             thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -16431,7 +15226,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -16463,30 +15257,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -16522,755 +15306,6 @@ BTC is currently around $65,000 based on latest tool output."#
         );
     }
 
-    #[test]
-    fn prompt_contains_all_sections() {
-        let ws = make_workspace();
-        let tools = vec![("shell", "Run commands"), ("file_read", "Read files")];
-        let prompt = build_system_prompt(ws.path(), "test-model", &tools, &[], None, None);
-
-        // Section headers
-        assert!(prompt.contains("## Tools"), "missing Tools section");
-        assert!(prompt.contains("## Safety"), "missing Safety section");
-        assert!(prompt.contains("## Workspace"), "missing Workspace section");
-        assert!(
-            prompt.contains("## Project Context"),
-            "missing Project Context"
-        );
-        assert!(prompt.contains("## Current Date"), "missing Date section");
-        assert!(
-            !prompt.contains("## Current Date & Time"),
-            "prompt should use date-only context"
-        );
-        assert!(prompt.contains("## Runtime"), "missing Runtime section");
-    }
-
-    #[test]
-    fn prompt_injects_tools() {
-        let ws = make_workspace();
-        let tools = vec![
-            ("shell", "Run commands"),
-            ("memory_recall", "Search memory"),
-        ];
-        let prompt = build_system_prompt(ws.path(), "gpt-4o", &tools, &[], None, None);
-
-        assert!(prompt.contains("**shell**"));
-        assert!(prompt.contains("Run commands"));
-        assert!(prompt.contains("**memory_recall**"));
-    }
-
-    #[test]
-    fn prompt_includes_single_tool_protocol_block_after_append() {
-        let ws = make_workspace();
-        let tools = vec![("shell", "Run commands")];
-        let mut prompt = build_system_prompt(ws.path(), "gpt-4o", &tools, &[], None, None);
-
-        assert!(
-            !prompt.contains("## Tool Use Protocol"),
-            "build_system_prompt should not emit protocol block directly"
-        );
-
-        let tools_registry: Vec<Box<dyn Tool>> = vec![Box::new(MockPriceTool)];
-        prompt.push_str(&build_tool_instructions(&tools_registry));
-
-        assert_eq!(
-            prompt.matches("## Tool Use Protocol").count(),
-            1,
-            "protocol block should appear exactly once in the final prompt"
-        );
-    }
-
-    #[test]
-    fn channel_strict_non_native_prompt_hides_text_tool_protocol() {
-        let ws = make_workspace();
-        let mut tool_descs = vec![("shell", "Run commands")];
-        let mut deferred_section = "## Deferred MCP Tools\n\n- mcp__example".to_string();
-
-        let expose_text_protocol =
-            apply_text_tool_prompt_policy(false, true, &mut tool_descs, &mut deferred_section);
-
-        let mut prompt = build_system_prompt_with_mode_and_autonomy(
-            ws.path(),
-            "gpt-4o",
-            &tool_descs,
-            &[],
-            None,
-            None,
-            None,
-            false,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
-            false,
-            0,
-            false,
-            false,
-            None,
-        );
-        if expose_text_protocol {
-            let tools_registry: Vec<Box<dyn Tool>> = vec![Box::new(MockPriceTool)];
-            let effective_tool_names: HashSet<&str> =
-                tools_registry.iter().map(|tool| tool.name()).collect();
-            prompt.push_str(&build_tool_instructions_for_names(
-                &tools_registry,
-                &effective_tool_names,
-            ));
-        }
-        if !deferred_section.is_empty() {
-            prompt.push('\n');
-            prompt.push_str(&deferred_section);
-        }
-
-        assert!(!expose_text_protocol);
-        assert!(!prompt.contains("## Tools"));
-        assert!(!prompt.contains("## Tool Use Protocol"));
-        assert!(!prompt.contains("<tool_call>"));
-        assert!(!prompt.contains("mcp__example"));
-    }
-
-    #[test]
-    fn channel_strict_non_native_prompt_keeps_skill_tools_non_callable() {
-        let ws = make_workspace();
-        let skills = vec![clawcrew_runtime::skills::Skill {
-            name: "ops".into(),
-            description: "Operations helpers".into(),
-            description_localizations: Default::default(),
-            version: "1".into(),
-            author: None,
-            tags: Vec::new(),
-            tools: vec![clawcrew_runtime::skills::SkillTool {
-                name: "run".into(),
-                description: "Run an operation".into(),
-                kind: "shell".into(),
-                command: "echo ok".into(),
-                args: Default::default(),
-                target: None,
-                locked_args: Default::default(),
-                timeout_secs: None,
-            }],
-            prompts: Vec::new(),
-            slash_options: Vec::new(),
-            always: false,
-            location: None,
-        }];
-
-        let prompt = build_system_prompt_with_mode_and_effective_tools(
-            ws.path(),
-            "test-model",
-            &[],
-            |_| false,
-            &skills,
-            None,
-            None,
-            None,
-            false,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
-            false,
-            0,
-            false,
-            false,
-            None,
-        );
-
-        assert!(!prompt.contains("<callable_tools"));
-        assert!(prompt.contains("<name>run</name>"));
-    }
-
-    #[test]
-    fn channel_skill_availability_requires_callable_tool_protocol() {
-        let tools_registry: Vec<Box<dyn Tool>> = vec![Box::new(NamedMockTool("read_skill"))];
-        let text_tool_prompt = "## Tool Use Protocol\n\n\
-            <tool_call></tool_call>\n\n\
-            ### Available Tools\n\n\
-            **read_skill**: Read a skill";
-        let read_skill_available = |native_tool_specs_present: bool,
-                                    strict_tool_parsing: bool,
-                                    excluded_tools: &[String],
-                                    system_prompt: &str| {
-            channel_tool_available_for_turn(
-                callable_protocol_exposed_for_channel_turn(
-                    native_tool_specs_present,
-                    strict_tool_parsing,
-                    system_prompt,
-                ),
-                &tools_registry,
-                excluded_tools,
-                "read_skill",
-            )
-        };
-
-        assert!(read_skill_available(false, false, &[], text_tool_prompt));
-        assert!(!read_skill_available(false, false, &[], ""));
-        assert!(!read_skill_available(
-            false,
-            false,
-            &[],
-            "## Workspace\n\nMentions ## Tool Use Protocol and **read_skill** in ordinary prose.",
-        ));
-        assert!(!read_skill_available(
-            false,
-            false,
-            &["read_skill".to_string()],
-            text_tool_prompt,
-        ));
-        assert!(!read_skill_available(false, true, &[], text_tool_prompt));
-        assert!(read_skill_available(true, true, &[], ""));
-    }
-
-    #[test]
-    fn channel_skill_availability_uses_selected_model_capability() {
-        let provider = ModelAwareToolProvider;
-        let tools_registry: Vec<Box<dyn Tool>> = vec![Box::new(NamedMockTool("read_skill"))];
-        let text_tool_prompt = "## Tool Use Protocol\n\n\
-            <tool_call></tool_call>\n\n\
-            ### Available Tools\n\n\
-            **read_skill**: Read a skill";
-
-        assert!(provider.supports_native_tools());
-        let selected_model_native =
-            ::clawcrew_runtime::agent::loop_::native_tool_specs_present_for_turn(
-                &provider,
-                "text-only",
-                &tools_registry,
-                &[],
-                None,
-            )
-            .unwrap();
-        assert!(!selected_model_native);
-        assert!(!callable_protocol_exposed_for_channel_turn(
-            selected_model_native,
-            true,
-            text_tool_prompt,
-        ));
-        assert!(callable_protocol_exposed_for_channel_turn(
-            selected_model_native,
-            false,
-            text_tool_prompt,
-        ));
-    }
-
-    #[test]
-    fn rendered_skills_prompt_mode_ignores_skill_body_text() {
-        let prompt = "## Available Skills\n\n\
-            Skill instructions and tool metadata are preloaded below.\n\n\
-            <available_skills>\n\
-            <skill>Skill summaries are preloaded below to keep context compact.</skill>\n\
-            </available_skills>";
-
-        assert_eq!(
-            rendered_skills_prompt_mode(prompt),
-            Some(clawcrew_config::schema::SkillsPromptInjectionMode::Full)
-        );
-    }
-
-    #[test]
-    fn effective_non_cli_tool_names_respects_exclusions() {
-        let tools_registry: Vec<Box<dyn Tool>> = vec![
-            Box::new(NamedMockTool("read_skill")),
-            Box::new(NamedMockTool("file_read")),
-        ];
-        let risk_profile = clawcrew_config::schema::RiskProfileConfig {
-            excluded_tools: vec!["read_skill".to_string()],
-            ..Default::default()
-        };
-
-        let effective = effective_non_cli_tool_names(&tools_registry, &risk_profile);
-        assert!(!effective.contains("read_skill"));
-        assert!(effective.contains("file_read"));
-
-        let full_profile = clawcrew_config::schema::RiskProfileConfig {
-            level: AutonomyLevel::Full,
-            excluded_tools: vec!["read_skill".to_string()],
-            ..Default::default()
-        };
-        let effective_full = effective_non_cli_tool_names(&tools_registry, &full_profile);
-        assert!(effective_full.contains("read_skill"));
-    }
-
-    #[test]
-    fn prompt_injects_safety() {
-        let ws = make_workspace();
-        let prompt = build_system_prompt(ws.path(), "model", &[], &[], None, None);
-
-        assert!(prompt.contains("Do not exfiltrate private data"));
-        assert!(prompt.contains("Respect the runtime autonomy policy"));
-        assert!(prompt.contains("Prefer `trash` over `rm`"));
-    }
-
-    #[test]
-    fn prompt_injects_workspace_files() {
-        let ws = make_workspace();
-        let prompt = build_system_prompt(ws.path(), "model", &[], &[], None, None);
-
-        assert!(!prompt.contains("### SOUL.md"), "heading removed: SOUL.md");
-        const SOUL_CONTENT: &str = "# Soul\nBe helpful.";
-        assert!(prompt.contains(SOUL_CONTENT), "missing SOUL content");
-        assert_eq!(
-            prompt.matches(SOUL_CONTENT).count(),
-            1,
-            "SOUL content should be injected exactly once"
-        );
-        assert!(
-            !prompt.contains("### IDENTITY.md"),
-            "heading removed: IDENTITY.md"
-        );
-        assert!(
-            prompt.contains("Name: ClawCrew"),
-            "missing IDENTITY content"
-        );
-        assert!(!prompt.contains("### USER.md"), "heading removed: USER.md");
-        assert!(
-            !prompt.contains("### AGENTS.md"),
-            "heading removed: AGENTS.md"
-        );
-        assert!(
-            !prompt.contains("### TOOLS.md"),
-            "heading removed: TOOLS.md"
-        );
-        // HEARTBEAT.md is intentionally excluded from channel prompts — it's only
-        // relevant to the heartbeat worker and causes LLMs to emit spurious
-        // "HEARTBEAT_OK" acknowledgments in channel conversations.
-        assert!(
-            !prompt.contains("### HEARTBEAT.md"),
-            "HEARTBEAT.md should not be in channel prompt"
-        );
-        assert!(
-            !prompt.contains("### MEMORY.md"),
-            "heading removed: MEMORY.md"
-        );
-        assert!(prompt.contains("User likes Rust"), "missing MEMORY content");
-    }
-
-    #[test]
-    fn prompt_missing_file_markers() {
-        let tmp = TempDir::new().unwrap();
-        // Empty workspace — no files at all
-        let prompt = build_system_prompt(tmp.path(), "model", &[], &[], None, None);
-
-        assert!(prompt.contains("[File not found: SOUL.md]"));
-        assert!(prompt.contains("[File not found: AGENTS.md]"));
-        assert!(prompt.contains("[File not found: IDENTITY.md]"));
-    }
-
-    #[test]
-    fn prompt_bootstrap_only_if_exists() {
-        let ws = make_workspace();
-        // No BOOTSTRAP.md — should not appear
-        let prompt = build_system_prompt(ws.path(), "model", &[], &[], None, None);
-        assert!(
-            !prompt.contains("### BOOTSTRAP.md"),
-            "BOOTSTRAP.md should not appear when missing"
-        );
-
-        // Create BOOTSTRAP.md — content should appear, heading should not
-        std::fs::write(ws.path().join("BOOTSTRAP.md"), "# Bootstrap\nFirst run.").unwrap();
-        let prompt2 = build_system_prompt(ws.path(), "model", &[], &[], None, None);
-        assert!(
-            !prompt2.contains("### BOOTSTRAP.md"),
-            "BOOTSTRAP heading removed: {prompt2}"
-        );
-        assert!(
-            prompt2.contains("First run."),
-            "BOOTSTRAP content should appear: {prompt2}"
-        );
-        assert!(prompt2.contains("First run"));
-    }
-
-    #[test]
-    fn prompt_no_daily_memory_injection() {
-        let ws = make_workspace();
-        let memory_dir = ws.path().join("memory");
-        std::fs::create_dir_all(&memory_dir).unwrap();
-        let today = chrono::Local::now().format("%Y-%m-%d").to_string();
-        std::fs::write(
-            memory_dir.join(format!("{today}.md")),
-            "# Daily\nSome note.",
-        )
-        .unwrap();
-
-        let prompt = build_system_prompt(ws.path(), "model", &[], &[], None, None);
-
-        // Daily notes should NOT be in the system prompt (on-demand via tools)
-        assert!(
-            !prompt.contains("Daily Notes"),
-            "daily notes should not be auto-injected"
-        );
-        assert!(
-            !prompt.contains("Some note"),
-            "daily content should not be in prompt"
-        );
-    }
-
-    #[test]
-    fn prompt_runtime_metadata() {
-        let ws = make_workspace();
-        let prompt = build_system_prompt(ws.path(), "claude-sonnet-4", &[], &[], None, None);
-
-        assert!(prompt.contains("Model: claude-sonnet-4"));
-        assert!(prompt.contains(&format!("OS: {}", std::env::consts::OS)));
-        assert!(prompt.contains("Host:"));
-    }
-
-    #[test]
-    fn prompt_helpers_default_mode_preserves_instructions_with_compact_loader() {
-        let ws = make_workspace();
-        let skills = vec![clawcrew_runtime::skills::Skill {
-            name: "code-review".into(),
-            description: "Review code for bugs".into(),
-            description_localizations: Default::default(),
-            version: "1.0.0".into(),
-            author: None,
-            tags: vec![],
-            tools: vec![clawcrew_runtime::skills::SkillTool {
-                name: "lint".into(),
-                description: "Run static checks".into(),
-                kind: "shell".into(),
-                command: "cargo clippy".into(),
-                args: HashMap::new(),
-                target: None,
-                locked_args: std::collections::HashMap::new(),
-                timeout_secs: None,
-            }],
-            prompts: vec!["Always run cargo test before final response.".into()],
-            slash_options: Vec::new(),
-            always: false,
-            location: None,
-        }];
-
-        let prompt = build_system_prompt(
-            ws.path(),
-            "model",
-            &[("read_skill", "Load skill instructions by name")],
-            &skills,
-            None,
-            None,
-        );
-        let prompt_with_tool_calls =
-            clawcrew_runtime::agent::system_prompt::build_system_prompt_with_tool_calls(
-                ws.path(),
-                "model",
-                &[("read_skill", "Load skill instructions by name")],
-                &skills,
-                None,
-                None,
-                true,
-            );
-
-        assert!(prompt.contains("<available_skills>"), "missing skills XML");
-        assert!(prompt.contains("<name>code-review</name>"));
-        assert!(prompt.contains("<description>Review code for bugs</description>"));
-        assert!(prompt.contains("SKILL.md</location>"));
-        assert!(prompt.contains("<instructions>"));
-        assert!(
-            prompt.contains(
-                "<instruction>Always run cargo test before final response.</instruction>"
-            )
-        );
-        // Registered tools (shell kind) appear under <callable_tools> with prefixed names
-        assert!(prompt.contains("<callable_tools"));
-        assert!(prompt.contains("<name>code-review__lint</name>"));
-        assert!(prompt_with_tool_calls.contains("<instructions>"));
-        assert!(
-            prompt_with_tool_calls.contains(
-                "<instruction>Always run cargo test before final response.</instruction>"
-            )
-        );
-    }
-
-    #[test]
-    fn prompt_skills_compact_mode_omits_instructions_but_keeps_tools() {
-        let ws = make_workspace();
-        let skills = vec![clawcrew_runtime::skills::Skill {
-            name: "code-review".into(),
-            description: "Review code for bugs".into(),
-            description_localizations: Default::default(),
-            version: "1.0.0".into(),
-            author: None,
-            tags: vec![],
-            tools: vec![clawcrew_runtime::skills::SkillTool {
-                name: "lint".into(),
-                description: "Run static checks".into(),
-                kind: "shell".into(),
-                command: "cargo clippy".into(),
-                args: HashMap::new(),
-                target: None,
-                locked_args: std::collections::HashMap::new(),
-                timeout_secs: None,
-            }],
-            prompts: vec!["Always run cargo test before final response.".into()],
-            slash_options: Vec::new(),
-            always: false,
-            location: None,
-        }];
-
-        let prompt = build_system_prompt_with_mode(
-            ws.path(),
-            "model",
-            &[("read_skill", "Load skill instructions by name")],
-            &skills,
-            None,
-            None,
-            false,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Compact,
-            AutonomyLevel::default(),
-        );
-
-        assert!(prompt.contains("<available_skills>"), "missing skills XML");
-        assert!(prompt.contains("<name>code-review</name>"));
-        assert!(prompt.contains("<location>skills/code-review/SKILL.md</location>"));
-        assert!(prompt.contains("loaded on demand"));
-        assert!(!prompt.contains("<instructions>"));
-        assert!(
-            !prompt.contains(
-                "<instruction>Always run cargo test before final response.</instruction>"
-            )
-        );
-        // Compact mode should still include tools so the LLM knows about them.
-        // Registered tools (shell kind) appear under <callable_tools> with prefixed names.
-        assert!(prompt.contains("<callable_tools"));
-        assert!(prompt.contains("<name>code-review__lint</name>"));
-    }
-
-    #[test]
-    fn prompt_skills_escape_reserved_xml_chars() {
-        let ws = make_workspace();
-        let skills = vec![clawcrew_runtime::skills::Skill {
-            name: "code<review>&".into(),
-            description: "Review \"unsafe\" and 'risky' bits".into(),
-            description_localizations: Default::default(),
-            version: "1.0.0".into(),
-            author: None,
-            tags: vec![],
-            tools: vec![clawcrew_runtime::skills::SkillTool {
-                name: "run\"linter\"".into(),
-                description: "Run <lint> & report".into(),
-                kind: "shell&exec".into(),
-                command: "cargo clippy".into(),
-                args: HashMap::new(),
-                target: None,
-                locked_args: std::collections::HashMap::new(),
-                timeout_secs: None,
-            }],
-            prompts: vec!["Use <tool_call> and & keep output \"safe\"".into()],
-            slash_options: Vec::new(),
-            always: false,
-            location: None,
-        }];
-
-        let prompt = build_system_prompt(ws.path(), "model", &[], &skills, None, None);
-
-        assert!(prompt.contains("<name>code&lt;review&gt;&amp;</name>"));
-        assert!(prompt.contains(
-            "<description>Review &quot;unsafe&quot; and &apos;risky&apos; bits</description>"
-        ));
-        assert!(prompt.contains("<name>run&quot;linter&quot;</name>"));
-        assert!(prompt.contains("<description>Run &lt;lint&gt; &amp; report</description>"));
-        assert!(prompt.contains("<kind>shell&amp;exec</kind>"));
-        assert!(prompt.contains(
-            "<instruction>Use &lt;tool_call&gt; and &amp; keep output &quot;safe&quot;</instruction>"
-        ));
-    }
-
-    #[test]
-    fn prompt_truncation() {
-        let ws = make_workspace();
-        // Write a file larger than BOOTSTRAP_MAX_CHARS
-        let big_content = "x".repeat(BOOTSTRAP_MAX_CHARS + 1000);
-        std::fs::write(ws.path().join("AGENTS.md"), &big_content).unwrap();
-
-        let prompt = build_system_prompt(ws.path(), "model", &[], &[], None, None);
-
-        assert!(
-            prompt.contains("truncated at"),
-            "large files should be truncated"
-        );
-        assert!(
-            !prompt.contains(&big_content),
-            "full content should not appear"
-        );
-    }
-
-    #[test]
-    fn prompt_empty_files_skipped() {
-        let ws = make_workspace();
-        std::fs::write(ws.path().join("TOOLS.md"), "").unwrap();
-
-        let prompt = build_system_prompt(ws.path(), "model", &[], &[], None, None);
-
-        // Empty file should not produce a header
-        assert!(
-            !prompt.contains("### TOOLS.md"),
-            "empty files should be skipped"
-        );
-    }
-
-    #[test]
-    fn channel_log_truncation_is_utf8_safe_for_multibyte_text() {
-        let msg = "Hello from ClawCrew 🌍. Current status is healthy, and café-style UTF-8 text stays safe in logs.";
-
-        // Reproduces the production crash path where channel logs truncate at 80 chars.
-        let result =
-            std::panic::catch_unwind(|| clawcrew_runtime::util::truncate_with_ellipsis(msg, 80));
-        assert!(
-            result.is_ok(),
-            "truncate_with_ellipsis should never panic on UTF-8"
-        );
-
-        let truncated = result.unwrap();
-        assert!(!truncated.is_empty());
-        assert!(truncated.is_char_boundary(truncated.len()));
-    }
-
-    #[test]
-    fn prompt_contains_channel_capabilities() {
-        let ws = make_workspace();
-        let prompt = build_system_prompt(ws.path(), "model", &[], &[], None, None);
-
-        assert!(
-            prompt.contains("## Channel Capabilities"),
-            "missing Channel Capabilities section"
-        );
-        assert!(
-            prompt.contains("running as a messaging bot"),
-            "missing channel context"
-        );
-        assert!(
-            prompt.contains("NEVER repeat, describe, or echo credentials"),
-            "missing security instruction"
-        );
-    }
-
-    #[test]
-    fn full_autonomy_prompt_executes_allowed_tools_without_extra_approval() {
-        let ws = make_workspace();
-        let config = clawcrew_config::schema::RiskProfileConfig {
-            level: clawcrew_runtime::security::AutonomyLevel::Full,
-            ..clawcrew_config::schema::RiskProfileConfig::default()
-        };
-        let prompt = build_system_prompt_with_mode_and_autonomy(
-            ws.path(),
-            "model",
-            &[],
-            &[],
-            None,
-            None,
-            Some(&config),
-            false,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
-            false,
-            0,
-            false,
-            false,
-            None,
-        );
-
-        assert!(
-            prompt.contains("Execute those directly instead of asking the user for extra approval"),
-            "full autonomy should instruct direct execution for allowed tools"
-        );
-        assert!(
-            prompt.contains("Never pretend you are waiting for a human approval"),
-            "full autonomy should not simulate interactive approval flows"
-        );
-    }
-
-    #[test]
-    fn readonly_prompt_explains_policy_blocks_without_fake_approval() {
-        let ws = make_workspace();
-        let config = clawcrew_config::schema::RiskProfileConfig {
-            level: clawcrew_runtime::security::AutonomyLevel::ReadOnly,
-            ..clawcrew_config::schema::RiskProfileConfig::default()
-        };
-        let prompt = build_system_prompt_with_mode_and_autonomy(
-            ws.path(),
-            "model",
-            &[],
-            &[],
-            None,
-            None,
-            Some(&config),
-            false,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
-            false,
-            0,
-            false,
-            false,
-            None,
-        );
-
-        assert!(
-            prompt.contains("this runtime is read-only for side effects"),
-            "read-only prompt should expose the runtime restriction"
-        );
-        assert!(
-            prompt.contains("instead of simulating an approval flow"),
-            "read-only prompt should explain restrictions instead of faking approval"
-        );
-    }
-
-    #[test]
-    fn prompt_workspace_path() {
-        let ws = make_workspace();
-        let prompt = build_system_prompt(ws.path(), "model", &[], &[], None, None);
-
-        assert!(prompt.contains(&format!("Working directory: `{}`", ws.path().display())));
-    }
-
-    #[test]
-    fn full_autonomy_omits_approval_instructions() {
-        let ws = make_workspace();
-        let prompt = build_system_prompt_with_mode(
-            ws.path(),
-            "model",
-            &[],
-            &[],
-            None,
-            None,
-            false,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
-            AutonomyLevel::Full,
-        );
-
-        assert!(
-            !prompt.contains("without asking"),
-            "full autonomy prompt must not tell the model to ask before acting"
-        );
-        assert!(
-            !prompt.contains("ask before acting externally"),
-            "full autonomy prompt must not contain ask-before-acting instruction"
-        );
-        // Core safety rules should still be present
-        assert!(
-            prompt.contains("Do not exfiltrate private data"),
-            "data exfiltration guard must remain"
-        );
-        assert!(
-            prompt.contains("Prefer `trash` over `rm`"),
-            "trash-over-rm hint must remain"
-        );
-    }
-
-    #[test]
-    fn supervised_autonomy_includes_approval_instructions() {
-        let ws = make_workspace();
-        let prompt = build_system_prompt_with_mode(
-            ws.path(),
-            "model",
-            &[],
-            &[],
-            None,
-            None,
-            false,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
-            AutonomyLevel::Supervised,
-        );
-
-        assert!(
-            prompt.contains("without asking"),
-            "supervised prompt must include ask-before-acting instruction"
-        );
-        assert!(
-            prompt.contains("ask before acting externally"),
-            "supervised prompt must include ask-before-acting instruction"
-        );
-    }
 
     #[test]
     fn channel_notify_observer_truncates_utf8_arguments_safely() {
@@ -17288,7 +15323,7 @@ BTC is currently around $65,000 based on latest tool output."#
             .expect("should produce non-char-boundary data at byte index 120");
 
         observer.record_event(
-            &clawcrew_runtime::observability::traits::ObserverEvent::ToolCallStart {
+            &clawcrew_api::observability_traits::ObserverEvent::ToolCallStart {
                 parent_agent_alias: None,
                 tool: "file_write".to_string(),
                 tool_call_id: None,
@@ -17318,7 +15353,7 @@ BTC is currently around $65,000 based on latest tool output."#
         let payload = serde_json::json!({ "path": &long_path }).to_string();
 
         observer.record_event(
-            &clawcrew_runtime::observability::traits::ObserverEvent::ToolCallStart {
+            &clawcrew_api::observability_traits::ObserverEvent::ToolCallStart {
                 parent_agent_alias: None,
                 tool: "file_read".to_string(),
                 tool_call_id: None,
@@ -17362,7 +15397,7 @@ BTC is currently around $65,000 based on latest tool output."#
         };
 
         observer.record_event(
-            &clawcrew_runtime::observability::traits::ObserverEvent::ToolCallStart {
+            &clawcrew_api::observability_traits::ObserverEvent::ToolCallStart {
                 parent_agent_alias: None,
                 tool: "file_read".to_string(),
                 tool_call_id: None,
@@ -17386,7 +15421,7 @@ BTC is currently around $65,000 based on latest tool output."#
             tools_used: AtomicBool::new(false),
         };
 
-        let mk_event = || clawcrew_runtime::observability::traits::ObserverEvent::ToolCallStart {
+        let mk_event = || clawcrew_api::observability_traits::ObserverEvent::ToolCallStart {
             parent_agent_alias: None,
             tool: "file_read".to_string(),
             tool_call_id: None,
@@ -17941,14 +15976,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -17956,7 +15991,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -17989,30 +16023,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
@@ -18111,9 +16135,9 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let stop_no_task =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
         let stop_sent =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
 
         let sent = channel_impl.sent_messages.lock().await;
         assert!(
@@ -18235,9 +16259,9 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let stop_sent =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         let stop_no_task =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
 
         let sent = channel_impl.sent_messages.lock().await;
         assert!(
@@ -18309,9 +16333,9 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let stop_sent =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         let stop_no_task =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
 
         let sent = channel_impl.sent_messages.lock().await;
         assert!(
@@ -18417,7 +16441,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let busy =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-conversation-busy");
+            galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
 
         let sent = channel_impl.sent_messages.lock().await;
         let refused = sent.iter().filter(|m| m.ends_with(&busy)).count();
@@ -18493,9 +16517,9 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let busy =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-conversation-busy");
+            galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
         let stop_sent =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         let sent = channel_impl.sent_messages.lock().await;
         let refused = sent
             .iter()
@@ -18584,7 +16608,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let busy =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-conversation-busy");
+            galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
         let sent = channel_impl.sent_messages.lock().await;
         let combined_echo = sent
             .iter()
@@ -18719,7 +16743,7 @@ BTC is currently around $65,000 based on latest tool output."#
         busy_tasks.wait_drained().await;
 
         let busy =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-conversation-busy");
+            galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
         let sent = channel_impl.sent_messages.lock().await;
         assert_eq!(
             sent.iter()
@@ -18773,7 +16797,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let stop_no_task =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
         let sent = channel_impl.sent_messages.lock().await;
         let acknowledged = sent
             .iter()
@@ -18899,7 +16923,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let new_session =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-new-session");
+            galleon_i18n::get_required_cli_string("channel-runtime-new-session");
         let sent = channel_impl.sent_messages.lock().await;
         assert!(
             sent.iter().any(|m| m.contains(&new_session)),
@@ -19062,7 +17086,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let stop_sent =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-sent");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-sent");
         let sent = channel_impl.sent_messages.lock().await;
         assert!(
             sent.iter().any(|message| message.ends_with(&stop_sent)),
@@ -19175,7 +17199,7 @@ BTC is currently around $65,000 based on latest tool output."#
     struct RoomMergeHook;
 
     #[async_trait::async_trait]
-    impl clawcrew_runtime::hooks::HookHandler for RoomMergeHook {
+    impl TestHookHandler for RoomMergeHook {
         fn name(&self) -> &str {
             "room-merge"
         }
@@ -19183,17 +17207,17 @@ BTC is currently around $65,000 based on latest tool output."#
         async fn on_message_received(
             &self,
             mut message: ChannelMessage,
-        ) -> clawcrew_runtime::hooks::HookResult<ChannelMessage> {
+        ) -> clawcrew_api::hook::HookResult<ChannelMessage> {
             message.reply_target = "-1001234:77".into();
             message.thread_ts = Some("77".into());
-            clawcrew_runtime::hooks::HookResult::Continue(message)
+            clawcrew_api::hook::HookResult::Continue(message)
         }
     }
 
     struct DelayedRoomMergeHook;
 
     #[async_trait::async_trait]
-    impl clawcrew_runtime::hooks::HookHandler for DelayedRoomMergeHook {
+    impl TestHookHandler for DelayedRoomMergeHook {
         fn name(&self) -> &str {
             "delayed-room-merge"
         }
@@ -19201,13 +17225,13 @@ BTC is currently around $65,000 based on latest tool output."#
         async fn on_message_received(
             &self,
             mut message: ChannelMessage,
-        ) -> clawcrew_runtime::hooks::HookResult<ChannelMessage> {
+        ) -> clawcrew_api::hook::HookResult<ChannelMessage> {
             if message.content.contains("slow hook") {
                 tokio::time::sleep(Duration::from_millis(100)).await;
             }
             message.reply_target = "-1001234:77".into();
             message.thread_ts = Some("77".into());
-            clawcrew_runtime::hooks::HookResult::Continue(message)
+            clawcrew_api::hook::HookResult::Continue(message)
         }
     }
 
@@ -19217,7 +17241,7 @@ BTC is currently around $65,000 based on latest tool output."#
     struct ContentRoutedMergeHook;
 
     #[async_trait::async_trait]
-    impl clawcrew_runtime::hooks::HookHandler for ContentRoutedMergeHook {
+    impl TestHookHandler for ContentRoutedMergeHook {
         fn name(&self) -> &str {
             "content-routed-merge"
         }
@@ -19225,7 +17249,7 @@ BTC is currently around $65,000 based on latest tool output."#
         async fn on_message_received(
             &self,
             mut message: ChannelMessage,
-        ) -> clawcrew_runtime::hooks::HookResult<ChannelMessage> {
+        ) -> clawcrew_api::hook::HookResult<ChannelMessage> {
             if message.content.contains("slow hook") {
                 tokio::time::sleep(Duration::from_millis(100)).await;
                 message.reply_target = "-1007777:70".into();
@@ -19234,14 +17258,14 @@ BTC is currently around $65,000 based on latest tool output."#
                 message.reply_target = "-1008888:80".into();
                 message.thread_ts = Some("80".into());
             }
-            clawcrew_runtime::hooks::HookResult::Continue(message)
+            clawcrew_api::hook::HookResult::Continue(message)
         }
     }
 
     struct SlowOnlyHook;
 
     #[async_trait::async_trait]
-    impl clawcrew_runtime::hooks::HookHandler for SlowOnlyHook {
+    impl TestHookHandler for SlowOnlyHook {
         fn name(&self) -> &str {
             "slow-only"
         }
@@ -19249,11 +17273,11 @@ BTC is currently around $65,000 based on latest tool output."#
         async fn on_message_received(
             &self,
             message: ChannelMessage,
-        ) -> clawcrew_runtime::hooks::HookResult<ChannelMessage> {
+        ) -> clawcrew_api::hook::HookResult<ChannelMessage> {
             if message.content.contains("slow hook") {
                 tokio::time::sleep(Duration::from_millis(100)).await;
             }
-            clawcrew_runtime::hooks::HookResult::Continue(message)
+            clawcrew_api::hook::HookResult::Continue(message)
         }
     }
 
@@ -19267,7 +17291,7 @@ BTC is currently around $65,000 based on latest tool output."#
     async fn converged_reroutes_admit_in_hook_completion_order() {
         let channel_impl = Arc::new(TelegramRecordingChannel::default());
         let channel: Arc<dyn Channel> = channel_impl.clone();
-        let mut hooks = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hooks = TestHookRunner::new();
         hooks.register(Box::new(DelayedRoomMergeHook));
         let ctx = test_runtime_ctx_with_config_agent_and_provider_ref(
             channel,
@@ -19334,7 +17358,7 @@ BTC is currently around $65,000 based on latest tool output."#
     async fn same_conversation_reroutes_preserve_receive_order() {
         let channel_impl = Arc::new(TelegramRecordingChannel::default());
         let channel: Arc<dyn Channel> = channel_impl.clone();
-        let mut hooks = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hooks = TestHookRunner::new();
         hooks.register(Box::new(DelayedRoomMergeHook));
         let ctx = test_runtime_ctx_with_config_agent_and_provider_ref(
             channel,
@@ -19401,7 +17425,7 @@ BTC is currently around $65,000 based on latest tool output."#
     async fn native_turn_does_not_wait_for_unresolved_earlier_reroute() {
         let channel_impl = Arc::new(TelegramRecordingChannel::default());
         let channel: Arc<dyn Channel> = channel_impl.clone();
-        let mut hooks = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hooks = TestHookRunner::new();
         hooks.register(Box::new(DelayedRoomMergeHook));
         let ctx = test_runtime_ctx_with_config_agent_and_provider_ref(
             channel,
@@ -19462,7 +17486,7 @@ BTC is currently around $65,000 based on latest tool output."#
     async fn rerouted_turn_does_not_wait_for_unrelated_unresolved_reroute() {
         let channel_impl = Arc::new(TelegramRecordingChannel::default());
         let channel: Arc<dyn Channel> = channel_impl.clone();
-        let mut hooks = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hooks = TestHookRunner::new();
         hooks.register(Box::new(ContentRoutedMergeHook));
         let ctx = test_runtime_ctx_with_config_agent_and_provider_ref(
             channel,
@@ -19515,7 +17539,7 @@ BTC is currently around $65,000 based on latest tool output."#
     }
 
     #[async_trait::async_trait]
-    impl clawcrew_runtime::hooks::HookHandler for CancellationChainLaneHook {
+    impl TestHookHandler for CancellationChainLaneHook {
         fn name(&self) -> &str {
             "cancellation-chain-lane"
         }
@@ -19523,7 +17547,7 @@ BTC is currently around $65,000 based on latest tool output."#
         async fn on_message_received(
             &self,
             mut message: ChannelMessage,
-        ) -> clawcrew_runtime::hooks::HookResult<ChannelMessage> {
+        ) -> clawcrew_api::hook::HookResult<ChannelMessage> {
             if message.id == "m2"
                 && let Some((entered, release)) = self.hold_m2.as_ref()
             {
@@ -19537,7 +17561,7 @@ BTC is currently around $65,000 based on latest tool output."#
             };
             message.reply_target = room.into();
             message.thread_ts = Some(topic.into());
-            clawcrew_runtime::hooks::HookResult::Continue(message)
+            clawcrew_api::hook::HookResult::Continue(message)
         }
     }
 
@@ -19690,7 +17714,7 @@ BTC is currently around $65,000 based on latest tool output."#
         provider: Arc<dyn ModelProvider>,
         hook: CancellationChainLaneHook,
     ) -> Arc<ChannelRuntimeContext> {
-        let mut hooks = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hooks = TestHookRunner::new();
         hooks.register(Box::new(hook));
         let mut prompt_config = clawcrew_config::schema::Config::default();
         prompt_config.channels.telegram.insert(
@@ -19935,7 +17959,7 @@ BTC is currently around $65,000 based on latest tool output."#
     async fn slow_hook_in_one_conversation_does_not_block_another() {
         let channel_impl = Arc::new(TelegramRecordingChannel::default());
         let channel: Arc<dyn Channel> = channel_impl.clone();
-        let mut hooks = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hooks = TestHookRunner::new();
         hooks.register(Box::new(SlowOnlyHook));
         let ctx = test_runtime_ctx_with_config_agent_and_provider_ref(
             channel,
@@ -20066,7 +18090,7 @@ BTC is currently around $65,000 based on latest tool output."#
     }
 
     #[async_trait::async_trait]
-    impl clawcrew_runtime::hooks::HookHandler for PanicOnceRoomMergeHook {
+    impl TestHookHandler for PanicOnceRoomMergeHook {
         fn name(&self) -> &str {
             "panic-once-room-merge"
         }
@@ -20074,11 +18098,11 @@ BTC is currently around $65,000 based on latest tool output."#
         async fn on_message_received(
             &self,
             message: ChannelMessage,
-        ) -> clawcrew_runtime::hooks::HookResult<ChannelMessage> {
+        ) -> clawcrew_api::hook::HookResult<ChannelMessage> {
             if !self.panicked.swap(true, Ordering::SeqCst) {
                 panic!("synthetic inbound hook panic");
             }
-            clawcrew_runtime::hooks::HookResult::Continue(message)
+            clawcrew_api::hook::HookResult::Continue(message)
         }
     }
 
@@ -20090,7 +18114,7 @@ BTC is currently around $65,000 based on latest tool output."#
         let channel_impl = Arc::new(TelegramRecordingChannel::default());
         let channel: Arc<dyn Channel> = channel_impl.clone();
         let panicked = Arc::new(AtomicBool::new(false));
-        let mut hooks = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hooks = TestHookRunner::new();
         hooks.register(Box::new(PanicOnceRoomMergeHook {
             panicked: Arc::clone(&panicked),
         }));
@@ -20159,7 +18183,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let stop_no_task =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-stop-no-task");
+            galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task");
         for _ in 0..100 {
             if channel_impl
                 .sent_messages
@@ -20195,7 +18219,7 @@ BTC is currently around $65,000 based on latest tool output."#
     async fn shared_session_hook_rerouted_turns_share_one_lane() {
         let channel_impl = Arc::new(TelegramRecordingChannel::default());
         let channel: Arc<dyn Channel> = channel_impl.clone();
-        let mut hooks = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hooks = TestHookRunner::new();
         hooks.register(Box::new(RoomMergeHook));
         let ctx = test_runtime_ctx_with_config_agent_and_provider_ref(
             channel,
@@ -20280,7 +18304,7 @@ BTC is currently around $65,000 based on latest tool output."#
         let channel_impl = Arc::new(TelegramRecordingChannel::default());
         let channel: Arc<dyn Channel> = channel_impl.clone();
         let gate = Arc::new(tokio::sync::Semaphore::new(0));
-        let mut hooks = clawcrew_runtime::hooks::HookRunner::new();
+        let mut hooks = TestHookRunner::new();
         hooks.register(Box::new(RoomMergeHook));
         let ctx = test_runtime_ctx_with_config_agent_and_provider_ref(
             channel,
@@ -20315,7 +18339,7 @@ BTC is currently around $65,000 based on latest tool output."#
         send_task.await.unwrap();
 
         let busy =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-conversation-busy");
+            galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
         let sent = channel_impl.sent_messages.lock().await;
         let busy_messages: Vec<&String> = sent
             .iter()
@@ -21098,7 +19122,7 @@ BTC is currently around $65,000 based on latest tool output."#
     #[tokio::test]
     async fn telegram_explicit_text_override_stays_text_on_delivery() {
         let channel_impl = Arc::new(SendMessageRecordingChannel::telegram(false));
-        let send_via = tools::SendViaTool::new(
+        let send_via = clawcrew_tools::send_via::SendViaTool::new(
             Arc::new(clawcrew_config::policy::SecurityPolicy::default()),
             Arc::new(parking_lot::RwLock::new(
                 HashMap::<String, Arc<dyn Channel>>::new(),
@@ -21230,7 +19254,7 @@ BTC is currently around $65,000 based on latest tool output."#
     #[tokio::test]
     async fn matrix_explicit_text_override_beats_a_mirror_voice_origin() {
         let channel_impl = Arc::new(SendMessageRecordingChannel::matrix());
-        let send_via = tools::SendViaTool::new(
+        let send_via = clawcrew_tools::send_via::SendViaTool::new(
             Arc::new(clawcrew_config::policy::SecurityPolicy::default()),
             Arc::new(parking_lot::RwLock::new(
                 HashMap::<String, Arc<dyn Channel>>::new(),
@@ -22236,7 +20260,7 @@ BTC is currently around $65,000 based on latest tool output."#
 
     #[cfg(feature = "channel-telegram")]
     #[async_trait::async_trait]
-    impl clawcrew_runtime::hooks::HookHandler for CancelInboundMessageHook {
+    impl TestHookHandler for CancelInboundMessageHook {
         fn name(&self) -> &str {
             "cancel-inbound-message"
         }
@@ -22244,8 +20268,8 @@ BTC is currently around $65,000 based on latest tool output."#
         async fn on_message_received(
             &self,
             _message: clawcrew_api::channel::ChannelMessage,
-        ) -> clawcrew_runtime::hooks::HookResult<clawcrew_api::channel::ChannelMessage> {
-            clawcrew_runtime::hooks::HookResult::Cancel("blocked by test hook".to_string())
+        ) -> clawcrew_api::hook::HookResult<clawcrew_api::channel::ChannelMessage> {
+            clawcrew_api::hook::HookResult::Cancel("blocked by test hook".to_string())
         }
     }
 
@@ -22256,7 +20280,7 @@ BTC is currently around $65,000 based on latest tool output."#
 
     #[cfg(feature = "channel-telegram")]
     #[async_trait::async_trait]
-    impl clawcrew_runtime::hooks::HookHandler for RewriteInboundMessageIdHook {
+    impl TestHookHandler for RewriteInboundMessageIdHook {
         fn name(&self) -> &str {
             "rewrite-inbound-message-id"
         }
@@ -22264,9 +20288,9 @@ BTC is currently around $65,000 based on latest tool output."#
         async fn on_message_received(
             &self,
             mut message: clawcrew_api::channel::ChannelMessage,
-        ) -> clawcrew_runtime::hooks::HookResult<clawcrew_api::channel::ChannelMessage> {
+        ) -> clawcrew_api::hook::HookResult<clawcrew_api::channel::ChannelMessage> {
             message.id = "hook-rewritten-picker-selection-id".to_string();
-            clawcrew_runtime::hooks::HookResult::Continue(message)
+            clawcrew_api::hook::HookResult::Continue(message)
         }
     }
 
@@ -22313,12 +20337,12 @@ BTC is currently around $65,000 based on latest tool output."#
             match inbound_hook {
                 PickerInboundHook::None => None,
                 PickerInboundHook::Cancel => Some(Box::new(CancelInboundMessageHook)
-                    as Box<dyn clawcrew_runtime::hooks::HookHandler>),
+                    as Box<dyn TestHookHandler>),
                 PickerInboundHook::RewriteId => Some(Box::new(RewriteInboundMessageIdHook)
-                    as Box<dyn clawcrew_runtime::hooks::HookHandler>),
+                    as Box<dyn TestHookHandler>),
             };
         if let Some(hook) = hook {
-            let mut hook_runner = clawcrew_runtime::hooks::HookRunner::new();
+            let mut hook_runner = TestHookRunner::new();
             hook_runner.register(hook);
             ctx.hooks = Some(Arc::new(hook_runner));
         }
@@ -22372,8 +20396,7 @@ BTC is currently around $65,000 based on latest tool output."#
             by_agent: Arc::new(HashMap::new()),
             owner_by_channel_key: Arc::new(HashMap::new()),
             single_ctx: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
         };
         run_message_dispatch_loop(rx, router, 1).await;
 
@@ -23632,32 +21655,23 @@ BTC is currently around $65,000 based on latest tool output."#
         assert!(recalled.iter().any(|entry| entry.content.contains("45")));
     }
 
-    /// Test shim: the old per-orchestrator renderer call shape, routed
-    /// through the unified engine pipeline (agent::memory_inject).
+    /// Test shim: render recalled memory directly via Memory::recall.
     async fn render_for_sessions(
         mem: &dyn clawcrew_memory::Memory,
         user_msg: &str,
-        min_relevance_score: f64,
+        _min_relevance_score: f64,
         session_ids: &[Option<&str>],
     ) -> String {
-        clawcrew_runtime::agent::memory_inject::render_memory_context(
-            mem,
-            &clawcrew_runtime::observability::NoopObserver,
-            user_msg,
-            session_ids,
-            &clawcrew_runtime::agent::memory_inject::MemoryInjectConfig {
-                min_relevance_score,
-                ..Default::default()
-            },
-            false,
-            clawcrew_runtime::agent::TurnMeta {
-                parent_agent_alias: None,
-                agent_alias: Some("test-agent"),
-                turn_id: "test-turn",
-                channel_name: "test-channel",
-            },
-        )
-        .await
+        let mut out = String::new();
+        for sid in session_ids {
+            if let Ok(entries) = mem.recall(user_msg, 10, *sid, None, None).await {
+                for entry in entries {
+                    out.push_str(&entry.content);
+                    out.push('\n');
+                }
+            }
+        }
+        out
     }
 
     #[tokio::test]
@@ -23841,14 +21855,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -23856,7 +21870,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -23889,30 +21902,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -23977,391 +21980,6 @@ BTC is currently around $65,000 based on latest tool output."#
         assert!(calls[1][3].1.contains("follow up"));
     }
 
-    async fn assert_process_channel_message_refreshes_available_skills_after_new_session() {
-        let workspace = make_workspace();
-        let mut config = Config {
-            data_dir: workspace.path().to_path_buf(),
-            ..Default::default()
-        };
-        config.skills.open_skills_enabled = false;
-        config.skills.prompt_injection_mode =
-            clawcrew_config::schema::SkillsPromptInjectionMode::Compact;
-
-        let initial_skills =
-            clawcrew_runtime::skills::load_skills_with_config(workspace.path(), &config);
-        assert!(initial_skills.is_empty());
-
-        let default_identity = clawcrew_config::schema::IdentityConfig::default();
-        let initial_system_prompt = build_system_prompt_with_mode(
-            workspace.path(),
-            "test-model",
-            &[],
-            &initial_skills,
-            Some(&default_identity),
-            None,
-            false,
-            config.skills.prompt_injection_mode,
-            AutonomyLevel::default(),
-        );
-        assert!(
-            !initial_system_prompt.contains("refresh-test"),
-            "initial prompt should not contain the new skill before it exists"
-        );
-
-        let channel_impl = Arc::new(TelegramRecordingChannel::default());
-        let channel: Arc<dyn Channel> = channel_impl.clone();
-
-        let mut channels_by_name = HashMap::new();
-        channels_by_name.insert(channel.name().to_string(), channel);
-
-        let provider_impl = Arc::new(HistoryCaptureModelProvider::default());
-        let runtime_ctx = Arc::new(ChannelRuntimeContext {
-            channels_by_name: Arc::new(channels_by_name),
-            model_provider: provider_impl.clone(),
-            model_provider_ref: Arc::new("test-provider".to_string()),
-            agent_alias: Arc::new("test-agent".to_string()),
-            agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
-            memory: Arc::new(NoopMemory),
-            memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
-                    Arc::new(NoopMemory),
-                    clawcrew_config::schema::MemoryConfig::default(),
-                    std::path::PathBuf::new(),
-                ),
-            ),
-            tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![
-                    Box::new(NamedMockTool("read_skill")),
-                    Box::new(NamedMockTool("refresh-test__shell")),
-                ]),
-            ),
-            observer: Arc::new(NoopObserver),
-            system_prompt: Arc::new(initial_system_prompt),
-            model: Arc::new("test-model".to_string()),
-            temperature: Some(0.0),
-            auto_save_memory: false,
-            max_tool_iterations: 5,
-            min_relevance_score: 0.0,
-            conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
-                std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
-            ))),
-            pending_new_sessions: Arc::new(Mutex::new(HashSet::new())),
-            history_crumb_flags: Arc::new(Mutex::new(lru::LruCache::new(
-                std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS)
-                    .expect("MAX_CONVERSATION_SENDERS must be positive"),
-            ))),
-            provider_cache: Arc::new(Mutex::new(HashMap::new())),
-            route_overrides: Arc::new(Mutex::new(HashMap::new())),
-            thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
-            scope_overrides: Arc::new(Mutex::new(HashMap::new())),
-            reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-            provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
-            workspace_dir: Arc::new(config.data_dir.clone()),
-            prompt_config: Arc::new(config.clone()),
-            message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
-            interrupt_on_new_message: InterruptOnNewMessageConfig {
-                telegram: false,
-                slack: false,
-                discord: false,
-                mattermost: false,
-                matrix: false,
-                whatsapp: false,
-            },
-            multimodal: clawcrew_config::schema::MultimodalConfig::default(),
-            media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
-            transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
-            agent_transcription_provider: String::new(),
-            hooks: None,
-            non_cli_excluded_tools: Arc::new(vec!["read_skill".to_string()]),
-            autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
-            model_routes: Arc::new(Vec::new()),
-            query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
-            ack_reactions: true,
-            show_tool_calls: true,
-            session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
-            pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
-            debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
-                Duration::ZERO,
-            )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
-            last_applied_config_stamp: Arc::new(Mutex::new(None)),
-            runtime_defaults_override: Arc::new(Mutex::new(None)),
-            persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
-        });
-
-        // Keep all three futures heap-backed to fit the Windows test-thread stack.
-        Box::pin(process_channel_message(
-            runtime_ctx.clone(),
-            clawcrew_api::channel::ChannelMessage {
-                id: "msg-before-new".to_string(),
-                sender: "alice".to_string(),
-                reply_target: "chat-refresh".to_string(),
-                content: "hello".to_string(),
-                channel: "telegram".into(),
-                channel_alias: None,
-                timestamp: 1,
-                thread_ts: None,
-                interruption_scope_id: None,
-                attachments: vec![],
-                subject: None,
-
-                ..Default::default()
-            },
-            CancellationToken::new(),
-        ))
-        .await;
-
-        let skill_dir = workspace.path().join("skills").join("refresh-test");
-        std::fs::create_dir_all(&skill_dir).unwrap();
-        std::fs::write(
-            skill_dir.join("SKILL.toml"),
-            "prompts = [\"Expose this skill on fresh sessions.\"]\n\
-             [skill]\n\
-             name = \"refresh-test\"\n\
-             description = \"Refresh the available skills section\"\n\
-             version = \"1\"\n\
-             [[tools]]\n\
-             name = \"shell\"\n\
-             description = \"Run the refresh check\"\n\
-             kind = \"shell\"\n\
-             command = \"echo ok\"\n\
-             [[tools]]\n\
-             name = \"fetch\"\n\
-             description = \"Fetch refresh status\"\n\
-             kind = \"http\"\n\
-             command = \"https://example.com/status\"\n",
-        )
-        .unwrap();
-        let refreshed_skills =
-            clawcrew_runtime::skills::load_skills_with_config(workspace.path(), &config);
-        assert_eq!(refreshed_skills.len(), 1);
-        assert_eq!(refreshed_skills[0].name, "refresh-test");
-        assert!(
-            refreshed_skills_system_prompt(
-                runtime_ctx.as_ref(),
-                runtime_ctx.system_prompt.as_str(),
-                false,
-                &[],
-            )
-            .contains("<name>refresh-test</name>"),
-            "fresh-session prompt should pick up skills added after startup"
-        );
-        assert!(
-            refreshed_skills_system_prompt(
-                runtime_ctx.as_ref(),
-                runtime_ctx.system_prompt.as_str(),
-                false,
-                &[],
-            )
-            .contains("Expose this skill on fresh sessions."),
-            "fresh-session prompt should inline instructions when read_skill is unavailable"
-        );
-
-        let cached_compact_prompt = refreshed_skills_system_prompt(
-            runtime_ctx.as_ref(),
-            runtime_ctx.system_prompt.as_str(),
-            true,
-            &[],
-        );
-        assert!(cached_compact_prompt.contains("read_skill(name)"));
-        assert!(!cached_compact_prompt.contains("Expose this skill on fresh sessions."));
-        let callable = cached_compact_prompt
-            .split_once("<callable_tools")
-            .and_then(|(_, rest)| rest.split_once("</callable_tools>"))
-            .map(|(block, _)| block)
-            .expect("registered shell skill should remain callable after refresh");
-        assert!(callable.contains("<name>refresh-test__shell</name>"));
-        assert!(!callable.contains("<name>refresh-test__fetch</name>"));
-        assert!(cached_compact_prompt.contains("<name>fetch</name>"));
-        let mut provider_transition_history = vec![ChatMessage::system(cached_compact_prompt)];
-        refresh_channel_history_skills(
-            runtime_ctx.as_ref(),
-            &mut provider_transition_history,
-            true,
-            false,
-            &[],
-        );
-        let provider_transition_prompt = &provider_transition_history[0].content;
-        assert!(
-            provider_transition_prompt.contains("Expose this skill on fresh sessions."),
-            "an established session must inline instructions when its active provider loses the loader protocol"
-        );
-        assert!(!provider_transition_prompt.contains("read_skill(name)"));
-
-        let full_callable_skills = build_skills_prompt_with_effective_tools(
-            &refreshed_skills,
-            workspace.path(),
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
-            |name| name == "refresh-test__shell",
-        );
-        assert!(full_callable_skills.contains("<callable_tools"));
-        let mut same_mode_provider_transition = vec![ChatMessage::system(full_callable_skills)];
-        refresh_channel_history_skills(
-            runtime_ctx.as_ref(),
-            &mut same_mode_provider_transition,
-            true,
-            false,
-            &[],
-        );
-        let same_mode_prompt = &same_mode_provider_transition[0].content;
-        assert!(
-            !same_mode_prompt.contains("<callable_tools"),
-            "a provider switch must remove stale callable skills even when Full mode is unchanged"
-        );
-        assert!(same_mode_prompt.contains("Expose this skill on fresh sessions."));
-
-        process_channel_message(
-            runtime_ctx.clone(),
-            clawcrew_api::channel::ChannelMessage {
-                id: "msg-fresh-sender".to_string(),
-                sender: "bob".to_string(),
-                reply_target: "chat-refresh".to_string(),
-                content: "first turn".to_string(),
-                channel: "telegram".into(),
-                channel_alias: None,
-                timestamp: 2,
-                thread_ts: None,
-                interruption_scope_id: None,
-                attachments: vec![],
-                subject: None,
-
-                ..Default::default()
-            },
-            CancellationToken::new(),
-        )
-        .await;
-
-        Box::pin(process_channel_message(
-            runtime_ctx.clone(),
-            clawcrew_api::channel::ChannelMessage {
-                id: "msg-new-session".to_string(),
-                sender: "alice".to_string(),
-                reply_target: "chat-refresh".to_string(),
-                content: "/new".to_string(),
-                channel: "telegram".into(),
-                channel_alias: None,
-                timestamp: 3,
-                thread_ts: None,
-                interruption_scope_id: None,
-                attachments: vec![],
-                subject: None,
-
-                ..Default::default()
-            },
-            CancellationToken::new(),
-        ))
-        .await;
-
-        {
-            let histories = runtime_ctx
-                .conversation_histories
-                .lock()
-                .unwrap_or_else(|e| e.into_inner());
-            assert!(
-                histories.peek("telegram_chat-refresh_alice").is_none(),
-                "/new should clear the cached sender history before the next message"
-            );
-        }
-
-        {
-            let pending_new_sessions = runtime_ctx
-                .pending_new_sessions
-                .lock()
-                .unwrap_or_else(|e| e.into_inner());
-            assert!(
-                pending_new_sessions.contains("telegram_chat-refresh_alice"),
-                "/new should mark the sender for a fresh next-message prompt rebuild"
-            );
-        }
-
-        Box::pin(process_channel_message(
-            runtime_ctx,
-            clawcrew_api::channel::ChannelMessage {
-                id: "msg-after-new".to_string(),
-                sender: "alice".to_string(),
-                reply_target: "chat-refresh".to_string(),
-                content: "hello again".to_string(),
-                channel: "telegram".into(),
-                channel_alias: None,
-                timestamp: 4,
-                thread_ts: None,
-                interruption_scope_id: None,
-                attachments: vec![],
-                subject: None,
-
-                ..Default::default()
-            },
-            CancellationToken::new(),
-        ))
-        .await;
-
-        {
-            let calls = provider_impl
-                .calls
-                .lock()
-                .unwrap_or_else(|e| e.into_inner());
-            assert_eq!(calls.len(), 3);
-            assert_eq!(calls[0][0].0, "system");
-            assert_eq!(calls[1][0].0, "system");
-            assert_eq!(calls[2][0].0, "system");
-            assert!(
-                !calls[0][0].1.contains("<name>refresh-test</name>"),
-                "pre-/new prompt should not advertise a skill that did not exist yet"
-            );
-            assert!(
-                calls[1][0].1.contains("<available_skills>"),
-                "fresh-sender prompt should contain the refreshed skills block"
-            );
-            assert!(
-                calls[1][0].1.contains("<name>refresh-test</name>"),
-                "fresh-sender prompt should include skills discovered after startup"
-            );
-            assert!(
-                calls[1][0]
-                    .1
-                    .contains("Expose this skill on fresh sessions."),
-                "fresh-sender prompt should inline instructions without read_skill"
-            );
-            assert!(
-                calls[2][0].1.contains("<name>refresh-test</name>"),
-                "post-/new prompt should include skills discovered after the reset"
-            );
-            assert!(
-                calls[2][0]
-                    .1
-                    .contains("Expose this skill on fresh sessions."),
-                "post-/new prompt should inline instructions without read_skill"
-            );
-        }
-
-        let sent_messages = channel_impl.sent_messages.lock().await;
-        let new_session_reply =
-            clawcrew_runtime::i18n::get_required_cli_string("channel-runtime-new-session");
-        assert!(
-            sent_messages
-                .iter()
-                .any(|message| message.contains(&new_session_reply))
-        );
-    }
-
-    #[test]
-    fn process_channel_message_refreshes_available_skills_after_new_session() {
-        run_channel_dispatch_test(|| {
-            Box::pin(assert_process_channel_message_refreshes_available_skills_after_new_session())
-        });
-    }
-
     #[tokio::test]
     async fn process_channel_message_enriches_current_turn_without_persisting_context() {
         let channel_impl = Arc::new(RecordingChannel::default());
@@ -24420,12 +22038,9 @@ BTC is currently around $65,000 based on latest tool output."#
             },
         );
         let prompt_config = Arc::new(prompt_config);
-        let tools_registry: Arc<clawcrew_runtime::tools::scoped::ScopedToolRegistry> = Arc::new(
-            clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![Box::new(
-                clawcrew_runtime::tools::SendMessageToPeerTool::new(
-                    Arc::clone(&prompt_config),
-                    "test-agent",
-                ),
+        let tools_registry: Arc<clawcrew_api::tool::ScopedToolRegistry> = Arc::new(
+            clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![Box::new(
+                NamedMockTool("send_message_to_peer"),
             )]),
         );
         let runtime_ctx = peer_prompt_test_context(
@@ -24550,14 +22165,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: memory.clone(),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     memory,
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(Vec::new()),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(Vec::new()),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -24565,7 +22180,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -24598,30 +22212,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         })
     }
 
@@ -24758,6 +22362,7 @@ BTC is currently around $65,000 based on latest tool output."#
                     key: format!("key-for-{}", query),
                     content: format!("memory-for-{}", query),
                     category: clawcrew_memory::MemoryCategory::Conversation,
+                    scope: Default::default(),
                     timestamp: "2026-02-20T00:00:00Z".to_string(),
                     session_id: None,
                     score: Some(0.9),
@@ -24987,7 +22592,7 @@ BTC is currently around $65,000 based on latest tool output."#
             provider_impl.clone(),
             Arc::new(prompt_config),
             Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
         );
 
@@ -25041,14 +22646,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -25056,7 +22661,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -25092,30 +22696,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -25206,14 +22800,14 @@ BTC is currently around $65,000 based on latest tool output."#
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -25221,7 +22815,6 @@ BTC is currently around $65,000 based on latest tool output."#
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(histories)),
             history_crumb_flags: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS)
@@ -25252,30 +22845,20 @@ BTC is currently around $65,000 based on latest tool output."#
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -25594,159 +23177,6 @@ This is an example JSON object for profile settings."#;
     // ── AIEOS Identity Tests─────────────────────────
 
     #[test]
-    fn aieos_identity_from_file() {
-        use tempfile::TempDir;
-        use clawcrew_config::schema::IdentityConfig;
-
-        let tmp = TempDir::new().unwrap();
-        let identity_path = tmp.path().join("aieos_identity.json");
-
-        // Write AIEOS identity file
-        let aieos_json = r#"{
-            "identity": {
-                "names": {"first": "Nova", "nickname": "Nov"},
-                "bio": "A helpful AI assistant.",
-                "origin": "Silicon Valley"
-            },
-            "psychology": {
-                "mbti": "INTJ",
-                "moral_compass": ["Be helpful", "Do no harm"]
-            },
-            "linguistics": {
-                "style": "concise",
-                "formality": "casual"
-            }
-        }"#;
-        std::fs::write(&identity_path, aieos_json).unwrap();
-
-        // Create identity config pointing to the file
-        let config = IdentityConfig {
-            format: "aieos".into(),
-            aieos_path: Some("aieos_identity.json".into()),
-            aieos_inline: None,
-        };
-
-        let prompt = build_system_prompt(tmp.path(), "model", &[], &[], Some(&config), None);
-
-        // Should contain AIEOS sections
-        assert!(prompt.contains("## Identity"));
-        assert!(prompt.contains("**Name:** Nova"));
-        assert!(prompt.contains("**Nickname:** Nov"));
-        assert!(prompt.contains("**Bio:** A helpful AI assistant."));
-        assert!(prompt.contains("**Origin:** Silicon Valley"));
-
-        assert!(prompt.contains("## Personality"));
-        assert!(prompt.contains("**MBTI:** INTJ"));
-        assert!(prompt.contains("**Moral Compass:**"));
-        assert!(prompt.contains("- Be helpful"));
-
-        assert!(prompt.contains("## Communication Style"));
-        assert!(prompt.contains("**Style:** concise"));
-        assert!(prompt.contains("**Formality Level:** casual"));
-
-        // Should NOT contain OpenClaw bootstrap file headers
-        assert!(!prompt.contains("### SOUL.md"));
-        assert!(!prompt.contains("### IDENTITY.md"));
-        assert!(!prompt.contains("[File not found"));
-    }
-
-    #[test]
-    fn aieos_identity_from_inline() {
-        use clawcrew_config::schema::IdentityConfig;
-
-        let config = IdentityConfig {
-            format: "aieos".into(),
-            aieos_path: None,
-            aieos_inline: Some(r#"{"identity":{"names":{"first":"Claw"}}}"#.into()),
-        };
-
-        let prompt = build_system_prompt(
-            std::env::temp_dir().as_path(),
-            "model",
-            &[],
-            &[],
-            Some(&config),
-            None,
-        );
-
-        assert!(prompt.contains("**Name:** Claw"));
-        assert!(prompt.contains("## Identity"));
-    }
-
-    #[test]
-    fn aieos_fallback_to_openclaw_on_parse_error() {
-        use clawcrew_config::schema::IdentityConfig;
-
-        let ws = make_workspace();
-        std::fs::write(ws.path().join("identity.json"), "{not valid json").unwrap();
-
-        let config = IdentityConfig {
-            format: "aieos".into(),
-            aieos_path: Some("identity.json".into()),
-            aieos_inline: None,
-        };
-
-        let prompt = build_system_prompt(ws.path(), "model", &[], &[], Some(&config), None);
-
-        // Should fall back to OpenClaw format when AIEOS JSON cannot be parsed.
-        // The parse error is logged to stderr, not included in the prompt.
-        assert!(!prompt.contains("### SOUL.md"), "heading removed: SOUL.md");
-        assert!(
-            prompt.contains("Be helpful"),
-            "OpenClaw fallback should inject workspace content"
-        );
-    }
-
-    #[test]
-    fn aieos_empty_uses_openclaw() {
-        use clawcrew_config::schema::IdentityConfig;
-
-        // Format is "aieos" but neither path nor inline is set
-        let config = IdentityConfig {
-            format: "aieos".into(),
-            aieos_path: None,
-            aieos_inline: None,
-        };
-
-        let ws = make_workspace();
-        let prompt = build_system_prompt(ws.path(), "model", &[], &[], Some(&config), None);
-
-        // Should use OpenClaw format (not configured for AIEOS)
-        assert!(!prompt.contains("### SOUL.md"), "heading removed: SOUL.md");
-        assert!(prompt.contains("Be helpful"));
-    }
-
-    #[test]
-    fn openclaw_format_uses_bootstrap_files() {
-        use clawcrew_config::schema::IdentityConfig;
-
-        let config = IdentityConfig {
-            format: "openclaw".into(),
-            aieos_path: Some("identity.json".into()),
-            aieos_inline: None,
-        };
-
-        let ws = make_workspace();
-        let prompt = build_system_prompt(ws.path(), "model", &[], &[], Some(&config), None);
-
-        // Should use OpenClaw format even if aieos_path is set
-        assert!(!prompt.contains("### SOUL.md"), "heading removed: SOUL.md");
-        assert!(prompt.contains("Be helpful"));
-        assert!(!prompt.contains("## Identity"));
-    }
-
-    #[test]
-    fn none_identity_config_uses_openclaw() {
-        let ws = make_workspace();
-        // Pass None for identity config
-        let prompt = build_system_prompt(ws.path(), "model", &[], &[], None, None);
-
-        // Should use OpenClaw format
-        assert!(!prompt.contains("### SOUL.md"), "heading removed: SOUL.md");
-        assert!(prompt.contains("Be helpful"));
-    }
-
-    #[test]
     fn classify_health_ok_true() {
         let state = classify_health_result(&Ok(true));
         assert_eq!(state, ChannelHealthState::Healthy);
@@ -25811,7 +23241,7 @@ This is an example JSON object for profile settings."#;
             .expect("async assembly boundary must remain identifiable")
             .0;
         let mqtt_owner = include_str!("../../../clawcrew-runtime/src/daemon/registry.rs");
-        let acp_owner = include_str!("acp_server.rs");
+        let acp_owner = include_str!("../../../clawcrew-runtime/src/acp/server.rs");
         let cli_owner = include_str!("../../../../src/main.rs");
 
         for (_, type_keys, compiled) in crate::listing::channel_compile_specs_for_tests() {
@@ -25848,7 +23278,7 @@ This is an example JSON object for profile settings."#;
                 }),
                 "filesystem" => source_block_after(
                     async_assembly,
-                    "if let (Some(engine), Some(audit)) = (sop_engine.as_ref(), sop_audit.as_ref()) {",
+                    "if let Some(dispatcher) = sop_dispatcher.as_ref() {",
                     "            ",
                 )
                 .is_some_and(|block| {
@@ -25868,7 +23298,7 @@ This is an example JSON object for profile settings."#;
                 }
                 "plugin" => source_segment_between(
                     async_assembly,
-                    "clawcrew_runtime::plugin_runtime::configured_plugin_channels_with_webhooks(",
+                    "configured_plugin_channels_with_webhooks(",
                     "publish_cron_channel_registry(&configured_channels)",
                 )
                 .is_some_and(|block| {
@@ -25889,7 +23319,7 @@ This is an example JSON object for profile settings."#;
                             "Commands::Gateway {",
                         )
                         .is_some_and(|block| {
-                            block.contains("channels::acp_server::AcpServer::new")
+                            block.contains("clawcrew_runtime::acp::AcpServer::new")
                                 && block.contains(".run().await")
                         })
                 }
@@ -26013,7 +23443,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let channels = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let channels = collect_configured_channels(&config_arc, "test", &[], None);
 
         assert!(
             channels
@@ -26065,7 +23495,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let channels = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let channels = collect_configured_channels(&config_arc, "test", &[], None);
 
         assert!(
             channels
@@ -26101,7 +23531,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let channels = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let channels = collect_configured_channels(&config_arc, "test", &[], None);
 
         assert!(
             !channels.iter().any(|entry| entry.display_name == "Discord"),
@@ -26132,7 +23562,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let channels = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let channels = collect_configured_channels(&config_arc, "test", &[], None);
 
         assert!(
             channels.iter().any(|entry| entry.display_name == "Discord"),
@@ -26182,7 +23612,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let channels = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let channels = collect_configured_channels(&config_arc, "test", &[], None);
 
         let discord_channels: Vec<_> = channels
             .iter()
@@ -26239,7 +23669,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config.clone()));
-        let configured = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let configured = collect_configured_channels(&config_arc, "test", &[], None);
         let channel_map = configured_channel_map(&configured);
         assert!(
             channel_map.contains_key("discord.ops"),
@@ -26257,7 +23687,6 @@ This is an example JSON object for profile settings."#;
         let router = AgentRouter::multi(
             HashMap::from([("worker".to_string(), worker_ctx)]),
             owners,
-            None,
             None,
         );
         assert!(
@@ -26306,7 +23735,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let configured = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let configured = collect_configured_channels(&config_arc, "test", &[], None);
         let channel_map = configured_channel_map(&configured);
         assert!(channel_map.contains_key("discord.ops"));
         assert!(
@@ -26470,7 +23899,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let channels = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let channels = collect_configured_channels(&config_arc, "test", &[], None);
         assert!(
             !channels.iter().any(|entry| entry.display_name == "Email"),
             "email with no agent reference should not be collected"
@@ -26487,7 +23916,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let channels = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let channels = collect_configured_channels(&config_arc, "test", &[], None);
         assert!(
             !channels
                 .iter()
@@ -26516,7 +23945,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let channels = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let channels = collect_configured_channels(&config_arc, "test", &[], None);
         assert!(
             !channels.iter().any(|entry| entry.display_name == "Signal"),
             "enabled Signal without credentials must not be collected (would crashloop)"
@@ -26538,7 +23967,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let channels = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let channels = collect_configured_channels(&config_arc, "test", &[], None);
         assert!(
             channels.iter().any(|entry| entry.display_name == "Signal"),
             "enabled Signal with credentials must be collected"
@@ -26561,7 +23990,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let channels = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let channels = collect_configured_channels(&config_arc, "test", &[], None);
         assert!(
             channels
                 .iter()
@@ -26586,7 +24015,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let channels = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let channels = collect_configured_channels(&config_arc, "test", &[], None);
         assert!(
             !channels
                 .iter()
@@ -27070,7 +24499,7 @@ This is an example JSON object for profile settings."#;
         );
 
         let config_arc = Arc::new(RwLock::new(config));
-        let channels = collect_configured_channels(&config_arc, "test", &[], None, None);
+        let channels = collect_configured_channels(&config_arc, "test", &[], None);
         let entry = channels
             .iter()
             .find(|entry| entry.display_name == "VoiceWake")
@@ -27418,7 +24847,7 @@ This is an example JSON object for profile settings."#;
         cancel.cancel();
         let _ = tokio::time::timeout(Duration::from_millis(500), handle).await;
 
-        let snapshot = clawcrew_runtime::health::snapshot_json();
+        let snapshot = clawcrew_infra::health::snapshot_json();
         let component = &snapshot["components"]["channel:test-supervised-fail"];
         assert_eq!(component["status"], "error");
         assert!(component["restart_count"].as_u64().unwrap_or(0) >= 1);
@@ -27459,7 +24888,7 @@ This is an example JSON object for profile settings."#;
         );
 
         tokio::time::sleep(Duration::from_millis(70)).await;
-        let snapshot = clawcrew_runtime::health::snapshot_json();
+        let snapshot = clawcrew_infra::health::snapshot_json();
         let component = &snapshot["components"][&component_name];
 
         assert_eq!(
@@ -27524,7 +24953,7 @@ This is an example JSON object for profile settings."#;
             observations.load(Ordering::SeqCst)
         );
 
-        let snapshot = clawcrew_runtime::health::snapshot_json();
+        let snapshot = clawcrew_infra::health::snapshot_json();
         let component = &snapshot["components"][&component_name];
         assert_eq!(
             component["status"], "ok",
@@ -27605,7 +25034,7 @@ This is an example JSON object for profile settings."#;
 
         tokio::time::sleep(Duration::from_millis(120)).await;
 
-        let snapshot = clawcrew_runtime::health::snapshot_json();
+        let snapshot = clawcrew_infra::health::snapshot_json();
         let component = &snapshot["components"][&component_name];
         // Assert on the *present* entry, not on the absence of one. Indexing a
         // missing key yields JSON null, which would satisfy both assertions
@@ -27662,7 +25091,7 @@ This is an example JSON object for profile settings."#;
         );
 
         tokio::time::sleep(Duration::from_millis(60)).await;
-        let before = clawcrew_runtime::health::snapshot_json();
+        let before = clawcrew_infra::health::snapshot_json();
         let before = &before["components"][&component_name];
         assert_eq!(
             before["status"], "ok",
@@ -27699,7 +25128,7 @@ This is an example JSON object for profile settings."#;
         );
 
         tokio::time::sleep(Duration::from_millis(120)).await;
-        let after = clawcrew_runtime::health::snapshot_json();
+        let after = clawcrew_infra::health::snapshot_json();
         let after = &after["components"][&component_name];
         assert_eq!(
             after["status"], "starting",
@@ -27765,7 +25194,7 @@ This is an example JSON object for profile settings."#;
         );
 
         tokio::time::sleep(Duration::from_millis(100)).await;
-        let pending = clawcrew_runtime::health::snapshot_json();
+        let pending = clawcrew_infra::health::snapshot_json();
         let pending = &pending["components"][&component_name];
         // As above: require the entry to exist, since a missing key would index
         // to null and pass a bare `assert_ne!(.., "ok")`.
@@ -27780,7 +25209,7 @@ This is an example JSON object for profile settings."#;
 
         reporter.set_report(Some(ListenerHealth::Unhealthy));
         tokio::time::sleep(Duration::from_millis(80)).await;
-        let unhealthy = clawcrew_runtime::health::snapshot_json();
+        let unhealthy = clawcrew_infra::health::snapshot_json();
         let unhealthy = &unhealthy["components"][&component_name];
         assert_eq!(
             unhealthy["status"], "error",
@@ -27821,7 +25250,7 @@ This is an example JSON object for profile settings."#;
         );
 
         tokio::time::sleep(Duration::from_millis(60)).await;
-        let healthy = clawcrew_runtime::health::snapshot_json();
+        let healthy = clawcrew_infra::health::snapshot_json();
         let healthy = &healthy["components"][&component_name];
         assert_eq!(
             healthy["status"], "ok",
@@ -27834,7 +25263,7 @@ This is an example JSON object for profile settings."#;
         reporter.set_report(Some(ListenerHealth::Unhealthy));
         tokio::time::sleep(Duration::from_millis(80)).await;
 
-        let stale = clawcrew_runtime::health::snapshot_json();
+        let stale = clawcrew_infra::health::snapshot_json();
         let stale = &stale["components"][&component_name];
         assert_eq!(
             stale["status"], "error",
@@ -27874,7 +25303,7 @@ This is an example JSON object for profile settings."#;
         );
 
         tokio::time::sleep(Duration::from_millis(35)).await;
-        let first_last_ok = clawcrew_runtime::health::snapshot_json()["components"]
+        let first_last_ok = clawcrew_infra::health::snapshot_json()["components"]
             [&component_name]["last_ok"]
             .as_str()
             .unwrap_or("")
@@ -27882,7 +25311,7 @@ This is an example JSON object for profile settings."#;
         assert!(!first_last_ok.is_empty());
 
         tokio::time::sleep(Duration::from_millis(70)).await;
-        let second_last_ok = clawcrew_runtime::health::snapshot_json()["components"]
+        let second_last_ok = clawcrew_infra::health::snapshot_json()["components"]
             [&component_name]["last_ok"]
             .as_str()
             .unwrap_or("")
@@ -27916,7 +25345,7 @@ This is an example JSON object for profile settings."#;
         let handle = spawn_supervised_listener(channel, None, tx, 1, 1, cancel.clone());
 
         tokio::time::sleep(Duration::from_millis(80)).await;
-        let snapshot = clawcrew_runtime::health::snapshot_json();
+        let snapshot = clawcrew_infra::health::snapshot_json();
         let component = &snapshot["components"][&component_name];
         assert_eq!(calls.load(Ordering::SeqCst), 1);
         assert_eq!(component["status"], "error");
@@ -27954,7 +25383,7 @@ This is an example JSON object for profile settings."#;
         let handle = spawn_supervised_listener(channel, None, tx, 1, 1, cancel.clone());
 
         tokio::time::sleep(Duration::from_millis(80)).await;
-        let snapshot = clawcrew_runtime::health::snapshot_json();
+        let snapshot = clawcrew_infra::health::snapshot_json();
         let component = &snapshot["components"][&component_name];
         assert_eq!(calls.load(Ordering::SeqCst), 1);
         assert_eq!(component["status"], "error");
@@ -27997,7 +25426,7 @@ This is an example JSON object for profile settings."#;
         let handle = spawn_supervised_listener(channel, None, tx, 1, 1, cancel.clone());
 
         tokio::time::sleep(Duration::from_millis(80)).await;
-        let snapshot = clawcrew_runtime::health::snapshot_json();
+        let snapshot = clawcrew_infra::health::snapshot_json();
         let component = &snapshot["components"][&component_name];
         assert_eq!(calls.load(Ordering::SeqCst), 1);
         assert_eq!(component["status"], "error");
@@ -28054,7 +25483,7 @@ This is an example JSON object for profile settings."#;
 
         tokio::time::sleep(Duration::from_millis(80)).await;
 
-        let first_last_ok = clawcrew_runtime::health::snapshot_json()["components"]
+        let first_last_ok = clawcrew_infra::health::snapshot_json()["components"]
             [&healthy_component]["last_ok"]
             .as_str()
             .unwrap_or("")
@@ -28066,7 +25495,7 @@ This is an example JSON object for profile settings."#;
 
         tokio::time::sleep(Duration::from_millis(70)).await;
 
-        let snapshot = clawcrew_runtime::health::snapshot_json();
+        let snapshot = clawcrew_infra::health::snapshot_json();
         let failing = &snapshot["components"][&failing_component];
         let healthy = &snapshot["components"][&healthy_component];
         let second_last_ok = healthy["last_ok"].as_str().unwrap_or("").to_string();
@@ -28289,7 +25718,7 @@ This is an example JSON object for profile settings."#;
             provider_impl.clone(),
             Arc::new(clawcrew_config::schema::Config::default()),
             Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
         );
         let runtime_ctx = Arc::new(ChannelRuntimeContext {
@@ -28456,7 +25885,7 @@ This is an example JSON object for profile settings."#;
             provider_impl.clone(),
             Arc::new(clawcrew_config::schema::Config::default()),
             Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
         );
         let ctx = Arc::new(ChannelRuntimeContext {
@@ -28621,7 +26050,7 @@ This is an example JSON object for profile settings."#;
                 provider_impl.clone(),
                 Arc::new(clawcrew_config::schema::Config::default()),
                 Arc::new(
-                    clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                    clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
                 ),
             );
             let ctx = Arc::new(ChannelRuntimeContext {
@@ -28732,14 +26161,14 @@ This is an example JSON object for profile settings."#;
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("You are a helpful assistant.".to_string()),
@@ -28747,7 +26176,6 @@ This is an example JSON object for profile settings."#;
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -28780,30 +26208,20 @@ This is an example JSON object for profile settings."#;
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         // Simulate a photo attachment message with [IMAGE:] marker.
@@ -28853,14 +26271,14 @@ This is an example JSON object for profile settings."#;
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("You are a helpful assistant.".to_string()),
@@ -28868,7 +26286,6 @@ This is an example JSON object for profile settings."#;
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -28901,30 +26318,20 @@ This is an example JSON object for profile settings."#;
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -29021,14 +26428,14 @@ This is an example JSON object for profile settings."#;
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("You are a helpful assistant.".to_string()),
@@ -29036,7 +26443,6 @@ This is an example JSON object for profile settings."#;
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -29066,30 +26472,20 @@ This is an example JSON object for profile settings."#;
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 50000,
-            context_token_budget: 128_000,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 std::time::Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
             media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
             transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
             agent_transcription_provider: String::new(),
@@ -29332,14 +26728,14 @@ This is an example JSON object for profile settings."#;
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -29347,7 +26743,6 @@ This is an example JSON object for profile settings."#;
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -29380,30 +26775,20 @@ This is an example JSON object for profile settings."#;
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(model_routes),
             query_classification: classification_config,
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -29491,14 +26876,14 @@ This is an example JSON object for profile settings."#;
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -29506,7 +26891,6 @@ This is an example JSON object for profile settings."#;
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -29539,30 +26923,20 @@ This is an example JSON object for profile settings."#;
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(model_routes),
             query_classification: classification_config,
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -29642,14 +27016,14 @@ This is an example JSON object for profile settings."#;
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -29657,7 +27031,6 @@ This is an example JSON object for profile settings."#;
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -29690,30 +27063,20 @@ This is an example JSON object for profile settings."#;
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(model_routes),
             query_classification: classification_config,
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -29813,14 +27176,14 @@ This is an example JSON object for profile settings."#;
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -29828,7 +27191,6 @@ This is an example JSON object for profile settings."#;
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 5,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -29861,30 +27223,20 @@ This is an example JSON object for profile settings."#;
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(model_routes),
             query_classification: classification_config,
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         process_channel_message(
@@ -30759,14 +28111,14 @@ This is an example JSON object for profile settings."#;
             agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
             memory: Arc::new(NoopMemory),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     Arc::new(NoopMemory),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
                 ),
             ),
             tools_registry: Arc::new(
-                clawcrew_runtime::tools::scoped::ScopedToolRegistry::from_raw_for_test(vec![]),
+                clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
             ),
             observer: Arc::new(NoopObserver),
             system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -30774,7 +28126,6 @@ This is an example JSON object for profile settings."#;
             temperature: Some(0.0),
             auto_save_memory: false,
             max_tool_iterations: 10,
-            min_relevance_score: 0.0,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
             ))),
@@ -30807,30 +28158,20 @@ This is an example JSON object for profile settings."#;
             hooks: None,
             non_cli_excluded_tools: Arc::new(Vec::new()),
             autonomy_level: AutonomyLevel::default(),
-            tool_call_dedup_exempt: Arc::new(Vec::new()),
             model_routes: Arc::new(Vec::new()),
             query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
             ack_reactions: true,
             show_tool_calls: true,
             session_store: None,
-            approval_manager: Arc::new(ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
-            )),
-            activated_tools: None,
-            cost_tracking: None,
             pacing: clawcrew_config::schema::PacingConfig::default(),
-            max_tool_result_chars: 0,
-            context_token_budget: 0,
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::ZERO,
             )),
-            receipt_generator: None,
-            show_receipts_in_response: false,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
+            turn_runner: Arc::new(StandardChannelTurnRunner),
         });
 
         let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
@@ -31819,9 +29160,9 @@ Done."#;
         // The capacity exceeds the number of deltas, so nothing blocks and the
         // updater needs no concurrent task: it returns once the channel is
         // closed and empty.
-        let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_runtime::agent::loop_::DraftEvent>(32);
+        let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::DraftEvent>(32);
 
-        use clawcrew_runtime::agent::loop_::StreamDelta;
+        use clawcrew_api::channel::StreamDelta;
         for delta in [
             "Looking that up",
             " now.\n<tool_res",
@@ -31876,7 +29217,7 @@ Done."#;
 
     #[tokio::test]
     async fn draft_updater_uses_legacy_tool_status_and_ignores_reasoning() {
-        use clawcrew_runtime::agent::loop_::StreamDelta;
+        use clawcrew_api::channel::StreamDelta;
 
         let channel_impl = Arc::new(DraftRecordingChannel::new(false, false));
         let channel: Arc<dyn Channel> = channel_impl.clone();
@@ -31962,8 +29303,8 @@ Done."#;
             let channel_impl = Arc::new(DraftRecordingChannel::new(false, false));
             let channel: Arc<dyn Channel> = channel_impl.clone();
             let (tx, rx) =
-                tokio::sync::mpsc::channel::<clawcrew_runtime::agent::loop_::DraftEvent>(32);
-            use clawcrew_runtime::agent::loop_::StreamDelta;
+                tokio::sync::mpsc::channel::<clawcrew_api::channel::DraftEvent>(32);
+            use clawcrew_api::channel::StreamDelta;
             for delta in deltas {
                 tx.send(StreamDelta::Text(delta.to_string())).await.unwrap();
             }
@@ -32031,8 +29372,8 @@ Done."#;
             let channel_impl = Arc::new(DraftRecordingChannel::new(false, false));
             let channel: Arc<dyn Channel> = channel_impl.clone();
             let (tx, rx) =
-                tokio::sync::mpsc::channel::<clawcrew_runtime::agent::loop_::DraftEvent>(32);
-            use clawcrew_runtime::agent::loop_::StreamDelta;
+                tokio::sync::mpsc::channel::<clawcrew_api::channel::DraftEvent>(32);
+            use clawcrew_api::channel::StreamDelta;
             for delta in &deltas {
                 tx.send(StreamDelta::Text((*delta).to_string()))
                     .await
@@ -32070,7 +29411,7 @@ Done."#;
     /// published to the channel via `flush_draft_turn`.
     #[tokio::test]
     async fn multi_message_narration_flush_suppresses_registered_tool_protocol() {
-        use clawcrew_runtime::agent::loop_::StreamDelta;
+        use clawcrew_api::channel::StreamDelta;
         let known: HashSet<String> = ["mock_price".to_string()].into_iter().collect();
 
         for (label, payload) in [
@@ -32086,7 +29427,7 @@ Done."#;
             let channel_impl = Arc::new(DraftRecordingChannel::new(false, false));
             let channel: Arc<dyn Channel> = channel_impl.clone();
             let (tx, rx) =
-                tokio::sync::mpsc::channel::<clawcrew_runtime::agent::loop_::DraftEvent>(32);
+                tokio::sync::mpsc::channel::<clawcrew_api::channel::DraftEvent>(32);
 
             // The protocol JSON is a completed narration turn; the following
             // `Status` event is what drives the permanent turn flush.
@@ -32127,7 +29468,7 @@ Done."#;
 
     #[tokio::test]
     async fn multi_message_narration_is_committed_as_text_independent_of_the_final_route() {
-        use clawcrew_runtime::agent::loop_::StreamDelta;
+        use clawcrew_api::channel::StreamDelta;
 
         // Contract (multi_message): narration streamed during a turn is published
         // as separate, permanent text messages. `run_draft_updater` has no
@@ -32141,7 +29482,7 @@ Done."#;
         let known: HashSet<String> = HashSet::new();
         let channel_impl = Arc::new(DraftRecordingChannel::new(false, false));
         let channel: Arc<dyn Channel> = channel_impl.clone();
-        let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_runtime::agent::loop_::DraftEvent>(32);
+        let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::DraftEvent>(32);
 
         // A completed narration turn (plain prose, not a tool protocol) followed
         // by the `Status` event that drives the permanent flush.
@@ -32184,9 +29525,9 @@ Done."#;
         let known: HashSet<String> = ["shell".to_string()].into_iter().collect();
         let channel_impl = Arc::new(DraftRecordingChannel::new(false, false));
         let channel: Arc<dyn Channel> = channel_impl.clone();
-        let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_runtime::agent::loop_::DraftEvent>(32);
+        let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::DraftEvent>(32);
 
-        use clawcrew_runtime::agent::loop_::StreamDelta;
+        use clawcrew_api::channel::StreamDelta;
         for delta in [
             "Here is how a config looks:\n```json\n",
             "{\"retries\": 3,\n",
@@ -32331,7 +29672,7 @@ Done."#;
         let base_prompt_with_native = format!(
             "{}\n{}",
             "Some base agent prompt.",
-            ::clawcrew_runtime::agent::system_prompt::NATIVE_TOOLS_TASK_FRAMING,
+            clawcrew_api::agent::NATIVE_TOOLS_TASK_FRAMING,
         );
         let msg = build_msg_for_signal_test();
         let prompt = build_channel_system_prompt_for_message_with_signal(
@@ -32341,11 +29682,11 @@ Done."#;
             false, // per-turn: no effective native specs
         );
         assert!(
-            prompt.contains(::clawcrew_runtime::agent::system_prompt::NO_TOOLS_TASK_FRAMING),
+            prompt.contains(clawcrew_api::agent::NO_TOOLS_TASK_FRAMING),
             "per-turn signal=false must inject NO_TOOLS_TASK_FRAMING; got: {prompt}"
         );
         assert!(
-            !prompt.contains(::clawcrew_runtime::agent::system_prompt::NATIVE_TOOLS_TASK_FRAMING),
+            !prompt.contains(clawcrew_api::agent::NATIVE_TOOLS_TASK_FRAMING),
             "per-turn signal=false must remove NATIVE_TOOLS_TASK_FRAMING; got: {prompt}"
         );
     }
@@ -32355,7 +29696,7 @@ Done."#;
         let base_prompt_with_no_tools = format!(
             "{}\n{}",
             "Some base agent prompt.",
-            ::clawcrew_runtime::agent::system_prompt::NO_TOOLS_TASK_FRAMING,
+            clawcrew_api::agent::NO_TOOLS_TASK_FRAMING,
         );
         let msg = build_msg_for_signal_test();
         let prompt_with_helper = build_channel_system_prompt_for_message_with_signal(
@@ -32377,7 +29718,7 @@ Done."#;
         let base_prompt_with_no_tools = format!(
             "{}\n{}",
             "Some base agent prompt.",
-            ::clawcrew_runtime::agent::system_prompt::NO_TOOLS_TASK_FRAMING,
+            clawcrew_api::agent::NO_TOOLS_TASK_FRAMING,
         );
         let msg = build_msg_for_signal_test();
         let prompt = build_channel_system_prompt_for_message_with_signal(
@@ -32387,11 +29728,11 @@ Done."#;
             true, // per-turn: native specs now present
         );
         assert!(
-            prompt.contains(::clawcrew_runtime::agent::system_prompt::NATIVE_TOOLS_TASK_FRAMING),
+            prompt.contains(clawcrew_api::agent::NATIVE_TOOLS_TASK_FRAMING),
             "per-turn signal=true must inject NATIVE_TOOLS_TASK_FRAMING; got: {prompt}"
         );
         assert!(
-            !prompt.contains(::clawcrew_runtime::agent::system_prompt::NO_TOOLS_TASK_FRAMING),
+            !prompt.contains(clawcrew_api::agent::NO_TOOLS_TASK_FRAMING),
             "per-turn signal=true must remove NO_TOOLS_TASK_FRAMING; got: {prompt}"
         );
     }
@@ -33036,70 +30377,8 @@ Done."#;
             by_agent: Arc::new(HashMap::new()),
             owner_by_channel_key: Arc::new(HashMap::new()),
             single_ctx: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_dispatcher: None,
         }
-    }
-
-    fn manual_sop_event() -> clawcrew_runtime::sop::types::SopEvent {
-        clawcrew_runtime::sop::types::SopEvent {
-            source: clawcrew_runtime::sop::types::SopTriggerSource::Manual,
-            topic: None,
-            payload: None,
-            timestamp: "2026-01-01T00:00:00Z".to_string(),
-        }
-    }
-
-    fn channel_gate_sop(policy: Option<&str>) -> clawcrew_runtime::sop::types::Sop {
-        use clawcrew_runtime::sop::types::{
-            Sop, SopAdmissionPolicy, SopExecutionMode, SopPriority, SopStep, SopStepKind,
-            SopTrigger,
-        };
-
-        Sop {
-            name: "channel-gate".to_string(),
-            description: "channel gate test".to_string(),
-            version: "1.0.0".to_string(),
-            priority: SopPriority::Normal,
-            execution_mode: SopExecutionMode::Supervised,
-            triggers: vec![SopTrigger::Manual],
-            steps: vec![SopStep {
-                number: 1,
-                title: "Approve me".to_string(),
-                body: "Do the gated work".to_string(),
-                suggested_tools: vec![],
-                requires_confirmation: false,
-                kind: SopStepKind::Execute,
-                schema: None,
-                policy: policy.map(str::to_string),
-                ..SopStep::default()
-            }],
-            cooldown_secs: 0,
-            max_concurrent: 1,
-            location: None,
-            deterministic: false,
-            admission_policy: SopAdmissionPolicy::Parallel,
-            max_pending_approvals: 0,
-            agent: None,
-        }
-    }
-
-    fn channel_gate_config_with_routes(
-        request_route: Option<&str>,
-        escalation_route: Option<&str>,
-    ) -> clawcrew_config::schema::SopConfig {
-        let mut config = clawcrew_config::schema::SopConfig::default();
-        if request_route.is_some() || escalation_route.is_some() {
-            config.approval.policies.insert(
-                "prod".to_string(),
-                clawcrew_config::schema::ApprovalPolicyConfig {
-                    request_route: request_route.map(str::to_string),
-                    escalation_route: escalation_route.map(str::to_string),
-                    ..clawcrew_config::schema::ApprovalPolicyConfig::default()
-                },
-            );
-        }
-        config
     }
 
     fn parked_channel_gate_router(
@@ -33107,53 +30386,41 @@ Done."#;
         request_route: Option<&str>,
     ) -> (
         AgentRouter,
-        Arc<Mutex<clawcrew_runtime::sop::SopEngine>>,
+        Arc<MockSopDispatcher>,
         String,
     ) {
         parked_channel_gate_router_with_routes(policy, request_route, None)
     }
 
     fn parked_channel_gate_router_with_routes(
-        policy: Option<&str>,
+        _policy: Option<&str>,
         request_route: Option<&str>,
         escalation_route: Option<&str>,
     ) -> (
         AgentRouter,
-        Arc<Mutex<clawcrew_runtime::sop::SopEngine>>,
+        Arc<MockSopDispatcher>,
         String,
     ) {
-        let mut engine = clawcrew_runtime::sop::SopEngine::new(channel_gate_config_with_routes(
-            request_route,
-            escalation_route,
-        ));
-        engine.set_sops_for_test(vec![channel_gate_sop(policy)]);
-        let action = engine
-            .start_run("channel-gate", manual_sop_event())
-            .unwrap();
-        let run_id = match action {
-            clawcrew_runtime::sop::types::SopRunAction::WaitApproval { run_id, .. } => run_id,
-            other => panic!("expected waiting approval, got {other:?}"),
-        };
-        let engine = Arc::new(Mutex::new(engine));
+        let dispatcher = Arc::new(MockSopDispatcher {
+            request_route: Mutex::new(request_route.map(str::to_string)),
+            escalation_route: Mutex::new(escalation_route.map(str::to_string)),
+            run_status: Arc::new(Mutex::new(Some(clawcrew_api::sop::SopRunStatus::WaitingApproval))),
+            ..Default::default()
+        });
         let router = AgentRouter {
             by_agent: Arc::new(HashMap::new()),
             owner_by_channel_key: Arc::new(HashMap::new()),
             single_ctx: None,
-            sop_engine: Some(Arc::clone(&engine)),
-            sop_audit: None,
+            sop_dispatcher: Some(dispatcher.clone()),
         };
-        (router, engine, run_id)
+        (router, dispatcher, "det-1-0001".to_string())
     }
 
     fn active_run_status(
-        engine: &Arc<Mutex<clawcrew_runtime::sop::SopEngine>>,
-        run_id: &str,
-    ) -> Option<clawcrew_runtime::sop::types::SopRunStatus> {
-        engine
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .get_run(run_id)
-            .map(|run| run.status)
+        engine: &Arc<MockSopDispatcher>,
+        _run_id: &str,
+    ) -> Option<clawcrew_api::sop::SopRunStatus> {
+        *engine.run_status.lock().unwrap_or_else(|e| e.into_inner())
     }
 
     async fn dispatch_test_channel_sop_gate(
@@ -33329,7 +30596,7 @@ Done."#;
         );
         assert_eq!(
             active_run_status(&engine, &run_id),
-            Some(clawcrew_runtime::sop::types::SopRunStatus::WaitingApproval)
+            Some(clawcrew_api::sop::SopRunStatus::WaitingApproval)
         );
     }
 
@@ -33353,7 +30620,7 @@ Done."#;
         );
         assert_eq!(
             active_run_status(&engine, &run_id),
-            Some(clawcrew_runtime::sop::types::SopRunStatus::WaitingApproval)
+            Some(clawcrew_api::sop::SopRunStatus::WaitingApproval)
         );
     }
 
@@ -33377,7 +30644,7 @@ Done."#;
         );
         assert_eq!(
             active_run_status(&engine, &run_id),
-            Some(clawcrew_runtime::sop::types::SopRunStatus::WaitingApproval)
+            Some(clawcrew_api::sop::SopRunStatus::WaitingApproval)
         );
     }
 
@@ -33405,7 +30672,7 @@ Done."#;
         );
         assert_eq!(
             active_run_status(&engine, &run_id),
-            Some(clawcrew_runtime::sop::types::SopRunStatus::WaitingApproval)
+            Some(clawcrew_api::sop::SopRunStatus::WaitingApproval)
         );
     }
 
@@ -33433,7 +30700,7 @@ Done."#;
         );
         assert_eq!(
             active_run_status(&engine, &run_id),
-            Some(clawcrew_runtime::sop::types::SopRunStatus::WaitingApproval)
+            Some(clawcrew_api::sop::SopRunStatus::WaitingApproval)
         );
     }
 
@@ -33462,7 +30729,7 @@ Done."#;
         );
         assert_eq!(
             active_run_status(&engine, &run_id),
-            Some(clawcrew_runtime::sop::types::SopRunStatus::Running)
+            Some(clawcrew_api::sop::SopRunStatus::Running)
         );
     }
 
@@ -33486,7 +30753,7 @@ Done."#;
         );
         assert_eq!(
             active_run_status(&engine, &run_id),
-            Some(clawcrew_runtime::sop::types::SopRunStatus::Running)
+            Some(clawcrew_api::sop::SopRunStatus::Running)
         );
     }
 
@@ -33514,7 +30781,7 @@ Done."#;
         tokio::time::timeout(Duration::from_secs(1), async {
             loop {
                 if active_run_status(&engine, &run_id)
-                    == Some(clawcrew_runtime::sop::types::SopRunStatus::Failed)
+                    == Some(clawcrew_api::sop::SopRunStatus::Failed)
                 {
                     break;
                 }
@@ -33561,7 +30828,7 @@ Done."#;
         tokio::time::timeout(Duration::from_secs(1), async {
             loop {
                 if active_run_status(&engine, &run_id)
-                    == Some(clawcrew_runtime::sop::types::SopRunStatus::Failed)
+                    == Some(clawcrew_api::sop::SopRunStatus::Failed)
                 {
                     break;
                 }
@@ -33606,7 +30873,7 @@ Done."#;
         );
         assert_eq!(
             active_run_status(&engine, &run_id),
-            Some(clawcrew_runtime::sop::types::SopRunStatus::Running)
+            Some(clawcrew_api::sop::SopRunStatus::Running)
         );
         for finalized in [
             request_channel.finalized_gate_prompts.lock().await,
@@ -33641,7 +30908,7 @@ Done."#;
         );
         assert_eq!(
             active_run_status(&engine, &run_id),
-            Some(clawcrew_runtime::sop::types::SopRunStatus::Running)
+            Some(clawcrew_api::sop::SopRunStatus::Running)
         );
     }
 
