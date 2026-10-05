@@ -43,5 +43,4 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 - [ ] **G-33 (P2, M) Sub-agent / handoff / A2A** sebagai Artifact reference antar Crew di Go. Dep: R-00.
 
 
-- [ ] **G-37 (P3, S) ADR opsional: Delegated Authority Chain** (wewenang bertingkat Quartermaster→Crew yang ditandatangani, attenuasi, fail-closed) — rujukan 
-esearch/verifiable-intent-assessment.md §3. Dep: G-35, G-23. Bukan komitmen implementasi.
+- [ ] **G-37 (P2 — naik dari P3, DIUPGRADE jadi gate wajib, keputusan Owner 2026-10-05, S) ADR: Delegated Authority Chain** (wewenang bertingkat Quartermaster→Crew yang ditandatangani, attenuasi, fail-closed) — rujukan `research/verifiable-intent-assessment.md` §3,§3b,§3c. **Konteks baru**: Owner konfirmasi arah "bayar" di product definition §5 berpotensi meluas ke agentic commerce (agent beli dari merchant pihak ketiga). ADR ini **WAJIB ditinjau ulang SEBELUM desain fitur commerce pertama dimulai** — bukan lagi opsional P3. Harus merujuk AP2/VI (Google/Mastercard, donasi FIDO Mei 2026), IETF WIMSE delegation chains, IETF DAAP, dan invariant F1 (Treasury read-only, zero platform markup, larangan reseller kredit) sebagai pagar desain. Dep: G-35, G-23. Bukan komitmen implementasi DAC itu sendiri — tapi gate review wajib sebelum commerce.
