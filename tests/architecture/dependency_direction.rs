@@ -56,8 +56,9 @@ fn crate_dependency_direction_strictly_enforced() {
         );
     }
 
-    // 3. Check new galleon-channel-* crates do not depend on clawcrew-runtime
+    // 3. Check channel crates do not depend on clawcrew-runtime
     for channel_crate in [
+        "crates/clawcrew-channels",
         "crates/galleon-channel-core",
         "crates/galleon-channel-signal",
         "crates/galleon-channel-bluesky",

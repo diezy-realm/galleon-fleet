@@ -42,7 +42,7 @@ pub fn redact(value: &str) -> String {
 }
 
 pub static SENSITIVE_KEY_REGEX: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
-    regex::Regex::new(r#"(?i)(authorization|token|api[_-]?key|password|secret|user[_-]?key|bearer|credential|set[_-]?cookie|cookie)"#)
+    regex::Regex::new(r#"(?i)(authorization|token|api[_-]?key|private[_-]?key|password|secret|user[_-]?key|bearer|credential|set[_-]?cookie|cookie)"#)
         .expect("static sensitive-key regex must compile")
 });
 pub const REDACTED_CREDENTIAL_VALUE: &str = "[REDACTED]";
@@ -56,6 +56,8 @@ pub fn looks_like_secret_key(key: &str) -> bool {
         || lower.contains("apikey")
         || lower.contains("auth")
         || lower.contains("credential")
+        || lower.contains("private_key")
+        || lower.contains("privatekey")
 }
 
 pub fn is_credential_key(key: &str) -> bool {

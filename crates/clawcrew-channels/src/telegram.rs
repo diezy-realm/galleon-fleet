@@ -48,6 +48,9 @@ const TELEGRAM_MAX_MESSAGE_LENGTH: usize = 4096;
 /// Prefix for synthetic draft ids returned by `send_draft` in MultiMessage mode.
 const TELEGRAM_MULTI_MESSAGE_SYNTHETIC_PREFIX: &str = "multi_message_synthetic:";
 
+pub type TelegramSkillsResolver =
+    Arc<dyn Fn(&Path) -> Vec<clawcrew_api::skill::Skill> + Send + Sync>;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct MultiDraftKey {
     recipient: String,
@@ -979,7 +982,7 @@ pub struct TelegramChannel {
     /// Pre-computed tool command specs (name, description) for bot command registration.
     tool_command_specs: Vec<(String, String)>,
     skills: Vec<clawcrew_api::skill::Skill>,
-    skills_resolver: Option<Arc<dyn Fn(&std::path::Path) -> Vec<clawcrew_api::skill::Skill> + Send + Sync>>,
+    skills_resolver: Option<TelegramSkillsResolver>,
     /// Pending approval requests: callback_data key → oneshot sender.
     /// `listen()` resolves these when a matching `callback_query` arrives.
     pending_approvals:
@@ -2736,7 +2739,7 @@ impl TelegramChannel {
     /// Configure dynamic skills resolver for bot command registration.
     pub fn with_skills_resolver(
         mut self,
-        resolver: Arc<dyn Fn(&std::path::Path) -> Vec<clawcrew_api::skill::Skill> + Send + Sync>,
+        resolver: TelegramSkillsResolver,
     ) -> Self {
         self.skills_resolver = Some(resolver);
         self

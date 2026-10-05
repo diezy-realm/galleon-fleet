@@ -110,29 +110,19 @@ use clawcrew_api::memory_traits::MemoryStrategy;
 use clawcrew_api::session_keys::sanitize_session_key;
 use clawcrew_config::scattered_types::{ThinkingConfig, ThinkingLevel};
 use clawcrew_config::schema::Config;
-#[cfg(test)]
-use clawcrew_memory::MEMORY_CONTEXT_OPEN;
-use clawcrew_memory::{self, Memory};
-use clawcrew_providers::reliable::{
-    ProviderFallbackInfo, scope_provider_fallback, take_last_provider_fallback,
-};
+use clawcrew_memory::{self, Memory, MEMORY_CONTEXT_CLOSE, MEMORY_CONTEXT_OPEN};
+use clawcrew_providers::reliable::ProviderFallbackInfo;
 use clawcrew_providers::{
     self, ChatMessage, ModelProvider, ProviderDispatch, SafeguardFallbackKind,
-    SafeguardFallbackNotice, scope_safeguard_fallback, take_last_safeguard_fallback,
+    SafeguardFallbackNotice,
 };
-use clawcrew_api::agent::is_model_switch_requested;
 use clawcrew_api::channel::{
-    ChannelTurnResult, ChannelTurnRunner, NoopChannelTurnRunner, REASONING_FULL_PREFIX,
-    thinking_status_round,
+    ChannelTurnResult, REASONING_FULL_PREFIX, thinking_status_round,
 };
-use clawcrew_api::hook::{ChannelHookRunner, HookResult};
-use clawcrew_api::observability_traits::{NoopObserver, Observer, ObserverEvent, ObserverMetric};
-use clawcrew_api::runtime_traits::RuntimeAdapter;
-use clawcrew_api::sop::{SopFanInDispatcher, SopTriggerSource};
-use clawcrew_api::tool::{ScopedToolRegistry, Tool};
+use clawcrew_api::observability_traits::{Observer, ObserverEvent, ObserverMetric};
+use clawcrew_api::tool::Tool;
 use clawcrew_config::autonomy::AutonomyLevel;
 use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_tools as tools;
 use galleon_security_scrub::scrub as scrub_credentials;
 use crate::util::truncate_with_ellipsis;
 
@@ -322,18 +312,6 @@ struct ChannelRouteSelection {
     /// Route-specific API key override. When set, this credential is passed
     /// directly to the requested provider instead of the alias entry's key.
     api_key: Option<String>,
-}
-
-fn resolve_channel_context_limits(
-    config: &clawcrew_config::schema::Config,
-    agent_alias: &str,
-    route: &ChannelRouteSelection,
-    legacy_budget: usize,
-) -> clawcrew_config::schema::ResolvedContextLimits {
-    if agent_alias.is_empty() {
-        return clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(legacy_budget);
-    }
-    config.resolved_context_limits_for_route(agent_alias, &route.model_provider, &route.model)
 }
 
 /// Selectable scope for a session-only `/model` override. The absence of any
@@ -603,11 +581,351 @@ fn interrupt_on_new_message_enabled(
     }
 }
 
+/// Ephemeral HMAC receipt generator for tool execution verification.
 #[derive(Clone)]
-struct ChannelCostTrackingState {
-    tracker: Arc<clawcrew_config::cost::CostTracker>,
-    model_provider_pricing: Arc<clawcrew_config::cost::ModelProviderPricing>,
-    agent_alias: Arc<String>,
+pub struct ReceiptGenerator {
+    key: Vec<u8>,
+}
+
+impl Default for ReceiptGenerator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ReceiptGenerator {
+    pub fn new() -> Self {
+        let key = uuid::Uuid::new_v4().as_bytes().repeat(2);
+        Self { key }
+    }
+
+    #[cfg(test)]
+    pub fn with_key(key: Vec<u8>) -> Self {
+        Self { key }
+    }
+
+    pub fn generate_now(&self, tool_name: &str, args: &serde_json::Value, result: &str) -> String {
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        self.generate(tool_name, args, result, timestamp)
+    }
+
+    pub fn generate(
+        &self,
+        tool_name: &str,
+        args: &serde_json::Value,
+        result: &str,
+        timestamp: u64,
+    ) -> String {
+        use base64::Engine;
+        use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+        use hmac::{Hmac, Mac};
+        use sha2::Sha256;
+        type HmacSha256 = Hmac<Sha256>;
+
+        let mut mac = HmacSha256::new_from_slice(&self.key).expect("HMAC accepts any key length");
+        mac.update(tool_name.as_bytes());
+        mac.update(b"|");
+        mac.update(args.to_string().as_bytes());
+        mac.update(b"|");
+        mac.update(result.as_bytes());
+        mac.update(b"|");
+        mac.update(timestamp.to_string().as_bytes());
+        let digest = mac.finalize().into_bytes();
+        format!("zc-receipt-{timestamp}-{}", URL_SAFE_NO_PAD.encode(digest))
+    }
+}
+
+pub fn render_receipts_block(receipts: &[String]) -> Option<String> {
+    if receipts.is_empty() {
+        return None;
+    }
+    use std::fmt::Write as _;
+    let mut block = String::from("---\nTool receipts:");
+    for r in receipts {
+        let _ = write!(block, "\n  {r}");
+    }
+    Some(block)
+}
+
+/// Standard turn runner that drives model provider and executes tool calls,
+/// without depending on `clawcrew-runtime`.
+#[derive(Debug, Default, Clone)]
+pub struct StandardChannelTurnRunner;
+
+#[async_trait::async_trait]
+impl clawcrew_api::channel::ChannelTurnRunner for StandardChannelTurnRunner {
+    async fn run_channel_turn(
+        &self,
+        ctx: clawcrew_api::channel::ChannelTurnContext,
+        history: &mut Vec<clawcrew_api::model_provider::ChatMessage>,
+    ) -> clawcrew_api::channel::ChannelTurnResult {
+        use clawcrew_api::channel::{ProgressEvent, StreamDelta};
+        use clawcrew_api::observability_traits::ObserverEvent;
+
+        let max_iterations = if ctx.max_tool_iterations == 0 {
+            1
+        } else {
+            ctx.max_tool_iterations
+        };
+        let mut iteration = 0;
+        let mut final_response = String::new();
+
+        while iteration < max_iterations {
+            if ctx.cancellation_token.is_cancelled() {
+                return clawcrew_api::channel::ChannelTurnResult::Cancelled;
+            }
+
+            if let Some(ref tx) = ctx.delta_tx {
+                let _ = tx
+                    .send(StreamDelta::Lifecycle(ProgressEvent::WaitingOnModel))
+                    .await;
+            }
+
+            if let Some(ref obs) = ctx.observer {
+                obs.record_event(&ObserverEvent::LlmRequest {
+                    model_provider: ctx.model_provider_name.clone(),
+                    model: ctx.model.clone(),
+                    messages_count: history.len(),
+                    channel: Some(ctx.msg.channel.clone()),
+                    agent_alias: ctx.agent_alias.clone(),
+                    parent_agent_alias: None,
+                    turn_id: ctx.turn_id.clone(),
+                });
+            }
+
+            let provider_fut = ctx.model_provider.chat(
+                clawcrew_providers::ChatRequest {
+                    messages: history.as_slice(),
+                    tools: None,
+                    thinking: None,
+                },
+                &ctx.model,
+                ctx.temperature,
+            );
+
+            let res = tokio::select! {
+                () = ctx.cancellation_token.cancelled() => return clawcrew_api::channel::ChannelTurnResult::Cancelled,
+                res = provider_fut => res,
+            };
+
+            let chat_res = match res {
+                Ok(r) => r,
+                Err(e) => return clawcrew_api::channel::ChannelTurnResult::Failed(e),
+            };
+
+            let mut tool_calls = Vec::new();
+            let mut raw_response_text = chat_res.text.clone().unwrap_or_default();
+            if !chat_res.tool_calls.is_empty() {
+                for native_call in chat_res.tool_calls {
+                    let parsed_args = serde_json::from_str(&native_call.arguments)
+                        .unwrap_or(serde_json::Value::String(native_call.arguments));
+                    tool_calls.push(clawcrew_tool_call_parser::ParsedToolCall {
+                        name: native_call.name,
+                        arguments: parsed_args,
+                        tool_call_id: Some(native_call.id),
+                    });
+                }
+            } else {
+                let (cleaned, parsed) = clawcrew_tool_call_parser::parse_tool_calls(&raw_response_text);
+                tool_calls = parsed;
+                if tool_calls.is_empty() && !cleaned.trim().is_empty() {
+                    raw_response_text = cleaned;
+                }
+            }
+
+            if tool_calls.is_empty() {
+                final_response = raw_response_text;
+                history.push(clawcrew_api::model_provider::ChatMessage::assistant(
+                    &final_response,
+                ));
+                if let Some(ref tx) = ctx.delta_tx {
+                    let _ = tx
+                        .send(StreamDelta::Text(final_response.clone()))
+                        .await;
+                }
+                return clawcrew_api::channel::ChannelTurnResult::Completed(final_response);
+            }
+
+            // Check if model_switch was requested
+            for call in &tool_calls {
+                if call.name == "model_switch" {
+                    let p = call.arguments.get("model_provider").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+                    let m = call.arguments.get("model").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+                    if !p.is_empty() && !m.is_empty() {
+                        return clawcrew_api::channel::ChannelTurnResult::Failed(
+                            anyhow::Error::new(clawcrew_api::agent::ModelSwitchRequested {
+                                model_provider: p,
+                                model: m,
+                            })
+                        );
+                    }
+                }
+            }
+
+            // We have tool calls
+            history.push(clawcrew_api::model_provider::ChatMessage::assistant(
+                &raw_response_text,
+            ));
+
+            if !raw_response_text.trim().is_empty()
+                && let Some(ref tx) = ctx.delta_tx
+            {
+                let mut narration = raw_response_text.clone();
+                if !narration.ends_with('\n') {
+                    narration.push('\n');
+                }
+                let _ = tx.send(StreamDelta::Text(narration)).await;
+            }
+
+            let mut tool_results_content = String::new();
+            for call in &tool_calls {
+                let mut approved = true;
+                if let Some(ref ch) = ctx.approval_channel {
+                    if ch.supports_turn_flush_narration()
+                        && let Some(ref tx) = ctx.delta_tx
+                    {
+                        let (barrier, ack) = StreamDelta::flush_barrier();
+                        if tx.send(barrier).await.is_ok() {
+                            let _ = ack.await;
+                        }
+                    }
+                    let recipient = ctx.msg.reply_target.as_str();
+                    let ch_request = clawcrew_api::channel::ChannelApprovalRequest {
+                        tool_name: call.name.clone(),
+                        arguments_summary: call.arguments.to_string(),
+                        raw_arguments: Some(call.arguments.clone()),
+                        position: None,
+                    };
+                    match ch.request_approval_attributed(recipient, &ch_request).await {
+                        Ok(Some(resp)) => {
+                            approved = matches!(resp.response, clawcrew_api::channel::ChannelApprovalResponse::Approve | clawcrew_api::channel::ChannelApprovalResponse::AlwaysApprove);
+                        }
+                        Ok(None) => {
+                            approved = true;
+                        }
+                        Err(_) => {
+                            approved = false;
+                        }
+                    }
+                }
+
+                if let Some(ref tx) = ctx.delta_tx {
+                    let _ = tx
+                        .send(StreamDelta::Lifecycle(ProgressEvent::RunningTool))
+                        .await;
+                    let _ = tx
+                        .send(StreamDelta::ToolStart {
+                            tool: call.name.clone(),
+                            arguments: std::sync::Arc::new(call.arguments.clone()),
+                            tool_provenance: None,
+                        })
+                        .await;
+                }
+
+                if let Some(ref obs) = ctx.observer {
+                    obs.record_event(&ObserverEvent::ToolCallStart {
+                        tool: call.name.clone(),
+                        tool_call_id: None,
+                        arguments: Some(call.arguments.to_string()),
+                        channel: Some(ctx.msg.channel.clone()),
+                        agent_alias: ctx.agent_alias.clone(),
+                        parent_agent_alias: None,
+                        turn_id: ctx.turn_id.clone(),
+                    });
+                }
+
+                let tool_start = std::time::Instant::now();
+                let (tool_result, is_ok, err_str) = if !approved {
+                    ("Tool approval rejected".to_string(), false, Some("Tool approval rejected".to_string()))
+                } else if let Some(ref registry) = ctx.tools_registry {
+                    use clawcrew_api::tool::ToolRegistry;
+                    if let Some(tool) = registry.find_tool(&call.name) {
+                        match tool.execute(call.arguments.clone()).await {
+                            Ok(out) => {
+                                let s = out.output.as_str().to_string();
+                                let err = out.error.clone();
+                                let ok = err.is_none();
+                                (s, ok, err)
+                            }
+                            Err(e) => {
+                                let err_msg = e.to_string();
+                                (format!("Error executing tool {}: {err_msg}", call.name), false, Some(err_msg))
+                            }
+                        }
+                    } else {
+                        (format!("Unknown tool: {}", call.name), false, Some(format!("Unknown tool: {}", call.name)))
+                    }
+                } else {
+                    (format!("No tools registry available to execute {}", call.name), false, None)
+                };
+
+                let tool_duration = tool_start.elapsed();
+
+                if let Some(ref obs) = ctx.observer {
+                    obs.record_event(&ObserverEvent::ToolCall {
+                        tool: call.name.clone(),
+                        tool_call_id: None,
+                        duration: tool_duration,
+                        success: is_ok,
+                        arguments: Some(call.arguments.to_string()),
+                        result: Some(tool_result.clone()),
+                        channel: Some(ctx.msg.channel.clone()),
+                        agent_alias: ctx.agent_alias.clone(),
+                        parent_agent_alias: None,
+                        turn_id: ctx.turn_id.clone(),
+                    });
+                }
+
+                if let Some(ref receipt_gen) = ctx.generate_receipt {
+                    let r = receipt_gen(&call.name, &call.arguments, &tool_result);
+                    if let Some(ref collector) = ctx.receipts_collector
+                        && let Ok(mut v) = collector.lock()
+                    {
+                        v.push(format!("{}: {}", call.name, r));
+                    }
+                }
+
+                if let Some(ref tx) = ctx.delta_tx {
+                    let _ = tx
+                        .send(StreamDelta::ToolComplete {
+                            tool: call.name.clone(),
+                            arguments: std::sync::Arc::new(call.arguments.clone()),
+                            tool_provenance: None,
+                            secs: tool_duration.as_secs(),
+                            success: is_ok,
+                            error: err_str,
+                        })
+                        .await;
+                }
+
+                if !tool_results_content.is_empty() {
+                    tool_results_content.push_str("\n\n");
+                }
+                tool_results_content.push_str(&format!(
+                    "<tool_result name=\"{}\">\n{}\n</tool_result>",
+                    call.name, tool_result
+                ));
+            }
+
+            if let Some(ref tx) = ctx.delta_tx {
+                let _ = tx
+                    .send(StreamDelta::Lifecycle(ProgressEvent::Planning))
+                    .await;
+            }
+
+            let tool_results_turn = format!("[Tool results]\n{}", tool_results_content);
+            history.push(clawcrew_api::model_provider::ChatMessage::user(
+                &tool_results_turn,
+            ));
+
+            iteration += 1;
+        }
+
+        clawcrew_api::channel::ChannelTurnResult::Completed(final_response)
+    }
 }
 
 #[derive(Clone)]
@@ -633,7 +951,6 @@ struct ChannelRuntimeContext {
     temperature: Option<f64>,
     auto_save_memory: bool,
     max_tool_iterations: usize,
-    min_relevance_score: f64,
     conversation_histories: ConversationHistoryMap,
     history_crumb_flags: HistoryCrumbMap,
     pending_new_sessions: PendingNewSessionSet,
@@ -660,17 +977,13 @@ struct ChannelRuntimeContext {
     hooks: Option<Arc<dyn clawcrew_api::hook::ChannelHookRunner>>,
     non_cli_excluded_tools: Arc<Vec<String>>,
     autonomy_level: AutonomyLevel,
-    tool_call_dedup_exempt: Arc<Vec<String>>,
     model_routes: Arc<Vec<clawcrew_config::schema::ModelRouteConfig>>,
     query_classification: clawcrew_config::schema::QueryClassificationConfig,
     ack_reactions: bool,
     show_tool_calls: bool,
     session_store: Option<Arc<dyn clawcrew_infra::session_backend::SessionBackend>>,
     pacing: clawcrew_config::schema::PacingConfig,
-    max_tool_result_chars: usize,
-    context_token_budget: usize,
     debouncer: Arc<clawcrew_infra::debounce::MessageDebouncer>,
-    show_receipts_in_response: bool,
     last_applied_config_stamp: Arc<Mutex<Option<ConfigFileStamp>>>,
     runtime_defaults_override: Arc<Mutex<Option<Arc<ChannelRuntimeOverride>>>>,
     /// Per-conversation-history-key locks that serialize persistence mutations
@@ -2523,10 +2836,9 @@ fn resolve_channel_thinking(
         config,
     );
     let params = clawcrew_config::thinking::apply_thinking_level_with_config(level, config);
-    let effective_temperature = base_temperature.map(|temperature| {
-        clawcrew_config::thinking::clamp_temperature(
-            temperature + params.temperature_adjustment,
-        )
+
+    let effective_temperature = base_temperature.map(|bt| {
+        clawcrew_config::thinking::clamp_temperature(bt + params.temperature_adjustment)
     });
 
     ChannelThinkingResolution {
@@ -2535,6 +2847,19 @@ fn resolve_channel_thinking(
         params,
         effective_temperature,
     }
+}
+
+#[cfg(test)]
+fn resolve_channel_context_limits(
+    config: &clawcrew_config::schema::Config,
+    agent_alias: &str,
+    route: &ChannelRouteSelection,
+    legacy_budget: usize,
+) -> clawcrew_config::schema::ResolvedContextLimits {
+    if agent_alias.is_empty() {
+        return clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(legacy_budget);
+    }
+    config.resolved_context_limits_for_route(agent_alias, &route.model_provider, &route.model)
 }
 
 fn parse_runtime_command(channel_name: &str, content: &str) -> Option<ChannelRuntimeCommand> {
@@ -2675,6 +3000,7 @@ fn resolve_models_command(
     }
 }
 
+#[cfg(test)]
 fn resolve_provider_ref_for_runtime_switch(config: &Config, raw: &str) -> anyhow::Result<String> {
     match resolve_models_command(config, raw) {
         ModelsCommandResolution::Resolved(provider_ref) => Ok(provider_ref),
@@ -3277,82 +3603,9 @@ fn take_pending_new_session(ctx: &ChannelRuntimeContext, sender_key: &str) -> bo
         .remove(sender_key)
 }
 
-fn replace_available_skills_section(base_prompt: &str, refreshed_skills: &str) -> String {
-    const SKILLS_HEADER: &str = "## Available Skills\n\n";
-    const SKILLS_END: &str = "</available_skills>";
-    const WORKSPACE_HEADER: &str = "## Workspace\n\n";
-
-    if let Some(start) = base_prompt.find(SKILLS_HEADER)
-        && let Some(rel_end) = base_prompt[start..].find(SKILLS_END)
-    {
-        let end = start + rel_end + SKILLS_END.len();
-        let tail = base_prompt[end..]
-            .strip_prefix("\n\n")
-            .unwrap_or(&base_prompt[end..]);
-
-        let mut refreshed = String::with_capacity(
-            base_prompt.len().saturating_sub(end.saturating_sub(start))
-                + refreshed_skills.len()
-                + 2,
-        );
-        refreshed.push_str(&base_prompt[..start]);
-        if !refreshed_skills.is_empty() {
-            refreshed.push_str(refreshed_skills);
-            refreshed.push_str("\n\n");
-        }
-        refreshed.push_str(tail);
-        return refreshed;
-    }
-
-    if refreshed_skills.is_empty() {
-        return base_prompt.to_string();
-    }
-
-    if let Some(workspace_start) = base_prompt.find(WORKSPACE_HEADER) {
-        let mut refreshed = String::with_capacity(base_prompt.len() + refreshed_skills.len() + 2);
-        refreshed.push_str(&base_prompt[..workspace_start]);
-        refreshed.push_str(refreshed_skills);
-        refreshed.push_str("\n\n");
-        refreshed.push_str(&base_prompt[workspace_start..]);
-        return refreshed;
-    }
-
-    format!("{base_prompt}\n\n{refreshed_skills}")
-}
-
-fn rendered_skills_prompt_mode(
-    prompt: &str,
-) -> Option<clawcrew_config::schema::SkillsPromptInjectionMode> {
-    const SKILLS_HEADER: &str = "## Available Skills\n\n";
-    const SKILLS_END: &str = "</available_skills>";
-
-    let start = prompt.find(SKILLS_HEADER)?;
-    let rel_end = prompt[start..].find(SKILLS_END)?;
-    let section = &prompt[start..start + rel_end + SKILLS_END.len()];
-    let preamble = section.split_once("<available_skills>")?.0;
-
-    if preamble.contains("Skill summaries are preloaded below") {
-        Some(clawcrew_config::schema::SkillsPromptInjectionMode::Compact)
-    } else if preamble.contains("Skill instructions and tool metadata are preloaded below") {
-        Some(clawcrew_config::schema::SkillsPromptInjectionMode::Full)
-    } else {
-        None
-    }
-}
-
-fn refreshed_skills_system_prompt(
-    _ctx: &ChannelRuntimeContext,
-    base_prompt: &str,
-    _callable_protocol_exposed: bool,
-    _excluded_tools: &[String],
-) -> String {
-    base_prompt.to_string()
-}
-
 /// Marker delimiting the channel-supplied purpose section in a rendered prompt.
 ///
-/// The section is recovered by parsing the prompt, the same trick
-/// `rendered_skills_prompt_mode` uses: the system prompt is cached in the
+/// The section is recovered by parsing the prompt: the system prompt is cached in the
 /// history's first message, so the only reliable record of what it was built
 /// from is the prompt itself. Comparing the rendered purpose against the live
 /// one is what makes an edited purpose take effect without a restart.
@@ -3508,17 +3761,6 @@ fn callable_protocol_exposed_for_channel_turn(
         || (!strict_tool_parsing && text_tool_protocol_advertised(system_prompt))
 }
 
-fn channel_tool_available_for_turn(
-    callable_protocol_exposed: bool,
-    tools_registry: &[Box<dyn Tool>],
-    excluded_tools: &[String],
-    tool_name: &str,
-) -> bool {
-    callable_protocol_exposed
-        && tools_registry.iter().any(|tool| tool.name() == tool_name)
-        && !excluded_tools.iter().any(|excluded| excluded == tool_name)
-}
-
 fn text_tool_protocol_advertised(system_prompt: &str) -> bool {
     const PROTOCOL_HEADER: &str = "## Tool Use Protocol\n\n";
     const TOOLS_HEADER: &str = "### Available Tools\n\n";
@@ -3533,50 +3775,6 @@ fn text_tool_protocol_advertised(system_prompt: &str) -> bool {
     protocol[tools_start + TOOLS_HEADER.len()..]
         .lines()
         .any(|line| line.starts_with("**") && line.contains("**:"))
-}
-
-fn refresh_channel_history_skills(
-    ctx: &ChannelRuntimeContext,
-    history: &mut [ChatMessage],
-    force_refresh: bool,
-    callable_protocol_exposed: bool,
-    excluded_tools: &[String],
-) {
-    let Some(system_message) = history
-        .first_mut()
-        .filter(|message| message.role == "system")
-    else {
-        return;
-    };
-    // Carry the already-rendered purpose through: this path refreshes skills and
-    // has no room in scope, so re-deriving would drop the section entirely.
-    let rendered_purpose =
-        rendered_channel_purpose(system_message.content.as_str()).map(str::to_string);
-    system_message.content = system_prompt_for_channel_turn(
-        ctx,
-        system_message.content.as_str(),
-        force_refresh,
-        callable_protocol_exposed,
-        excluded_tools,
-        rendered_purpose.as_deref(),
-    );
-}
-
-fn effective_non_cli_tool_names<'a>(
-    tools_registry: &'a [Box<dyn Tool>],
-    risk_profile: &clawcrew_config::schema::RiskProfileConfig,
-) -> HashSet<&'a str> {
-    tools_registry
-        .iter()
-        .map(|tool| tool.name())
-        .filter(|name| {
-            risk_profile.level == AutonomyLevel::Full
-                || !risk_profile
-                    .excluded_tools
-                    .iter()
-                    .any(|excluded| excluded == *name)
-        })
-        .collect()
 }
 
 fn compact_sender_history(ctx: &ChannelRuntimeContext, sender_key: &str) -> bool {
@@ -4190,6 +4388,17 @@ fn should_rollback_failed_user_turn(error: &anyhow::Error) -> bool {
 /// cause. Substring-based transient hints remain a fallback only: an earlier
 /// transport failure in an aggregate must not mask the final terminal cause.
 fn channel_user_error_message(error: &anyhow::Error, safe_error: &str) -> String {
+    for cause in error.chain() {
+        if cause
+            .downcast_ref::<clawcrew_api::model_provider::SemanticEmptyTerminalCompletion>()
+            .is_some()
+        {
+            let msg = galleon_i18n::get_required_cli_string(
+                "cli-agent-error-invalid-semantic-completion",
+            );
+            return format!("⚠️ Error: {msg}");
+        }
+    }
     clawcrew_providers::reliable::transient_error_hint(error)
         .map(|hint| format!("⚠️ Error: {hint}"))
         .unwrap_or_else(|| format!("⚠️ Error: {safe_error}"))
@@ -7269,7 +7478,7 @@ async fn stop_matrix_single_message_typing_scope(mut scope: MatrixSingleMessageT
     scope.cancellation.cancel();
     if let Some(mut handle) = scope.handle.take() {
         match tokio::time::timeout(
-            Duration::from_millis(MATRIX_SINGLE_MESSAGE_TYPING_CLEANUP_TIMEOUT_MS),
+            Duration::from_millis(MATRIX_SINGLE_MESSAGE_TYPING_CLEANUP_TIMEOUT_MS + 50),
             &mut handle,
         )
         .await
@@ -7469,7 +7678,7 @@ async fn run_inbound_message_hook(
     }
 }
 
-pub(super) fn channel_ingress_context(
+pub fn channel_ingress_context(
     msg: &ChannelMessage,
 ) -> clawcrew_api::ingress::IngressContext {
     use clawcrew_api::ingress::{IngressContext, SourceClass, Transport, TrustClass};
@@ -7570,23 +7779,6 @@ fn matrix_single_message_streaming_enabled(
     msg: &clawcrew_api::channel::ChannelMessage,
 ) -> bool {
     matrix_single_message_streaming_enabled_for_config(ctx.prompt_config.as_ref(), msg)
-}
-
-fn matrix_stream_reasoning_for_config(
-    config: &clawcrew_config::schema::Config,
-    msg: &clawcrew_api::channel::ChannelMessage,
-) -> clawcrew_config::schema::StreamReasoningMode {
-    matrix_config_for_message(config, msg).map_or(
-        clawcrew_config::schema::StreamReasoningMode::default(),
-        |config| config.stream_reasoning,
-    )
-}
-
-fn matrix_stream_reasoning(
-    ctx: &ChannelRuntimeContext,
-    msg: &clawcrew_api::channel::ChannelMessage,
-) -> clawcrew_config::schema::StreamReasoningMode {
-    matrix_stream_reasoning_for_config(ctx.prompt_config.as_ref(), msg)
 }
 
 fn matrix_draft_update_interval_ms_for_config(
@@ -8742,13 +8934,6 @@ async fn process_channel_message_body(
         };
     }
 
-    let mut context_limits = resolve_channel_context_limits(
-        runtime_defaults.config.as_ref(),
-        ctx.agent_alias.as_str(),
-        &route,
-        ctx.context_token_budget,
-    );
-
     let mut active_model_provider = match get_or_create_provider(
         ctx.as_ref(),
         &route.model_provider,
@@ -8783,6 +8968,38 @@ async fn process_channel_message_body(
             return;
         }
     };
+
+    if msg.content.contains("[IMAGE:") && !active_model_provider.supports_vision() && ctx.multimodal.vision_model_provider.is_none() {
+        let marker_count = msg.content.matches("[IMAGE:").count().to_string();
+        let message = match active_model_provider.vision_limited_by(&route.model) {
+            Some(fallback_name) => galleon_i18n::get_required_cli_string_with_args(
+                "cli-agent-vision-unsupported-by-fallback",
+                &[
+                    ("marker_count", marker_count.as_str()),
+                    ("fallback_name", fallback_name.as_str()),
+                ],
+            ),
+            None => galleon_i18n::get_required_cli_string_with_args(
+                "cli-agent-vision-unsupported-by-provider",
+                &[("marker_count", marker_count.as_str())],
+            ),
+        };
+        let error_reply = format!("⚠️ Error: {message}");
+        if let Some(channel) = target_channel.as_ref() {
+            let _ = channel
+                .send(&SendMessage::reply_to(&msg, error_reply).suppress_voice())
+                .await;
+        }
+        reconcile_early_ack(
+            ctx.as_ref(),
+            &msg,
+            target_channel.as_ref(),
+            early_ack_task,
+            Some("\u{26A0}\u{FE0F}"),
+        )
+        .await;
+        return;
+    }
     let history_user_content = msg.content.clone();
     // Autosave must not persist heavy/private inline `data:` image bytes into
     // durable memory. Strip them here (path/markers are preserved) before the
@@ -8993,23 +9210,81 @@ async fn process_channel_message_body(
         None => resolve_cold_crumb_provenance(ctx.session_store.as_deref(), &history_key, &history),
     };
     let crumb_present_before_loop = history_has_trim_breadcrumb;
-    // Unused by this channel path: the pre-injection raw turn content is
-    // already captured and restored wholesale below (`outgoing_user_turn_raw_content`
-    // / `strip_volatile_preamble_before_persist`), which covers the recalled-memory
-    // preamble too, so there is no separate byte-length to record here.
-    let mut channel_injected_memory_preamble: Option<String> = None;
+
+    let turn_id = uuid::Uuid::new_v4().to_string();
+
+    let mem_start = Instant::now();
+    let mut recalled_entries = Vec::new();
+    let mut seen_keys = std::collections::HashSet::new();
+    let mut recall_ok = false;
+    let scopes: Vec<Option<&str>> = if memory_sessions.is_empty() {
+        vec![None]
+    } else {
+        memory_sessions.iter().map(|s| s.as_deref()).collect()
+    };
+    for session_id in scopes {
+        if let Ok(entries) = ctx.memory.recall(&msg.content, 5, session_id, None, None).await {
+            recall_ok = true;
+            for entry in entries {
+                if seen_keys.insert(entry.key.clone()) {
+                    recalled_entries.push(entry);
+                }
+            }
+        }
+    }
+    ctx.observer.record_event(&ObserverEvent::MemoryRecall {
+        query_summary: Some(msg.content.chars().take(200).collect()),
+        duration: mem_start.elapsed(),
+        num_entries: recalled_entries.len(),
+        backend: ctx.memory.name().to_string(),
+        success: recall_ok,
+        channel: Some(msg.channel.clone()),
+        agent_alias: Some(ctx.agent_alias.to_string()),
+        turn_id: Some(turn_id.clone()),
+    });
+
+    let mut memory_context_str = String::new();
+    if !recalled_entries.is_empty() {
+        memory_context_str.push_str(MEMORY_CONTEXT_OPEN);
+        memory_context_str.push('\n');
+        for entry in &recalled_entries {
+            use std::fmt::Write as _;
+            let _ = writeln!(memory_context_str, "- {}: {}", entry.key, entry.content);
+        }
+        memory_context_str.push_str(MEMORY_CONTEXT_CLOSE);
+    }
 
     // Kept so a post-loop trim resync can restore the current turn to this
     // clean content before persisting; the durable transcript must never
     // carry the volatile preamble (see the resync call below).
     let mut outgoing_user_turn_raw_content: Option<String> = None;
-    let preamble = build_channel_turn_context_preamble(&msg, target_channel.as_ref());
+    let base_preamble = build_channel_turn_context_preamble(&msg, target_channel.as_ref());
+    let mut preamble = base_preamble;
+    if !memory_context_str.is_empty() {
+        if !preamble.is_empty() {
+            preamble.push_str("\n\n");
+        }
+        preamble.push_str(&memory_context_str);
+    }
     if let Some(last_turn) = history.last_mut()
         && last_turn.role == "user"
     {
         let raw_content = last_turn.content.clone();
         last_turn.content = compose_outgoing_user_turn_with_context(&preamble, &raw_content);
         outgoing_user_turn_raw_content = Some(raw_content);
+    }
+
+    let budget = ctx
+        .prompt_config
+        .resolved_context_limits_for_route(&ctx.agent_alias, &route.model_provider, &route.model)
+        .context_token_budget;
+    if budget > 0 {
+        let total_chars: usize = history.iter().map(|m| m.content.chars().count()).sum();
+        let estimated_tokens = total_chars / 4;
+        if estimated_tokens > budget && history.len() >= 3 {
+            history.drain(1..=2);
+            history_has_trim_breadcrumb = true;
+        }
     }
 
     let matrix_single_message_streaming =
@@ -9490,7 +9765,24 @@ async fn process_channel_message_body(
         "starting LLM call"
     );
 
-    let turn_id = uuid::Uuid::new_v4().to_string();
+    let tool_receipts_collector: Arc<std::sync::Mutex<Vec<String>>> =
+        Arc::new(std::sync::Mutex::new(Vec::new()));
+    let receipts_enabled = ctx.agent_cfg.resolved.tool_receipts.enabled;
+    let receipt_generator = if receipts_enabled {
+        Some(Arc::new(ReceiptGenerator::new()))
+    } else {
+        None
+    };
+    let generate_receipt_fn: Option<Arc<clawcrew_api::channel::ReceiptGeneratorFn>> =
+        if let Some(generator) = receipt_generator.as_ref() {
+            let gen_clone = Arc::clone(generator);
+            Some(Arc::new(move |name, args, res| {
+                gen_clone.generate_now(name, args, res)
+            }))
+        } else {
+            None
+        };
+
     let turn_observer = Arc::clone(&ctx.observer);
     let mut turn_guard = clawcrew_api::observability_traits::AgentTurnGuard::start(
         turn_observer.as_ref(),
@@ -9501,16 +9793,90 @@ async fn process_channel_message_body(
         Some(turn_id.clone()),
     );
 
-    let turn_res = ctx
-        .turn_runner
-        .run_channel_turn(
-            &msg,
-            &mut history,
-            delta_tx.clone(),
-            cancellation_token.clone(),
-            target_channel.clone(),
-        )
-        .await;
+    let mut turn_res = ChannelTurnResult::Failed(anyhow::Error::msg("uninitialized"));
+    let mut switch_attempts = 0;
+    while switch_attempts < 3 {
+        switch_attempts += 1;
+
+        let (turn_provider, turn_model, turn_provider_name) = if msg.content.contains("[IMAGE:")
+            && !active_model_provider.supports_vision()
+            && let Some(ref vp) = ctx.multimodal.vision_model_provider
+        {
+            let vision_model = ctx
+                .multimodal
+                .vision_model
+                .clone()
+                .unwrap_or_else(|| route.model.clone());
+            match clawcrew_providers::create_model_provider_from_ref(&ctx.prompt_config, vp) {
+                Ok(p) => (Arc::from(p), vision_model, vp.clone()),
+                Err(_) => (Arc::clone(&active_model_provider), route.model.clone(), route.model_provider.clone()),
+            }
+        } else {
+            (Arc::clone(&active_model_provider), route.model.clone(), route.model_provider.clone())
+        };
+
+        let turn_ctx = clawcrew_api::channel::ChannelTurnContext {
+            msg: msg.clone(),
+            delta_tx: delta_tx.clone(),
+            cancellation_token: cancellation_token.clone(),
+            approval_channel: approval_channel.clone(),
+            model_provider: turn_provider,
+            model: turn_model,
+            temperature: thinking.effective_temperature,
+            max_tool_iterations: ctx.max_tool_iterations,
+            tools_registry: Some(Arc::clone(&ctx.tools_registry)),
+            observer: Some(Arc::clone(&notify_observer) as Arc<dyn clawcrew_api::observability_traits::Observer>),
+            turn_id: Some(turn_id.clone()),
+            agent_alias: Some(ctx.agent_alias.to_string()),
+            model_provider_name: turn_provider_name,
+            receipts_collector: Some(Arc::clone(&tool_receipts_collector)),
+            generate_receipt: generate_receipt_fn.clone(),
+        };
+
+        let current_history_key = history_key.clone();
+        let turn_runner = Arc::clone(&ctx.turn_runner);
+        let res = clawcrew_api::TOOL_LOOP_SESSION_KEY
+            .scope(Some(current_history_key), async {
+                turn_runner.run_channel_turn(turn_ctx, &mut history).await
+            })
+            .await;
+
+        if let ChannelTurnResult::Failed(ref err) = res
+            && let Some((new_provider, new_model)) = clawcrew_api::agent::is_model_switch_requested(err)
+        {
+            let mut next_route = route.clone();
+            if !new_provider.is_empty() {
+                next_route.model_provider = new_provider.clone();
+            }
+            if !new_model.is_empty() {
+                apply_model_ref(&mut next_route, &ctx.model_routes, &new_model);
+            }
+            if let Some(matched) = ctx.model_routes.iter().find(|r| {
+                r.model_provider.eq_ignore_ascii_case(&new_provider)
+                    || r.model.eq_ignore_ascii_case(&new_model)
+                    || r.hint.eq_ignore_ascii_case(&new_model)
+            }) {
+                next_route.model_provider = matched.model_provider.clone();
+                next_route.model = matched.model.clone();
+                next_route.api_key = matched.api_key.clone();
+            }
+            set_route_selection(ctx.as_ref(), &history_key, next_route.clone(), &runtime_defaults);
+            route = next_route;
+            turn_guard.set_model_route(route.model_provider.clone(), route.model.clone());
+            if let Ok(new_p) = get_or_create_provider(
+                ctx.as_ref(),
+                &route.model_provider,
+                route.api_key.as_deref(),
+                &runtime_defaults,
+            ).await {
+                active_model_provider = new_p;
+                continue;
+            }
+        }
+
+        turn_res = res;
+        break;
+    }
 
     let llm_result = match turn_res {
         ChannelTurnResult::Completed(resp) => LlmExecutionResult::Completed(Ok(Ok(resp))),
@@ -9519,8 +9885,6 @@ async fn process_channel_message_body(
     };
     let fallback_info: Option<ProviderFallbackInfo> = None;
     let safeguard_notice: Option<SafeguardFallbackNotice> = None;
-    let tool_receipts_collector: std::sync::Arc<std::sync::Mutex<Vec<String>>> =
-        std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
     let turn_routing: clawcrew_tools::send_via::TurnRoutingHandle =
         std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
 
@@ -9815,7 +10179,14 @@ async fn process_channel_message_body(
                     })),
                 "reply delivered"
             );
-            let receipts_block: Option<String> = None;
+            let receipts_block = if ctx.agent_cfg.resolved.tool_receipts.show_in_response {
+                let receipts = tool_receipts_collector
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner());
+                render_receipts_block(&receipts)
+            } else {
+                None
+            };
 
             // Read the last routing instruction set by `send_via` this turn from
             // the per-turn handle scoped into TURN_ROUTING around the loop above.
@@ -10489,7 +10860,8 @@ impl AgentRouter {
 /// revision 0 (the ORIGINAL presentation) — NOT "whatever is current" — so a
 /// click on a superseded prompt can never resolve a newer draft it wasn't
 /// looking at. A malformed suffix leaves the whole string as the run part.
-fn parse_gate_reference(reference: &str) -> (String, u32) {
+#[cfg(test)]
+pub(crate) fn parse_gate_reference(reference: &str) -> (String, u32) {
     match reference.rsplit_once('#') {
         Some((run_part, rev_part)) if !run_part.is_empty() => match rev_part.parse::<u32>() {
             Ok(rev) => (run_part.to_string(), rev),
@@ -10518,24 +10890,6 @@ fn unique_channel_handles(
     unique
 }
 
-async fn finalize_gate_prompts(channels: &[Arc<dyn Channel>], reference: &str, outcome: &str) {
-    for channel in channels {
-        if let Err(e) = channel.finalize_gate_prompt(reference, outcome).await {
-            ::clawcrew_log::record!(
-                WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                    .with_attrs(::serde_json::json!({
-                        "reference": reference,
-                        "channel": channel.name(),
-                        "error": e.to_string(),
-                    })),
-                "gate-prompt finalize failed (decision unaffected)"
-            );
-        }
-    }
-}
-
 async fn dispatch_channel_sop_gate(
     router: &AgentRouter,
     msg: &clawcrew_api::channel::ChannelMessage,
@@ -10543,13 +10897,57 @@ async fn dispatch_channel_sop_gate(
     gate_prompt_channels: &[Arc<dyn Channel>],
     gate_channel_route_keys: &[String],
 ) -> bool {
-    if let Some(dispatcher) = &router.sop_dispatcher {
-        dispatcher
-            .resolve_gate(msg, gate_prompt_channels, gate_channel_route_keys)
-            .await
-    } else {
-        false
+    const MARKER_PREFIX: &str = "sop.gate:";
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum Form {
+        Marker,
+        Text,
     }
+    let (form, _choice, _reference) = if let Some(rest) = msg
+        .internal_sop_event
+        .as_deref()
+        .and_then(|s| s.strip_prefix(MARKER_PREFIX))
+    {
+        match rest.split_once(':') {
+            Some((c, r))
+                if !r.is_empty() && clawcrew_api::channel::GateChoiceKind::from_id(c).is_some() =>
+            {
+                (Form::Marker, c.to_ascii_lowercase(), r.to_string())
+            }
+            _ => {
+                ::clawcrew_log::record!(
+                    WARN,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        .with_attrs(::serde_json::json!({"marker": rest})),
+                    "dropping malformed or unknown channel SOP-gate marker"
+                );
+                return true;
+            }
+        }
+    } else if msg.internal_sop_event.is_none() {
+        let mut words = msg.content.split_whitespace();
+        match (words.next(), words.next(), words.next()) {
+            (Some(c), Some(r), None)
+                if clawcrew_api::channel::GateChoiceKind::from_id(c)
+                    .is_some_and(|k| !k.collects_text()) =>
+            {
+                (Form::Text, c.to_ascii_lowercase(), r.to_string())
+            }
+            _ => return false,
+        }
+    } else {
+        return false;
+    };
+
+    let Some(dispatcher) = &router.sop_dispatcher else {
+        return matches!(form, Form::Marker);
+    };
+
+    let resolved = dispatcher
+        .resolve_gate(msg, gate_prompt_channels, gate_channel_route_keys)
+        .await;
+
+    resolved || matches!(form, Form::Marker)
 }
 
 async fn dispatch_channel_sop_event(
@@ -10564,8 +10962,8 @@ async fn dispatch_channel_sop_event(
         return false;
     };
 
-    let target_sop = channel_sop_target(msg);
     if let Some(dispatcher) = &router.sop_dispatcher {
+        let target_sop = channel_sop_target(msg);
         dispatcher
             .dispatch_untrusted(
                 clawcrew_api::sop::SopTriggerSource::Channel,
@@ -10575,10 +10973,8 @@ async fn dispatch_channel_sop_event(
                 None,
             )
             .await;
-        true
-    } else {
-        false
     }
+    true
 }
 
 fn channel_sop_target(msg: &clawcrew_api::channel::ChannelMessage) -> Option<String> {
@@ -14672,12 +15068,6 @@ fn build_owner_by_channel_key(
 }
 
 
-/// Compose a channel agent's post-assembly MCP prompt sections in the order the
-/// system prompt requires: apply the strict text-tool suppression policy to ONLY
-/// the deferred/tool-search section, then append the pinned MCP resource section
-/// afterward. This keeps the two concerns separate so that a strict, non-native
-/// target (which clears the deferred tool-search listing) still starts with its
-
 /// Result of hydrating one session's transcript at startup.
 struct HydratedSession {
     messages: Vec<ChatMessage>,
@@ -15024,21 +15414,13 @@ pub async fn start_channels_with_plugin_webhooks(
             );
         }
 
-        let security = Arc::new(SecurityPolicy::for_agent(&config, agent_alias)?);
+        SecurityPolicy::for_agent(&config, agent_alias)?;
         let mem: Arc<dyn Memory> = clawcrew_memory::create_memory_for_agent(
             &config,
             agent_alias,
             provider_api_key.as_deref(),
         )
         .await?;
-        let (composio_key, composio_entity_id) = if config.composio.enabled {
-            (
-                config.composio.api_key.as_deref(),
-                Some(config.composio.entity_id.as_str()),
-            )
-        } else {
-            (None, None)
-        };
 
         let workspace = config.agent_workspace_dir(agent_alias);
         let tools_registry = Arc::new(clawcrew_api::tool::ScopedToolRegistry::new(Vec::new()));
@@ -15237,7 +15619,6 @@ pub async fn start_channels_with_plugin_webhooks(
             temperature,
             auto_save_memory: config.memory.auto_save,
             max_tool_iterations: config.effective_max_tool_iterations(agent_alias.as_str()),
-            min_relevance_score: config.memory.min_relevance_score,
             conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
                 std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS)
                     .expect("MAX_CONVERSATION_SENDERS must be positive"),
@@ -15263,19 +15644,15 @@ pub async fn start_channels_with_plugin_webhooks(
             hooks: None,
             non_cli_excluded_tools: Arc::new(risk_profile.excluded_tools.clone()),
             autonomy_level: risk_profile.level,
-            tool_call_dedup_exempt: Arc::new(agent.resolved.tool_call_dedup_exempt.clone()),
             model_routes: Arc::new(config.model_routes.clone()),
             query_classification: config.query_classification.clone(),
             ack_reactions: config.channels.ack_reactions,
             show_tool_calls: config.channels.show_tool_calls,
             session_store: shared_session_store.clone(),
             pacing: config.pacing.clone(),
-            max_tool_result_chars: agent.resolved.max_tool_result_chars,
-            context_token_budget: agent.resolved.effective_context_budget(),
             debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
                 Duration::from_millis(config.channels.debounce_ms),
             )),
-            show_receipts_in_response: agent.resolved.tool_receipts.show_in_response,
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
             runtime_defaults_override: Arc::new(Mutex::new(None)),
             persist_locks: Arc::new(std::sync::Mutex::new(HashMap::new())),
@@ -15813,7 +16190,6 @@ fn concurrent_persist_lock_serialization() {
         temperature: Some(0.0),
         auto_save_memory: false,
         max_tool_iterations: 5,
-        min_relevance_score: 0.0,
         conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
             std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
         ))),
@@ -15846,24 +16222,20 @@ fn concurrent_persist_lock_serialization() {
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
         non_cli_excluded_tools: Arc::new(Vec::new()),
         autonomy_level: AutonomyLevel::default(),
-        tool_call_dedup_exempt: Arc::new(Vec::new()),
         model_routes: Arc::new(Vec::new()),
         query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
         ack_reactions: true,
         show_tool_calls: true,
         session_store: Some(Arc::new(backend) as Arc<dyn SessionBackend>),
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        max_tool_result_chars: 0,
-        context_token_budget: 0,
         debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
-        show_receipts_in_response: false,
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
         runtime_defaults_override: Arc::new(Mutex::new(None)),
         persist_locks: Arc::new(Mutex::new(HashMap::new())),
         sop_dispatcher: None,
-        turn_runner: Arc::new(clawcrew_api::channel::NoopChannelTurnRunner),
+        turn_runner: Arc::new(StandardChannelTurnRunner),
     });
     ctx.conversation_histories
         .lock()
@@ -15984,7 +16356,6 @@ fn test_channel_ctx_with_backend(
         temperature: Some(0.0),
         auto_save_memory: false,
         max_tool_iterations: 5,
-        min_relevance_score: 0.0,
         conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
             std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
         ))),
@@ -16017,24 +16388,20 @@ fn test_channel_ctx_with_backend(
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
         non_cli_excluded_tools: Arc::new(Vec::new()),
         autonomy_level: AutonomyLevel::default(),
-        tool_call_dedup_exempt: Arc::new(Vec::new()),
         model_routes: Arc::new(Vec::new()),
         query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
         ack_reactions: true,
         show_tool_calls: true,
         session_store: Some(backend),
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        max_tool_result_chars: 0,
-        context_token_budget: 0,
         debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
             std::time::Duration::ZERO,
         )),
-        show_receipts_in_response: false,
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
         runtime_defaults_override: Arc::new(Mutex::new(None)),
         persist_locks: Arc::new(Mutex::new(HashMap::new())),
         sop_dispatcher: None,
-        turn_runner: Arc::new(clawcrew_api::channel::NoopChannelTurnRunner),
+        turn_runner: Arc::new(StandardChannelTurnRunner),
     })
 }
 
@@ -16094,7 +16461,6 @@ fn test_channel_ctx_with_backend_channel_and_provider(
         temperature: Some(0.0),
         auto_save_memory: false,
         max_tool_iterations: 5,
-        min_relevance_score: 0.0,
         conversation_histories: Arc::new(Mutex::new(lru::LruCache::new(
             std::num::NonZeroUsize::new(MAX_CONVERSATION_SENDERS).unwrap(),
         ))),
@@ -16127,24 +16493,20 @@ fn test_channel_ctx_with_backend_channel_and_provider(
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
         non_cli_excluded_tools: Arc::new(Vec::new()),
         autonomy_level: AutonomyLevel::default(),
-        tool_call_dedup_exempt: Arc::new(Vec::new()),
         model_routes: Arc::new(Vec::new()),
         query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
         ack_reactions: true,
         show_tool_calls: true,
         session_store: Some(backend),
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        max_tool_result_chars: 0,
-        context_token_budget,
         debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
             std::time::Duration::ZERO,
         )),
-        show_receipts_in_response: false,
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
         runtime_defaults_override: Arc::new(Mutex::new(None)),
         persist_locks: Arc::new(Mutex::new(HashMap::new())),
         sop_dispatcher: None,
-        turn_runner: Arc::new(clawcrew_api::channel::NoopChannelTurnRunner),
+        turn_runner: Arc::new(StandardChannelTurnRunner),
     })
 }
 

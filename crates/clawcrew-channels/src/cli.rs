@@ -88,6 +88,58 @@ impl Channel for CliChannel {
     }
 }
 
+pub struct TerminalUtf8EraseGuard {
+    #[cfg(any(target_os = "android", target_os = "linux"))]
+    fd: libc::c_int,
+    #[cfg(any(target_os = "android", target_os = "linux"))]
+    original: Option<libc::termios>,
+}
+
+#[cfg(any(target_os = "android", target_os = "linux"))]
+impl Drop for TerminalUtf8EraseGuard {
+    fn drop(&mut self) {
+        let Some(original) = self.original.as_ref() else {
+            return;
+        };
+        unsafe {
+            let _ = libc::tcsetattr(self.fd, libc::TCSANOW, original);
+        }
+    }
+}
+
+#[cfg(not(any(target_os = "android", target_os = "linux")))]
+impl Drop for TerminalUtf8EraseGuard {
+    fn drop(&mut self) {}
+}
+
+fn ensure_terminal_utf8_erase() -> TerminalUtf8EraseGuard {
+    #[cfg(any(target_os = "android", target_os = "linux"))]
+    {
+        let fd = libc::STDIN_FILENO;
+        let mut termios = std::mem::MaybeUninit::<libc::termios>::uninit();
+        let rc = unsafe { libc::tcgetattr(fd, termios.as_mut_ptr()) };
+        if rc != 0 {
+            return TerminalUtf8EraseGuard { fd, original: None };
+        }
+        let original = unsafe { termios.assume_init() };
+        let mut modified = original;
+        modified.c_lflag |= libc::IEXTEN;
+        let rc = unsafe { libc::tcsetattr(fd, libc::TCSANOW, &modified) };
+        if rc == 0 {
+            TerminalUtf8EraseGuard {
+                fd,
+                original: Some(original),
+            }
+        } else {
+            TerminalUtf8EraseGuard { fd, original: None }
+        }
+    }
+    #[cfg(not(any(target_os = "android", target_os = "linux")))]
+    {
+        TerminalUtf8EraseGuard {}
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -188,57 +240,5 @@ mod tests {
         let cloned = msg.clone();
         assert_eq!(cloned.id, msg.id);
         assert_eq!(cloned.content, msg.content);
-    }
-}
-
-pub struct TerminalUtf8EraseGuard {
-    #[cfg(any(target_os = "android", target_os = "linux"))]
-    fd: libc::c_int,
-    #[cfg(any(target_os = "android", target_os = "linux"))]
-    original: Option<libc::termios>,
-}
-
-#[cfg(any(target_os = "android", target_os = "linux"))]
-impl Drop for TerminalUtf8EraseGuard {
-    fn drop(&mut self) {
-        let Some(original) = self.original.as_ref() else {
-            return;
-        };
-        unsafe {
-            let _ = libc::tcsetattr(self.fd, libc::TCSANOW, original);
-        }
-    }
-}
-
-#[cfg(not(any(target_os = "android", target_os = "linux")))]
-impl Drop for TerminalUtf8EraseGuard {
-    fn drop(&mut self) {}
-}
-
-fn ensure_terminal_utf8_erase() -> TerminalUtf8EraseGuard {
-    #[cfg(any(target_os = "android", target_os = "linux"))]
-    {
-        let fd = libc::STDIN_FILENO;
-        let mut termios = std::mem::MaybeUninit::<libc::termios>::uninit();
-        let rc = unsafe { libc::tcgetattr(fd, termios.as_mut_ptr()) };
-        if rc != 0 {
-            return TerminalUtf8EraseGuard { fd, original: None };
-        }
-        let original = unsafe { termios.assume_init() };
-        let mut modified = original;
-        modified.c_lflag |= libc::IEXTEN;
-        let rc = unsafe { libc::tcsetattr(fd, libc::TCSANOW, &modified) };
-        if rc == 0 {
-            TerminalUtf8EraseGuard {
-                fd,
-                original: Some(original),
-            }
-        } else {
-            TerminalUtf8EraseGuard { fd, original: None }
-        }
-    }
-    #[cfg(not(any(target_os = "android", target_os = "linux")))]
-    {
-        TerminalUtf8EraseGuard {}
     }
 }

@@ -7,7 +7,7 @@ use crate::attribution::{Attributable, Role};
 /// A skill is a user-defined or community-built capability.
 /// Skills live in `~/.clawcrew/workspace/skills/<name>/SKILL.md`
 /// and can include tool definitions, prompts, and automation scripts.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Skill {
     pub name: String,
     pub description: String,
@@ -51,7 +51,7 @@ impl Attributable for Skill {
 }
 
 /// A tool defined by a skill (shell command, HTTP call, etc.)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SkillTool {
     pub name: String,
     pub description: String,

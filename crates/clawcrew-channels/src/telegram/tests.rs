@@ -13852,7 +13852,12 @@
             mention_only,
         )
         .with_mock_api_base(mock_server.uri())
-        .with_workspace_dir(workspace.path().to_path_buf());
+        .with_workspace_dir(workspace.path().to_path_buf())
+        .with_skills(vec![clawcrew_api::skill::Skill {
+            name: "weather".to_string(),
+            description: "Check the weather forecast".to_string(),
+            ..Default::default()
+        }]);
 
         ch.register_bot_commands().await;
     }

@@ -1538,17 +1538,35 @@ pub enum ChannelTurnResult {
     Failed(anyhow::Error),
 }
 
+/// Context passed to a [`ChannelTurnRunner`] for executing a single channel turn.
+pub type ReceiptGeneratorFn = dyn Fn(&str, &serde_json::Value, &str) -> String + Send + Sync;
+
+pub struct ChannelTurnContext {
+    pub msg: ChannelMessage,
+    pub delta_tx: Option<tokio::sync::mpsc::Sender<StreamDelta>>,
+    pub cancellation_token: CancellationToken,
+    pub approval_channel: Option<std::sync::Arc<dyn Channel>>,
+    pub model_provider: std::sync::Arc<dyn crate::model_provider::ModelProvider>,
+    pub model: String,
+    pub temperature: Option<f64>,
+    pub max_tool_iterations: usize,
+    pub tools_registry: Option<std::sync::Arc<crate::tool::ScopedToolRegistry>>,
+    pub observer: Option<std::sync::Arc<dyn crate::observability_traits::Observer>>,
+    pub turn_id: Option<String>,
+    pub agent_alias: Option<String>,
+    pub model_provider_name: String,
+    pub receipts_collector: Option<std::sync::Arc<std::sync::Mutex<Vec<String>>>>,
+    pub generate_receipt: Option<std::sync::Arc<ReceiptGeneratorFn>>,
+}
+
 /// Trait abstracting turn execution for channel messages,
 /// decoupling channel routing from the concrete agent runtime loop.
 #[async_trait]
 pub trait ChannelTurnRunner: Send + Sync {
     async fn run_channel_turn(
         &self,
-        msg: &ChannelMessage,
+        ctx: ChannelTurnContext,
         history: &mut Vec<crate::model_provider::ChatMessage>,
-        delta_tx: Option<tokio::sync::mpsc::Sender<StreamDelta>>,
-        cancellation_token: CancellationToken,
-        approval_channel: Option<std::sync::Arc<dyn Channel>>,
     ) -> ChannelTurnResult;
 }
 
@@ -1560,11 +1578,8 @@ pub struct NoopChannelTurnRunner;
 impl ChannelTurnRunner for NoopChannelTurnRunner {
     async fn run_channel_turn(
         &self,
-        _msg: &ChannelMessage,
+        _ctx: ChannelTurnContext,
         _history: &mut Vec<crate::model_provider::ChatMessage>,
-        _delta_tx: Option<tokio::sync::mpsc::Sender<StreamDelta>>,
-        _cancellation_token: CancellationToken,
-        _approval_channel: Option<std::sync::Arc<dyn Channel>>,
     ) -> ChannelTurnResult {
         ChannelTurnResult::Completed("noop".to_string())
     }

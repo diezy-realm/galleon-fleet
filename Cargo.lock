@@ -1687,7 +1687,6 @@ dependencies = [
  "clawcrew-log",
  "clawcrew-memory",
  "clawcrew-providers",
- "clawcrew-runtime",
  "clawcrew-spawn",
  "clawcrew-tool-call-parser",
  "clawcrew-tools",

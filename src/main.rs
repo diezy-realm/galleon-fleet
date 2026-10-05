@@ -5292,17 +5292,26 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     let sop_a = sop_audit.clone();
                     let plugin_webhooks = channel_plugin_webhooks.clone();
                     move |config, cancel| {
-                        let canvas_store = canvas_store_for_channels.clone();
                         let sop_engine = sop_e.clone();
                         let sop_audit = sop_a.clone();
                         let plugin_webhooks = plugin_webhooks.clone();
                         Box::pin(async move {
+                            let sop_dispatcher: Option<std::sync::Arc<dyn clawcrew_api::sop::SopFanInDispatcher>> =
+                                match (sop_engine, sop_audit) {
+                                    (Some(engine), Some(audit)) => Some(std::sync::Arc::new(
+                                        clawcrew_runtime::sop::SopRuntimeDispatcher::new(
+                                            engine, audit,
+                                        ),
+                                    )),
+                                    _ => None,
+                                };
+                            let turn_runner =
+                                std::sync::Arc::new(clawcrew_api::channel::NoopChannelTurnRunner);
                             let channels = clawcrew_channels::orchestrator::start_channels_with_plugin_webhooks(
                                 config,
-                                Some(canvas_store),
+                                turn_runner,
                                 cancel,
-                                sop_engine,
-                                sop_audit,
+                                sop_dispatcher,
                                 plugin_webhooks,
                             );
                             Box::pin(channels).await
@@ -6631,8 +6640,20 @@ Add pricing to the active provider profile or supply a catalog entry."
                     sop_audit.as_ref(),
                     config.sop.maintenance_interval_secs,
                 );
+                let sop_dispatcher: Option<std::sync::Arc<dyn clawcrew_api::sop::SopFanInDispatcher>> =
+                    match (sop_engine, sop_audit) {
+                        (Some(engine), Some(audit)) => Some(std::sync::Arc::new(
+                            clawcrew_runtime::sop::SopRuntimeDispatcher::new(engine, audit),
+                        )),
+                        _ => None,
+                    };
+                let turn_runner =
+                    std::sync::Arc::new(clawcrew_api::channel::NoopChannelTurnRunner);
                 let result = Box::pin(channels::start_channels(
-                    config, None, cancel, sop_engine, sop_audit,
+                    config,
+                    turn_runner,
+                    cancel,
+                    sop_dispatcher,
                 ))
                 .await;
                 if let Some(handle) = sop_maintenance {

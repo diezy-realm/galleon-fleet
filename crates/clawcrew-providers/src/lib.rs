@@ -2004,8 +2004,10 @@ fn create_resilient_model_provider_from_ref_with_model_override(
     options: &ModelProviderRuntimeOptions,
     primary_model_override: Option<&str>,
 ) -> anyhow::Result<Box<dyn ModelProvider>> {
-    match name.split_once('.') {
-        Some((family, alias)) => create_resilient_model_provider_for_alias_with_model_override(
+    if let Some((family, alias)) = name.split_once('.')
+        && !family.contains(':')
+    {
+        create_resilient_model_provider_for_alias_with_model_override(
             config,
             family,
             alias,
@@ -2014,14 +2016,15 @@ fn create_resilient_model_provider_from_ref_with_model_override(
             reliability,
             options,
             primary_model_override,
-        ),
-        None => create_resilient_model_provider_with_options(
+        )
+    } else {
+        create_resilient_model_provider_with_options(
             name,
             api_key,
             api_url,
             reliability,
             options,
-        ),
+        )
     }
 }
 
