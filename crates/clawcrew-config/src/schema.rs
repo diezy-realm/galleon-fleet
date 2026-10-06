@@ -5709,6 +5709,26 @@ pub struct McpServerConfig {
     /// plaintext URLs and downgrade redirects are rejected. Ignored by stdio.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tls_ca_cert_path: Option<String>,
+    /// Sandbox profile for stdio transport:
+    /// - `None` / `Some("default")` / `Some("workspace-only")`: sandbox child process to workspace + allowed paths.
+    /// - `Some("none")` / `Some("unconfined")`: explicit opt-out from sandboxing.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sandbox_profile: Option<String>,
+    /// Explicit allowed filesystem paths for stdio child process beyond the workspace.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub allowed_paths: Vec<String>,
+}
+
+impl McpServerConfig {
+    /// Whether this MCP server is sandboxed at the OS level (deny-by-default).
+    /// Returns false only if explicitly configured with an opt-out profile ("none" or "unconfined").
+    #[must_use]
+    pub fn is_sandboxed(&self) -> bool {
+        match self.sandbox_profile.as_deref() {
+            Some("none") | Some("unconfined") => false,
+            _ => true,
+        }
+    }
 }
 
 /// External MCP client configuration (`[mcp]` section).

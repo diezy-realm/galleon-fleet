@@ -85,6 +85,9 @@ pub use clawcrew_tools::linkedin::LinkedInTool;
 pub use clawcrew_tools::llm_task::LlmTaskTool;
 pub use clawcrew_tools::mcp_client::{McpRegistry, McpServer};
 pub use clawcrew_tools::mcp_context;
+pub use clawcrew_tools::mcp_transport::{
+    McpCommandBoundary, current_mcp_command_boundary, set_mcp_command_boundary,
+};
 pub use clawcrew_tools::mcp_deferred::{
     ActivatedToolSet, DeferredMcpToolSet, build_deferred_tools_section,
     build_deferred_tools_section_excluding, build_deferred_tools_section_filtered,
@@ -699,6 +702,32 @@ impl GitCommandBoundary for RuntimeGitCommandBoundary {
     }
 }
 
+/// Adapts the runtime's canonical per-agent sandbox to MCP stdio subprocesses.
+pub struct RuntimeMcpCommandBoundary {
+    sandbox: Arc<dyn Sandbox>,
+}
+
+impl RuntimeMcpCommandBoundary {
+    pub fn new(sandbox: Arc<dyn Sandbox>) -> Self {
+        Self { sandbox }
+    }
+}
+
+impl McpCommandBoundary for RuntimeMcpCommandBoundary {
+    fn wrap_command(
+        &self,
+        command: &mut std::process::Command,
+        config: &clawcrew_config::schema::McpServerConfig,
+    ) -> anyhow::Result<()> {
+        if !config.is_sandboxed() {
+            return Ok(());
+        }
+        self.sandbox
+            .wrap_command(command)
+            .map_err(anyhow::Error::from)
+    }
+}
+
 /// Pair the canonical runtime kind with one shared sandbox instance for every
 /// runtime-backed executor assembled by the production tool registry.
 fn runtime_shell_assembly(
@@ -719,6 +748,10 @@ fn runtime_shell_assembly(
         Some(&security.workspace_dir),
         &sandbox_extra_roots,
     );
+    // Register the canonical runtime sandbox as the process MCP command boundary
+    let mcp_boundary = Arc::new(RuntimeMcpCommandBoundary::new(sandbox.clone()));
+    set_mcp_command_boundary(Some(mcp_boundary));
+
     let shell_tool = ShellTool::new_with_sandbox(security, runtime, sandbox.clone());
     RuntimeShellAssembly {
         shell_tool,

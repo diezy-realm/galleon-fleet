@@ -184,6 +184,7 @@ mod tests {
                     key: "recent".into(),
                     content: "recent memory".into(),
                     category: MemoryCategory::Core,
+                    scope: Default::default(),
                     timestamp: "2026-05-03T00:00:00Z".into(),
                     session_id: None,
                     score: None,
