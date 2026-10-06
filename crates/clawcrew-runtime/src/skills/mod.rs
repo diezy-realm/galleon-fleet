@@ -4649,6 +4649,7 @@ description = "fine"
 #[cfg(test)]
 mod prompt_callable_name_tests {
     use super::*;
+    use std::collections::HashMap;
     use std::path::Path;
 
     fn tool(name: &str, kind: &str) -> SkillTool {

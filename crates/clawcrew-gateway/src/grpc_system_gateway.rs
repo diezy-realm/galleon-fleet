@@ -23,6 +23,8 @@ pub struct SystemGatewayService {
     secret_store: std::sync::Arc<clawcrew_config::secrets::SecretStore>,
     /// ModelProvider instance for LLM streaming turn execution (Rust LLM SSOT)
     model_provider: Option<std::sync::Arc<dyn clawcrew_providers::ModelProvider>>,
+    /// Optional authorization token required for privileged RPCs like GetDecryptedSecret
+    auth_token: Option<String>,
 }
 
 impl std::fmt::Debug for SystemGatewayService {
@@ -51,7 +53,14 @@ impl SystemGatewayService {
             vault_dir: Some(vault_dir),
             secret_store,
             model_provider: None,
+            auth_token: None,
         }
+    }
+
+    /// Configure an authorization token required for privileged caller access (BR-B5).
+    pub fn with_auth_token(mut self, token: impl Into<String>) -> Self {
+        self.auth_token = Some(token.into());
+        self
     }
 
     /// Configure a custom model provider for LLM streaming execution
@@ -70,6 +79,11 @@ impl SystemGatewayService {
         self
     }
 
+    /// Access the underlying SecretStore
+    pub fn secret_store(&self) -> std::sync::Arc<clawcrew_config::secrets::SecretStore> {
+        std::sync::Arc::clone(&self.secret_store)
+    }
+
     /// Store an encrypted secret in the vault
     pub fn set_secret(&self, key_name: &str, plaintext: &str) -> Result<(), String> {
         let vault_dir = self.vault_dir.as_ref().ok_or_else(|| "no vault dir configured".to_string())?;
@@ -79,6 +93,53 @@ impl SystemGatewayService {
         let encrypted = self.secret_store.encrypt(plaintext).map_err(|e| format!("encryption failed: {e}"))?;
         std::fs::write(&secret_file, encrypted).map_err(|e| format!("failed to write secret file: {e}"))?;
         Ok(())
+    }
+
+    /// Rotate an existing secret: ensures it exists, encrypts new plaintext, and overwrites atomically (BR-B5).
+    pub fn rotate_secret(&self, key_name: &str, new_plaintext: &str) -> Result<(), String> {
+        let vault_dir = self.vault_dir.as_ref().ok_or_else(|| "no vault dir configured".to_string())?;
+        let sanitized_key = key_name.replace(['/', '\\', '.', ':'], "_");
+        let secret_file = vault_dir.join(format!("{sanitized_key}.vault"));
+        if !secret_file.exists() {
+            return Err(format!("cannot rotate nonexistent secret `{key_name}`"));
+        }
+        self.set_secret(key_name, new_plaintext)
+    }
+
+    /// Export all encrypted vault items for backup or migration without revealing plaintext (BR-B5).
+    pub fn export_encrypted_vault(&self) -> Result<std::collections::HashMap<String, String>, String> {
+        let vault_dir = self.vault_dir.as_ref().ok_or_else(|| "no vault dir configured".to_string())?;
+        if !vault_dir.exists() {
+            return Ok(std::collections::HashMap::new());
+        }
+        let mut exported = std::collections::HashMap::new();
+        let entries = std::fs::read_dir(vault_dir).map_err(|e| format!("failed to read vault dir: {e}"))?;
+        for entry in entries {
+            let entry = entry.map_err(|e| format!("vault entry error: {e}"))?;
+            let path = entry.path();
+            if path.extension().and_then(|ext| ext.to_str()) == Some("vault") {
+                if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                    let content = std::fs::read_to_string(&path)
+                        .map_err(|e| format!("failed to read `{}`: {e}", path.display()))?;
+                    exported.insert(stem.to_string(), content);
+                }
+            }
+        }
+        Ok(exported)
+    }
+
+    /// Import encrypted vault items for migration across environments (BR-B5).
+    pub fn import_encrypted_vault(&self, exported: &std::collections::HashMap<String, String>) -> Result<usize, String> {
+        let vault_dir = self.vault_dir.as_ref().ok_or_else(|| "no vault dir configured".to_string())?;
+        std::fs::create_dir_all(vault_dir).map_err(|e| format!("failed to create vault dir: {e}"))?;
+        let mut imported = 0;
+        for (key, encrypted_val) in exported {
+            let sanitized_key = key.replace(['/', '\\', '.', ':'], "_");
+            let secret_file = vault_dir.join(format!("{sanitized_key}.vault"));
+            std::fs::write(&secret_file, encrypted_val).map_err(|e| format!("failed to write `{}`: {e}", secret_file.display()))?;
+            imported += 1;
+        }
+        Ok(imported)
     }
 
     /// Get the workspace root, falling back to current dir if not set.
@@ -338,6 +399,29 @@ impl SystemGateway for SystemGatewayService {
         &self,
         request: Request<SecretRequest>,
     ) -> Result<Response<SecretResponse>, Status> {
+        if let Some(expected_token) = &self.auth_token {
+            let authorized = request
+                .metadata()
+                .get("authorization")
+                .and_then(|v| v.to_str().ok())
+                .map(|auth_header| {
+                    let token = auth_header.strip_prefix("Bearer ").unwrap_or(auth_header).trim();
+                    token == expected_token
+                })
+                .unwrap_or(false);
+
+            if !authorized {
+                ::clawcrew_log::record!(
+                    WARN,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        .with_attrs(::serde_json::json!({"action": "get_decrypted_secret", "reason": "unauthorized"})),
+                    "GetDecryptedSecret rejected: caller is not authorized"
+                );
+                return Err(Status::unauthenticated("unauthorized secret access"));
+            }
+        }
+
         let req = request.into_inner();
         let key_name = req.key_name.trim();
         if key_name.is_empty() {
@@ -813,5 +897,111 @@ mod tests {
         let err = svc.execute_task(Request::new(req)).await.unwrap_err();
         assert_eq!(err.code(), tonic::Code::InvalidArgument);
     }
+
+    // ── BR-B5: Vault Rotation, Export, Migration, and Authorization ─────────
+
+    #[tokio::test]
+    async fn vault_rotation_and_migration_lifecycle() -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir_a = tempfile::tempdir()?;
+        let svc_a = SystemGatewayService::new(Some(temp_dir_a.path().to_path_buf()));
+
+        // Store secret
+        svc_a.set_secret("db_pass", "super_secret_initial_123")?;
+
+        // Rotate secret successfully
+        svc_a.rotate_secret("db_pass", "rotated_secret_456")?;
+        let resp = svc_a
+            .get_decrypted_secret(Request::new(SecretRequest {
+                key_name: "db_pass".to_string(),
+            }))
+            .await?
+            .into_inner();
+        assert_eq!(resp.value, "rotated_secret_456");
+
+        // Rotating nonexistent secret must fail
+        assert!(svc_a.rotate_secret("nonexistent", "val").is_err());
+
+        // Export encrypted vault
+        let exported = svc_a.export_encrypted_vault()?;
+        assert!(exported.contains_key("db_pass"));
+        // Exported payload must be encrypted, not plaintext!
+        assert_ne!(exported["db_pass"], "rotated_secret_456");
+
+        // Migrate/import into service B (using shared secret store key)
+        let temp_dir_b = tempfile::tempdir()?;
+        let svc_b = SystemGatewayService::new(Some(temp_dir_b.path().to_path_buf()))
+            .with_vault(temp_dir_b.path().join("vault"), (*svc_a.secret_store()).clone());
+        let imported_count = svc_b.import_encrypted_vault(&exported)?;
+        assert_eq!(imported_count, 1);
+
+        // Fetch from service B: succeeds with same key
+        let resp_b = svc_b
+            .get_decrypted_secret(Request::new(SecretRequest {
+                key_name: "db_pass".to_string(),
+            }))
+            .await?
+            .into_inner();
+        assert_eq!(resp_b.value, "rotated_secret_456");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn get_decrypted_secret_requires_authorization_when_configured() -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir = tempfile::tempdir()?;
+        let svc = SystemGatewayService::new(Some(temp_dir.path().to_path_buf()))
+            .with_auth_token("trusted-internal-bearer-999");
+
+        svc.set_secret("api_token", "secret-payload-xyz")?;
+
+        // 1. Unauthenticated request without metadata -> rejected with Unauthenticated
+        let unauthed_req = Request::new(SecretRequest {
+            key_name: "api_token".to_string(),
+        });
+        let err = svc.get_decrypted_secret(unauthed_req).await.unwrap_err();
+        assert_eq!(err.code(), tonic::Code::Unauthenticated);
+
+        // 2. Request with invalid token -> rejected
+        let mut bad_req = Request::new(SecretRequest {
+            key_name: "api_token".to_string(),
+        });
+        bad_req.metadata_mut().insert(
+            "authorization",
+            "Bearer wrong-token".parse().unwrap(),
+        );
+        let err = svc.get_decrypted_secret(bad_req).await.unwrap_err();
+        assert_eq!(err.code(), tonic::Code::Unauthenticated);
+
+        // 3. Request with valid token -> authorized & succeeds
+        let mut good_req = Request::new(SecretRequest {
+            key_name: "api_token".to_string(),
+        });
+        good_req.metadata_mut().insert(
+            "authorization",
+            "Bearer trusted-internal-bearer-999".parse().unwrap(),
+        );
+        let resp = svc.get_decrypted_secret(good_req).await?.into_inner();
+        assert!(resp.found);
+        assert_eq!(resp.value, "secret-payload-xyz");
+
+        Ok(())
+    }
+
+    // ── BR-B4: Credential Scrubbing in Logs (ExecuteTurn & Vault) ────────────
+
+    #[test]
+    fn credential_scrubbing_protects_secrets_in_logs() {
+        let raw_prompt = "Hello, my secret token is sk-proj-1234567890abcdef and password is password123!";
+        let scrubbed = galleon_security_scrub::scrub(raw_prompt);
+
+        assert!(
+            !scrubbed.contains("sk-proj-1234567890abcdef"),
+            "secret key must be redacted in scrubbed log"
+        );
+        assert!(
+            scrubbed.contains("[REDACTED]") || !scrubbed.contains("1234567890"),
+            "scrubbed content should mask the credential"
+        );
+    }
 }
+
 

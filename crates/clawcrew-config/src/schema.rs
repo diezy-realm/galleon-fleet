@@ -19522,6 +19522,9 @@ pub enum SandboxBackend {
     /// macOS sandbox-exec (Seatbelt)
     #[serde(alias = "sandbox-exec")]
     SandboxExec,
+    /// Windows AppContainer / process isolation
+    #[serde(alias = "appcontainer")]
+    AppContainer,
     /// No sandboxing (application-layer only)
     None,
 }

@@ -99,6 +99,7 @@ enum SelectedSandboxBackend {
     /// describe this state as application-layer-only.
     DockerRuntime,
     SandboxExec,
+    AppContainer,
 }
 
 impl SelectedSandboxBackend {
@@ -111,6 +112,7 @@ impl SelectedSandboxBackend {
             Self::Docker => "docker",
             Self::DockerRuntime => "docker-runtime",
             Self::SandboxExec => "sandbox-exec",
+            Self::AppContainer => "appcontainer",
         }
     }
 
@@ -125,6 +127,7 @@ impl SelectedSandboxBackend {
                 "cli-security-status-sandbox-description-docker-runtime",
             ),
             Self::SandboxExec => SEATBELT_DESCRIPTION.to_string(),
+            Self::AppContainer => "Windows AppContainer / process isolation (deny-by-default)".to_string(),
         }
     }
 
@@ -136,6 +139,7 @@ impl SelectedSandboxBackend {
             SandboxBackend::Bubblewrap => Some(Self::Bubblewrap),
             SandboxBackend::Docker => Some(Self::Docker),
             SandboxBackend::SandboxExec => Some(Self::SandboxExec),
+            SandboxBackend::AppContainer => Some(Self::AppContainer),
         }
     }
 }
@@ -237,6 +241,13 @@ fn detect_best_backend_with(
         }
     }
 
+    #[cfg(target_os = "windows")]
+    {
+        if is_available(SelectedSandboxBackend::AppContainer) {
+            return SelectedSandboxBackend::AppContainer;
+        }
+    }
+
     if auto_backend_compatible_with_runtime(SelectedSandboxBackend::Docker, runtime_kind)
         && is_available(SelectedSandboxBackend::Docker)
     {
@@ -296,6 +307,7 @@ fn sandbox_backend_available(
             result.is_ok()
         }
         SelectedSandboxBackend::SandboxExec => seatbelt_available(),
+        SelectedSandboxBackend::AppContainer => true,
     }
 }
 
@@ -333,6 +345,7 @@ fn sandbox_backend_name(backend: &SandboxBackend) -> &'static str {
         SandboxBackend::Bubblewrap => "bubblewrap",
         SandboxBackend::Docker => "docker",
         SandboxBackend::SandboxExec => "sandbox-exec",
+        SandboxBackend::AppContainer => "appcontainer",
         SandboxBackend::None => "none",
     }
 }
@@ -517,6 +530,12 @@ fn create_selected_sandbox(
                 None
             }
         }
+        SelectedSandboxBackend::AppContainer => {
+            Some(Arc::new(super::appcontainer::AppContainerSandbox::with_roots(
+                workspace_dir,
+                &extra_roots.read_write,
+            )) as Arc<dyn Sandbox>)
+        }
     }
 }
 
@@ -528,6 +547,7 @@ fn selected_backend_label(backend: &SandboxBackend) -> &'static str {
         SandboxBackend::Bubblewrap => "Bubblewrap",
         SandboxBackend::Docker => "Docker",
         SandboxBackend::SandboxExec => "sandbox-exec",
+        SandboxBackend::AppContainer => "AppContainer",
         SandboxBackend::None => "None",
     }
 }
@@ -626,6 +646,13 @@ fn log_auto_backend_selection(selected: SelectedSandboxBackend, runtime_kind: Ru
                 INFO,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
                 "macOS sandbox-exec (Seatbelt) enabled"
+            );
+        }
+        SelectedSandboxBackend::AppContainer => {
+            ::clawcrew_log::record!(
+                INFO,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                "Windows AppContainer / process isolation enabled"
             );
         }
     }

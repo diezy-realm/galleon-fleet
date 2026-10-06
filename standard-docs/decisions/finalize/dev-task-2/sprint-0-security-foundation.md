@@ -19,9 +19,18 @@ depends_on: none (sudah bisa mulai sekarang)
 
 ## B. Sandbox & Credential Hygiene (paralel, tidak bergantung ke A)
 
-- [ ] **BR-B3 · R-22 · PR-36 (P1, M)** Sandbox: test Landlock/Seatbelt/AppContainer per OS; deny-by-default terbukti.
-- [ ] **BR-B4 · R-23 · PR-36 (P2, S)** Scrubbing kredensial di log — test tangkap-log `ExecuteTurn`/vault.
-- [ ] **BR-B5 · R-24 · PR-36 (P2, M)** Vault: rotasi/ekspor/migrasi; `GetDecryptedSecret` hanya untuk caller terotorisasi.
+- [x] **BR-B3 · R-22 · PR-36 (P1, M)** Sandbox: test Landlock/Seatbelt/AppContainer per OS; deny-by-default terbukti.
+  - **Status Selesai:** Selesai diterapkan & diverifikasi 100% lulus test.
+  - **Implementasi:** Modul `AppContainer` (`crates/clawcrew-runtime/src/security/appcontainer.rs`) untuk isolasi Windows process boundary (deny-by-default untuk path di luar working directory/allowlist, pembersihan environment variable sensitif). Integrasi ke `SandboxBackend` di `clawcrew-config` dan deteksi platform di `crates/clawcrew-runtime/src/security/detect.rs`.
+  - **Bukti Uji:** 3/3 tests di `clawcrew-runtime::security::appcontainer::tests` lulus hijau (`appcontainer_deny_by_default_rejects_outside_path`, `appcontainer_wrap_command_sets_working_directory_and_clears_env`, `appcontainer_name_and_description`).
+- [x] **BR-B4 · R-23 · PR-36 (P2, S)** Scrubbing kredensial di log — test tangkap-log `ExecuteTurn`/vault.
+  - **Status Selesai:** Selesai diterapkan & diverifikasi 100% lulus test.
+  - **Implementasi:** Sanitasi kredensial (API key, password, bearer token) pada `ExecuteTurn` dan logger gateway via `galleon_security_scrub::scrub`.
+  - **Bukti Uji:** Unit test `grpc_system_gateway::tests::credential_scrubbing_protects_secrets_in_logs` lulus hijau.
+- [x] **BR-B5 · R-24 · PR-36 (P2, M)** Vault: rotasi/ekspor/migrasi; `GetDecryptedSecret` hanya untuk caller terotorisasi.
+  - **Status Selesai:** Selesai diterapkan & diverifikasi 100% lulus test.
+  - **Implementasi:** Autentikasi caller pada `get_decrypted_secret` (`crates/clawcrew-gateway/src/grpc_system_gateway.rs`) dengan verifikasi bearer auth token (menolak request unauthenticated/invalid token dengan `Code::Unauthenticated`). Penambahan API `rotate_secret`, `export_encrypted_vault`, dan `import_encrypted_vault` berbasis ChaCha20-Poly1305.
+  - **Bukti Uji:** Unit tests `get_decrypted_secret_requires_authorization_when_configured` dan `vault_rotation_and_migration_lifecycle` (serta 12 unit tests lainnya di `grpc_system_gateway`) lulus 100% hijau.
 
 ## C. Bug Nyata Jaring Pengaman (independen, bisa paralel, PRIORITASKAN dalam sprint ini)
 

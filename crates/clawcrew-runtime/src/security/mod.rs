@@ -1,5 +1,6 @@
 //! Security subsystem for policy enforcement, sandboxing, and secret management.
 
+pub mod appcontainer;
 pub mod audit;
 pub mod auth_provider;
 #[cfg(feature = "sandbox-bubblewrap")]
@@ -35,6 +36,7 @@ pub mod vulnerability;
 pub mod webauthn;
 
 #[allow(unused_imports)]
+pub use appcontainer::AppContainerSandbox;
 pub use audit::{AuditEvent, AuditEventType, AuditLogger};
 #[allow(unused_imports)]
 pub use detect::create_sandbox;
