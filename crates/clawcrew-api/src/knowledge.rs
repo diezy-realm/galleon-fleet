@@ -57,6 +57,8 @@ pub struct Lesson {
     pub category: String,
     pub scope: crate::memory_traits::MemoryScope,
     pub provenance: KnowledgeProvenance,
+    #[serde(default)]
+    pub citations: Vec<String>,
     pub owner_agent_id: Option<String>,
 }
 

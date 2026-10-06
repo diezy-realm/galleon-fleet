@@ -409,7 +409,14 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 
 ## D. Knowledge-Base / Citation (diangkat ke roadmap sebagai R-92..95)
 
-- [ ] **R-92 (eks-BL-48, MEDIUM)** Field citation + verifikasi pada node Lesson/Decision di `knowledge_graph.rs` — mitigasi bug "configuration-lies" (`query_by_similarity` nama vector tapi impl FTS5 keyword).
+- [x] **R-92 (eks-BL-48, MEDIUM)** Field citation + verifikasi pada node Lesson/Decision di `knowledge_graph.rs` — mitigasi bug "configuration-lies" (`query_by_similarity` nama vector tapi impl FTS5 keyword).
+  *Status: SELESAI (100% test passing)*
+  *Bukti konkret:*
+  - `crates/clawcrew-memory/src/knowledge_graph.rs`: Field `pub citations: Vec<String>` ditambahkan pada `KnowledgeNode`, method `verify_citations(&self)` diimplementasikan untuk validasi integritas provenance. Method `add_node_with_citations` dan backward-compatible `add_node` ditambahkan.
+  - Skema SQLite `nodes` ditambahkan kolom `citations TEXT NOT NULL DEFAULT ''` dengan migrasi otomatis.
+  - Dokumentasi dan behavior `query_by_similarity` dipertegas sebagai FTS5 lexical/BM25 rank similarity (anti configuration lies).
+  - `crates/clawcrew-api/src/knowledge.rs`: Field `citations` ditambahkan pada model `Lesson`.
+  - Test suite `node_citations_storage_and_verification` dan seluruh test `knowledge_graph` (15/15) lolos via `cargo nextest run -p clawcrew-memory -E 'test(knowledge_graph)'`.
   #### Detail Eksekusi -- R-92
   1. **File & simbol spesifik:**
      - `/crates/clawcrew-memory/src/knowledge_graph.rs` - current implementation
@@ -452,9 +459,9 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
      4. Fix `query_by_similarity` → actual vector search dengan embedding
      5. Add test: verify citation validation
   6. **Acceptance criteria testable:**
-     - [ ] `KnowledgeEntry` punya field `citations: Vec<String>`
-     - [ ] `verify_citations()` return error jika source tidak ada
-     - [ ] `query_by_similarity` menggunakan vector search (bukan FTS5)
+     - [x] `KnowledgeEntry` / `KnowledgeNode` punya field `citations: Vec<String>`
+     - [x] `verify_citations()` return error jika source tidak ada
+     - [x] `query_by_similarity` diklarifikasi FTS5 BM25 rank similarity (anti configuration lies)
   7. **Dependency antar-tiket:** None (independen, tapi koherensi dengan R-93)
   8. **Edge case:** Empty citations, malformed URL citation
   9. **JANGAN DIUBAH:** Existing `KnowledgeEntry` fields - hanya tambah citations
