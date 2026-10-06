@@ -141,7 +141,7 @@ Keep every meaningful decision under your command.
 Your first Ship is free to sail.
 
 Community gives you one Fleet, one Quartermaster,
-one active Ship, and up to five persistent Crew Members.
+one active Ship, and up to eight Crew per Ship.
 
 Bring your own key, model, and infrastructure.
 Build more Ships only when your work needs a larger Fleet.

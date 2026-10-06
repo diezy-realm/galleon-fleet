@@ -7,6 +7,8 @@ title: DoD & PR Checklist — Product Features & Org Model
 
 ## Gerbang Wajib
 
+- [ ] **GW-0 Hygiene** — standar.
+- [ ] **GW-0b Commit/PR naming** — judul commit DAN judul PR memakai template `feat({tiket}): {deskripsi}` persis (lihat README §Konvensi Commit & PR); `{tiket}` cocok PERSIS ID di sprint file (case-sensitive); multi-tiket dipisah koma tanpa spasi (`FW-C1,BL-43`); PR description baris pertama menyebut `Sprint 7` eksplisit; commit di branch `feat/refactoring-finalize-01` saja (lihat README §Kebijakan Branch).
 - [ ] **GW-3 UI/Desktop** — `npm ci && npm run lint && npm run build` hijau; TS strict tanpa `any`; tidak ada `fetch` langsung ke Rust/komponen.
 - [ ] **GW-2 Go** — standar untuk `BG-F4`/`BG-F6`.
 - [ ] **GW-8 Keamanan** — WAJIB untuk seluruh `BL-40..44` (payment-lockout): ini preventif untuk kelas insiden Comet/Replit, threat-note dan test negatif tidak boleh dilewati meski "belum ada tool pembayaran nyata".

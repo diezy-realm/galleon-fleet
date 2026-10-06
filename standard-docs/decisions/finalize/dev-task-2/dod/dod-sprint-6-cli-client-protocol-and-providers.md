@@ -7,6 +7,8 @@ title: DoD & PR Checklist — CLI/Client Protocol & Providers
 
 ## Gerbang Wajib
 
+- [ ] **GW-0 Hygiene** — standar.
+- [ ] **GW-0b Commit/PR naming** — judul commit DAN judul PR memakai template `feat({tiket}): {deskripsi}` persis (lihat README §Konvensi Commit & PR); `{tiket}` cocok PERSIS ID di sprint file (case-sensitive); multi-tiket dipisah koma tanpa spasi (`BR-E3,BL-30`); PR description baris pertama menyebut `Sprint 6` eksplisit; commit di branch `feat/refactoring-finalize-01` saja (lihat README §Kebijakan Branch).
 - [ ] **GW-1 Rust** — standar.
 - [ ] **GW-5 Kontrak** — WAJIB: `api-contracts/client-protocol.md` berubah di PR yang SAMA dengan perubahan server/klien (`BG-E1`/`BG-E2` dari Sprint 4 harus sudah stabil sebelum sprint ini mulai).
 

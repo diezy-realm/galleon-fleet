@@ -40,7 +40,7 @@ Produk ini **bukan**: reseller kredit, chatbot generik, no-code workflow builder
 Scaffold baru: `orchestrator, fleet, ship, squad, charter, mission, navigator, briefing, policy, approval, treasury, audit, entitlement, schedule, integration`. **Extend, jangan duplikat** yang sudah ada: `crew, run, workflow, task, tool, llm, memory, artifact, persistence`. Plumb `correlation_id` lintas Quest→Voyage→Artifact→Ship Report.
 
 ## Monetisasi (jangan reproduksi credit lock-in)
-Charge untuk ekspansi/Charter/maintenance/kolaborasi/support — **bukan** akses dasar ke intelligence milik user. Community = 1 Ship aktif, ≤5 Crew, 2 Voyage, delegation depth 1. Jangan kunci Artifact/memory user di balik paywall.
+Charge untuk ekspansi/Charter/maintenance/kolaborasi/support — **bukan** akses dasar ke intelligence milik user. Tangga tier final (2026-10-06, lihat `standard-docs/product-research/tier-pricing-and-entitlement-final.md`): Community (gratis, 1 Ship/2 Squad/8 Crew-per-Ship/2 Concurrent Voyages) / Team ($15/bln flat, 3 Ship/6 Squad/22 Crew-per-Ship/4 Voyage) / Dockyard ($28/bln flat + per seat, 6 Ship/12 Squad/100 Crew-per-Ship/8 Voyage) / Private Dockyard (custom, by request). Delegation depth adalah parameter konkurensi runtime terpisah dari kuota tier (`max_delegation_depth` preset `tight_runtime` = 1 di `clawcrew-config/src/presets.rs:238` — kedalaman RANTAI delegasi A→B→C, bukan dimensi tier produk). Jangan kunci Artifact/memory user di balik paywall.
 
 ### INVARIANT F1 — Treasury read-only cost (mengikat implementasi)
 Galleon **tidak pernah berdiri di antara user dan tagihan providernya** (BYOK/BYOM). Treasury hanya **melaporkan** biaya; ia bukan dompet, bukan saldo kredit, bukan meteran konsumsi.

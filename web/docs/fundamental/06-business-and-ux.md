@@ -81,9 +81,9 @@ Do not sell consumable “timber” in the early product. Use it as visual langu
 ```text
 Shipyard Capacity
 
-Active Ships: 1 of 3
-Crew Berths: 5 of 15
-Voyage Lanes: 2 of 8
+Active Ships: 1 of [tier limit]
+Crew Berths: [used] of [tier limit]
+Voyage Lanes: 2 of [tier limit]
 
 Need another persistent team?
 Build another Ship.
@@ -98,8 +98,8 @@ Community — First Ship
 • 1 active Ship
 • 1 Quartermaster
 • 1 Navigator
-• Up to 5 persistent Crew Members
-• 1 active Squad
+• Up to 8 Crew per Ship (includes all Squads and direct-Ship roles)
+• Up to 2 Squads
 • 2 concurrent Voyages
 • 1–2 temporary agents under strict limits
 • BYOK / BYOM / BYOI
@@ -120,7 +120,7 @@ Narrative:
 | Layer | What the user purchases | Pricing style |
 |---|---|---|
 | Community | One useful local-first Fleet/Ship/Squad experience | Free |
-| Pro capacity | More active Ships, more Crew berths, more Voyage lanes, advanced history/export | Subscription or major-version perpetual license |
+| Team / Dockyard capacity | More active Ships, more Crew berths, more Voyage lanes, advanced history/export | Subscription |
 | Squad Charters | Ready-to-run team blueprints, routines, artifacts, policies, evaluations | One-time purchase or maintained-pack subscription |
 | Premium skills | Specialized safe capabilities | One-time or pack membership |
 | Fleet Care | Managed update channel, pack maintenance, backup/sync, support | Optional subscription |

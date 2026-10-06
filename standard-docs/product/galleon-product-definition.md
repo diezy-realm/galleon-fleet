@@ -2,6 +2,7 @@
 
 > **Sumber:** `decisions/owner-decisions/ODR-2026-10-04-product-direction.md` + `.kiro/steering/galleon-product-fundamentals.md` (invariant F1 dll tetap berlaku).
 > **Catatan:** `prd-hybrid-engine.md` di folder ini adalah PRD fase lama (era ClawCrew Phase 2); bila bertentangan, dokumen ini menang.
+> **Tier & Pricing:** diselaraskan ke `standard-docs/product-research/tier-pricing-and-entitlement-final.md`, 2026-10-06. Tangga tier final: Community (gratis) / Team ($15/bln flat) / Dockyard ($28/bln flat + per seat) / Private Dockyard (custom). Dokumen ini tidak merinci angka tier — lihat sumber tersebut untuk tabel plafon lengkap (Ships/Squads/CrewPerShip/ConcurrentVoyages). Dua dokumen lama sudah di-supersede: `community-tier-licensing-enforcement.md` dan `tier-enforcement-method-d-c-deep-dive.md`.
 
 ## 1. Apa produknya
 

@@ -31,6 +31,16 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 - [ ] **R-93 (eks-BL-49, MEDIUM-HIGH)** Aktifkan Knowledge Library untuk `standard-docs/` — setelah R-92 untuk koherensi (tidak hard-block).
 - [ ] **R-94 (eks-BL-50, LOW, murni dokumentasi)** Query decomposition + domain-filtering sebagai SOP riset (pola dari metodologi Perplexity, bukan kode baru).
 
+## E. Skills/Steering/Lessons Persistence (dari `skills-steering-lessons-backlog.md`, belum pernah masuk sprint manapun sebelum audit 2026-10-05)
+
+> Tema sama dengan §A/§D di atas (jembatan Go-Rust untuk storage vektor/persisten) — BL-01 digabung ke sini karena pola arsitekturnya identik: Go pegang kebijakan, Rust pegang storage, gRPC `SystemGateway` sebagai jembatan.
+
+- [ ] **BL-01 (HIGH, bug fungsional nyata)** Jembatan gRPC: persist Lesson/Learning dari Go (`engine/src/memory/proposal.go`, "Learning by Consent" lifecycle lengkap) ke Rust vector store (`clawcrew-memory`) — saat ini `Approve()`/`Revert()` menulis ke `inMemoryVectorStore` Go yang hilang total saat restart proses. Scope: RPC baru `StoreLearnedRule`/`RetrieveLearnedRules` di proto `SystemGateway`, implementasi di `clawcrew-gateway/src/grpc_system_gateway.rs` (reuse `clawcrew-memory`, JANGAN tulis ulang vector-store). **Serialisasi: proto dulu, baru implementasi Go+Rust paralel.**
+- [ ] **BL-03 (LOW, dokumentasi murni, bisa paralel kapan saja)** Dokumentasikan ekosistem `open-skills` yang sudah matang (`crates/clawcrew-runtime/src/skills/mod.rs`, 3-lapis loading workspace→global→plugin WASM) — risiko duplikasi SSOT kalau tim lain menganggap belum ada. Tulis `standard-docs/tech-standart/plugin-standard/open-skills-ecosystem.md`.
+- [ ] **BL-04 (MEDIUM, verifikasi — lebih bermakna SETELAH BL-01 selesai)** Test baru: skill/steering inheritance untuk sub-agent (`DelegateTaskTool`) — verifikasi sub-agent mewarisi skill-bundle yang sama dengan parent (bukan skill-set kosong tanpa alasan). File: `engine/src/tool/phase3_tool_test.go` atau test baru.
+
+> **BL-02 (GAP-01, perancangan steering produk Galleon end-user) TIDAK dimasukkan sprint ini** — scope-nya adalah ADR/design-spec (keputusan one-way-door format file untuk end-user), bukan kerja kode. Lebih cocok sebagai item mandiri di Sprint 7 (produk FE) karena menyentuh pengalaman end-user `galleon`/`galleoncode` CLI, bukan backend internal — lihat Sprint 7 §F.
+
 ## File Ownership & Serialization
 
 | Area | File | Penulis |
@@ -39,6 +49,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 | B | `crates/clawcrew-{gateway,channels,runtime}/src/**` (per-crate berseri, JANGAN paralel di crate yang sama) | Backend-Rust |
 | C | `crates/clawcrew-runtime/src/context/{trim,cache}.rs` (lokasi perlu konfirmasi saat eksekusi) | Backend-Rust |
 | D | `crates/clawcrew-runtime/src/knowledge_graph.rs`, `clawcrew-api/src/knowledge.rs` | Backend-Rust |
+| E | `proto/agent_service.proto`, `crates/clawcrew-gateway/src/grpc_system_gateway.rs`, `engine/src/memory/{proposal,store,wire}.go`, `standard-docs/tech-standart/plugin-standard/` (BL-03) | Backend-Go + Backend-Rust (BL-01 serial: proto dulu) |
 
 ## Keluaran Sprint
 
@@ -46,3 +57,4 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 - Burn-down `unwrap/expect` turun signifikan dari ±400 hit baseline.
 - Data konkret ada/tidaknya korelasi trim-history vs cache-miss (R-88) — keputusan R-89 berbasis data, bukan hipotesis.
 - Node Lesson/Decision punya citation terverifikasi, bukan klaim tanpa sumber.
+- "Learning by Consent" (Go) persisten lintas-restart lewat jembatan gRPC ke Rust vector store — bukan lagi `inMemoryVectorStore` yang hilang saat proses mati.

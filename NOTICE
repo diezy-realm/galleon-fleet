@@ -1,16 +1,33 @@
-ClawCrew
-Copyright 2025 ClawCrew Labs
+Galleon Fleet
+Copyright 2026 Galleon Fleet contributors
 
-This product includes software developed at ClawCrew Labs (https://github.com/clawcrew-labs).
+Origin and Attribution
+======================
 
-Official Repository
-===================
+Galleon Fleet is a derivative work of ZeroClaw, created by ZeroClaw Labs and
+contributors:
 
-The only official ClawCrew repository is:
-https://github.com/clawcrew-labs/clawcrew
+  Project:  ZeroClaw
+  Source:   https://github.com/zeroclaw-labs/zeroclaw
+  Notice:   Copyright 2025 ZeroClaw Labs
+  License:  MIT OR Apache-2.0 (dual-licensed)
 
-Any other repository claiming to be ClawCrew is unauthorized.
-See TRADEMARK.md for the full trademark policy.
+This product includes software developed at ZeroClaw Labs
+(https://github.com/zeroclaw-labs).
+
+The initial commit of this repository is ZeroClaw v0.1.0 (2026-02-13). Files
+inherited from ZeroClaw have been modified, renamed and in part replaced;
+modified files carry their change history in the git log of this repository.
+
+The ZeroClaw name and logo are trademarks of ZeroClaw Labs. Galleon Fleet is an
+independent project. It is not affiliated with, endorsed by, or sponsored by
+ZeroClaw Labs. The ZeroClaw name is used here only to describe the origin of
+the work.
+
+Upstream contributors retain copyright ownership of their contributions.
+Contributions are attributed in the upstream commit history, which is preserved
+in this repository, and at:
+https://github.com/zeroclaw-labs/zeroclaw/graphs/contributors
 
 License
 =======
@@ -20,19 +37,8 @@ This software is available under a dual-license model:
   1. MIT License — see LICENSE-MIT
   2. Apache License 2.0 — see LICENSE-APACHE
 
-You may use either license. Contributors grant rights under both.
-See CLA.md for the contributor license agreement.
-
-Contributors
-============
-
-This NOTICE file is maintained by repository automation.
-For the latest contributor list, see the repository contributors page:
-https://github.com/clawcrew-labs/clawcrew/graphs/contributors
-
-All contributors retain copyright ownership of their contributions.
-Contributions are permanently attributed in the repository commit history.
-Patent rights are protected for all contributors under Apache License 2.0.
+You may use either license. Both license files retain the upstream copyright
+notice of ZeroClaw Labs as required by their terms.
 
 Third-Party Dependencies
 ========================

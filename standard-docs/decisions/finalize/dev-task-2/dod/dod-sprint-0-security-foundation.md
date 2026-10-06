@@ -8,6 +8,7 @@ title: DoD & PR Checklist — Security Foundation
 ## Gerbang Wajib (dari `roadmap/PR-plan.md` §1)
 
 - [ ] **GW-0 Hygiene** — `git diff --check`; tidak ada secret (`gitleaks`); commit conventional + trailer; tidak ada perubahan di luar scope tiket.
+- [ ] **GW-0b Commit/PR naming** — judul commit DAN judul PR memakai template `feat({tiket}): {deskripsi}` persis (lihat README §Konvensi Commit & PR); `{tiket}` cocok PERSIS ID di sprint file (case-sensitive); multi-tiket dipisah koma tanpa spasi (`BL-32,BL-14`); PR description baris pertama menyebut `Sprint 0` eksplisit; commit dilakukan di branch `feat/refactoring-finalize-01` (bukan sub-branch baru kecuali darurat + wajib sync balik, lihat README §Kebijakan Branch).
 - [ ] **GW-1 Rust** — `cargo fmt --all -- --check`; `cargo clippy -p <crate> -- -D warnings`; `cargo nextest run -p <crate>`; **nol `unwrap()/expect()` baru di jalur produksi**; tidak ada `#[allow(dead_code)]` baru.
 - [ ] **GW-2 Go** — `go vet ./...`; `go test -race ./...`; `wire` regen bersih (`git diff --exit-code engine/app/wire_gen.go`); wrap error `%w`; zap.
 - [ ] **GW-4 Boundary** — UI/Tauri → Go :9090 → Rust :50052; tidak ada shell/fs di Go atau Tauri; policy hanya di `fleet/policies.go`; rahasia hanya di Vault.

@@ -165,23 +165,17 @@ AI-assisted PRs are welcome; see [Contribution culture (RFC #5615)](https://gith
 
 Do not file public issues for security vulnerabilities. Email `security@clawcrew.dev`. See [SECURITY.md](SECURITY.md) for the full policy.
 
-## Official repository & impersonation notice
-
-This is the only official ClawCrew repository:
-
-> <https://github.com/clawcrew-labs/clawcrew>
-
-Any other repository, organization, domain, or package claiming to be "ClawCrew" or implying affiliation with ClawCrew Labs is **unauthorized and not affiliated with this project**.
-
 ## License
 
-Dual-licensed: [MIT](LICENSE-MIT) OR [Apache 2.0](LICENSE-APACHE). You may choose either. Contributors automatically grant rights under both — see [CLA](docs/book/src/contributing/cla.md). The **ClawCrew** name and logo are trademarks of ClawCrew Labs.
+Dual-licensed: [MIT](LICENSE-MIT) OR [Apache 2.0](LICENSE-APACHE). You may choose either. Both license files retain the upstream copyright notice of ZeroClaw Labs; see [NOTICE](NOTICE) for the full attribution.
+
+The **ZeroClaw** name and logo are trademarks of ZeroClaw Labs. This project is an independent derivative and is not affiliated with, endorsed by, or sponsored by ZeroClaw Labs.
 
 ## Credits
 
-Built and maintained by the community — original creator [@theonlyhennygod](https://github.com/theonlyhennygod); project lead [@JordanTheJet](https://github.com/JordanTheJet). Full maintainer list in [Communication](docs/book/src/contributing/communication.md).
+This project is a derivative of [ZeroClaw](https://github.com/zeroclaw-labs/zeroclaw) by ZeroClaw Labs (MIT OR Apache-2.0). We are grateful to the upstream authors and contributors: original creator [@theonlyhennygod](https://github.com/theonlyhennygod); upstream project lead [@JordanTheJet](https://github.com/JordanTheJet). The upstream contributor list is at <https://github.com/zeroclaw-labs/zeroclaw/graphs/contributors>.
 
-Thanks to the communities that incubated early work: **Harvard University**, **MIT**, **Sundai Club**, and every contributor pushing it forward.
+Thanks to the communities that incubated the early upstream work: **Harvard University**, **MIT**, **Sundai Club**, and every contributor pushing it forward.
 
 <p align="center">
   <a href="https://www.star-history.com/#clawcrew-labs/clawcrew&type=date&legend=top-left">

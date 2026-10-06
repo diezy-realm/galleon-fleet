@@ -7,6 +7,8 @@ date: 2026-10-05
 # Definition of Done & PR Checklist — Index
 
 > Satu file per sprint, format konsisten. Checklist DoD di sini TIDAK mengubah gerbang resmi `roadmap/PR-plan.md` §1 (GW-0..9) — hanya mengelompokkannya per-sprint supaya Principle punya satu daftar per PR-batch, sesuai pola kerja existing "PR batch-by-phase, bukan per-task" dan "Principle review langsung ke FE/BE, Lead sentuh yang sudah lolos".
+>
+> **GW-0b Commit/PR naming** (ditambahkan 2026-10-05, berlaku di SETIAP sprint di bawah): judul commit DAN judul PR WAJIB `feat({tiket}): {deskripsi}` — lihat `../README.md` §Konvensi Commit & PR untuk aturan lengkap + §Kebijakan Branch (satu branch `feat/refactoring-finalize-01`, tanpa sub-branch kecuali darurat). PR dengan ID tiket typo/tidak ketemu di sprint file manapun, atau prefix selain `feat(...)`, DITOLAK Principle sampai diperbaiki.
 
 ## Alur Review (dipertahankan dari lesson existing, tidak berubah)
 

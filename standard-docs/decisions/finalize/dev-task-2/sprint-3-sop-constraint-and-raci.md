@@ -29,6 +29,11 @@ depends_on: none (additive, risiko regresi rendah)
 - [ ] **Eval-01 (dari `decisions/sop-eval-telemetry-loop-design.md`)** Sambungkan `clawcrew-eval` (harness Replay/Live yang sudah matang, CLI sudah ada) sebagai check ADVISORY di CI — TIDAK blocking merge. Dijalankan Lead→Backend→Principle (bukan Owner harian).
 - [ ] **Eval-02** Surface `SopCounters`/`RunSnapshot` (metrics SOP yang sudah matang tapi nol di-expose) ke endpoint read-only gateway/dashboard.
 
+## D. SOP Execution Model — Delivery Separation & Cost Cap (dari `automation-cron-webhook-backlog.md`, belum pernah masuk sprint manapun sebelum audit 2026-10-05)
+
+- [ ] **BL-13 (LOW-MEDIUM, MULAI DENGAN VERIFIKASI, bukan langsung kode)** Cost cap eksplisit per cron-job/SOP-run. **Verifikasi dulu**: `SecurityPolicy.max_actions_per_hour`/`record_action()`/`is_rate_limited()` (`crates/clawcrew-config/src/policy.rs:349`) sudah dipakai luas di `cron/scheduler.rs:898,1272` dan `subagent/mod.rs` — kemungkinan BESAR task ini SUDAH tercakup existing mechanism, bukan gap baru. Definition of Done tahap ini: dokumentasikan apakah `max_actions_per_hour` sudah cukup sebagai cost-cap level cron-job/SOP-run, atau genuinely butuh field tambahan (mis. cap biaya USD, bukan cuma jumlah aksi).
+- [ ] **BL-12 (LOW, EVALUASI dulu — bukan implementasi langsung)** Pemisahan eksekusi vs delivery untuk SOP/cron trigger eksternal (pola `gh-aw` safe-outputs). **Bukan vulnerability aktif** — `ContentSafety::screen_event` (BL-14, Sprint 0) sudah menyaring input SOP. Ini defense-in-depth tambahan: evaluasi apakah perlu tahap "proposed output" terpisah sebelum `SopRunAction::ExecuteStep` menerapkan delivery (permission lebih sempit). Definition of Done tahap ini: design-spec baru yang memutuskan perlu/tidak, JANGAN langsung ubah `SopRunAction` yang sudah punya invariant ketat.
+
 ## File Ownership & Serialization
 
 | Area | File | Penulis |
@@ -36,6 +41,7 @@ depends_on: none (additive, risiko regresi rendah)
 | A | `crates/clawcrew-runtime/src/sop/types.rs` (field baru), `engine/src/mission/` (Quest Go) | Backend-Rust + Backend-Go |
 | B | `crates/clawcrew-runtime/src/sop/{types.rs,constraint.rs}` (baru), `crates/clawcrew-runtime/src/hooks/` (reuse existing) | Backend-Rust — **serialkan A dan B pada `sop/types.rs` kalau bersinggungan** |
 | C | `crates/clawcrew-eval/`, `.github/workflows/` (check baru, non-blocking), `clawcrew-gateway/src/` (endpoint metrics baru) | Backend-Rust + Platform/DevOps |
+| D | `crates/clawcrew-config/src/policy.rs` (baca, verifikasi BL-13), `standard-docs/decisions/` (design-spec baru BL-12) | squad-lead (evaluasi/dokumentasi dulu, bukan kode) |
 
 ## Keluaran Sprint
 
