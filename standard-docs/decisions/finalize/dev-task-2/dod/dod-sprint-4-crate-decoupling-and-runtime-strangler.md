@@ -9,7 +9,7 @@ title: DoD & PR Checklist — Crate Decoupling & Runtime Strangler
 
 - [ ] **GW-0 Hygiene** — standar.
 - [ ] **GW-0b Commit/PR naming** — judul commit DAN judul PR memakai template `feat({tiket}): {deskripsi}` persis (lihat README §Konvensi Commit & PR); `{tiket}` cocok PERSIS ID di sprint file (case-sensitive); multi-tiket dipisah koma tanpa spasi (`BR-C5,BG-D1`); PR description baris pertama menyebut `Sprint 4` eksplisit; commit di branch `feat/refactoring-finalize-01` saja (lihat README §Kebijakan Branch).
-- [ ] **GW-1 Rust** — standar, plus: `BR-C5`/`BR-C6`/`BR-D1` adalah PR berseri (XL) — setiap PR dalam seri HARUS lolos `cargo metadata` dependency-direction gate (`BR-A3`, sudah terkunci) sendiri, bukan menunggu seri selesai total.
+- [ ] **GW-1 Rust** — `cargo fmt --all -- --check`; `cargo clippy -p <crate> -- -D warnings`; `cargo nextest run -p <crate>` (Windows: `$env:CARGO_TARGET_DIR="target/agent"`); **nol `unwrap()/expect()` baru**; plus: `BR-C5`/`BR-C6`/`BR-D1` adalah PR berseri (XL) — setiap PR dalam seri HARUS lolos `cargo metadata` dependency-direction gate (`BR-A3`, sudah terkunci) sendiri, bukan menunggu seri selesai total.
 - [ ] **GW-2 Go** — `BG-D1`..`BG-D5` adalah fitur BARU di Go, bukan port langsung — `go test -race ./...` WAJIB untuk setiap PR, tidak ada pengecualian "akan ditest nanti".
 - [ ] **GW-6 Integrasi** — WAJIB untuk sprint ini (XL, lintas-tier): smoke e2e start engine Go + gateway Rust → `StartTurn` stream → `ExecuteNativeTool` fail-closed saat Rust mati → UI memuat; hasil tertulis di deskripsi PR.
 

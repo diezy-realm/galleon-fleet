@@ -49,6 +49,7 @@ const (
 type Principal struct {
 	ID            PrincipalId       `json:"id"`
 	DisplayID     string            `json:"display_id"`
+	Actor         ActorKind         `json:"actor,omitempty"`
 	IsHuman       bool              `json:"is_human"`
 	AuthMethod    AuthMethod        `json:"auth_method"`
 	ProviderAlias *string           `json:"provider_alias,omitempty"`

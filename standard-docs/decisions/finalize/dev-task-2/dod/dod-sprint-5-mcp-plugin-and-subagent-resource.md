@@ -9,7 +9,7 @@ title: DoD & PR Checklist — MCP/Plugin Governance & Sub-Agent Resource
 
 - [ ] **GW-0 Hygiene** — standar.
 - [ ] **GW-0b Commit/PR naming** — judul commit DAN judul PR memakai template `feat({tiket}): {deskripsi}` persis (lihat README §Konvensi Commit & PR); `{tiket}` cocok PERSIS ID di sprint file (case-sensitive); multi-tiket dipisah koma tanpa spasi (`BL-19,BL-23`); PR description baris pertama menyebut `Sprint 5` eksplisit; commit di branch `feat/refactoring-finalize-01` saja (lihat README §Kebijakan Branch).
-- [ ] **GW-1 Rust** — standar.
+- [ ] **GW-1 Rust** — `cargo fmt --all -- --check`; `cargo clippy -p <crate> -- -D warnings`; `cargo nextest run -p <crate>` (Windows: `$env:CARGO_TARGET_DIR="target/agent"`); **nol `unwrap()/expect()` baru**.
 - [ ] **GW-8 Keamanan** — WAJIB untuk `BL-19`/`BL-20`/`BL-21`/`BL-23`: threat-note eksplisit per PR (permukaan baru default tertutup); test negatif (akses di luar scope → ditolak).
 
 ## Acceptance Criteria Spesifik Sprint Ini

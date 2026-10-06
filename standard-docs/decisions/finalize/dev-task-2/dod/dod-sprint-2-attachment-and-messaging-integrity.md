@@ -9,7 +9,7 @@ title: DoD & PR Checklist — Attachment & Messaging Integrity
 
 - [ ] **GW-0 Hygiene** — standar.
 - [ ] **GW-0b Commit/PR naming** — judul commit DAN judul PR memakai template `feat({tiket}): {deskripsi}` persis (lihat README §Konvensi Commit & PR); `{tiket}` cocok PERSIS ID di sprint file (case-sensitive); multi-tiket dipisah koma tanpa spasi (`BL-52,BL-14`); PR description baris pertama menyebut `Sprint 2` eksplisit; commit di branch `feat/refactoring-finalize-01` saja (lihat README §Kebijakan Branch).
-- [ ] **GW-1 Rust** — standar, plus: perubahan di `clawcrew-channels/src/orchestrator/mod.rs` HARUS menyertakan diff yang jelas terhadap commit BL-14 (Sprint 0) — reviewer memverifikasi tidak ada revert tidak sengaja terhadap ContentSafety yang baru ditambahkan.
+- [ ] **GW-1 Rust** — `cargo fmt --all -- --check`; `cargo clippy -p <crate> -- -D warnings`; `cargo nextest run -p <crate>` (Windows: `$env:CARGO_TARGET_DIR="target/agent"`); **nol `unwrap()/expect()` baru**; plus: perubahan di `clawcrew-channels/src/orchestrator/mod.rs` HARUS menyertakan diff yang jelas terhadap commit BL-14 (Sprint 0) — reviewer memverifikasi tidak ada revert tidak sengaja terhadap ContentSafety yang baru ditambahkan.
 - [ ] **GW-8 Keamanan** — khusus `BL-37`/`BL-38`: test tangkap-log membuktikan redaksi/scrub BENAR-BENAR terjadi (baca file log hasil test, assert konten sensitif TIDAK ADA), bukan hanya assert fungsi dipanggil.
 
 ## Acceptance Criteria Spesifik Sprint Ini

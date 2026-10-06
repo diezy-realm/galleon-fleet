@@ -19,7 +19,7 @@ title: DoD & PR Checklist — Security Foundation
 
 - [x] `S2-SEC-01`: test negatif membuktikan `req.Approved=true` TANPA principal terverifikasi dari `BG-C1` DITOLAK (bukan hanya diterima dengan warning).
 - [x] `BG-C1`: test negatif "tanpa kredensial → ditolak" lolos untuk SETIAP endpoint yang bergantung principal resolver (bukan hanya satu contoh).
-- [x] `BL-32`: `cargo test -p clawcrew-gateway --features channel-whatsapp-cloud` lolos PENUH termasuk drift-guard; test integrasi HTTP baru (signature salah → 401) ada dan lolos.
+- [x] `BL-32`: `cargo nextest run -p clawcrew-gateway --features channel-whatsapp-cloud` lolos PENUH termasuk drift-guard; test integrasi HTTP baru (signature salah → 401) ada dan lolos.
 - [x] `BR-B3`: sandbox deny-by-default terbukti test per-OS (Landlock/Seatbelt/AppContainer) — minimal 1 OS yang relevan ke target rilis, bukan placeholder skip-all.
 - [x] `BL-19`: MCP stdio child process sandboxed — buktikan dengan test yang mencoba akses file/network di luar scope dan assert DITOLAK.
 - [x] `BL-14`: `ContentSafety` aktif terverifikasi di SEMUA channel non-SOP yang ada saat ini (daftar eksplisit channel yang dicek, bukan klaim umum "semua channel").

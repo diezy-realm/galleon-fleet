@@ -360,7 +360,7 @@ server.RegisterRouteFunc("/api/pairing/revoke", identity.RequireAuthenticated(re
 3. `crates/clawcrew-gateway/src/tests.rs` baris 5793-5880+ (helper `compute_whatsapp_signature_hex`/`compute_whatsapp_signature_header` sudah dibaca — ini test HELPER yang BENAR, cuma target `verify_whatsapp_signature` yang hilang).
 
 **Langkah pengerjaan (WAJIB urut, sesuai instruksi dokumen asli):**
-1. `cargo test -p clawcrew-gateway --features channel-whatsapp-cloud 2>&1 | head -50` — konfirmasi compile error PERSIS di titik mana (nama fungsi hilang akan muncul sebagai `cannot find function` error Rust).
+1. `cargo nextest run -p clawcrew-gateway --features channel-whatsapp-cloud 2>&1 | head -50` — konfirmasi compile error PERSIS di titik mana (nama fungsi hilang akan muncul sebagai `cannot find function` error Rust).
 2. `git log -p --all -- crates/clawcrew-gateway/src/tests.rs | grep -B5 -A30 "fn verify_whatsapp_signature"` (atau pencarian serupa) — cari commit yang MENULISKAN fungsi ini pertama kali dan commit yang MENGHAPUSNYA. Catat kedua SHA.
 3. Baca commit penghapus — apakah itu bagian dari refactor `webhook_ingress.rs` (kemungkinan besar)? Kalau ya, cek APAKAH closure pengganti ada di `lib.rs::optional_channel_routes()` dengan logic HMAC yang SAMA (secure, constant-time compare) tapi nama berbeda — kalau closure itu ADA dan benar, maka FIX-nya adalah update test memanggil pola baru (bukan restore fungsi lama), DAN test level HTTP (bukan unit) perlu ditambah untuk memverifikasi jalur `authenticate()` end-to-end.
 4. Kalau closure pengganti TIDAK ADA (genuinely hilang, bukan dipindah): restore `verify_whatsapp_signature(secret: &str, body: &[u8], signature_header: &str) -> bool` sebagai fungsi standalone di `webhook_ingress.rs`, dipanggil sebagai closure oleh `authenticate()` di titik registrasi WhatsApp route — WAJIB pakai constant-time comparison (`subtle::ConstantTimeEq` atau `hmac::Mac::verify_slice` yang built-in constant-time, LIHAT `compute_whatsapp_signature_hex` di test yang sudah pakai crate `hmac`+`sha2` — reuse pola yang sama, JANGAN `==` string biasa yang vulnerable timing attack).
@@ -390,7 +390,7 @@ pub(crate) fn verify_whatsapp_signature(secret: &str, body: &[u8], signature_hea
 ```
 
 **Acceptance criteria testable:**
-- `cargo test -p clawcrew-gateway --features channel-whatsapp-cloud` hijau, termasuk 5 test existing di `tests.rs` baris 5793-5880+ tanpa diubah assertion-nya (hanya target fungsi yang diperbaiki).
+- `cargo nextest run -p clawcrew-gateway --features channel-whatsapp-cloud` hijau, termasuk 5 test existing di `tests.rs` baris 5793-5880+ tanpa diubah assertion-nya (hanya target fungsi yang diperbaiki).
 - Test HTTP baru: POST `/whatsapp` dengan `X-Hub-Signature-256` salah → 401 dengan body `{"error":"Invalid signature"}`.
 - Drift guard test `every_channel_webhook_route_is_classified_by_the_registry` (sudah ada) tetap hijau — ini bukti `optional_channel_routes` tidak rusak oleh perubahan.
 
@@ -450,6 +450,6 @@ pub(crate) fn verify_whatsapp_signature(secret: &str, body: &[u8], signature_hea
 ## Keluaran Sprint
 
 - Principal resolver Go hidup + dipakai approval-gate terminal (menutup `S2-SEC-01`).
-- `cargo test -p clawcrew-gateway` ground-truth soal WhatsApp signature terjawab definitif (lolos atau gagal — keduanya hasil valid, yang penting bukan lagi tidak diketahui).
+- `cargo nextest run -p clawcrew-gateway` ground-truth soal WhatsApp signature terjawab definitif (lolos atau gagal — keduanya hasil valid, yang penting bukan lagi tidak diketahui).
 - MCP stdio sandboxed setara WASM plugin.
 - `ContentSafety` aktif di seluruh channel non-SOP.
