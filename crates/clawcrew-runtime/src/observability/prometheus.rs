@@ -32,6 +32,7 @@ pub struct PrometheusObserver {
     tokens_used: prometheus::IntGauge,
     active_sessions: GaugeVec,
     queue_depth: GaugeVec,
+    cache_hit_rate: GaugeVec,
 }
 
 impl Default for PrometheusObserver {
@@ -183,6 +184,12 @@ impl PrometheusObserver {
         )
         .expect("valid metric");
 
+        let cache_hit_rate = GaugeVec::new(
+            prometheus::Opts::new("clawcrew_cache_hit_rate", "Ratio of cache hits to total requests"),
+            &["cache_type"],
+        )
+        .expect("valid metric");
+
         // Register all metrics
         registry.register(Box::new(agent_starts.clone())).ok();
         registry.register(Box::new(llm_requests.clone())).ok();
@@ -198,6 +205,7 @@ impl PrometheusObserver {
         registry.register(Box::new(cache_hits.clone())).ok();
         registry.register(Box::new(cache_misses.clone())).ok();
         registry.register(Box::new(cache_tokens_saved.clone())).ok();
+        registry.register(Box::new(cache_hit_rate.clone())).ok();
         registry.register(Box::new(agent_duration.clone())).ok();
         registry.register(Box::new(tool_duration.clone())).ok();
         registry
@@ -229,6 +237,7 @@ impl PrometheusObserver {
             tokens_used,
             active_sessions,
             queue_depth,
+            cache_hit_rate,
         }
     }
 
@@ -355,9 +364,21 @@ impl Observer for PrometheusObserver {
                 self.cache_tokens_saved
                     .with_label_values(&[cache_type])
                     .inc_by(*tokens_saved);
+                let hits = self.cache_hits.with_label_values(&[cache_type]).get() as f64;
+                let misses = self.cache_misses.with_label_values(&[cache_type]).get() as f64;
+                let total = hits + misses;
+                if total > 0.0 {
+                    self.cache_hit_rate.with_label_values(&[cache_type]).set(hits / total);
+                }
             }
             ObserverEvent::CacheMiss { cache_type } => {
                 self.cache_misses.with_label_values(&[cache_type]).inc();
+                let hits = self.cache_hits.with_label_values(&[cache_type]).get() as f64;
+                let misses = self.cache_misses.with_label_values(&[cache_type]).get() as f64;
+                let total = hits + misses;
+                if total > 0.0 {
+                    self.cache_hit_rate.with_label_values(&[cache_type]).set(hits / total);
+                }
             }
             ObserverEvent::Error {
                 component,

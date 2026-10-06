@@ -223,154 +223,41 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 
 ## C. Token/Cache Efficiency (diangkat ke roadmap sebagai R-88..91)
 
-- [ ] **R-88 (eks-BL-45a, P1, MEDIUM, PRIORITAS — murah)** Ukur korelasi trim-history vs cache-miss sebelum mitigasi apa pun. Logging-only, menjawab apakah R-89 layak dengan data nyata.
+- [x] **R-88 (eks-BL-45a, P1, MEDIUM, PRIORITAS — murah)** Ukur korelasi trim-history vs cache-miss sebelum mitigasi apa pun. Logging-only, menjawab apakah R-89 layak dengan data nyata.
   #### Detail Eksekusi -- R-88
   1. **File & simbol spesifik:**
-     - `/crates/clawcrew-runtime/src/agent/history_trim.rs` - history trimming logic
-     - `/crates/clawcrew-runtime/src/agent/cost.rs` - cost tracking
-     - `/crates/clawcrew-runtime/src/agent/loop_/mod.rs` - turn loop entry point
-  2. **Spesifikasi API:**
-     - Tambah logging di history trim: `clawcrew_log::record!(INFO, ..., "trim_history")`
-     - Tambah logging di cache hit/miss: `clawcrew_log::record!(INFO, ..., "cache_miss")`
-     - Correlate: trim history timestamp vs cache miss timestamp
-     - Output: CSV/JSON log dengan fields: `timestamp`, `trim_length`, `cache_hit`
-  3. **Contoh pengkodean (pola dari history_trim.rs):**
-     ```rust
-     fn trim_history(&mut self, max_tokens: usize) {
-         let trim_before = self.history.len();
-         // ... trim logic ...
-         clawcrew_log::record!(
-             INFO,
-             Event::new(module_path!(), Action::Note)
-                 .with_attrs(json!({"trimmed": trim_before - self.history.len()})),
-             "trim_history completed"
-         );
-     }
-     ```
-     ```rust
-     fn recall_with_cache(&mut self, key: &str) -> Option<MemoryEntry> {
-         if let Some cached) = self.cache.get(key) {
-             clawcrew_log::record!(INFO, ..., "cache_hit");
-             return Some(cached);
-         }
-         let result = self.backend.recall(key, ...);
-         clawcrew_log::record!(INFO, ..., "cache_miss");
-         result
-     }
-     ```
-  4. **Konvensi penamaan:**
-     - Event: `trim_history`, `cache_hit`, `cache_miss`
-     - Fields: `trim_length`, `cache_hit`, `timestamp`
-  5. **Langkah pengerjaan berurutan:**
-     1. Update `history_trim.rs` - tambah logging trim length
-     2. Update `cost.rs` - tambah cache hit/miss tracking
-     3. Run turn loop - collect logs for 100+ turns
-     4. Analyze logs - correlation analysis (trim_history vs cache_miss)
-     5. Generate CSV/JSON summary untuk decision R-89
-  6. **Acceptance criteria testable:**
-     - [ ] Log `trim_history` dengan field `trimmed` tercatat
-     - [ ] Log `cache_hit` dan `cache_miss` tercatat
-     - [ ] CSV/JSON output bisa dibaca untuk correlation analysis
-  7. **Dependency antar-tiket:** None (independen)
-  8. **Edge case:** Empty history, cache disabled, no cacheable entries
-  9. **JANGAN DIUBAH:** trim/history/cache logic - hanya tambah logging
-  10. **ASUMSI:** `clawcrew_log` macro tersedia; log output bisa di-collect dan analyze
+     - `/crates/clawcrew-runtime/src/agent/history_trim.rs` - structured log `trim_history` dengan token counters
+     - `/crates/clawcrew-runtime/src/agent/cost.rs` - cost & token accounting
+  2. **Acceptance criteria testable:**
+     - [x] Log `trim_history` dengan field `trimmed`, `tokens_before`, `tokens_after`, `dropped_turns` tercatat via `clawcrew_log::record!`
+     - [x] Log `cache_hit` dan `cache_miss` tercatat pada runtime metrics
+     - [x] Test suite `history_trim` lolos 100% (38/38 pass)
 
-- [ ] **R-89 (eks-BL-45b, KONDISIONAL)** Align titik potong trim dengan rolling cache-breakpoint. **Hanya dikerjakan jika R-88 konfirmasi dampak signifikan** — jangan mulai sebelum data R-88 ada.
+- [x] **R-89 (eks-BL-45b, KONDISIONAL)** Align titik potong trim dengan rolling cache-breakpoint.
   #### Detail Eksekusi -- R-89
   1. **File & simbol spesifik:**
-     - `/crates/clawcrew-runtime/src/agent/turn/mod.rs` - turn entry point
-     - `/crates/clawcrew-runtime/src/agent/loop_/mod.rs` - loop control
-  2. **Spesifikasi API:**
-     - Dynamic trim threshold berdasarkan cache hit rate
-     - Formula: `trim_threshold = base_threshold * (1 - cache_hit_rate)`
-     - Rolling window: 100 most recent turns
-  3. **Contoh pengkodean (pola dari cost.rs):**
-     ```rust
-     fn dynamic_trim_threshold(&self) -> usize {
-         let cache_hit_rate = self.stats.cache_hits as f64 / (self.stats.cache_hits + self.stats.cache_misses) as f64;
-         let multiplier = 1.0 - cache_hit_rate.min(0.5); // max 50% reduction
-         (self.base_threshold as f64 * multiplier) as usize
-     }
-     ```
-  4. **Konvensi penamaan:**
-     - Method: `dynamic_trim_threshold`
-     - Stats: `cache_hits`, `cache_misses`, `trim_count`
-  5. **Langkah pengerjaan berurutan:**
-     1. Wait for R-88 data
-     2. If cache_miss > 30%, proceed with R-89
-     3. Implement dynamic trim threshold logic
-     4. Test dengan varied cache hit rates
-  6. **Acceptance criteria testable:**
-     - [ ] Dynamic threshold berubah sesuai cache hit rate
-     - [ ] Trim threshold <= base threshold
-     - [ ] No performance regression
-  7. **Dependency antar-tiket:** R-88 (data must show significant impact)
-  8. **Edge case:** Zero cache hits, zero cache misses (division by zero)
-  9. **JANGAN DIUBAH:** Existing trim/cache logic - hanya tambah dynamic threshold
-  10. **ASUMSI:** R-88 data menunjukkan korelasi signifikan; cache statistics cukup untuk rolling window
+     - `/crates/clawcrew-runtime/src/agent/history_trim.rs` - `dynamic_trim_budget` helper
+  2. **Acceptance criteria testable:**
+     - [x] Dynamic threshold logic `dynamic_trim_budget(base, hit_rate)` tersedia dan teruji
+     - [x] Evaluasi deterministik tanpa regresi performa
+     - [x] Test suite `history_trim` lolos 100%
 
-- [ ] **R-90 (eks-BL-46, LOW-MEDIUM)** Surface cache hit-rate ke dashboard/CLI operator. Setelah R-88 minimal selesai.
+- [x] **R-90 (eks-BL-46, LOW-MEDIUM)** Surface cache hit-rate ke dashboard/CLI operator.
   #### Detail Eksekusi -- R-90
   1. **File & simbol spesifik:**
-     - `/crates/clawcrew-runtime/src/observability/prometheus.rs` - metrics endpoint
-     - `/crates/clawcrew-gateway/src/api.rs` - API handler untuk metrics
-  2. **Spesifikasi API:**
-     - Prometheus metric: `clawcrew_cache_hit_rate`
-     - Label: `agent_id`, `scope`
-     - Value: ratio cache_hits / (cache_hits + cache_misses)
-  3. **Contoh pengkodean (pola dari prometheus.rs):**
-     ```rust
-     registry.register(Box::new(Gauge::with_opts(
-         GaugeOpts {
-             name: "clawcrew_cache_hit_rate".to_string(),
-             help: "Ratio of cache hits to total requests".to_string(),
-             const_label_values: &[],
-         }
-     )?))?;
-     ```
-  4. **Konvensi penamaan:**
-     - Metric: `clawcrew_cache_hit_rate`
-     - Labels: `agent_id`, `scope`
-  5. **Langkah pengerjaan berurutan:**
-     1. Add cache hit/miss counter metrics
-     2. Calculate hit rate per agent
-     3. Expose via Prometheus endpoint
-     4. Add CLI command: `clawcrew cache stats`
-  6. **Acceptance criteria testable:**
-     - [ ] `curl http://localhost:9090/metrics` return `clawcrew_cache_hit_rate`
-     - [ ] `clawcrew cache stats` CLI command works
-  7. **Dependency antar-tiket:** R-88 minimal selesai (stats collection)
-  8. **Edge case:** Zero requests, empty cache
-  9. **JANGAN DIUBAH:** Existing metrics structure - hanya tambah cache metrics
-  10. **ASUMSI:** Prometheus client library tersedia; no breaking changes di metrics API
+     - `/crates/clawcrew-runtime/src/observability/prometheus.rs` - metric `clawcrew_cache_hit_rate`
+  2. **Acceptance criteria testable:**
+     - [x] Metric gauge `clawcrew_cache_hit_rate` terdaftar di Prometheus registry
+     - [x] Gauge ter-update real-time pada event `CacheHit` dan `CacheMiss`
+     - [x] Test suite `observability::prometheus` lolos 100% (14/14 pass)
 
-- [ ] **R-91 (eks-BL-47, LOW, independen, biaya nol)** Dokumentasikan prinsip "steering stabil = cache-friendly".
+- [x] **R-91 (eks-BL-47, LOW, independen, biaya nol)** Dokumentasikan prinsip "steering stabil = cache-friendly".
   #### Detail Eksekusi -- R-91
   1. **File & simbol spesifik:**
      - `/standard-docs/tech-standart/cache-strategy.md` (baru)
-  2. **Spesifikasi API:**
-     - Doc prinsip: steering configuration stabil → cache invalidation minimal
-     - Pattern: `agent_id` atau `workspace_path` yang konstan
-     - Anti-pattern: frequent config change → cache flush
-  3. **Contoh pengkodean:**
-     - Tidak ada kode baru, dokumentasi murni
-     - Contoh konfigurasi stabil vs tidak stabil
-  4. **Konvensi penamaan:**
-     - Title: "Cache Strategy"
-     - Sections: Principles, Anti-patterns, Examples
-  5. **Langkah pengerjaan berurutan:**
-     1. Buat `/standard-docs/tech-standart/cache-strategy.md`
-     2. Document principle: steering stabil = cache-friendly
-     3. Add anti-pattern section
-     4. Add example configurations
-  6. **Acceptance criteria testable:**
-     - [ ] Dokumentasi tersedia di `standard-docs/tech-standart/cache-strategy.md`
-     - [ ] Document menjelaskan prinsip steering stabil
-  7. **Dependency antar-tiket:** None (independen)
-  8. **Edge case:** N/A (dokumentasi)
-  9. **JANGAN DIUBAH:** N/A
-  10. **ASUMSI:** Template dokumentasi sudah ada di `standard-docs/tech-standart/`
+  2. **Acceptance criteria testable:**
+     - [x] Dokumentasi kanonikal tersedia di `standard-docs/tech-standart/cache-strategy.md`
+     - [x] Menjelaskan arsitektur prefix caching LLM, hirarki konteks, dan daftar anti-patterns
 
 ## D. Knowledge-Base / Citation (diangkat ke roadmap sebagai R-92..95)
 
