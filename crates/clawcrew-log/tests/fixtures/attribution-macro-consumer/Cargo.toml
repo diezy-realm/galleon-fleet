@@ -1,5 +1,6 @@
 [package]
 name = "clawcrew-log-attribution-macro-consumer"
+rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true

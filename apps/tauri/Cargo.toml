@@ -1,5 +1,6 @@
 [package]
 name = "fleet-ai-desktop"
+rust-version.workspace = true
 version = "2.4.0"
 description = "Fleet AI Desktop Environment"
 authors = ["Captain & Sovereign Crew"]

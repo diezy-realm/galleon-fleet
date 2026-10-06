@@ -1,5 +1,6 @@
 [package]
 name = "galleon-security-scrub"
+rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true

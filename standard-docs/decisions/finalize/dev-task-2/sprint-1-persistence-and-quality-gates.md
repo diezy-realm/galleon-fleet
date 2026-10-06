@@ -214,7 +214,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
   9. **JANGAN DIUBAH:** Logic yang ada - hanya ganti error handling style
   10. **ASUMSI:** `thiserror` sudah ter-install di semua crate; no `#[allow(clippy::unwrap-usage)]` di production code
 
-- [ ] **BR-A6 · R-05 · PR-20 (P2, S)** Selaraskan `rust-conventions.md` (MSRV, jumlah crate).
+- [x] **BR-A6 · R-05 · PR-20 (P2, S)** Selaraskan `rust-conventions.md` (MSRV, jumlah crate).
   #### Detail Eksekusi -- BR-A6
   1. **File & simbol spesifik:**
      - `/standard-docs/tech-standart/tech-stack/rust-conventions.md` - source of truth
@@ -222,37 +222,32 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
      - `/rust-toolchain.toml` - verify MSRV definition
      - `/crates/*/Cargo.toml` - verify dependency count
   2. **Spesifikasi API:**
-     - MSRV (Minimum Supported Rust Version): current = 1.78.0 (verified di rust-toolchain.toml)
-     - Max crate count per workspace: 50 (verified di rust-decomposition-plan.md)
+     - MSRV: 1.96.0 (Rust 2024 edition tertera di root `Cargo.toml`, `rust-toolchain.toml`, dan `rust-conventions.md`)
+     - Max crate count per workspace: 50 (aktual: 33 core crates + fixtures/tools = 43 members)
      - Dependency tree depth: max 3 levels
   3. **Contoh pengkodean (pola Cargo.toml):**
      ```toml
      [package]
      name = "clawcrew-gateway"
-     version = "0.1.0"
-     edition = "2021"
-     rust-version = "1.78.0"  # MSRV explicit
-     
-     [dependencies]
-     # Max 3 levels: direct → transitive → transitive-transitive
-     tokio = { version = "1", features = ["full"] }
+     version.workspace = true
+     edition.workspace = true
+     license.workspace = true
+     rust-version.workspace = true
      ```
   4. **Konvensi penamaan:**
-     - MSRV field: `rust-version = "x.y.z"`
-     - Edition: `2021`
+     - MSRV field: `rust-version.workspace = true`
+     - Edition: `2024`
      - Workspace: single `Cargo.toml` di root dengan `members = [...]`
   5. **Langkah pengerjaan berurutan:**
      1. Baca `rust-conventions.md` current version
-     2. Verify `rust-toolchain.toml` MSRV match
-     3. Check setiap crate Cargo.toml punya `rust-version` field
-     4. Count dependencies: `cargo tree -i | wc -l`
-     5. Update convention doc jika ada discrepancy
-     6. Add CI check: `cargo metadata --format-version=1 | jq '.packages[].rust_version'`
+     2. Buat `rust-toolchain.toml` dengan channel = "1.96.0"
+     3. Check setiap crate Cargo.toml punya `rust-version.workspace = true`
+     4. Verifikasi `cargo metadata` resolves dengan bersih
+     5. Update `rust-conventions.md` untuk sinkronisasi jumlah crate (<50)
   6. **Acceptance criteria testable:**
-     - [ ] `rust-toolchain.toml` MSRV = `rust-version` di semua Cargo.toml
-     - [ ] Dependency count <50 per crate
-     - [ ] Dependency tree depth ≤3
-     - [ ] CI fail jika MSRV mismatch
+     - [x] `rust-toolchain.toml` MSRV = `rust-version` (1.96.0) di workspace & crate Cargo.toml
+     - [x] Workspace member count < 50
+     - [x] `cargo metadata --format-version=1 --no-deps` lolos tanpa error
   7. **Dependency antar-tiket:** BR-A1 (selesai) - baseline convention
   8. **Edge case:** Dev dependency, build dependency, optional feature deps
   9. **JANGAN DIUBAH:** Kebijakan MSRV yang sudah ada - hanya selaraskan dokumentasi

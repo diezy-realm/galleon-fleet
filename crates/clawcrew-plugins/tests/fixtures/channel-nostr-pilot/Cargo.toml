@@ -4,6 +4,7 @@
 # resolving from the root lockfile.
 [package]
 name = "clawcrew-channel-nostr-pilot"
+rust-version.workspace = true
 version = "0.0.0"
 edition.workspace = true
 license.workspace = true
