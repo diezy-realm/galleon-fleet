@@ -101,6 +101,12 @@ use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::Json;
+use axum::extract::{Path, Query, State};
+use axum::response::{IntoResponse, Response};
+use axum::routing::{get, post};
+use axum::Router;
+use axum::body::Bytes;
+use clawcrew_api::channel::Channel;
 use clawcrew_config::pairing::constant_time_eq;
 
 // Config write guard is an OwnedMutexGuard
@@ -280,6 +286,11 @@ pub fn needs_quickstart_channel_reply() -> &'static str {
     "Quickstart configuration required: set [providers.models.<type>.<alias>] model = \"...\""
 }
 
+/// True when `e` carries the marker produced by `needs_quickstart_for`.
+pub fn is_needs_quickstart_err(e: &anyhow::Error) -> bool {
+    e.to_string().contains("needs_quickstart")
+}
+
 pub type WebhookJsonResponse = (StatusCode, Json<serde_json::Value>);
 
 fn hash_webhook_secret(value: &str) -> String {
@@ -452,6 +463,613 @@ fn require_gateway_chat_agent_alias(
     resolve_gateway_chat_agent_alias(config, agent_override).ok_or_else(|| {
         anyhow::Error::msg("webhook chat requires at least one configured [agents.<alias>] entry")
     })
+}
+
+fn optional_channel_routes() -> Router<AppState> {
+    let router: Router<AppState> = Router::new();
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    let router = router
+        .route("/whatsapp", get(handle_whatsapp_verify))
+        .route("/whatsapp", post(handle_whatsapp_message))
+        .route("/whatsapp/{alias}", get(handle_whatsapp_verify_alias))
+        .route("/whatsapp/{alias}", post(handle_whatsapp_message_alias));
+    #[cfg(feature = "channel-linq")]
+    let router = router
+        .route("/linq", post(handle_linq_webhook))
+        .route("/linq/{alias}", post(handle_linq_webhook_alias));
+    #[cfg(feature = "channel-nextcloud")]
+    let router = router
+        .route("/nextcloud-talk", post(handle_nextcloud_talk_webhook))
+        .route(
+            "/nextcloud-talk/{alias}",
+            post(handle_nextcloud_talk_webhook_alias),
+        );
+    #[cfg(feature = "channel-email")]
+    let router = router.route("/webhook/gmail", post(handle_gmail_push_webhook));
+    router
+}
+
+fn sop_webhook_routes() -> Router<AppState> {
+    Router::new().route("/sop/{*rest}", post(api_sop_webhook::handle_sop_webhook))
+}
+
+#[cfg(any(
+    feature = "channel-linq",
+    feature = "channel-nextcloud",
+    feature = "channel-whatsapp-cloud"
+))]
+pub(crate) fn sender_session_id(channel: &str, msg: &clawcrew_api::channel::ChannelMessage) -> String {
+    match &msg.thread_ts {
+        Some(thread_id) => format!("{channel}_{thread_id}_{}", msg.sender),
+        None => format!("{channel}_{}", msg.sender),
+    }
+}
+
+#[cfg(feature = "channel-whatsapp-cloud")]
+fn whatsapp_memory_key(msg: &clawcrew_api::channel::ChannelMessage) -> String {
+    format!("whatsapp_{}_{}", msg.sender, msg.id)
+}
+
+#[cfg(feature = "channel-linq")]
+fn linq_memory_key(msg: &clawcrew_api::channel::ChannelMessage) -> String {
+    format!("linq_{}_{}", msg.sender, msg.id)
+}
+
+#[cfg(feature = "channel-linq")]
+fn linq_channel_ref(alias: &str) -> String {
+    format!("linq.{alias}")
+}
+
+#[cfg(feature = "channel-nextcloud")]
+fn nextcloud_talk_memory_key(msg: &clawcrew_api::channel::ChannelMessage) -> String {
+    format!("nextcloud_talk_{}_{}", msg.sender, msg.id)
+}
+
+/// Verify `WhatsApp` webhook signature (`X-Hub-Signature-256`).
+/// Returns true if the signature is valid, false otherwise.
+/// See: <https://developers.facebook.com/docs/graph-api/webhooks/getting-started#verification-requests>
+#[cfg(any(feature = "channel-whatsapp-cloud", test))]
+pub fn verify_whatsapp_signature(app_secret: &str, body: &[u8], signature_header: &str) -> bool {
+    use hmac::{Hmac, Mac};
+    use sha2::Sha256;
+
+    // Signature format: "sha256=<hex_signature>"
+    let Some(hex_sig) = signature_header.strip_prefix("sha256=") else {
+        return false;
+    };
+
+    // Decode hex signature
+    let Ok(expected) = hex::decode(hex_sig) else {
+        return false;
+    };
+
+    // Compute HMAC-SHA256
+    let Ok(mut mac) = Hmac::<Sha256>::new_from_slice(app_secret.as_bytes()) else {
+        return false;
+    };
+    mac.update(body);
+
+    // Constant-time comparison
+    mac.verify_slice(&expected).is_ok()
+}
+
+/// `WhatsApp` verification query params
+#[derive(serde::Deserialize)]
+pub struct WhatsAppVerifyQuery {
+    #[serde(rename = "hub.mode")]
+    pub mode: Option<String>,
+    #[serde(rename = "hub.verify_token")]
+    pub verify_token: Option<String>,
+    #[serde(rename = "hub.challenge")]
+    pub challenge: Option<String>,
+}
+
+/// GET /whatsapp — Meta webhook verification (bare path, deprecated fallback).
+#[cfg(feature = "channel-whatsapp-cloud")]
+pub(crate) async fn handle_whatsapp_verify(
+    State(state): State<AppState>,
+    Query(params): Query<WhatsAppVerifyQuery>,
+) -> Response {
+    handle_whatsapp_verify_impl(state, None, params).await
+}
+
+/// GET /whatsapp/{alias} — Meta webhook verification for a specific instance.
+#[cfg(feature = "channel-whatsapp-cloud")]
+pub(crate) async fn handle_whatsapp_verify_alias(
+    State(state): State<AppState>,
+    Path(alias): Path<String>,
+    Query(params): Query<WhatsAppVerifyQuery>,
+) -> Response {
+    handle_whatsapp_verify_impl(state, Some(alias), params).await
+}
+
+#[cfg(feature = "channel-whatsapp-cloud")]
+async fn handle_whatsapp_verify_impl(
+    state: AppState,
+    alias: Option<String>,
+    params: WhatsAppVerifyQuery,
+) -> Response {
+    let resolved = api_webhook::resolve(&state.whatsapp, alias.as_deref());
+    let Some((_alias, wa)) = resolved.entry() else {
+        return api_webhook::not_found("whatsapp");
+    };
+
+    // Verify the token matches (constant-time comparison to prevent timing attacks)
+    let token_matches = params
+        .verify_token
+        .as_deref()
+        .is_some_and(|t| constant_time_eq(t, wa.verify_token()));
+    let resp = if params.mode.as_deref() == Some("subscribe") && token_matches {
+        if let Some(ch) = params.challenge {
+            ::clawcrew_log::record!(
+                INFO,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    .with_attrs(::serde_json::json!({"channel": "whatsapp"})),
+                "webhook verified successfully"
+            );
+            (StatusCode::OK, ch).into_response()
+        } else {
+            (StatusCode::BAD_REQUEST, "Missing hub.challenge".to_string()).into_response()
+        }
+    } else {
+        ::clawcrew_log::record!(
+            WARN,
+            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                .with_attrs(::serde_json::json!({"channel": "whatsapp"})),
+            "webhook verification failed — token mismatch"
+        );
+        (StatusCode::FORBIDDEN, "Forbidden".to_string()).into_response()
+    };
+    api_webhook::tag_deprecation(resp, resolved, "whatsapp")
+}
+
+/// POST /whatsapp — incoming message webhook (bare path, deprecated fallback).
+#[cfg(feature = "channel-whatsapp-cloud")]
+pub(crate) async fn handle_whatsapp_message(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Response {
+    handle_whatsapp_message_impl(state, None, headers, body).await
+}
+
+/// POST /whatsapp/{alias} — incoming message webhook for a specific instance.
+#[cfg(feature = "channel-whatsapp-cloud")]
+pub(crate) async fn handle_whatsapp_message_alias(
+    State(state): State<AppState>,
+    Path(alias): Path<String>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Response {
+    handle_whatsapp_message_impl(state, Some(alias), headers, body).await
+}
+
+#[cfg(feature = "channel-whatsapp-cloud")]
+async fn handle_whatsapp_message_impl(
+    state: AppState,
+    alias: Option<String>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Response {
+    let resolved = api_webhook::resolve(&state.whatsapp, alias.as_deref());
+    let Some((alias_key, wa)) = resolved.entry() else {
+        return api_webhook::not_found("whatsapp");
+    };
+    let app_secret = state.whatsapp_app_secret.get(alias_key).cloned();
+    let resp =
+        process_whatsapp_message(&state, alias_key, wa, app_secret.as_deref(), headers, body).await;
+    api_webhook::tag_deprecation(resp.into_response(), resolved, "whatsapp")
+}
+
+/// Verify, parse, and dispatch a WhatsApp webhook payload for one resolved
+/// instance. `app_secret` is that instance's `X-Hub-Signature-256` secret.
+#[cfg(feature = "channel-whatsapp-cloud")]
+async fn process_whatsapp_message(
+    state: &AppState,
+    alias: &str,
+    wa: &Arc<clawcrew_channels::whatsapp::WhatsAppChannel>,
+    app_secret: Option<&str>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> (StatusCode, Json<serde_json::Value>) {
+    let verified = match webhook_ingress::authenticate(
+        &webhook_ingress::WHATSAPP_WEBHOOK,
+        alias,
+        app_secret,
+        &headers,
+        body,
+        |secret, headers, body| {
+            let signature = headers
+                .get("X-Hub-Signature-256")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("");
+            verify_whatsapp_signature(secret, body, signature)
+        },
+    ) {
+        Ok(verified) => verified,
+        Err(refusal) => return refusal.into_response(&webhook_ingress::WHATSAPP_WEBHOOK),
+    };
+
+    let mut verified = match verified.parse_messages(|body| {
+        let payload = serde_json::from_slice::<serde_json::Value>(body).map_err(|_| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({"error": "Invalid JSON payload"})),
+            )
+        })?;
+        Ok::<_, (StatusCode, Json<serde_json::Value>)>(wa.parse_webhook_payload(&payload))
+    }) {
+        Ok(verified) => verified,
+        Err(response) => return response,
+    };
+
+    // Route approval replies to pending approval requests before dispatching
+    // to the agent.
+    let mut approvals = wa.pending_approvals().lock().await;
+    verified.retain(|msg| {
+        let Some((token, response)) = clawcrew_channels::util::parse_approval_reply(&msg.content)
+        else {
+            return true;
+        };
+        let Some(sender) = approvals.remove(&token) else {
+            return true;
+        };
+        let _ = sender.send(response);
+        false
+    });
+    drop(approvals);
+
+    let channel: Arc<dyn Channel> = wa.clone();
+    webhook_ingress::dispatch_verified_webhook(
+        state,
+        verified,
+        webhook_ingress::WebhookDispatchContext {
+            channel,
+            memory_key: whatsapp_memory_key,
+            agent_override: None,
+            mode: webhook_ingress::WebhookDispatchMode::Synchronous,
+            #[cfg(test)]
+            suppress_reply_send: true,
+        },
+    )
+    .await
+}
+
+/// POST /linq — incoming message webhook (bare path, deprecated fallback).
+#[cfg(feature = "channel-linq")]
+pub(crate) async fn handle_linq_webhook(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Response {
+    handle_linq_webhook_impl(state, None, headers, body).await
+}
+
+/// POST /linq/{alias} — incoming message webhook for a specific instance.
+#[cfg(feature = "channel-linq")]
+pub(crate) async fn handle_linq_webhook_alias(
+    State(state): State<AppState>,
+    Path(alias): Path<String>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Response {
+    handle_linq_webhook_impl(state, Some(alias), headers, body).await
+}
+
+#[cfg(feature = "channel-linq")]
+async fn handle_linq_webhook_impl(
+    state: AppState,
+    alias: Option<String>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Response {
+    let resolved = api_webhook::resolve(&state.linq, alias.as_deref());
+    let Some((alias_key, linq)) = resolved.entry() else {
+        return api_webhook::not_found("linq");
+    };
+    let signing_secret = state.linq_signing_secrets.get(alias_key).cloned();
+    let resp = process_linq_webhook(
+        &state,
+        alias_key,
+        linq,
+        signing_secret.as_deref(),
+        headers,
+        body,
+    )
+    .await;
+    api_webhook::tag_deprecation(resp.into_response(), resolved, "linq")
+}
+
+/// Verify, parse, and dispatch a Linq webhook payload for one resolved instance.
+/// `signing_secret` is that instance's `X-Webhook-Signature` secret.
+#[cfg(feature = "channel-linq")]
+async fn process_linq_webhook(
+    state: &AppState,
+    alias: &str,
+    linq: &Arc<clawcrew_channels::linq::LinqChannel>,
+    signing_secret: Option<&str>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> (StatusCode, Json<serde_json::Value>) {
+    let verified = match webhook_ingress::authenticate(
+        &webhook_ingress::LINQ_WEBHOOK,
+        alias,
+        signing_secret,
+        &headers,
+        body,
+        |secret, headers, body| {
+            let body_str = String::from_utf8_lossy(body);
+            let timestamp = headers
+                .get("X-Webhook-Timestamp")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("");
+            let signature = headers
+                .get("X-Webhook-Signature")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("");
+            clawcrew_channels::linq::verify_linq_signature(secret, &body_str, timestamp, signature)
+        },
+    ) {
+        Ok(verified) => verified,
+        Err(refusal) => return refusal.into_response(&webhook_ingress::LINQ_WEBHOOK),
+    };
+
+    let verified = match verified.parse_messages(|body| {
+        let payload = serde_json::from_slice::<serde_json::Value>(body).map_err(|_| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({"error": "Invalid JSON payload"})),
+            )
+        })?;
+        Ok::<_, (StatusCode, Json<serde_json::Value>)>(linq.parse_webhook_payload(&payload))
+    }) {
+        Ok(verified) => verified,
+        Err(response) => return response,
+    };
+
+    if verified.is_empty() {
+        return (StatusCode::OK, Json(serde_json::json!({"status": "ok"})));
+    }
+
+    let channel_ref = linq_channel_ref(alias);
+    let (agent_override, has_channel_bindings) = {
+        let config = state.config.read();
+        (
+            config.agent_for_channel(&channel_ref).map(str::to_owned),
+            config
+                .agents
+                .values()
+                .any(|agent| !agent.channels.is_empty()),
+        )
+    };
+    if agent_override.is_none() && has_channel_bindings {
+        ::clawcrew_log::record!(
+            WARN,
+            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                .with_attrs(::serde_json::json!({"channel": "linq", "alias": alias})),
+            "Linq webhook ignored because no enabled agent owns the channel alias"
+        );
+        return (
+            StatusCode::OK,
+            Json(serde_json::json!({"status": "ignored", "reason": "no_agent_for_channel"})),
+        );
+    }
+
+    let channel: Arc<dyn Channel> = linq.clone();
+    webhook_ingress::dispatch_verified_webhook(
+        state,
+        verified,
+        webhook_ingress::WebhookDispatchContext {
+            channel,
+            memory_key: linq_memory_key,
+            agent_override,
+            mode: webhook_ingress::WebhookDispatchMode::Synchronous,
+            #[cfg(test)]
+            suppress_reply_send: true,
+        },
+    )
+    .await
+}
+
+/// POST /nextcloud-talk — incoming message webhook (bare path, deprecated).
+#[cfg(feature = "channel-nextcloud")]
+pub(crate) async fn handle_nextcloud_talk_webhook(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Response {
+    handle_nextcloud_talk_webhook_impl(state, None, headers, body).await
+}
+
+/// POST /nextcloud-talk/{alias} — incoming message webhook for one instance.
+#[cfg(feature = "channel-nextcloud")]
+pub(crate) async fn handle_nextcloud_talk_webhook_alias(
+    State(state): State<AppState>,
+    Path(alias): Path<String>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Response {
+    handle_nextcloud_talk_webhook_impl(state, Some(alias), headers, body).await
+}
+
+#[cfg(feature = "channel-nextcloud")]
+async fn handle_nextcloud_talk_webhook_impl(
+    state: AppState,
+    alias: Option<String>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Response {
+    let resolved = api_webhook::resolve(&state.nextcloud_talk, alias.as_deref());
+    let Some((alias_key, nextcloud_talk)) = resolved.entry() else {
+        return api_webhook::not_found("nextcloud-talk");
+    };
+    let webhook_secret = state.nextcloud_talk_webhook_secret.get(alias_key).cloned();
+    let resp = process_nextcloud_talk_webhook(
+        &state,
+        alias_key,
+        nextcloud_talk,
+        webhook_secret.as_deref(),
+        headers,
+        body,
+    )
+    .await;
+    api_webhook::tag_deprecation(resp.into_response(), resolved, "nextcloud-talk")
+}
+
+/// Verify, parse, and dispatch a Nextcloud Talk webhook payload for one resolved
+/// instance. `webhook_secret` is that instance's HMAC signing secret.
+#[cfg(feature = "channel-nextcloud")]
+async fn process_nextcloud_talk_webhook(
+    state: &AppState,
+    alias: &str,
+    nextcloud_talk: &Arc<clawcrew_channels::nextcloud_talk::NextcloudTalkChannel>,
+    webhook_secret: Option<&str>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> (StatusCode, Json<serde_json::Value>) {
+    let verified = match webhook_ingress::authenticate(
+        &webhook_ingress::NEXTCLOUD_TALK_WEBHOOK,
+        alias,
+        webhook_secret,
+        &headers,
+        body,
+        |secret, headers, body| {
+            let body_str = String::from_utf8_lossy(body);
+            let random = headers
+                .get("X-Nextcloud-Talk-Random")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("");
+            let signature = headers
+                .get("X-Nextcloud-Talk-Signature")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("");
+            clawcrew_channels::nextcloud_talk::verify_nextcloud_talk_signature(
+                secret, random, &body_str, signature,
+            )
+        },
+    ) {
+        Ok(verified) => verified,
+        Err(refusal) => return refusal.into_response(&webhook_ingress::NEXTCLOUD_TALK_WEBHOOK),
+    };
+
+    let verified = match verified.parse_messages(|body| {
+        let payload = serde_json::from_slice::<serde_json::Value>(body).map_err(|_| {
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({"error": "Invalid JSON payload"})),
+            )
+        })?;
+        Ok::<_, (StatusCode, Json<serde_json::Value>)>(
+            nextcloud_talk.parse_webhook_payload(&payload),
+        )
+    }) {
+        Ok(verified) => verified,
+        Err(response) => return response,
+    };
+
+    let channel: Arc<dyn Channel> = nextcloud_talk.clone();
+    webhook_ingress::dispatch_verified_webhook(
+        state,
+        verified,
+        webhook_ingress::WebhookDispatchContext {
+            channel,
+            memory_key: nextcloud_talk_memory_key,
+            agent_override: None,
+            mode: webhook_ingress::WebhookDispatchMode::FastAck,
+            #[cfg(test)]
+            suppress_reply_send: true,
+        },
+    )
+    .await
+}
+
+/// Maximum request body size for the Gmail webhook endpoint (1 MB).
+#[cfg(feature = "channel-email")]
+const GMAIL_WEBHOOK_MAX_BODY: usize = 1024 * 1024;
+
+/// POST /webhook/gmail — incoming Gmail Pub/Sub push notification
+#[cfg(feature = "channel-email")]
+pub(crate) async fn handle_gmail_push_webhook(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> impl IntoResponse {
+    let Some(ref gmail_push) = state.gmail_push else {
+        return (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({"error": "Gmail push not configured"})),
+        );
+    };
+
+    if body.len() > GMAIL_WEBHOOK_MAX_BODY {
+        return (
+            StatusCode::PAYLOAD_TOO_LARGE,
+            Json(serde_json::json!({"error": "Request body too large"})),
+        );
+    }
+
+    let secret = gmail_push.config.webhook_secret.clone();
+    if !secret.is_empty() {
+        let provided = headers
+            .get(axum::http::header::AUTHORIZATION)
+            .and_then(|v| v.to_str().ok())
+            .and_then(|auth| auth.strip_prefix("Bearer "))
+            .unwrap_or("");
+
+        if provided != secret {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    .with_attrs(::serde_json::json!({"channel": "gmail_push"})),
+                "webhook: unauthorized request"
+            );
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(serde_json::json!({"error": "Unauthorized"})),
+            );
+        }
+    }
+
+    let body_str = String::from_utf8_lossy(&body);
+    let envelope: clawcrew_channels::gmail_push::PubSubEnvelope =
+        match serde_json::from_str(&body_str) {
+            Ok(e) => e,
+            Err(e) => {
+                ::clawcrew_log::record!(
+                    WARN,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        .with_attrs(
+                            ::serde_json::json!({"error": format!("{}", e), "channel": "gmail_push"})
+                        ),
+                    "webhook: invalid payload"
+                );
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({"error": "Invalid Pub/Sub envelope"})),
+                );
+            }
+        };
+
+    let channel = Arc::clone(gmail_push);
+    clawcrew_spawn::spawn!(async move {
+        if let Err(e) = channel.handle_notification(&envelope).await {
+            ::clawcrew_log::record!(
+                ERROR,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
+                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    .with_attrs(
+                        ::serde_json::json!({"channel": "gmail_push", "error": format!("{}", e)})
+                    ),
+                "push notification processing failed"
+            );
+        }
+    });
+
+    (StatusCode::OK, Json(serde_json::json!({"status": "ok"})))
 }
 
 pub async fn run_gateway_chat_with_tools(

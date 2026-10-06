@@ -141,7 +141,7 @@ feat({nomor tiket}): {deskripsi singkat}
 
 1. Sumber kebenaran TIKET tetap `roadmap/*.md` (R-nn/G-nn/U-nn/N-nn/P-nn/D-nn) — `dev-task-2/` adalah tampilan kerja gabungan, bukan pengganti.
 2. `dev-tasks/` asli TIDAK diedit oleh Lead — biarkan tim dev update sendiri; `dev-task-2/` murni referensi tambahan di sebelahnya.
-3. Centang `[x]` di `dev-task-2/sprint-*.md` HANYA setelah PR merge + gerbang relevan lulus + Principle approve (sama seperti aturan `dev-tasks/`).
+3. **Wajib Menandai & Memberi Deskripsi:** Centang `[x]` di `dev-task-2/sprint-*.md` HANYA setelah PR merge + gerbang relevan lulus + Principle approve (sama seperti aturan `dev-tasks/`). **WAJIB menyertakan keterangan/deskripsi konkret penyelesaian** pada tiket tersebut (mencakup hash commit, file yang diubah/dibuat, hasil test/verifikasi, dan ringkasan solusi). Jangan biarkan tiket selesai tanpa bukti deskripsi.
 4. BL yang masih **DITUNDA/EXPLORATORY** (BL-24) TIDAK dimasukkan ke sprint manapun sebagai kerja aktif — tetap tercatat di `backlog/README.md`, tunggu keputusan Owner eksplisit.
 5. **Commit/PR WAJIB pakai template `feat({tiket}): {deskripsi}`** (lihat §Konvensi Commit & PR di atas) — severity MEDIUM yang baru ditambahkan, berlaku untuk commit yang BELUM di-push (tidak perlu rewrite history commit yang sudah di-push).
 6. **Satu branch fitur (`feat/refactoring-finalize-01`) untuk seluruh dev-task-2** — tidak ada sub-branch per sprint/tiket kecuali darurat (lihat §Kebijakan Branch).

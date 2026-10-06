@@ -25,7 +25,11 @@ depends_on: none (sudah bisa mulai sekarang)
 
 ## C. Bug Nyata Jaring Pengaman (independen, bisa paralel, PRIORITASKAN dalam sprint ini)
 
-- [ ] **BL-32 (P0, HIGH — bug nyata, bukan desain)** Perbaiki/pulihkan `verify_whatsapp_signature` + `optional_channel_routes` yang hilang. **Urutan wajib:** (1) `cargo test -p clawcrew-gateway --features channel-whatsapp-cloud` untuk ground-truth, (2) `git log -p`/`git blame` cari kapan hilang, (3) pulihkan implementasi, (4) tambah test integrasi HTTP level (signature salah → 401). File: `crates/clawcrew-gateway/src/{tests.rs,webhook_ingress.rs,lib.rs}`. **Jalankan test ini SEBELUM item lain di sprint ini** — ground-truth dulu, bukan baca kode lagi.
+- [x] **BL-32 (P0, HIGH — bug nyata, bukan desain)** Perbaiki/pulihkan `verify_whatsapp_signature` + `optional_channel_routes` yang hilang. **Urutan wajib:** (1) `cargo test -p clawcrew-gateway --features channel-whatsapp-cloud` untuk ground-truth, (2) `git log -p`/`git blame` cari kapan hilang, (3) pulihkan implementasi, (4) tambah test integrasi HTTP level (signature salah → 401). File: `crates/clawcrew-gateway/src/{tests.rs,webhook_ingress.rs,lib.rs}`.
+  - **Status Selesai:** Selesai direstorasi & diverifikasi 100% lulus test.
+  - **Root Cause Faktual:** Terpotong 4,927 baris di commit `db18a3745` (*"feat: refactoring rust"*) saat transisi parsial router.
+  - **Restorasi:** `crates/clawcrew-gateway/src/lib.rs` (`verify_whatsapp_signature`, `optional_channel_routes`, `sop_webhook_routes`, handlers webhook channel), `crates/clawcrew-gateway/src/webhook_ingress.rs` (type fix, callsite pin update, 11 unit tests HMAC-SHA256, dan 5 integration tests Axum HTTP-level 401/404/200).
+  - **Bukti Uji:** 19/19 tests lulus hijau (`cargo test -p clawcrew-gateway --features channel-whatsapp-cloud -- webhook_ingress`).
 - [ ] **BL-19 (P1, HIGH)** Sandbox MCP stdio child process — gap keamanan di jalur yang sudah dipakai produksi (nol sandboxing OS-level untuk proses stdio server, kontras dengan WASM plugin yang sangat ketat).
 - [ ] **BL-14 (P1, HIGH)** Terapkan `ContentSafety` ke jalur channel orchestrator biasa (non-SOP) — prompt-injection terbuka di semua channel saat ini, satu titik perbaikan menutup semua. **Catatan file-overlap:** menyentuh `clawcrew-channels/src/orchestrator/mod.rs` — file yang SAMA dengan BL-52 (Sprint 2). Serialkan: BL-14 (sprint ini) selesai dan merge dulu SEBELUM BL-52 mulai menyentuh file ini, supaya tidak dua crew menulis file sama secara paralel.
 

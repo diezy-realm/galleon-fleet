@@ -159,12 +159,25 @@ PR Diajukan ke Testing
 ```
 
 ### Konvensi Git & PR:
-- Gunakan branch non-`master` / non-`main`.
+- **Disiplin Konvensi Commit & PR (WAJIB):** Pastikan setiap commit baru wajib mengikuti format tiket kanonikal:
+  ```
+  feat({tiket}): {deskripsi}
+  ```
+  *(Contoh: `feat(BL-32): pulihkan verifikasi whatsapp signature`)*
+  - `{tiket}` = ID tiket persis dari sprint/backlog (`BG-A4`, `BL-52`, `S2-SEC-01`, dst.). Jika menuntaskan >1 tiket: `feat(BL-52,BL-14): ...`.
+  - Prefix SELALU `feat(...)` untuk seluruh pekerjaan sprint `dev-task-2` agar penomoran tiket seragam (bukan dicampur `fix(...)`/`chore(...)`).
+  - Judul PR DAN judul commit wajib memakai format template ini.
+- Gunakan branch non-`master` / non-`main` (branch fitur aktif: `feat/refactoring-finalize-01`, dilarang sub-branch liar).
 - Target PR ke `main` / `testing`.
-- Gunakan Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`).
 - Pisahkan commit per concern (ODR-10).
 - Dilarang menyertakan bot/AI attribution footer di PR description atau commit body.
 - Deklarasikan dependensi tugas dengan `Depends on #...` dan `Supersedes #...`.
+
+### Penandaan & Pelaporan Penyelesaian Tugas (DoD Tracking):
+- **Wajib Tandai `[x]` & Beri Deskripsi:** Setiap kali suatu tiket atau task selesai dikerjakan dan diverifikasi:
+  - Wajib mengubah tanda checkbox dari `[ ]` menjadi `[x]` pada berkas sprint terkait di [`standard-docs/decisions/finalize/dev-task-2/sprint-*.md`](../standard-docs/decisions/finalize/dev-task-2/).
+  - Wajib menambahkan **keterangan/deskripsi konkret penyelesaian** tepat di bawah atau di samping tiket tersebut (mencakup: commit hash, file yang diubah/dibuat, ringkasan solusi, dan bukti hasil test/verifikasi yang dijalankan).
+  - Jangan biarkan tiket yang sudah selesai tanpa centang `[x]` atau tanpa deskripsi pembuktian.
 
 ---
 
