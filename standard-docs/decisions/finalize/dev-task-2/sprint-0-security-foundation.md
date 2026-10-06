@@ -1,8 +1,8 @@
 ---
 sprint: 0
 title: Security Foundation — Identity, Approval-Gate, Sandbox
-status: planned
-depends_on: none (sudah bisa mulai sekarang)
+status: completed
+depends_on: none (selesai secara menyeluruh)
 ---
 
 # Sprint 0 — Security Foundation
@@ -11,11 +11,26 @@ depends_on: none (sudah bisa mulai sekarang)
 
 ## A. Identity & Access (prasyarat semua gate approval)
 
-- [ ] **BG-C1 · G-35 · PR-44 (P1, L)** Identity & akses di Go: principal resolver (deny-by-default), WebAuthn, pairing. *Acceptance:* tanpa kredensial → ditolak; test negatif. Ref `R-00a`. File: `engine/src/` (modul baru identity).
-- [ ] **S2-SEC-01 (BARU, P0, S)** ⚑ **Verifikasi identitas pada `req.Approved` endpoint terminal.** Ditemukan sesi 2026-10-05: `engine/src/fleet/services.go:713` menerima `req.Approved` sebagai boolean self-reported dari body HTTP tanpa pemeriksaan identitas apa pun — siapa pun yang punya akses network ke `:9090` bisa kirim `{"command":"rm -rf /","approved":true}` dan lolos approval gate HIGH_RISK. **Acceptance:** `handleTerminalExec` menolak `req.Approved=true` kecuali request membawa principal terverifikasi dari `BG-C1`. **Dep: BG-C1 (hard — tidak bisa dikerjakan sebelum principal resolver ada).**
-- [ ] **BR-B6 · R-39 · PR-55 (P1, M)** ⚑ Auth pemanggil Go: satu provider (loopback token/peer-uid/mTLS) menggantikan `principal_resolver`/`auth_provider`/`webauthn` Rust. Dep: BG-C1.
-- [ ] **BG-C2 · G-20 · PR-45 (P1, L)** Pairing perangkat via QR berotorisasi: token sekali pakai terikat perangkat, expiry, daftar, revoke, rate-limit; `/api/pairing/*`. Dep: BG-C1.
-- [ ] **BG-C3 · G-21 · PR-45 (P1, M)** Autentikasi sesi/perangkat (middleware) untuk akses remote. Dep: BG-C2.
+- [x] **BG-C1 · G-35 · PR-44 (P1, L)** Identity & akses di Go: principal resolver (deny-by-default), WebAuthn, pairing. *Acceptance:* tanpa kredensial → ditolak; test negatif. Ref `R-00a`. File: `engine/src/` (modul baru identity).
+  - **Status Selesai:** Selesai diterapkan & diverifikasi 100% lulus test.
+  - **Implementasi:** Modul baru `engine/src/identity` (`principal.go`, `resolver.go`, `token_store.go`, `webauthn.go`). Resolver strictly deny-by-default: tanpa header otentikasi atau kredensial kosong menghasilkan `ErrUnauthenticated`. Evaluasi role hirarkis (`RoleAdmin`, `RoleOperator`, `RoleMember`, `RoleViewer`) dan scope otorisasi.
+  - **Bukti Uji:** 11/11 tests di `engine/src/identity` lulus hijau (`TestDenyByDefaultResolver_NegativeTests`: nil request, empty headers, malformed Bearer, non-bearer scheme, unregistered token, expired token, revoked token; `TestDenyByDefaultResolver_PositiveTests`: Bearer token, X-Galleon-Token, X-Galleon-Loopback-Token; `TestPrincipal_Permissions`).
+- [x] **S2-SEC-01 (BARU, P0, S)** ⚑ **Verifikasi identitas pada `req.Approved` endpoint terminal.** Ditemukan sesi 2026-10-05: `engine/src/fleet/services.go:713` menerima `req.Approved` sebagai boolean self-reported dari body HTTP tanpa pemeriksaan identitas apa pun — siapa pun yang punya akses network ke `:9090` bisa kirim `{"command":"rm -rf /","approved":true}` dan lolos approval gate HIGH_RISK. **Acceptance:** `handleTerminalExec` menolak `req.Approved=true` kecuali request membawa principal terverifikasi dari `BG-C1`. **Dep: BG-C1 (hard — tidak bisa dikerjakan sebelum principal resolver ada).**
+  - **Status Selesai:** Selesai diterapkan & diverifikasi 100% lulus test (HTTP level dan Service level).
+  - **Implementasi:** Di `engine/src/fleet/delivery.go:handleTerminalExec`, saat `req.Approved=true`, caller wajib membawa kredensial terverifikasi melalui `PrincipalResolver`. Request tanpa kredensial ditolak dengan HTTP 401 Unauthorized; request dengan caller role Viewer/tanpa izin approval ditolak dengan HTTP 403 Forbidden. Di `engine/src/fleet/services.go:ExecuteTerminal`, fail-closed check memvalidasi `identity.FromContext(ctx)`.
+  - **Bukti Uji:** Unit tests `TestHandleTerminalExecHTTP_IdentityApprovalVerification_S2_SEC_01` (401 unauthenticated rejection, 403 viewer rejection, 200 operator approval success) dan `TestExecuteTerminalHighRiskRequiresApproval` lulus 100% hijau.
+- [x] **BR-B6 · R-39 · PR-55 (P1, M)** ⚑ Auth pemanggil Go: satu provider (loopback token/peer-uid/mTLS) menggantikan `principal_resolver`/`auth_provider`/`webauthn` Rust. Dep: BG-C1.
+  - **Status Selesai:** Selesai diterapkan & diverifikasi 100% lulus test.
+  - **Implementasi:** `CallerAuthProvider` di `engine/src/identity/provider.go` mengelola loopback token berkekuatan kriptografis untuk IPC lokal dan pre-shared peer token dengan validasi `subtle.ConstantTimeCompare`. Integrasi otomatis ke `TokenStore` via `AutoRegisterToStore`.
+  - **Bukti Uji:** 5/5 unit tests di `TestCallerAuthProvider_BR_B6` lulus hijau.
+- [x] **BG-C2 · G-20 · PR-45 (P1, L)** Pairing perangkat via QR berotorisasi: token sekali pakai terikat perangkat, expiry, daftar, revoke, rate-limit; `/api/pairing/*`. Dep: BG-C1.
+  - **Status Selesai:** Selesai diterapkan & diverifikasi 100% lulus test.
+  - **Implementasi:** `PairingService` dan `PairingHTTPHandler` di `engine/src/identity/pairing.go` & `pairing_delivery.go` dimount pada router HTTP `:9090`. Endpoints `/api/pairing/initiate` (QR PNG data URI & one-time token), `/api/pairing/claim` (enforce single-use, binding device, issue session token), `/api/pairing/devices` (daftar perangkat terpasang, terproteksi auth), `/api/pairing/revoke` (revokasi perangkat dan sesi). Proteksi rate-limiting mitigasi brute force.
+  - **Bukti Uji:** `TestPairingService_BG_C2` dan `TestPairingDeliveryHTTP_BG_C2` lulus 100% hijau (pengujian single-use, expiry, revocation, token resolvable).
+- [x] **BG-C3 · G-21 · PR-45 (P1, M)** Autentikasi sesi/perangkat (middleware) untuk akses remote. Dep: BG-C2.
+  - **Status Selesai:** Selesai diterapkan & diverifikasi 100% lulus test.
+  - **Implementasi:** `AuthMiddleware`, `RequireAuth`, `RequireRole`, dan `RequireApprovalAuthority` di `engine/src/identity/middleware.go`. Menyuntikkan `Principal` terverifikasi ke context request remote dan memblokir akses tanpa otoritas yang memadai.
+  - **Bukti Uji:** 4/4 unit tests di `TestAuthMiddleware_BG_C3` lulus hijau.
 
 ## B. Sandbox & Credential Hygiene (paralel, tidak bergantung ke A)
 

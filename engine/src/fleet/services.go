@@ -19,6 +19,7 @@ import (
 
 	"github.com/diezy-labs/claw-crew/engine/pkg/client"
 	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
+	"github.com/diezy-labs/claw-crew/engine/src/identity"
 )
 
 var safeFilenameRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
@@ -707,6 +708,41 @@ func (s *fleetService) ExecuteTerminal(ctx context.Context, req TerminalExecRequ
 			AuditID:          auditID,
 			Error:            reason,
 		}, nil
+	}
+
+	// S2-SEC-01: Verifikasi identitas caller jika req.Approved bernilai true
+	if req.Approved {
+		principal, ok := identity.FromContext(ctx)
+		if !ok || principal == nil || !principal.IsAuthenticated() || !principal.CanApprove() {
+			secReason := "security policy rejection: req.Approved=true requires verified caller principal with approval authority (S2-SEC-01)"
+			auditID := ""
+			if s.terminalAudit != nil {
+				auditID = s.terminalAudit.Record(TerminalAuditRecord{
+					Timestamp:  start,
+					Command:    req.Command,
+					RiskTier:   riskTier,
+					Approved:   false,
+					ApprovedBy: req.ApprovedBy,
+					Success:    false,
+					ExitCode:   1,
+					Duration:   time.Since(start).String(),
+					Error:      secReason,
+				})
+			}
+			return &TerminalExecResponse{
+				Stdout:           "",
+				Stderr:           secReason,
+				ExitCode:         1,
+				Duration:         time.Since(start).String(),
+				RiskTier:         riskTier,
+				RequiresApproval: true,
+				AuditID:          auditID,
+				Error:            secReason,
+			}, nil
+		}
+		if req.ApprovedBy == "" {
+			req.ApprovedBy = principal.ID
+		}
 	}
 
 	// High risk command wajib mendapat approval

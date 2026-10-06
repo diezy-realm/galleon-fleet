@@ -12,19 +12,43 @@ import (
 	"time"
 
 	"github.com/diezy-labs/claw-crew/engine/core/metrics"
+	"github.com/diezy-labs/claw-crew/engine/src/identity"
 	qrcode "github.com/skip2/go-qrcode"
 )
 
 type HTTPHandler struct {
-	service   Service
-	startTime time.Time
+	service        Service
+	startTime      time.Time
+	resolver       identity.PrincipalResolver
+	pairingService identity.PairingService
 }
 
 func NewHTTPHandler(service Service) *HTTPHandler {
+	tokenStore := identity.NewMemoryTokenStore()
+	resolver := identity.NewDenyByDefaultResolver(tokenStore)
+	pairingService := identity.NewPairingService(tokenStore)
 	return &HTTPHandler{
-		service:   service,
-		startTime: time.Now(),
+		service:        service,
+		startTime:      time.Now(),
+		resolver:       resolver,
+		pairingService: pairingService,
 	}
+}
+
+// WithResolver configures a custom PrincipalResolver (e.g. backed by shared token store)
+func (h *HTTPHandler) WithResolver(resolver identity.PrincipalResolver) *HTTPHandler {
+	if resolver != nil {
+		h.resolver = resolver
+	}
+	return h
+}
+
+// WithPairingService configures a custom PairingService
+func (h *HTTPHandler) WithPairingService(pairingService identity.PairingService) *HTTPHandler {
+	if pairingService != nil {
+		h.pairingService = pairingService
+	}
+	return h
 }
 
 func (h *HTTPHandler) RegisterHTTP(server *metrics.Server) {
@@ -47,6 +71,12 @@ func (h *HTTPHandler) RegisterHTTP(server *metrics.Server) {
 	server.RegisterRouteFunc("/api/terminal/exec", h.handleTerminalExec)
 	server.RegisterRouteFunc("/api/terminal/audit", h.handleTerminalAudit)
 	server.RegisterRouteFunc("/api/engine/execute", h.handleTerminalExec)
+
+	// BG-C2: Mount authorized device pairing endpoints (/api/pairing/*)
+	if h.pairingService != nil {
+		pairingHandler := identity.NewPairingHTTPHandler(h.pairingService, h.resolver)
+		pairingHandler.RegisterHTTP(server)
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
@@ -398,7 +428,47 @@ func (h *HTTPHandler) handleTerminalExec(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	resp, err := h.service.ExecuteTerminal(r.Context(), req)
+	// S2-SEC-01: Verifikasi identitas caller jika req.Approved=true
+	ctx := r.Context()
+	if req.Approved {
+		var principal *identity.Principal
+		var err error
+
+		if p, ok := identity.FromContext(ctx); ok {
+			principal = p
+		} else if h.resolver != nil {
+			principal, err = h.resolver.Resolve(ctx, r)
+		} else {
+			err = identity.ErrUnauthenticated
+		}
+
+		if err != nil || principal == nil || !principal.IsAuthenticated() {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{
+				"error":    "security rejection: req.Approved=true requires verified caller identity (BG-C1 / S2-SEC-01)",
+				"exitCode": 1,
+				"stdout":   "",
+				"stderr":   "unauthorized: caller principal not verified",
+			})
+			return
+		}
+
+		if !principal.CanApprove() {
+			writeJSON(w, http.StatusForbidden, map[string]any{
+				"error":    "security rejection: caller principal lacks approval authority for terminal execution",
+				"exitCode": 1,
+				"stdout":   "",
+				"stderr":   "forbidden: insufficient permissions to approve terminal execution",
+			})
+			return
+		}
+
+		ctx = identity.WithPrincipal(ctx, principal)
+		if req.ApprovedBy == "" {
+			req.ApprovedBy = principal.ID
+		}
+	}
+
+	resp, err := h.service.ExecuteTerminal(ctx, req)
 	if err != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"error":    err.Error(),
