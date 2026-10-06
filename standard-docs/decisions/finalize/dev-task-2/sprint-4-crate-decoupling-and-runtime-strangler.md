@@ -12,25 +12,161 @@ depends_on: Sprint 0-1 (BG-C1 untuk auth; persistensi Go untuk BG-D-series)
 ## A. Dekoplasi Crate Rust (lanjutan BR-C1..C4 yang sudah selesai)
 
 - [ ] **BR-C5 · R-14 · PR-61 (P1, L)** ⚑ `gateway` tidak bergantung ke `runtime` (426 ref → 0). Dep: BR-D1 (lihat §C — ini saling bergantung, koordinasikan urutan nyata saat eksekusi, dev-tasks mencatat BR-C5 depends BR-D1 TAPI BR-D1 juga di sprint ini).
+
+#### Detail Eksekusi — BR-C5
+
+**TIDAK DIVERIFIKASI PENUH sesi ini** (426 referensi `gateway`→`runtime` tidak di-grep ulang — klaim dari dokumen lama, verifikasi angka ini sebagai langkah pertama). **Langkah pertama WAJIB:** `grep -rn "clawcrew_runtime::" crates/clawcrew-gateway/src/ | wc -l` untuk konfirmasi angka 426 masih akurat atau sudah berubah (kode terus bergerak, seperti ditemukan di Sprint 0-2 — banyak nomor baris/jumlah referensi dokumen lama sudah bergeser).
+
+**Langkah pengerjaan:**
+1. Jalankan grep di atas untuk ground-truth jumlah referensi saat ini.
+2. Kategorikan tiap referensi: (a) tipe data yang perlu dipindah ke crate bersama (`clawcrew-api` kemungkinan), (b) fungsi yang perlu di-reimplementasi di `gateway` sendiri, (c) referensi yang genuinely perlu `runtime` tetap ada (kalau ada, catat sebagai pengecualian yang perlu didiskusikan).
+3. Koordinasikan dengan BR-D1 (§D, ramping runtime per modul) — urutan NYATA (bukan urutan tiket di dokumen) adalah BG-D1 (Go agent loop) harus cukup matang dulu sebelum modul Rust tertentu bisa "dipensiunkan" dari sisi `gateway`.
+
+**Dependency:** BR-D1 (sirkular, lihat §Catatan Sirkularitas di bawah).
+
+**ASUMSI:** Scope detail per-referensi tidak bisa saya rinci tanpa membaca 426 titik referensi (di luar budget sesi ini) — tim eksekusi WAJIB melakukan kategorisasi langkah 2 sebagai pekerjaan AWAL sebelum estimasi effort final.
+
 - [ ] **BR-C6 · R-15 · PR-63 (P2, XL, berseri)** Pecah `channels` (198k LOC) → `galleon-channel-<nama>` (sudah: core, imessage, signal, bluesky). Dep: BR-C4 (selesai).
+
+#### Detail Eksekusi — BR-C6
+
+**Verifikasi parsial:** `galleon-channel-core`, `galleon-channel-imessage`, `galleon-channel-signal`, `galleon-channel-bluesky` disebut "sudah" di dokumen — konsisten dengan lesson project ini (RF-B1 pattern sudah established untuk `BlueskyChannel`). Channel YANG BELUM dipecah (tersisa di `clawcrew-channels` monolith) perlu diinventarisasi.
+
+**Langkah pengerjaan:**
+1. `read` direktori `crates/` untuk daftar `galleon-channel-*` yang SUDAH ada vs channel yang masih di `clawcrew-channels/src/` (WhatsApp, Telegram, Discord, dll — belum diverifikasi mana yang sudah/belum).
+2. Untuk SETIAP channel yang belum dipecah, ikuti pola RF-B1 yang SUDAH established (lesson project): (a) verifikasi satu-satunya consumer eksternal tetap resolve via re-export, (b) verifikasi public surface baru identik (struct/constructor/impl Channel), (c) wire feature `dep:galleon-channel-x`, (d) HANYA setelah itu hapus kode monolith lama.
+3. **PRIORITASKAN channel yang "Tier A" (produksi aktif)** dulu sebelum Tier B/C (regional/WASI, Sprint 5 BR-F3/F4/F5) — menghindari pecah channel yang jarang dipakai duluan sementara channel utama masih monolith besar.
+
+**JANGAN DIUBAH:** Policy allowlist bersama — tetap di `galleon-channel-core`, JANGAN direimplementasi per-channel (lesson project: "shared policy lives in galleon-channel-core re-exporting clawcrew_config::schema SSOT, never reimplemented per-channel").
+
+**Dependency:** BR-C4 (selesai, prasyarat terpenuhi).
+
 - [ ] **BR-C7 · R-17 · PR-60 (P2, M)** Pecah file terbesar yang tetap di Rust.
+
+#### Detail Eksekusi — BR-C7
+
+**File & simbol spesifik (terverifikasi dari Sprint 1 BR-A5):** `crates/clawcrew-gateway/src/api.rs` (374 referensi `unwrap/expect` disebut Sprint 1 — indikasi file BESAR), `api_config.rs` (164 ref), `ws.rs` (122 ref), `api_sections.rs` (104 ref) — kandidat kuat untuk "file terbesar yang tetap di Rust" setelah BR-C5 (`gateway` decoupling).
+
+**Langkah pengerjaan:**
+1. Setelah BR-C5 selesai (gateway lepas dari runtime), ukur ulang file terbesar yang TERSISA (`wc -l crates/*/src/*.rs | sort -rn | head -20`).
+2. Pecah file >2000 baris (threshold umum, konfirmasi dengan Lead kalau beda) menjadi submodule — pola SAFE RF-A (file-split WITHIN satu crate, `pub(crate) use` menjaga path, zero dependency change) yang sudah established di lesson project ini.
+
+**Dependency:** BR-C5 (file ukuran berubah signifikan setelah decoupling, ukur SETELAH itu bukan sebelum).
+
 - [ ] **BR-C8 · R-18 · PR-97 (P3, M)** Audit `tools`/`config`/`providers` — tanpa pemecahan spekulatif.
+
+#### Detail Eksekusi — BR-C8
+
+**Langkah pengerjaan:** AUDIT murni (bukan kode) — baca `crates/clawcrew-tools/` (atau lokasi tools, verifikasi nama crate persis), `crates/clawcrew-config/`, `crates/clawcrew-providers/` untuk ukuran/kompleksitas, tulis temuan apakah PERLU dipecah atau TIDAK — **"tanpa pemecahan spekulatif"** berarti JANGAN pecah crate ini kalau tidak ada bukti konkret ukuran/kompleksitas bermasalah (ponytail: YAGNI, jangan refactor tanpa kebutuhan nyata).
+
+**JANGAN DIUBAH:** Jangan pecah ketiga crate ini sampai audit menunjukkan kebutuhan nyata — ini P3 (prioritas rendah) justru karena sifatnya audit-dulu.
 
 ## B. Protokol Klien (prasyarat BG-D-series butuh ini untuk streaming)
 
 - [ ] **BG-E1 · G-36 · PR-51 (P1, M)** Spesifikasi Galleon Client Protocol v1.
+
+#### Detail Eksekusi — BG-E1
+
+**Langkah pengerjaan:** Tulis spesifikasi (dokumen, bukan kode) di `api-contracts/client-protocol.md` (path sesuai tabel File Ownership dokumen ini) — WS JSON-RPC 2.0 method untuk `chat`/`run`/`approve`/`status` (sesuai kebutuhan BR-E2 Sprint 6 yang akan dipetakan ke protokol ini). Definisikan: method names, params shape, response shape, error codes, event/notification shape untuk streaming (tool-call events, turn progress).
+
+**Dependency:** Prasyarat BG-E2 (implementasi server), BR-E2/E3 (Sprint 6, consumer CLI/TUI).
+
+**ASUMSI:** JSON-RPC 2.0 dipilih dokumen (bukan keputusan saya) — spesifikasi harus comply JSON-RPC 2.0 spec standar (method/params/id/result/error shape baku), bukan varian custom.
+
 - [ ] **BG-E2 · G-36/G-27 · PR-52 (P1, L)** Server Client Protocol (WS JSON-RPC 2.0). Dep: BG-E1, BG-C1 (Sprint 0), BG-D1 (§C sprint ini — sirkular, koordinasikan: BG-E2 butuh BG-D1 ADA, bukan selesai total; verifikasi urutan nyata saat eksekusi).
 
-## C. Otak Agent di Go — Strangler dari `clawcrew-runtime`
+#### Detail Eksekusi — BG-E2
+
+**Langkah pengerjaan:**
+1. Implementasikan WS server Go sesuai spec BG-E1.
+2. Pasang middleware `identity.RequireAuthenticated` (BG-C1, Sprint 0) di titik WS upgrade — koneksi WS harus authenticated sebelum menerima method call apa pun (fail-closed, konsisten pola `handleTerminalExec` Sprint 0).
+3. Method `chat`/`run` meneruskan ke BG-D1 agent loop (begitu BG-D1 cukup matang — lihat §Catatan Sirkularitas).
+
+**Dependency:** BG-E1 (hard), BG-C1 (hard, Sprint 0), BG-D1 (sirkular — mulai duluan tapi tidak perlu selesai total, lihat catatan sirkularitas dokumen ini).
+
+**JANGAN DIUBAH:** `identity.RequireAuthenticated` middleware — reuse langsung dari BG-C1, jangan buat varian auth terpisah untuk WS.
+
+## D. Ramping Runtime (hanya setelah C punya parity)
+
+- [ ] **BR-D1 · R-16 · PR-60 (P2, XL, berseri)** ⚑ Ramping runtime per modul (urutan R-00 §3). Syarat tiap modul: parity Go + eval hijau.
+
+#### Detail Eksekusi — BR-D1
+
+**TIDAK DIVERIFIKASI sesi ini** — urutan modul "R-00 §3" (dirujuk dokumen) belum dibaca. **Langkah pertama WAJIB:** baca `standard-docs/roadmap/R-rust.md` §R-00 bagian 3 untuk urutan modul persis yang harus di-ramping (strangler pattern — matikan modul Rust satu per satu setelah Go punya parity).
+
+**Langkah pengerjaan (per modul, BERSERI — jangan paralel 2 modul yang saling import):**
+1. Pilih modul berikutnya sesuai urutan R-00 §3.
+2. Verifikasi Go agent loop (BG-D1 dkk) punya PARITY fungsional (test `clawcrew-eval` replay hijau untuk skenario yang mencakup modul ini).
+3. Matikan modul Rust (feature flag off, atau hapus kalau sudah confirmed tidak ada regresi).
+4. Ulangi untuk modul berikutnya.
+
+**Dependency:** BG-D1-D5 (§C, parity harus established lebih dulu per modul).
+
+- [ ] **BR-D2 · R-37 · PR-56 (P2, M)** Retarget `galleon-eval` ke jalur Go; pertahankan fixture trace. Dep: BG-D1.
+
+#### Detail Eksekusi — BR-D2
+
+**Koreksi nama kemungkinan:** `galleon-eval` disebut Sprint 3 Eval-01 sebagai `clawcrew-eval` (crate harness Replay/Live) — KEMUNGKINAN nama sama, belum di-rename (`galleon-eval` adalah nama PASCA-rename Sprint 8). Verifikasi nama crate aktual (`crates/clawcrew-eval/` kemungkinan) sebelum eksekusi — JANGAN cari direktori `galleon-eval` yang mungkin belum ada.
+
+**Langkah pengerjaan:** Setelah BG-D1 jalan, retarget harness eval (`clawcrew-eval`) untuk replay fixture terhadap jalur Go (bukan lagi langsung ke `clawcrew-runtime` Rust) — PERTAHANKAN fixture trace yang sudah ada (data test tidak diubah, hanya target eksekusi yang berubah).
+
+**Dependency:** BG-D1 (hard).
+
+- [ ] **BR-D3 · R-38 · PR-59 (P2, S)** ⚑ Hapus `verifiable_intent` (tag `archive/pre-galleon` dulu; ODR-21).
+
+#### Detail Eksekusi — BR-D3
+
+**TIDAK DIVERIFIKASI sesi ini** — lokasi modul `verifiable_intent` belum dicari (disebut di `research/verifiable-intent-assessment.md` menurut Sprint 7 §B BG-F6, kemungkinan terkait). **Langkah pertama WAJIB:** `grep -rn "verifiable_intent" crates/` untuk lokasi persis, dan baca ODR-21 (`standard-docs/decisions/owner-decisions/`) untuk konteks keputusan sebelum menghapus apa pun.
+
+**Langkah pengerjaan:** Git tag `archive/pre-galleon` pada commit SEBELUM penghapusan (preservasi history, bukan hard-delete tanpa jejak) — pola yang sama dengan praktik archival lain di project ini — BARU hapus modul.
+
+**JANGAN DIUBAH:** Jangan hapus tanpa tag archive dulu — ini destructive action yang perlu jejak rollback.
+
+- [ ] **BR-D4 · R-41 · PR-62 (P2, L)** ⚑ Hapus `rpc` + REST/WS/A2A lama setelah parity. Dep: BR-E3 (Sprint 6), BR-C5 (§A sprint ini).
+
+#### Detail Eksekusi — BR-D4
+
+**Verifikasi parsial:** `crates/clawcrew-runtime/src/rpc/dispatch/mod.rs` ditemukan saat grep Sprint 5 (1 ref `loop_detector`-adjacent) — konfirmasi modul `rpc` ADA di lokasi ini.
+
+**Langkah pengerjaan:** Setelah BR-E3 (Sprint 6, CLI/TUI retargeted ke Client Protocol) DAN BR-C5 (gateway lepas runtime) selesai — hapus `crates/clawcrew-runtime/src/rpc/` dan REST/WS/A2A lama yang digantikan Client Protocol (BG-E2). Tag archive dulu (pola sama BR-D3) sebelum hapus.
+
+**Dependency:** BR-E3 (Sprint 6, hard), BR-C5 (§A, hard) — JANGAN mulai sebelum KEDUA selesai, menghapus jalur lama sebelum penggantinya terbukti jalan = outage risk.
+
+## E. Observabilitas & Organisasi (dep ke persistensi Sprint 1)
 
 > **BL-05 BARU DITAMBAHKAN (CRITICAL, dari `skills-steering-lessons-backlog.md`, belum pernah masuk sprint manapun sebelum audit 2026-10-05 ini)** — celah keamanan privilege-escalation AKTIF: `engine/src/crew/dispatcher.go` masih mendaftarkan DUA jalur delegasi sub-agent paralel ke LLM — `spawn_subagent` (`dispatcher.go:216`, TANPA ceiling-check, langsung `gateway.ExecuteTurn`) vs `DelegateTaskTool`/`delegate_task` (`delegation.go:116-180`, PUNYA ceiling-check teruji `TestDelegationPolicyCeiling`, tapi ternyata TIDAK benar-benar eksekusi — cuma validasi+return JSON). LLM bebas pilih jalur mana, dan `spawn_subagent` melewati privilege-ceiling sepenuhnya. **Scope BL-05 (satukan jadi satu jalur, hapus/alias `spawn_subagent`) HARUS selesai SEBELUM atau BERSAMAAN dengan BG-D1** — kalau BG-D1 dibangun di atas `spawn_subagent` yang belum diperbaiki, resource-gate baru (eks-BL-18 di atas) akan menjaga pintu yang salah.
 
 - [ ] **BL-05 (CRITICAL, PRIORITASKAN di §C ini — sebelum BG-D1 mulai menyentuh `dispatcher.go`)** Satukan dua jalur delegasi sub-agent: hapus entri `spawn_subagent` dari `standardTools` di `dispatcher.go`, ATAU alias ke `DelegateTaskTool` logic. Klarifikasi juga: apakah `DelegateTaskTool` yang "tidak eksekusi apa-apa" itu disengaja (lapis approval sebelum eksekusi nyata di tempat lain) atau fitur belum selesai — perlu jawaban sebelum memutuskan bentuk penyatuan. File: `engine/src/crew/dispatcher.go` (satu file utama, isolated change). **AC tambahan (2026-10-06, Owner):** tambah depth-limit (bukan hanya capability-ceiling) — `ExecutionContext.DelegationDepth`/`MaxDelegationDepth` baru (`tool/dto.go`), ditegakkan di `delegation.go` `ExecuteWithContext`, nilai dari `entitlement.QuotaPolicy.MaxDelegationDepth()` (ENT-01 di §E bawah, Community=1/Team=2/Dockyard=3). Lihat `standard-docs/backlog/skills-steering-lessons-backlog.md` BL-05 untuk AC lengkap.
 - [ ] **BG-D1 · G-30 · PR-47 (P1, L)** Agent loop/turn: tool-call loop, kompaksi, batas iterasi di atas `ExecuteTurn` Rust. *Acceptance:* paritas dengan `eval` replay. **Acceptance criteria tambahan (eks-BL-18, DITUNDA → DIANGKAT sprint ini):** jalur masuk `ExecuteTurn` dari Go `spawn_subagent` HARUS punya resource-gate (cap jumlah/memori sub-agent) sebelum BG-D1 dianggap selesai — jangan ulangi gap yang sama yang sudah ditutup di sisi Rust (BL-15, Sprint 5). **Titik pemasangan konkret (trace 2026-10-06):** `crew/services.go:187-189` (goroutine spawn sebelum `s.runSubagent`) — gate harus cek SEBELUM `subagentWg.Add(1)`, bukan di dalam `runSubagent` sendiri (`services.go:235-264`), supaya penolakan tidak memakan slot goroutine. **Catatan scope:** `runSubagent` saat ini HANYA menangani `TurnToken_Token` (teks), tidak ada `case *pb.TurnToken_ToolCall` — sub-agent belum punya tool-access, jadi resource-gate di sini murni membatasi *jumlah* sub-agent paralel, BUKAN kedalaman rantai (depth-limit itu scope BL-05, berlaku saat tool-access ditambahkan nanti). **Dep tambahan: BL-05 di atas** — kalau `spawn_subagent` dihapus/dialias BL-05, resource-gate ini dipasang di jalur pengganti (`DelegateTaskTool`→`runSubagent` yang sudah tersambung), bukan jalur lama.
 - [ ] **BG-D2 · G-31 · PR-48 (P1, L)** SOP engine + approval gate. Dep: BG-D1.
+
+#### Detail Eksekusi — BG-D2
+
+**Dependency:** BG-D1 (hard). Koordinasikan dengan Sprint 3 (SOP engine Rust — `SopStep`/`SopConstraint`/RACI) — BG-D2 adalah PORT ke Go dari konsep SOP yang di Rust sedang diperluas (Sprint 3). **Urutan yang masuk akal:** tunggu Sprint 3 §A/B stabil (field baru Do's/Don'ts/RACI/Constraint sudah final) SEBELUM port struktur SOP ke Go — supaya tidak port struktur yang masih berubah.
+
+**ASUMSI:** Scope "approval gate" Go di tiket ini overlap dengan `fleet/policies.go` (approval existing) — perlu dicek duplikasi, pola sama dengan catatan BG-D5 di baris dokumen ini sendiri ("cek duplikasi dengan fleet/policies.go").
+
 - [ ] **BG-D3 · G-32 · PR-49 (P2, M)** Skills & scheduler (cron) terikat Squad/Crew. Dep: BG-D1.
+
+#### Detail Eksekusi — BG-D3
+
+**TIDAK DIVERIFIKASI sesi ini** — scheduler/cron Go existing belum dibaca (disebut `cron/scheduler.rs` di Sprint 3 BL-13 TAPI itu RUST, bukan Go — tiket ini kemungkinan PORT scheduler ke Go, atau cron Go yang BERBEDA dari cron Rust). **Langkah pertama WAJIB:** klarifikasi dengan Lead apakah ini scheduler Go BARU (terikat model organisasi BG-F1 Squad/Crew) atau port dari `cron/scheduler.rs` Rust — dua skenario ini beda effort signifikan.
+
+**Dependency:** BG-D1 (hard), BG-F1 (§E, model organisasi Squad/Crew harus ada untuk "terikat" bermakna).
+
 - [ ] **BG-D4 · G-33 · PR-49 (P2, M)** Sub-agent / handoff / A2A sebagai Artifact reference. Dep: BG-D1. **Acceptance criteria tambahan (eks-BL-18, bagian 2):** resource-gate dari BG-D1 di atas HARUS diwariskan ke jalur handoff/A2A ini — titik masuk sub-agent kedua yang perlu gate sama.
 - [ ] **BG-D5 · G-34 · PR-50 (P2, M)** Padanan `control_plane` & `approval`; cek duplikasi dengan `fleet/policies.go` (policy tetap SSOT di sana).
+
+#### Detail Eksekusi — BG-D5
+
+**TIDAK DITEMUKAN:** `control_plane`/`ControlPlane` sebagai simbol **0 match** di seluruh `engine/` Go — istilah ini kemungkinan merujuk konsep Rust (`clawcrew-runtime` mungkin punya modul `control_plane`, BELUM diverifikasi sesi ini) yang akan di-port/dipadankan ke Go. **Langkah pertama WAJIB:** `grep -rn "control_plane\|ControlPlane" crates/` untuk menemukan konsep Rust aslinya sebelum merancang padanan Go.
+
+**Langkah pengerjaan:**
+1. Temukan `control_plane` di sisi Rust (lokasi + API publik).
+2. Baca `engine/src/fleet/policies.go` (disebut sebagai SSOT policy existing) — pahami apa yang SUDAH ditangani di sana.
+3. Rancang padanan Go untuk `control_plane`+`approval` HANYA untuk bagian yang BELUM tercakup `fleet/policies.go` — JANGAN duplikasi, `fleet/policies.go` tetap SSOT (eksplisit di judul tiket).
+
+**JANGAN DIUBAH:** `fleet/policies.go` sebagai SSOT policy — tiket ini melengkapi, tidak menggantikan.
 
 ## D. Ramping Runtime (hanya setelah C punya parity)
 
@@ -46,9 +182,51 @@ depends_on: Sprint 0-1 (BG-C1 untuk auth; persistensi Go untuk BG-D-series)
 - [ ] **BG-F1 · G-23 · PR-53 (P1, L)** Model organisasi persisten Quartermaster→Ship→Squad→Crew. Dep: BG-B2 (selesai). **Acceptance criteria tambahan (BL-81, prasyarat guard kuota bermakna — 5 bug diverifikasi 2026-10-06):** (1) ID Ship unik, bukan `"shp_"+fleetID` (`ship/services.go:31`, kolisi Ship ke-2 pada Fleet sama); (2) satu sumber hitung Ship/Squad ditetapkan (`countCollection("ships")`/`countCollection("squads")` interim — JANGAN `Fleet.ActiveShips`, yang selalu `[]string{}` dan tidak pernah di-append); (3) `squad.Squad` struct baru dari nol (`squad/interfaces.go` saat ini kosong total — `package squad` + 1 baris TODO); (4) `ship.Ship` tambah field `CrewIDs []string` untuk Crew-langsung-di-Ship (non-Squad, role Supervisor/Security — lihat riset §1.2); (5) guard kuota dari `entitlement.QuotaPolicy` (BL-80 di bawah) dipasang DI `handleCollections` (`fleet/delivery.go`) untuk koleksi `ships`/`squads`/`crew` — BUKAN hanya di `ship.Service`/`squad.Service` yang jalur nyatanya belum tersambung (`ship.Service.CreateShip` nol pemanggil, jalur tulis nyata = `POST /api/collections/{name}` → `SaveCollection` menerima JSON bebas, melewati guard service manapun); (6) cek+insert atomik di bawah lock yang sama (`fleetService.mu`); (7) entitas di atas plafon (lapse/downgrade/impor) tetap bisa dibaca & diekspor, hanya *create* baru ditolak (grandfathering).
 - [ ] **ENT-01 (BL-80, P2, S)** `QuotaPolicy` interface + `CommunityPolicy`/`TeamPolicy`/`DockyardPolicy` di `engine/src/entitlement/` (saat ini `interfaces.go` hanya `package entitlement` + TODO). Method: `MaxFleets()`, `MaxShips()`, `MaxSquadsTotal()`, `MaxCrewsPerSquad()`, `MaxCrewsPerShip()`, `MaxConcurrentVoyages()`, **`MaxDelegationDepth()`** (`*int`, nil = unlimited/custom). Nilai final: Community `{1,1,2,6,8,2,1}`, Team `{1,3,6,6,22,4,2}`, Dockyard `{1,6,12,8,100,8,3}`. Endpoint `GET /api/v1/entitlement/usage`. **Dep: BL-81 di atas** untuk AC "guard menolak create ke-N+1" — tanpa itu guard dekoratif. **Konsumen `MaxDelegationDepth()`: BL-05 (§C) — penegakan depth-limit rantai delegasi sub-agent**, ditambahkan 2026-10-06 setelah analisa pola KiroCrew (platform agen sesi ini membatasi rantai Crew→Crew via `max_delegation_depth` statis). **Jangan taruh logika verifikasi lisensi Ed25519 di package publik ini** — `TeamPolicy`/`DockyardPolicy` hanya nilai fallback/default-saat-aktif; verifier Ed25519 Team/Dockyard adalah modul Licensing privat terpisah (repo lain, di luar scope sprint ini — dicatat ongoing).
 - [ ] **GO-MOD-RENAME (BL-82, P3, S)** `engine/go.mod` module path `github.com/diezy-labs/claw-crew/engine` → `github.com/diezy-realm/galleon-fleet/engine` (remote git repo sudah pindah, module path belum ikut). **Kerjakan sebelum modul Licensing privat (Q5 Owner) mulai mengimpor package `entitlement`** — menunda ke Sprint 8 (RB-02) berarti modul privat itu harus refactor import path ulang begitu rebrand jalan. Isolated, mekanis (ponytail: byte-level find-replace, verifikasi dengan `go build ./...` bukan grep manual).
+
+#### Detail Eksekusi — GO-MOD-RENAME
+
+**Verifikasi 2026-10-06:** `engine/go.mod:1` — persis `module github.com/diezy-labs/claw-crew/engine` (terkonfirmasi akurat, belum berubah sejak dicatat).
+
+**Langkah pengerjaan:**
+1. Ubah baris 1 `engine/go.mod` ke `module github.com/diezy-realm/galleon-fleet/engine`.
+2. Find-replace SEMUA import path `github.com/diezy-labs/claw-crew/engine/...` → `github.com/diezy-realm/galleon-fleet/engine/...` di SELURUH file `.go` di `engine/` (termasuk `engine/pkg/`, `engine/core/`).
+3. `go build ./...` dari root `engine/` — ini verifikasi WAJIB (bukan grep manual) karena compiler akan menangkap import yang terlewat.
+4. `go vet ./...` dan jalankan test suite existing untuk konfirmasi nol regresi.
+
+**Acceptance criteria testable:** `go build ./...` dan `go test ./...` keduanya hijau setelah rename, nol sisa referensi `diezy-labs/claw-crew` di file `.go` manapun (`grep -rn "diezy-labs/claw-crew" engine/ --include=*.go` = 0 match).
+
+**JANGAN DIUBAH:** Logic kode apa pun — ini MURNI rename path, perilaku program harus identik sebelum/sesudah.
+
 - [ ] **BG-F2 · G-25 · PR-53 (P2, M)** Kontrak rute QM two-layer + test.
+
+#### Detail Eksekusi — BG-F2
+
+**TIDAK DIVERIFIKASI sesi ini** — "QM two-layer" (Quartermaster, dua layer apa persisnya belum jelas dari judul tiket saja). **Dependency:** BG-F1 (model organisasi Quartermaster→Ship→Squad→Crew harus ada dulu — BG-F2 menulis kontrak rute DI ATAS model ini).
+
+**ASUMSI:** "Two-layer" kemungkinan merujuk pola yang sama dengan ENT-01 (Go policy layer + storage layer) — verifikasi dengan Lead maksud persis sebelum eksekusi, dokumen tidak cukup detail untuk saya tentukan sendiri.
+
 - [ ] **BG-F3 · G-26 · PR-54 (P2, M)** Audit trail & policy SSOT read-only ke UI/Tauri.
+
+#### Detail Eksekusi — BG-F3
+
+**Dependency:** BG-F1 (hard — audit trail butuh entitas Ship/Squad/Crew yang sudah ada untuk punya makna).
+
+**Langkah pengerjaan:** Endpoint GET read-only (pola sama Eval-02 Sprint 3 / `GET /api/v1/entitlement/usage` ENT-01) yang expose audit trail (siapa approve apa, kapan) dan policy SSOT (`fleet/policies.go`) ke UI — UI (`apps/tauri/`/`web/`) HANYA membaca, tidak pernah menulis policy langsung (sesuai `galleon-architecture.md`: "Eksekusi dari Tauri wajib lewat Go").
+
+**JANGAN DIUBAH:** `fleet/policies.go` tetap SSOT — endpoint ini read-only murni.
+
 - [ ] **BG-F5 · G-28 · PR-96 (P3, M)** Observabilitas: zap + request-id Go→Rust; scrubbing.
+
+#### Detail Eksekusi — BG-F5
+
+**TIDAK DIVERIFIKASI sesi ini** — penggunaan `zap` (Go structured logging) existing belum dicek. **Catatan overlap scrubbing:** "scrubbing" di tiket ini (Go-side logging) berkaitan tapi TERPISAH dari BL-38 (Sprint 2, `scrub_credentials` Rust-side `tool_execution.rs`) — DUA sisi berbeda bahasa yang perlu konsisten prinsipnya (jangan log kredensial mentah) tapi implementasi terpisah (Go `zap` field redaction vs Rust `scrub_credentials` function).
+
+**Langkah pengerjaan:**
+1. Cek apakah `zap` sudah dipakai di `engine/` (library logging Go) atau perlu ditambahkan sebagai dependency baru.
+2. Tambah `request-id` propagation Go→Rust (header/metadata gRPC yang dibawa dari HTTP request Go ke call `ExecuteTurn`/RPC lain ke Rust) — untuk tracing lintas-bahasa satu request.
+3. Scrubbing: terapkan pola redaksi serupa `scrub_credentials` (Rust) tapi di sisi Go — field logging yang membawa secret/token di-mask sebelum ditulis `zap` logger.
+
+**Dependency:** Tidak hard-block tiket lain, tapi KONSISTENSI prinsip dengan BL-38 (Sprint 2) perlu dikoordinasikan (sama kelas masalah, dua bahasa).
 
 ## Catatan Sirkularitas (dari dev-tasks asli, dipertahankan apa adanya)
 
