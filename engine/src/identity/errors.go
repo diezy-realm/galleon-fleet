@@ -5,9 +5,11 @@ import "errors"
 var (
 	// ErrUnauthenticated indicates credentials are required but missing
 	ErrUnauthenticated = errors.New("unauthenticated: credentials missing or empty")
+	ErrNoCredential    = ErrUnauthenticated
 
 	// ErrInvalidCredentials indicates the presented credentials failed verification
 	ErrInvalidCredentials = errors.New("unauthenticated: invalid credentials")
+	ErrBadCredential       = ErrInvalidCredentials
 
 	// ErrTokenExpired indicates the token or session has expired
 	ErrTokenExpired = errors.New("unauthenticated: token has expired")

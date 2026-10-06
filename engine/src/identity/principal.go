@@ -9,6 +9,22 @@ type contextKey string
 
 const principalContextKey = contextKey("galleon.identity.principal")
 
+// PrincipalId mirrors clawcrew_api::principal::PrincipalId (Rust)
+type PrincipalId string
+
+const SharedOperatorID PrincipalId = "shared-operator"
+
+// AuthMethod mirrors clawcrew_api::principal::AuthMethod
+type AuthMethod string
+
+const (
+	AuthMethodNone           AuthMethod = "none"
+	AuthMethodSharedOperator AuthMethod = "shared_operator"
+	AuthMethodOIDC           AuthMethod = "oidc"
+	AuthMethodPeercred       AuthMethod = "peercred"
+	AuthMethodNative         AuthMethod = "native"
+)
+
 // PrincipalType defines the source entity of an identity
 type PrincipalType string
 
@@ -29,9 +45,15 @@ const (
 	RoleViewer   Role = "viewer"
 )
 
-// Principal represents a verified caller identity in the Go engine (BG-C1)
+// Principal represents a verified caller identity in the Go engine (BG-C1, RFC 7141 parity)
 type Principal struct {
-	ID            string            `json:"id"`
+	ID            PrincipalId       `json:"id"`
+	DisplayID     string            `json:"display_id"`
+	IsHuman       bool              `json:"is_human"`
+	AuthMethod    AuthMethod        `json:"auth_method"`
+	ProviderAlias *string           `json:"provider_alias,omitempty"`
+	TrustDomain   string            `json:"trust_domain"`
+	MFAVerified   bool              `json:"mfa_verified"`
 	Type          PrincipalType     `json:"type"`
 	Role          Role              `json:"role"`
 	Authenticated bool              `json:"authenticated"`
@@ -42,7 +64,13 @@ type Principal struct {
 
 // IsAuthenticated reports whether the principal has been cryptographically or credentials-verified
 func (p *Principal) IsAuthenticated() bool {
-	return p != nil && p.Authenticated && p.ID != ""
+	if p == nil {
+		return false
+	}
+	if p.AuthMethod != "" && (p.AuthMethod == AuthMethodNone || p.ID == SharedOperatorID) {
+		return false
+	}
+	return p.Authenticated && p.ID != ""
 }
 
 // CanApprove reports whether this principal has sufficient authority to approve HIGH_RISK operations (S2-SEC-01)
@@ -99,4 +127,13 @@ func FromContext(ctx context.Context) (*Principal, bool) {
 	}
 	p, ok := ctx.Value(principalContextKey).(*Principal)
 	return p, ok && p != nil && p.IsAuthenticated()
+}
+
+// PrincipalFromContext extracts the verified principal from context, returning ok=false if not found
+func PrincipalFromContext(ctx context.Context) (Principal, bool) {
+	p, ok := FromContext(ctx)
+	if !ok || p == nil {
+		return Principal{}, false
+	}
+	return *p, true
 }

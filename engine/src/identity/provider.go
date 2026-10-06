@@ -85,7 +85,7 @@ func (p *loopbackAuthProvider) VerifyPeerToken(ctx context.Context, peerID strin
 	}
 
 	return &Principal{
-		ID:            "peer-" + peerID,
+		ID:            PrincipalId("peer-" + peerID),
 		Type:          PrincipalTypePeer,
 		Role:          RoleOperator,
 		Authenticated: true,

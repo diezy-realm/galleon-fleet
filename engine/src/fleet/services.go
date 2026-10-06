@@ -741,7 +741,11 @@ func (s *fleetService) ExecuteTerminal(ctx context.Context, req TerminalExecRequ
 			}, nil
 		}
 		if req.ApprovedBy == "" {
-			req.ApprovedBy = principal.ID
+			if principal.DisplayID != "" {
+				req.ApprovedBy = principal.DisplayID
+			} else {
+				req.ApprovedBy = string(principal.ID)
+			}
 		}
 	}
 

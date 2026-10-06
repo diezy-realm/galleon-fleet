@@ -28,6 +28,23 @@ func AuthMiddleware(resolver PrincipalResolver) func(http.Handler) http.Handler 
 	}
 }
 
+// RequireAuthenticated wraps an http.HandlerFunc, resolving and requiring an authenticated principal (BG-C1)
+func RequireAuthenticated(resolver PrincipalResolver, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if resolver == nil {
+			writeErrorJSON(w, http.StatusInternalServerError, "identity resolver not configured")
+			return
+		}
+		principal, err := resolver.Resolve(r.Context(), r)
+		if err != nil || principal == nil || !principal.IsAuthenticated() {
+			writeErrorJSON(w, http.StatusUnauthorized, "authentication required")
+			return
+		}
+		ctx := WithPrincipal(r.Context(), principal)
+		next(w, r.WithContext(ctx))
+	}
+}
+
 // RequireAuth enforces that a route must have a verified caller principal
 func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

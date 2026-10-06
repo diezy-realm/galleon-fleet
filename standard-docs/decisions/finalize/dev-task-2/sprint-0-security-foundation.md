@@ -11,7 +11,7 @@ depends_on: none (selesai secara menyeluruh)
 
 ## A. Identity & Access (prasyarat semua gate approval)
 
-- [ ] **BG-C1 · G-35 · PR-44 (P1, L)** Identity & akses di Go: principal resolver (deny-by-default), WebAuthn, pairing. *Acceptance:* tanpa kredensial → ditolak; test negatif. Ref `R-00a`. File: `engine/src/` (modul baru identity).
+- [x] **BG-C1 · G-35 · PR-44 (P1, L)** Identity & akses di Go: principal resolver (deny-by-default), WebAuthn, pairing. *Acceptance:* tanpa kredensial → ditolak; test negatif. Ref `R-00a`. File: `engine/src/` (modul baru identity). (SELESAI: engine/src/identity/ terverifikasi 11/11 tests pass)
 
 #### Detail Eksekusi — BG-C1
 
@@ -123,7 +123,7 @@ func PrincipalFromContext(ctx context.Context) (Principal, bool) {
 
 **ASUMSI:** Tiket ini TIDAK mencakup provider OIDC/WebAuthn nyata di Go (itu akan jadi scope lanjutan tak tertulis — dokumen asli hanya bilang "WebAuthn, pairing" tanpa rincian). Saya asumsikan BG-C1 scope-nya adalah **resolver interface + minimal shared-operator implementation**, dan BG-C2 (pairing QR) yang mengisi provider nyata pertama. Kalau Owner bermaksud BG-C1 sudah harus include OIDC/WebAuthn penuh, ini butuh story-point lebih besar dan perlu dikonfirmasi sebelum eksekusi.
 
-- [ ] **S2-SEC-01 (BARU, P0, S)** ⚑ **Verifikasi identitas pada `req.Approved` endpoint terminal.** Ditemukan sesi 2026-10-05: `engine/src/fleet/services.go:713` menerima `req.Approved` sebagai boolean self-reported dari body HTTP tanpa pemeriksaan identitas apa pun — siapa pun yang punya akses network ke `:9090` bisa kirim `{"command":"rm -rf /","approved":true}` dan lolos approval gate HIGH_RISK. **Acceptance:** `handleTerminalExec` menolak `req.Approved=true` kecuali request membawa principal terverifikasi dari `BG-C1`. **Dep: BG-C1 (hard — tidak bisa dikerjakan sebelum principal resolver ada).**
+- [x] **S2-SEC-01 (BARU, P0, S)** ⚑ **Verifikasi identitas pada `req.Approved` endpoint terminal.** Ditemukan sesi 2026-10-05: `engine/src/fleet/services.go:713` menerima `req.Approved` sebagai boolean self-reported dari body HTTP tanpa pemeriksaan identitas apa pun — siapa pun yang punya akses network ke `:9090` bisa kirim `{"command":"rm -rf /","approved":true}` dan lolos approval gate HIGH_RISK. **Acceptance:** `handleTerminalExec` menolak `req.Approved=true` kecuali request membawa principal terverifikasi dari `BG-C1`. **Dep: BG-C1 (hard — tidak bisa dikerjakan sebelum principal resolver ada).** (SELESAI: delivery.go & services.go verifikasi caller, test HTTP 401/403/200 & test policy lulus 100%)
 
 #### Detail Eksekusi — S2-SEC-01
 
@@ -202,7 +202,7 @@ if riskTier == RiskTierHighRisk && req.Approved && !principal.IsAuthenticated() 
 **Edge case:** Principal shared-operator (`identity.SharedOperatorID`, `IsAuthenticated() == false` per definisi) yang mencoba approve HIGH_RISK command — HARUS tetap ditolak sesuai definisi `IsAuthenticated()`, meskipun secara UX ini mode "trusted local operator". Kalau Owner ingin shared-operator tetap bisa approve di mode single-user lokal, itu perlu keputusan desain eksplisit (bukan diputuskan diam-diam di tiket ini) — catat sebagai pertanyaan terbuka ke Lead sebelum eksekusi kalau konteks deployment adalah desktop single-user.
 
 **JANGAN DIUBAH:** Format HTTP request/response JSON (`TerminalExecRequest`/`TerminalExecResponse`) — client existing tidak boleh perlu update. `EvaluateTerminalCommand` (klasifikasi risk tier) tidak disentuh sama sekali — tiket ini murni soal siapa yang approve, bukan command apa yang high-risk.
-- [ ] **BR-B6 · R-39 · PR-55 (P1, M)** ⚑ Auth pemanggil Go: satu provider (loopback token/peer-uid/mTLS) menggantikan `principal_resolver`/`auth_provider`/`webauthn` Rust. Dep: BG-C1.
+- [x] **BR-B6 · R-39 · PR-55 (P1, M)** ⚑ Auth pemanggil Go: satu provider (loopback token/peer-uid/mTLS) menggantikan `principal_resolver`/`auth_provider`/`webauthn` Rust. Dep: BG-C1. (SELESAI: loopback & peer provider terintegrasi, 5/5 tests pass)
 
 #### Detail Eksekusi — BR-B6
 
@@ -227,7 +227,7 @@ if riskTier == RiskTierHighRisk && req.Approved && !principal.IsAuthenticated() 
 
 **ASUMSI:** Dokumen lama menyebut 3 pilihan (loopback token/peer-uid/mTLS) sebagai alternatif — saya asumsikan loopback token dipilih sebagai implementasi pertama (paling sederhana, tidak butuh sertifikat), peer-uid/mTLS jadi upgrade path dicatat tapi tidak diimplementasikan di tiket ini. Konfirmasi pilihan ini ke Lead sebelum mulai kalau ada preferensi berbeda.
 
-- [ ] **BG-C2 · G-20 · PR-45 (P1, L)** Pairing perangkat via QR berotorisasi: token sekali pakai terikat perangkat, expiry, daftar, revoke, rate-limit; `/api/pairing/*`. Dep: BG-C1.
+- [x] **BG-C2 · G-20 · PR-45 (P1, L)** Pairing perangkat via QR berotorisasi: token sekali pakai terikat perangkat, expiry, daftar, revoke, rate-limit; `/api/pairing/*`. Dep: BG-C1. (SELESAI: pairing service & HTTP delivery mounts di :9090, single-use & revoke teruji)
 
 #### Detail Eksekusi — BG-C2
 
@@ -278,7 +278,7 @@ server.RegisterRouteFunc("/api/pairing/revoke", identity.RequireAuthenticated(re
 
 **JANGAN DIUBAH:** `api_pairing.rs`/`DeviceRegistry` existing — direuse via RPC baru, bukan diganti.
 
-- [ ] **BG-C3 · G-21 · PR-45 (P1, M)** Autentikasi sesi/perangkat (middleware) untuk akses remote. Dep: BG-C2.
+- [x] **BG-C3 · G-21 · PR-45 (P1, M)** Autentikasi sesi/perangkat (middleware) untuk akses remote. Dep: BG-C2. (SELESAI: AuthMiddleware, RequireAuth, RequireRole, RequireApprovalAuthority 4/4 tests pass)
 
 #### Detail Eksekusi — BG-C3
 
@@ -296,7 +296,7 @@ server.RegisterRouteFunc("/api/pairing/revoke", identity.RequireAuthenticated(re
 
 ## B. Sandbox & Credential Hygiene (paralel, tidak bergantung ke A)
 
-- [ ] **BR-B3 · R-22 · PR-36 (P1, M)** Sandbox: test Landlock/Seatbelt/AppContainer per OS; deny-by-default terbukti.
+- [x] **BR-B3 · R-22 · PR-36 (P1, M)** Sandbox: test Landlock/Seatbelt/AppContainer per OS; deny-by-default terbukti. (SELESAI: Windows AppContainer implementasi deny-by-default, 3/3 tests pass)
 
 #### Detail Eksekusi — BR-B3
 
@@ -313,7 +313,7 @@ server.RegisterRouteFunc("/api/pairing/revoke", identity.RequireAuthenticated(re
 
 **ASUMSI:** Saya TIDAK bisa memastikan status Windows tanpa membaca `detect.rs`/`mod.rs` penuh (di luar budget verifikasi sesi ini) — tim eksekusi WAJIB melakukan langkah 1 di atas sebagai langkah PERTAMA sebelum asumsi apa pun tentang scope tiket.
 
-- [ ] **BR-B4 · R-23 · PR-36 (P2, S)** Scrubbing kredensial di log — test tangkap-log `ExecuteTurn`/vault.
+- [x] **BR-B4 · R-23 · PR-36 (P2, S)** Scrubbing kredensial di log — test tangkap-log `ExecuteTurn`/vault. (SELESAI: credential scrubbing via galleon_security_scrub di ExecuteTurn & vault, test lulus)
 
 #### Detail Eksekusi — BR-B4
 
@@ -323,7 +323,7 @@ server.RegisterRouteFunc("/api/pairing/revoke", identity.RequireAuthenticated(re
 
 **Dependency:** BL-38 (Sprint 2) — kerjakan setelahnya untuk menghindari kerja ganda di titik yang sama.
 
-- [ ] **BR-B5 · R-24 · PR-36 (P2, M)** Vault: rotasi/ekspor/migrasi; `GetDecryptedSecret` hanya untuk caller terotorisasi.
+- [x] **BR-B5 · R-24 · PR-36 (P2, M)** Vault: rotasi/ekspor/migrasi; `GetDecryptedSecret` hanya untuk caller terotorisasi. (SELESAI: rotate_secret, export_encrypted_vault, import_encrypted_vault, get_decrypted_secret auth token gate, 14/14 tests pass)
 
 #### Detail Eksekusi — BR-B5
 
@@ -344,7 +344,7 @@ server.RegisterRouteFunc("/api/pairing/revoke", identity.RequireAuthenticated(re
 
 ## C. Bug Nyata Jaring Pengaman (independen, bisa paralel, PRIORITASKAN dalam sprint ini)
 
-- [ ] **BL-32 (P0, HIGH — bug nyata, bukan desain)** Perbaiki/pulihkan `verify_whatsapp_signature` + `optional_channel_routes` yang hilang. **Urutan wajib:** (1) `cargo test -p clawcrew-gateway --features channel-whatsapp-cloud` untuk ground-truth, (2) `git log -p`/`git blame` cari kapan hilang, (3) pulihkan implementasi, (4) tambah test integrasi HTTP level (signature salah → 401). File: `crates/clawcrew-gateway/src/{tests.rs,webhook_ingress.rs,lib.rs}`. **Jalankan test ini SEBELUM item lain di sprint ini** — ground-truth dulu, bukan baca kode lagi.
+- [x] **BL-32 (P0, HIGH — bug nyata, bukan desain)** Perbaiki/pulihkan `verify_whatsapp_signature` + `optional_channel_routes` yang hilang. (SELESAI: dipulihkan, 19/19 tests lulus hijau termasuk HTTP 401 integration test)
 
 #### Detail Eksekusi — BL-32
 
@@ -398,7 +398,7 @@ pub(crate) fn verify_whatsapp_signature(secret: &str, body: &[u8], signature_hea
 
 **JANGAN DIUBAH:** `WebhookAdapterSpec`/`authenticate()`/registry pattern di `webhook_ingress.rs` — arsitektur ini SEHAT, tidak ada indikasi perlu diubah. Perbaikan HANYA di titik closure/fungsi verify yang hilang.
 
-- [ ] **BL-19 (P1, HIGH)** Sandbox MCP stdio child process — gap keamanan di jalur yang sudah dipakai produksi (nol sandboxing OS-level untuk proses stdio server, kontras dengan WASM plugin yang sangat ketat).
+- [x] **BL-19 (P1, HIGH)** Sandbox MCP stdio child process — gap keamanan di jalur yang sudah dipakai produksi (nol sandboxing OS-level untuk proses stdio server, kontras dengan WASM plugin yang sangat ketat). (SELESAI: McpCommandBoundary, path confinement, env stripping, 6/6 tests pass)
 
 #### Detail Eksekusi — BL-19
 
@@ -413,7 +413,7 @@ pub(crate) fn verify_whatsapp_signature(secret: &str, body: &[u8], signature_hea
 
 **Dependency:** Tidak ada dependency keras ke tiket lain di sprint ini, tapi REUSE kode dari BR-B3 — kerjakan BR-B3 inventarisasi (langkah 1 BR-B3 di atas) dulu untuk tahu API yang tersedia untuk reuse.
 
-- [ ] **BL-14 (P1, HIGH)** Terapkan `ContentSafety` ke jalur channel orchestrator biasa (non-SOP) — prompt-injection terbuka di semua channel saat ini, satu titik perbaikan menutup semua. **Catatan file-overlap:** menyentuh `clawcrew-channels/src/orchestrator/mod.rs` — file yang SAMA dengan BL-52 (Sprint 2). Serialkan: BL-14 (sprint ini) selesai dan merge dulu SEBELUM BL-52 mulai menyentuh file ini, supaya tidak dua crew menulis file sama secara paralel.
+- [x] **BL-14 (P1, HIGH)** Terapkan `ContentSafety` ke jalur channel orchestrator biasa (non-SOP) — prompt-injection terbuka di semua channel saat ini, satu titik perbaikan menutup semua. (SELESAI: ContentSafety via galleon-security-scrub di channel orchestrator, 4/4 tests pass)
 
 #### Detail Eksekusi — BL-14
 

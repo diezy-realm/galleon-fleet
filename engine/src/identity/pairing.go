@@ -198,7 +198,7 @@ func (s *memoryPairingService) Claim(ctx context.Context, req ClaimPairingReques
 	// Issue long-lived device session token in TokenStore
 	sessionToken := GenerateSecureToken(32)
 	devicePrincipal := &Principal{
-		ID:            "device-" + req.DeviceID,
+		ID:            PrincipalId("device-" + req.DeviceID),
 		Type:          PrincipalTypeDevice,
 		Role:          RoleOperator,
 		Authenticated: true,

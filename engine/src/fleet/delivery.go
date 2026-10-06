@@ -464,7 +464,11 @@ func (h *HTTPHandler) handleTerminalExec(w http.ResponseWriter, r *http.Request)
 
 		ctx = identity.WithPrincipal(ctx, principal)
 		if req.ApprovedBy == "" {
-			req.ApprovedBy = principal.ID
+			if principal.DisplayID != "" {
+				req.ApprovedBy = principal.DisplayID
+			} else {
+				req.ApprovedBy = string(principal.ID)
+			}
 		}
 	}
 
