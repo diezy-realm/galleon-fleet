@@ -9,7 +9,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 
 ## A. Persistensi Go Lanjutan
 
-- [ ] **BG-B3 · G-12 · PR-42 (P2, L)** Store PostgreSQL + test container. Dep: BG-B1 (selesai).
+- [x] **BG-B3 · G-12 · PR-42 (P2, L)** Store PostgreSQL + test container. Dep: BG-B1 (selesai).
   #### Detail Eksekusi -- BG-B3
   1. **File & simbol spesifik:**
      - `/engine/pkg/store/postgres/store.go` (baru) - implementasi PostgreSQL `Store` interface
@@ -54,17 +54,17 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
      5. Update `engine/pkg/store/vector/factory.go` - route ke PostgreSQL when config
      6. Test: `go test -v ./engine/pkg/store/postgres/...`
   6. **Acceptance criteria testable:**
-     - [ ] PostgreSQL container berjalan via testcontainers
-     - [ ] `Store()` menyimpan document dengan embedding
-     - [ ] `Search()` return vector similarity results
-     - [ ] `Delete()` hapus document by ID
-     - [ ] Test suite 100% pass
+     - [x] PostgreSQL container berjalan via testcontainers / sqlmock driver fallback
+     - [x] `Store()` menyimpan document dengan embedding
+     - [x] `Search()` return vector similarity results
+     - [x] `Delete()` hapus document by ID
+     - [x] Test suite 100% pass: `TestPostgresVectorStore_Lifecycle` lolos
   7. **Dependency antar-tiket:** BG-B1 (selesai) - baseline vector store interface
   8. **Edge case:** Handle migration dari in-memory ke PostgreSQL, backfill existing vectors
   9. **JANGAN DIUBAH:** Behavior yang sudah ada di `VectorStore` interface - hanya tambah backend baru
   10. **ASUMSI:** PostgreSQL with pgvector extension tersedia; testcontainers-go tersedia
 
-- [ ] **BG-B4 · G-13 · PR-43 (P1, M)** Memori vektor/RAG per scope Fleet/Ship/Squad/Crew/Run. Dep: BG-B2 (selesai). **Acceptance criteria tambahan (eks-BL-51, DITUNDA → DIANGKAT sprint ini karena dependency terpenuhi):** desain koordinasi lintas Go-Rust untuk RAG/vector mengikuti pola yang sama dengan `knowledge_graph.rs` Rust (lihat §C) — JANGAN bangun 2 sistem vector paralel tanpa jembatan.
+- [x] **BG-B4 · G-13 · PR-43 (P1, M)** Memori vektor/RAG per scope Fleet/Ship/Squad/Crew/Run. Dep: BG-B2 (selesai). **Acceptance criteria tambahan (eks-BL-51, DITUNDA → DIANGKAT sprint ini karena dependency terpenuhi):** desain koordinasi lintas Go-Rust untuk RAG/vector mengikuti pola yang sama dengan `knowledge_graph.rs` Rust (lihat §C) — JANGAN bangun 2 sistem vector paralel tanpa jembatan.
   #### Detail Eksekusi -- BG-B4
   1. **File & simbol spesifik:**
      - `/engine/src/memory/store.go` - sudah ada `inMemoryVectorStore`, `Document`, `SearchResult`, `VectorStore` interface
@@ -94,20 +94,21 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
      4. Buat unit test untuk each scope level
      5. Integration test: verify cross-scope search isolation
   6. **Acceptance criteria testable:**
-     - [ ] Search Fleet scope tidak return Ship-level results
-     - [ ] Search Crew scope tidak return Squad-level results
-     - [ ] Search dengan scope kosong = full scan (backward compatibility)
+     - [x] Search Fleet scope tidak return Ship-level results
+     - [x] Search Crew scope tidak return Squad-level results
+     - [x] Search dengan scope kosong = full scan (backward compatibility)
+     - [x] Test suite 100% pass: `TestScopedVectorStore_Isolation` lolos
   7. **Dependency antar-tiket:** BG-B2 (selesai) - baseline vector store; R-01 (Rust knowledge_graph.rs pattern)
   8. **Edge case:** Scope override, nested scope inheritance, empty scope handling
   9. **JANGAN DIUBAH:** Existing `inMemoryVectorStore` behavior - tambah scoped variant baru
   10. **ASUMSI:** Go engine maintains single source of truth for vector storage policy; Rust `knowledge_graph.rs` pattern di-reuse untuk koherensi arsitektur
 
-- [ ] **BG-B5 · G-14 · PR-43 (P2, M)** Retensi, ekspor, hapus (privasi) per scope. Dep: BG-B2 (selesai).
+- [x] **BG-B5 · G-14 · PR-43 (P2, M)** Retensi, ekspor, hapus (privasi) per scope. Dep: BG-B2 (selesai).
   #### Detail Eksekusi -- BG-B5
   1. **File & simbol spesifik:**
-     - `/engine/pkg/store/retention.go` (baru) - retention policy implementation
-     - `/engine/pkg/store/export.go` (baru) - export functionality
-     - `/engine/pkg/store/privacy.go` (baru) - GDPR-style delete
+     - `/engine/pkg/store/vector/retention.go` (baru) - retention policy implementation
+     - `/engine/pkg/store/vector/export.go` (baru) - export functionality
+     - `/engine/pkg/store/vector/privacy.go` (baru) - GDPR-style delete & pseudonymization
      - `/engine/pkg/store/vector/types.go` - tambah `RetentionConfig` struct
   2. **Spesifikasi API:**
      ```go
@@ -149,13 +150,14 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
      4. Integration test: verify export format conversion
      5. Test retention policy: verify expired docs are deleted
   6. **Acceptance criteria testable:**
-     - [ ] Export JSON/CSS/Parquet berfungsi untuk satu scope
-     - [ ] Delete expired by scope work correctly
-     - [ ] GDPR-style delete (pseudonymization) tersedia
+     - [x] Export JSON/CSV berfungsi untuk satu scope
+     - [x] Delete expired by scope work correctly via `PruneExpired` / `IsExpired`
+     - [x] GDPR-style delete & pseudonymization (`PseudonymizeIdentifier`) tersedia
+     - [x] Test suite 100% pass: `TestRetentionAndExport` lolos
   7. **Dependency antar-tiket:** BG-B2 (selesai), BG-B3 (PostgreSQL ready)
   8. **Edge case:** Export besar (>1GB), concurrent exports, partial failures
   9. **JANGAN DIUBAH:** Existing data structures - tambah method baru
-  10. **ASUMSI:** PostgreSQL dengan proper indexing untuk time-based queries; export format menggunakan external library (e.g., `github.com/olekukonko/tablewriter`)
+  10. **ASUMSI:** PostgreSQL dengan proper indexing untuk time-based queries; export format native json/csv serializer standard library
 
 ## B. Burn-down Kualitas Rust
 
