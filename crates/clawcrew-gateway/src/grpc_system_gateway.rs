@@ -25,6 +25,8 @@ pub struct SystemGatewayService {
     model_provider: Option<std::sync::Arc<dyn clawcrew_providers::ModelProvider>>,
     /// Optional authorization token required for privileged RPCs like GetDecryptedSecret
     auth_token: Option<String>,
+    /// Optional Memory backend for learned rule persistence (BL-01)
+    memory: Option<std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>>,
 }
 
 impl std::fmt::Debug for SystemGatewayService {
@@ -48,13 +50,26 @@ impl SystemGatewayService {
         let root = workspace_root.clone().unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
         let vault_dir = root.join(".vault");
         let secret_store = std::sync::Arc::new(clawcrew_config::secrets::SecretStore::new(&root, true));
+        let memory = clawcrew_memory::sqlite::SqliteMemory::new("gateway", &root)
+            .ok()
+            .map(|m| std::sync::Arc::new(m) as std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>);
         Self {
             workspace_root,
             vault_dir: Some(vault_dir),
             secret_store,
             model_provider: None,
             auth_token: None,
+            memory,
         }
+    }
+
+    /// Configure a custom memory backend for learned rule persistence (BL-01)
+    pub fn with_memory(
+        mut self,
+        memory: std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>,
+    ) -> Self {
+        self.memory = Some(memory);
+        self
     }
 
     /// Configure an authorization token required for privileged caller access (BR-B5).
@@ -623,6 +638,127 @@ impl SystemGateway for SystemGatewayService {
 
         Ok(Response::new(tokio_stream::wrappers::ReceiverStream::new(rx)))
     }
+
+    async fn store_learned_rule(
+        &self,
+        request: Request<StoreLearnedRuleRequest>,
+    ) -> Result<Response<StoreLearnedRuleResponse>, Status> {
+        let req = request.into_inner();
+        let rule = req.rule.trim();
+        if rule.is_empty() {
+            return Err(Status::invalid_argument("rule cannot be empty"));
+        }
+
+        let Some(memory) = self.memory.as_ref() else {
+            return Err(Status::internal("memory backend not configured"));
+        };
+
+        let id = format!("rule-{}", uuid::Uuid::new_v4());
+        let now_str = chrono::Utc::now().to_rfc3339();
+        let rule_json = serde_json::json!({
+            "id": &id,
+            "rule": rule,
+            "scope": req.scope,
+            "reversible": req.reversible,
+            "created_at": &now_str,
+            "approved": true,
+            "reverted": false,
+        });
+
+        let key = format!("learned_rule:{}", id);
+        let content = rule_json.to_string();
+
+        match memory.store(&key, &content, clawcrew_api::memory_traits::MemoryCategory::Core, None).await {
+            Ok(_) => {
+                ::clawcrew_log::record!(
+                    INFO,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        .with_attrs(::serde_json::json!({"rule_id": &id, "scope": req.scope})),
+                    "learned rule stored successfully"
+                );
+                Ok(Response::new(StoreLearnedRuleResponse {
+                    id,
+                    success: true,
+                    error: String::new(),
+                }))
+            }
+            Err(e) => {
+                ::clawcrew_log::record!(
+                    ERROR,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
+                        .with_attrs(::serde_json::json!({"error": e.to_string()})),
+                    "failed to store learned rule"
+                );
+                Ok(Response::new(StoreLearnedRuleResponse {
+                    id: String::new(),
+                    success: false,
+                    error: e.to_string(),
+                }))
+            }
+        }
+    }
+
+    async fn retrieve_learned_rules(
+        &self,
+        request: Request<RetrieveLearnedRulesRequest>,
+    ) -> Result<Response<RetrieveLearnedRulesResponse>, Status> {
+        let req = request.into_inner();
+        let Some(memory) = self.memory.as_ref() else {
+            return Err(Status::internal("memory backend not configured"));
+        };
+
+        let entries = memory
+            .list(Some(&clawcrew_api::memory_traits::MemoryCategory::Core), None)
+            .await
+            .map_err(|e| Status::internal(format!("failed to list memory entries: {e}")))?;
+
+        let mut rules = Vec::new();
+        for entry in entries {
+            if !entry.key.starts_with("learned_rule:") {
+                continue;
+            }
+            if let Ok(v) = serde_json::from_str::<serde_json::Value>(&entry.content) {
+                let id = v.get("id").and_then(|x| x.as_str()).unwrap_or(&entry.key).to_string();
+                let rule_text = v.get("rule").and_then(|x| x.as_str()).unwrap_or(&entry.content).to_string();
+                let reversible = v.get("reversible").and_then(|x| x.as_bool()).unwrap_or(true);
+                let created_at = v.get("created_at").and_then(|x| x.as_str()).unwrap_or(&entry.timestamp).to_string();
+                let approved = v.get("approved").and_then(|x| x.as_bool()).unwrap_or(true);
+                let reverted = v.get("reverted").and_then(|x| x.as_bool()).unwrap_or(false);
+
+                let mut scope = std::collections::HashMap::new();
+                if let Some(s) = v.get("scope").and_then(|x| x.as_object()) {
+                    for (k, val) in s {
+                        if let Some(v_str) = val.as_str() {
+                            scope.insert(k.clone(), v_str.to_string());
+                        }
+                    }
+                }
+
+                // Apply scope filter if specified
+                if !req.scope_key.is_empty() {
+                    if let Some(val) = scope.get(&req.scope_key) {
+                        if !req.scope_value.is_empty() && val != &req.scope_value {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+
+                rules.push(LearnedRule {
+                    id,
+                    rule: rule_text,
+                    scope,
+                    reversible,
+                    created_at,
+                    approved,
+                    reverted,
+                });
+            }
+        }
+
+        Ok(Response::new(RetrieveLearnedRulesResponse { rules }))
+    }
 }
 
 #[cfg(test)]
@@ -1001,6 +1137,57 @@ mod tests {
             scrubbed.contains("[REDACTED]") || !scrubbed.contains("1234567890"),
             "scrubbed content should mask the credential"
         );
+    }
+
+    // ── BL-01: Learned Rules Persistence via gRPC ────────────────────────────
+
+    #[tokio::test]
+    async fn store_and_retrieve_learned_rules_persists_across_queries() -> anyhow::Result<()> {
+        let temp_dir = tempfile::tempdir()?;
+        let svc = SystemGatewayService::new(Some(temp_dir.path().to_path_buf()));
+
+        // 1. Store a learned rule
+        let mut scope = std::collections::HashMap::new();
+        scope.insert("fleet".to_string(), "black-pearl".to_string());
+        scope.insert("ship".to_string(), "flagship".to_string());
+
+        let store_req = Request::new(StoreLearnedRuleRequest {
+            rule: "Always check fuel before sailing".to_string(),
+            scope: scope.clone(),
+            reversible: true,
+        });
+
+        let store_resp = svc.store_learned_rule(store_req).await?.into_inner();
+        assert!(store_resp.success);
+        assert!(!store_resp.id.is_empty());
+
+        // 2. Retrieve without filter
+        let ret_req = Request::new(RetrieveLearnedRulesRequest {
+            scope_key: String::new(),
+            scope_value: String::new(),
+        });
+        let ret_resp = svc.retrieve_learned_rules(ret_req).await?.into_inner();
+        assert_eq!(ret_resp.rules.len(), 1);
+        assert_eq!(ret_resp.rules[0].rule, "Always check fuel before sailing");
+        assert_eq!(ret_resp.rules[0].scope.get("fleet").map(String::as_str), Some("black-pearl"));
+
+        // 3. Retrieve with matching filter
+        let filter_req = Request::new(RetrieveLearnedRulesRequest {
+            scope_key: "fleet".to_string(),
+            scope_value: "black-pearl".to_string(),
+        });
+        let filter_resp = svc.retrieve_learned_rules(filter_req).await?.into_inner();
+        assert_eq!(filter_resp.rules.len(), 1);
+
+        // 4. Retrieve with non-matching filter
+        let non_match_req = Request::new(RetrieveLearnedRulesRequest {
+            scope_key: "fleet".to_string(),
+            scope_value: "flying-dutchman".to_string(),
+        });
+        let non_match_resp = svc.retrieve_learned_rules(non_match_req).await?.into_inner();
+        assert_eq!(non_match_resp.rules.len(), 0);
+
+        Ok(())
     }
 }
 

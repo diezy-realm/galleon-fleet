@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v7.36.0
-// source: agent_service.proto
+// source: proto/agent_service.proto
 
 package pb
 
@@ -207,14 +207,16 @@ var AgentEngine_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "agent_service.proto",
+	Metadata: "proto/agent_service.proto",
 }
 
 const (
-	SystemGateway_ExecuteNativeTool_FullMethodName  = "/clawcrew.agent.SystemGateway/ExecuteNativeTool"
-	SystemGateway_GetDecryptedSecret_FullMethodName = "/clawcrew.agent.SystemGateway/GetDecryptedSecret"
-	SystemGateway_ExecuteTask_FullMethodName        = "/clawcrew.agent.SystemGateway/ExecuteTask"
-	SystemGateway_ExecuteTurn_FullMethodName        = "/clawcrew.agent.SystemGateway/ExecuteTurn"
+	SystemGateway_ExecuteNativeTool_FullMethodName    = "/clawcrew.agent.SystemGateway/ExecuteNativeTool"
+	SystemGateway_GetDecryptedSecret_FullMethodName   = "/clawcrew.agent.SystemGateway/GetDecryptedSecret"
+	SystemGateway_ExecuteTask_FullMethodName          = "/clawcrew.agent.SystemGateway/ExecuteTask"
+	SystemGateway_ExecuteTurn_FullMethodName          = "/clawcrew.agent.SystemGateway/ExecuteTurn"
+	SystemGateway_StoreLearnedRule_FullMethodName     = "/clawcrew.agent.SystemGateway/StoreLearnedRule"
+	SystemGateway_RetrieveLearnedRules_FullMethodName = "/clawcrew.agent.SystemGateway/RetrieveLearnedRules"
 )
 
 // SystemGatewayClient is the client API for SystemGateway service.
@@ -231,6 +233,10 @@ type SystemGatewayClient interface {
 	ExecuteTask(ctx context.Context, in *TaskExecutionRequest, opts ...grpc.CallOption) (*TaskExecutionResponse, error)
 	// Executes an LLM generation turn with vendor streaming (ADR 0001: Rust LLM SSOT)
 	ExecuteTurn(ctx context.Context, in *ExecuteTurnRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TurnToken], error)
+	// Stores a learned rule/correction in persistent memory (BL-01)
+	StoreLearnedRule(ctx context.Context, in *StoreLearnedRuleRequest, opts ...grpc.CallOption) (*StoreLearnedRuleResponse, error)
+	// Retrieves learned rules filtered by scope (BL-01)
+	RetrieveLearnedRules(ctx context.Context, in *RetrieveLearnedRulesRequest, opts ...grpc.CallOption) (*RetrieveLearnedRulesResponse, error)
 }
 
 type systemGatewayClient struct {
@@ -290,6 +296,26 @@ func (c *systemGatewayClient) ExecuteTurn(ctx context.Context, in *ExecuteTurnRe
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type SystemGateway_ExecuteTurnClient = grpc.ServerStreamingClient[TurnToken]
 
+func (c *systemGatewayClient) StoreLearnedRule(ctx context.Context, in *StoreLearnedRuleRequest, opts ...grpc.CallOption) (*StoreLearnedRuleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StoreLearnedRuleResponse)
+	err := c.cc.Invoke(ctx, SystemGateway_StoreLearnedRule_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *systemGatewayClient) RetrieveLearnedRules(ctx context.Context, in *RetrieveLearnedRulesRequest, opts ...grpc.CallOption) (*RetrieveLearnedRulesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RetrieveLearnedRulesResponse)
+	err := c.cc.Invoke(ctx, SystemGateway_RetrieveLearnedRules_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SystemGatewayServer is the server API for SystemGateway service.
 // All implementations must embed UnimplementedSystemGatewayServer
 // for forward compatibility.
@@ -304,6 +330,10 @@ type SystemGatewayServer interface {
 	ExecuteTask(context.Context, *TaskExecutionRequest) (*TaskExecutionResponse, error)
 	// Executes an LLM generation turn with vendor streaming (ADR 0001: Rust LLM SSOT)
 	ExecuteTurn(*ExecuteTurnRequest, grpc.ServerStreamingServer[TurnToken]) error
+	// Stores a learned rule/correction in persistent memory (BL-01)
+	StoreLearnedRule(context.Context, *StoreLearnedRuleRequest) (*StoreLearnedRuleResponse, error)
+	// Retrieves learned rules filtered by scope (BL-01)
+	RetrieveLearnedRules(context.Context, *RetrieveLearnedRulesRequest) (*RetrieveLearnedRulesResponse, error)
 	mustEmbedUnimplementedSystemGatewayServer()
 }
 
@@ -325,6 +355,12 @@ func (UnimplementedSystemGatewayServer) ExecuteTask(context.Context, *TaskExecut
 }
 func (UnimplementedSystemGatewayServer) ExecuteTurn(*ExecuteTurnRequest, grpc.ServerStreamingServer[TurnToken]) error {
 	return status.Error(codes.Unimplemented, "method ExecuteTurn not implemented")
+}
+func (UnimplementedSystemGatewayServer) StoreLearnedRule(context.Context, *StoreLearnedRuleRequest) (*StoreLearnedRuleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StoreLearnedRule not implemented")
+}
+func (UnimplementedSystemGatewayServer) RetrieveLearnedRules(context.Context, *RetrieveLearnedRulesRequest) (*RetrieveLearnedRulesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RetrieveLearnedRules not implemented")
 }
 func (UnimplementedSystemGatewayServer) mustEmbedUnimplementedSystemGatewayServer() {}
 func (UnimplementedSystemGatewayServer) testEmbeddedByValue()                       {}
@@ -412,6 +448,42 @@ func _SystemGateway_ExecuteTurn_Handler(srv interface{}, stream grpc.ServerStrea
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type SystemGateway_ExecuteTurnServer = grpc.ServerStreamingServer[TurnToken]
 
+func _SystemGateway_StoreLearnedRule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StoreLearnedRuleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemGatewayServer).StoreLearnedRule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemGateway_StoreLearnedRule_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemGatewayServer).StoreLearnedRule(ctx, req.(*StoreLearnedRuleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SystemGateway_RetrieveLearnedRules_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RetrieveLearnedRulesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemGatewayServer).RetrieveLearnedRules(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemGateway_RetrieveLearnedRules_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemGatewayServer).RetrieveLearnedRules(ctx, req.(*RetrieveLearnedRulesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SystemGateway_ServiceDesc is the grpc.ServiceDesc for SystemGateway service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -431,6 +503,14 @@ var SystemGateway_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ExecuteTask",
 			Handler:    _SystemGateway_ExecuteTask_Handler,
 		},
+		{
+			MethodName: "StoreLearnedRule",
+			Handler:    _SystemGateway_StoreLearnedRule_Handler,
+		},
+		{
+			MethodName: "RetrieveLearnedRules",
+			Handler:    _SystemGateway_RetrieveLearnedRules_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -439,5 +519,5 @@ var SystemGateway_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "agent_service.proto",
+	Metadata: "proto/agent_service.proto",
 }

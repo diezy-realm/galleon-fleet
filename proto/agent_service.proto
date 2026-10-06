@@ -29,6 +29,12 @@ service SystemGateway {
     
     // Executes an LLM generation turn with vendor streaming (ADR 0001: Rust LLM SSOT)
     rpc ExecuteTurn(ExecuteTurnRequest) returns (stream TurnToken);
+    
+    // Stores a learned rule/correction in persistent memory (BL-01)
+    rpc StoreLearnedRule(StoreLearnedRuleRequest) returns (StoreLearnedRuleResponse);
+    
+    // Retrieves learned rules filtered by scope (BL-01)
+    rpc RetrieveLearnedRules(RetrieveLearnedRulesRequest) returns (RetrieveLearnedRulesResponse);
 }
 
 // ======================================
@@ -178,5 +184,40 @@ message TurnComplete {
 message TurnError {
     string error_code = 1;
     string message = 2;
+}
+
+// ======================================
+// Learned Rules (BL-01)
+// ======================================
+
+message StoreLearnedRuleRequest {
+    string rule = 1;              // The learned rule/correction
+    map<string, string> scope = 2; // Scope (fleet, ship, squad, crew, run)
+    bool reversible = 3;          // Whether this can be reverted
+}
+
+message StoreLearnedRuleResponse {
+    string id = 1;                // Rule ID
+    bool success = 2;
+    string error = 3;
+}
+
+message RetrieveLearnedRulesRequest {
+    string scope_key = 1;         // Optional filter by scope key (e.g., "fleet")
+    string scope_value = 2;       // Optional filter by scope value
+}
+
+message RetrieveLearnedRulesResponse {
+    repeated LearnedRule rules = 1;
+}
+
+message LearnedRule {
+    string id = 1;
+    string rule = 2;
+    map<string, string> scope = 3;
+    bool reversible = 4;
+    string created_at = 5;
+    bool approved = 6;
+    bool reverted = 7;
 }
 

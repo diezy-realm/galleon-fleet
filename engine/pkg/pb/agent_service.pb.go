@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.12
 // 	protoc        v7.36.0
-// source: agent_service.proto
+// source: proto/agent_service.proto
 
 package pb
 
@@ -54,11 +54,11 @@ func (x HealthCheckResponse_ServingStatus) String() string {
 }
 
 func (HealthCheckResponse_ServingStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_agent_service_proto_enumTypes[0].Descriptor()
+	return file_proto_agent_service_proto_enumTypes[0].Descriptor()
 }
 
 func (HealthCheckResponse_ServingStatus) Type() protoreflect.EnumType {
-	return &file_agent_service_proto_enumTypes[0]
+	return &file_proto_agent_service_proto_enumTypes[0]
 }
 
 func (x HealthCheckResponse_ServingStatus) Number() protoreflect.EnumNumber {
@@ -67,7 +67,7 @@ func (x HealthCheckResponse_ServingStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HealthCheckResponse_ServingStatus.Descriptor instead.
 func (HealthCheckResponse_ServingStatus) EnumDescriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{1, 0}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{1, 0}
 }
 
 type TurnResponse_EventType int32
@@ -115,11 +115,11 @@ func (x TurnResponse_EventType) String() string {
 }
 
 func (TurnResponse_EventType) Descriptor() protoreflect.EnumDescriptor {
-	return file_agent_service_proto_enumTypes[1].Descriptor()
+	return file_proto_agent_service_proto_enumTypes[1].Descriptor()
 }
 
 func (TurnResponse_EventType) Type() protoreflect.EnumType {
-	return &file_agent_service_proto_enumTypes[1]
+	return &file_proto_agent_service_proto_enumTypes[1]
 }
 
 func (x TurnResponse_EventType) Number() protoreflect.EnumNumber {
@@ -128,7 +128,7 @@ func (x TurnResponse_EventType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TurnResponse_EventType.Descriptor instead.
 func (TurnResponse_EventType) EnumDescriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{3, 0}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{3, 0}
 }
 
 type HealthCheckRequest struct {
@@ -140,7 +140,7 @@ type HealthCheckRequest struct {
 
 func (x *HealthCheckRequest) Reset() {
 	*x = HealthCheckRequest{}
-	mi := &file_agent_service_proto_msgTypes[0]
+	mi := &file_proto_agent_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -152,7 +152,7 @@ func (x *HealthCheckRequest) String() string {
 func (*HealthCheckRequest) ProtoMessage() {}
 
 func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[0]
+	mi := &file_proto_agent_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -165,7 +165,7 @@ func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
 func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{0}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *HealthCheckRequest) GetService() string {
@@ -184,7 +184,7 @@ type HealthCheckResponse struct {
 
 func (x *HealthCheckResponse) Reset() {
 	*x = HealthCheckResponse{}
-	mi := &file_agent_service_proto_msgTypes[1]
+	mi := &file_proto_agent_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -196,7 +196,7 @@ func (x *HealthCheckResponse) String() string {
 func (*HealthCheckResponse) ProtoMessage() {}
 
 func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[1]
+	mi := &file_proto_agent_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -209,7 +209,7 @@ func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
 func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{1}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *HealthCheckResponse) GetStatus() HealthCheckResponse_ServingStatus {
@@ -231,7 +231,7 @@ type TurnRequest struct {
 
 func (x *TurnRequest) Reset() {
 	*x = TurnRequest{}
-	mi := &file_agent_service_proto_msgTypes[2]
+	mi := &file_proto_agent_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -243,7 +243,7 @@ func (x *TurnRequest) String() string {
 func (*TurnRequest) ProtoMessage() {}
 
 func (x *TurnRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[2]
+	mi := &file_proto_agent_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -256,7 +256,7 @@ func (x *TurnRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnRequest.ProtoReflect.Descriptor instead.
 func (*TurnRequest) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{2}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *TurnRequest) GetSessionId() string {
@@ -299,7 +299,7 @@ type TurnResponse struct {
 
 func (x *TurnResponse) Reset() {
 	*x = TurnResponse{}
-	mi := &file_agent_service_proto_msgTypes[3]
+	mi := &file_proto_agent_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -311,7 +311,7 @@ func (x *TurnResponse) String() string {
 func (*TurnResponse) ProtoMessage() {}
 
 func (x *TurnResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[3]
+	mi := &file_proto_agent_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -324,7 +324,7 @@ func (x *TurnResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnResponse.ProtoReflect.Descriptor instead.
 func (*TurnResponse) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{3}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *TurnResponse) GetType() TurnResponse_EventType {
@@ -366,7 +366,7 @@ type QueryRequest struct {
 
 func (x *QueryRequest) Reset() {
 	*x = QueryRequest{}
-	mi := &file_agent_service_proto_msgTypes[4]
+	mi := &file_proto_agent_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -378,7 +378,7 @@ func (x *QueryRequest) String() string {
 func (*QueryRequest) ProtoMessage() {}
 
 func (x *QueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[4]
+	mi := &file_proto_agent_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -391,7 +391,7 @@ func (x *QueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryRequest.ProtoReflect.Descriptor instead.
 func (*QueryRequest) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{4}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *QueryRequest) GetQuery() string {
@@ -424,7 +424,7 @@ type QueryResponse struct {
 
 func (x *QueryResponse) Reset() {
 	*x = QueryResponse{}
-	mi := &file_agent_service_proto_msgTypes[5]
+	mi := &file_proto_agent_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -436,7 +436,7 @@ func (x *QueryResponse) String() string {
 func (*QueryResponse) ProtoMessage() {}
 
 func (x *QueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[5]
+	mi := &file_proto_agent_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -449,7 +449,7 @@ func (x *QueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryResponse.ProtoReflect.Descriptor instead.
 func (*QueryResponse) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{5}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *QueryResponse) GetMatches() []*QueryMatch {
@@ -471,7 +471,7 @@ type QueryMatch struct {
 
 func (x *QueryMatch) Reset() {
 	*x = QueryMatch{}
-	mi := &file_agent_service_proto_msgTypes[6]
+	mi := &file_proto_agent_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -483,7 +483,7 @@ func (x *QueryMatch) String() string {
 func (*QueryMatch) ProtoMessage() {}
 
 func (x *QueryMatch) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[6]
+	mi := &file_proto_agent_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -496,7 +496,7 @@ func (x *QueryMatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryMatch.ProtoReflect.Descriptor instead.
 func (*QueryMatch) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{6}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *QueryMatch) GetId() string {
@@ -539,7 +539,7 @@ type ToolCallRequest struct {
 
 func (x *ToolCallRequest) Reset() {
 	*x = ToolCallRequest{}
-	mi := &file_agent_service_proto_msgTypes[7]
+	mi := &file_proto_agent_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -551,7 +551,7 @@ func (x *ToolCallRequest) String() string {
 func (*ToolCallRequest) ProtoMessage() {}
 
 func (x *ToolCallRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[7]
+	mi := &file_proto_agent_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -564,7 +564,7 @@ func (x *ToolCallRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToolCallRequest.ProtoReflect.Descriptor instead.
 func (*ToolCallRequest) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{7}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ToolCallRequest) GetToolName() string {
@@ -607,7 +607,7 @@ type ToolCallResponse struct {
 
 func (x *ToolCallResponse) Reset() {
 	*x = ToolCallResponse{}
-	mi := &file_agent_service_proto_msgTypes[8]
+	mi := &file_proto_agent_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -619,7 +619,7 @@ func (x *ToolCallResponse) String() string {
 func (*ToolCallResponse) ProtoMessage() {}
 
 func (x *ToolCallResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[8]
+	mi := &file_proto_agent_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -632,7 +632,7 @@ func (x *ToolCallResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToolCallResponse.ProtoReflect.Descriptor instead.
 func (*ToolCallResponse) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{8}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ToolCallResponse) GetSuccess() bool {
@@ -672,7 +672,7 @@ type SecretRequest struct {
 
 func (x *SecretRequest) Reset() {
 	*x = SecretRequest{}
-	mi := &file_agent_service_proto_msgTypes[9]
+	mi := &file_proto_agent_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -684,7 +684,7 @@ func (x *SecretRequest) String() string {
 func (*SecretRequest) ProtoMessage() {}
 
 func (x *SecretRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[9]
+	mi := &file_proto_agent_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -697,7 +697,7 @@ func (x *SecretRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SecretRequest.ProtoReflect.Descriptor instead.
 func (*SecretRequest) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{9}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *SecretRequest) GetKeyName() string {
@@ -717,7 +717,7 @@ type SecretResponse struct {
 
 func (x *SecretResponse) Reset() {
 	*x = SecretResponse{}
-	mi := &file_agent_service_proto_msgTypes[10]
+	mi := &file_proto_agent_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -729,7 +729,7 @@ func (x *SecretResponse) String() string {
 func (*SecretResponse) ProtoMessage() {}
 
 func (x *SecretResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[10]
+	mi := &file_proto_agent_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -742,7 +742,7 @@ func (x *SecretResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SecretResponse.ProtoReflect.Descriptor instead.
 func (*SecretResponse) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{10}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *SecretResponse) GetFound() bool {
@@ -770,7 +770,7 @@ type TaskExecutionRequest struct {
 
 func (x *TaskExecutionRequest) Reset() {
 	*x = TaskExecutionRequest{}
-	mi := &file_agent_service_proto_msgTypes[11]
+	mi := &file_proto_agent_service_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -782,7 +782,7 @@ func (x *TaskExecutionRequest) String() string {
 func (*TaskExecutionRequest) ProtoMessage() {}
 
 func (x *TaskExecutionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[11]
+	mi := &file_proto_agent_service_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -795,7 +795,7 @@ func (x *TaskExecutionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TaskExecutionRequest.ProtoReflect.Descriptor instead.
 func (*TaskExecutionRequest) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{11}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *TaskExecutionRequest) GetTaskId() string {
@@ -823,7 +823,7 @@ type TaskExecutionResponse struct {
 
 func (x *TaskExecutionResponse) Reset() {
 	*x = TaskExecutionResponse{}
-	mi := &file_agent_service_proto_msgTypes[12]
+	mi := &file_proto_agent_service_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -835,7 +835,7 @@ func (x *TaskExecutionResponse) String() string {
 func (*TaskExecutionResponse) ProtoMessage() {}
 
 func (x *TaskExecutionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[12]
+	mi := &file_proto_agent_service_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -848,7 +848,7 @@ func (x *TaskExecutionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TaskExecutionResponse.ProtoReflect.Descriptor instead.
 func (*TaskExecutionResponse) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{12}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *TaskExecutionResponse) GetSuccess() bool {
@@ -888,7 +888,7 @@ type ExecuteTurnRequest struct {
 
 func (x *ExecuteTurnRequest) Reset() {
 	*x = ExecuteTurnRequest{}
-	mi := &file_agent_service_proto_msgTypes[13]
+	mi := &file_proto_agent_service_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -900,7 +900,7 @@ func (x *ExecuteTurnRequest) String() string {
 func (*ExecuteTurnRequest) ProtoMessage() {}
 
 func (x *ExecuteTurnRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[13]
+	mi := &file_proto_agent_service_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -913,7 +913,7 @@ func (x *ExecuteTurnRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteTurnRequest.ProtoReflect.Descriptor instead.
 func (*ExecuteTurnRequest) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{13}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ExecuteTurnRequest) GetSessionId() string {
@@ -977,7 +977,7 @@ type TurnChatMessage struct {
 
 func (x *TurnChatMessage) Reset() {
 	*x = TurnChatMessage{}
-	mi := &file_agent_service_proto_msgTypes[14]
+	mi := &file_proto_agent_service_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -989,7 +989,7 @@ func (x *TurnChatMessage) String() string {
 func (*TurnChatMessage) ProtoMessage() {}
 
 func (x *TurnChatMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[14]
+	mi := &file_proto_agent_service_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1002,7 +1002,7 @@ func (x *TurnChatMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnChatMessage.ProtoReflect.Descriptor instead.
 func (*TurnChatMessage) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{14}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *TurnChatMessage) GetRole() string {
@@ -1044,7 +1044,7 @@ type TurnToolDefinition struct {
 
 func (x *TurnToolDefinition) Reset() {
 	*x = TurnToolDefinition{}
-	mi := &file_agent_service_proto_msgTypes[15]
+	mi := &file_proto_agent_service_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1056,7 +1056,7 @@ func (x *TurnToolDefinition) String() string {
 func (*TurnToolDefinition) ProtoMessage() {}
 
 func (x *TurnToolDefinition) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[15]
+	mi := &file_proto_agent_service_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1069,7 +1069,7 @@ func (x *TurnToolDefinition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnToolDefinition.ProtoReflect.Descriptor instead.
 func (*TurnToolDefinition) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{15}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *TurnToolDefinition) GetName() string {
@@ -1108,7 +1108,7 @@ type TurnToken struct {
 
 func (x *TurnToken) Reset() {
 	*x = TurnToken{}
-	mi := &file_agent_service_proto_msgTypes[16]
+	mi := &file_proto_agent_service_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1120,7 +1120,7 @@ func (x *TurnToken) String() string {
 func (*TurnToken) ProtoMessage() {}
 
 func (x *TurnToken) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[16]
+	mi := &file_proto_agent_service_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1133,7 +1133,7 @@ func (x *TurnToken) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnToken.ProtoReflect.Descriptor instead.
 func (*TurnToken) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{16}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *TurnToken) GetEvent() isTurnToken_Event {
@@ -1217,7 +1217,7 @@ type TokenChunk struct {
 
 func (x *TokenChunk) Reset() {
 	*x = TokenChunk{}
-	mi := &file_agent_service_proto_msgTypes[17]
+	mi := &file_proto_agent_service_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1229,7 +1229,7 @@ func (x *TokenChunk) String() string {
 func (*TokenChunk) ProtoMessage() {}
 
 func (x *TokenChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[17]
+	mi := &file_proto_agent_service_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1242,7 +1242,7 @@ func (x *TokenChunk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TokenChunk.ProtoReflect.Descriptor instead.
 func (*TokenChunk) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{17}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *TokenChunk) GetDelta() string {
@@ -1270,7 +1270,7 @@ type TurnToolCall struct {
 
 func (x *TurnToolCall) Reset() {
 	*x = TurnToolCall{}
-	mi := &file_agent_service_proto_msgTypes[18]
+	mi := &file_proto_agent_service_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1282,7 +1282,7 @@ func (x *TurnToolCall) String() string {
 func (*TurnToolCall) ProtoMessage() {}
 
 func (x *TurnToolCall) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[18]
+	mi := &file_proto_agent_service_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1295,7 +1295,7 @@ func (x *TurnToolCall) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnToolCall.ProtoReflect.Descriptor instead.
 func (*TurnToolCall) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{18}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *TurnToolCall) GetId() string {
@@ -1331,7 +1331,7 @@ type TurnComplete struct {
 
 func (x *TurnComplete) Reset() {
 	*x = TurnComplete{}
-	mi := &file_agent_service_proto_msgTypes[19]
+	mi := &file_proto_agent_service_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1343,7 +1343,7 @@ func (x *TurnComplete) String() string {
 func (*TurnComplete) ProtoMessage() {}
 
 func (x *TurnComplete) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[19]
+	mi := &file_proto_agent_service_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1356,7 +1356,7 @@ func (x *TurnComplete) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnComplete.ProtoReflect.Descriptor instead.
 func (*TurnComplete) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{19}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *TurnComplete) GetFinishReason() string {
@@ -1397,7 +1397,7 @@ type TurnError struct {
 
 func (x *TurnError) Reset() {
 	*x = TurnError{}
-	mi := &file_agent_service_proto_msgTypes[20]
+	mi := &file_proto_agent_service_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1409,7 +1409,7 @@ func (x *TurnError) String() string {
 func (*TurnError) ProtoMessage() {}
 
 func (x *TurnError) ProtoReflect() protoreflect.Message {
-	mi := &file_agent_service_proto_msgTypes[20]
+	mi := &file_proto_agent_service_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1422,7 +1422,7 @@ func (x *TurnError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnError.ProtoReflect.Descriptor instead.
 func (*TurnError) Descriptor() ([]byte, []int) {
-	return file_agent_service_proto_rawDescGZIP(), []int{20}
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *TurnError) GetErrorCode() string {
@@ -1439,11 +1439,319 @@ func (x *TurnError) GetMessage() string {
 	return ""
 }
 
-var File_agent_service_proto protoreflect.FileDescriptor
+type StoreLearnedRuleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Rule          string                 `protobuf:"bytes,1,opt,name=rule,proto3" json:"rule,omitempty"`                                                                             // The learned rule/correction
+	Scope         map[string]string      `protobuf:"bytes,2,rep,name=scope,proto3" json:"scope,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Scope (fleet, ship, squad, crew, run)
+	Reversible    bool                   `protobuf:"varint,3,opt,name=reversible,proto3" json:"reversible,omitempty"`                                                                // Whether this can be reverted
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
 
-const file_agent_service_proto_rawDesc = "" +
+func (x *StoreLearnedRuleRequest) Reset() {
+	*x = StoreLearnedRuleRequest{}
+	mi := &file_proto_agent_service_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StoreLearnedRuleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StoreLearnedRuleRequest) ProtoMessage() {}
+
+func (x *StoreLearnedRuleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_agent_service_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StoreLearnedRuleRequest.ProtoReflect.Descriptor instead.
+func (*StoreLearnedRuleRequest) Descriptor() ([]byte, []int) {
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *StoreLearnedRuleRequest) GetRule() string {
+	if x != nil {
+		return x.Rule
+	}
+	return ""
+}
+
+func (x *StoreLearnedRuleRequest) GetScope() map[string]string {
+	if x != nil {
+		return x.Scope
+	}
+	return nil
+}
+
+func (x *StoreLearnedRuleRequest) GetReversible() bool {
+	if x != nil {
+		return x.Reversible
+	}
+	return false
+}
+
+type StoreLearnedRuleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"` // Rule ID
+	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
+	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StoreLearnedRuleResponse) Reset() {
+	*x = StoreLearnedRuleResponse{}
+	mi := &file_proto_agent_service_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StoreLearnedRuleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StoreLearnedRuleResponse) ProtoMessage() {}
+
+func (x *StoreLearnedRuleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_agent_service_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StoreLearnedRuleResponse.ProtoReflect.Descriptor instead.
+func (*StoreLearnedRuleResponse) Descriptor() ([]byte, []int) {
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *StoreLearnedRuleResponse) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *StoreLearnedRuleResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *StoreLearnedRuleResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+type RetrieveLearnedRulesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ScopeKey      string                 `protobuf:"bytes,1,opt,name=scope_key,json=scopeKey,proto3" json:"scope_key,omitempty"`       // Optional filter by scope key (e.g., "fleet")
+	ScopeValue    string                 `protobuf:"bytes,2,opt,name=scope_value,json=scopeValue,proto3" json:"scope_value,omitempty"` // Optional filter by scope value
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RetrieveLearnedRulesRequest) Reset() {
+	*x = RetrieveLearnedRulesRequest{}
+	mi := &file_proto_agent_service_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RetrieveLearnedRulesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RetrieveLearnedRulesRequest) ProtoMessage() {}
+
+func (x *RetrieveLearnedRulesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_agent_service_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RetrieveLearnedRulesRequest.ProtoReflect.Descriptor instead.
+func (*RetrieveLearnedRulesRequest) Descriptor() ([]byte, []int) {
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *RetrieveLearnedRulesRequest) GetScopeKey() string {
+	if x != nil {
+		return x.ScopeKey
+	}
+	return ""
+}
+
+func (x *RetrieveLearnedRulesRequest) GetScopeValue() string {
+	if x != nil {
+		return x.ScopeValue
+	}
+	return ""
+}
+
+type RetrieveLearnedRulesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Rules         []*LearnedRule         `protobuf:"bytes,1,rep,name=rules,proto3" json:"rules,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RetrieveLearnedRulesResponse) Reset() {
+	*x = RetrieveLearnedRulesResponse{}
+	mi := &file_proto_agent_service_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RetrieveLearnedRulesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RetrieveLearnedRulesResponse) ProtoMessage() {}
+
+func (x *RetrieveLearnedRulesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_agent_service_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RetrieveLearnedRulesResponse.ProtoReflect.Descriptor instead.
+func (*RetrieveLearnedRulesResponse) Descriptor() ([]byte, []int) {
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *RetrieveLearnedRulesResponse) GetRules() []*LearnedRule {
+	if x != nil {
+		return x.Rules
+	}
+	return nil
+}
+
+type LearnedRule struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Rule          string                 `protobuf:"bytes,2,opt,name=rule,proto3" json:"rule,omitempty"`
+	Scope         map[string]string      `protobuf:"bytes,3,rep,name=scope,proto3" json:"scope,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Reversible    bool                   `protobuf:"varint,4,opt,name=reversible,proto3" json:"reversible,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	Approved      bool                   `protobuf:"varint,6,opt,name=approved,proto3" json:"approved,omitempty"`
+	Reverted      bool                   `protobuf:"varint,7,opt,name=reverted,proto3" json:"reverted,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LearnedRule) Reset() {
+	*x = LearnedRule{}
+	mi := &file_proto_agent_service_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LearnedRule) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LearnedRule) ProtoMessage() {}
+
+func (x *LearnedRule) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_agent_service_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LearnedRule.ProtoReflect.Descriptor instead.
+func (*LearnedRule) Descriptor() ([]byte, []int) {
+	return file_proto_agent_service_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *LearnedRule) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *LearnedRule) GetRule() string {
+	if x != nil {
+		return x.Rule
+	}
+	return ""
+}
+
+func (x *LearnedRule) GetScope() map[string]string {
+	if x != nil {
+		return x.Scope
+	}
+	return nil
+}
+
+func (x *LearnedRule) GetReversible() bool {
+	if x != nil {
+		return x.Reversible
+	}
+	return false
+}
+
+func (x *LearnedRule) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *LearnedRule) GetApproved() bool {
+	if x != nil {
+		return x.Approved
+	}
+	return false
+}
+
+func (x *LearnedRule) GetReverted() bool {
+	if x != nil {
+		return x.Reverted
+	}
+	return false
+}
+
+var File_proto_agent_service_proto protoreflect.FileDescriptor
+
+const file_proto_agent_service_proto_rawDesc = "" +
 	"\n" +
-	"\x13agent_service.proto\x12\x0eclawcrew.agent\".\n" +
+	"\x19proto/agent_service.proto\x12\x0eclawcrew.agent\".\n" +
 	"\x12HealthCheckRequest\x12\x18\n" +
 	"\aservice\x18\x01 \x01(\tR\aservice\"\x9c\x01\n" +
 	"\x13HealthCheckResponse\x12I\n" +
@@ -1563,33 +1871,70 @@ const file_agent_service_proto_rawDesc = "" +
 	"\tTurnError\x12\x1d\n" +
 	"\n" +
 	"error_code\x18\x01 \x01(\tR\terrorCode\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\xfa\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xd1\x01\n" +
+	"\x17StoreLearnedRuleRequest\x12\x12\n" +
+	"\x04rule\x18\x01 \x01(\tR\x04rule\x12H\n" +
+	"\x05scope\x18\x02 \x03(\v22.clawcrew.agent.StoreLearnedRuleRequest.ScopeEntryR\x05scope\x12\x1e\n" +
+	"\n" +
+	"reversible\x18\x03 \x01(\bR\n" +
+	"reversible\x1a8\n" +
+	"\n" +
+	"ScopeEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Z\n" +
+	"\x18StoreLearnedRuleResponse\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"[\n" +
+	"\x1bRetrieveLearnedRulesRequest\x12\x1b\n" +
+	"\tscope_key\x18\x01 \x01(\tR\bscopeKey\x12\x1f\n" +
+	"\vscope_value\x18\x02 \x01(\tR\n" +
+	"scopeValue\"Q\n" +
+	"\x1cRetrieveLearnedRulesResponse\x121\n" +
+	"\x05rules\x18\x01 \x03(\v2\x1b.clawcrew.agent.LearnedRuleR\x05rules\"\xa0\x02\n" +
+	"\vLearnedRule\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04rule\x18\x02 \x01(\tR\x04rule\x12<\n" +
+	"\x05scope\x18\x03 \x03(\v2&.clawcrew.agent.LearnedRule.ScopeEntryR\x05scope\x12\x1e\n" +
+	"\n" +
+	"reversible\x18\x04 \x01(\bR\n" +
+	"reversible\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x05 \x01(\tR\tcreatedAt\x12\x1a\n" +
+	"\bapproved\x18\x06 \x01(\bR\bapproved\x12\x1a\n" +
+	"\breverted\x18\a \x01(\bR\breverted\x1a8\n" +
+	"\n" +
+	"ScopeEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\xfa\x01\n" +
 	"\vAgentEngine\x12H\n" +
 	"\tStartTurn\x12\x1b.clawcrew.agent.TurnRequest\x1a\x1c.clawcrew.agent.TurnResponse0\x01\x12I\n" +
 	"\n" +
 	"QuickQuery\x12\x1c.clawcrew.agent.QueryRequest\x1a\x1d.clawcrew.agent.QueryResponse\x12V\n" +
-	"\vHealthCheck\x12\".clawcrew.agent.HealthCheckRequest\x1a#.clawcrew.agent.HealthCheckResponse2\xe8\x02\n" +
+	"\vHealthCheck\x12\".clawcrew.agent.HealthCheckRequest\x1a#.clawcrew.agent.HealthCheckResponse2\xc2\x04\n" +
 	"\rSystemGateway\x12V\n" +
 	"\x11ExecuteNativeTool\x12\x1f.clawcrew.agent.ToolCallRequest\x1a .clawcrew.agent.ToolCallResponse\x12S\n" +
 	"\x12GetDecryptedSecret\x12\x1d.clawcrew.agent.SecretRequest\x1a\x1e.clawcrew.agent.SecretResponse\x12Z\n" +
 	"\vExecuteTask\x12$.clawcrew.agent.TaskExecutionRequest\x1a%.clawcrew.agent.TaskExecutionResponse\x12N\n" +
-	"\vExecuteTurn\x12\".clawcrew.agent.ExecuteTurnRequest\x1a\x19.clawcrew.agent.TurnToken0\x01B2Z0github.com/diezy-labs/claw-crew/engine/pkg/pb;pbb\x06proto3"
+	"\vExecuteTurn\x12\".clawcrew.agent.ExecuteTurnRequest\x1a\x19.clawcrew.agent.TurnToken0\x01\x12e\n" +
+	"\x10StoreLearnedRule\x12'.clawcrew.agent.StoreLearnedRuleRequest\x1a(.clawcrew.agent.StoreLearnedRuleResponse\x12q\n" +
+	"\x14RetrieveLearnedRules\x12+.clawcrew.agent.RetrieveLearnedRulesRequest\x1a,.clawcrew.agent.RetrieveLearnedRulesResponseB2Z0github.com/diezy-labs/claw-crew/engine/pkg/pb;pbb\x06proto3"
 
 var (
-	file_agent_service_proto_rawDescOnce sync.Once
-	file_agent_service_proto_rawDescData []byte
+	file_proto_agent_service_proto_rawDescOnce sync.Once
+	file_proto_agent_service_proto_rawDescData []byte
 )
 
-func file_agent_service_proto_rawDescGZIP() []byte {
-	file_agent_service_proto_rawDescOnce.Do(func() {
-		file_agent_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_agent_service_proto_rawDesc), len(file_agent_service_proto_rawDesc)))
+func file_proto_agent_service_proto_rawDescGZIP() []byte {
+	file_proto_agent_service_proto_rawDescOnce.Do(func() {
+		file_proto_agent_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_agent_service_proto_rawDesc), len(file_proto_agent_service_proto_rawDesc)))
 	})
-	return file_agent_service_proto_rawDescData
+	return file_proto_agent_service_proto_rawDescData
 }
 
-var file_agent_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_agent_service_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
-var file_agent_service_proto_goTypes = []any{
+var file_proto_agent_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_proto_agent_service_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_proto_agent_service_proto_goTypes = []any{
 	(HealthCheckResponse_ServingStatus)(0), // 0: clawcrew.agent.HealthCheckResponse.ServingStatus
 	(TurnResponse_EventType)(0),            // 1: clawcrew.agent.TurnResponse.EventType
 	(*HealthCheckRequest)(nil),             // 2: clawcrew.agent.HealthCheckRequest
@@ -1613,50 +1958,64 @@ var file_agent_service_proto_goTypes = []any{
 	(*TurnToolCall)(nil),                   // 20: clawcrew.agent.TurnToolCall
 	(*TurnComplete)(nil),                   // 21: clawcrew.agent.TurnComplete
 	(*TurnError)(nil),                      // 22: clawcrew.agent.TurnError
-	nil,                                    // 23: clawcrew.agent.QueryMatch.MetadataEntry
+	(*StoreLearnedRuleRequest)(nil),        // 23: clawcrew.agent.StoreLearnedRuleRequest
+	(*StoreLearnedRuleResponse)(nil),       // 24: clawcrew.agent.StoreLearnedRuleResponse
+	(*RetrieveLearnedRulesRequest)(nil),    // 25: clawcrew.agent.RetrieveLearnedRulesRequest
+	(*RetrieveLearnedRulesResponse)(nil),   // 26: clawcrew.agent.RetrieveLearnedRulesResponse
+	(*LearnedRule)(nil),                    // 27: clawcrew.agent.LearnedRule
+	nil,                                    // 28: clawcrew.agent.QueryMatch.MetadataEntry
+	nil,                                    // 29: clawcrew.agent.StoreLearnedRuleRequest.ScopeEntry
+	nil,                                    // 30: clawcrew.agent.LearnedRule.ScopeEntry
 }
-var file_agent_service_proto_depIdxs = []int32{
+var file_proto_agent_service_proto_depIdxs = []int32{
 	0,  // 0: clawcrew.agent.HealthCheckResponse.status:type_name -> clawcrew.agent.HealthCheckResponse.ServingStatus
 	1,  // 1: clawcrew.agent.TurnResponse.type:type_name -> clawcrew.agent.TurnResponse.EventType
 	8,  // 2: clawcrew.agent.QueryResponse.matches:type_name -> clawcrew.agent.QueryMatch
-	23, // 3: clawcrew.agent.QueryMatch.metadata:type_name -> clawcrew.agent.QueryMatch.MetadataEntry
+	28, // 3: clawcrew.agent.QueryMatch.metadata:type_name -> clawcrew.agent.QueryMatch.MetadataEntry
 	16, // 4: clawcrew.agent.ExecuteTurnRequest.messages:type_name -> clawcrew.agent.TurnChatMessage
 	17, // 5: clawcrew.agent.ExecuteTurnRequest.tools:type_name -> clawcrew.agent.TurnToolDefinition
 	19, // 6: clawcrew.agent.TurnToken.token:type_name -> clawcrew.agent.TokenChunk
 	20, // 7: clawcrew.agent.TurnToken.tool_call:type_name -> clawcrew.agent.TurnToolCall
 	21, // 8: clawcrew.agent.TurnToken.complete:type_name -> clawcrew.agent.TurnComplete
 	22, // 9: clawcrew.agent.TurnToken.error:type_name -> clawcrew.agent.TurnError
-	4,  // 10: clawcrew.agent.AgentEngine.StartTurn:input_type -> clawcrew.agent.TurnRequest
-	6,  // 11: clawcrew.agent.AgentEngine.QuickQuery:input_type -> clawcrew.agent.QueryRequest
-	2,  // 12: clawcrew.agent.AgentEngine.HealthCheck:input_type -> clawcrew.agent.HealthCheckRequest
-	9,  // 13: clawcrew.agent.SystemGateway.ExecuteNativeTool:input_type -> clawcrew.agent.ToolCallRequest
-	11, // 14: clawcrew.agent.SystemGateway.GetDecryptedSecret:input_type -> clawcrew.agent.SecretRequest
-	13, // 15: clawcrew.agent.SystemGateway.ExecuteTask:input_type -> clawcrew.agent.TaskExecutionRequest
-	15, // 16: clawcrew.agent.SystemGateway.ExecuteTurn:input_type -> clawcrew.agent.ExecuteTurnRequest
-	5,  // 17: clawcrew.agent.AgentEngine.StartTurn:output_type -> clawcrew.agent.TurnResponse
-	7,  // 18: clawcrew.agent.AgentEngine.QuickQuery:output_type -> clawcrew.agent.QueryResponse
-	3,  // 19: clawcrew.agent.AgentEngine.HealthCheck:output_type -> clawcrew.agent.HealthCheckResponse
-	10, // 20: clawcrew.agent.SystemGateway.ExecuteNativeTool:output_type -> clawcrew.agent.ToolCallResponse
-	12, // 21: clawcrew.agent.SystemGateway.GetDecryptedSecret:output_type -> clawcrew.agent.SecretResponse
-	14, // 22: clawcrew.agent.SystemGateway.ExecuteTask:output_type -> clawcrew.agent.TaskExecutionResponse
-	18, // 23: clawcrew.agent.SystemGateway.ExecuteTurn:output_type -> clawcrew.agent.TurnToken
-	17, // [17:24] is the sub-list for method output_type
-	10, // [10:17] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	29, // 10: clawcrew.agent.StoreLearnedRuleRequest.scope:type_name -> clawcrew.agent.StoreLearnedRuleRequest.ScopeEntry
+	27, // 11: clawcrew.agent.RetrieveLearnedRulesResponse.rules:type_name -> clawcrew.agent.LearnedRule
+	30, // 12: clawcrew.agent.LearnedRule.scope:type_name -> clawcrew.agent.LearnedRule.ScopeEntry
+	4,  // 13: clawcrew.agent.AgentEngine.StartTurn:input_type -> clawcrew.agent.TurnRequest
+	6,  // 14: clawcrew.agent.AgentEngine.QuickQuery:input_type -> clawcrew.agent.QueryRequest
+	2,  // 15: clawcrew.agent.AgentEngine.HealthCheck:input_type -> clawcrew.agent.HealthCheckRequest
+	9,  // 16: clawcrew.agent.SystemGateway.ExecuteNativeTool:input_type -> clawcrew.agent.ToolCallRequest
+	11, // 17: clawcrew.agent.SystemGateway.GetDecryptedSecret:input_type -> clawcrew.agent.SecretRequest
+	13, // 18: clawcrew.agent.SystemGateway.ExecuteTask:input_type -> clawcrew.agent.TaskExecutionRequest
+	15, // 19: clawcrew.agent.SystemGateway.ExecuteTurn:input_type -> clawcrew.agent.ExecuteTurnRequest
+	23, // 20: clawcrew.agent.SystemGateway.StoreLearnedRule:input_type -> clawcrew.agent.StoreLearnedRuleRequest
+	25, // 21: clawcrew.agent.SystemGateway.RetrieveLearnedRules:input_type -> clawcrew.agent.RetrieveLearnedRulesRequest
+	5,  // 22: clawcrew.agent.AgentEngine.StartTurn:output_type -> clawcrew.agent.TurnResponse
+	7,  // 23: clawcrew.agent.AgentEngine.QuickQuery:output_type -> clawcrew.agent.QueryResponse
+	3,  // 24: clawcrew.agent.AgentEngine.HealthCheck:output_type -> clawcrew.agent.HealthCheckResponse
+	10, // 25: clawcrew.agent.SystemGateway.ExecuteNativeTool:output_type -> clawcrew.agent.ToolCallResponse
+	12, // 26: clawcrew.agent.SystemGateway.GetDecryptedSecret:output_type -> clawcrew.agent.SecretResponse
+	14, // 27: clawcrew.agent.SystemGateway.ExecuteTask:output_type -> clawcrew.agent.TaskExecutionResponse
+	18, // 28: clawcrew.agent.SystemGateway.ExecuteTurn:output_type -> clawcrew.agent.TurnToken
+	24, // 29: clawcrew.agent.SystemGateway.StoreLearnedRule:output_type -> clawcrew.agent.StoreLearnedRuleResponse
+	26, // 30: clawcrew.agent.SystemGateway.RetrieveLearnedRules:output_type -> clawcrew.agent.RetrieveLearnedRulesResponse
+	22, // [22:31] is the sub-list for method output_type
+	13, // [13:22] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
-func init() { file_agent_service_proto_init() }
-func file_agent_service_proto_init() {
-	if File_agent_service_proto != nil {
+func init() { file_proto_agent_service_proto_init() }
+func file_proto_agent_service_proto_init() {
+	if File_proto_agent_service_proto != nil {
 		return
 	}
-	file_agent_service_proto_msgTypes[7].OneofWrappers = []any{}
-	file_agent_service_proto_msgTypes[8].OneofWrappers = []any{}
-	file_agent_service_proto_msgTypes[13].OneofWrappers = []any{}
-	file_agent_service_proto_msgTypes[14].OneofWrappers = []any{}
-	file_agent_service_proto_msgTypes[16].OneofWrappers = []any{
+	file_proto_agent_service_proto_msgTypes[7].OneofWrappers = []any{}
+	file_proto_agent_service_proto_msgTypes[8].OneofWrappers = []any{}
+	file_proto_agent_service_proto_msgTypes[13].OneofWrappers = []any{}
+	file_proto_agent_service_proto_msgTypes[14].OneofWrappers = []any{}
+	file_proto_agent_service_proto_msgTypes[16].OneofWrappers = []any{
 		(*TurnToken_Token)(nil),
 		(*TurnToken_ToolCall)(nil),
 		(*TurnToken_Complete)(nil),
@@ -1666,18 +2025,18 @@ func file_agent_service_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_agent_service_proto_rawDesc), len(file_agent_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_agent_service_proto_rawDesc), len(file_proto_agent_service_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   22,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_agent_service_proto_goTypes,
-		DependencyIndexes: file_agent_service_proto_depIdxs,
-		EnumInfos:         file_agent_service_proto_enumTypes,
-		MessageInfos:      file_agent_service_proto_msgTypes,
+		GoTypes:           file_proto_agent_service_proto_goTypes,
+		DependencyIndexes: file_proto_agent_service_proto_depIdxs,
+		EnumInfos:         file_proto_agent_service_proto_enumTypes,
+		MessageInfos:      file_proto_agent_service_proto_msgTypes,
 	}.Build()
-	File_agent_service_proto = out.File
-	file_agent_service_proto_goTypes = nil
-	file_agent_service_proto_depIdxs = nil
+	File_proto_agent_service_proto = out.File
+	file_proto_agent_service_proto_goTypes = nil
+	file_proto_agent_service_proto_depIdxs = nil
 }

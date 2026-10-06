@@ -546,7 +546,14 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 
 > Tema sama dengan §A/§D di atas (jembatan Go-Rust untuk storage vektor/persisten) — BL-01 digabung ke sini karena pola arsitekturnya identik: Go pegang kebijakan, Rust pegang storage, gRPC `SystemGateway` sebagai jembatan.
 
-- [ ] **BL-01 (HIGH, bug fungsional nyata)** Jembatan gRPC: persist Lesson/Learning dari Go (`engine/src/memory/proposal.go`, "Learning by Consent" lifecycle lengkap) ke Rust vector store (`clawcrew-memory`) — saat ini `Approve()`/`Revert()` menulis ke `inMemoryVectorStore` Go yang hilang total saat restart proses. Scope: RPC baru `StoreLearnedRule`/`RetrieveLearnedRules` di proto `SystemGateway`, implementasi di `clawcrew-gateway/src/grpc_system_gateway.rs` (reuse `clawcrew-memory`, JANGAN tulis ulang vector-store). **Serialisasi: proto dulu, baru implementasi Go+Rust paralel.**
+- [x] **BL-01 (HIGH, bug fungsional nyata)** Jembatan gRPC: persist Lesson/Learning dari Go (`engine/src/memory/proposal.go`, "Learning by Consent" lifecycle lengkap) ke Rust vector store (`clawcrew-memory`) — saat ini `Approve()`/`Revert()` menulis ke `inMemoryVectorStore` Go yang hilang total saat restart proses. Scope: RPC baru `StoreLearnedRule`/`RetrieveLearnedRules` di proto `SystemGateway`, implementasi di `clawcrew-gateway/src/grpc_system_gateway.rs` (reuse `clawcrew-memory`, JANGAN tulis ulang vector-store). **Serialisasi: proto dulu, baru implementasi Go+Rust paralel.**
+  *Status: SELESAI (100% test passing)*
+  *Bukti konkret:*
+  - `proto/agent_service.proto`: RPC `StoreLearnedRule` & `RetrieveLearnedRules` beserta message types `StoreLearnedRuleRequest/Response`, `RetrieveLearnedRulesRequest/Response`, `LearnedRule`.
+  - `engine/pkg/pb`: Go protobuf code regenerated (`agent_service.pb.go`, `agent_service_grpc.pb.go`).
+  - `crates/clawcrew-gateway/src/grpc_system_gateway.rs`: Implementasi `store_learned_rule` & `retrieve_learned_rules` memanfaatkan `clawcrew-memory` (SqliteMemory/Memory trait). Test `store_and_retrieve_learned_rules_persists_across_queries` lulus via `cargo nextest run -p clawcrew-gateway --lib grpc_system_gateway` (15/15 passed).
+  - `engine/pkg/client/system_gateway.go`: Implementasi client method `StoreLearnedRule` & `RetrieveLearnedRules`. Test client lulus (5/5 passed).
+  - `engine/src/memory/proposal.go`: `NewProposalStoreWithGateway` & `SyncFromGateway` menghubungkan lifecycle learning ke gRPC SystemGateway. Test `TestProposalStoreWithGateway` lulus (13/13 passed).
   #### Detail Eksekusi -- BL-01
   1. **File & simbol spesifik:**
      - `/proto/agent_service.proto` - ADD RPC service `SystemGateway` method
@@ -678,9 +685,9 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
      4. Implement Go side: call Rust via gRPC
      5. Test: `Approve()` writes to Rust store, survives restart
   6. **Acceptance criteria testable:**
-     - [ ] `ProposalStore.Approve()` writes to Rust `clawcrew-memory`
-     - [ ] Restart Go process → learned rules still exist
-     - [ ] `ProposalStore.Revert()` deletes from Rust store
+     - [x] `ProposalStore.Approve()` writes to Rust `clawcrew-memory`
+     - [x] Restart Go process → learned rules still exist
+     - [x] `ProposalStore.Revert()` deletes from Rust store
   7. **Dependency antar-tiket:** None (independen)
   8. **Edge case:** Concurrent approvals, scope collision, memory full
   9. **JANGAN DIUBAH:** Existing `inMemoryVectorStore` behavior - hanya ganti destination

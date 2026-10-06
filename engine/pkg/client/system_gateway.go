@@ -19,6 +19,8 @@ type SystemGatewayClient interface {
 	GetDecryptedSecret(ctx context.Context, keyName string) (string, error)
 	ExecuteTask(ctx context.Context, taskID, taskData string) (string, error)
 	ExecuteTurn(ctx context.Context, req *pb.ExecuteTurnRequest) (pb.SystemGateway_ExecuteTurnClient, error)
+	StoreLearnedRule(ctx context.Context, rule string, scope map[string]string, reversible bool) (*pb.StoreLearnedRuleResponse, error)
+	RetrieveLearnedRules(ctx context.Context, scopeKey, scopeValue string) ([]*pb.LearnedRule, error)
 	Close() error
 }
 
@@ -163,6 +165,40 @@ func (c *systemGatewayClient) ExecuteTurn(ctx context.Context, req *pb.ExecuteTu
 	return stream, nil
 }
 
+func (c *systemGatewayClient) StoreLearnedRule(ctx context.Context, rule string, scope map[string]string, reversible bool) (*pb.StoreLearnedRuleResponse, error) {
+	client, err := c.getClient()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.StoreLearnedRule(ctx, &pb.StoreLearnedRuleRequest{
+		Rule:       rule,
+		Scope:      scope,
+		Reversible: reversible,
+	})
+	if err != nil {
+		return nil, appErrors.Wrap(err, appErrors.CodeInternal, "failed to store learned rule via Rust gateway", appErrors.LayerExternal)
+	}
+
+	return resp, nil
+}
+
+func (c *systemGatewayClient) RetrieveLearnedRules(ctx context.Context, scopeKey, scopeValue string) ([]*pb.LearnedRule, error) {
+	client, err := c.getClient()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.RetrieveLearnedRules(ctx, &pb.RetrieveLearnedRulesRequest{
+		ScopeKey:   scopeKey,
+		ScopeValue: scopeValue,
+	})
+	if err != nil {
+		return nil, appErrors.Wrap(err, appErrors.CodeInternal, "failed to retrieve learned rules via Rust gateway", appErrors.LayerExternal)
+	}
+
+	return resp.GetRules(), nil
+}
 
 func (c *systemGatewayClient) Close() error {
 	c.mu.Lock()

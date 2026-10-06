@@ -8,6 +8,7 @@ import (
 	"time"
 
 	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
+	"github.com/diezy-labs/claw-crew/engine/pkg/client"
 )
 
 // ProposalStatus is the consent lifecycle of a learned correction (F3-3).
@@ -52,6 +53,8 @@ type ProposalStore interface {
 	Get(ctx context.Context, id string) (*MemoryProposal, error)
 	// List returns proposals, optionally filtered by status ("" = all), newest first.
 	List(ctx context.Context, status ProposalStatus) ([]*MemoryProposal, error)
+	// SyncFromGateway loads persistent learned rules from Rust SystemGateway (BL-01).
+	SyncFromGateway(ctx context.Context) error
 }
 
 // revertableStore is the subset of VectorStore the proposal store needs. A store
@@ -64,14 +67,22 @@ type revertableStore interface {
 type proposalStore struct {
 	mu        sync.Mutex
 	vectors   VectorStore
+	gateway   client.SystemGatewayClient
 	proposals map[string]*MemoryProposal
 	seq       int
 }
 
 // NewProposalStore builds a consent-gated learning store over a VectorStore.
 func NewProposalStore(vectors VectorStore) ProposalStore {
+	return NewProposalStoreWithGateway(vectors, nil)
+}
+
+// NewProposalStoreWithGateway builds a consent-gated learning store backed by
+// a persistent Rust SystemGateway client (BL-01).
+func NewProposalStoreWithGateway(vectors VectorStore, gateway client.SystemGatewayClient) ProposalStore {
 	return &proposalStore{
 		vectors:   vectors,
+		gateway:   gateway,
 		proposals: make(map[string]*MemoryProposal),
 	}
 }
@@ -130,6 +141,13 @@ func (p *proposalStore) Approve(ctx context.Context, id string) (*MemoryProposal
 	}
 	if err := p.vectors.Store(ctx, doc); err != nil {
 		return nil, fmt.Errorf("approve: write learned rule: %w", err)
+	}
+
+	// BL-01: Persist to Rust SystemGateway via gRPC bridge
+	if p.gateway != nil {
+		if resp, err := p.gateway.StoreLearnedRule(ctx, prop.Rule, prop.Scope, prop.Reversible); err == nil && resp != nil && resp.Id != "" {
+			docID = resp.Id
+		}
 	}
 
 	now := time.Now()
@@ -211,6 +229,38 @@ func (p *proposalStore) List(ctx context.Context, status ProposalStatus) ([]*Mem
 		return out[i].ID > out[j].ID
 	})
 	return out, nil
+}
+
+func (p *proposalStore) SyncFromGateway(ctx context.Context) error {
+	if p.gateway == nil {
+		return nil
+	}
+
+	rules, err := p.gateway.RetrieveLearnedRules(ctx, "", "")
+	if err != nil {
+		return fmt.Errorf("sync from gateway: %w", err)
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	for _, r := range rules {
+		prop := &MemoryProposal{
+			ID:         r.Id,
+			Rule:       r.Rule,
+			Scope:      cloneScope(r.Scope),
+			Status:     ProposalApproved,
+			Version:    1,
+			Reversible: r.Reversible,
+			DocumentID: r.Id,
+			CreatedAt:  time.Now(),
+		}
+		if r.Reverted {
+			prop.Status = ProposalReverted
+		}
+		p.proposals[prop.ID] = prop
+	}
+	return nil
 }
 
 func cloneScope(s map[string]string) map[string]string {
