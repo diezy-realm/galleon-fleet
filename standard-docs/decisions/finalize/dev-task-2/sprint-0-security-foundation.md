@@ -31,7 +31,11 @@ depends_on: none (sudah bisa mulai sekarang)
   - **Restorasi:** `crates/clawcrew-gateway/src/lib.rs` (`verify_whatsapp_signature`, `optional_channel_routes`, `sop_webhook_routes`, handlers webhook channel), `crates/clawcrew-gateway/src/webhook_ingress.rs` (type fix, callsite pin update, 11 unit tests HMAC-SHA256, dan 5 integration tests Axum HTTP-level 401/404/200).
   - **Bukti Uji:** 19/19 tests lulus hijau (`cargo test -p clawcrew-gateway --features channel-whatsapp-cloud -- webhook_ingress`).
 - [ ] **BL-19 (P1, HIGH)** Sandbox MCP stdio child process — gap keamanan di jalur yang sudah dipakai produksi (nol sandboxing OS-level untuk proses stdio server, kontras dengan WASM plugin yang sangat ketat).
-- [ ] **BL-14 (P1, HIGH)** Terapkan `ContentSafety` ke jalur channel orchestrator biasa (non-SOP) — prompt-injection terbuka di semua channel saat ini, satu titik perbaikan menutup semua. **Catatan file-overlap:** menyentuh `clawcrew-channels/src/orchestrator/mod.rs` — file yang SAMA dengan BL-52 (Sprint 2). Serialkan: BL-14 (sprint ini) selesai dan merge dulu SEBELUM BL-52 mulai menyentuh file ini, supaya tidak dua crew menulis file sama secara paralel.
+- [x] **BL-14 (P1, HIGH)** Terapkan `ContentSafety` ke jalur channel orchestrator biasa (non-SOP) — prompt-injection terbuka di semua channel saat ini, satu titik perbaikan menutup semua. **Catatan file-overlap:** menyentuh `clawcrew-channels/src/orchestrator/mod.rs` — file yang SAMA dengan BL-52 (Sprint 2). Serialkan: BL-14 (sprint ini) selesai dan merge dulu SEBELUM BL-52 mulai menyentuh file ini, supaya tidak dua crew menulis file sama secara paralel.
+  - **Status Selesai:** Selesai diterapkan & diverifikasi 100% lulus test.
+  - **Solusi Arsitektur:** Mengekstrak `ContentSafety` & `PromptGuard` ke crate `galleon-security-scrub` (menghormati invariant R-04 bahwa channel crates tidak boleh depend ke `clawcrew-runtime`).
+  - **Implementasi:** Di `crates/clawcrew-channels/src/orchestrator/mod.rs:8757`, seluruh pesan inbound dari semua channel disaring melalui `content_safety.screen_content(&msg.content)`. Zero-width, control tokens (`<|im_start|>`), dan homoglyphs dinetralkan; injection dengan mode Block ditolak dini dan direply notice peringatan aman.
+  - **Bukti Uji:** 58/58 tests di `galleon-security-scrub` lulus, 4/4 tests `content_safety` di `clawcrew-channels` lulus (`test result: ok. 4 passed`). Invariant `dependency_direction` R-04 tetap utuh.
 
 ## File Ownership & Serialization
 

@@ -8753,6 +8753,50 @@ async fn process_channel_message_body(
             .await;
     }
 
+    // ── Content Safety (BL-14): Screen and sanitize untrusted channel content ──
+    let content_safety = galleon_security_scrub::ContentSafety::from_sop_config(&ctx.prompt_config.sop);
+    let (sanitized_content, safety_outcome) = content_safety.screen_content(&msg.content);
+
+    match safety_outcome {
+        galleon_security_scrub::ScanOutcome::Blocked { reason } => {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    .with_attrs(::serde_json::json!({
+                        "channel": msg.channel,
+                        "sender": msg.sender,
+                        "reason": reason,
+                    })),
+                "inbound channel message rejected by ContentSafety guard"
+            );
+            if let Some(channel) = target_channel.as_ref() {
+                let rejection_notice = "⚠️ Message refused: unsafe content or potential prompt injection detected.";
+                let _ = channel
+                    .send(&SendMessage::reply_to(&msg, rejection_notice).suppress_voice())
+                    .await;
+            }
+            return;
+        }
+        galleon_security_scrub::ScanOutcome::Suspicious { patterns, score } => {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    .with_attrs(::serde_json::json!({
+                        "channel": msg.channel,
+                        "sender": msg.sender,
+                        "patterns": patterns,
+                        "score": score,
+                    })),
+                "inbound channel message flagged suspicious by ContentSafety guard"
+            );
+            msg.content = sanitized_content;
+        }
+        galleon_security_scrub::ScanOutcome::Safe => {
+            msg.content = sanitized_content;
+        }
+    }
+
     let history_key = runtime_conversation_history_key(ctx.as_ref(), &msg);
     stamp_session_routing_context(ctx.as_ref(), &msg, &history_key);
     if msg.passive_context {
