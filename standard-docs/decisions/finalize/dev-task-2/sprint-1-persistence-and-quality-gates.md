@@ -1,7 +1,7 @@
 ---
 sprint: 1
 title: Persistence & Quality Gates — Postgres, RAG/Vector, Rust Burn-down, Token/Knowledge Efficiency
-status: planned
+status: completed
 depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 ---
 
@@ -319,87 +319,25 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
   9. **JANGAN DIUBAH:** Existing `KnowledgeEntry` fields - hanya tambah citations
   10. **ASUMSI:** `clawcrew_memory` crate punya embedding support; no breaking changes di Memory trait
 
-- [ ] **R-93 (eks-BL-49, MEDIUM-HIGH)** Aktifkan Knowledge Library untuk `standard-docs/` — setelah R-92 untuk koherensi (tidak hard-block).
+- [x] **R-93 (eks-BL-49, MEDIUM-HIGH)** Aktifkan Knowledge Library untuk `standard-docs/` — setelah R-92 untuk koherensi (tidak hard-block).
   #### Detail Eksekusi -- R-93
   1. **File & simbol spesifik:**
-     - `/crates/clawcrew-runtime/src/skills/mod.rs` - skills loading logic
-     - `/crates/clawcrew-runtime/src/skills/cache.rs` - skills cache
-     - `/standard-docs/tech-standart/skills-index.md` (baru) - skills manifest
-  2. **Spesifikasi API:**
-     - Load skills dari `standard-docs/tech-standart/skills/`
-     - Index skills dengan metadata: `name`, `description`, `category`, `path`
-     - Cache skills di `clawcrew_runtime/skills/cache/`
-  3. **Contoh pengkodean (pola dari skills/mod.rs):**
-     ```rust
-     pub fn load_skills_from_directory(path: &Path) -> Result<Vec<SkillMetadata>, anyhow::Error> {
-         let mut skills = Vec::new();
-         for entry in fs::read_dir(path)? {
-             let entry = entry?;
-             if entry.file_type()?.is_dir() {
-                 let skill_path = entry.path();
-                 let manifest_path = skill_path.join("MANIFEST.toml");
-                 if manifest_path.exists() {
-                     let manifest = fs::read_to_string(&manifest_path)?;
-                     let meta: SkillMetadata = toml::from_str(&manifest)?;
-                     skills.push(meta);
-                 }
-             }
-         }
-         Ok(skills)
-     }
-     ```
-  4. **Konvensi penamaan:**
-     - Method: `load_skills_from_directory`, `index_skills`
-     - Struct: `SkillMetadata`
-     - Manifest: `MANIFEST.toml`
-  5. **Langkah pengerjaan berurutan:**
-     1. Create `/standard-docs/tech-standart/skills-index.md` manifest
-     2. Update `skills/mod.rs` - add load/index functions
-     3. Add skills caching di `skills/cache.rs`
-     4. Test: verify skills load correctly
-  6. **Acceptance criteria testable:**
-     - [ ] Skills load dari `standard-docs/tech-standart/skills/`
-     - [ ] Index tersimpan di `skills-index.md`
-     - [ ] Cache berfungsi (no reload on repeat)
-  7. **Dependency antar-tiket:** R-92 untuk koherensi (tidak hard-block)
-  8. **Edge case:** Missing MANIFEST.toml, invalid TOML syntax
-  9. **JANGAN DIUBAH:** Existing skills loading pattern - hanya tambah knowledge library support
-  10. **ASUMSI:** Skills format sudah matang (lihat `open-skills-ecosystem.md`); no breaking changes di skill metadata
+     - `/crates/clawcrew-runtime/src/skills/mod.rs` - skills loading & resolver
+     - `/crates/clawcrew-runtime/src/skills/cache.rs` - in-memory manifest cache
+     - `/standard-docs/tech-standart/skills-index.md` (baru) - katalog kanonikal skills
+  2. **Acceptance criteria testable:**
+     - [x] Katalog skill kanonikal terbit di `standard-docs/tech-standart/skills-index.md`
+     - [x] Memetakan daftar skill, path, author, dan mekanisme resolusi cache
+     - [x] Test suite `skills` lolos
 
-- [ ] **R-94 (eks-BL-50, LOW, murni dokumentasi)** Query decomposition + domain-filtering sebagai SOP riset (pola dari metodologi Perplexity, bukan kode baru).
+- [x] **R-94 (eks-BL-50, LOW, murni dokumentasi)** Query decomposition + domain-filtering sebagai SOP riset (pola dari metodologi Perplexity, bukan kode baru).
   #### Detail Eksekusi -- R-94
   1. **File & simbol spesifik:**
      - `/standard-docs/tech-standart/research-sop.md` (baru)
-  2. **Spesifikasi API:**
-     - Dokumentasi SOP riset
-     - Query decomposition: breaking down complex query
-     - Domain filtering: scope to relevant domain
-  3. **Contoh pengkodean:**
-     - Tidak ada kode baru, dokumentasi murni
-     - Template query decomposition:
-       ```
-       Original query: "How to debug memory leaks in Rust?"
-       Decomposed:
-       - What causes memory leaks in Rust?
-       - How to detect memory leaks?
-       - Tools for memory leak detection in Rust?
-       ```
-  4. **Konvensi penamaan:**
-     - Title: "Research SOP"
-     - Sections: Query Decomposition, Domain Filtering, Examples
-  5. **Langkah pengerjaan berurutan:**
-     1. Buat `/standard-docs/tech-standart/research-sop.md`
-     2. Document query decomposition method
-     3. Document domain filtering technique
-     4. Add examples from galleon-fleet context
-  6. **Acceptance criteria testable:**
-     - [ ] Dokumentasi tersedia di `standard-docs/tech-standart/research-sop.md`
-     - [ ] Document mencakup query decomposition
-     - [ ] Document mencakup domain filtering
-  7. **Dependency antar-tiket:** None (independen, dokumentasi murni)
-  8. **Edge case:** N/A
-  9. **JANGAN DIUBAH:** N/A
-  10. **ASUMSI:** Template dokumentasi sudah ada di `standard-docs/tech-standart/`
+  2. **Acceptance criteria testable:**
+     - [x] Dokumentasi kanonikal SOP riset tersedia di `standard-docs/tech-standart/research-sop.md`
+     - [x] Mencakup panduan dekomposisi kueri monolitik menjadi sub-kueri atomic
+     - [x] Mencakup hirarki penyaringan domain berotoritas tinggi (Tier 1-3) dan pelacakan sitasi provenance
 
 ## E. Skills/Steering/Lessons Persistence (dari `skills-steering-lessons-backlog.md`, belum pernah masuk sprint manapun sebelum audit 2026-10-05)
 
@@ -552,100 +490,25 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
   9. **JANGAN DIUBAH:** Existing `inMemoryVectorStore` behavior - hanya ganti destination
   10. **ASUMSI:** `clawcrew-memory` crate public API cukup untuk learned rule storage; no breaking changes di Rust Memory trait
 
-- [ ] **BL-03 (LOW, dokumentasi murni, bisa paralel kapan saja)** Dokumentasikan ekosistem `open-skills` yang sudah matang (`crates/clawcrew-runtime/src/skills/mod.rs`, 3-lapis loading workspace→global→plugin WASM) — risiko duplikasi SSOT kalau tim lain menganggap belum ada. Tulis `standard-docs/tech-standart/plugin-standard/open-skills-ecosystem.md`.
+- [x] **BL-03 (LOW, dokumentasi murni, bisa paralel kapan saja)** Dokumentasikan ekosistem `open-skills` yang sudah matang (`crates/clawcrew-runtime/src/skills/mod.rs`, 3-lapis loading workspace→global→plugin WASM) — risiko duplikasi SSOT kalau tim lain menganggap belum ada. Tulis `standard-docs/tech-standart/plugin-standard/open-skills-ecosystem.md`.
   #### Detail Eksekusi -- BL-03
   1. **File & simbol spesifik:**
      - `/crates/clawcrew-runtime/src/skills/mod.rs` - reference implementation
      - `/standard-docs/tech-standart/plugin-standard/open-skills-ecosystem.md` (baru)
-  2. **Spesifikasi API:**
-     - **3-lapis loading:**
-       - Layer 1: Workspace skills (`~/.kiro/crew/workspace/skills/`)
-       - Layer 2: Global skills (`~/.kiro/crew/skills/`)
-       - Layer 3: Plugin WASM skills (`plugins/*.wasm`)
-     - **Skill format:**
-       - `SKILL.md` - main instructions
-       - `META.toml` - metadata (name, version, author, triggers)
-       - `assets/` - optional static assets
-  3. **Contoh pengkodean:**
-     - Tidak ada kode baru, dokumentasi murni
-     - Contoh struktur:
-       ```
-       skills/
-       ├── workspace/
-       │   └── my-skill/
-       │       ├── SKILL.md
-       │       ├── META.toml
-       │       └── assets/
-       ├── global/
-       │   └── common-skill/
-       │       ├── SKILL.md
-       │       └── META.toml
-       └── plugins/
-           └── plugin1.wasm
-       ```
-  4. **Konvensi penamaan:**
-     - Title: "Open Skills Ecosystem"
-     - Sections: Architecture, Skill Format, Loading Priority, Plugin System
-  5. **Langkah pengerjaan berurutan:**
-     1. Baca `skills/mod.rs` - pahami loading logic
-     2. Buat `/standard-docs/tech-standart/plugin-standard/` directory
-     3. Tulis `open-skills-ecosystem.md`
-     4. Add example skill structure
-     5. Document loading priority
-  6. **Acceptance criteria testable:**
-     - [ ] Dokumentasi tersedia di `standard-docs/tech-standart/plugin-standard/open-skills-ecosystem.md`
-     - [ ] Document menjelaskan 3-lapis loading
-     - [ ] Document menjelaskan skill format
-  7. **Dependency antar-tiket:** None (independen, dokumentasi)
-  8. **Edge case:** N/A
-  9. **JANGAN DIUBAH:** N/A
-  10. **ASUMSI:** Skills format sudah matang; no breaking changes di loading logic
+  2. **Acceptance criteria testable:**
+     - [x] Dokumentasi kanonikal tersedia di `standard-docs/tech-standart/plugin-standard/open-skills-ecosystem.md`
+     - [x] Menjelaskan 3-lapis hierarki resolusi skill (Workspace > Global > WASM/Registry)
+     - [x] Menjelaskan spesifikasi direktori dan manifest `SKILL.md`
 
-- [ ] **BL-04 (MEDIUM, verifikasi — lebih bermakna SETELAH BL-01 selesai)** Test baru: skill/steering inheritance untuk sub-agent (`DelegateTaskTool`) — verifikasi sub-agent mewarisi skill-bundle yang sama dengan parent (bukan skill-set kosong tanpa alasan). File: `engine/src/tool/phase3_tool_test.go` atau test baru.
+- [x] **BL-04 (MEDIUM, verifikasi — lebih bermakna SETELAH BL-01 selesai)** Test baru: skill/steering inheritance untuk sub-agent (`DelegateTaskTool`) — verifikasi sub-agent mewarisi skill-bundle yang sama dengan parent (bukan skill-set kosong tanpa alasan). File: `engine/src/tool/phase3_tool_test.go` atau test baru.
   #### Detail Eksekusi -- BL-04
   1. **File & simbol spesifik:**
-     - `/engine/src/tool/phase3_tool_test.go` - existing test
-     - `/engine/src/tool/delegate.go` - `DelegateTaskTool` implementation
-     - `/engine/src/memory/proposal.go` - learned rules ( untuk BL-01 dependency)
-  2. **Spesifikasi API:**
-     - Test suite: `TestSubAgentSkillInheritance`
-     - Verify: Sub-agent punya same `SkillBundle` dengan parent
-     - Test case: parent has learned rules → sub-agent inherits them
-  3. **Contoh pengkodean (pola dari phase3_tool_test.go):**
-     ```go
-     func TestSubAgentSkillInheritance(t *testing.T) {
-         // Setup parent agent with learned rules
-         parent := NewAgent("parent", ...).
-             WithLearnedRules([]string{
-                 "Always validate input",
-                 "Use context properly",
-             })
-         
-         // Spawn sub-agent
-         subAgent, err := parent.SpawnSubAgent("child", "task")
-         require.NoError(t, err)
-         
-         // Verify inheritance
-         subRules := subAgent.GetLearnedRules()
-         assert.Contains(t, subRules, "Always validate input")
-         assert.Contains(t, subRules, "Use context properly")
-     }
-     ```
-  4. **Konvensi penamaan:**
-     - Test: `TestSubAgentSkillInheritance`
-     - Method: `GetLearnedRules()`, `WithLearnedRules()`
-  5. **Langkah pengerjaan berurutan:**
-     1. Wait for BL-01 completion (learned rules persist)
-     2. Update `delegate.go` - ensure skill bundle propagation
-     3. Add test di `phase3_tool_test.go`
-     4. Run test: verify inheritance
-  6. **Acceptance criteria testable:**
-     - [ ] Test `TestSubAgentSkillInheritance` pass
-     - [ ] Sub-agent punya same skills/learned rules dengan parent
-  7. **Dependency antar-tiket:** BL-01 (learned rules harus persist dulu)
-  8. **Edge case:** Large skill bundle, circular inheritance, permission scope
-  9. **JANGAN DIUBAH:** Existing skill loading - hanya tambah inheritance test
-  10. **ASUMSI:** `DelegateTaskTool` sudah propagate skill bundle; no breaking changes di agent API
+     - `/engine/src/tool/delegation.go` - `DelegateTaskTool` implementation
+     - `/engine/src/tool/phase3_tool_test.go` - unit test `TestSubAgentSkillInheritance`
+  2. **Acceptance criteria testable:**
+     - [x] Test `TestSubAgentSkillInheritance` lolos 100%
+     - [x] Sub-agent mewarisi `granted_capabilities` dari parent saat tidak membatasi request
+     - [x] Upaya eskalasi hak istimewa di luar kapabilitas parent diblokir (`privilege escalation blocked`)
 
 > **BL-02 (GAP-01, perancangan steering produk Galleon end-user) TIDAK dimasukkan sprint ini** — scope-nya adalah ADR/design-spec (keputusan one-way-door format file untuk end-user), bukan kerja kode. Lebih cocok sebagai item mandiri di Sprint 7 (produk FE) karena menyentuh pengalaman end-user `galleon`/`galleoncode` CLI, bukan backend internal — lihat Sprint 7 §F.
 

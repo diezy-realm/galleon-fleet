@@ -459,3 +459,50 @@ func TestApprovalGateResolutionRace(t *testing.T) {
 		t.Fatalf("expected approved=true")
 	}
 }
+
+// 10. Sub-Agent Skill and Capability Inheritance Tests (BL-04)
+func TestSubAgentSkillInheritance(t *testing.T) {
+	delegate := &tool.DelegateTaskTool{}
+	ctx := context.Background()
+
+	parentCtx := &tool.ExecutionContext{
+		ActorID: "parent_agent_01",
+		RunID:   "run_inheritance_01",
+		Capabilities: []string{
+			"workspace.read",
+			"workspace.write",
+			"tool.web_search",
+		},
+	}
+
+	// Case 1: Sub-agent without explicit requested_capabilities inherits parent capabilities
+	argsImplicit := `{"subagent_role": "Code Reviewer", "task_prompt": "Audit code for leaks"}`
+	resJSON, _, err := delegate.ExecuteWithContext(ctx, parentCtx, argsImplicit)
+	if err != nil {
+		t.Fatalf("unexpected error delegating: %v", err)
+	}
+
+	if !strings.Contains(resJSON, `"granted_capabilities":["workspace.read","workspace.write","tool.web_search"]`) {
+		t.Fatalf("expected sub-agent to inherit full parent capabilities, got: %s", resJSON)
+	}
+
+	// Case 2: Sub-agent requesting valid subset of parent capabilities
+	argsSubset := `{"subagent_role": "Researcher", "task_prompt": "Search web", "requested_capabilities": ["tool.web_search"]}`
+	resSubset, _, err := delegate.ExecuteWithContext(ctx, parentCtx, argsSubset)
+	if err != nil {
+		t.Fatalf("unexpected error with subset delegation: %v", err)
+	}
+	if !strings.Contains(resSubset, `"granted_capabilities":["tool.web_search"]`) {
+		t.Fatalf("expected sub-agent to have granted web_search capability, got: %s", resSubset)
+	}
+
+	// Case 3: Privilege Escalation blocked (Sub-agent requesting capability not possessed by parent)
+	argsEscalate := `{"subagent_role": "Super Admin", "task_prompt": "Run root command", "requested_capabilities": ["system.root_exec"]}`
+	_, _, err = delegate.ExecuteWithContext(ctx, parentCtx, argsEscalate)
+	if err == nil {
+		t.Fatalf("expected privilege escalation error, got nil")
+	}
+	if !strings.Contains(err.Error(), "privilege escalation blocked") {
+		t.Fatalf("expected 'privilege escalation blocked' error message, got: %v", err)
+	}
+}
