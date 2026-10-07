@@ -1055,7 +1055,10 @@ enum InboundSlot {
     Ready(InboundTurn),
     Debounced {
         turn: InboundTurn,
-        content: tokio::sync::oneshot::Receiver<String>,
+        content: tokio::sync::oneshot::Receiver<(
+            String,
+            Vec<clawcrew_api::media::MediaAttachment>,
+        )>,
     },
 }
 
@@ -1658,8 +1661,9 @@ async fn route_inbound_slot(
     let InboundTurn { mut turn, order } = match slot {
         InboundSlot::Ready(turn) => turn,
         InboundSlot::Debounced { mut turn, content } => match content.await {
-            Ok(combined) => {
+            Ok((combined, attachments)) => {
                 turn.turn.msg.content = combined;
+                turn.turn.msg.attachments = attachments;
                 turn
             }
             Err(_) => return,
@@ -1742,6 +1746,7 @@ fn spawn_inbound_routing(
 type DebounceBucketExtension = (
     tokio::sync::oneshot::Receiver<String>,
     tokio::sync::OwnedSemaphorePermit,
+    Vec<clawcrew_api::media::MediaAttachment>,
 );
 
 /// Retire the open debounce bucket a cancelled turn owns.
@@ -1774,8 +1779,9 @@ async fn retire_owned_bucket(
 
 fn spawn_debounce_forwarder(
     first: tokio::sync::oneshot::Receiver<String>,
+    first_attachments: Vec<clawcrew_api::media::MediaAttachment>,
 ) -> (
-    tokio::sync::oneshot::Receiver<String>,
+    tokio::sync::oneshot::Receiver<(String, Vec<clawcrew_api::media::MediaAttachment>)>,
     tokio::sync::mpsc::UnboundedSender<DebounceBucketExtension>,
 ) {
     let (slot_tx, slot_rx) = tokio::sync::oneshot::channel();
@@ -1790,16 +1796,18 @@ fn spawn_debounce_forwarder(
         // aggregate budget just like queued and active turns, and a sustained
         // flood is refused at receive time instead of growing the bucket.
         let mut extension_permits = Vec::new();
+        let mut accumulated_attachments = first_attachments;
         loop {
             match pending.await {
                 Ok(combined) => {
-                    let _ = slot_tx.send(combined);
+                    let _ = slot_tx.send((combined, accumulated_attachments));
                     drop(extension_permits);
                     return;
                 }
                 Err(_) => match updates_rx.recv().await {
-                    Some((next, permit)) => {
+                    Some((next, permit, mut ext_attachments)) => {
                         extension_permits.push(permit);
+                        accumulated_attachments.append(&mut ext_attachments);
                         pending = next;
                     }
                     // No replacement is coming: the dispatch loop dropped the
@@ -11359,6 +11367,7 @@ async fn run_message_dispatch_loop(
                 &ctx.prompt_config.channels.telegram,
             );
 
+            let mut msg = msg;
             match ctx
                 .debouncer
                 .debounce_with_window(&debounce_key, &msg.content, debounce_window)
@@ -11378,33 +11387,36 @@ async fn run_message_dispatch_loop(
                     // liveness would race the window expiry, and a receiver
                     // sent to a forwarder whose bucket just fired would be
                     // dropped unread — silently losing the new message.
-                    let (rx, pending_work) = match debounce_buckets.get(&debounce_key) {
-                        Some(bucket) if extended => match bucket.send((rx, pending_work)) {
-                            Ok(()) => continue,
-                            // An extended bucket always has a live forwarder
-                            // (it can only retire after consuming the bucket's
-                            // final receiver). If the invariant ever breaks,
-                            // reserving a fresh slot loses ordering but never
-                            // the message.
-                            Err(returned) => {
-                                ::clawcrew_log::record!(
-                                    WARN,
-                                    ::clawcrew_log::Event::new(
-                                        module_path!(),
-                                        ::clawcrew_log::Action::Note
-                                    )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                                    .with_attrs(::serde_json::json!({"debounce": debounce_key})),
-                                    "debounce forwarder retired before its bucket was delivered"
-                                );
-                                debounce_buckets.remove(&debounce_key);
-                                returned.0
+                    let (rx, pending_work, first_attachments) = match debounce_buckets.get(&debounce_key) {
+                        Some(bucket) if extended => {
+                            let attachments = std::mem::take(&mut msg.attachments);
+                            match bucket.send((rx, pending_work, attachments)) {
+                                Ok(()) => continue,
+                                // An extended bucket always has a live forwarder
+                                // (it can only retire after consuming the bucket's
+                                // final receiver). If the invariant ever breaks,
+                                // reserving a fresh slot loses ordering but never
+                                // the message.
+                                Err(returned) => {
+                                    ::clawcrew_log::record!(
+                                        WARN,
+                                        ::clawcrew_log::Event::new(
+                                            module_path!(),
+                                            ::clawcrew_log::Action::Note
+                                        )
+                                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                        .with_attrs(::serde_json::json!({"debounce": debounce_key})),
+                                        "debounce forwarder retired before its bucket was delivered"
+                                    );
+                                    debounce_buckets.remove(&debounce_key);
+                                    returned.0
+                                }
                             }
-                        },
-                        _ => (rx, pending_work),
+                        }
+                        _ => (rx, pending_work, std::mem::take(&mut msg.attachments)),
                     };
 
-                    let (content, bucket) = spawn_debounce_forwarder(rx);
+                    let (content, bucket) = spawn_debounce_forwarder(rx, first_attachments);
                     debounce_buckets.retain(|_, open| !open.is_closed());
                     debounce_bucket_owners.retain(|key, _| debounce_buckets.contains_key(key));
                     debounce_buckets.insert(debounce_key.clone(), bucket);

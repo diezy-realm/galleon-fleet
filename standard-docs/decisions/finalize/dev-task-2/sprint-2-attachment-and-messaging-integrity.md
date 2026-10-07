@@ -11,7 +11,7 @@ depends_on: Sprint 0 §C (BL-14 harus merge dulu — file overlap orchestrator/m
 
 ## A. Bug Data-Loss (PRIORITASKAN — P0, mempengaruhi semua channel messaging hari ini)
 
-- [ ] **BL-52 (P0 — bug data-loss nyata, PRIORITASKAN di atas semua item lain sprint ini)** Perbaiki bug attachment hilang di `MessageDebouncer`. **Masalah terverifikasi sampai baris kode:** saat pesan rapid digabung, hanya `turn` PERTAMA yang dipertahankan strukturnya (komentar kode sendiri: *"the combined turn keeps the place of the sender's first message"*), attachment dari pesan ke-2/3/dst HILANG diam-diam — hanya teksnya yang ikut digabung. File: `crates/clawcrew-infra/src/debounce.rs`, `crates/clawcrew-channels/src/orchestrator/mod.rs:1370-1372` (titik overwrite `turn.turn.msg.content = combined`).
+- [x] **BL-52 (P0 — bug data-loss nyata, PRIORITASKAN di atas semua item lain sprint ini)** Perbaiki bug attachment hilang di `MessageDebouncer`. **Masalah terverifikasi sampai baris kode:** saat pesan rapid digabung, hanya `turn` PERTAMA yang dipertahankan strukturnya (komentar kode sendiri: *"the combined turn keeps the place of the sender's first message"*), attachment dari pesan ke-2/3/dst HILANG diam-diam — hanya teksnya yang ikut digabung. File: `crates/clawcrew-infra/src/debounce.rs`, `crates/clawcrew-channels/src/orchestrator/mod.rs:1370-1372` (titik overwrite `turn.turn.msg.content = combined`). Status: COMPLETED (`debounced_messages_preserve_all_attachments` passed).
 
 #### Detail Eksekusi — BL-52
 
