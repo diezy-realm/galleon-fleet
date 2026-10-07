@@ -1649,6 +1649,36 @@ fn send_conversation_busy(
     }
 }
 
+/// Layer 2 hard limits on attachments per inbound turn (post-debounce aggregation).
+pub const MAX_ATTACHMENTS_PER_TURN: usize = 10;
+/// Total byte limit per turn across all attachments (default 50 MiB).
+pub const MAX_ATTACHMENT_BYTES_PER_TURN: u64 = 50 * 1024 * 1024;
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum AttachmentLimitError {
+    TooManyAttachments { count: usize, max: usize },
+    TooManyBytes { total_bytes: u64, max: u64 },
+}
+
+pub fn enforce_attachment_limits(
+    msg: &clawcrew_api::channel::ChannelMessage,
+) -> Result<(), AttachmentLimitError> {
+    if msg.attachments.len() > MAX_ATTACHMENTS_PER_TURN {
+        return Err(AttachmentLimitError::TooManyAttachments {
+            count: msg.attachments.len(),
+            max: MAX_ATTACHMENTS_PER_TURN,
+        });
+    }
+    let total_bytes: u64 = msg.attachments.iter().map(|a| a.byte_size()).sum();
+    if total_bytes > MAX_ATTACHMENT_BYTES_PER_TURN {
+        return Err(AttachmentLimitError::TooManyBytes {
+            total_bytes,
+            max: MAX_ATTACHMENT_BYTES_PER_TURN,
+        });
+    }
+    Ok(())
+}
+
 /// Resolve debounce content and the modifying inbound hook concurrently, then
 /// commit final lane admission in receive order within the source
 /// conversation; cross-source convergence order follows hook completion.
@@ -1675,6 +1705,27 @@ async fn route_inbound_slot(
         .as_ref()
         .is_some_and(|registration| registration.cancellation.is_cancelled())
     {
+        return;
+    }
+
+    if let Err(err) = enforce_attachment_limits(&turn.msg) {
+        ::clawcrew_log::record!(
+            WARN,
+            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                .with_attrs(::serde_json::json!({
+                    "reason": format!("{err:?}"),
+                    "attachments_count": turn.msg.attachments.len(),
+                })),
+            "attachment limit exceeded in inbound turn"
+        );
+        send_conversation_busy(
+            &turn.ctx,
+            &turn.msg,
+            "attachment_limit_exceeded",
+            &busy_notice_budget,
+            &busy_notice_tasks,
+        );
+        order.finish();
         return;
     }
 

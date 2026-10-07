@@ -17301,6 +17301,110 @@ BTC is currently around $65,000 based on latest tool output."#
         assert!(captured[0].content.contains("text 2"));
     }
 
+    /// Acceptance criteria test for BL-55:
+    /// Combined debounced attachments that exceed the 10-attachment limit must
+    /// be rejected at Layer 2 (Core aggregation), preventing users from bypassing
+    /// the Front App per-message limit by sending multiple rapid messages.
+    #[tokio::test]
+    async fn debounced_bucket_rejects_when_combined_attachments_exceed_cap() {
+        let channel_impl = Arc::new(TelegramRecordingChannel::default());
+        let channel: Arc<dyn Channel> = channel_impl.clone();
+        let prompt_config = clawcrew_config::schema::Config {
+            channels: clawcrew_config::schema::ChannelsConfig {
+                debounce_ms: 80,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let captured_messages = Arc::new(Mutex::new(Vec::new()));
+        let turn_runner = Arc::new(AttachmentRecordingTurnRunner {
+            captured_messages: captured_messages.clone(),
+        });
+        let ctx = test_runtime_ctx_with_turn_runner(
+            channel,
+            Arc::new(SlowModelProvider {
+                delay: Duration::from_millis(20),
+            }),
+            prompt_config,
+            turn_runner,
+        );
+
+        // 5 messages, each with 3 attachments = 15 total (each individual message <= 10).
+        let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(16);
+        let send_task = clawcrew_spawn::spawn!(async move {
+            for i in 0..5 {
+                let mut msg = shared_topic_message("alice", &format!("m{i}"), &format!("part {i}"));
+                msg.attachments = (0..3)
+                    .map(|j| clawcrew_api::media::MediaAttachment {
+                        file_name: format!("file_{i}_{j}.png"),
+                        data: vec![1, 2, 3],
+                        mime_type: Some("image/png".to_string()),
+                        marker: None,
+                    })
+                    .collect();
+                tx.send(msg).await.unwrap();
+                tokio::time::sleep(Duration::from_millis(5)).await;
+            }
+        });
+
+        run_message_dispatch_loop(rx, AgentRouter::single(Arc::clone(&ctx)), 4).await;
+        send_task.await.unwrap();
+
+        let captured = captured_messages.lock().unwrap();
+        assert_eq!(
+            captured.len(),
+            0,
+            "turn must be rejected at Layer 2 when total combined attachments (15) exceed cap of 10"
+        );
+    }
+
+    #[test]
+    fn enforce_attachment_limits_validates_count_and_bytes() {
+        let mut msg = shared_topic_message("alice", "m1", "test");
+        // Empty is valid
+        assert!(enforce_attachment_limits(&msg).is_ok());
+
+        // 10 attachments is valid
+        msg.attachments = (0..10)
+            .map(|i| clawcrew_api::media::MediaAttachment {
+                file_name: format!("f{i}.txt"),
+                data: vec![0; 10],
+                mime_type: Some("text/plain".to_string()),
+                marker: None,
+            })
+            .collect();
+        assert!(enforce_attachment_limits(&msg).is_ok());
+
+        // 11 attachments exceeds count
+        msg.attachments.push(clawcrew_api::media::MediaAttachment {
+            file_name: "f11.txt".to_string(),
+            data: vec![0; 10],
+            mime_type: Some("text/plain".to_string()),
+            marker: None,
+        });
+        assert_eq!(
+            enforce_attachment_limits(&msg),
+            Err(AttachmentLimitError::TooManyAttachments { count: 11, max: 10 })
+        );
+
+        // Reset to 1 attachment with bytes over 50MB
+        let over_limit = (MAX_ATTACHMENT_BYTES_PER_TURN + 1) as usize;
+        let mut large_msg = shared_topic_message("alice", "m2", "large");
+        large_msg.attachments = vec![clawcrew_api::media::MediaAttachment {
+            file_name: "big.bin".to_string(),
+            data: vec![0; over_limit],
+            mime_type: None,
+            marker: None,
+        }];
+        assert_eq!(
+            enforce_attachment_limits(&large_msg),
+            Err(AttachmentLimitError::TooManyBytes {
+                total_bytes: over_limit as u64,
+                max: MAX_ATTACHMENT_BYTES_PER_TURN,
+            })
+        );
+    }
+
     /// `/stop` closes the sender's open debounce bucket. A message received
     /// inside the cancelled bucket's original window must open a new bucket,
     /// run normally, and contain none of the cancelled text.

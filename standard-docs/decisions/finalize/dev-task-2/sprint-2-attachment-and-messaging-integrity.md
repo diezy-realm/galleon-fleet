@@ -140,7 +140,7 @@ pub enum MediaKind {
 
 **ASUMSI:** Angka "10" adalah hard-cap yang SUDAH diputuskan (bukan nilai yang perlu didesain ulang) — dokumen tidak menyebut dari mana angka ini berasal; kalau ini bisa dikonfigurasi per-tier (lihat `entitlement.QuotaPolicy`/ENT-01 Sprint 4), ini mungkin perlu field tambahan di sana — TAPI saya TIDAK merekomendasikan menambah ini ke ENT-01 tanpa keputusan eksplisit Owner (10 attachment per message sepertinya limit teknis/UX, bukan limit tier bisnis).
 
-- [ ] **BL-55 (MEDIUM, SETELAH BL-52 — hard dependency, bukan paralel)** Layer 2: Core count+bytes enforcement SETELAH agregasi debounce. Menutup celah user kirim banyak pesan rapid untuk mengakali total 10 per-pesan, plus resource-gate total BYTES per bucket (jawab kekhawatiran over-memory).
+- [x] **BL-55 (MEDIUM, SETELAH BL-52 — hard dependency, bukan paralel)** Layer 2: Core count+bytes enforcement SETELAH agregasi debounce. Menutup celah user kirim banyak pesan rapid untuk mengakali total 10 per-pesan, plus resource-gate total BYTES per bucket (jawab kekhawatiran over-memory). Status: COMPLETED (`debounced_bucket_rejects_when_combined_attachments_exceed_cap` & `enforce_attachment_limits_validates_count_and_bytes` passed).
 
 #### Detail Eksekusi — BL-55
 
