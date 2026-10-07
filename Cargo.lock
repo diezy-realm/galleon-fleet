@@ -1976,6 +1976,7 @@ dependencies = [
  "tracing-log",
  "tracing-subscriber",
  "uuid",
+ "windows",
 ]
 
 [[package]]

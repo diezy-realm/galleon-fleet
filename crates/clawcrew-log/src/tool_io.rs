@@ -232,12 +232,17 @@ mod tests {
 
     #[test]
     fn conversational_tool_io_defaults_to_off_while_technical_is_captured() {
-        let default_policy = ResolvedPolicy::from_config(&LogConfig::default(), std::path::Path::new("/"));
+        let default_policy =
+            ResolvedPolicy::from_config(&LogConfig::default(), std::path::Path::new("/"));
         // Technical tool like 'shell' or 'file_read' is Redacted (captured).
         assert!(capture_tool_input(&default_policy, "shell", "echo hello").is_some());
         // Conversational tool like 'send_message_to_peer' defaults to Off (omitted).
-        assert!(capture_tool_input(&default_policy, "send_message_to_peer", "private msg").is_none());
-        assert!(capture_tool_output(&default_policy, "send_message_to_peer", "peer reply").is_none());
+        assert!(
+            capture_tool_input(&default_policy, "send_message_to_peer", "private msg").is_none()
+        );
+        assert!(
+            capture_tool_output(&default_policy, "send_message_to_peer", "peer reply").is_none()
+        );
     }
 
     #[test]
