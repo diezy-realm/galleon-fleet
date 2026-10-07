@@ -34,7 +34,6 @@ pub mod sop_status;
 pub mod sop_workshop;
 pub mod spawn_subagent;
 pub mod todo_write;
-pub mod verifiable_intent;
 
 // Tool types from clawcrew-tools (direct imports, no shims)
 pub use clawcrew_tools::a2a_client::{
@@ -159,7 +158,6 @@ pub use sop_status::SopStatusTool;
 pub use sop_workshop::SopWorkshopTool;
 pub use spawn_subagent::SpawnSubagentTool;
 pub use todo_write::TodoWriteTool;
-pub use verifiable_intent::VerifiableIntentTool;
 
 /// Re-entrant agent-spawning tools that must never be collapsed by the
 /// per-turn duplicate-call guard: launching several with the same prompt
@@ -5190,56 +5188,6 @@ permissions = ["http_client"]
         );
     }
 
-    /// `vi_verify` checked caller-supplied constraints against a caller-supplied
-    /// fulfillment with nothing establishing that either came from a signed
-    /// credential. Until a chain verifier exists the tool must not reach the model
-    /// even when an operator opts in.
-    #[test]
-    fn vi_verify_is_not_registered_even_when_verifiable_intent_is_enabled() {
-        let tmp = TempDir::new().unwrap();
-        let security = Arc::new(SecurityPolicy::default());
-        let mem_cfg = MemoryConfig {
-            backend: "markdown".into(),
-            ..MemoryConfig::default()
-        };
-        let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
-
-        let mut cfg = test_config(&tmp);
-        cfg.verifiable_intent.enabled = true;
-
-        let tools = all_tools(
-            Arc::new(cfg.clone()),
-            &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
-            "test-agent",
-            mem,
-            None,
-            None,
-            &BrowserConfig::default(),
-            &clawcrew_config::schema::HttpRequestConfig::default(),
-            &clawcrew_config::schema::WebFetchConfig::default(),
-            tmp.path(),
-            &HashMap::new(),
-            None,
-            &cfg,
-            None,
-            false,
-            None,
-        )
-        .expect("tool registry builds")
-        .tools;
-        let names: Vec<&str> = tools.iter().map(|t| t.name()).collect();
-
-        assert!(
-            !names.contains(&"vi_verify"),
-            "vi_verify must not be model-callable while no chain verifier exists"
-        );
-        assert!(
-            names.contains(&"shell"),
-            "positive control: the registry must still be populated"
-        );
-    }
 
     // ── Regression: alias-specific provider config ───────────────────
 

@@ -956,8 +956,6 @@ mod trust;
 mod tunnel;
 #[cfg(feature = "agent-runtime")]
 mod util;
-#[cfg(feature = "agent-runtime")]
-mod verifiable_intent;
 
 use config::Config;
 
