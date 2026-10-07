@@ -49,6 +49,14 @@ func (m *mockGatewayClient) ExecuteTurn(ctx context.Context, req *pb.ExecuteTurn
 	return nil, nil
 }
 
+func (m *mockGatewayClient) StoreLearnedRule(ctx context.Context, rule string, scope map[string]string, reversible bool) (*pb.StoreLearnedRuleResponse, error) {
+	return &pb.StoreLearnedRuleResponse{Success: true}, nil
+}
+
+func (m *mockGatewayClient) RetrieveLearnedRules(ctx context.Context, scopeKey, scopeValue string) ([]*pb.LearnedRule, error) {
+	return nil, nil
+}
+
 func (m *mockGatewayClient) Close() error {
 	return nil
 }
