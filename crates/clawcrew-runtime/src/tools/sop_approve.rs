@@ -138,6 +138,11 @@ impl Tool for SopApproveTool {
                         .to_string(),
                 ),
             }),
+            Ok(BrokerOutcome::Resolved(ResolveOutcome::RejectedConstraint(reason))) => Ok(ToolResult {
+                success: false,
+                output: ToolOutput::default(),
+                error: Some(format!("Approval rejected by SOP constraint: {reason}")),
+            }),
             Ok(BrokerOutcome::Resolved(ResolveOutcome::AlreadyResolved)) => Ok(ToolResult {
                 success: true,
                 output: format!("Run {run_id} was already resolved.").into(),

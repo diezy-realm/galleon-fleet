@@ -25,7 +25,7 @@ pub mod wire;
 
 pub use approval::ApprovalDecision;
 pub use audit::SopAuditLogger;
-pub use constraint::{ConstraintKind, SopConstraint};
+pub use constraint::{ConstraintKind, RoleRestrictionHook, SopConstraint};
 pub use dispatch::SopRuntimeDispatcher;
 #[allow(unused_imports)]
 pub use binding::{
