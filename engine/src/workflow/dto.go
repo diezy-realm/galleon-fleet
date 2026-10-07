@@ -2,13 +2,18 @@ package workflow
 
 // StepTemplate represents a single task definition within a workflow template
 type StepTemplate struct {
-	ID             string   `json:"id"`
-	Title          string   `json:"title"`
-	Description    string   `json:"description"`
-	AgentRole      string   `json:"agent_role"`
-	Dependencies   []string `json:"dependencies"`
-	PromptTemplate string   `json:"prompt_template"`
-	TimeoutSeconds int      `json:"timeout_seconds,omitempty"`
+	ID               string   `json:"id"`
+	Title            string   `json:"title"`
+	Description      string   `json:"description"`
+	AgentRole        string   `json:"agent_role"`
+	Dependencies     []string `json:"dependencies"`
+	PromptTemplate   string   `json:"prompt_template"`
+	TimeoutSeconds   int      `json:"timeout_seconds,omitempty"`
+	RequiresApproval bool     `json:"requires_approval,omitempty"`
+	Constraints      []string `json:"constraints,omitempty"`
+	Dos              []string `json:"dos,omitempty"`
+	Donts            []string `json:"donts,omitempty"`
+	RACI             string   `json:"raci,omitempty"`
 }
 
 // WorkflowTemplate represents an SOP or quickstart multi-step workflow definition
