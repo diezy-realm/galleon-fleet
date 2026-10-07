@@ -121,6 +121,31 @@ func NewToolDispatcher(gateway client.SystemGatewayClient) ToolDispatcher {
 			},
 		},
 		{
+			Name:        "delegate_task",
+			Description: "Delegates a sub-task to a specialized sub-agent with capability and depth ceilings",
+			Parameters: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"subagent_role": map[string]any{
+						"type":        "string",
+						"description": "Role/title of the sub-agent",
+					},
+					"task_prompt": map[string]any{
+						"type":        "string",
+						"description": "Specific task instructions for the sub-agent",
+					},
+					"requested_capabilities": map[string]any{
+						"type": "array",
+						"items": map[string]any{
+							"type": "string",
+						},
+						"description": "Subset of capabilities to grant",
+					},
+				},
+				"required": []string{"subagent_role", "task_prompt"},
+			},
+		},
+		{
 			Name:        "workspace.list_files",
 			Description: "Lists files inside the authorized workspace boundary with depth limiting",
 			Parameters: map[string]any{
@@ -212,11 +237,20 @@ func (d *toolDispatcher) Dispatch(ctx context.Context, call *ToolCall) (*ToolExe
 		slog.String("tool", call.Name),
 	)
 
-	// Check if this is an internal sub-agent spawn request
-	if call.Name == "spawn_subagent" {
+	// BL-05: Unified subagent delegation path (supporting both spawn_subagent and delegate_task)
+	if call.Name == "spawn_subagent" || call.Name == "delegate_task" {
 		var args subagentArgs
-		if err := json.Unmarshal([]byte(call.Arguments), &args); err != nil {
-			return nil, appErrors.Wrap(err, appErrors.CodeInvalidArgument, "invalid arguments for spawn_subagent", appErrors.LayerService)
+		if err := json.Unmarshal([]byte(call.Arguments), &args); err != nil || args.Role == "" || args.Task == "" {
+			var altArgs struct {
+				Role string `json:"subagent_role"`
+				Task string `json:"task_prompt"`
+			}
+			if err2 := json.Unmarshal([]byte(call.Arguments), &altArgs); err2 == nil && altArgs.Role != "" {
+				args.Role = altArgs.Role
+				args.Task = altArgs.Task
+			} else {
+				return nil, appErrors.Wrap(err, appErrors.CodeInvalidArgument, "invalid arguments for delegation: role and task are required", appErrors.LayerService)
+			}
 		}
 
 		subagentID := fmt.Sprintf("subagent_%s_%s", args.Role, call.ID)

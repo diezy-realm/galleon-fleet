@@ -19,20 +19,22 @@ import (
 
 	"github.com/diezy-realm/galleon-fleet/engine/pkg/client"
 	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
+	"github.com/diezy-realm/galleon-fleet/engine/src/entitlement"
 	"github.com/diezy-realm/galleon-fleet/engine/src/identity"
 )
 
 var safeFilenameRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
 
 type fleetService struct {
-	mu          sync.RWMutex
-	fleets      map[string]*Fleet
-	dataDir     string
-	gateway     client.SystemGatewayClient
-	diagnostics []DiagnosticItem
-	snapshots   []SnapshotItem
-	proposer    ObjectiveProposer
-	terminalAudit *TerminalAuditLedger
+	mu                 sync.RWMutex
+	fleets             map[string]*Fleet
+	dataDir            string
+	gateway            client.SystemGatewayClient
+	diagnostics        []DiagnosticItem
+	snapshots          []SnapshotItem
+	proposer           ObjectiveProposer
+	terminalAudit      *TerminalAuditLedger
+	entitlementService entitlement.Service
 }
 
 // ObjectiveProposer is the objective-branch dependency the Quartermaster router
@@ -101,12 +103,13 @@ func NewService(gateway client.SystemGatewayClient) Service {
 	}
 
 	return &fleetService{
-		fleets:        make(map[string]*Fleet),
-		dataDir:       dataDir,
-		gateway:       gateway,
-		diagnostics:   initialDiags,
-		snapshots:     initialSnaps,
-		terminalAudit: NewTerminalAuditLedger(1000),
+		fleets:             make(map[string]*Fleet),
+		dataDir:            dataDir,
+		gateway:            gateway,
+		diagnostics:        initialDiags,
+		snapshots:          initialSnaps,
+		terminalAudit:      NewTerminalAuditLedger(1000),
+		entitlementService: entitlement.NewService(),
 	}
 }
 
@@ -482,8 +485,38 @@ func (s *fleetService) SaveCollection(ctx context.Context, name string, rawJSON 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// BL-81 AC #5, #6, #7: Atomic quota guard check with grandfathering
+	if name == "ships" || name == "squads" || name == "crew" {
+		currentCount := s.countCollection(name)
+		var incomingList []any
+		if err := json.Unmarshal(rawJSON, &incomingList); err == nil {
+			newCount := len(incomingList)
+			if err := s.entitlementService.CheckQuota(name, currentCount, newCount); err != nil {
+				return err
+			}
+		}
+	}
+
 	path := s.getCollectionPath(name)
 	return os.WriteFile(path, rawJSON, 0644)
+}
+
+func (s *fleetService) SetEntitlementPolicy(p entitlement.QuotaPolicy) {
+	s.entitlementService.SetPolicy(p)
+}
+
+func (s *fleetService) GetEntitlementUsage(ctx context.Context) (*entitlement.UsageReport, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	counts := entitlement.Counts{
+		FleetsCount:       1,
+		ShipsCount:        s.countCollection("ships"),
+		SquadsCount:       s.countCollection("squads"),
+		CrewsCount:        s.countCollection("crew"),
+		ConcurrentVoyages: s.countBy("quests", "underway", "in_progress", "active"),
+	}
+	return s.entitlementService.GetUsage(ctx, counts), nil
 }
 
 // ChatQuartermaster is the Quartermaster's single door (docs/finalize/01). It runs

@@ -8,6 +8,7 @@ import (
 type Orchestrator interface {
 	StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<- *TurnEvent) error
 	CancelTurn(ctx context.Context, sessionID string) error
+	SetMaxSubagents(max int)
 }
 
 // Registry defines storage and retrieval for crew and agent definitions

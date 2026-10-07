@@ -70,7 +70,9 @@ func (h *HTTPHandler) RegisterHTTP(server *metrics.Server) {
 	server.RegisterRouteFunc("/api/engine/processes", h.handleEngineProcesses)
 	server.RegisterRouteFunc("/api/terminal/exec", h.handleTerminalExec)
 	server.RegisterRouteFunc("/api/terminal/audit", h.handleTerminalAudit)
+	server.RegisterRouteFunc("/api/v1/audit/trail", h.handleTerminalAudit)
 	server.RegisterRouteFunc("/api/engine/execute", h.handleTerminalExec)
+	server.RegisterRouteFunc("/api/v1/entitlement/usage", h.handleEntitlementUsage)
 
 	// BG-C2: Mount authorized device pairing endpoints (/api/pairing/*)
 	if h.pairingService != nil {
@@ -251,6 +253,19 @@ func (h *HTTPHandler) handleCollections(w http.ResponseWriter, r *http.Request) 
 	}
 
 	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (h *HTTPHandler) handleEntitlementUsage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	usage, err := h.service.GetEntitlementUsage(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, usage)
 }
 
 func (h *HTTPHandler) handleQuartermasterChat(w http.ResponseWriter, r *http.Request) {

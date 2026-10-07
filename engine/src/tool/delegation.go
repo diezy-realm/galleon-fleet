@@ -127,6 +127,17 @@ func (t *DelegateTaskTool) ExecuteWithContext(ctx context.Context, execCtx *Exec
 		return "", nil, appErrors.New(appErrors.CodeInvalidArgument, "subagent_role and task_prompt are required", appErrors.LayerService)
 	}
 
+	// BL-05: Delegation Depth Limit Enforcement (from QuotaPolicy / ExecutionContext)
+	if execCtx != nil && execCtx.MaxDelegationDepth != nil {
+		if execCtx.DelegationDepth >= *execCtx.MaxDelegationDepth {
+			return "", nil, appErrors.New(
+				appErrors.CodePermissionDenied,
+				fmt.Sprintf("delegation depth limit exceeded: current %d >= max %d", execCtx.DelegationDepth, *execCtx.MaxDelegationDepth),
+				appErrors.LayerService,
+			)
+		}
+	}
+
 	// Policy Ceiling Enforcement (Security Invariant):
 	// Child subagent cannot escalate permissions beyond parent crew permissions.
 	if execCtx != nil && len(execCtx.Capabilities) > 0 {

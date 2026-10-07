@@ -11,7 +11,16 @@ import (
 	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
+
+// withRequestIDMetadata propagates x-request-id from Go context to outgoing gRPC metadata for Rust tracing (BG-F5)
+func withRequestIDMetadata(ctx context.Context) context.Context {
+	if reqID, ok := ctx.Value("request_id").(string); ok && reqID != "" {
+		return metadata.AppendToOutgoingContext(ctx, "x-request-id", reqID)
+	}
+	return ctx
+}
 
 // SystemGatewayClient defines the interface for calling Rust platform operations
 type SystemGatewayClient interface {
@@ -95,6 +104,7 @@ func (c *systemGatewayClient) ExecuteNativeTool(ctx context.Context, toolName, a
 		return "", appErrors.Wrap(err, appErrors.CodeUnavailable, "Rust SystemGateway unreachable: native tool execution rejected (fail-closed boundary enforced)", appErrors.LayerExternal)
 	}
 
+	ctx = withRequestIDMetadata(ctx)
 	resp, err := client.ExecuteNativeTool(ctx, &pb.ToolCallRequest{
 		ToolName:      toolName,
 		ArgumentsJson: argumentsJSON,
@@ -116,6 +126,7 @@ func (c *systemGatewayClient) GetDecryptedSecret(ctx context.Context, keyName st
 		return "", err
 	}
 
+	ctx = withRequestIDMetadata(ctx)
 	resp, err := client.GetDecryptedSecret(ctx, &pb.SecretRequest{
 		KeyName: keyName,
 	})
@@ -136,6 +147,7 @@ func (c *systemGatewayClient) ExecuteTask(ctx context.Context, taskID, taskData 
 		return "", err
 	}
 
+	ctx = withRequestIDMetadata(ctx)
 	resp, err := client.ExecuteTask(ctx, &pb.TaskExecutionRequest{
 		TaskId:   taskID,
 		TaskData: taskData,
@@ -157,6 +169,7 @@ func (c *systemGatewayClient) ExecuteTurn(ctx context.Context, req *pb.ExecuteTu
 		return nil, err
 	}
 
+	ctx = withRequestIDMetadata(ctx)
 	stream, err := client.ExecuteTurn(ctx, req)
 	if err != nil {
 		return nil, appErrors.Wrap(err, appErrors.CodeInternal, "failed to start ExecuteTurn streaming via Rust gateway", appErrors.LayerExternal)
