@@ -21,6 +21,7 @@ import {
   ChevronDown,
   X,
   Play,
+  Plus,
   CheckCircle2,
   AlertTriangle,
   User,
@@ -49,6 +50,7 @@ export const AppSidebar: React.FC = () => {
 
   const [showAnchorModal, setShowAnchorModal] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
 
   const toggleSectionCollapse = (sectionTitle: string) => {
     setCollapsedSections((prev) => ({
@@ -187,6 +189,61 @@ export const AppSidebar: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* BL-69: Quick Action "+ New" Dropdown */}
+          {!isSidebarCollapsed && (
+            <div className="px-3 pt-3 pb-1 relative">
+              <button
+                type="button"
+                onClick={() => setIsNewMenuOpen((prev) => !prev)}
+                className="w-full py-2 px-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs flex items-center justify-between shadow-xs transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5">
+                  <Plus className="w-4 h-4" />
+                  <span>New Action</span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isNewMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isNewMenuOpen && (
+                <div className="absolute top-full left-3 right-3 mt-1 py-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xl z-30 divide-y divide-neutral-100 dark:divide-neutral-800 text-xs font-medium">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsNewMenuOpen(false);
+                      handleTabClick('quests');
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 flex items-center gap-2 text-neutral-800 dark:text-neutral-200"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-teal-500" />
+                    <span>New Quest</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsNewMenuOpen(false);
+                      handleTabClick('captains-journal');
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 flex items-center gap-2 text-neutral-800 dark:text-neutral-200"
+                  >
+                    <BookMarked className="w-3.5 h-3.5 text-teal-500" />
+                    <span>New Captain’s Journal</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsNewMenuOpen(false);
+                      handleTabClick('crew');
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 flex items-center gap-2 text-neutral-800 dark:text-neutral-200"
+                  >
+                    <Users className="w-3.5 h-3.5 text-teal-500" />
+                    <span>New Crew Specialist</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Navigation list (scrollbar hidden for clean visual) */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 space-y-4 scrollbar-none">

@@ -10756,6 +10756,7 @@ pub enum ProxyScope {
     Environment,
     /// Apply proxy to all ClawCrew-managed HTTP traffic (default).
     #[default]
+    #[serde(alias = "clawcrew")]
     Zeroclaw,
     /// Apply proxy only to explicitly listed service selectors.
     Services,
@@ -19091,6 +19092,13 @@ pub struct SecurityConfig {
     #[nested]
     pub estop: EstopConfig,
 
+    /// Payment-lockout gate configuration (BL-40).
+    /// Default state: locked. Agents cannot invoke payment-category tools
+    /// unless explicitly unlocked by the user.
+    #[serde(default)]
+    #[nested]
+    pub payment_lock: PaymentLockConfig,
+
     /// Nevis IAM integration for SSO/MFA authentication and role-based access.
     #[serde(default)]
     #[nested]
@@ -19319,6 +19327,91 @@ impl Default for EstopConfig {
         }
     }
 }
+
+/// Operational mode of the payment lockout gate (BL-40).
+#[derive(
+    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default, clawcrew_macros::ConfigEnum,
+)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+#[serde(rename_all = "snake_case")]
+pub enum PaymentLockMode {
+    /// Agent cannot invoke financial or payment capabilities under any circumstance.
+    #[default]
+    Locked,
+    /// Financial tools may execute if explicit conditions (scope, expiry) match.
+    Unlocked,
+}
+
+/// Classification of financial or payment operations covered by the lockout gate (BL-40).
+#[derive(
+    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, clawcrew_macros::ConfigEnum,
+)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+#[serde(rename_all = "snake_case")]
+pub enum PaymentActionCategory {
+    CardPayment,
+    BankTransfer,
+    CryptoTransaction,
+    WalletTopup,
+    SubscriptionCommit,
+}
+
+impl crate::traits::HasPropKind for Vec<PaymentActionCategory> {
+    const PROP_KIND: crate::traits::PropKind = crate::traits::PropKind::StringArray;
+}
+
+impl PaymentActionCategory {
+    pub fn all() -> Vec<Self> {
+        vec![
+            Self::CardPayment,
+            Self::BankTransfer,
+            Self::CryptoTransaction,
+            Self::WalletTopup,
+            Self::SubscriptionCommit,
+        ]
+    }
+}
+
+/// Preventive payment lockout configuration (BL-40).
+/// Enforces fail-closed: defaults to Locked, requiring conscious operator action to unlock.
+#[derive(Debug, Clone, Serialize, Deserialize, Configurable, PartialEq, Eq)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+#[prefix = "security.payment_lock"]
+pub struct PaymentLockConfig {
+    /// Master switch for the payment lock gate. Default: Locked.
+    #[serde(default)]
+    pub mode: PaymentLockMode,
+
+    /// Explicit scopes allowed when mode = Unlocked. An empty list keeps all scopes locked.
+    #[serde(default)]
+    pub unlocked_scopes: Vec<String>,
+
+    /// Require an authenticated operator action/OTP to unlock.
+    #[serde(default = "default_true")]
+    pub require_otp_to_unlock: bool,
+
+    /// UNIX timestamp when the unlock automatically expires.
+    /// When expired or null while locked, gate fails closed immediately.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub unlock_expires_at: Option<u64>,
+
+    /// Financial categories covered by this lock gate.
+    #[serde(default = "PaymentActionCategory::all")]
+    pub covered_categories: Vec<PaymentActionCategory>,
+}
+
+impl Default for PaymentLockConfig {
+    fn default() -> Self {
+        Self {
+            mode: PaymentLockMode::Locked,
+            unlocked_scopes: Vec::new(),
+            require_otp_to_unlock: true,
+            unlock_expires_at: None,
+            covered_categories: PaymentActionCategory::all(),
+        }
+    }
+}
+
 
 /// Nevis IAM integration configuration.
 ///

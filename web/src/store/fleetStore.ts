@@ -119,7 +119,7 @@ interface FleetState {
   createQuest: (quest: Partial<Quest>) => void;
   updateQuestStatus: (id: string, status: QuestStatus) => void;
   runQuestVoyage: (id: string) => void;
-  handleApproval: (id: string, decision: 'approved' | 'rejected') => void;
+  handleApproval: (id: string, decision: 'approved' | 'rejected', reason?: string) => Promise<void>;
   promoteArtifactToTreasure: (id: string) => void;
   saveArtifact: (artifact: Omit<Artifact, 'id' | 'createdAt'>) => void;
   addCrewMember: (crewData: Omit<CrewMember, 'id'>) => void;
@@ -692,9 +692,15 @@ export const useFleetStore = create<FleetState>((set, get) => ({
     });
   },
 
-  handleApproval: (id, decision) => {
+  handleApproval: async (id, decision, reason) => {
     const appr = get().approvals.find((a) => a.id === id);
     if (!appr) return;
+
+    try {
+      await apiClient.approveToolExecution(id, decision, reason);
+    } catch (err) {
+      console.warn(`[Approval] Backend tool execution call failed for ${id}:`, err);
+    }
 
     set((state) => {
       const nextApprovals = state.approvals.map((a) => (a.id === id ? { ...a, status: decision } : a));

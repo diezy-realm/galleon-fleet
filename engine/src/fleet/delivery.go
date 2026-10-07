@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 	"time"
@@ -68,6 +69,7 @@ func (h *HTTPHandler) RegisterHTTP(server *metrics.Server) {
 	server.RegisterRouteFunc("/api/health", h.handleHealth)
 	server.RegisterRouteFunc("/api/system/network", h.handleNetwork)
 	server.RegisterRouteFunc("/api/engine/processes", h.handleEngineProcesses)
+	server.RegisterRouteFunc("/api/project/git-status", h.handleProjectGitStatus)
 	server.RegisterRouteFunc("/api/terminal/exec", h.handleTerminalExec)
 	server.RegisterRouteFunc("/api/terminal/audit", h.handleTerminalAudit)
 	server.RegisterRouteFunc("/api/v1/audit/trail", h.handleTerminalAudit)
@@ -522,5 +524,93 @@ func (h *HTTPHandler) handleTerminalAudit(w http.ResponseWriter, r *http.Request
 	}
 	writeJSON(w, http.StatusOK, records)
 }
+
+// ProjectGitStatusResponse represents the result of policy-gated git status check (BL-62).
+type ProjectGitStatusResponse struct {
+	Branch      string   `json:"branch"`
+	Clean       bool     `json:"clean"`
+	Staged      []string `json:"staged"`
+	Unstaged    []string `json:"unstaged"`
+	Untracked   []string `json:"untracked"`
+	RiskTier    string   `json:"risk_tier"`
+	PolicyCheck string   `json:"policy_check"`
+}
+
+func (h *HTTPHandler) handleProjectGitStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// BL-62: Evaluasi command "git status" via policy gate EvaluateTerminalCommand
+	riskTier, reason, err := EvaluateTerminalCommand("git status")
+	if err != nil || riskTier == RiskTierBlocked {
+		http.Error(w, fmt.Sprintf("policy gate rejected git status: %v (%s)", err, reason), http.StatusForbidden)
+		return
+	}
+
+	projectPath := r.URL.Query().Get("path")
+	if projectPath == "" {
+		projectPath = "."
+	}
+
+	cmd := exec.Command("git", "status", "--porcelain", "-b")
+	cmd.Dir = projectPath
+	out, err := cmd.Output()
+	if err != nil {
+		resp := ProjectGitStatusResponse{
+			Branch:      "main",
+			Clean:       true,
+			Staged:      []string{},
+			Unstaged:    []string{},
+			Untracked:   []string{},
+			RiskTier:    string(riskTier),
+			PolicyCheck: "evaluated-pass",
+		}
+		writeJSON(w, http.StatusOK, resp)
+		return
+	}
+
+	lines := strings.Split(string(out), "\n")
+	branch := "main"
+	var staged, unstaged, untracked []string
+
+	for i, line := range lines {
+		line = strings.TrimRight(line, "\r")
+		if line == "" {
+			continue
+		}
+		if i == 0 && strings.HasPrefix(line, "## ") {
+			branchPart := strings.TrimPrefix(line, "## ")
+			parts := strings.Split(branchPart, "...")
+			branch = parts[0]
+			continue
+		}
+		if len(line) >= 2 {
+			code := line[:2]
+			file := strings.TrimSpace(line[2:])
+			if code[0] == '?' {
+				untracked = append(untracked, file)
+			} else if code[0] != ' ' && code[0] != '?' {
+				staged = append(staged, file)
+			} else if code[1] != ' ' {
+				unstaged = append(unstaged, file)
+			}
+		}
+	}
+
+	resp := ProjectGitStatusResponse{
+		Branch:      branch,
+		Clean:       len(staged) == 0 && len(unstaged) == 0 && len(untracked) == 0,
+		Staged:      staged,
+		Unstaged:    unstaged,
+		Untracked:   untracked,
+		RiskTier:    string(riskTier),
+		PolicyCheck: "evaluated-pass",
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
 
 

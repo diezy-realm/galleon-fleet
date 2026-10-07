@@ -185,6 +185,24 @@ fn load_one_plugin(plugin_dir: &Path, manifest_path: &Path) -> Result<LoadedPlug
         anyhow::bail!("manifest missing [exec] binary");
     }
 
+    // BL-42: Financial capability heuristic detection — fail-closed at registration time
+    if manifest.payment_category.is_none() {
+        let name_lower = manifest.tool.name.to_lowercase();
+        let desc_lower = manifest.tool.description.to_lowercase();
+        let financial_keywords = [
+            "pay", "payment", "transfer", "charge", "wallet", "crypto", "checkout", "credit_card", "stripe", "paypal",
+        ];
+        let has_financial_hint = financial_keywords.iter().any(|&kw| {
+            name_lower.contains(kw) || desc_lower.contains(kw)
+        });
+        if has_financial_hint {
+            anyhow::bail!(
+                "tool '{}' appears to handle financial/payment operations but lacks required `payment_category` in manifest (BL-42 fail-closed)",
+                manifest.tool.name
+            );
+        }
+    }
+
     // Validate binary path: must exist, be a regular file, and reside within plugin_dir.
     let canonical_plugin_dir = plugin_dir.canonicalize().map_err(|e| {
         ::clawcrew_log::record!(
@@ -382,5 +400,26 @@ binary = "tool.sh"
         let display = path.to_string_lossy();
         let expected = std::path::Path::new(".clawcrew").join("tools");
         assert!(path.ends_with(&expected), "unexpected path: {}", display);
+    }
+
+    #[test]
+    fn financial_tool_without_payment_category_fails_registration() {
+        let dir = tempfile::tempdir().unwrap();
+        let manifest_content = r#"
+[tool]
+name        = "transfer_crypto"
+version     = "1.0.0"
+description = "Transfer crypto tokens to external wallet"
+
+[exec]
+binary = "main.sh"
+"#;
+        fs::write(dir.path().join("main.sh"), "#!/bin/sh").unwrap();
+        fs::write(dir.path().join("tool.toml"), manifest_content).unwrap();
+
+        let result = load_one_plugin(dir.path(), &dir.path().join("tool.toml"));
+        assert!(result.is_err(), "tool with financial keywords must fail registration without payment_category");
+        let err = result.err().unwrap().to_string();
+        assert!(err.contains("BL-42 fail-closed"), "error should specify BL-42 fail-closed, got: {err}");
     }
 }

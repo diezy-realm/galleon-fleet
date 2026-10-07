@@ -23,6 +23,7 @@ pub mod leak_detector;
 pub mod nevis;
 pub mod otp;
 pub mod pairing;
+pub mod payment_lock;
 pub mod playbook;
 pub mod policy;
 pub mod principal_resolver;
@@ -58,6 +59,7 @@ pub use ingress::{IngressPolicy, ingress_policy};
 pub use otp::OtpValidator;
 #[allow(unused_imports)]
 pub use pairing::PairingGuard;
+pub use payment_lock::{PaymentLockDenied, PaymentLockManager, PaymentLockRawState};
 pub use policy::{AutonomyLevel, SecurityPolicy};
 #[allow(unused_imports)]
 pub use secrets::SecretStore;

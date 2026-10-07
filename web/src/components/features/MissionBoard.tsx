@@ -344,7 +344,7 @@ export const MissionBoard: React.FC = () => {
               <div>
                 <span className="text-[10px] text-neutral-400 block">Workspace</span>
                 <span className="font-medium text-neutral-800 dark:text-neutral-200 truncate block">
-                  {selectedQuest.workspaceId}
+                  {selectedQuest.workspaceId || 'Default'}
                 </span>
               </div>
               <div>

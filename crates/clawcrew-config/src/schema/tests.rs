@@ -1,6 +1,19 @@
 use super::*;
 
     #[::core::prelude::v1::test]
+    fn payment_lock_config_defaults_to_locked_fail_closed() {
+        let default_cfg = PaymentLockConfig::default();
+        assert_eq!(default_cfg.mode, PaymentLockMode::Locked);
+        assert!(default_cfg.unlocked_scopes.is_empty());
+        assert!(default_cfg.require_otp_to_unlock);
+        assert_eq!(default_cfg.unlock_expires_at, None);
+        assert_eq!(
+            default_cfg.covered_categories,
+            PaymentActionCategory::all()
+        );
+    }
+
+    #[::core::prelude::v1::test]
     fn channel_external_peers_carries_every_ignore_across_matching_groups() {
         let config: super::Config = toml::from_str(
             r#"

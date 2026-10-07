@@ -109,6 +109,33 @@ fn unavailable_tool_outcome(
     }
 }
 
+/// Helper to evaluate payment lock gate before tool execution (BL-41).
+pub(crate) fn check_payment_lock_gate(
+    tool_name: &str,
+    manager: Option<&crate::security::payment_lock::PaymentLockManager>,
+    scope: Option<&str>,
+) -> Result<(), String> {
+    let lower = tool_name.to_lowercase();
+    let is_financial = lower.contains("pay")
+        || lower.contains("transfer")
+        || lower.contains("wallet")
+        || lower.contains("crypto")
+        || lower.contains("checkout")
+        || lower.contains("stripe");
+
+    if is_financial {
+        let default_mgr = crate::security::payment_lock::PaymentLockManager::default_locked();
+        let mgr = manager.unwrap_or(&default_mgr);
+        mgr.check_allowed(
+            clawcrew_config::schema::PaymentActionCategory::CardPayment,
+            scope,
+        )
+        .map_err(|e| format!("Payment lockout gate rejected execution of '{tool_name}': {e}"))
+    } else {
+        Ok(())
+    }
+}
+
 // ── Outcome ──────────────────────────────────────────────────────────────
 
 pub struct ToolExecutionOutcome {
@@ -237,6 +264,31 @@ pub(crate) async fn execute_one_tool(
             observer,
             start.elapsed(),
         ));
+    }
+
+    // BL-41: Payment-Lockout Gate check — fail-closed before any external request
+    if let Err(denial) = check_payment_lock_gate(tool.name(), None, meta.agent_alias) {
+        let duration = start.elapsed();
+        observer.record_event(&ObserverEvent::ToolCall {
+            tool: call_name.to_string(),
+            tool_call_id: tool_call_id_owned.clone(),
+            duration,
+            success: false,
+            arguments: Some(scrubbed_full_args.clone()),
+            result: Some(scrub_credentials(&denial)),
+            channel: Some(meta.channel_name.to_string()),
+            agent_alias: meta.agent_alias.map(|s| s.to_string()),
+            parent_agent_alias: meta.parent_agent_alias.map(|s| s.to_string()),
+            turn_id: Some(meta.turn_id.to_string()),
+        });
+        return Ok(ToolExecutionOutcome {
+            output: denial.clone(),
+            success: false,
+            error_reason: Some(denial),
+            duration,
+            receipt: None,
+            output_data: None,
+        });
     }
 
     let resolved_policy = ::clawcrew_log::active_resolved_policy();

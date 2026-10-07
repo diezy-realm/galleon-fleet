@@ -228,13 +228,38 @@ export const apiClient = {
     }));
   },
 
-  async executeTerminalCommand(command: string, approved = false): Promise<{ stdout: string; stderr?: string; exitCode: number; duration: string; riskTier?: string; requiresApproval?: boolean }> {
+  async executeTerminalCommand(
+    command: string,
+    approved = false,
+    authToken?: string
+  ): Promise<{ stdout: string; stderr?: string; exitCode: number; duration: string; riskTier?: string; requiresApproval?: boolean }> {
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      } else {
+        const storedToken = localStorage.getItem('galleon_auth_token');
+        if (storedToken) {
+          headers['Authorization'] = `Bearer ${storedToken}`;
+        }
+      }
+
       const res = await fetch('/api/terminal/exec', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ command, approved, approved_by: 'web_terminal_ui' })
       });
+
+      if (res.status === 401) {
+        const data = await res.json().catch(() => ({}));
+        return {
+          stdout: '',
+          stderr: data.error || data.stderr || 'Unauthorized: caller principal not verified (S2-SEC-01)',
+          exitCode: 1,
+          duration: '0ms'
+        };
+      }
+
       if (!res.ok && res.status !== 403) {
         throw new Error(`Engine returned ${res.status}`);
       }
@@ -292,14 +317,51 @@ export const apiClient = {
   },
 
   async get<T>(path: string): Promise<T> {
+    const url = path.startsWith('/api') ? path : `/api${path}`;
     if (this.isTauri()) {
       try {
-        return await invokeTauri('get_api', { path });
+        return await invokeTauri('get_api', { path: url });
       } catch (e) {
-        console.warn(`[API] Tauri get("${path}") fallback:`, e);
+        console.warn(`[API] Tauri get("${url}") fallback:`, e);
       }
     }
-    const res = await fetch(`/api${path}`);
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`GET ${url} failed with status ${res.status}`);
+    }
+    return res.json();
+  },
+
+  async post<T>(path: string, body?: unknown): Promise<T> {
+    const url = path.startsWith('/api') ? path : `/api${path}`;
+    if (this.isTauri()) {
+      try {
+        return await invokeTauri('post_api', { path: url, body });
+      } catch (e) {
+        console.warn(`[API] Tauri post("${url}") fallback:`, e);
+      }
+    }
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+      throw new Error(`POST ${url} failed with status ${res.status}`);
+    }
+    return res.json();
+  },
+
+  async approveToolExecution(id: string, decision: 'approved' | 'rejected', reason?: string): Promise<{ status: string }> {
+    const action = decision === 'approved' ? 'approve' : 'deny';
+    const res = await fetch(`/api/v1/tool-executions/${id}/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason || `Decision by Captain: ${decision}` })
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to ${action} tool execution ${id}: ${res.statusText}`);
+    }
     return res.json();
   }
 };

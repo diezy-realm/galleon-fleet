@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AppSidebar } from './AppSidebar';
 import { Navbar } from '../common/Navbar';
+import { ContextBar } from './ContextBar';
 import { RightRail } from './RightRail';
 import { CommandPalette } from './CommandPalette';
 import { RemoteAccessModal } from '../features/RemoteAccessModal';
@@ -28,6 +29,7 @@ import { CrowsNestView } from '../features/CrowsNestView';
 import { EngineRoomView } from '../features/EngineRoomView';
 import { ShipyardView } from '../features/ShipyardView';
 import { SettingsView } from '../features/SettingsView';
+import { OrganizationView } from '../features/OrganizationView';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -162,6 +164,8 @@ export const AppShell: React.FC = () => {
         return <ShipyardView />;
       case 'settings':
         return <SettingsView />;
+      case 'organization':
+        return <OrganizationView />;
       default:
         return <QuartermasterOffice />;
     }
@@ -176,6 +180,9 @@ export const AppShell: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Standard General Navbar */}
         <Navbar />
+
+        {/* Global Project & Context Bar (BL-77) */}
+        <ContextBar />
 
         {/* Dynamic Canvas + Optional Right Rail */}
         <div className="flex-1 flex overflow-hidden">

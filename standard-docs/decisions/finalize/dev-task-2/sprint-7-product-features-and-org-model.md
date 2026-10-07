@@ -1,7 +1,7 @@
 ---
 sprint: 7
 title: Product Features (FE Organization/Approval UI) & Payment-Lockout Preventif
-status: planned
+status: completed
 depends_on: Sprint 4 §E (BG-F1/F3 org model), Sprint 1 §A (BG-B4 untuk FW-C5)
 ---
 
@@ -9,7 +9,7 @@ depends_on: Sprint 4 §E (BG-F1/F3 org model), Sprint 1 §A (BG-B4 untuk FW-C5)
 
 ## A. Fitur Produk FE (dep org model Sprint 4)
 
-- [ ] **FW-C1 · U-13 · PR-72 (P2, L)** Layar organisasi: Quartermaster/Ship/Squad/Crew, memori, approval, audit/policy read-only. Dep: BG-F1, BG-F3 (Sprint 4).
+- [x] **FW-C1 · U-13 · PR-72 (P2, L)** Layar organisasi: Quartermaster/Ship/Squad/Crew, memori, approval, audit/policy read-only. Dep: BG-F1, BG-F3 (Sprint 4).
 
 #### Detail Eksekusi — FW-C1
 
@@ -24,7 +24,7 @@ depends_on: Sprint 4 §E (BG-F1/F3 org model), Sprint 1 §A (BG-B4 untuk FW-C5)
 
 **JANGAN DIUBAH:** View existing (`ApprovalPage.tsx`, dll.) — ini komponen BARU, bukan refactor yang sudah ada, kecuali BL-72 (integrasi approval nyata) secara eksplisit menyentuh `ApprovalForm.tsx`.
 
-- [ ] **FW-C2 · U-14 · PR-98 (P3, M)** i18n & aksesibilitas dasar.
+- [x] **FW-C2 · U-14 · PR-98 (P3, M)** i18n & aksesibilitas dasar.
 
 #### Detail Eksekusi — FW-C2
 
@@ -32,7 +32,7 @@ depends_on: Sprint 4 §E (BG-F1/F3 org model), Sprint 1 §A (BG-B4 untuk FW-C5)
 
 **Dependency:** Setelah FW-C1 dan komponen lain di sprint ini punya teks UI final — i18n lebih bermakna setelah UI stabil.
 
-- [ ] **FW-C3 · (ODR-07)** Terminal UI memakai `POST /api/terminal/exec` setelah `BG-A4` (sudah selesai) + `S2-SEC-01` (Sprint 0, approval-identity) — tampilkan prompt approval yang BENAR-BENAR terverifikasi identitas, bukan checkbox kosong.
+- [x] **FW-C3 · (ODR-07)** Terminal UI memakai `POST /api/terminal/exec` setelah `BG-A4` (sudah selesai) + `S2-SEC-01` (Sprint 0, approval-identity) — tampilkan prompt approval yang BENAR-BENAR terverifikasi identitas, bukan checkbox kosong.
 
 #### Detail Eksekusi — FW-C3
 
@@ -45,7 +45,7 @@ depends_on: Sprint 4 §E (BG-F1/F3 org model), Sprint 1 §A (BG-B4 untuk FW-C5)
 
 **Dependency:** BG-A4 (sudah selesai, prasyarat terpenuhi), S2-SEC-01 (Sprint 0, HARD — tanpa ini, "approval yang terverifikasi" tidak punya makna di backend).
 
-- [ ] **FW-C4 · (G-20)** Halaman perangkat terhubung: daftar perangkat, revoke, QR pairing. Dep: `BG-C2` (Sprint 0).
+- [x] **FW-C4 · (G-20)** Halaman perangkat terhubung: daftar perangkat, revoke, QR pairing. Dep: `BG-C2` (Sprint 0).
 
 #### Detail Eksekusi — FW-C4
 
@@ -53,7 +53,7 @@ depends_on: Sprint 4 §E (BG-F1/F3 org model), Sprint 1 §A (BG-B4 untuk FW-C5)
 
 **Langkah pengerjaan:** Setelah BG-C2 selesai, buat halaman FE (`web/src/components/features/`, pola `*View.tsx`) menampilkan `DeviceInfo` list (id, name, device_type, paired_at, last_seen — field sudah terverifikasi ada di `clawcrew-gateway/src/api_pairing.rs`), tombol revoke, dan flow QR pairing (generate QR dari token sekali-pakai yang di-return BG-C2).
 
-- [ ] **FW-C5 · (G-24)** UI persetujuan `MemoryProposal` (learning by consent). Dep: `BG-F4` (Go, lihat §B di bawah).
+- [x] **FW-C5 · (G-24)** UI persetujuan `MemoryProposal` (learning by consent). Dep: `BG-F4` (Go, lihat §B di bawah).
 
 #### Detail Eksekusi — FW-C5
 
@@ -65,7 +65,7 @@ depends_on: Sprint 4 §E (BG-F1/F3 org model), Sprint 1 §A (BG-B4 untuk FW-C5)
 
 ## B. Learning by Consent & ADR Lanjutan
 
-- [ ] **BG-F4 · G-24 · PR-96 (P2, L)** Learning by consent lanjutan: tipe `MemoryProposal` sudah ada (T-3.2 ✔); tinggal alur umpan balik → persetujuan Owner → versi/rollback di atas store baru. Dep: `BG-B4` (Sprint 1).
+- [x] **BG-F4 · G-24 · PR-96 (P2, L)** Learning by consent lanjutan: tipe `MemoryProposal` sudah ada (T-3.2 ✔); tinggal alur umpan balik → persetujuan Owner → versi/rollback di atas store baru. Dep: `BG-B4` (Sprint 1).
 
 #### Detail Eksekusi — BG-F4
 
@@ -80,7 +80,7 @@ depends_on: Sprint 4 §E (BG-F1/F3 org model), Sprint 1 §A (BG-B4 untuk FW-C5)
 
 **JANGAN DIUBAH:** `MemoryProposal` type existing — tiket ini menambah alur DI ATASNYA, bukan redesign struct.
 
-- [ ] **BG-F6 · G-37 · PR-99 (P3, S)** ADR opsional Delegated Authority Chain (rujukan `research/verifiable-intent-assessment.md` §3c — di-upgrade jadi gate WAJIB sebelum desain fitur commerce, bukan lagi opsional, per keputusan Owner 2026-10-05).
+- [x] **BG-F6 · G-37 · PR-99 (P3, S)** ADR opsional Delegated Authority Chain (rujukan `research/verifiable-intent-assessment.md` §3c — di-upgrade jadi gate WAJIB sebelum desain fitur commerce, bukan lagi opsional, per keputusan Owner 2026-10-05).
 
 #### Detail Eksekusi — BG-F6
 
@@ -92,7 +92,7 @@ depends_on: Sprint 4 §E (BG-F1/F3 org model), Sprint 1 §A (BG-B4 untuk FW-C5)
 
 > Desain+riset sudah lengkap (`decisions/payment-lockout-gate-scheme.md`, diperkuat 4 temuan riset: AP2 v0.2, insiden Comet/Replit, OWASP Agentic ASI03/09/10). Ditunda Owner 2026-10-05 (fokus BL-32 dulu) — sekarang BL-32 sudah di Sprint 0, jadi sprint ini adalah titik eksekusi wajar.
 
-- [ ] **BL-40 (MEDIUM-importance/LOW-urgency, tidak ada dependency)** `PaymentLockConfig` schema (termasuk `unlock_expires_at`) di `clawcrew-config`.
+- [x] **BL-40 (MEDIUM-importance/LOW-urgency, tidak ada dependency)** `PaymentLockConfig` schema (termasuk `unlock_expires_at`) di `clawcrew-config`.
 
 #### Detail Eksekusi — BL-40
 
@@ -121,7 +121,7 @@ pub struct PaymentLockConfig {
 
 **Dependency:** Tidak ada (tiket pertama di chain BL-41/42/43/44).
 
-- [ ] **BL-41 (MEDIUM, SETELAH BL-40)** `PaymentLockManager` + titik gate di `tool_execution.rs` (termasuk expiry check).
+- [x] **BL-41 (MEDIUM, SETELAH BL-40)** `PaymentLockManager` + titik gate di `tool_execution.rs` (termasuk expiry check).
 
 #### Detail Eksekusi — BL-41
 
@@ -156,7 +156,7 @@ impl PaymentLockManager {
 
 **Edge case:** `unlock_expires_at` sudah lewat tapi `locked` masih `false` — HARUS dianggap locked (expiry adalah fail-safe, bukan opsional).
 
-- [ ] **BL-42 (MEDIUM-HIGH, paralel dengan BL-41)** Field `payment_category` di `ToolManifest` + fail-closed waktu registrasi.
+- [x] **BL-42 (MEDIUM-HIGH, paralel dengan BL-41)** Field `payment_category` di `ToolManifest` + fail-closed waktu registrasi.
 
 #### Detail Eksekusi — BL-42
 
@@ -171,7 +171,7 @@ impl PaymentLockManager {
 
 **ASUMSI:** Heuristik "tool berpotensi payment" belum didefinisikan — WAJIB baca dokumen desain `payment-lockout-gate-scheme.md` untuk kriteria persis sebelum implementasi fail-closed check ini.
 
-- [ ] **BL-43 (MEDIUM, SETELAH BL-40/41)** UI Settings "Allow Agents to Make Payments" — **state mentah, bukan ringkasan agent** (OWASP ASI09: state harus dari sistem, bukan laporan agent yang bisa salah/menipu).
+- [x] **BL-43 (MEDIUM, SETELAH BL-40/41)** UI Settings "Allow Agents to Make Payments" — **state mentah, bukan ringkasan agent** (OWASP ASI09: state harus dari sistem, bukan laporan agent yang bisa salah/menipu).
 
 #### Detail Eksekusi — BL-43
 
@@ -186,7 +186,7 @@ impl PaymentLockManager {
 
 **JANGAN DIUBAH:** Prinsip "state dari sistem, bukan dari agent" — JANGAN membuat endpoint yang menerima status locked/unlocked dari laporan agent sendiri, itu melanggar OWASP ASI09 eksplisit yang dicatat dokumen.
 
-- [ ] **BL-44 (LOW-MEDIUM, paralel dengan BL-43)** Audit log perubahan mode Locked→Unlocked.
+- [x] **BL-44 (LOW-MEDIUM, paralel dengan BL-43)** Audit log perubahan mode Locked→Unlocked.
 
 #### Detail Eksekusi — BL-44
 
@@ -200,7 +200,7 @@ impl PaymentLockManager {
 > - **BL-78**: metode sekarang "spawn sub-agent Prompt Engineer sebelum turn utama" (bukan rewrite sederhana), hasil editable tidak auto-send, kemungkinan reuse infrastruktur delegasi `clawcrew-runtime/src/subagent/mod.rs` (BL-05, §C di atas). Lihat `research/toolbox-parity-audit.md` §Penajaman Metode untuk detail flow lengkap.
 > - **BL-79 (baru)**: top-bar "smart rekomendasi" — post-response tarik kesimpulan + array maks 5 pertanyaan lanjutan (hybrid instruksi-prompt + hard-cap), klik item → teks masuk composer (editable), klik item ke-2+ → gabung separator `", "`. Satu pertanyaan terbuka tersisa: siapa menjalankan tarik-kesimpulan (LLM utama vs sub-agent terpisah) — keputusan ini mempengaruhi apakah BL-78 dan BL-79 berbagi SATU mekanisme delegasi atau dua mekanisme terpisah.
 
-- [ ] **BL-74 (LOW-MEDIUM, PALING MURAH, kerjakan duluan)** Hapus context-window placeholder hardcoded (`EngineRoomView.tsx:335` — teks statis "8,192 tokens... 68%" tidak terhubung sesi nyata) — ganti data real atau hapus.
+- [x] **BL-74 (LOW-MEDIUM, PALING MURAH, kerjakan duluan)** Hapus context-window placeholder hardcoded (`EngineRoomView.tsx:335` — teks statis "8,192 tokens... 68%" tidak terhubung sesi nyata) — ganti data real atau hapus.
 
 #### Detail Eksekusi — BL-74
 
@@ -215,7 +215,7 @@ impl PaymentLockManager {
 
 **JANGAN DIUBAH:** Entry log LAIN yang bersifat genuinely demo/contoh (kalau ada context yang menjelaskan "Engine Room" adalah demo visual, bukan dashboard data nyata) — hanya hapus/ganti yang MENGKLAIM angka spesifik yang terlihat seperti data sesi nyata.
 
-- [ ] **BL-72 (MEDIUM, independen)** Sambungkan `ApprovalForm.tsx`/`fleetStore.ts::handleApproval` ke endpoint nyata (`POST /api/v1/tool-executions/{id}/approve|deny`, sudah ada di `approval_gate.go` — saat ini UI mock state lokal).
+- [x] **BL-72 (MEDIUM, independen)** Sambungkan `ApprovalForm.tsx`/`fleetStore.ts::handleApproval` ke endpoint nyata (`POST /api/v1/tool-executions/{id}/approve|deny`, sudah ada di `approval_gate.go` — saat ini UI mock state lokal).
 
 #### Detail Eksekusi — BL-72
 
@@ -252,7 +252,7 @@ handleApproval: async (id: string, decision: 'approved' | 'rejected') => {
 
 **Edge case:** Network request gagal (timeout/500) — UI harus menampilkan error, BUKAN silently tetap menunjukkan "approved" di state lokal.
 
-- [ ] **BL-71 (MEDIUM-HIGH, butuh keputusan desain dulu)** Toggle approval-mode per-chat (Normal/Reads/Trust/YOLO ala KiroCrew) terhubung ke `RiskTier`/`RiskClass` API yang sudah ada di `approval_gate.go`/`policy.go`. **Keputusan terbuka**: apakah mode ini dipetakan ke `authority: read_only|draft_only|gated_write` existing di `CrewMember`, atau butuh bentuk baru — jangan tiru UI KiroCrew mentah tanpa cek kesesuaian model.
+- [x] **BL-71 (MEDIUM-HIGH, butuh keputusan desain dulu)** Toggle approval-mode per-chat (Normal/Reads/Trust/YOLO ala KiroCrew) terhubung ke `RiskTier`/`RiskClass` API yang sudah ada di `approval_gate.go`/`policy.go`. **Keputusan terbuka**: apakah mode ini dipetakan ke `authority: read_only|draft_only|gated_write` existing di `CrewMember`, atau butuh bentuk baru — jangan tiru UI KiroCrew mentah tanpa cek kesesuaian model.
 
 #### Detail Eksekusi — BL-71
 
@@ -269,7 +269,7 @@ handleApproval: async (id: string, decision: 'approved' | 'rejected') => {
 
 **ASUMSI:** Saya tidak bisa memutuskan (a) vs (b) tanpa baca `CrewMember` struct penuh dan konteks penggunaan `authority` di lebih banyak tempat — scope verifikasi ini di luar budget sesi ini, WAJIB dilakukan tim eksekusi sebagai LANGKAH PERTAMA.
 
-- [ ] **BL-75 (MEDIUM, SETELAH BL-68 §B di bawah)** Tombol "Chat" di `CrewView.tsx`/`SquadsView.tsx`/`ShipsView.tsx` yang membuka sesi Journal terikat entitas.
+- [x] **BL-75 (MEDIUM, SETELAH BL-68 §B di bawah)** Tombol "Chat" di `CrewView.tsx`/`SquadsView.tsx`/`ShipsView.tsx` yang membuka sesi Journal terikat entitas.
 
 #### Detail Eksekusi — BL-75
 
@@ -277,7 +277,7 @@ handleApproval: async (id: string, decision: 'approved' | 'rejected') => {
 
 **Dependency:** BL-68 (§E, hard — `JournalSession.projectId?` harus ada untuk "sesi Journal terikat entitas" bermakna), KEMUNGKINAN juga FW-C1 (§A, kalau `CrewView.tsx`/dst belum ada).
 
-- [ ] **BL-76 (MEDIUM-HIGH, SETELAH BL-62 §B di bawah)** Autocomplete `@` (mention `Project`) + `/` (slash skill) di composer `CaptainsJournalView.tsx`.
+- [x] **BL-76 (MEDIUM-HIGH, SETELAH BL-62 §B di bawah)** Autocomplete `@` (mention `Project`) + `/` (slash skill) di composer `CaptainsJournalView.tsx`.
 
 #### Detail Eksekusi — BL-76
 
@@ -290,7 +290,7 @@ handleApproval: async (id: string, decision: 'approved' | 'rejected') => {
 2. Baca `CaptainsJournalView.tsx` untuk titik composer/input text existing.
 3. Tambah autocomplete trigger `@` (daftar `Project` entity) dan `/` (daftar skill — cari sumber skill list, kemungkinan endpoint Go baru atau existing).
 
-- [ ] **BL-77 (MEDIUM, MENYATU dengan BL-62/68/69 §B — jangan kerjakan terpisah)** Pindahkan switcher Workspace dari sidebar `QuestsView.tsx` ke bentuk benar: Workspace scoped Journal, Project jadi bar global `ContextBar.tsx` yang BENAR-BENAR dirender (saat ini hanya diimpor, tidak pernah muncul di JSX).
+- [x] **BL-77 (MEDIUM, MENYATU dengan BL-62/68/69 §B — jangan kerjakan terpisah)** Pindahkan switcher Workspace dari sidebar `QuestsView.tsx` ke bentuk benar: Workspace scoped Journal, Project jadi bar global `ContextBar.tsx` yang BENAR-BENAR dirender (saat ini hanya diimpor, tidak pernah muncul di JSX).
 
 #### Detail Eksekusi — BL-77
 
@@ -310,7 +310,7 @@ handleApproval: async (id: string, decision: 'approved' | 'rejected') => {
 
 > BL-62/68/69 sudah dirancang lengkap di `backlog/ui-nice-to-have-backlog.md` dengan urutan eksekusi dan serialisasi file sendiri — rujuk file itu untuk detail. Diringkas di sini karena jadi dependency langsung §D:
 
-- [ ] **BL-68 (MEDIUM-HIGH, PRIORITAS)** Hapus `Quest.workspaceId` (vestigial), scope `selectedWorkspace`/`Workspace[]` ke Captain's Journal saja, tambah `JournalSession.projectId?`.
+- [x] **BL-68 (MEDIUM-HIGH, PRIORITAS)** Hapus `Quest.workspaceId` (vestigial), scope `selectedWorkspace`/`Workspace[]` ke Captain's Journal saja, tambah `JournalSession.projectId?`.
 
 #### Detail Eksekusi — BL-68
 
@@ -326,7 +326,7 @@ handleApproval: async (id: string, decision: 'approved' | 'rejected') => {
 
 **JANGAN DIUBAH:** Jangan hapus `selectedWorkspace`/`Workspace[]` KESELURUHAN — hanya `Quest.workspaceId` yang vestigial, workspace concept lain tetap valid (hanya pindah scope).
 
-- [ ] **BL-62 (MEDIUM-HIGH)** `Project` entity + Go endpoint `GET /api/project/git-status` — wajib lewat policy gate (`terminal_policy.go`), bukan `exec git` langsung dari Tauri.
+- [x] **BL-62 (MEDIUM-HIGH)** `Project` entity + Go endpoint `GET /api/project/git-status` — wajib lewat policy gate (`terminal_policy.go`), bukan `exec git` langsung dari Tauri.
 
 #### Detail Eksekusi — BL-62
 
@@ -357,7 +357,7 @@ func (h *HTTPHandler) handleProjectGitStatus(w http.ResponseWriter, r *http.Requ
 
 **JANGAN DIUBAH:** `EvaluateTerminalCommand`/`readCommands` list — reuse langsung, jangan buat gate kedua yang terpisah untuk project git-status.
 
-- [ ] **BL-65/66/67 (lihat `ui-nice-to-have-backlog.md`)** Bugfix + grouping visual + tombol kontekstual Captain's Journal, SETELAH BL-68.
+- [x] **BL-65/66/67 (lihat `ui-nice-to-have-backlog.md`)** Bugfix + grouping visual + tombol kontekstual Captain's Journal, SETELAH BL-68.
 
 #### Detail Eksekusi — BL-65/66/67
 
@@ -365,7 +365,7 @@ func (h *HTTPHandler) handleProjectGitStatus(w http.ResponseWriter, r *http.Requ
 
 **Dependency:** BL-68 (hard, semua tiga tiket).
 
-- [ ] **BL-69 (MEDIUM)** Dropdown "+ New" di `AppSidebar.tsx`, SETELAH BL-68.
+- [x] **BL-69 (MEDIUM)** Dropdown "+ New" di `AppSidebar.tsx`, SETELAH BL-68.
 
 #### Detail Eksekusi — BL-69
 
@@ -377,7 +377,7 @@ func (h *HTTPHandler) handleProjectGitStatus(w http.ResponseWriter, r *http.Requ
 
 > Scope PERANCANGAN (ADR/design-spec), bukan implementasi langsung — keputusan one-way-door format file untuk end-user `galleon`/`galleoncode` CLI. Ditempatkan di sprint ini (bukan Sprint 1) karena menyentuh pengalaman end-user produk jadi, konsisten dengan tema Sprint 7 (fitur produk).
 
-- [ ] **BL-02 (MEDIUM, perancangan dulu — implementasi menunggu desain disetujui Owner)** Rancang mekanisme steering produk Galleon end-user setara `~/.kiro/steering/` Kiro Crew (saat ini TIDAK ADA — `standard-docs/` hanya untuk tim developer, bukan end-user produk jadi). 4 keputusan yang perlu dijawab design-spec: (1) lokasi fisik file (`~/.config/galleon/steering/`?), (2) format (markdown bebas vs frontmatter terstruktur), (3) resolusi konflik (workspace-menang-atas-global, pola Kiro Crew), (4) siapa membaca — Go pegang keputusan "steering mana aktif" (kebijakan), Rust `galleoncode` CLI eksekusi baca+suntik ke prompt (I/O teknis). Output: design-spec baru di `standard-docs/decisions/`. File: `web/src/pages/settings/` (opsional, kalau butuh UI toggle) — murni Lead (dokumentasi) di tahap ini, belum ada file kode.
+- [x] **BL-02 (MEDIUM, perancangan dulu — implementasi menunggu desain disetujui Owner)** Rancang mekanisme steering produk Galleon end-user setara `~/.kiro/steering/` Kiro Crew (saat ini TIDAK ADA — `standard-docs/` hanya untuk tim developer, bukan end-user produk jadi). 4 keputusan yang perlu dijawab design-spec: (1) lokasi fisik file (`~/.config/galleon/steering/`?), (2) format (markdown bebas vs frontmatter terstruktur), (3) resolusi konflik (workspace-menang-atas-global, pola Kiro Crew), (4) siapa membaca — Go pegang keputusan "steering mana aktif" (kebijakan), Rust `galleoncode` CLI eksekusi baca+suntik ke prompt (I/O teknis). Output: design-spec baru di `standard-docs/decisions/`. File: `web/src/pages/settings/` (opsional, kalau butuh UI toggle) — murni Lead (dokumentasi) di tahap ini, belum ada file kode.
 
 #### Detail Eksekusi — BL-02
 
