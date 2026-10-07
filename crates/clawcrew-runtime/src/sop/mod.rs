@@ -2254,4 +2254,39 @@ mod tests {
         let val = validate_sop_strict(&sop);
         assert!(val.is_ok(), "blocking: {:?}", val.blocking);
     }
+
+    #[test]
+    fn load_shared_engineering_and_marketing_sops_verifies_raci_dos_donts_and_constraints() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        let sops_dir = root.join("shared").join("sops");
+
+        // 1. Verify engineering feature delivery SOP
+        let eng_sop = load_sop_by_name(&sops_dir, "engineering-feature-delivery", SopExecutionMode::Supervised)
+            .expect("engineering-feature-delivery must load from shared/sops");
+        assert_eq!(eng_sop.name, "engineering-feature-delivery");
+        let eng_raci = eng_sop.raci.as_ref().expect("engineering SOP must define RACI");
+        assert_eq!(eng_raci.accountable, "crew-lead-engineer");
+        assert!(eng_raci.responsible.contains(&"crew-backend-engineer".to_string()));
+        assert_eq!(eng_sop.steps.len(), 3);
+        assert!(!eng_sop.steps[0].dos.is_empty(), "step 1 must have dos");
+        assert!(!eng_sop.steps[0].donts.is_empty(), "step 1 must have donts");
+        assert_eq!(eng_sop.constraints.len(), 2, "must define 2 constraints");
+
+        // 2. Verify marketing content delivery SOP (non-engineering, generic)
+        let mkt_sop = load_sop_by_name(&sops_dir, "marketing-content-delivery", SopExecutionMode::Supervised)
+            .expect("marketing-content-delivery must load from shared/sops");
+        assert_eq!(mkt_sop.name, "marketing-content-delivery");
+        let mkt_raci = mkt_sop.raci.as_ref().expect("marketing SOP must define RACI");
+        assert_eq!(mkt_raci.accountable, "crew-marketing-strategist");
+        assert!(mkt_raci.responsible.contains(&"crew-content-copywriter".to_string()));
+        assert_eq!(mkt_sop.steps.len(), 3);
+        assert!(!mkt_sop.steps[0].dos.is_empty(), "step 1 must have dos");
+        assert!(!mkt_sop.steps[0].donts.is_empty(), "step 1 must have donts");
+        assert_eq!(mkt_sop.constraints.len(), 2, "must define 2 constraints");
+    }
 }

@@ -10,6 +10,7 @@ use super::types::{Sop, SopStepResult};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 pub struct SopConstraint {
+    #[serde(flatten)]
     pub kind: ConstraintKind,
     /// Human-readable reason shown when the constraint blocks an action
     /// (surfaced via HookResult::Cancel message or step validation).
