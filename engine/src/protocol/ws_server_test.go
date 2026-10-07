@@ -34,6 +34,9 @@ func (d *dummyOrchestrator) StartTurn(ctx context.Context, req *crew.TurnRequest
 }
 func (d *dummyOrchestrator) CancelTurn(ctx context.Context, sessionID string) error { return nil }
 func (d *dummyOrchestrator) SetMaxSubagents(max int)                                  {}
+func (d *dummyOrchestrator) HandoffSubagent(ctx context.Context, req *crew.HandoffRequest, eventCh chan<- *crew.TurnEvent) error {
+	return nil
+}
 
 func TestWSClientProtocolAuthenticationAndJsonRpc(t *testing.T) {
 	tokenStore := identity.NewMemoryTokenStore()

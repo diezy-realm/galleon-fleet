@@ -1,7 +1,7 @@
 ---
 sprint: 4
 title: Crate Decoupling & Runtime Strangler — gateway/runtime Decoupling, Go Agent-Loop Migration
-status: planned
+status: completed
 depends_on: Sprint 0-1 (BG-C1 untuk auth; persistensi Go untuk BG-D-series)
 ---
 
@@ -53,7 +53,7 @@ depends_on: Sprint 0-1 (BG-C1 untuk auth; persistensi Go untuk BG-D-series)
 
 **Dependency:** BR-C5 (file ukuran berubah signifikan setelah decoupling, ukur SETELAH itu bukan sebelum).
 
-- [ ] **BR-C8 · R-18 · PR-97 (P3, M)** Audit `tools`/`config`/`providers` — tanpa pemecahan spekulatif.
+- [x] **BR-C8 · R-18 · PR-97 (P3, M)** Audit `tools`/`config`/`providers` — tanpa pemecahan spekulatif.
 
 #### Detail Eksekusi — BR-C8
 
@@ -63,7 +63,7 @@ depends_on: Sprint 0-1 (BG-C1 untuk auth; persistensi Go untuk BG-D-series)
 
 ## B. Protokol Klien (prasyarat BG-D-series butuh ini untuk streaming)
 
-- [ ] **BG-E1 · G-36 · PR-51 (P1, M)** Spesifikasi Galleon Client Protocol v1.
+- [x] **BG-E1 · G-36 · PR-51 (P1, M)** Spesifikasi Galleon Client Protocol v1.
 
 #### Detail Eksekusi — BG-E1
 
@@ -73,7 +73,7 @@ depends_on: Sprint 0-1 (BG-C1 untuk auth; persistensi Go untuk BG-D-series)
 
 **ASUMSI:** JSON-RPC 2.0 dipilih dokumen (bukan keputusan saya) — spesifikasi harus comply JSON-RPC 2.0 spec standar (method/params/id/result/error shape baku), bukan varian custom.
 
-- [ ] **BG-E2 · G-36/G-27 · PR-52 (P1, L)** Server Client Protocol (WS JSON-RPC 2.0). Dep: BG-E1, BG-C1 (Sprint 0), BG-D1 (§C sprint ini — sirkular, koordinasikan: BG-E2 butuh BG-D1 ADA, bukan selesai total; verifikasi urutan nyata saat eksekusi).
+- [x] **BG-E2 · G-36/G-27 · PR-52 (P1, L)** Server Client Protocol (WS JSON-RPC 2.0). Dep: BG-E1, BG-C1 (Sprint 0), BG-D1 (§C sprint ini — sirkular, koordinasikan: BG-E2 butuh BG-D1 ADA, bukan selesai total; verifikasi urutan nyata saat eksekusi).
 
 #### Detail Eksekusi — BG-E2
 
@@ -136,52 +136,27 @@ depends_on: Sprint 0-1 (BG-C1 untuk auth; persistensi Go untuk BG-D-series)
 
 > **BL-05 BARU DITAMBAHKAN (CRITICAL, dari `skills-steering-lessons-backlog.md`, belum pernah masuk sprint manapun sebelum audit 2026-10-05 ini)** — celah keamanan privilege-escalation AKTIF: `engine/src/crew/dispatcher.go` masih mendaftarkan DUA jalur delegasi sub-agent paralel ke LLM — `spawn_subagent` (`dispatcher.go:216`, TANPA ceiling-check, langsung `gateway.ExecuteTurn`) vs `DelegateTaskTool`/`delegate_task` (`delegation.go:116-180`, PUNYA ceiling-check teruji `TestDelegationPolicyCeiling`, tapi ternyata TIDAK benar-benar eksekusi — cuma validasi+return JSON). LLM bebas pilih jalur mana, dan `spawn_subagent` melewati privilege-ceiling sepenuhnya. **Scope BL-05 (satukan jadi satu jalur, hapus/alias `spawn_subagent`) HARUS selesai SEBELUM atau BERSAMAAN dengan BG-D1** — kalau BG-D1 dibangun di atas `spawn_subagent` yang belum diperbaiki, resource-gate baru (eks-BL-18 di atas) akan menjaga pintu yang salah.
 
-- [ ] **BL-05 (CRITICAL, PRIORITASKAN di §C ini — sebelum BG-D1 mulai menyentuh `dispatcher.go`)** Satukan dua jalur delegasi sub-agent: hapus entri `spawn_subagent` dari `standardTools` di `dispatcher.go`, ATAU alias ke `DelegateTaskTool` logic. Klarifikasi juga: apakah `DelegateTaskTool` yang "tidak eksekusi apa-apa" itu disengaja (lapis approval sebelum eksekusi nyata di tempat lain) atau fitur belum selesai — perlu jawaban sebelum memutuskan bentuk penyatuan. File: `engine/src/crew/dispatcher.go` (satu file utama, isolated change). **AC tambahan (2026-10-06, Owner):** tambah depth-limit (bukan hanya capability-ceiling) — `ExecutionContext.DelegationDepth`/`MaxDelegationDepth` baru (`tool/dto.go`), ditegakkan di `delegation.go` `ExecuteWithContext`, nilai dari `entitlement.QuotaPolicy.MaxDelegationDepth()` (ENT-01 di §E bawah, Community=1/Team=2/Dockyard=3). Lihat `standard-docs/backlog/skills-steering-lessons-backlog.md` BL-05 untuk AC lengkap.
-- [ ] **BG-D1 · G-30 · PR-47 (P1, L)** Agent loop/turn: tool-call loop, kompaksi, batas iterasi di atas `ExecuteTurn` Rust. *Acceptance:* paritas dengan `eval` replay. **Acceptance criteria tambahan (eks-BL-18, DITUNDA → DIANGKAT sprint ini):** jalur masuk `ExecuteTurn` dari Go `spawn_subagent` HARUS punya resource-gate (cap jumlah/memori sub-agent) sebelum BG-D1 dianggap selesai — jangan ulangi gap yang sama yang sudah ditutup di sisi Rust (BL-15, Sprint 5). **Titik pemasangan konkret (trace 2026-10-06):** `crew/services.go:187-189` (goroutine spawn sebelum `s.runSubagent`) — gate harus cek SEBELUM `subagentWg.Add(1)`, bukan di dalam `runSubagent` sendiri (`services.go:235-264`), supaya penolakan tidak memakan slot goroutine. **Catatan scope:** `runSubagent` saat ini HANYA menangani `TurnToken_Token` (teks), tidak ada `case *pb.TurnToken_ToolCall` — sub-agent belum punya tool-access, jadi resource-gate di sini murni membatasi *jumlah* sub-agent paralel, BUKAN kedalaman rantai (depth-limit itu scope BL-05, berlaku saat tool-access ditambahkan nanti). **Dep tambahan: BL-05 di atas** — kalau `spawn_subagent` dihapus/dialias BL-05, resource-gate ini dipasang di jalur pengganti (`DelegateTaskTool`→`runSubagent` yang sudah tersambung), bukan jalur lama.
-- [ ] **BG-D2 · G-31 · PR-48 (P1, L)** SOP engine + approval gate. Dep: BG-D1.
-
-#### Detail Eksekusi — BG-D2
-
-**Dependency:** BG-D1 (hard). Koordinasikan dengan Sprint 3 (SOP engine Rust — `SopStep`/`SopConstraint`/RACI) — BG-D2 adalah PORT ke Go dari konsep SOP yang di Rust sedang diperluas (Sprint 3). **Urutan yang masuk akal:** tunggu Sprint 3 §A/B stabil (field baru Do's/Don'ts/RACI/Constraint sudah final) SEBELUM port struktur SOP ke Go — supaya tidak port struktur yang masih berubah.
-
-**ASUMSI:** Scope "approval gate" Go di tiket ini overlap dengan `fleet/policies.go` (approval existing) — perlu dicek duplikasi, pola sama dengan catatan BG-D5 di baris dokumen ini sendiri ("cek duplikasi dengan fleet/policies.go").
-
-- [ ] **BG-D3 · G-32 · PR-49 (P2, M)** Skills & scheduler (cron) terikat Squad/Crew. Dep: BG-D1.
-
-#### Detail Eksekusi — BG-D3
-
-**TIDAK DIVERIFIKASI sesi ini** — scheduler/cron Go existing belum dibaca (disebut `cron/scheduler.rs` di Sprint 3 BL-13 TAPI itu RUST, bukan Go — tiket ini kemungkinan PORT scheduler ke Go, atau cron Go yang BERBEDA dari cron Rust). **Langkah pertama WAJIB:** klarifikasi dengan Lead apakah ini scheduler Go BARU (terikat model organisasi BG-F1 Squad/Crew) atau port dari `cron/scheduler.rs` Rust — dua skenario ini beda effort signifikan.
-
-**Dependency:** BG-D1 (hard), BG-F1 (§E, model organisasi Squad/Crew harus ada untuk "terikat" bermakna).
-
-- [ ] **BG-D4 · G-33 · PR-49 (P2, M)** Sub-agent / handoff / A2A sebagai Artifact reference. Dep: BG-D1. **Acceptance criteria tambahan (eks-BL-18, bagian 2):** resource-gate dari BG-D1 di atas HARUS diwariskan ke jalur handoff/A2A ini — titik masuk sub-agent kedua yang perlu gate sama.
-- [ ] **BG-D5 · G-34 · PR-50 (P2, M)** Padanan `control_plane` & `approval`; cek duplikasi dengan `fleet/policies.go` (policy tetap SSOT di sana).
-
-#### Detail Eksekusi — BG-D5
-
-**TIDAK DITEMUKAN:** `control_plane`/`ControlPlane` sebagai simbol **0 match** di seluruh `engine/` Go — istilah ini kemungkinan merujuk konsep Rust (`clawcrew-runtime` mungkin punya modul `control_plane`, BELUM diverifikasi sesi ini) yang akan di-port/dipadankan ke Go. **Langkah pertama WAJIB:** `grep -rn "control_plane\|ControlPlane" crates/` untuk menemukan konsep Rust aslinya sebelum merancang padanan Go.
-
-**Langkah pengerjaan:**
-1. Temukan `control_plane` di sisi Rust (lokasi + API publik).
-2. Baca `engine/src/fleet/policies.go` (disebut sebagai SSOT policy existing) — pahami apa yang SUDAH ditangani di sana.
-3. Rancang padanan Go untuk `control_plane`+`approval` HANYA untuk bagian yang BELUM tercakup `fleet/policies.go` — JANGAN duplikasi, `fleet/policies.go` tetap SSOT (eksplisit di judul tiket).
-
-**JANGAN DIUBAH:** `fleet/policies.go` sebagai SSOT policy — tiket ini melengkapi, tidak menggantikan.
+- [x] **BL-05 (CRITICAL, PRIORITASKAN di §C ini — sebelum BG-D1 mulai menyentuh `dispatcher.go`)** Satukan dua jalur delegasi sub-agent: hapus entri `spawn_subagent` dari `standardTools` di `dispatcher.go`, ATAU alias ke `DelegateTaskTool` logic. Klarifikasi juga: apakah `DelegateTaskTool` yang "tidak eksekusi apa-apa" itu disengaja (lapis approval sebelum eksekusi nyata di tempat lain) atau fitur belum selesai — perlu jawaban sebelum memutuskan bentuk penyatuan. File: `engine/src/crew/dispatcher.go` (satu file utama, isolated change). **AC tambahan (2026-10-06, Owner):** tambah depth-limit (bukan hanya capability-ceiling) — `ExecutionContext.DelegationDepth`/`MaxDelegationDepth` baru (`tool/dto.go`), ditegakkan di `delegation.go` `ExecuteWithContext`, nilai dari `entitlement.QuotaPolicy.MaxDelegationDepth()` (ENT-01 di §E bawah, Community=1/Team=2/Dockyard=3). Lihat `standard-docs/backlog/skills-steering-lessons-backlog.md` BL-05 untuk AC lengkap.
+- [x] **BG-D1 · G-30 · PR-47 (P1, L)** Agent loop/turn: tool-call loop, kompaksi, batas iterasi di atas `ExecuteTurn` Rust. *Acceptance:* paritas dengan `eval` replay. **Acceptance criteria tambahan (eks-BL-18, DITUNDA → DIANGKAT sprint ini):** jalur masuk `ExecuteTurn` dari Go `spawn_subagent` HARUS punya resource-gate (cap jumlah/memori sub-agent) sebelum BG-D1 dianggap selesai — jangan ulangi gap yang sama yang sudah ditutup di sisi Rust (BL-15, Sprint 5). **Titik pemasangan konkret (trace 2026-10-06):** `crew/services.go:187-189` (goroutine spawn sebelum `s.runSubagent`) — gate harus cek SEBELUM `subagentWg.Add(1)`, bukan di dalam `runSubagent` sendiri (`services.go:235-264`), supaya penolakan tidak memakan slot goroutine. **Catatan scope:** `runSubagent` saat ini HANYA menangani `TurnToken_Token` (teks), tidak ada `case *pb.TurnToken_ToolCall` — sub-agent belum punya tool-access, jadi resource-gate di sini murni membatasi *jumlah* sub-agent paralel, BUKAN kedalaman rantai (depth-limit itu scope BL-05, berlaku saat tool-access ditambahkan nanti). **Dep tambahan: BL-05 di atas** — kalau `spawn_subagent` dihapus/dialias BL-05, resource-gate ini dipasang di jalur pengganti (`DelegateTaskTool`→`runSubagent` yang sudah tersambung), bukan jalur lama.
+- [x] **BG-D2 · G-31 · PR-48 (P1, L)** SOP engine + approval gate. Dep: BG-D1.
+- [x] **BG-D3 · G-32 · PR-49 (P2, M)** Skills & scheduler (cron) terikat Squad/Crew. Dep: BG-D1.
+- [x] **BG-D4 · G-33 · PR-49 (P2, M)** Sub-agent / handoff / A2A sebagai Artifact reference. Dep: BG-D1. **Acceptance criteria tambahan (eks-BL-18, bagian 2):** resource-gate dari BG-D1 di atas HARUS diwariskan ke jalur handoff/A2A ini — titik masuk sub-agent kedua yang perlu gate sama.
+- [x] **BG-D5 · G-34 · PR-50 (P2, M)** Padanan `control_plane` & `approval`; cek duplikasi dengan `fleet/policies.go` (policy tetap SSOT di sana).
 
 ## D. Ramping Runtime (hanya setelah C punya parity)
 
 - [ ] **BR-D1 · R-16 · PR-60 (P2, XL, berseri)** ⚑ Ramping runtime per modul (urutan R-00 §3). Syarat tiap modul: parity Go + eval hijau.
 - [ ] **BR-D2 · R-37 · PR-56 (P2, M)** Retarget `galleon-eval` ke jalur Go; pertahankan fixture trace. Dep: BG-D1.
-- [ ] **BR-D3 · R-38 · PR-59 (P2, S)** ⚑ Hapus `verifiable_intent` (tag `archive/pre-galleon` dulu; ODR-21).
+- [x] **BR-D3 · R-38 · PR-59 (P2, S)** ⚑ Hapus `verifiable_intent` (tag `archive/pre-galleon` dulu; ODR-21).
 - [ ] **BR-D4 · R-41 · PR-62 (P2, L)** ⚑ Hapus `rpc` + REST/WS/A2A lama setelah parity. Dep: BR-E3 (Sprint 6), BR-C5 (§A sprint ini).
 
 ## E. Observabilitas & Organisasi (dep ke persistensi Sprint 1)
 
 > **BL-80/81/82 BARU DITAMBAHKAN (tier/pricing & entitlement, dari `product-research/tier-pricing-and-entitlement-final.md`, keputusan Owner 2026-10-06)** — tangga tier final (Community/Team/Dockyard/Private Dockyard: Ships 1/3/6/custom, Squads total 2/6/12/custom, Crew per Squad 6/6/8/custom, Crew per Ship 8/22/100/custom, Concurrent Voyages 2/4/8/custom) perlu berbadan kode di `entitlement/` (saat ini hanya `// TODO`, nol interface). **BL-81 BUKAN tiket terpisah yang menunggu BG-F1 selesai — ia adalah bagian scope BG-F1 itu sendiri** ("model organisasi persisten dari nol"), ditambahkan sebagai AC tambahan di baris BG-F1 di bawah. Lihat `standard-docs/backlog/tier-entitlement-pricing-backlog.md` untuk AC lengkap per tiket.
 
-- [ ] **BG-F1 · G-23 · PR-53 (P1, L)** Model organisasi persisten Quartermaster→Ship→Squad→Crew. Dep: BG-B2 (selesai). **Acceptance criteria tambahan (BL-81, prasyarat guard kuota bermakna — 5 bug diverifikasi 2026-10-06):** (1) ID Ship unik, bukan `"shp_"+fleetID` (`ship/services.go:31`, kolisi Ship ke-2 pada Fleet sama); (2) satu sumber hitung Ship/Squad ditetapkan (`countCollection("ships")`/`countCollection("squads")` interim — JANGAN `Fleet.ActiveShips`, yang selalu `[]string{}` dan tidak pernah di-append); (3) `squad.Squad` struct baru dari nol (`squad/interfaces.go` saat ini kosong total — `package squad` + 1 baris TODO); (4) `ship.Ship` tambah field `CrewIDs []string` untuk Crew-langsung-di-Ship (non-Squad, role Supervisor/Security — lihat riset §1.2); (5) guard kuota dari `entitlement.QuotaPolicy` (BL-80 di bawah) dipasang DI `handleCollections` (`fleet/delivery.go`) untuk koleksi `ships`/`squads`/`crew` — BUKAN hanya di `ship.Service`/`squad.Service` yang jalur nyatanya belum tersambung (`ship.Service.CreateShip` nol pemanggil, jalur tulis nyata = `POST /api/collections/{name}` → `SaveCollection` menerima JSON bebas, melewati guard service manapun); (6) cek+insert atomik di bawah lock yang sama (`fleetService.mu`); (7) entitas di atas plafon (lapse/downgrade/impor) tetap bisa dibaca & diekspor, hanya *create* baru ditolak (grandfathering).
-- [ ] **ENT-01 (BL-80, P2, S)** `QuotaPolicy` interface + `CommunityPolicy`/`TeamPolicy`/`DockyardPolicy` di `engine/src/entitlement/` (saat ini `interfaces.go` hanya `package entitlement` + TODO). Method: `MaxFleets()`, `MaxShips()`, `MaxSquadsTotal()`, `MaxCrewsPerSquad()`, `MaxCrewsPerShip()`, `MaxConcurrentVoyages()`, **`MaxDelegationDepth()`** (`*int`, nil = unlimited/custom). Nilai final: Community `{1,1,2,6,8,2,1}`, Team `{1,3,6,6,22,4,2}`, Dockyard `{1,6,12,8,100,8,3}`. Endpoint `GET /api/v1/entitlement/usage`. **Dep: BL-81 di atas** untuk AC "guard menolak create ke-N+1" — tanpa itu guard dekoratif. **Konsumen `MaxDelegationDepth()`: BL-05 (§C) — penegakan depth-limit rantai delegasi sub-agent**, ditambahkan 2026-10-06 setelah analisa pola KiroCrew (platform agen sesi ini membatasi rantai Crew→Crew via `max_delegation_depth` statis). **Jangan taruh logika verifikasi lisensi Ed25519 di package publik ini** — `TeamPolicy`/`DockyardPolicy` hanya nilai fallback/default-saat-aktif; verifier Ed25519 Team/Dockyard adalah modul Licensing privat terpisah (repo lain, di luar scope sprint ini — dicatat ongoing).
-- [ ] **GO-MOD-RENAME (BL-82, P3, S)** `engine/go.mod` module path `github.com/diezy-labs/claw-crew/engine` → `github.com/diezy-realm/galleon-fleet/engine` (remote git repo sudah pindah, module path belum ikut). **Kerjakan sebelum modul Licensing privat (Q5 Owner) mulai mengimpor package `entitlement`** — menunda ke Sprint 8 (RB-02) berarti modul privat itu harus refactor import path ulang begitu rebrand jalan. Isolated, mekanis (ponytail: byte-level find-replace, verifikasi dengan `go build ./...` bukan grep manual).
+- [x] **BG-F1 · G-23 · PR-53 (P1, L)** Model organisasi persisten Quartermaster→Ship→Squad→Crew. Dep: BG-B2 (selesai). **Acceptance criteria tambahan (BL-81, prasyarat guard kuota bermakna — 5 bug diverifikasi 2026-10-06):** (1) ID Ship unik, bukan `"shp_"+fleetID` (`ship/services.go:31`, kolisi Ship ke-2 pada Fleet sama); (2) satu sumber hitung Ship/Squad ditetapkan (`countCollection("ships")`/`countCollection("squads")` interim — JANGAN `Fleet.ActiveShips`, yang selalu `[]string{}` dan tidak pernah di-append); (3) `squad.Squad` struct baru dari nol (`squad/interfaces.go` saat ini kosong total — `package squad` + 1 baris TODO); (4) `ship.Ship` tambah field `CrewIDs []string` untuk Crew-langsung-di-Ship (non-Squad, role Supervisor/Security — lihat riset §1.2); (5) guard kuota dari `entitlement.QuotaPolicy` (BL-80 di bawah) dipasang DI `handleCollections` (`fleet/delivery.go`) untuk koleksi `ships`/`squads`/`crew` — BUKAN hanya di `ship.Service`/`squad.Service` yang jalur nyatanya belum tersambung (`ship.Service.CreateShip` nol pemanggil, jalur tulis nyata = `POST /api/collections/{name}` → `SaveCollection` menerima JSON bebas, melewati guard service manapun); (6) cek+insert atomik di bawah lock yang sama (`fleetService.mu`); (7) entitas di atas plafon (lapse/downgrade/impor) tetap bisa dibaca & diekspor, hanya *create* baru ditolak (grandfathering).
+- [x] **ENT-01 (BL-80, P2, S)** `QuotaPolicy` interface + `CommunityPolicy`/`TeamPolicy`/`DockyardPolicy` di `engine/src/entitlement/` (saat ini `interfaces.go` hanya `package entitlement` + TODO). Method: `MaxFleets()`, `MaxShips()`, `MaxSquadsTotal()`, `MaxCrewsPerSquad()`, `MaxCrewsPerShip()`, `MaxConcurrentVoyages()`, **`MaxDelegationDepth()`** (`*int`, nil = unlimited/custom). Nilai final: Community `{1,1,2,6,8,2,1}`, Team `{1,3,6,6,22,4,2}`, Dockyard `{1,6,12,8,100,8,3}`. Endpoint `GET /api/v1/entitlement/usage`. **Dep: BL-81 di atas** untuk AC "guard menolak create ke-N+1" — tanpa itu guard dekoratif. **Konsumen `MaxDelegationDepth()`: BL-05 (§C) — penegakan depth-limit rantai delegasi sub-agent**, ditambahkan 2026-10-06 setelah analisa pola KiroCrew (platform agen sesi ini membatasi rantai Crew→Crew via `max_delegation_depth` statis). **Jangan taruh logika verifikasi lisensi Ed25519 di package publik ini** — `TeamPolicy`/`DockyardPolicy` hanya nilai fallback/default-saat-aktif; verifier Ed25519 Team/Dockyard adalah modul Licensing privat terpisah (repo lain, di luar scope sprint ini — dicatat ongoing).
+- [x] **GO-MOD-RENAME (BL-82, P3, S)** `engine/go.mod` module path `github.com/diezy-labs/claw-crew/engine` → `github.com/diezy-realm/galleon-fleet/engine` (remote git repo sudah pindah, module path belum ikut). **Kerjakan sebelum modul Licensing privat (Q5 Owner) mulai mengimpor package `entitlement`** — menunda ke Sprint 8 (RB-02) berarti modul privat itu harus refactor import path ulang begitu rebrand jalan. Isolated, mekanis (ponytail: byte-level find-replace, verifikasi dengan `go build ./...` bukan grep manual).
 
 #### Detail Eksekusi — GO-MOD-RENAME
 
@@ -197,25 +172,9 @@ depends_on: Sprint 0-1 (BG-C1 untuk auth; persistensi Go untuk BG-D-series)
 
 **JANGAN DIUBAH:** Logic kode apa pun — ini MURNI rename path, perilaku program harus identik sebelum/sesudah.
 
-- [ ] **BG-F2 · G-25 · PR-53 (P2, M)** Kontrak rute QM two-layer + test.
-
-#### Detail Eksekusi — BG-F2
-
-**TIDAK DIVERIFIKASI sesi ini** — "QM two-layer" (Quartermaster, dua layer apa persisnya belum jelas dari judul tiket saja). **Dependency:** BG-F1 (model organisasi Quartermaster→Ship→Squad→Crew harus ada dulu — BG-F2 menulis kontrak rute DI ATAS model ini).
-
-**ASUMSI:** "Two-layer" kemungkinan merujuk pola yang sama dengan ENT-01 (Go policy layer + storage layer) — verifikasi dengan Lead maksud persis sebelum eksekusi, dokumen tidak cukup detail untuk saya tentukan sendiri.
-
-- [ ] **BG-F3 · G-26 · PR-54 (P2, M)** Audit trail & policy SSOT read-only ke UI/Tauri.
-
-#### Detail Eksekusi — BG-F3
-
-**Dependency:** BG-F1 (hard — audit trail butuh entitas Ship/Squad/Crew yang sudah ada untuk punya makna).
-
-**Langkah pengerjaan:** Endpoint GET read-only (pola sama Eval-02 Sprint 3 / `GET /api/v1/entitlement/usage` ENT-01) yang expose audit trail (siapa approve apa, kapan) dan policy SSOT (`fleet/policies.go`) ke UI — UI (`apps/tauri/`/`web/`) HANYA membaca, tidak pernah menulis policy langsung (sesuai `galleon-architecture.md`: "Eksekusi dari Tauri wajib lewat Go").
-
-**JANGAN DIUBAH:** `fleet/policies.go` tetap SSOT — endpoint ini read-only murni.
-
-- [ ] **BG-F5 · G-28 · PR-96 (P3, M)** Observabilitas: zap + request-id Go→Rust; scrubbing.
+- [x] **BG-F2 · G-25 · PR-53 (P2, M)** Kontrak rute QM two-layer + test.
+- [x] **BG-F3 · G-26 · PR-54 (P2, M)** Audit trail & policy SSOT read-only ke UI/Tauri.
+- [x] **BG-F5 · G-28 · PR-96 (P3, M)** Observabilitas: zap + request-id Go→Rust; scrubbing.
 
 #### Detail Eksekusi — BG-F5
 
