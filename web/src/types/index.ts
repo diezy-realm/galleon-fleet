@@ -299,6 +299,15 @@ export interface MapStep {
   outputArtifactType?: string;
 }
 
+export interface CircuitBreakerTelemetry {
+  totalCalls: number;
+  exactRepeats: number;
+  pingPongCycles: number;
+  noProgressCount: number;
+  status: 'normal' | 'warning' | 'blocked' | 'break';
+  lastTriggerReason?: string;
+}
+
 export interface Quest {
   id: string;
   title: string;
@@ -317,7 +326,9 @@ export interface Quest {
   createdAt: string;
   updatedAt: string;
   discoveriesCount: number;
+  circuitBreaker?: CircuitBreakerTelemetry;
 }
+
 
 export interface Discovery {
   id: string;

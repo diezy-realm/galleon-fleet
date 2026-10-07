@@ -1,0 +1,8 @@
+package clawcrew:plugin@1.0.0;
+
+/// Shared primitive type aliases used across ClawCrew plugin interfaces (V1).
+interface types {
+    /// Semantic alias: a JSON-encoded string value.
+    /// Callers must produce valid JSON; receivers must parse it as JSON.
+    type json-string = string;
+}

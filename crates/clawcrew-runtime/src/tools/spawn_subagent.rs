@@ -150,6 +150,20 @@ impl Tool for SpawnSubagentTool {
             });
         }
 
+        // Subagent concurrency and resource gate check (BL-15)
+        let _resource_guard = match crate::subagent::SubagentActiveGuard::try_acquire(
+            &crate::subagent::SubagentResourcePolicy::default(),
+        ) {
+            Ok(g) => g,
+            Err(err) => {
+                return Ok(ToolResult {
+                    success: false,
+                    output: ToolOutput::default(),
+                    error: Some(format!("subagent resource gate denied: {err}")),
+                });
+            }
+        };
+
         let subagent_ctx = match SubAgentSpawn::for_agent_with_policy(
             &self.config,
             &self.parent_alias,
