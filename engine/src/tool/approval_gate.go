@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/id"
-	"github.com/diezy-labs/claw-crew/engine/core/logger"
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
-	"github.com/diezy-labs/claw-crew/engine/src/run"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/id"
+	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/src/run"
 )
 
 // MemoryApprovalGate manages cryptographic approval pauses and CAS bindings

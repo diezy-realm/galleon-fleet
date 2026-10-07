@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/diezy-labs/claw-crew/engine/core/logger"
+	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
 )
 
 // AppConfig holds all configurations for Go Agent Engine daemon

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
 )
 
 func TestRunLifecycle(t *testing.T) {

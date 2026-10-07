@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/logger"
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

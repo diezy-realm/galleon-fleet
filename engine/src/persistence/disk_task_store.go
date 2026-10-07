@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/src/task"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/src/task"
 )
 
 // DiskTaskStore implements task.Store with one JSON file per task on disk,

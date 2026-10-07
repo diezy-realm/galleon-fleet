@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
-	"github.com/diezy-labs/claw-crew/engine/src/identity"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
+	"github.com/diezy-realm/galleon-fleet/engine/src/identity"
 )
 
 type mockGatewayClient struct {

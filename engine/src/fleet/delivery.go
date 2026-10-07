@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
-	"github.com/diezy-labs/claw-crew/engine/src/identity"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/src/identity"
 	qrcode "github.com/skip2/go-qrcode"
 )
 

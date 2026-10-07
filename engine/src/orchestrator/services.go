@@ -14,10 +14,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/diezy-labs/claw-crew/engine/pkg/client"
-	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
-	"github.com/diezy-labs/claw-crew/engine/src/crew"
-	"github.com/diezy-labs/claw-crew/engine/src/fleet"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/client"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
+	"github.com/diezy-realm/galleon-fleet/engine/src/crew"
+	"github.com/diezy-realm/galleon-fleet/engine/src/fleet"
 )
 
 type orchestratorService struct {

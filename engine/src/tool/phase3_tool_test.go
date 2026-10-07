@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
-	"github.com/diezy-labs/claw-crew/engine/src/run"
-	"github.com/diezy-labs/claw-crew/engine/src/tool"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/src/run"
+	"github.com/diezy-realm/galleon-fleet/engine/src/tool"
 )
 
 // 1. Canonical Normalization and Hasher Tests

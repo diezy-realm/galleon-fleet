@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/id"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/id"
 )
 
 // FilterToolsForIntent performs intent-aware filtering to conserve model prompt tokens (FR-01, Phase T4)

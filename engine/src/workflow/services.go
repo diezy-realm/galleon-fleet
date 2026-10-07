@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/src/task"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/src/task"
 )
 
 // memoryRegistry implements Workflow Registry in memory with default built-in SOP templates

@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/diezy-labs/claw-crew/engine/core/logger"
+	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
 )
 
 // QuartermasterIntent is the Layer-1 router classification (docs/finalize/01).

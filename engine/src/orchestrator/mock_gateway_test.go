@@ -4,8 +4,8 @@ import (
 	"net"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/pkg/client"
-	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/client"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
 	"google.golang.org/grpc"
 )
 

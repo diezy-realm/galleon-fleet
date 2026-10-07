@@ -17,9 +17,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/pkg/client"
-	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
-	"github.com/diezy-labs/claw-crew/engine/src/identity"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/client"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
+	"github.com/diezy-realm/galleon-fleet/engine/src/identity"
 )
 
 var safeFilenameRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)

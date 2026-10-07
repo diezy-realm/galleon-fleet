@@ -1,4 +1,4 @@
-module github.com/diezy-labs/claw-crew/engine
+module github.com/diezy-realm/galleon-fleet/engine
 
 go 1.27.1
 

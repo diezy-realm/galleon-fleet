@@ -9,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/logger"
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
-	"github.com/diezy-labs/claw-crew/engine/pkg/client"
-	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/client"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
 )
 
 type service struct {

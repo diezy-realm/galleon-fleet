@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/src/memory"
+	"github.com/diezy-realm/galleon-fleet/engine/src/memory"
 )
 
 func TestVectorStoreIndexAndSearch(t *testing.T) {

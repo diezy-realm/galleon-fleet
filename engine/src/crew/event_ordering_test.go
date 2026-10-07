@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/src/run"
+	"github.com/diezy-realm/galleon-fleet/engine/src/run"
 )
 
 func TestEventOrdering_MonotonicSequence(t *testing.T) {

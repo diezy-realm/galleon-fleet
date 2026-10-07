@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/src/run"
-	"github.com/diezy-labs/claw-crew/engine/src/task"
+	"github.com/diezy-realm/galleon-fleet/engine/src/run"
+	"github.com/diezy-realm/galleon-fleet/engine/src/task"
 )
 
 func setupTestWorkflow(t *testing.T) (Service, task.Service, *HTTPHandler) {

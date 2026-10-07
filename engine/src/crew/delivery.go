@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
-	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
-	"github.com/diezy-labs/claw-crew/engine/src/memory"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
+	"github.com/diezy-realm/galleon-fleet/engine/src/memory"
 	"google.golang.org/grpc"
 	"strings"
 )

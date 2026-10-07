@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/pkg/client"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/client"
 )
 
 // ProposalStatus is the consent lifecycle of a learned correction (F3-3).

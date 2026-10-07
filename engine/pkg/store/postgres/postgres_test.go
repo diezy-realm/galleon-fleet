@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/diezy-labs/claw-crew/engine/pkg/store/vector"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/store/vector"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

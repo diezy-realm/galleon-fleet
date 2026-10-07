@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/src/run"
-	"github.com/diezy-labs/claw-crew/engine/src/tool"
+	"github.com/diezy-realm/galleon-fleet/engine/src/run"
+	"github.com/diezy-realm/galleon-fleet/engine/src/tool"
 )
 
 func TestApprovalEnforcementAndIdempotency(t *testing.T) {

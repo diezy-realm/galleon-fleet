@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/src/run"
-	"github.com/diezy-labs/claw-crew/engine/src/task"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/src/run"
+	"github.com/diezy-realm/galleon-fleet/engine/src/task"
 )
 
 // MigrationResult summarizes the records imported during DiskStore migration.

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/src/memory"
+	"github.com/diezy-realm/galleon-fleet/engine/src/memory"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

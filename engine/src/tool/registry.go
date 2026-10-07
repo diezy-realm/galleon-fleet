@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 )
 
 // MemoryRegistry manages tools in-memory with thread-safety and namespace resolution

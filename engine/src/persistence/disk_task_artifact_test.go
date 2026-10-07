@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/src/artifact"
-	"github.com/diezy-labs/claw-crew/engine/src/task"
+	"github.com/diezy-realm/galleon-fleet/engine/src/artifact"
+	"github.com/diezy-realm/galleon-fleet/engine/src/task"
 )
 
 func TestDiskTaskStore_RoundTrip(t *testing.T) {

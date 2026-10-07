@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 )
 
 // RunLinterTool implements code.run_linter with environment scrubbing

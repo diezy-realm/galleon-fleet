@@ -9,8 +9,8 @@ import (
 	"sort"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/pkg/store/vector"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/store/vector"
 	_ "github.com/lib/pq"
 )
 

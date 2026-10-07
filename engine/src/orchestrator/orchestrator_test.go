@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/src/fleet"
-	"github.com/diezy-labs/claw-crew/engine/src/orchestrator"
+	"github.com/diezy-realm/galleon-fleet/engine/src/fleet"
+	"github.com/diezy-realm/galleon-fleet/engine/src/orchestrator"
 )
 
 // A simple mock for fleet service

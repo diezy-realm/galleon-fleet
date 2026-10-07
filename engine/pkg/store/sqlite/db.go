@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 	_ "modernc.org/sqlite"
 )
 

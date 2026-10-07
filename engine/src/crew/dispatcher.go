@@ -7,9 +7,9 @@ import (
 	"log/slog"
 	"sync"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/logger"
-	"github.com/diezy-labs/claw-crew/engine/pkg/client"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/client"
 )
 
 // ToolDefinition represents a function schema callable by the model
