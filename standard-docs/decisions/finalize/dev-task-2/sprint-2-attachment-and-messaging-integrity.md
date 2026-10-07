@@ -92,7 +92,7 @@ Plus test regresi: pesan TANPA attachment yang didebounce tetap bekerja seperti 
 
 ## B. Perluasan Skema & Layer Validasi (paralel dengan A setelah A mulai, TIDAK sebelum)
 
-- [ ] **BL-53 (LOW-MEDIUM, paralel dengan A)** Perluas `MediaKind` dengan `Document`/`Archive`/`Link` (saat ini hanya `Audio|Image|Video|Unknown`). File: `clawcrew-api/src/media.rs`. Referensi skema: Claude `source.type: base64|url|file` (seragam, lebih bersih ditiru) vs Gemini union-field-per-jenis.
+- [x] **BL-53 (LOW-MEDIUM, paralel dengan A)** Perluas `MediaKind` dengan `Document`/`Archive`/`Link` (saat ini hanya `Audio|Image|Video|Unknown`). File: `clawcrew-api/src/media.rs`. Referensi skema: Claude `source.type: base64|url|file` (seragam, lebih bersih ditiru) vs Gemini union-field-per-jenis. Status: COMPLETED (273/273 tests pass).
 
 #### Detail Eksekusi — BL-53
 
