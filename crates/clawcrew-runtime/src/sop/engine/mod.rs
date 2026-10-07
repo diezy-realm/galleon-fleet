@@ -399,6 +399,11 @@ impl SopEngine {
         Arc::clone(&self.approval_broker)
     }
 
+    /// Return the engine's metrics collector.
+    pub fn metrics(&self) -> &Arc<SopMetricsCollector> {
+        &self.metrics
+    }
+
     /// Resolve a gate or deterministic checkpoint THROUGH the broker (membership +
     /// quorum), then its single transition owner.
     /// This is the entry point out-of-band surfaces (gateway / CLI / tools) should

@@ -484,6 +484,15 @@ pub async fn handle_sop_decide(
                         )
                             .into_response();
                     }
+                    Ok(BrokerOutcome::Resolved(ResolveOutcome::RejectedConstraint(reason))) => {
+                        return (
+                            StatusCode::FORBIDDEN,
+                            Json(serde_json::json!({
+                                "error": format!("constraint violation: {reason}")
+                            })),
+                        )
+                            .into_response();
+                    }
                     Ok(BrokerOutcome::Resolved(ResolveOutcome::DeferredAtCapacity)) => {
                         return (
                             StatusCode::SERVICE_UNAVAILABLE,
@@ -935,7 +944,6 @@ mod tests {
 
     use axum::extract::{Path, State};
     use axum::http::{HeaderValue, header};
-    use http_body_util::BodyExt;
     use clawcrew_config::schema::{
         ApprovalGroupConfig, ApprovalPolicyConfig, SopApprovalConfig, SopConfig,
     };
@@ -946,6 +954,7 @@ mod tests {
         Sop, SopAdmissionPolicy, SopEvent, SopExecutionMode, SopPriority, SopRunAction,
         SopRunStatus, SopStep, SopStepKind, SopTrigger, SopTriggerSource,
     };
+    use http_body_util::BodyExt;
 
     fn bearer(token: &str) -> HeaderMap {
         let mut headers = HeaderMap::new();
@@ -987,6 +996,8 @@ mod tests {
             agent: None,
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
+            raci: None,
+            constraints: Vec::new(),
         }
     }
 
@@ -1011,6 +1022,8 @@ mod tests {
             agent: None,
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
+            raci: None,
+            constraints: Vec::new(),
         }
     }
 
@@ -1302,6 +1315,8 @@ mod tests {
             agent: None,
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
+            raci: None,
+            constraints: Vec::new(),
         }
     }
 

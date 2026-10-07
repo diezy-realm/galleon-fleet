@@ -1378,10 +1378,8 @@ pub fn validate_sop_strict(sop: &Sop) -> SopValidation {
         blocking.push("SOP name is empty".into());
     }
 
-    if let Some(raci) = &sop.raci {
-        if raci.accountable.trim().is_empty() {
-            blocking.push("SOP RACI accountable role must not be empty".into());
-        }
+    if sop.raci.as_ref().is_some_and(|r| r.accountable.trim().is_empty()) {
+        blocking.push("SOP RACI accountable role must not be empty".into());
     }
 
     let mut seen = std::collections::HashSet::new();

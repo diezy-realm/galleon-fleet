@@ -53,30 +53,30 @@ pub fn resolve_gate(
 
     // Dynamic Separation of Duties: DistinctPerformer check for approvals
     if matches!(decision, ApprovalDecision::Approve) {
-        if let Ok((_, sop)) = engine.resolve_active_run_sop(run_id) {
-            if let Some(run) = engine.get_run(run_id) {
-                if let Some(identity) = principal.identity.as_deref() {
-                    if let Err(reason) = crate::sop::constraint::SopConstraint::check_distinct_performer(
-                        &sop.constraints,
-                        step,
-                        Some(identity),
-                        &run.step_results,
-                    ) {
-                        ::clawcrew_log::record!(
-                            WARN,
-                            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
-                                .with_attrs(::serde_json::json!({
-                                    "run_id": run_id,
-                                    "step": step,
-                                    "principal": identity,
-                                    "reason": reason,
-                                })),
-                            "SOP gate approval rejected: DistinctPerformer separation of duties violation"
-                        );
-                        return Ok(ResolveOutcome::RejectedConstraint(reason));
-                    }
-                }
+        if let (Ok((_, sop)), Some(run), Some(identity)) = (
+            engine.resolve_active_run_sop(run_id),
+            engine.get_run(run_id),
+            principal.identity.as_deref(),
+        ) {
+            if let Err(reason) = crate::sop::constraint::SopConstraint::check_distinct_performer(
+                &sop.constraints,
+                step,
+                Some(identity),
+                &run.step_results,
+            ) {
+                ::clawcrew_log::record!(
+                    WARN,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        .with_attrs(::serde_json::json!({
+                            "run_id": run_id,
+                            "step": step,
+                            "principal": identity,
+                            "reason": reason,
+                        })),
+                    "SOP gate approval rejected: DistinctPerformer separation of duties violation"
+                );
+                return Ok(ResolveOutcome::RejectedConstraint(reason));
             }
         }
     }

@@ -45,16 +45,17 @@ impl SopConstraint {
                 };
 
                 if let Some(prior_step_num) = prior_step_target {
-                    if let Some(prior_res) =
-                        step_results.iter().find(|r| r.step_number == prior_step_num)
-                    {
-                        if let Some(prior_agent) = prior_res.effective_agent.as_deref() {
-                            if prior_agent.trim().eq_ignore_ascii_case(current_performer) {
-                                return Err(format!(
-                                    "Dynamic Separation of Duties violation: Step {} and Step {} cannot have the same performer '{}': {}",
-                                    step_a, step_b, current_performer, constraint.reason
-                                ));
-                            }
+                    let prior_performer = step_results
+                        .iter()
+                        .find(|r| r.step_number == prior_step_num)
+                        .and_then(|r| r.effective_agent.as_deref());
+
+                    if let Some(prior_agent) = prior_performer {
+                        if prior_agent.trim().eq_ignore_ascii_case(current_performer) {
+                            return Err(format!(
+                                "Dynamic Separation of Duties violation: Step {} and Step {} cannot have the same performer '{}': {}",
+                                step_a, step_b, current_performer, constraint.reason
+                            ));
                         }
                     }
                 }
@@ -146,17 +147,17 @@ impl HookHandler for RoleRestrictionHook {
             if let ConstraintKind::RoleRestriction {
                 role,
                 forbidden_tools,
-            } = &constraint.kind
-            {
-                if role.eq_ignore_ascii_case(&current_role) {
-                    for forbidden in forbidden_tools {
-                        if forbidden == "*" || forbidden.eq_ignore_ascii_case(&name) {
-                            let msg = format!(
-                                "Role '{}' is forbidden from using tool '{}': {}",
-                                current_role, name, constraint.reason
-                            );
-                            return HookResult::Cancel(msg);
-                        }
+            } = &constraint.kind {
+                if !role.eq_ignore_ascii_case(&current_role) {
+                    continue;
+                }
+                for forbidden in forbidden_tools {
+                    if forbidden == "*" || forbidden.eq_ignore_ascii_case(&name) {
+                        let msg = format!(
+                            "Role '{}' is forbidden from using tool '{}': {}",
+                            current_role, name, constraint.reason
+                        );
+                        return HookResult::Cancel(msg);
                     }
                 }
             }
