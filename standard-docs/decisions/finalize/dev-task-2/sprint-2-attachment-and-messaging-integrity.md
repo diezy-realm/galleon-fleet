@@ -128,7 +128,7 @@ pub enum MediaKind {
 
 **JANGAN DIUBAH:** 4 variant existing (`Audio`,`Image`,`Video`,`Unknown`) — hanya tambah, tidak reorder/rename (reorder aman untuk enum non-`#[repr]` tapi tetap hindari untuk minimize diff review).
 
-- [ ] **BL-54 (MEDIUM, paralel, tersebar per-channel)** Layer 1: validasi hard-cap 10 attachment di Front App entry point (desktop/web/messaging) — SEBELUM bytes dikirim ke Core.
+- [x] **BL-54 (MEDIUM, paralel, tersebar per-channel)** Layer 1: validasi hard-cap 10 attachment di Front App entry point (desktop/web/messaging) — SEBELUM bytes dikirim ke Core. Status: COMPLETED (`uploading_eleventh_attachment_rejected_in_front_app` passed).
 
 #### Detail Eksekusi — BL-54
 
