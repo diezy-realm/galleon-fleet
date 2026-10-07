@@ -316,6 +316,42 @@ func (s *service) CancelTurn(ctx context.Context, sessionID string) error {
 	return nil
 }
 
+// HandoffSubagent performs subagent handoff / A2A delegation carrying an artifact reference
+// with the resource-gate check inherited from BG-D1 (BG-D4 / eks-BL-18 part 2).
+func (s *service) HandoffSubagent(ctx context.Context, req *HandoffRequest, eventCh chan<- *TurnEvent) error {
+	s.mu.Lock()
+	if s.maxSubagents > 0 && s.activeSubagents >= s.maxSubagents {
+		s.mu.Unlock()
+		return appErrors.New(appErrors.CodeFailedPrecondition,
+			fmt.Sprintf("resource gate rejection: maximum concurrent sub-agents reached (%d/%d)", s.activeSubagents, s.maxSubagents),
+			appErrors.LayerService)
+	}
+	s.activeSubagents++
+	s.mu.Unlock()
+
+	defer func() {
+		s.mu.Lock()
+		s.activeSubagents--
+		s.mu.Unlock()
+	}()
+
+	if eventCh != nil {
+		eventCh <- &TurnEvent{
+			Type:       EventSubagentSpawned,
+			Content:    fmt.Sprintf("Handoff to subagent '%s' with artifact '%s': %s", req.ToAgentID, req.ArtifactRef, req.TaskDescription),
+			SubagentID: req.ToAgentID,
+		}
+	}
+
+	taskWithArtifact := req.TaskDescription
+	if req.ArtifactRef != "" {
+		taskWithArtifact = fmt.Sprintf("[Handoff Artifact: %s] %s", req.ArtifactRef, req.TaskDescription)
+	}
+
+	s.runSubagent(ctx, req.ToAgentID, taskWithArtifact, eventCh)
+	return nil
+}
+
 // MemoryRegistry provides persistent storage for crews and agents
 type MemoryRegistry struct {
 	mu    sync.RWMutex

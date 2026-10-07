@@ -101,3 +101,50 @@ func TestSubagentResourceGateRejection(t *testing.T) {
 	assert.True(t, hasSpawned, "at least 1 subagent must be spawned up to the cap")
 	assert.True(t, hasRejection, "excess subagent requests beyond cap (1) must be rejected")
 }
+
+func TestHandoffSubagentResourceGate(t *testing.T) {
+	// BG-D4 / eks-BL-18 part 2: Test resource gate on HandoffSubagent / A2A
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	grpcServer := grpc.NewServer()
+	pb.RegisterSystemGatewayServer(grpcServer, &resourceGateServer{})
+	go func() {
+		_ = grpcServer.Serve(lis)
+	}()
+	defer grpcServer.Stop()
+
+	gwClient, err := client.NewSystemGatewayClient(lis.Addr().String())
+	require.NoError(t, err)
+	defer gwClient.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	dispatcher := crew.NewToolDispatcher(gwClient)
+	orch := crew.NewService(dispatcher, gwClient)
+	orch.SetMaxSubagents(1)
+
+	// 1. First handoff succeeds with artifact ref
+	eventCh1 := make(chan *crew.TurnEvent, 10)
+	err = orch.HandoffSubagent(ctx, &crew.HandoffRequest{
+		SessionID:       "sess-handoff-1",
+		FromAgentID:     "planner",
+		ToAgentID:       "coder",
+		TaskDescription: "implement feature",
+		ArtifactRef:     "art_plan_123",
+	}, eventCh1)
+	require.NoError(t, err)
+
+	close(eventCh1)
+	var spawnedEvent *crew.TurnEvent
+	for ev := range eventCh1 {
+		if ev.Type == crew.EventSubagentSpawned {
+			spawnedEvent = ev
+		}
+	}
+	require.NotNil(t, spawnedEvent)
+	assert.Contains(t, spawnedEvent.Content, "art_plan_123")
+	assert.Equal(t, "coder", spawnedEvent.SubagentID)
+}
+
