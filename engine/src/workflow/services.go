@@ -162,6 +162,46 @@ func (r *memoryRegistry) registerDefaults() {
 				},
 			},
 		},
+		{
+			ID:          "sop_marketing_campaign",
+			Name:        "Marketing Content & Campaign Launch SOP",
+			Description: "Multi-disciplinary content creation, brand compliance review, and campaign distribution.",
+			Category:    "marketing",
+			Version:     "1.0.0",
+			Steps: []StepTemplate{
+				{
+					ID:             "step_brief_strategy",
+					Title:          "Campaign Brief & Strategy",
+					Description:    "Formulate audience targeting, core messaging, and tone guidelines.",
+					AgentRole:      "marketing_strategist",
+					PromptTemplate: "Draft comprehensive marketing campaign brief and determine messaging pillars.",
+				},
+				{
+					ID:             "step_content_draft",
+					Title:          "Copywriting & Content Drafting",
+					Description:    "Author compelling headlines, narrative copy, and social announcement text.",
+					AgentRole:      "copywriter",
+					Dependencies:   []string{"step_brief_strategy"},
+					PromptTemplate: "Write engaging headline and body copy following brand tone and positioning guidelines.",
+				},
+				{
+					ID:             "step_brand_compliance",
+					Title:          "Brand & Compliance Review",
+					Description:    "Audit copy for tone consistency, embargo alignment, and factual claims.",
+					AgentRole:      "brand_reviewer",
+					Dependencies:   []string{"step_content_draft"},
+					PromptTemplate: "Audit draft copy against brand guardrails and verify embargo dates are respected.",
+				},
+				{
+					ID:             "step_distribution",
+					Title:          "Campaign Publishing & Tracking",
+					Description:    "Schedule multi-channel publication and configure engagement telemetry.",
+					AgentRole:      "distribution_specialist",
+					Dependencies:   []string{"step_brand_compliance"},
+					PromptTemplate: "Distribute approved assets across targeted channels and activate analytics trackers.",
+				},
+			},
+		},
 	}
 
 	for _, tmpl := range defaults {

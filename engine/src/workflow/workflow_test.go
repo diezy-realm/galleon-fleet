@@ -51,6 +51,20 @@ func TestWorkflow_ListAndGetDefaults(t *testing.T) {
 	if len(sopDev.Steps) != 4 {
 		t.Errorf("expected 4 steps in feature dev SOP, got %d", len(sopDev.Steps))
 	}
+
+	sopMkt, err := wfSvc.GetWorkflow(ctx, "sop_marketing_campaign")
+	if err != nil {
+		t.Fatalf("GetWorkflow(sop_marketing_campaign) failed: %v", err)
+	}
+	if sopMkt.Name != "Marketing Content & Campaign Launch SOP" {
+		t.Errorf("expected Marketing Content & Campaign Launch SOP, got %s", sopMkt.Name)
+	}
+	if len(sopMkt.Steps) != 4 {
+		t.Errorf("expected 4 steps in marketing SOP, got %d", len(sopMkt.Steps))
+	}
+	if sopMkt.Steps[1].AgentRole != "copywriter" {
+		t.Errorf("expected step 2 role to be copywriter, got %s", sopMkt.Steps[1].AgentRole)
+	}
 }
 
 func TestWorkflow_InstantiateWorkflow(t *testing.T) {
