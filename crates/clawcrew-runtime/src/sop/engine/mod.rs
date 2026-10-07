@@ -6045,6 +6045,20 @@ fn format_step_context(sop: &Sop, run: &SopRun, step: &SopStep, config: &SopConf
 
     let _ = write!(ctx, "\nCurrent step: **{}**\n{}\n", step.title, step.body);
 
+    if !step.dos.is_empty() {
+        let _ = writeln!(ctx, "\nDo's:");
+        for item in &step.dos {
+            let _ = writeln!(ctx, "- {item}");
+        }
+    }
+
+    if !step.donts.is_empty() {
+        let _ = writeln!(ctx, "\nDon'ts:");
+        for item in &step.donts {
+            let _ = writeln!(ctx, "- {item}");
+        }
+    }
+
     if !step.suggested_tools.is_empty() {
         let _ = write!(
             ctx,

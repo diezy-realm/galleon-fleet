@@ -56,14 +56,14 @@ pub fn apply_default_mcp_sandbox(
     command: &mut std::process::Command,
     config: &McpServerConfig,
 ) -> anyhow::Result<()> {
-    if let Some(profile) = config.sandbox_profile.as_deref() {
-        if profile == "deny-all" || profile == "blocked" {
-            anyhow::bail!(
-                "MCP server `{}` execution blocked by sandbox profile `{}`",
-                config.name,
-                profile
-            );
-        }
+    if let Some(profile) = config.sandbox_profile.as_deref()
+        && (profile == "deny-all" || profile == "blocked")
+    {
+        anyhow::bail!(
+            "MCP server `{}` execution blocked by sandbox profile `{}`",
+            config.name,
+            profile
+        );
     }
 
     if let Some(first_path) = config.allowed_paths.first() {

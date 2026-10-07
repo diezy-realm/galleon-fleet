@@ -4082,6 +4082,10 @@ pub struct SopStep {
     /// preserves it verbatim on round-trip; its TUI renders from the grid layout.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pos: Option<StepPos>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dos: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub donts: Vec<String>,
     /// Editor-local raw JSON text for `calls`; never on the wire.
     #[serde(skip)]
     pub calls_buf: Option<String>,
@@ -4104,6 +4108,8 @@ impl Default for SopStep {
             mode: serde_json::Value::Null,
             agent: serde_json::Value::Null,
             pos: None,
+            dos: Vec::new(),
+            donts: Vec::new(),
             calls_buf: None,
         }
     }

@@ -571,6 +571,8 @@ pub enum SopStepSyntaxKey {
     Prompt,
     Policy,
     Edit,
+    Do,
+    Dont,
     ContinuationBody,
 }
 
@@ -598,6 +600,8 @@ impl SopStepSyntaxKey {
             Self::Prompt => &["prompt:"],
             Self::Policy => &["policy:"],
             Self::Edit => &["edit:"],
+            Self::Do => &["do:"],
+            Self::Dont => &["dont:", "don't:"],
             Self::StepsSection | Self::NumberedItem | Self::BoldTitle | Self::ContinuationBody => {
                 &[]
             }
@@ -711,6 +715,14 @@ pub const SOP_STEP_SYNTAX_CATALOG: &[SopStepSyntaxSpec] = &[
     SopStepSyntaxSpec {
         key: SopStepSyntaxKey::Edit,
         description: "`- edit:` opts a checkpoint into editing the named field before resume.",
+    },
+    SopStepSyntaxSpec {
+        key: SopStepSyntaxKey::Do,
+        description: "`- do:` provides positive behavioral guidance that the agent should follow during this step.",
+    },
+    SopStepSyntaxSpec {
+        key: SopStepSyntaxKey::Dont,
+        description: "`- dont:` (or `- don't:`) provides negative behavioral guidance of actions the agent must avoid during this step.",
     },
     SopStepSyntaxSpec {
         key: SopStepSyntaxKey::ContinuationBody,
@@ -870,6 +882,18 @@ pub fn parse_steps(md: &str) -> Vec<SopStep> {
                             Some(val.to_string())
                         };
                     }
+                    SopStepSyntaxKey::Do => {
+                        let val = val.trim();
+                        if !val.is_empty() {
+                            current.dos.push(val.to_string());
+                        }
+                    }
+                    SopStepSyntaxKey::Dont => {
+                        let val = val.trim();
+                        if !val.is_empty() {
+                            current.donts.push(val.to_string());
+                        }
+                    }
                     SopStepSyntaxKey::StepsSection
                     | SopStepSyntaxKey::NumberedItem
                     | SopStepSyntaxKey::BoldTitle
@@ -922,6 +946,8 @@ struct StepParseState {
     policy: Option<String>,
     gate_prompt: Option<String>,
     edit: Option<String>,
+    dos: Vec<String>,
+    donts: Vec<String>,
 }
 
 impl StepParseState {
@@ -956,6 +982,8 @@ impl StepParseState {
             policy: self.policy.take(),
             gate_prompt: self.gate_prompt.take(),
             edit: self.edit.take(),
+            dos: std::mem::take(&mut self.dos),
+            donts: std::mem::take(&mut self.donts),
         });
         *self = Self::default();
     }
@@ -1167,6 +1195,12 @@ fn render_step_bullets(step: &SopStep) -> Vec<String> {
         if let Ok(rendered) = serde_json::to_string(call) {
             bullets.push(format!("call: {rendered}"));
         }
+    }
+    for do_item in &step.dos {
+        bullets.push(format!("do: {do_item}"));
+    }
+    for dont_item in &step.donts {
+        bullets.push(format!("dont: {dont_item}"));
     }
 
     bullets
@@ -2090,5 +2124,59 @@ mod tests {
             crate::sop::types::SopAdmissionPolicy::Drop
         );
         assert_eq!(sop.max_pending_approvals, 1);
+    }
+
+    #[test]
+    fn parse_steps_populates_dos_and_donts_for_marketing_role() {
+        let md = r#"
+## Steps
+
+1. **Draft Copy** - Write headline and caption for social announcement.
+   - agent: copywriter
+   - do: Focus on benefits over raw specs
+   - do: Maintain enthusiastic and professional brand tone
+   - dont: Jangan bocorkan tanggal embargo sebelum disetujui
+   - don't: Do not use unverified competitor benchmarks
+"#;
+        let steps = parse_steps(md);
+        assert_eq!(steps.len(), 1);
+        let step = &steps[0];
+        assert_eq!(step.agent.as_deref(), Some("copywriter"));
+        assert_eq!(
+            step.dos,
+            vec![
+                "Focus on benefits over raw specs",
+                "Maintain enthusiastic and professional brand tone"
+            ]
+        );
+        assert_eq!(
+            step.donts,
+            vec![
+                "Jangan bocorkan tanggal embargo sebelum disetujui",
+                "Do not use unverified competitor benchmarks"
+            ]
+        );
+
+        // Roundtrip via render_steps
+        let rendered = render_steps(&steps);
+        assert!(rendered.contains("- do: Focus on benefits over raw specs"));
+        assert!(rendered.contains("- dont: Jangan bocorkan tanggal embargo sebelum disetujui"));
+        let parsed_again = parse_steps(&rendered);
+        assert_eq!(parsed_again[0].dos, step.dos);
+        assert_eq!(parsed_again[0].donts, step.donts);
+    }
+
+    #[test]
+    fn parse_steps_backward_compatibility_empty_dos_donts() {
+        let md = r#"
+## Steps
+
+1. **Legacy Step** - No dos or donts present.
+   - tools: shell, file_read
+"#;
+        let steps = parse_steps(md);
+        assert_eq!(steps.len(), 1);
+        assert!(steps[0].dos.is_empty());
+        assert!(steps[0].donts.is_empty());
     }
 }

@@ -5724,10 +5724,10 @@ impl McpServerConfig {
     /// Returns false only if explicitly configured with an opt-out profile ("none" or "unconfined").
     #[must_use]
     pub fn is_sandboxed(&self) -> bool {
-        match self.sandbox_profile.as_deref() {
-            Some("none") | Some("unconfined") => false,
-            _ => true,
-        }
+        !matches!(
+            self.sandbox_profile.as_deref(),
+            Some("none") | Some("unconfined")
+        )
     }
 }
 

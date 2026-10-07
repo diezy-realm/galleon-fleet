@@ -389,6 +389,14 @@ pub struct SopStep {
     /// resumes (the gate prompt gains an "Edit" choice). Absent = no editing.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub edit: Option<String>,
+    /// Structured guidance for the agent executing this step: things it
+    /// SHOULD do. Rendered into the step prompt alongside `body`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dos: Vec<String>,
+    /// Structured guidance for the agent executing this step: things it
+    /// must NOT do. Rendered into the step prompt alongside `body`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub donts: Vec<String>,
 }
 
 impl Default for SopStep {
@@ -413,6 +421,8 @@ impl Default for SopStep {
             policy: None,
             gate_prompt: None,
             edit: None,
+            dos: Vec::new(),
+            donts: Vec::new(),
         }
     }
 }
