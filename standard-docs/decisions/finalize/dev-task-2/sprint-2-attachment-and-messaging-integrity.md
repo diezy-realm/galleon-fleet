@@ -1,7 +1,7 @@
 ---
 sprint: 2
 title: Attachment & Messaging Integrity — Debounce Bug, Multi-Format, 2-Layer Validation
-status: planned
+status: completed
 depends_on: Sprint 0 §C (BL-14 harus merge dulu — file overlap orchestrator/mod.rs)
 ---
 
@@ -193,7 +193,7 @@ async fn debounced_bucket_rejects_when_combined_attachments_exceed_cap() {
 
 ## C. Redaksi & Scrub Tool I/O (independen, file berbeda, bisa paralel penuh dengan A/B)
 
-- [ ] **BL-37 Tahap 1 (P1, HIGH — bug wiring, bukan desain, PRIORITASKAN)** Sambungkan `capture_tool_input`/`capture_tool_output` yang sudah dirancang benar tapi NOL dipanggil produksi. Ganti `call_arguments`/`r.output` mentah di `tool_execution.rs:166-262`. File: `crates/clawcrew-runtime/src/agent/tool_execution.rs`.
+- [x] **BL-37 Tahap 1 (P1, HIGH — bug wiring, bukan desain, PRIORITASKAN)** Sambungkan `capture_tool_input`/`capture_tool_output` yang sudah dirancang benar tapi NOL dipanggil produksi. Ganti `call_arguments`/`r.output` mentah di `tool_execution.rs:166-262`. File: `crates/clawcrew-runtime/src/agent/tool_execution.rs`. Status: COMPLETED (31 tests pass termasuk `tool_io_capture_redacts_and_truncates_in_debug_log`).
 
 #### Detail Eksekusi — BL-37 Tahap 1
 
@@ -254,7 +254,7 @@ let captured_input = clawcrew_log::capture_tool_input(&resolved_policy, call_nam
 
 **JANGAN DIUBAH:** `ToolIoCapture`/`capture_tool_input`/`capture_tool_output`/`capture_with_policy` di `tool_io.rs` — API ini sudah benar sesuai dokumentasinya sendiri, tiket ini murni WIRING caller, bukan mengubah fungsi itu.
 
-- [ ] **BL-37 Tahap 2 (SETELAH Tahap 1)** Pisah axis policy: technical tool I/O (default truncated) vs conversational tool I/O (default `Off`). File: `crates/clawcrew-config/src/schema.rs`, `crates/clawcrew-log/src/{tool_io.rs,config.rs}`.
+- [x] **BL-37 Tahap 2 (SETELAH Tahap 1)** Pisah axis policy: technical tool I/O (default truncated) vs conversational tool I/O (default `Off`). File: `crates/clawcrew-config/src/schema.rs`, `crates/clawcrew-log/src/{tool_io.rs,config.rs}`. Status: COMPLETED (`conversational_tool_io_defaults_to_off_while_technical_is_captured` passed).
 
 #### Detail Eksekusi — BL-37 Tahap 2
 
@@ -270,7 +270,7 @@ let captured_input = clawcrew_log::capture_tool_input(&resolved_policy, call_nam
 
 **Dependency:** BL-37 Tahap 1 (hard, prasyarat).
 
-- [ ] **BL-38 (P1, MEDIUM, independen dari BL-37, bisa paralel)** Terapkan `scrub_credentials` di jalur `record!` (`tool_execution.rs:234-266`) — gap terpisah dari BL-37, soal kredensial bukan konten percakapan.
+- [x] **BL-38 (P1, MEDIUM, independen dari BL-37, bisa paralel)** Terapkan `scrub_credentials` di jalur `record!` (`tool_execution.rs:234-266`) — gap terpisah dari BL-37, soal kredensial bukan konten percakapan. Status: COMPLETED (semua path record! dan ObserverEvent di `tool_execution.rs` telah di-scrub dan lolos uji).
 
 #### Detail Eksekusi — BL-38
 
@@ -287,7 +287,7 @@ let captured_input = clawcrew_log::capture_tool_input(&resolved_policy, call_nam
 
 **JANGAN DIUBAH:** `scrub_credentials` function itu sendiri (`super::loop_::scrub_credentials`) — tiket ini murni WIRING ke titik tambahan, bukan mengubah logic scrub.
 
-- [ ] **BL-39 (P2, MEDIUM)** Proteksi ACL file log Windows (`writer.rs:403-420` hanya punya branch `#[cfg(unix)]`).
+- [x] **BL-39 (P2, MEDIUM)** Proteksi ACL file log Windows (`writer.rs:403-420` hanya punya branch `#[cfg(unix)]`). Status: COMPLETED (SetNamedSecurityInfoW private DACL diterapkan di `writer.rs` & `migrate.rs`; `windows_log_file_has_restricted_acl` passed, 159 tests `clawcrew-log` passed).
 
 #### Detail Eksekusi — BL-39
 
