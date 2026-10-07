@@ -4944,13 +4944,9 @@ data: {\"type\":\"message_stop\"}\n\n";
     fn test_module_never_hand_rolls_provider_struct_literal() {
         // Assembled at runtime so this test's own source cannot match it.
         let needle = format!("{}{}", "AnthropicModelProvider", " {");
-        let source = include_str!("anthropic.rs");
+        let source = include_str!("tests.rs");
 
-        let tests_start = source
-            .find("\nmod tests {")
-            .expect("anthropic.rs must have a `mod tests` block");
-
-        let offenders: Vec<usize> = source[tests_start..]
+        let offenders: Vec<usize> = source
             .lines()
             .enumerate()
             .filter(|(_, line)| {
@@ -4963,7 +4959,7 @@ data: {\"type\":\"message_stop\"}\n\n";
                     && !trimmed.contains("->")
                     && !trimmed.starts_with("impl")
             })
-            .map(|(idx, _)| source[..tests_start].lines().count() + idx)
+            .map(|(idx, _)| idx + 1)
             .collect();
 
         assert!(
@@ -4972,7 +4968,7 @@ data: {\"type\":\"message_stop\"}\n\n";
              `AnthropicModelProvider::builder(..).build()`, not a struct \
              literal — a literal names every field and breaks to compile \
              (E0063) the moment a private field is added. Offending \
-             anthropic.rs line(s): {offenders:?}"
+             tests.rs line(s): {offenders:?}"
         );
     }
 

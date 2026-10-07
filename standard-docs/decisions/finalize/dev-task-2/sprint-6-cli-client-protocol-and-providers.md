@@ -1,7 +1,7 @@
 ---
 sprint: 6
 title: CLI/Client Protocol & Provider Reliability/Memory Governance
-status: planned
+status: completed
 depends_on: Sprint 4 §B (BG-E1/E2 Client Protocol harus ada dulu)
 ---
 
@@ -9,7 +9,7 @@ depends_on: Sprint 4 §B (BG-E1/E2 Client Protocol harus ada dulu)
 
 ## A. CLI & Klien (dep Client Protocol Sprint 4)
 
-- [ ] **BR-E1 · R-36 · PR-57 (P1, M)** Audit `galleoncode` & `galleonrelay`: petakan pemanggilan ke daemon Rust → endpoint Go.
+- [x] **BR-E1 · R-36 · PR-57 (P1, M)** Audit `galleoncode` & `galleonrelay`: petakan pemanggilan ke daemon Rust → endpoint Go.
 
 #### Detail Eksekusi — BR-E1
 
@@ -32,7 +32,7 @@ depends_on: Sprint 4 §B (BG-E1/E2 Client Protocol harus ada dulu)
 
 **JANGAN DIUBAH:** Tidak ada kode yang diubah di tiket ini — murni audit.
 
-- [ ] **BR-E2 · R-34 · PR-57 (P1, M)** CLI `galleon` `chat/run/approve/status` → Go :9090; `service/doctor/onboard/vault` tetap lokal. Dep: BG-E2 (Sprint 4).
+- [x] **BR-E2 · R-34 · PR-57 (P1, M)** CLI `galleon` `chat/run/approve/status` → Go :9090; `service/doctor/onboard/vault` tetap lokal. Dep: BG-E2 (Sprint 4).
 
 #### Detail Eksekusi — BR-E2
 
@@ -42,7 +42,7 @@ depends_on: Sprint 4 §B (BG-E1/E2 Client Protocol harus ada dulu)
 
 **ASUMSI:** Lokasi source CLI `galleon` (binary utama, beda dari `zerocode` TUI) belum diverifikasi sesi ini — kemungkinan crate terpisah di `crates/` atau `apps/`, cari sebelum eksekusi.
 
-- [ ] **BR-E3 · R-40 · PR-58 (P1, L)** Retarget `galleoncode` (TUI) ke Client Protocol; matikan `spawn_owned_ephemeral_daemon`. Dep: BG-E2 (Sprint 4).
+- [x] **BR-E3 · R-40 · PR-58 (P1, L)** Retarget `galleoncode` (TUI) ke Client Protocol; matikan `spawn_owned_ephemeral_daemon`. Dep: BG-E2 (Sprint 4).
 
 #### Detail Eksekusi — BR-E3
 
@@ -61,7 +61,7 @@ depends_on: Sprint 4 §B (BG-E1/E2 Client Protocol harus ada dulu)
 
 **JANGAN DIUBAH:** Fungsionalitas TUI yang terlihat user — ini migrasi transport, bukan perubahan UX.
 
-- [ ] **BR-E4 · R-42 · PR-58 (P1, M)** Retarget `galleon-acp-bridge` (ODR-24).
+- [x] **BR-E4 · R-42 · PR-58 (P1, M)** Retarget `galleon-acp-bridge` (ODR-24).
 
 #### Detail Eksekusi — BR-E4
 
@@ -73,7 +73,7 @@ depends_on: Sprint 4 §B (BG-E1/E2 Client Protocol harus ada dulu)
 
 ## B. Provider LLM — Reliability & OAuth
 
-- [ ] **BL-25 (MEDIUM)** BYOC — override `client_id` OAuth xAI/OpenAI. Naik prioritas kalau keputusan open-source "ya".
+- [x] **BL-25 (MEDIUM)** BYOC — override `client_id` OAuth xAI/OpenAI. Naik prioritas kalau keputusan open-source "ya".
 
 #### Detail Eksekusi — BL-25
 
@@ -85,7 +85,7 @@ depends_on: Sprint 4 §B (BG-E1/E2 Client Protocol harus ada dulu)
 
 **Dependency:** "Naik prioritas kalau keputusan open-source ya" — ini bergantung pada keputusan Owner terpisah (apakah Galleon open-source), BUKAN dependency teknis. Tidak blocking untuk mulai, tapi prioritas eksekusi bisa naik/turun sesuai keputusan itu.
 
-- [ ] **BL-26 (LOW effort/MEDIUM impact)** Dokumentasikan model keamanan single-tenant auth.
+- [x] **BL-26 (LOW effort/MEDIUM impact)** Dokumentasikan model keamanan single-tenant auth.
 
 #### Detail Eksekusi — BL-26
 
@@ -93,13 +93,13 @@ depends_on: Sprint 4 §B (BG-E1/E2 Client Protocol harus ada dulu)
 
 **Dependency:** Tidak hard-block, tapi lebih bermakna SETELAH Sprint 0 BG-C1 selesai (konsep "principal" sudah establish).
 
-- [ ] **BL-27 (LOW effort)** Perbaiki UX pesan error OAuth refresh-revoked.
+- [x] **BL-27 (LOW effort)** Perbaiki UX pesan error OAuth refresh-revoked.
 
 #### Detail Eksekusi — BL-27
 
 **TIDAK DIVERIFIKASI sesi ini** — pesan error OAuth existing belum dibaca. **Langkah pertama:** cari pesan error di `clawcrew-providers/src/auth/` terkait token revoked/expired, evaluasi apakah pesan ke user cukup actionable (menjelaskan harus re-auth, bukan generic "error").
 
-- [ ] **BL-28 (MEDIUM, tunggu BL-15 untuk baseline)** Client-side rate limiting LLM provider calls. Dep: BL-15 (Sprint 5, selesai duluan).
+- [x] **BL-28 (MEDIUM, tunggu BL-15 untuk baseline)** Client-side rate limiting LLM provider calls. Dep: BL-15 (Sprint 5, selesai duluan).
 
 #### Detail Eksekusi — BL-28
 
@@ -107,7 +107,7 @@ depends_on: Sprint 4 §B (BG-E1/E2 Client Protocol harus ada dulu)
 
 **ASUMSI:** Scope detail bergantung pada hasil BL-15 — tidak bisa dirinci lebih jauh sebelum pola BL-15 established.
 
-- [ ] **BL-29 (LOW-MEDIUM)** Lengkapi test reliability: cascading-all-down & cooldown-expiry.
+- [x] **BL-29 (LOW-MEDIUM)** Lengkapi test reliability: cascading-all-down & cooldown-expiry.
 
 #### Detail Eksekusi — BL-29
 
@@ -115,7 +115,7 @@ depends_on: Sprint 4 §B (BG-E1/E2 Client Protocol harus ada dulu)
 
 ## C. Memory Governance
 
-- [ ] **BL-30 (MEDIUM-HIGH)** `erase_identity()` lintas-backend untuk memory — saat ini primitif delete nyata ada TAPI tidak ada single entry-point "hapus semua data saya".
+- [x] **BL-30 (MEDIUM-HIGH)** `erase_identity()` lintas-backend untuk memory — saat ini primitif delete nyata ada TAPI tidak ada single entry-point "hapus semua data saya".
 
 #### Detail Eksekusi — BL-30
 
@@ -161,7 +161,7 @@ pub async fn erase_identity(
 
 **ASUMSI:** Scope "12 file backend" adalah estimasi dari grep sesi ini — tim eksekusi WAJIB konfirmasi jumlah pasti implementasi trait `Memory` sebelum commit ke estimate effort.
 
-- [ ] **BL-31 (MEDIUM, scope besar, evaluasi trait dulu)** Hygiene/retensi otomatis backend-agnostic — saat ini hanya jalan di SQLite.
+- [x] **BL-31 (MEDIUM, scope besar, evaluasi trait dulu)** Hygiene/retensi otomatis backend-agnostic — saat ini hanya jalan di SQLite.
 
 #### Detail Eksekusi — BL-31
 

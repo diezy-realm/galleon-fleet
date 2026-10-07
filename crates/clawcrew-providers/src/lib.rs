@@ -27,6 +27,7 @@ pub mod opencode_session;
 pub mod openrouter;
 pub mod openrouter_catalog;
 pub mod pricing;
+pub mod rate_limit;
 pub mod reliable;
 pub mod router;
 pub mod safeguard_notice;
@@ -37,6 +38,10 @@ pub mod vision_override;
 
 pub use anthropic::AnthropicRefusalError;
 pub use dispatch::{AccountedChatResponse, ProviderDispatch, ProviderDispatchRef};
+pub use rate_limit::{
+    ProviderRateLimitError, ProviderRateLimitGate, ProviderRateLimitPermit,
+    ProviderRateLimitPolicy,
+};
 pub use reliable::{
     ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
     ReliableRejectedCompletionUsage, ReliableSemanticEmptyCompletion,

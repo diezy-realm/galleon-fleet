@@ -4203,6 +4203,7 @@ impl Default for SopDraft {
             max_concurrent: 1,
             deterministic: false,
             agent: serde_json::Value::Null,
+            raci: serde_json::Value::Null,
         }
     }
 }

@@ -331,6 +331,15 @@ pub trait Memory: Send + Sync + crate::attribution::Attributable {
     /// would destroy sibling rows.
     async fn forget_for_agent(&self, key: &str, agent_id: &str) -> anyhow::Result<bool>;
 
+    /// Erase all memory data for a given agent across this backend (BL-30).
+    /// Default implementation delegates to `purge_agent` if supported, or returns 0.
+    async fn forget_all_for_agent(&self, agent_id: &str) -> anyhow::Result<u64> {
+        match self.purge_agent(agent_id).await {
+            Ok(count) => Ok(count as u64),
+            Err(_) => Ok(0),
+        }
+    }
+
     /// Remove all memories whose `namespace` field equals the given value.
     /// Returns the number of deleted entries.
     /// Default: returns unsupported error. Backends that support bulk deletion override this.
@@ -744,6 +753,53 @@ impl MemoryStrategy for NoopMemoryStrategy {
     }
 }
 
+/// Summary report of an `erase_identity()` run across all configured backends (BL-30).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct EraseIdentityReport {
+    /// Total entries erased across all successful backends.
+    pub total_erased: u64,
+    /// Successes per backend: backend name -> count erased.
+    pub backends_succeeded: std::collections::BTreeMap<String, u64>,
+    /// Failures per backend: backend name -> error message.
+    pub backends_failed: std::collections::BTreeMap<String, String>,
+}
+
+impl EraseIdentityReport {
+    pub fn record_success(&mut self, backend: &str, count: u64) {
+        self.total_erased += count;
+        self.backends_succeeded.insert(backend.to_string(), count);
+    }
+
+    pub fn record_failure(&mut self, backend: &str, err: &anyhow::Error) {
+        self.backends_failed.insert(backend.to_string(), err.to_string());
+    }
+
+    pub fn is_complete_success(&self) -> bool {
+        self.backends_failed.is_empty()
+    }
+}
+
+/// Erase ALL memory data for one identity across every configured backend (BL-30).
+///
+/// Unlike `Memory::forget` (single key, single backend), this is the single
+/// entry-point for "delete everything about me" (GDPR-style).
+///
+/// Iterates every active Memory backend instance and calls its
+/// `forget_all_for_agent`. Returns per-backend outcome so a partial failure
+/// (e.g. one remote backend down) is visible and traceable.
+pub async fn erase_identity(
+    backends: &[std::sync::Arc<dyn Memory>],
+    agent_id: &str,
+) -> EraseIdentityReport {
+    let mut report = EraseIdentityReport::default();
+    for backend in backends {
+        match backend.forget_all_for_agent(agent_id).await {
+            Ok(count) => report.record_success(backend.name(), count),
+            Err(e) => report.record_failure(backend.name(), &e),
+        }
+    }
+    report
+}
 
 #[cfg(test)]
 mod tests {
@@ -1005,5 +1061,137 @@ mod tests {
             err.to_string()
                 .contains("does not support agent-attributed StoreOptions")
         );
+    }
+
+    struct MockEraseMemory {
+        backend_name: &'static str,
+        erased_count: u64,
+        should_fail: bool,
+    }
+
+    impl crate::attribution::Attributable for MockEraseMemory {
+        fn role(&self) -> crate::attribution::Role {
+            crate::attribution::Role::Memory(crate::attribution::MemoryKind::InMemory)
+        }
+
+        fn alias(&self) -> &str {
+            self.backend_name
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl Memory for MockEraseMemory {
+        fn name(&self) -> &str {
+            self.backend_name
+        }
+
+        async fn store(
+            &self,
+            _key: &str,
+            _content: &str,
+            _category: MemoryCategory,
+            _session_id: Option<&str>,
+        ) -> anyhow::Result<()> {
+            Ok(())
+        }
+
+        async fn recall(
+            &self,
+            _query: &str,
+            _limit: usize,
+            _session_id: Option<&str>,
+            _since: Option<&str>,
+            _until: Option<&str>,
+        ) -> anyhow::Result<Vec<MemoryEntry>> {
+            Ok(Vec::new())
+        }
+
+        async fn get(&self, _key: &str) -> anyhow::Result<Option<MemoryEntry>> {
+            Ok(None)
+        }
+
+        async fn list(
+            &self,
+            _category: Option<&MemoryCategory>,
+            _session_id: Option<&str>,
+        ) -> anyhow::Result<Vec<MemoryEntry>> {
+            Ok(Vec::new())
+        }
+
+        async fn forget(&self, _key: &str) -> anyhow::Result<bool> {
+            Ok(true)
+        }
+
+        async fn forget_for_agent(&self, _key: &str, _agent_id: &str) -> anyhow::Result<bool> {
+            Ok(true)
+        }
+
+        async fn forget_all_for_agent(&self, _agent_id: &str) -> anyhow::Result<u64> {
+            if self.should_fail {
+                anyhow::bail!("backend {} is unreachable", self.backend_name);
+            }
+            Ok(self.erased_count)
+        }
+
+        async fn count(&self) -> anyhow::Result<usize> {
+            Ok(0)
+        }
+
+        async fn health_check(&self) -> bool {
+            true
+        }
+
+        async fn store_with_agent(
+            &self,
+            _key: &str,
+            _content: &str,
+            _category: MemoryCategory,
+            _session_id: Option<&str>,
+            _namespace: Option<&str>,
+            _importance: Option<f64>,
+            _agent_id: Option<&str>,
+        ) -> anyhow::Result<()> {
+            Ok(())
+        }
+
+        async fn recall_for_agents(
+            &self,
+            _allowed_agent_ids: &[&str],
+            _query: &str,
+            _limit: usize,
+            _session_id: Option<&str>,
+            _since: Option<&str>,
+            _until: Option<&str>,
+        ) -> anyhow::Result<Vec<MemoryEntry>> {
+            Ok(Vec::new())
+        }
+    }
+
+    #[tokio::test]
+    async fn erase_identity_aggregates_multi_backend_and_reports_partial_failure() {
+        let b1 = std::sync::Arc::new(MockEraseMemory {
+            backend_name: "sqlite",
+            erased_count: 5,
+            should_fail: false,
+        });
+        let b2 = std::sync::Arc::new(MockEraseMemory {
+            backend_name: "markdown",
+            erased_count: 3,
+            should_fail: false,
+        });
+        let b3 = std::sync::Arc::new(MockEraseMemory {
+            backend_name: "postgres_remote",
+            erased_count: 0,
+            should_fail: true,
+        });
+
+        let backends: Vec<std::sync::Arc<dyn Memory>> = vec![b1, b2, b3];
+        let report = erase_identity(&backends, "agent-007").await;
+
+        assert_eq!(report.total_erased, 8);
+        assert_eq!(report.backends_succeeded.get("sqlite"), Some(&5));
+        assert_eq!(report.backends_succeeded.get("markdown"), Some(&3));
+        assert!(report.backends_failed.contains_key("postgres_remote"));
+        assert!(!report.is_complete_success());
     }
 }
