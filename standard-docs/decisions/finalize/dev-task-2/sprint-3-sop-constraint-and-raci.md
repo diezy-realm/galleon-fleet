@@ -1,7 +1,7 @@
 ---
 sprint: 3
 title: SOP Engine — Do's/Don'ts, RACI, Quest, Constraint Layer (Separation of Duties)
-status: planned
+status: completed
 depends_on: none (additive, risiko regresi rendah)
 ---
 
@@ -9,7 +9,7 @@ depends_on: none (additive, risiko regresi rendah)
 
 ## A. Flow Layer — Do's/Don'ts, RACI, Role Template, Quest (existing design-spec)
 
-- [ ] **BL-06 (dari `sop-do-dont-raci-role-templates-design-spec.md`)** Field Do's/Don'ts terstruktur di `SopStep`. **Catatan generik:** contoh role (Backend/Frontend/QA) HARUS diperluas eksplisit mencakup minimal 1 contoh non-engineering (Marketing: Copywriter/Content Creator) — fundamental produk Galleon adalah AI Companion lintas departemen, bukan hanya engineering.
+- [x] **BL-06 (dari `sop-do-dont-raci-role-templates-design-spec.md`)** Field Do's/Don'ts terstruktur di `SopStep`. **Catatan generik:** contoh role (Backend/Frontend/QA) HARUS diperluas eksplisit mencakup minimal 1 contoh non-engineering (Marketing: Copywriter/Content Creator) — fundamental produk Galleon adalah AI Companion lintas departemen, bukan hanya engineering.
 
 #### Detail Eksekusi — BL-06
 
@@ -55,7 +55,7 @@ Pola `#[serde(default, skip_serializing_if = "Vec::is_empty")]` — IKUTI PERSIS
 
 **ASUMSI:** Lokasi file parser SOP.md belum diverifikasi — tim eksekusi WAJIB `search_symbols`/grep untuk fungsi parsing markdown-to-SopStep sebagai langkah pertama.
 
-- [ ] **BL-07** Field RACI lengkap di `Sop` struct.
+- [x] **BL-07** Field RACI lengkap di `Sop` struct.
 
 #### Detail Eksekusi — BL-07
 
@@ -102,7 +102,7 @@ pub struct RaciAssignment {
 
 **JANGAN DIUBAH:** Field existing `Sop` — hanya tambah 1 field opsional.
 
-- [ ] **BL-08** Template role per-Crew — **diperluas generik** (lihat catatan BL-06), bukan hanya Backend/Frontend/QA.
+- [x] **BL-08** Template role per-Crew — **diperluas generik** (lihat catatan BL-06), bukan hanya Backend/Frontend/QA.
 
 #### Detail Eksekusi — BL-08
 
@@ -116,7 +116,7 @@ pub struct RaciAssignment {
 
 **ASUMSI:** Scope tiket ini perlu diperjelas oleh Lead sebelum eksekusi — "template role" bisa berarti struct data baru, atau sekadar dokumentasi contoh SOP per role. Dokumen asli tidak cukup spesifik untuk saya tentukan sendiri tanpa menebak.
 
-- [ ] **BL-09** Matangkan `Quest` (Go) + `mission.Service` baru.
+- [x] **BL-09** Matangkan `Quest` (Go) + `mission.Service` baru.
 
 #### Detail Eksekusi — BL-09
 
@@ -128,7 +128,7 @@ pub struct RaciAssignment {
 
 > **Temuan riset kunci:** diagram arrow (BPMN/n8n) TIDAK BISA merepresentasikan larangan berbasis role — bahkan Camunda/jBPM (workflow engine enterprise) tidak native punya SoD. Solusi: Layer Flow (`SopStep`, existing, TIDAK diubah) + Layer Constraint (baru, `SopConstraint`) terpisah. Enforcement via hook `preToolUse` yang infrastrukturnya SUDAH ADA (`HookResult::Cancel`).
 
-- [ ] **BL-57 (LOW, additive, tidak ada risiko regresi)** Tipe `SopConstraint`/`ConstraintKind` di `sop::types`. Pola: `Sop.constraints: Vec<SopConstraint>` meniru `Sop.steps: Vec<SopStep>` yang sudah ada.
+- [x] **BL-57 (LOW, additive, tidak ada risiko regresi)** Tipe `SopConstraint`/`ConstraintKind` di `sop::types`. Pola: `Sop.constraints: Vec<SopConstraint>` meniru `Sop.steps: Vec<SopStep>` yang sudah ada.
 
 #### Detail Eksekusi — BL-57
 
@@ -168,7 +168,7 @@ Tambah ke `Sop` struct: `#[serde(default, skip_serializing_if = "Vec::is_empty")
 
 **JANGAN DIUBAH:** `SopStep`/flow layer existing — constraint adalah layer TERPISAH, tidak menggantikan apa pun.
 
-- [ ] **BL-58 (MEDIUM, SETELAH BL-57)** Enforcement `RoleRestriction` via hook `preToolUse` existing. Contoh konkret: role "Lead" dilarang `ToolKind::FileWrite`/`Shell` di MANA PUN dalam SOP run.
+- [x] **BL-58 (MEDIUM, SETELAH BL-57)** Enforcement `RoleRestriction` via hook `preToolUse` existing. Contoh konkret: role "Lead" dilarang `ToolKind::FileWrite`/`Shell` di MANA PUN dalam SOP run.
 
 #### Detail Eksekusi — BL-58
 
@@ -202,7 +202,7 @@ fn enforce_role_restriction(
 
 **JANGAN DIUBAH:** Hook `preToolUse` infrastructure — tiket ini HANYA menambah satu enforcement rule baru yang memakai hook existing.
 
-- [ ] **BL-59 (MEDIUM, SETELAH BL-58)** Enforcement `DistinctPerformer` (Dynamic Separation of Duties).
+- [x] **BL-59 (MEDIUM, SETELAH BL-58)** Enforcement `DistinctPerformer` (Dynamic Separation of Duties).
 
 #### Detail Eksekusi — BL-59
 
@@ -216,7 +216,7 @@ fn enforce_role_restriction(
 
 **ASUMSI:** Titik pemasangan enforcement (`preToolUse` vs titik lain) perlu verifikasi arsitektur SOP engine loop saat eksekusi — saya tidak bisa memastikan `preToolUse` cukup granular untuk constraint antar-step tanpa membaca SOP engine loop penuh (di luar budget sesi ini).
 
-- [ ] **BL-60 (LOW, SETELAH BL-58)** Contoh SOP nyata "Engineering Feature Delivery" — SEKALIGUS jadi test-case pertama untuk evaluation/telemetry loop (lihat `decisions/sop-eval-telemetry-loop-design.md`, advisory bukan blocking).
+- [x] **BL-60 (LOW, SETELAH BL-58)** Contoh SOP nyata "Engineering Feature Delivery" — SEKALIGUS jadi test-case pertama untuk evaluation/telemetry loop (lihat `decisions/sop-eval-telemetry-loop-design.md`, advisory bukan blocking).
 
 #### Detail Eksekusi — BL-60
 
@@ -224,7 +224,7 @@ fn enforce_role_restriction(
 
 **Dependency:** BL-58 (constraint enforcement harus berfungsi untuk SOP ini punya makna, bukan hanya field kosong).
 
-- [ ] **BL-61 (LOW, SETELAH BL-60)** Contoh SOP non-engineering (Marketing) — bukti `SopConstraint` genuinely department-agnostic tanpa ubah kode `ConstraintKind`.
+- [x] **BL-61 (LOW, SETELAH BL-60)** Contoh SOP non-engineering (Marketing) — bukti `SopConstraint` genuinely department-agnostic tanpa ubah kode `ConstraintKind`.
 
 #### Detail Eksekusi — BL-61
 
@@ -234,7 +234,7 @@ fn enforce_role_restriction(
 
 ## C. Evaluation/Telemetry Loop (advisory, divalidasi lewat BL-60)
 
-- [ ] **Eval-01 (dari `decisions/sop-eval-telemetry-loop-design.md`)** Sambungkan `clawcrew-eval` (harness Replay/Live yang sudah matang, CLI sudah ada) sebagai check ADVISORY di CI — TIDAK blocking merge. Dijalankan Lead→Backend→Principle (bukan Owner harian).
+- [x] **Eval-01 (dari `decisions/sop-eval-telemetry-loop-design.md`)** Sambungkan `clawcrew-eval` (harness Replay/Live yang sudah matang, CLI sudah ada) sebagai check ADVISORY di CI — TIDAK blocking merge. Dijalankan Lead→Backend→Principle (bukan Owner harian).
 
 #### Detail Eksekusi — Eval-01
 
@@ -247,7 +247,7 @@ fn enforce_role_restriction(
 
 **Dependency:** BL-60 (butuh SOP contoh untuk dijadikan test-case eval).
 
-- [ ] **Eval-02** Surface `SopCounters`/`RunSnapshot` (metrics SOP yang sudah matang tapi nol di-expose) ke endpoint read-only gateway/dashboard.
+- [x] **Eval-02** Surface `SopCounters`/`RunSnapshot` (metrics SOP yang sudah matang tapi nol di-expose) ke endpoint read-only gateway/dashboard.
 
 #### Detail Eksekusi — Eval-02
 
@@ -261,7 +261,7 @@ fn enforce_role_restriction(
 
 ## D. SOP Execution Model — Delivery Separation & Cost Cap (dari `automation-cron-webhook-backlog.md`, belum pernah masuk sprint manapun sebelum audit 2026-10-05)
 
-- [ ] **BL-13 (LOW-MEDIUM, MULAI DENGAN VERIFIKASI, bukan langsung kode)** Cost cap eksplisit per cron-job/SOP-run. **Verifikasi dulu**: `SecurityPolicy.max_actions_per_hour`/`record_action()`/`is_rate_limited()` (`crates/clawcrew-config/src/policy.rs:349`) sudah dipakai luas di `cron/scheduler.rs:898,1272` dan `subagent/mod.rs` — kemungkinan BESAR task ini SUDAH tercakup existing mechanism, bukan gap baru. Definition of Done tahap ini: dokumentasikan apakah `max_actions_per_hour` sudah cukup sebagai cost-cap level cron-job/SOP-run, atau genuinely butuh field tambahan (mis. cap biaya USD, bukan cuma jumlah aksi).
+- [x] **BL-13 (LOW-MEDIUM, MULAI DENGAN VERIFIKASI, bukan langsung kode)** Cost cap eksplisit per cron-job/SOP-run. **Verifikasi dulu**: `SecurityPolicy.max_actions_per_hour`/`record_action()`/`is_rate_limited()` (`crates/clawcrew-config/src/policy.rs:349`) sudah dipakai luas di `cron/scheduler.rs:898,1272` dan `subagent/mod.rs` — kemungkinan BESAR task ini SUDAH tercakup existing mechanism, bukan gap baru. Definition of Done tahap ini: dokumentasikan apakah `max_actions_per_hour` sudah cukup sebagai cost-cap level cron-job/SOP-run, atau genuinely butuh field tambahan (mis. cap biaya USD, bukan cuma jumlah aksi).
 
 #### Detail Eksekusi — BL-13
 
@@ -273,7 +273,7 @@ fn enforce_role_restriction(
 
 **JANGAN DIUBAH:** `SecurityPolicy`/`max_actions_per_hour` di tahap verifikasi ini — murni membaca dan mendokumentasikan.
 
-- [ ] **BL-12 (LOW, EVALUASI dulu — bukan implementasi langsung)** Pemisahan eksekusi vs delivery untuk SOP/cron trigger eksternal (pola `gh-aw` safe-outputs). **Bukan vulnerability aktif** — `ContentSafety::screen_event` (BL-14, Sprint 0) sudah menyaring input SOP. Ini defense-in-depth tambahan: evaluasi apakah perlu tahap "proposed output" terpisah sebelum `SopRunAction::ExecuteStep` menerapkan delivery (permission lebih sempit). Definition of Done tahap ini: design-spec baru yang memutuskan perlu/tidak, JANGAN langsung ubah `SopRunAction` yang sudah punya invariant ketat.
+- [x] **BL-12 (LOW, EVALUASI dulu — bukan implementasi langsung)** Pemisahan eksekusi vs delivery untuk SOP/cron trigger eksternal (pola `gh-aw` safe-outputs). **Bukan vulnerability aktif** — `ContentSafety::screen_event` (BL-14, Sprint 0) sudah menyaring input SOP. Ini defense-in-depth tambahan: evaluasi apakah perlu tahap "proposed output" terpisah sebelum `SopRunAction::ExecuteStep` menerapkan delivery (permission lebih sempit). Definition of Done tahap ini: design-spec baru yang memutuskan perlu/tidak, JANGAN langsung ubah `SopRunAction` yang sudah punya invariant ketat.
 
 #### Detail Eksekusi — BL-12
 
