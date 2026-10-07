@@ -4129,6 +4129,8 @@ pub struct SopDraft {
     pub deterministic: bool,
     #[serde(default, skip_serializing_if = "serde_json::Value::is_null")]
     pub agent: serde_json::Value,
+    #[serde(default, skip_serializing_if = "serde_json::Value::is_null")]
+    pub raci: serde_json::Value,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

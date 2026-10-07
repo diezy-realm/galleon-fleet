@@ -51,6 +51,8 @@
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }]);
         let action = engine
             .start_run(
@@ -221,6 +223,8 @@
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }]);
         let action = engine
             .start_run(
@@ -1529,6 +1533,8 @@
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         };
         crate::sop::save_sop(&sops_dir, &sop).unwrap();
         let mut groups = HashMap::new();
@@ -1669,6 +1675,8 @@
             location: None,
             deterministic: false,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
             admission_policy: crate::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
         };
@@ -1784,6 +1792,8 @@
             location: None,
             deterministic: true,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
             admission_policy: crate::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
         };
@@ -1885,6 +1895,8 @@
                 location: None,
                 deterministic: true,
                 agent: None,
+                raci: None,
+                constraints: Vec::new(),
                 admission_policy: crate::sop::types::SopAdmissionPolicy::Parallel,
                 max_pending_approvals: 0,
             }

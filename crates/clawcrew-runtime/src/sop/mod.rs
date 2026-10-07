@@ -4,6 +4,7 @@ pub mod audit;
 pub mod binding;
 pub mod capability;
 pub mod condition;
+pub mod constraint;
 pub mod dispatch;
 pub mod engine;
 pub mod executor;
@@ -24,6 +25,7 @@ pub mod wire;
 
 pub use approval::ApprovalDecision;
 pub use audit::SopAuditLogger;
+pub use constraint::{ConstraintKind, SopConstraint};
 pub use dispatch::SopRuntimeDispatcher;
 #[allow(unused_imports)]
 pub use binding::{
@@ -493,6 +495,8 @@ fn load_sop(sop_dir: &Path, default_execution_mode: SopExecutionMode) -> Result<
         admission_policy,
         max_pending_approvals,
         agent,
+        raci,
+        constraints,
     } = manifest.sop;
 
     // When deterministic=true, override execution_mode to Deterministic
@@ -517,6 +521,8 @@ fn load_sop(sop_dir: &Path, default_execution_mode: SopExecutionMode) -> Result<
         admission_policy,
         max_pending_approvals,
         agent,
+        raci,
+        constraints,
     };
     capability::SopCapabilityRegistry::with_builtins().validate_sop(&sop)?;
     Ok(sop)
@@ -1372,6 +1378,12 @@ pub fn validate_sop_strict(sop: &Sop) -> SopValidation {
         blocking.push("SOP name is empty".into());
     }
 
+    if let Some(raci) = &sop.raci {
+        if raci.accountable.trim().is_empty() {
+            blocking.push("SOP RACI accountable role must not be empty".into());
+        }
+    }
+
     let mut seen = std::collections::HashSet::new();
     for step in &sop.steps {
         if step.title.trim().is_empty() {
@@ -1440,6 +1452,8 @@ mod tests {
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }]);
         let action = engine
             .start_run(
@@ -1619,6 +1633,8 @@ mod tests {
             admission_policy: Default::default(),
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }
     }
 
@@ -2178,5 +2194,64 @@ mod tests {
         assert_eq!(steps.len(), 1);
         assert!(steps[0].dos.is_empty());
         assert!(steps[0].donts.is_empty());
+    }
+
+    #[test]
+    fn validate_sop_strict_rejects_empty_raci_accountable() {
+        use crate::sop::types::RaciAssignment;
+
+        let mut sop = Sop {
+            name: "marketing-press-release".into(),
+            description: "Press release SOP".into(),
+            triggers: vec![SopTrigger::Manual],
+            steps: vec![SopStep {
+                number: 1,
+                title: "Draft".into(),
+                body: "Write text".into(),
+                ..SopStep::default()
+            }],
+            raci: Some(RaciAssignment {
+                responsible: vec!["copywriter".into()],
+                accountable: "   ".into(), // Empty / whitespace must be rejected
+                consulted: vec![],
+                informed: vec!["marketing_head".into()],
+            }),
+            ..Sop::default()
+        };
+
+        let val = validate_sop_strict(&sop);
+        assert!(!val.is_ok());
+        assert!(
+            val.blocking
+                .iter()
+                .any(|b| b.contains("SOP RACI accountable role must not be empty")),
+            "expected accountable empty blocking error, got: {:?}",
+            val.blocking
+        );
+
+        // Fixing accountable makes it pass
+        sop.raci.as_mut().unwrap().accountable = "head_of_marketing".into();
+        let val_fixed = validate_sop_strict(&sop);
+        assert!(val_fixed.is_ok(), "blocking: {:?}", val_fixed.blocking);
+    }
+
+    #[test]
+    fn validate_sop_strict_accepts_none_raci() {
+        let sop = Sop {
+            name: "engineering-deploy".into(),
+            description: "Deploy SOP".into(),
+            triggers: vec![SopTrigger::Manual],
+            steps: vec![SopStep {
+                number: 1,
+                title: "Build".into(),
+                body: "Compile binary".into(),
+                ..SopStep::default()
+            }],
+            raci: None,
+            ..Sop::default()
+        };
+
+        let val = validate_sop_strict(&sop);
+        assert!(val.is_ok(), "blocking: {:?}", val.blocking);
     }
 }
