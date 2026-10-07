@@ -536,6 +536,15 @@ pub fn llm_request_payload_policy() -> Option<(LlmRequestPayloadPolicy, usize)> 
     })
 }
 
+/// Active resolved log policy for tool I/O capture and persistence.
+/// Falls back to default policy if no writer is installed.
+#[must_use]
+pub fn active_resolved_policy() -> ResolvedPolicy {
+    current_state()
+        .map(|s| s.policy.clone())
+        .unwrap_or_else(|| ResolvedPolicy::from_config(&LogConfig::default(), Path::new(".")))
+}
+
 /// Emit one event. Always fans out to the broadcast hook + tracing event.
 /// If persistence is enabled, hands the serialized value to the disk
 /// worker via a bounded `try_send`. The hot path performs no file I/O.

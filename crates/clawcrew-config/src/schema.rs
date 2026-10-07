@@ -13293,6 +13293,22 @@ pub struct ObservabilityConfig {
     )]
     pub log_tool_io: LogToolIo,
 
+    /// Technical tool I/O capture policy (shell, file ops, etc.): "off" | "redacted" | "full".
+    /// Defaults to `redacted`.
+    #[serde(
+        default = "default_log_technical_tool_io",
+        deserialize_with = "deserialize_enum_lenient"
+    )]
+    pub log_technical_tool_io: LogToolIo,
+
+    /// Conversational tool I/O capture policy (messaging, user chat): "off" | "redacted" | "full".
+    /// Defaults to `off` to protect user privacy.
+    #[serde(
+        default = "default_log_conversational_tool_io",
+        deserialize_with = "deserialize_enum_lenient"
+    )]
+    pub log_conversational_tool_io: LogToolIo,
+
     /// Truncate the captured tool input and output at this many bytes when
     /// `log_tool_io = "redacted"`. Truncated events carry an explicit
     /// `tool_output_truncated: true` flag plus `tool_output_original_bytes`.
@@ -13371,6 +13387,8 @@ impl Default for ObservabilityConfig {
             log_persistence_max_entries_per_segment:
                 default_log_persistence_max_entries_per_segment(),
             log_tool_io: default_log_tool_io(),
+            log_technical_tool_io: default_log_technical_tool_io(),
+            log_conversational_tool_io: default_log_conversational_tool_io(),
             log_tool_io_truncate_bytes: default_log_tool_io_truncate_bytes(),
             log_tool_io_denylist: Vec::new(),
             log_llm_request_payload: default_log_llm_request_payload(),
@@ -13422,6 +13440,14 @@ fn default_log_persistence_retention_max_age_days() -> u64 {
 
 fn default_log_tool_io() -> LogToolIo {
     LogToolIo::Redacted
+}
+
+fn default_log_technical_tool_io() -> LogToolIo {
+    LogToolIo::Redacted
+}
+
+fn default_log_conversational_tool_io() -> LogToolIo {
+    LogToolIo::Off
 }
 
 fn default_log_llm_request_payload() -> LogLlmRequestPayload {
