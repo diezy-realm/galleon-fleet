@@ -7,18 +7,18 @@ title: DoD & PR Checklist — MCP/Plugin Governance & Sub-Agent Resource
 
 ## Gerbang Wajib
 
-- [ ] **GW-0 Hygiene** — standar.
-- [ ] **GW-0b Commit/PR naming** — judul commit DAN judul PR memakai template `feat({tiket}): {deskripsi}` persis (lihat README §Konvensi Commit & PR); `{tiket}` cocok PERSIS ID di sprint file (case-sensitive); multi-tiket dipisah koma tanpa spasi (`BL-19,BL-23`); PR description baris pertama menyebut `Sprint 5` eksplisit; commit di branch `feat/refactoring-finalize-01` saja (lihat README §Kebijakan Branch).
-- [ ] **GW-1 Rust** — `cargo fmt --all -- --check`; `cargo clippy -p <crate> -- -D warnings`; `cargo nextest run -p <crate>` (Windows: `$env:CARGO_TARGET_DIR="target/agent"`); **nol `unwrap()/expect()` baru**.
-- [ ] **GW-8 Keamanan** — WAJIB untuk `BL-19`/`BL-20`/`BL-21`/`BL-23`: threat-note eksplisit per PR (permukaan baru default tertutup); test negatif (akses di luar scope → ditolak).
+- [x] **GW-0 Hygiene** — standar.
+- [x] **GW-0b Commit/PR naming** — judul commit DAN judul PR memakai template `feat({tiket}): {deskripsi}` persis (lihat README §Konvensi Commit & PR); `{tiket}` cocok PERSIS ID di sprint file (case-sensitive); multi-tiket dipisah koma tanpa spasi (`BL-19,BL-23`); PR description baris pertama menyebut `Sprint 5` eksplisit; commit di branch `feat/refactoring-finalize-01` saja (lihat README §Kebijakan Branch).
+- [x] **GW-1 Rust** — `cargo fmt --all -- --check`; `cargo clippy -p <crate> -- -D warnings`; `cargo nextest run -p <crate>` (Windows: `$env:CARGO_TARGET_DIR="target/agent"`); **nol `unwrap()/expect()` baru**.
+- [x] **GW-8 Keamanan** — WAJIB untuk `BL-19`/`BL-20`/`BL-21`/`BL-23`: threat-note eksplisit per PR (permukaan baru default tertutup); test negatif (akses di luar scope → ditolak).
 
 ## Acceptance Criteria Spesifik Sprint Ini
 
-- [ ] `BL-15`: test spawn sub-agent melebihi cap, assert DITOLAK/DI-QUEUE dengan pesan jelas (bukan crash/OOM) — ini akar masalah crash yang dilaporkan Owner, PR tanpa test reproduksi crash ASLI yang sekarang tertutup dipertanyakan.
-- [ ] `BL-16`: metrics `loop_detector_circuit_breaker` TERLIHAT di Tasks-view — screenshot/demo di PR description, bukan hanya endpoint API tanpa UI.
-- [ ] `BL-19`: MCP stdio child process test coba akses file/network di luar scope, assert DITOLAK — setara level sandboxing dengan WASM plugin yang sudah ada (dicek berdampingan, bukan asumsi "sudah cukup").
-- [ ] `BL-23`: `PluginPermission::FileRead/Write` wiring diverifikasi dengan test yang BENAR-BENAR mencoba read/write di luar permission granted, assert DITOLAK.
-- [ ] `BR-F2`: WIT v1 dan v0 hidup BERDAMPINGAN — test membuktikan plugin v0 existing TIDAK breaking setelah v1 ditambahkan.
+- [x] `BL-15`: test spawn sub-agent melebihi cap, assert DITOLAK/DI-QUEUE dengan pesan jelas (bukan crash/OOM) — ini akar masalah crash yang dilaporkan Owner, PR tanpa test reproduksi crash ASLI yang sekarang tertutup dipertanyakan.
+- [x] `BL-16`: metrics `loop_detector_circuit_breaker` TERLIHAT di Tasks-view — screenshot/demo di PR description, bukan hanya endpoint API tanpa UI.
+- [x] `BL-19`: MCP stdio child process test coba akses file/network di luar scope, assert DITOLAK — setara level sandboxing dengan WASM plugin yang sudah ada (dicek berdampingan, bukan asumsi "sudah cukup").
+- [x] `BL-23`: `PluginPermission::FileRead/Write` wiring diverifikasi dengan test yang BENAR-BENAR mencoba read/write di luar permission granted, assert DITOLAK.
+- [x] `BR-F2`: WIT v1 dan v0 hidup BERDAMPINGAN — test membuktikan plugin v0 existing TIDAK breaking setelah v1 ditambahkan.
 
 ## Checklist Review Principle
 

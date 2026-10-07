@@ -1,7 +1,7 @@
 ---
 sprint: 5
 title: MCP/Plugin Governance & Sub-Agent Resource Management
-status: planned
+status: completed
 depends_on: BL-19 (Sprint 0, MCP sandbox dasar)
 ---
 
@@ -9,7 +9,7 @@ depends_on: BL-19 (Sprint 0, MCP sandbox dasar)
 
 ## A. Resource Management Sub-Agent (akar masalah crash yang dilaporkan Owner)
 
-- [ ] **BL-15 (P1, HIGH, PRIORITAS TERTINGGI file ini)** Resource gate SEBELUM spawn sub-agent. Nol gate saat ini adalah penyebab langsung crash yang sudah dilaporkan.
+- [x] **BL-15 (P1, HIGH, PRIORITAS TERTINGGI file ini)** Resource gate SEBELUM spawn sub-agent. Nol gate saat ini adalah penyebab langsung crash yang sudah dilaporkan.
 
 #### Detail Eksekusi — BL-15
 
@@ -57,7 +57,7 @@ pub fn check_resource_gate(
 
 **ASUMSI:** Nilai cap (`max_concurrent_subagents`/`max_memory_mb`) belum ditentukan dokumen — perlu keputusan Lead berdasarkan data crash yang sudah dilaporkan (kalau ada angka crash threshold yang diketahui, pakai itu sebagai starting point, bukan angka sembarangan).
 
-- [ ] **BL-16 (MEDIUM)** Surface `loop_detector_circuit_breaker` ke Tasks-view — 3-pola deteksi sudah matang tapi hasil tidak pernah sampai ke dashboard.
+- [x] **BL-16 (MEDIUM)** Surface `loop_detector_circuit_breaker` ke Tasks-view — 3-pola deteksi sudah matang tapi hasil tidak pernah sampai ke dashboard.
 
 #### Detail Eksekusi — BL-16
 
@@ -76,7 +76,7 @@ pub fn check_resource_gate(
 
 **ASUMSI:** "Tasks-view" lokasi di `web/src/` belum diverifikasi — cari komponen dengan nama serupa sebelum menebak path.
 
-- [ ] **BL-17 (LOW, exploratory, dep BL-16)** Agregasi lintas-sub-agent untuk fan-out besar.
+- [x] **BL-17 (LOW, exploratory, dep BL-16)** Agregasi lintas-sub-agent untuk fan-out besar.
 
 #### Detail Eksekusi — BL-17
 
@@ -90,7 +90,7 @@ pub fn check_resource_gate(
 
 ## B. Plugin & MCP Architecture (lanjutan BL-19 Sprint 0)
 
-- [ ] **BL-20 (MEDIUM)** Dokumentasikan gap sandbox MCP (interim) — sambil BL-19 (Sprint 0) berjalan.
+- [x] **BL-20 (MEDIUM)** Dokumentasikan gap sandbox MCP (interim) — sambil BL-19 (Sprint 0) berjalan.
 
 #### Detail Eksekusi — BL-20
 
@@ -103,7 +103,7 @@ pub fn check_resource_gate(
 
 **JANGAN DIUBAH:** `clawcrew-plugins` WASM host — itu sistem terpisah yang sudah matang, bukan target tiket ini.
 
-- [ ] **BL-21 (MEDIUM, evaluasi desain dulu)** Vault-mediation untuk secret MCP env/headers.
+- [x] **BL-21 (MEDIUM, evaluasi desain dulu)** Vault-mediation untuk secret MCP env/headers.
 
 #### Detail Eksekusi — BL-21
 
@@ -111,7 +111,7 @@ pub fn check_resource_gate(
 
 **ASUMSI:** Scope detail bergantung pada temuan BL-20 — tidak bisa dirinci lebih jauh tanpa tahu MCP client host ada di mana.
 
-- [ ] **BL-22 (MEDIUM)** ADR pembanding WASM Plugin vs MCP.
+- [x] **BL-22 (MEDIUM)** ADR pembanding WASM Plugin vs MCP.
 
 #### Detail Eksekusi — BL-22
 
@@ -119,7 +119,7 @@ pub fn check_resource_gate(
 
 **Dependency:** BL-20 (butuh temuan gap MCP sebagai bahan perbandingan).
 
-- [ ] **BL-23 (MEDIUM)** Verifikasi wiring `PluginPermission::FileRead/Write`.
+- [x] **BL-23 (MEDIUM)** Verifikasi wiring `PluginPermission::FileRead/Write`.
 
 #### Detail Eksekusi — BL-23
 
@@ -142,7 +142,7 @@ pub fn check_resource_gate(
 
 ## C. Plugin & Channel Tier (dev-tasks asli, scope berdekatan)
 
-- [ ] **BR-F2 · R-35 · PR-86 (P1, M)** Host WIT v1 (dual v0/v1; v0 tetap lolos `.frozen`). Pasangan `RB-24` (Sprint 8).
+- [x] **BR-F2 · R-35 · PR-86 (P1, M)** Host WIT v1 (dual v0/v1; v0 tetap lolos `.frozen`). Pasangan `RB-24` (Sprint 8).
 
 #### Detail Eksekusi — BR-F2
 
@@ -150,9 +150,9 @@ pub fn check_resource_gate(
 
 **Dependency:** RB-24 (Sprint 8) — koordinasikan timing, RB-24 adalah bagian rename massal yang menunggu Sprint 0-7 selesai, sementara BR-F2 adalah pekerjaan FUNGSIONAL (host dual version) yang BISA dikerjakan sebelum rename.
 
-- [ ] **BR-F3 · R-32 · PR-64 (P2, L)** Channel regional Tier B (WeChat/QQ…) + feature flag.
-- [ ] **BR-F4 · R-33 · PR-94 (P2, M)** Pilih Tier B saat instalasi.
-- [ ] **BR-F5 · R-31 · PR-95 (P2, M)** Tier C WASI: pilot `channel-nostr-pilot` + `.frozen` v0 sudah ada; tinggal e2e penuh (host, signature, capability) dan ukur batas `wasi:http` outbound.
+- [x] **BR-F3 · R-32 · PR-64 (P2, L)** Channel regional Tier B (WeChat/QQ…) + feature flag.
+- [x] **BR-F4 · R-33 · PR-94 (P2, M)** Pilih Tier B saat instalasi.
+- [x] **BR-F5 · R-31 · PR-95 (P2, M)** Tier C WASI: pilot `channel-nostr-pilot` + `.frozen` v0 sudah ada; tinggal e2e penuh (host, signature, capability) dan ukur batas `wasi:http` outbound.
 
 #### Detail Eksekusi — BR-F3/BR-F4/BR-F5
 
