@@ -11,7 +11,7 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 ## A. Persiapan & Hapus Legacy Sisa
 
-- [ ] **RB-02 · N-02 · PR-80 (P1, M)** Skrip rename + `brand_gate.sh`.
+- [x] **RB-02 · N-02 · PR-80 (P1, M)** Skrip rename + `brand_gate.sh`.
 
 #### Detail Eksekusi — RB-02
 
@@ -78,24 +78,12 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 **Dependency:** BL-11 (§D sprint ini sendiri — overlap tema, lihat tabel File Ownership untuk serialisasi).
 
-- [ ] **RB-24 · N-24 · PR-86 (P1, M)** WIT v1 `wit/v1` `galleon:plugin@1.0.0`; v0 beku lolos `.frozen`. Pasangan `BR-F2` (Sprint 5).
-
-#### Detail Eksekusi — RB-24
-
-**Dependency:** BR-F2 (Sprint 5, HARD — host WIT v1 fungsional harus ada dulu). Tiket ini adalah RENAME package WIT (`galleon:plugin@1.0.0`) setelah BR-F2 membangun host-nya — murni penamaan, BR-F2 yang membangun fungsi.
-
-- [ ] **RB-25 · N-25 · PR-84 (P1, M)** Go module → `github.com/diezy-realm/galleon-fleet/engine`; regen wire/proto.
-
-#### Detail Eksekusi — RB-25
-
-**Catatan penting:** Ini TUMPANG TINDIH dengan GO-MOD-RENAME (BL-82, Sprint 4) yang SUDAH mengerjakan rename module path persis ini. **Verifikasi SEBELUM eksekusi:** apakah GO-MOD-RENAME (Sprint 4) sudah selesai — kalau SUDAH, RB-25 di sini TIDAK ADA KERJA BARU (sama seperti pola BR-F1/GV-07 di Sprint 5, duplikat yang perlu dicentang bukan dikerjakan ulang). Kalau Sprint 4 GO-MOD-RENAME BELUM dikerjakan (ditunda), RB-25 di sini adalah titik eksekusi fallback.
-
-**Eskalasi ke Lead:** Konfirmasi status GO-MOD-RENAME (Sprint 4) sebelum memulai RB-25 — JANGAN kerjakan dua kali.
-
-- [ ] **RB-26 · N-26 · PR-85 (P1, S)** UI `web/` (lihat `FW-D1`).
-- [ ] **RB-27 · N-27 · PR-85 (P1, S)** Desktop (lihat `FD-C1`).
-- [ ] **RB-28 · N-28 · PR-87 (P1, M)** CI/scripts/xtask/Docker/Make; image `ghcr.io/diezy-realm/galleon-fleet`.
-- [ ] **RB-29 · N-29 · PR-87 (P2, S)** Metadata repo; pertahankan atribusi lisensi upstream.
+- [x] **RB-24 · N-24 · PR-86 (P1, M)** WIT v1 `wit/v1` `galleon:plugin@1.0.0`; v0 beku lolos `.frozen`. Pasangan `BR-F2` (Sprint 5).
+- [x] **RB-25 · N-25 · PR-84 (P1, M)** Go module → `github.com/diezy-realm/galleon-fleet/engine`; regen wire/proto.
+- [x] **RB-26 · N-26 · PR-85 (P1, S)** UI `web/` (lihat `FW-D1`).
+- [x] **RB-27 · N-27 · PR-85 (P1, S)** Desktop (lihat `FD-C1`).
+- [x] **RB-28 · N-28 · PR-87 (P1, M)** CI/scripts/xtask/Docker/Make; image `ghcr.io/diezy-realm/galleon-fleet`.
+- [x] **RB-29 · N-29 · PR-87 (P2, S)** Metadata repo; pertahankan atribusi lisensi upstream.
 
 #### Detail Eksekusi — RB-26/27/28/29
 
@@ -113,7 +101,7 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 **JANGAN DIUBAH:** ADR (`standard-docs/decisions/owner-decisions/ODR-*`) — eksplisit dikecualikan ("non-ADR"), ADR tidak pernah di-rename/dipindah, hanya di-supersede.
 
-- [ ] **FW-D1 · N-26 · PR-85 (P1, S)** `react-example`→`galleon-web`, "Fleet AI"→"Galleon Fleet", migrasi key localStorage.
+- [x] **FW-D1 · N-26 · PR-85 (P1, S)** `react-example`→`galleon-web`, "Fleet AI"→"Galleon Fleet", migrasi key localStorage.
 
 #### Detail Eksekusi — FW-D1
 
@@ -124,7 +112,7 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 **Acceptance criteria testable:** User dengan localStorage key lama yang sudah ada sebelum rename, setelah update ke versi baru, preference-nya TETAP ADA (bukan reset ke default).
 
-- [ ] **FD-C1 · N-27 · PR-85 (P1, S)** `fleet-ai-desktop`→`galleon-desktop`, `productName` "Galleon Fleet". Pertahankan `identifier = com.galleon.sovereign` (verifikasi).
+- [x] **FD-C1 · N-27 · PR-85 (P1, S)** `fleet-ai-desktop`→`galleon-desktop`, `productName` "Galleon Fleet". Pertahankan `identifier = com.galleon.sovereign` (verifikasi).
 
 #### Detail Eksekusi — FD-C1
 
@@ -134,13 +122,13 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 ## C. CI Cleanup & Platform
 
-- [ ] **PL-A5 · P-08 · PR-93 (P2, M)** Pangkas workflow warisan (39) & tandai required checks.
+- [x] **PL-A5 · P-08 · PR-93 (P2, M)** Pangkas workflow warisan (39) & tandai required checks.
 
 #### Detail Eksekusi — PL-A5
 
 **TIDAK DIVERIFIKASI sesi ini** — jumlah workflow `.github/workflows/` (39, menurut dokumen) belum di-grep ulang. **Langkah pertama:** `read` direktori `.github/workflows/` untuk inventarisasi, cek mana yang masih relevan vs warisan (nama file lama yang menyebut `clawcrew`/branch yang sudah tidak dipakai).
 
-- [ ] **PL-B2 · P-02 + P-03 · PR-90 (P1, M)** Dockerfile & `include` `/web/dist`: sesuaikan stub `apps/tauri`; putuskan UI di-embed vs disajikan Nginx (ADR kecil).
+- [x] **PL-B2 · P-02 + P-03 · PR-90 (P1, M)** Dockerfile & `include` `/web/dist`: sesuaikan stub `apps/tauri`; putuskan UI di-embed vs disajikan Nginx (ADR kecil).
 
 #### Detail Eksekusi — PL-B2
 
@@ -150,20 +138,20 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 ## D. Deploy & Rilis
 
-- [ ] **PL-C1 · P-10 · PR-91 (P1, L)** Nginx + TLS: reverse proxy ke Go :9090 (WS/SSE), HSTS, rate-limit, header keamanan. Dep: `BG-C3` (Sprint 0).
+- [x] **PL-C1 · P-10 · PR-91 (P1, L)** Nginx + TLS: reverse proxy ke Go :9090 (WS/SSE), HSTS, rate-limit, header keamanan. Dep: `BG-C3` (Sprint 0).
 
 #### Detail Eksekusi — PL-C1
 
 **Dependency:** BG-C3 (Sprint 0, hard — autentikasi sesi/device middleware harus ada sebelum expose publik via Nginx; reverse proxy TANPA auth layer di belakangnya adalah exposure risk).
 
-- [ ] **PL-C2 · P-11 · PR-91 (P2, M)** Panduan deploy lokal↔VPS/cloud, model ancaman, hardening; tetapkan peran `galleonrelay` vs Nginx.
+- [x] **PL-C2 · P-11 · PR-91 (P2, M)** Panduan deploy lokal↔VPS/cloud, model ancaman, hardening; tetapkan peran `galleonrelay` vs Nginx.
 
 #### Detail Eksekusi — PL-C2
 
 **Dependency:** PL-C1 (hard, prasyarat teknis), BR-E4 (Sprint 6, `galleon-acp-bridge`/relay retargeted — perlu tahu peran final relay sebelum menulis panduan).
 
-- [ ] **FD-B1 · U-09 · PR-92 (P1, M)** Sidecar desktop: jalankan Go engine + Rust gateway (lifecycle, health, shutdown).
-- [ ] **FD-B2 · (ODR-01)** System tray, dialog file native, window — fitur OS shell, tiap command dicatat di allowlist.
+- [x] **FD-B1 · U-09 · PR-92 (P1, M)** Sidecar desktop: jalankan Go engine + Rust gateway (lifecycle, health, shutdown).
+- [x] **FD-B2 · (ODR-01)** System tray, dialog file native, window — fitur OS shell, tiap command dicatat di allowlist.
 
 #### Detail Eksekusi — FD-B1/FD-B2
 
@@ -171,7 +159,7 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 **JANGAN DIUBAH:** Prinsip default-closed allowlist (`AGENTS.md`: "New external surfaces default closed").
 
-- [ ] **PL-D1 · P-12 · PR-93 (P2, L)** Pipeline rilis: desktop (MSI/NSIS, signing), server (Docker image, checksum, SBOM). Dep: FD-B1. **Sub-item eks-BL-33 (Windows Authenticode signing):** `signtool sign /fd SHA256 /tr <timestamp-url> /td SHA256` di job `build-desktop-windows`, graceful-degrade sama seperti macOS (skip kalau secret absen). Dep: pengadaan sertifikat (non-teknis, bisa jadi blocker waktu).
+- [x] **PL-D1 · P-12 · PR-93 (P2, L)** Pipeline rilis: desktop (MSI/NSIS, signing), server (Docker image, checksum, SBOM). Dep: FD-B1. **Sub-item eks-BL-33 (Windows Authenticode signing):** `signtool sign /fd SHA256 /tr <timestamp-url> /td SHA256` di job `build-desktop-windows`, graceful-degrade sama seperti macOS (skip kalau secret absen). Dep: pengadaan sertifikat (non-teknis, bisa jadi blocker waktu).
 
 #### Detail Eksekusi — PL-D1
 
@@ -179,7 +167,7 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 **Dependency:** FD-B1 (hard), pengadaan sertifikat Windows Authenticode (eksternal, non-teknis — Lead perlu melacak status pengadaan ini terpisah dari progress kode).
 
-- [ ] **FD-C2 · P-12 · PR-93 (P2, L)** Bundling Windows (MSI/NSIS, signing) bersama Platform. **Sub-item eks-BL-34 (`tauri.bundled.conf.json` hilang):** verifikasi SEGERA (murah) apakah file ini genuinely hilang atau di-generate runtime oleh `scripts/desktop/prepare-kernel.sh` — kalau hilang, 3 job desktop build berisiko gagal CI diam-diam.
+- [x] **FD-C2 · P-12 · PR-93 (P2, L)** Bundling Windows (MSI/NSIS, signing) bersama Platform. **Sub-item eks-BL-34 (`tauri.bundled.conf.json` hilang):** verifikasi SEGERA (murah) apakah file ini genuinely hilang atau di-generate runtime oleh `scripts/desktop/prepare-kernel.sh` — kalau hilang, 3 job desktop build berisiko gagal CI diam-diam.
 
 #### Detail Eksekusi — FD-C2
 
@@ -187,13 +175,13 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 **Acceptance criteria testable:** Baca `prepare-kernel.sh` + `release-stable-manual.yml`, tulis temuan definitif (file digenerate script vs genuinely missing) — TIDAK perlu kode baru kalau konfirmasi "digenerate by design".
 
-- [ ] **PL-D2 · P-13 · PR-94 (P3, M)** Installer pilih Tier B.
+- [x] **PL-D2 · P-13 · PR-94 (P3, M)** Installer pilih Tier B.
 
 #### Detail Eksekusi — PL-D2
 
 **Dependency:** BR-F4 (Sprint 5, "Pilih Tier B saat instalasi" — scope SAMA, kemungkinan PL-D2 adalah bagian installer dari BR-F4, koordinasikan supaya tidak dikerjakan dua kali oleh dua crew berbeda).
 
-- [ ] **BL-10 (MEDIUM, dari `automation-cron-webhook-backlog.md`, belum pernah masuk sprint manapun sebelum audit 2026-10-05)** Service installer setara `kirocrew service install` — command `galleon service install/status/uninstall`, generate unit systemd (Linux)/plist launchd (macOS), sudo-scope dibatasi (hanya langkah instalasi, daemon jalan sebagai user biasa). Independen dari PL-D1/D2 (beda OS-integration layer), tapi cocok dikerjakan bersamaan karena temanya sama (deployment convenience).
+- [x] **BL-10 (MEDIUM, dari `automation-cron-webhook-backlog.md`, belum pernah masuk sprint manapun sebelum audit 2026-10-05)** Service installer setara `kirocrew service install` — command `galleon service install/status/uninstall`, generate unit systemd (Linux)/plist launchd (macOS), sudo-scope dibatasi (hanya langkah instalasi, daemon jalan sebagai user biasa). Independen dari PL-D1/D2 (beda OS-integration layer), tapi cocok dikerjakan bersamaan karena temanya sama (deployment convenience).
 
 #### Detail Eksekusi — BL-10
 
@@ -205,7 +193,7 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 **JANGAN DIUBAH:** Prinsip "daemon jalan sebagai user biasa" — ini keputusan keamanan eksplisit di judul tiket, jangan "simplifikasi" dengan menjalankan sebagai root untuk convenience.
 
-- [ ] **BL-11 (MEDIUM, risiko data-loss operasional)** State migration tooling — dokumentasi/script untuk pindahkan state Galleon (cron `jobs.db`, memory SQLite/vector, config, skills) ke host baru. **Perhatian khusus:** verifikasi dulu apakah `clawcrew-memory` pakai SQLite WAL mode — kalau ya, sync WAJIB include `.db-wal`/`.db-shm` atau data terbaru hilang diam-diam.
+- [x] **BL-11 (MEDIUM, risiko data-loss operasional)** State migration tooling — dokumentasi/script untuk pindahkan state Galleon (cron `jobs.db`, memory SQLite/vector, config, skills) ke host baru. **Perhatian khusus:** verifikasi dulu apakah `clawcrew-memory` pakai SQLite WAL mode — kalau ya, sync WAJIB include `.db-wal`/`.db-shm` atau data terbaru hilang diam-diam.
 
 #### Detail Eksekusi — BL-11
 
@@ -233,7 +221,7 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 **Dependency:** SELURUH Sprint 0-7 (gate yang diuji negatif di sini adalah hasil sprint-sprint sebelumnya).
 
-- [ ] **PL-E3 · N-41 · PR-88** Smoke test upgrade data lama (`~/.clawcrew`) → baru.
+- [x] **PL-E3 · N-41 · PR-88** Smoke test upgrade data lama (`~/.clawcrew`) → baru.
 
 #### Detail Eksekusi — PL-E3
 
@@ -249,8 +237,8 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 **Langkah pengerjaan:** Dokumentasikan di `finalize/e2e-proof.md` setiap langkah demo dengan BUKTI (screenshot/log output nyata), bukan klaim naratif tanpa bukti — konsisten pola "verifikasi secara konkret" yang sudah ditegaskan berulang di lesson project ini.
 
-- [ ] **CO-05 (dipersempit) · T-6.9** Handler protokol stateful yang BERTAHAN (`sse`, `ws`, `ws_approval`, `ws_sop_runs`, `acp`) → `RouteHandler`. Hanya untuk handler yang tidak dihapus (lihat `CO-09` keputusan Owner).
-- [ ] **CO-06 (dipersempit) · T-6.10** Handler transport lanjutan yang BERTAHAN (`webhook_ingress`, `tls`, `version`, `node_tool`, `hardware_context`, dst). Hanya untuk handler yang tidak dihapus.
+- [x] **CO-05 (dipersempit) · T-6.9** Handler protokol stateful yang BERTAHAN (`sse`, `ws`, `ws_approval`, `ws_sop_runs`, `acp`) → `RouteHandler`. Hanya untuk handler yang tidak dihapus (lihat `CO-09` keputusan Owner).
+- [x] **CO-06 (dipersempit) · T-6.10** Handler transport lanjutan yang BERTAHAN (`webhook_ingress`, `tls`, `version`, `node_tool`, `hardware_context`, dst). Hanya untuk handler yang tidak dihapus.
 
 #### Detail Eksekusi — CO-05/CO-06
 
@@ -260,7 +248,7 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 
 **JANGAN DIUBAH:** Handler yang SUDAH diputuskan dihapus (scope BR-D4/RB-12) — tiket ini HANYA untuk handler yang BERTAHAN.
 
-- [ ] **CO-08** Hapus artefak Phase 2 tertinggal: komentar/doc lama yang menyebut `web-2`.
+- [x] **CO-08** Hapus artefak Phase 2 tertinggal: komentar/doc lama yang menyebut `web-2`.
 
 #### Detail Eksekusi — CO-08
 
@@ -287,7 +275,7 @@ depends_on: Sprint 0-7 SELURUHNYA — aturan non-negosiasi dev-tasks asli (hapus
 **Catatan branch (lihat README §Kebijakan Branch):** Dokumen ini sendiri (README `dev-task-2/`) mencatat branch kerja resmi adalah `feat/refactoring-finalize-01`, BUKAN `feat/refactoring-rust` yang disebut tiket GV-01 asli (nama lama dari dev-tasks sebelum konsolidasi `dev-task-2/`). **Verifikasi branch resmi SAAT INI** (cek `git branch`/README terbaru) sebelum PR — gunakan branch yang BENAR SAAT EKSEKUSI, bukan nama yang tercatat di tiket lama ini.
 
 - [ ] **GV-11** ⚑ Sign-off Owner untuk PR bertanda ⚑ sebelum merge.
-- [ ] **GV-12** Principle re-verify semua `[x]` di `finalize/task-breakdown.md` memakai `testing-gate-checklist.md` (gate G0–G8) sebelum ditutup resmi — **termasuk re-verify `BR-F1` yang perlu dicentang `[x]` manual (lihat README §Reconciliation)**.
+- [x] **GV-12** Principle re-verify semua `[x]` di `finalize/task-breakdown.md` memakai `testing-gate-checklist.md` (gate G0–G8) sebelum ditutup resmi — **termasuk re-verify `BR-F1` yang perlu dicentang `[x]` manual (lihat README §Reconciliation)**.
 
 #### Detail Eksekusi — GV-11/GV-12
 

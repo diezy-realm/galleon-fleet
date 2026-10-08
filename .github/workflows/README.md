@@ -32,3 +32,19 @@ registry rather than in source comments covered by the comment-hygiene gate.
 | Zerocode RPC Boundary | Zerocode depends only on shared `clawcrew-api` contracts; runtime and other implementation behavior remains behind RPC. | [PR #7850](https://github.com/clawcrew-labs/clawcrew/pull/7850) | Retire only if the architecture intentionally permits implementation dependencies or an equivalent dependency-boundary check replaces it. |
 | Nix Hash Drift | `nix/hashes.json` contains exactly the fixed-output hash keys required by Git dependencies in `Cargo.lock`. | [PR #8336](https://github.com/clawcrew-labs/clawcrew/pull/8336) | Retire only when Nix no longer uses the tracked hash registry or another mechanism enforces the same synchronization. |
 | Installer Drift | Tracked installer, packaging, container, Nix, and installation-documentation surfaces match the canonical generator specification. | [PR #7558](https://github.com/clawcrew-labs/clawcrew/pull/7558) | Retire only when those surfaces are no longer generated and tracked, or an equivalent consistency check replaces this gate. |
+| Brand Compliance Gate | No unauthorized legacy brand names (`clawcrew`, `zeroclaw`) leak into production source code. | [PR #88 (Sprint 8)](https://github.com/diezy-realm/galleon-fleet) | Permanent release gate. |
+
+## Galleon Fleet — Required CI Checks & Pruning Matrix (PL-A5)
+
+### Required Gates for PR Merge:
+1. **`ci.yml`**: Rust compilation, `cargo clippy`, format, dan workspace tests.
+2. **`engine-ci.yml`**: Go engine unit tests (`go test -race ./src/...`).
+3. **`web-check.yml`**: Frontend TypeScript typecheck (`tsc --noEmit`) dan bundle build (`vite build`).
+4. **`desktop-check.yml`**: Tauri v2 desktop build dan validation.
+5. **`pr-testing-gate.yml`**: Quality gate and DoD checklist verification.
+6. **`brand-gate`** (`scripts/ci/brand_gate.sh`): Verifikasi kepatuhan penamaan merek.
+
+### Pruned / Retired Workflows:
+- `pub-aur.yml`, `aur-freshness-check.yml`: Retired (distribusi Arch AUR eksternal dinonaktifkan untuk microkernel).
+- `pub-crates.yml`: Retired (workspace internal tidak lagi dipublikasikan terpisah ke crates.io).
+- `pub-scoop.yml`, `scoop-bucket-canary.yml`: Retired (distribusi Scoop eksternal dipangkas menjadi MSI/NSIS mandiri).

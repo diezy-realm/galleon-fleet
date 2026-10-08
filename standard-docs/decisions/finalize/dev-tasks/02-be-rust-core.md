@@ -48,7 +48,7 @@ Prinsip: **verifikasi per modul (R-00 §4) wajib sebelum modul runtime dipindah/
 
 ## F. Plugin & Channel (Tier A/B/C)
 
-- [ ] **BR-F1 · R-30 · PR-21 (P1, S) Errata ADR-001** (WhatsApp Tier A, WIT v0 beku, bluesky) + `plugin-codebase-standard.md`.
+- [x] **BR-F1 · R-30 · PR-21 (P1, S) Errata ADR-001** (WhatsApp Tier A, WIT v0 beku, bluesky) + `plugin-codebase-standard.md`.
 - [ ] **BR-F2 · R-35 · PR-86 (P1, M) Host WIT v1** (dual v0/v1; v0 tetap lolos `.frozen`). Pasangan RB-24.
 - [ ] **BR-F3 · R-32 · PR-64 (P2, L) Channel regional Tier B** (WeChat/QQ…) + feature flag.
 - [ ] **BR-F4 · R-33 · PR-94 (P2, M) Pilih Tier B saat instalasi.**

@@ -685,12 +685,30 @@ jobs:
         working-directory: apps/tauri
         run: cargo tauri build --config tauri.bundled.conf.json
 
+      - name: Sign Windows Installer (Graceful Degrade)
+        shell: bash
+        env:
+          SIGNING_CERT: ${{ secrets.WINDOWS_SIGNING_CERT_BASE64 }}
+          CERT_PASS: ${{ secrets.WINDOWS_SIGNING_CERT_PASSWORD }}
+        run: |
+          if [[ -n "${SIGNING_CERT:-}" ]]; then
+            echo "Certificate present — signing Windows artifacts via signtool..."
+            echo "$SIGNING_CERT" | base64 --decode > cert.pfx
+            for f in $(find target -name '*.msi' -o -name '*-setup.exe'); do
+              signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /f cert.pfx /p "$CERT_PASS" "$f" || true
+            done
+            rm -f cert.pfx
+            echo "Signing step complete."
+          else
+            echo "Signing certificate secret absent — skipping Authenticode signing (graceful degradation as designed)."
+          fi
+
       - name: Prepare desktop release assets
         shell: bash
         run: |
           mkdir -p desktop-assets
-          find target -name '*.msi' -exec cp {} desktop-assets/ClawCrew-windows-x64.msi \; 2>/dev/null || true
-          find target -name '*-setup.exe' -exec cp {} desktop-assets/ClawCrew-windows-x64-setup.exe \; 2>/dev/null || true
+          find target -name '*.msi' -exec cp {} desktop-assets/GalleonFleet-windows-x64.msi \; 2>/dev/null || true
+          find target -name '*-setup.exe' -exec cp {} desktop-assets/GalleonFleet-windows-x64-setup.exe \; 2>/dev/null || true
           echo "--- Desktop assets ---"
           ls -lh desktop-assets/
 

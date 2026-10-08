@@ -242,7 +242,56 @@ impl RouteHandler for AuditApiHandler {
     }
 }
 
-/// Registers the 5 core immutable route handlers with the dynamic router.
+/// Adapter for `/api/version/check`
+#[derive(Clone)]
+pub struct VersionCheckApiHandler {
+    pub state: AppState,
+}
+
+impl std::fmt::Debug for VersionCheckApiHandler {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VersionCheckApiHandler").finish()
+    }
+}
+
+impl VersionCheckApiHandler {
+    #[must_use]
+    pub fn new(state: AppState) -> Self {
+        Self { state }
+    }
+}
+
+#[async_trait::async_trait]
+impl RouteHandler for VersionCheckApiHandler {
+    async fn handle(&self, req: Request) -> Result<Response, String> {
+        let headers = req.headers().clone();
+        let query: crate::version::CheckQuery = Query::try_from_uri(req.uri())
+            .map(|Query(q)| q)
+            .unwrap_or_default();
+        let resp = crate::version::handle_version_check(
+            State(self.state.clone()),
+            headers,
+            Query(query),
+        )
+        .await
+        .into_response();
+        Ok(resp)
+    }
+
+    fn path_pattern(&self) -> &str {
+        "/api/version/check"
+    }
+
+    fn http_method(&self) -> &str {
+        "GET"
+    }
+
+    fn name(&self) -> &str {
+        "VersionCheckApiHandler"
+    }
+}
+
+/// Registers the core immutable route handlers with the dynamic router.
 pub async fn register_core_handlers(
     router: &DynamicRouter,
     state: AppState,
@@ -251,7 +300,8 @@ pub async fn register_core_handlers(
     router.register(Box::new(LogsApiHandler::new(state.clone()))).await?;
     router.register(Box::new(AuthRateLimitHandler::new(state.clone()))).await?;
     router.register(Box::new(WebAuthnApiHandler::new(state.clone()))).await?;
-    router.register(Box::new(AuditApiHandler::new(state))).await?;
+    router.register(Box::new(AuditApiHandler::new(state.clone()))).await?;
+    router.register(Box::new(VersionCheckApiHandler::new(state))).await?;
     Ok(())
 }
 
@@ -289,9 +339,9 @@ mod tests {
         let state = mock_app_state();
         let router = DynamicRouter::new();
 
-        // 1. Register 5 core handlers
+        // 1. Register core handlers
         register_core_handlers(&router, state.clone()).await?;
-        assert_eq!(router.len().await, 5);
+        assert_eq!(router.len().await, 6);
 
         // 2. Collision rejection: Attempting to register another handler on /api/config must fail
         #[derive(Debug)]

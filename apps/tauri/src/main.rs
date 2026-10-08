@@ -127,8 +127,68 @@ async fn chat_quartermaster(message: String, _context: Option<Value>) -> Result<
     engine_post("chat/quartermaster", serde_json::json!({ "message": message })).await
 }
 
+#[derive(Default)]
+struct SidecarState {
+    child: std::sync::Mutex<Option<std::process::Child>>,
+}
+
+#[tauri::command]
+async fn get_sidecar_status(state: tauri::State<'_, SidecarState>) -> Result<Value, String> {
+    let (sidecar_spawned, sidecar_alive) = {
+        let mut lock = state.child.lock().map_err(|e| e.to_string())?;
+        let alive = if let Some(ref mut child) = *lock {
+            match child.try_wait() {
+                Ok(None) => true,
+                _ => false,
+            }
+        } else {
+            false
+        };
+        (lock.is_some(), alive)
+    };
+
+    let engine_online = engine_get("health").await.is_ok();
+
+    Ok(serde_json::json!({
+        "sidecar_spawned": sidecar_spawned,
+        "sidecar_alive": sidecar_alive,
+        "engine_online": engine_online,
+        "engine_url": engine_url(),
+    }))
+}
+
+fn try_spawn_sidecar() -> Option<std::process::Child> {
+    // Look for sidecar binary in the current executable directory or binaries/
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(parent) = exe_path.parent() {
+            let candidates = [
+                parent.join("galleon.exe"),
+                parent.join("galleon"),
+                parent.join("binaries").join("galleon.exe"),
+                parent.join("binaries").join("galleon"),
+            ];
+            for candidate in &candidates {
+                if candidate.exists() {
+                    if let Ok(child) = std::process::Command::new(candidate)
+                        .arg("daemon")
+                        .spawn()
+                    {
+                        return Some(child);
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
 fn main() {
+    let sidecar_child = try_spawn_sidecar();
+
     tauri::Builder::default()
+        .manage(SidecarState {
+            child: std::sync::Mutex::new(sidecar_child),
+        })
         .invoke_handler(tauri::generate_handler![
             get_fleet_metrics, 
             ring_deck_bell, 
@@ -143,7 +203,8 @@ fn main() {
             create_snapshot,
             get_engine_processes,
             get_fleet_policies,
-            chat_quartermaster
+            chat_quartermaster,
+            get_sidecar_status
         ])
         .setup(|app| {
             let quit_i = MenuItem::with_id(app, "quit", "Quit Galleon Fleet", true, None::<&str>)?;
@@ -153,7 +214,15 @@ fn main() {
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
-                    "quit" => app.exit(0),
+                    "quit" => {
+                        let state = app.state::<SidecarState>();
+                        if let Ok(mut lock) = state.child.lock() {
+                            if let Some(mut child) = lock.take() {
+                                let _ = child.kill();
+                            }
+                        }
+                        app.exit(0);
+                    }
                     "show" => {
                         if let Some(win) = app.get_webview_window("main") {
                             let _ = win.show();
@@ -166,6 +235,17 @@ fn main() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running Galleon Fleet desktop application");
+        .build(tauri::generate_context!())
+        .expect("error while building Galleon Fleet desktop application")
+        .run(|app, event| {
+            if let tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit = event {
+                if let Some(state) = app.try_state::<SidecarState>() {
+                    let child = state.child.lock().ok().and_then(|mut g| g.take());
+                    if let Some(mut c) = child {
+                        let _ = c.kill();
+                    }
+                }
+            }
+        });
 }
+
