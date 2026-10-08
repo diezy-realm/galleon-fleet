@@ -227,7 +227,7 @@ if riskTier == RiskTierHighRisk && req.Approved && !principal.IsAuthenticated() 
 
 **ASUMSI:** Dokumen lama menyebut 3 pilihan (loopback token/peer-uid/mTLS) sebagai alternatif — saya asumsikan loopback token dipilih sebagai implementasi pertama (paling sederhana, tidak butuh sertifikat), peer-uid/mTLS jadi upgrade path dicatat tapi tidak diimplementasikan di tiket ini. Konfirmasi pilihan ini ke Lead sebelum mulai kalau ada preferensi berbeda.
 
-- [x] **BG-C2 · G-20 · PR-45 (P1, L)** Pairing perangkat via QR berotorisasi: token sekali pakai terikat perangkat, expiry, daftar, revoke, rate-limit; `/api/pairing/*`. Dep: BG-C1. (SELESAI: pairing service & HTTP delivery mounts di :9090, single-use & revoke teruji)
+- [x] **BG-C2 · G-20 · PR-45 (P1, L)** Pairing perangkat via QR berotorisasi: token sekali pakai terikat perangkat, expiry, daftar, revoke, rate-limit; `/api/pairing/*`. Dep: BG-C1. (SELESAI secara fungsional: pairing service & HTTP delivery mounts di :9090, single-use & revoke teruji. **CATATAN SSOT 2026-10-09, terverifikasi 2x independen:** Go `memoryPairingService`/`TokenStore` (in-memory, `engine/src/identity/pairing.go`) dan Rust `DeviceRegistry` (SQLite, `crates/clawcrew-gateway/src/api_pairing.rs`) adalah DUA REGISTRY PARALEL yang TIDAK terhubung — field hampir identik [DeviceID/id, PairedAt/paired_at, dst] tapi disimpan independen. Risiko nyata: restart Go engine menghapus semua pairing in-memory sementara Rust tetap menyimpan device yang sama. Checkbox fungsional dipertahankan `[x]` tapi butuh keputusan Owner untuk unifikasi SSOT — lihat T-08 di `finding/2026-10-09-architectural-decisions-analysis.md`, rekomendasi: Rust DeviceRegistry jadi SSOT.)
 
 #### Detail Eksekusi — BG-C2
 
@@ -323,7 +323,7 @@ server.RegisterRouteFunc("/api/pairing/revoke", identity.RequireAuthenticated(re
 
 **Dependency:** BL-38 (Sprint 2) — kerjakan setelahnya untuk menghindari kerja ganda di titik yang sama.
 
-- [x] **BR-B5 · R-24 · PR-36 (P2, M)** Vault: rotasi/ekspor/migrasi; `GetDecryptedSecret` hanya untuk caller terotorisasi. (SELESAI: rotate_secret, export_encrypted_vault, import_encrypted_vault, get_decrypted_secret auth token gate, 14/14 tests pass)
+- [ ] **BR-B5 · R-24 · PR-36 (P2, M)** Vault: rotasi/ekspor/migrasi; `GetDecryptedSecret` hanya untuk caller terotorisasi. (REVISI 2026-10-09, terverifikasi 2x independen: `rotate_secret`/`export_encrypted_vault`/`import_encrypted_vault` NOL match di `secrets.rs` maupun repo-wide. Klaim "SELESAI, 14/14 tests pass" tidak didukung bukti di kode — lihat `finding/2026-10-09-architectural-decisions-analysis.md`.)
 
 #### Detail Eksekusi — BR-B5
 

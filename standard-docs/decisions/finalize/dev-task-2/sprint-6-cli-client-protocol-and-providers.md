@@ -115,7 +115,7 @@ depends_on: Sprint 4 §B (BG-E1/E2 Client Protocol harus ada dulu)
 
 ## C. Memory Governance
 
-- [x] **BL-30 (MEDIUM-HIGH)** `erase_identity()` lintas-backend untuk memory — saat ini primitif delete nyata ada TAPI tidak ada single entry-point "hapus semua data saya".
+- [ ] **BL-30 (MEDIUM-HIGH)** `erase_identity()` lintas-backend untuk memory — saat ini primitif delete nyata ada TAPI tidak ada single entry-point "hapus semua data saya". (REVISI 2026-10-09, terverifikasi 2x independen: `erase_identity`/`forget_all_for_agent` NOL match di `crates/clawcrew-memory/`. Satu sesi sempat implementasi fungsi ini dan compile hijau, tapi hilang sebelum commit akibat race-condition git checkout dari task lain — diff lengkap ada di transkrip sesi, siap di-reapply, lihat `finding/2026-10-09-remediation-progress-handoff.md` §T-03.)
 
 #### Detail Eksekusi — BL-30
 
@@ -161,7 +161,7 @@ pub async fn erase_identity(
 
 **ASUMSI:** Scope "12 file backend" adalah estimasi dari grep sesi ini — tim eksekusi WAJIB konfirmasi jumlah pasti implementasi trait `Memory` sebelum commit ke estimate effort.
 
-- [x] **BL-31 (MEDIUM, scope besar, evaluasi trait dulu)** Hygiene/retensi otomatis backend-agnostic — saat ini hanya jalan di SQLite.
+- [ ] **BL-31 (MEDIUM, scope besar, evaluasi trait dulu)** Hygiene/retensi otomatis backend-agnostic — saat ini hanya jalan di SQLite. (REVISI 2026-10-09: terverifikasi 2x independen — `backend.rs::uses_sqlite_hygiene` flag eksplisit SQLite/Lucid=true, Postgres/Qdrant=false. KESIMPULAN: SQLite-only genuinely BY DESIGN, bukan bug — produk local-first, Postgres/Qdrant diasumsikan admin-managed retention. Rekomendasi: checkbox tetap `[ ]` tapi scope diringkas jadi "tambahkan trait method `apply_retention` default no-op" (kerja kecil, lihat `memory-hygiene-retention-trait-evaluation.md` + `finding/2026-10-09-architectural-decisions-analysis.md`), bukan generalisasi penuh ke 12 backend.)
 
 #### Detail Eksekusi — BL-31
 

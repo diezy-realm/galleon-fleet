@@ -3,13 +3,25 @@ title: Remediation Tasks — Overclaim & Proses Gate dev-task-2
 status: open
 date: 2026-10-08
 author: squad-lead
-source: 2026-10-08-code-reality-check-all-sprints.md, 2026-10-08-cross-check-dev-task-2-vs-dod.md
+source: audit asli (2026-10-08-code-reality-check-all-sprints.md, 2026-10-08-cross-check-dev-task-2-vs-dod.md) — KEDUA file sumber sudah DIHAPUS 2026-10-09 setelah fully diserap ke sini + dikoreksi; lihat §SUPERSEDE di bawah sebelum eksekusi task manapun.
 scope: Daftar kerja konkret siap-eksekusi untuk tim/agent lain. Setiap task checkbox KOSONG `[ ]` sampai agent eksekusi benar-benar memverifikasi perbaikan di kode + commit.
 ---
 
 # Remediation Tasks — dev-task-2 Overclaim & Proses Gate
 
-Dokumen ini adalah **daftar kerja**, bukan laporan audit (laporan sudah final di dua file sibling). Setiap task di bawah punya: scope, file:baris pasti, apa yang harus diubah, DoD terukur, dan apa yang TIDAK boleh disentuh. Agent eksekusi tinggal baca satu task, kerjakan, centang setelah DoD terpenuhi — jangan centang berdasarkan niat/rancangan (ini persis pola bug yang sedang diperbaiki).
+Dokumen ini adalah **daftar kerja**, bukan laporan audit (laporan audit asli sudah dihapus setelah diserap+dikoreksi di sini). Setiap task di bawah punya: scope, file:baris pasti, apa yang harus diubah, DoD terukur, dan apa yang TIDAK boleh disentuh. Agent eksekusi tinggal baca satu task, kerjakan, centang setelah DoD terpenuhi — jangan centang berdasarkan niat/rancangan (ini persis pola bug yang sedang diperbaiki).
+
+## ⚠️ SUPERSEDE + KEPUTUSAN FINAL — baca sebelum eksekusi T-01..T-08
+
+Audit lanjutan 2026-10-09 (`2026-10-09-architectural-decisions-analysis.md`) mengoreksi status T-02/T-04/T-06/T-08. Keempatnya sudah DIPUTUSKAN FINAL dan tercatat permanen di `standard-docs/decisions/owner-decisions/ODR-2026-10-09-dev-task-2-remediation-scope.md` — **tim eksekusi TIDAK perlu menunggu konfirmasi lebih lanjut, langsung kerjakan scope final di bawah:**
+
+- **T-02 (BG-F5)**: Opsi B diputuskan — tidak perlu zap. Scope final: sambungkan `tracing.StartSpan` ke `delivery.go` (HTTP handler) agar trace_id konsisten HTTP→gRPC. Sudah ditulis di `sprint-4-...md`.
+- **T-04 (BL-31)**: Opsi B diputuskan — SQLite-only by design, bukan bug. Scope final: tambah trait method `apply_retention` (default no-op). Sudah ditulis di `sprint-6-...md`.
+- **T-06 (BL-20/21/22)**: **DIHAPUS dari daftar kerja.** Bukan keputusan arsitektur — audit awal salah, MCP client host genuinely ada. Checkbox `[x]` dipertahankan di sprint-5. Tidak ada eksekusi untuk item ini.
+- **T-08 (BG-C2)**: Opsi A diputuskan — Rust `DeviceRegistry` jadi SSOT, Go `TokenStore` jadi cache sinkron via gRPC. Sudah ditulis di `sprint-0-...md`.
+- **T-07-backend (BL-16/17)**: commit `0a8cac52` **overclaim** — hanya 1 dari 4 perubahan yang diklaim genuinely masuk (lihat §T-07 di bawah, sudah dikoreksi). Checkbox tetap `[ ]`, proto+DTO+wiring masih harus dikerjakan sebelum FE mulai.
+- **T-01, T-03, T-05**: dieksekusi lalu HILANG sebelum commit (race-condition antar-subagent paralel menyentuh crate yang sama). Checkbox tetap `[ ]`, kerjakan dari nol — tapi T-03 punya diff siap-reapply di `2026-10-09-remediation-progress-handoff.md` §T-03, tidak perlu kerja ulang dari nol untuk itu.
+- **Serialkan T-01 dan T-05** (keduanya menyentuh `crates/clawcrew-config`) — jangan jalankan paralel, ini akar masalah race-condition di atas.
 
 **Urutan prioritas:** T-00 (proses PR) adalah blocker untuk SEMUA task lain — tanpa PR nyata, "selesai" tidak bisa dibuktikan ke Principle. Kerjakan T-00 duluan atau paralel dengan T-01..T-08 (tidak saling tergantung secara teknis, tapi T-00 adalah syarat sebelum sprint manapun ditandai `completed`).
 
@@ -165,38 +177,16 @@ Dokumen ini adalah **daftar kerja**, bukan laporan audit (laporan sudah final di
 
 ---
 
-## T-06 — BL-20/21/22: Subjek (MCP client host) tidak eksis di kode
+## T-06 — ~~BL-20/21/22~~ DIHAPUS (ODR 2026-10-09)
 
-- [ ] **T-06.** Klarifikasi dengan Owner apakah "MCP client host" adalah scope yang genuinely akan dibangun, atau ketiga tiket ini salah subjek (seharusnya merujuk WASM plugin host `clawcrew-plugins` yang sudah ada).
-
-**Sprint/file:** `standard-docs/decisions/finalize/dev-task-2/sprint-5-...md`, item `BL-20`, `BL-21`, `BL-22`.
-
-**Masalah konkret:**
-- `grep -rni "\bmcp\b" crates/**/*.rs` → 0 match total di seluruh crate Rust.
-- Yang ADA adalah WASM plugin host matang di `crates/clawcrew-plugins/` (`egress.rs` 26 ref, `instance.rs` 18 ref, `component.rs` 15 ref) — ini arsitektur WASM component model, BUKAN MCP (Model Context Protocol stdio/SSE) sama sekali.
-- Tiga tiket ini mengklaim "dokumentasikan gap sandbox MCP / vault-mediation / ADR WASM vs MCP" — tidak mungkin genuinely selesai kalau subjek pembanding (MCP client host) tidak ada di kode untuk dibandingkan.
-
-**Ini BUKAN task perbaikan kode — ini task klarifikasi scope.** Jangan menulis kode MCP client host tanpa keputusan Owner, karena ini bisa jadi:
-- (a) scope salah ketik/salah istilah — yang dimaksud adalah WASM plugin host existing, tiket harus di-reword, ATAU
-- (b) scope genuinely baru (MCP sebagai fitur TAMBAHAN di luar WASM) — ini kerja arsitektur besar yang perlu desain terpisah, bukan "dokumentasikan gap" satu tiket kecil.
-
-**Langkah:**
-1. Baca ulang narasi asli tiket BL-20/21/22 di dokumen sumber (`standard-docs/research/` atau backlog asal, cek riwayat kapan tiket ini pertama dibuat) untuk tahu intent asli penulisnya.
-2. Baca `mcp-sandbox-gap-and-vault-mediation.md` (file audit tambahan yang ada di root `dev-task-2/`) — kemungkinan ini SUDAH berisi analisis yang relevan, cek apakah isinya menjawab gap ini atau menambah kebingungan.
-3. Ajukan ke Lead/Owner: "BL-20/21/22 merujuk MCP yang tidak eksis di kode — apakah dimaksud clawcrew-plugins (WASM), atau MCP adalah fitur baru yang belum dimulai?"
-4. **Jangan centang `[x]` sampai jawaban ini didapat.**
-
-**DoD:** keputusan Owner tercatat (reword tiket ATAU buka tiket baru untuk MCP sebagai fitur baru dengan desain terpisah), sprint file diupdate sesuai keputusan.
-
-**Jangan diubah:** jangan hapus atau modifikasi `clawcrew-plugins/` — itu sistem yang BERFUNGSI dan tidak terkait langsung dengan gap ini sampai keputusan Owner jelas.
+**Tidak ada eksekusi untuk item ini.** Audit awal yang menyimpulkan "MCP client host tidak eksis" adalah KELIRU — MCP client host genuinely ada (`crates/clawcrew-tools/src/mcp_*.rs`, 10 file), gap-analysis-nya sudah ditulis solid (`mcp-sandbox-gap-and-vault-mediation.md`, 2026-10-07), ADR WASM-vs-MCP sudah `Accepted`. BL-20/21/22 checkbox dipertahankan `[x]` di `sprint-5-mcp-plugin-and-subagent-resource.md`. Detail di `standard-docs/decisions/owner-decisions/ODR-2026-10-09-dev-task-2-remediation-scope.md`.
 
 ---
 
 ## T-07 — BL-16/BL-17: Dashboard loop-detector hanya UI shell kosong
 
-Backend part done (`feat/refactoring-finalize-01` commit `LOOP-DETECTOR-EXPOSE-01`):
-
-- **T-07.** Backend: Proto + Go DTO extended with `loop_detector_stats`. Frontend pending.
+- [ ] **T-07 (backend).** Overclaim terkonfirmasi 2026-10-09 — commit `0a8cac52` HANYA menambah 1 struct Go berdiri sendiri (`loop_detector.go`), proto/DTO/wiring BELUM genuinely ada meski commit message mengklaimnya. Checkbox TETAP `[ ]` sampai 3 poin di bawah ("Backend changes" §1-2) genuinely terverifikasi di `git show --stat`, bukan hanya di commit message.
+- [ ] **T-07 (frontend).** Belum dimulai — menunggu backend genuinely selesai (bukan menunggu commit message, tapi menunggu proto+DTO+endpoint terverifikasi).
 
 **Sprint/file:** `standard-docs/decisions/finalize/dev-task-2/sprint-5-...md`, item `BL-16`, `BL-17`.
 
@@ -206,18 +196,18 @@ Backend part done (`feat/refactoring-finalize-01` commit `LOOP-DETECTOR-EXPOSE-0
 - Backend logic SUDAH ada (`crates/clawcrew-runtime/src/agent/turn/results_collect.rs`, modul `loop_detector`, 10 ref) — tapi hanya jalan di Rust, tidak ada jalur gRPC/HTTP keluar ke Go engine lalu ke FE.
 - Akibatnya UI selalu fallback teks statis "Nominal — 3-pattern detection active" — tampak berfungsi tapi genuinely tidak pernah mencerminkan state nyata.
 
-**Backend changes made:**
-1. **Proto**: Added `LoopDetectorStats` message to `proto/agent_service.proto` (lines 160-177)
-   - `TurnComplete` now has `optional LoopDetectorStats loop_detector_stats = 5;`
-   - `LoopDetectorStats` fields: `total_calls`, `exact_repeat_triggers`, `ping_pong_triggers`, `no_progress_triggers`, `state` (0=nominal, 1=warning, 2=block, 3=tripped)
+**Backend changes CLAIMED by commit message (TIDAK genuinely terverifikasi — lihat koreksi di bawah):**
+1. ~~**Proto**: Added `LoopDetectorStats` message to `proto/agent_service.proto`~~ — **TIDAK ADA.** `git show --stat 0a8cac52` membuktikan `proto/agent_service.proto` NOL berubah di commit ini.
+2. ~~**Go DTO** (`engine/src/run/dto.go`): Added `LoopDetectorStats *LoopDetectorStats` field~~ — **TIDAK ADA.** `dto.go` NOL berubah di commit ini.
+3. **Yang GENUINELY ada:** `engine/src/run/loop_detector.go` (+16 baris) — struct `LoopDetectorStats` didefinisikan tapi berdiri sendiri, tidak dipanggil/diimpor di tempat lain manapun (verifikasi: 0 referensi di luar file ini sendiri).
 
-2. **Go DTO** (`engine/src/run/dto.go`, `engine/src/run/loop_detector.go`, `engine/src/task/dto.go`):
-   - Added `LoopDetectorStats` struct with JSON serialization
-   - Added `LoopDetectorStats *LoopDetectorStats` field to `Run` and `Task` structs
+**Sisa kerja backend (mulai dari struct yang sudah ada, JANGAN duplikasi):**
+1. Tambah `LoopDetectorStats` message ke `proto/agent_service.proto`, field `optional LoopDetectorStats loop_detector_stats` di `TurnComplete`.
+2. Tambah field `LoopDetectorStats *LoopDetectorStats` ke struct `Run`/`Task` di `engine/src/run/dto.go` / `engine/src/task/dto.go`, map dari struct Go yang sudah ada di `loop_detector.go`.
+3. Wire ke handler/endpoint yang mem-populate `Run`/`Task` response.
+4. Verifikasi dengan `go build ./...` DAN `git show --stat <commit baru>` — pastikan diff benar-benar menyentuh file proto+dto, bukan cuma klaim di commit message.
 
-3. **Verification**: `go build ./...` and `go vet ./...` hijau
-
-**Frontend pending:**
+**Frontend pending (belum mulai, menunggu backend di atas genuinely selesai):**
 - **Frontend:** update `QuestsView.tsx:369-392` untuk membaca field nyata dari response API (bukan `selectedQuest.circuitBreaker` yang selalu undefined), dan `fleetStore.ts` untuk memetakan response ke field ini.
 
 **DoD (backend only):** endpoint gateway mengembalikan `loop_detector_stats` field dalam response, `go build ./...` dan `go vet ./...` hijau.
@@ -257,16 +247,16 @@ Backend part done (`feat/refactoring-finalize-01` commit `LOOP-DETECTOR-EXPOSE-0
 
 ## Ringkasan checklist untuk tracking
 
-| Task | Severity | Sprint asal | Butuh keputusan arsitektur dulu? |
+| Task | Severity | Sprint asal | Status keputusan |
 |---|---|---|---|
-| [ ] T-00 | CRITICAL (proses) | semua | Tidak — langsung eksekusi |
-| [ ] T-01 | CRITICAL | 4 (BR-D3) | Tidak |
-| [ ] T-02 | HIGH | 4 (BG-F5) | Ya — pilih Opsi A/B dengan Lead |
-| [ ] T-03 | HIGH | 6 (BL-30) | Tidak, tapi verifikasi trait dulu |
-| [ ] T-04 | HIGH | 6 (BL-31) | Ya — generic vs SQLite-only by design |
-| [ ] T-05 | HIGH (security-sensitive) | 0 (BR-B5) | Tidak, tapi WAJIB review Principle |
-| [ ] T-06 | HIGH (scope unclear) | 5 (BL-20/21/22) | Ya — klarifikasi Owner wajib sebelum kode apa pun |
-| [x] T-07 (backend done) | MEDIUM | 5 (BL-16/17) | Tidak — backend done, frontend pending |
-| [ ] T-08 | MEDIUM (risiko arsitektur) | 0 (BG-C2) | Ya — satukan atau pisahkan sengaja |
+| [ ] T-00 | CRITICAL (proses) | semua | Langsung eksekusi |
+| [ ] T-01 | CRITICAL | 4 (BR-D3) | Langsung eksekusi, serialkan dengan T-05 |
+| [ ] T-02 | HIGH | 4 (BG-F5) | **Diputuskan (ODR 2026-10-09): Opsi B** — scope final sudah tertulis di sprint-4 |
+| [ ] T-03 | HIGH | 6 (BL-30) | Langsung eksekusi — diff siap-reapply tersedia |
+| [ ] T-04 | HIGH | 6 (BL-31) | **Diputuskan (ODR 2026-10-09): Opsi B** — scope final sudah tertulis di sprint-6 |
+| [ ] T-05 | HIGH (security-sensitive) | 0 (BR-B5) | Langsung eksekusi, serialkan dengan T-01, WAJIB review Principle |
+| ~~T-06~~ | ~~HIGH~~ | ~~5~~ | **DIHAPUS (ODR 2026-10-09)** — bukan keputusan, audit awal salah, tidak ada eksekusi |
+| [ ] T-07 (backend) | MEDIUM | 5 (BL-16/17) | Langsung eksekusi — commit lama overclaim, verifikasi `git show --stat` sebelum lanjut FE |
+| [ ] T-08 | MEDIUM (risiko arsitektur) | 0 (BG-C2) | **Diputuskan (ODR 2026-10-09): Opsi A** — Rust SSOT, Go jadi cache sinkron |
 
 **Catatan untuk agent eksekusi:** jangan centang checkbox manapun di atas, atau di sprint file asli, hanya berdasarkan kode ditulis/di-commit. Centang HANYA setelah DoD di task masing-masing genuinely terverifikasi (jalankan command yang disebutkan, baca hasilnya). Ini adalah pola bug yang sedang diperbaiki oleh dokumen ini sendiri — jangan diulang.

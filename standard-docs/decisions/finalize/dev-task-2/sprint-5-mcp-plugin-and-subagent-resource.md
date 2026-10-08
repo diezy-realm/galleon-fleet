@@ -57,7 +57,7 @@ pub fn check_resource_gate(
 
 **ASUMSI:** Nilai cap (`max_concurrent_subagents`/`max_memory_mb`) belum ditentukan dokumen — perlu keputusan Lead berdasarkan data crash yang sudah dilaporkan (kalau ada angka crash threshold yang diketahui, pakai itu sebagai starting point, bukan angka sembarangan).
 
-- [x] **BL-16 (MEDIUM)** Surface `loop_detector_circuit_breaker` ke Tasks-view — 3-pola deteksi sudah matang tapi hasil tidak pernah sampai ke dashboard.
+- [ ] **BL-16 (MEDIUM)** Surface `loop_detector_circuit_breaker` ke Tasks-view — 3-pola deteksi sudah matang tapi hasil tidak pernah sampai ke dashboard. (REVISI 2026-10-09, terverifikasi 2x independen: commit `0a8cac52` mengklaim "proto+endpoint" tapi `git show --stat` membuktikan HANYA 1 file baru `engine/src/run/loop_detector.go` — struct berdiri sendiri, NOL perubahan ke `proto/agent_service.proto`, NOL ke `engine/src/run/dto.go`, NOL wiring ke handler/service manapun. `QuestsView.tsx:369-392` tetap render field yang tidak pernah diisi API. Overclaim terkonfirmasi — lihat `finding/2026-10-09-remediation-progress-handoff.md` §T-07.)
 
 #### Detail Eksekusi — BL-16
 
@@ -76,7 +76,7 @@ pub fn check_resource_gate(
 
 **ASUMSI:** "Tasks-view" lokasi di `web/src/` belum diverifikasi — cari komponen dengan nama serupa sebelum menebak path.
 
-- [x] **BL-17 (LOW, exploratory, dep BL-16)** Agregasi lintas-sub-agent untuk fan-out besar.
+- [ ] **BL-17 (LOW, exploratory, dep BL-16)** Agregasi lintas-sub-agent untuk fan-out besar. (REVISI 2026-10-09: dependency BL-16 masih `[ ]` — tiket ini genuinely belum bisa mulai sampai BL-16 selesai.)
 
 #### Detail Eksekusi — BL-17
 
@@ -94,22 +94,16 @@ pub fn check_resource_gate(
 
 #### Detail Eksekusi — BL-20
 
-**Koreksi penting:** MCP client host **BUKAN** `crates/clawcrew-plugins/` murni untuk MCP — crate ini (`egress.rs` 26 ref, `instance.rs` 18 ref, `component.rs` 15 ref) adalah **WASM Plugin host** (komponen WIT/WASM, bukan MCP stdio protocol). MCP (Model Context Protocol, stdio-based child process) kemungkinan di lokasi BERBEDA — belum ditemukan di grep sesi ini. **Langkah pertama WAJIB tim eksekusi:** `grep -rn "mcp\|Mcp\|MCP" crates/ --include=*.rs -l` tanpa filter untuk membedakan WASM plugin host (`clawcrew-plugins`) dari MCP client host (lokasi lain, mungkin belum ada sama sekali — ini akan MENGUBAH pemahaman BL-19/BL-20 secara signifikan kalau genuinely belum ada implementasi MCP sama sekali, bukan hanya "belum sandboxed").
+**RESOLVED (2026-10-09, squad-lead, diverifikasi langsung ke disk):** MCP client host **GENUINELY ADA** di `crates/clawcrew-tools/src/` — 10 file: `mcp_transport.rs`, `mcp_client.rs`, `mcp_deferred.rs`, `mcp_protocol.rs`, `mcp_context.rs`, `mcp_prompt.rs`, `mcp_prompts_tool.rs`, `mcp_resource.rs`, `mcp_resources_tool.rs`, `mcp_tool.rs` (dikonfirmasi `glob` langsung ke disk, bukan asumsi). Ini TERPISAH TOTAL dari `crates/clawcrew-plugins/` (WASM Plugin host, Component Model/Wasmtime) — dua arsitektur ekstensi berbeda, bukan nama lain untuk hal yang sama. Analisis gap sandbox lengkap sudah ditulis di `standard-docs/decisions/finalize/dev-task-2/mcp-sandbox-gap-and-vault-mediation.md` (2026-10-07): MCP stdio subprocess belum punya `McpCommandBoundary` (Landlock/Bubblewrap/Seatbelt/AppContainer) setara isolasi WASM — berjalan privilege host penuh kecuali `sandbox_profile` diset `deny-all`/`blocked`. Checkbox `[x]` genuinely benar — dokumentasi gap sudah solid dan akurat.
 
-**Langkah pengerjaan:**
-1. Jalankan grep di atas, konfirmasi apakah MCP client host ADA (lokasi mana) atau BELUM ADA SAMA SEKALI.
-2. Kalau ada: dokumentasikan gap sandbox (apa yang BELUM dilindungi dibanding WASM plugin host `clawcrew-plugins` yang matang).
-3. Kalau belum ada sama sekali: ini mengubah BL-19 (Sprint 0) dari "sandbox MCP stdio" jadi "bangun MCP client host dari nol + sandbox sejak awal" — eskalasi temuan ini ke Lead SEBELUM lanjut, karena mengubah scope/estimate signifikan.
-
-**JANGAN DIUBAH:** `clawcrew-plugins` WASM host — itu sistem terpisah yang sudah matang, bukan target tiket ini.
+~~Koreksi penting lama (SUDAH TIDAK BERLAKU, dipertahankan untuk jejak audit):~~ ~~MCP client host BUKAN `crates/clawcrew-plugins/`... kemungkinan di lokasi BERBEDA — belum ditemukan di grep sesi ini.~~ — ini KELIRU karena scope grep sesi audit lama terlalu sempit/stale sebelum dokumen gap ditulis. Lihat `2026-10-09-architectural-decisions-analysis.md` di folder `finding/` untuk kronologi koreksi lengkap.
 
 - [x] **BL-21 (MEDIUM, evaluasi desain dulu)** Vault-mediation untuk secret MCP env/headers.
 
 #### Detail Eksekusi — BL-21
 
-**Dependency:** BL-20 (perlu tahu MCP client host ada/tidak dulu). Reuse `crates/clawcrew-config/src/secrets.rs` (`encrypt`/`decrypt`/`decrypt_and_migrate`, sudah diverifikasi Sprint 0 BR-B5) sebagai vault backend — JANGAN bangun vault terpisah untuk MCP.
+**RESOLVED:** Desain vault-mediation sudah lengkap di `mcp-sandbox-gap-and-vault-mediation.md` §3 — JIT (Just-In-Time) decrypt via `secrets::decrypt` (reuse `clawcrew-config/src/secrets.rs`, tidak bangun vault terpisah), format ciphertext `$clawvault$v1$...`, environment variable proses induk yang tidak terdaftar dibersihkan via `apply_default_mcp_sandbox`. Checkbox `[x]` genuinely benar.
 
-**ASUMSI:** Scope detail bergantung pada temuan BL-20 — tidak bisa dirinci lebih jauh tanpa tahu MCP client host ada di mana.
 
 - [x] **BL-22 (MEDIUM)** ADR pembanding WASM Plugin vs MCP.
 

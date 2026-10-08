@@ -147,7 +147,7 @@ depends_on: Sprint 0-1 (BG-C1 untuk auth; persistensi Go untuk BG-D-series)
 
 - [ ] **BR-D1 · R-16 · PR-60 (P2, XL, berseri)** ⚑ Ramping runtime per modul (urutan R-00 §3). Syarat tiap modul: parity Go + eval hijau.
 - [ ] **BR-D2 · R-37 · PR-56 (P2, M)** Retarget `galleon-eval` ke jalur Go; pertahankan fixture trace. Dep: BG-D1.
-- [x] **BR-D3 · R-38 · PR-59 (P2, S)** ⚑ Hapus `verifiable_intent` (tag `archive/pre-galleon` dulu; ODR-21).
+- [ ] **BR-D3 · R-38 · PR-59 (P2, S)** ⚑ Hapus `verifiable_intent` (tag `archive/pre-galleon` dulu; ODR-21). (REVISI 2026-10-09, terverifikasi 2x independen: `verifiable_intent`/`VerifiableIntentConfig` MASIH ADA — hitungan terbaru 131 referensi di 40 file, bahkan lebih banyak dari audit sebelumnya "43 di 12 file", mengindikasikan field ini makin menyebar bukan berkurang. `schema.rs:658`, `fixtures/v1.toml:746`, `sections.rs:896`, `validation_warnings.rs:21-74`, `doctor/mod.rs:1499,3296-3303`, `src/main.rs:4582,5866,7519,7795-7796`, test aktif di `tests/component/verifiable_intent_notice_visibility.rs`. Commit lama `20985dc0` TIDAK persisten/tidak membersihkan seluruh referensi.)
 - [ ] **BR-D4 · R-41 · PR-62 (P2, L)** ⚑ Hapus `rpc` + REST/WS/A2A lama setelah parity. Dep: BR-E3 (Sprint 6), BR-C5 (§A sprint ini).
 
 ## E. Observabilitas & Organisasi (dep ke persistensi Sprint 1)
@@ -174,18 +174,21 @@ depends_on: Sprint 0-1 (BG-C1 untuk auth; persistensi Go untuk BG-D-series)
 
 - [x] **BG-F2 · G-25 · PR-53 (P2, M)** Kontrak rute QM two-layer + test.
 - [x] **BG-F3 · G-26 · PR-54 (P2, M)** Audit trail & policy SSOT read-only ke UI/Tauri.
-- [x] **BG-F5 · G-28 · PR-96 (P3, M)** Observabilitas: zap + request-id Go→Rust; scrubbing.
+- [ ] **BG-F5 · G-28 · PR-96 (P3, M)** Observabilitas: zap + request-id Go→Rust; scrubbing. (REVISI 2026-10-09, terverifikasi + rekomendasi diterapkan: klaim "zap" keliru — Go sudah pakai `log/slog` + modul tracing custom OpenTelemetry-compatible yang matang di `engine/src/core/logger/`, `core/tracing/` [JSON structured, log rotation, auto-redaksi kredensial via regex]. Zap TIDAK diadopsi — keputusan sadar, slog sudah lebih sesuai [stdlib, lebih ringan]. request-id HTTP→gRPC SUDAH ada [`pkg/client/system_gateway.go:17-20`]. Gap genuine yang TERSISA dan jadi scope task ini sekarang: `tracing.StartSpan` tidak pernah dipanggil dari `delivery.go` [HTTP handler] — trace_id tidak konsisten lintas HTTP→gRPC log. Checkbox turun ke `[ ]` sampai `StartSpan` disambungkan ke request path.)
 
 #### Detail Eksekusi — BG-F5
 
-**TIDAK DIVERIFIKASI sesi ini** — penggunaan `zap` (Go structured logging) existing belum dicek. **Catatan overlap scrubbing:** "scrubbing" di tiket ini (Go-side logging) berkaitan tapi TERPISAH dari BL-38 (Sprint 2, `scrub_credentials` Rust-side `tool_execution.rs`) — DUA sisi berbeda bahasa yang perlu konsisten prinsipnya (jangan log kredensial mentah) tapi implementasi terpisah (Go `zap` field redaction vs Rust `scrub_credentials` function).
+**Scope final (bukan "adopsi zap" seperti klaim asli):** sambungkan `tracing.StartSpan`/`End` (sudah ada, `engine/src/core/tracing/tracing.go`) ke jalur HTTP request di `delivery.go`, supaya `trace_id` yang sama muncul di: (a) log `slog` HTTP, (b) log gRPC interceptor ke Rust, (c) `x-request-id` yang sudah dikirim ke Rust. Saat ini request-id dan tracing span adalah dua potongan yang tidak tersambung.
 
 **Langkah pengerjaan:**
-1. Cek apakah `zap` sudah dipakai di `engine/` (library logging Go) atau perlu ditambahkan sebagai dependency baru.
-2. Tambah `request-id` propagation Go→Rust (header/metadata gRPC yang dibawa dari HTTP request Go ke call `ExecuteTurn`/RPC lain ke Rust) — untuk tracing lintas-bahasa satu request.
-3. Scrubbing: terapkan pola redaksi serupa `scrub_credentials` (Rust) tapi di sisi Go — field logging yang membawa secret/token di-mask sebelum ditulis `zap` logger.
+1. Baca `core/tracing/tracing.go` (`StartSpan`/`End`, field `TraceID`/`SpanID`/`ParentSpanID`) dan `run/delivery.go` untuk titik masuk HTTP request.
+2. Panggil `tracing.StartSpan` di awal handler `delivery.go`, gunakan `TraceID` yang dihasilkan sebagai (atau disinkronkan dengan) `x-request-id` yang sudah dipropagasi ke gRPC metadata (`system_gateway.go:17-20`).
+3. Pastikan `slog` logger di jalur ini menyertakan `trace_id` sebagai field terstruktur (bukan hanya di tracing span, juga di log line).
+4. Scrubbing kredensial Go-side SUDAH ADA (`RedactAttr`/`RedactString` di `core/logger/logger.go`) — tidak perlu kerja baru, hanya verifikasi redaksi ini jalan juga untuk field `trace_id` kalau kebetulan membawa data sensitif (seharusnya tidak, tapi cek).
 
-**Dependency:** Tidak hard-block tiket lain, tapi KONSISTENSI prinsip dengan BL-38 (Sprint 2) perlu dikoordinasikan (sama kelas masalah, dua bahasa).
+**DoD:** satu request HTTP end-to-end menghasilkan `trace_id` yang sama di log `slog` HTTP, log gRPC interceptor, dan metadata yang diterima Rust — dibuktikan dengan 1 test/log sample, bukan hanya baca kode.
+
+**Dependency:** Tidak hard-block tiket lain. Prinsip konsistensi redaksi dengan BL-38 (Sprint 2, Rust `scrub_credentials`) sudah terpenuhi secara independen di masing-masing sisi — tidak perlu kerja tambahan untuk itu.
 
 ## Catatan Sirkularitas (dari dev-tasks asli, dipertahankan apa adanya)
 
