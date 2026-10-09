@@ -64,13 +64,16 @@ jobs:
         if: steps.paths.outputs.touches_rust == 'true'
         run: |
           echo "Checking for unwrap/expect in newly added lines..."
-          VIOLATIONS=$(git diff -U0 origin/${{ github.base_ref }}...HEAD -- 'crates/**/*.rs' ':!crates/**/tests/**' ':!crates/**/benches/**' \
-            | grep '^[+][^+]' | grep -E '\.(unwrap|expect)\(' || true)
-          
-          if [ -n "$VIOLATIONS" ]; then
-            echo "::error::Production path invariant violated: unwrap() or expect() found in newly added code!"
-            echo "$VIOLATIONS"
-            exit 1
+          if [ -f "scripts/ci/check_production_unwrap.py" ]; then
+            python3 scripts/ci/check_production_unwrap.py --base origin/${{ github.base_ref }}
+          else
+            VIOLATIONS=$(git diff -U0 origin/${{ github.base_ref }}...HEAD -- 'crates/**/*.rs' ':!crates/**/tests/**' ':!crates/**/benches/**' ':!crates/**/tests.rs' ':!crates/**/*/tests.rs' \
+              | grep '^[+][^+]' | grep -E '\.(unwrap|expect)\(' || true)
+            if [ -n "$VIOLATIONS" ]; then
+              echo "::error::Production path invariant violated: unwrap() or expect() found in newly added code!"
+              echo "$VIOLATIONS"
+              exit 1
+            fi
           fi
           echo "Zero unwrap()/expect() invariant preserved."
 
@@ -92,14 +95,14 @@ jobs:
         id: gate_d2
         if: steps.paths.outputs.touches_channels == 'true'
         run: |
-          if [ -f "crates/clawcrew-channels/src/util.rs" ]; then
-            COUPLING=$(grep -n 'feature = "channel-' crates/clawcrew-channels/src/util.rs || true)
-            if [ -n "$COUPLING" ]; then
-              echo "::warning::Gate D-2 finding: channel feature flags detected in util.rs:"
-              echo "$COUPLING"
-              echo "Check if governance primitives are coupled."
+          if [ -f "scripts/ci/check_gate_d2.py" ]; then
+            python3 scripts/ci/check_gate_d2.py
+          elif [ -f "crates/clawcrew-channels/src/util.rs" ]; then
+            if grep -nE '(RiskTier|should_auto_approve|playbook::|clawcrew_runtime::)' crates/clawcrew-channels/src/util.rs; then
+              echo "::error::Gate D-2 finding: governance coupling detected in util.rs"
+              exit 1
             else
-              echo "Gate D-2 Passed: Clean util.rs without channel feature couplings."
+              echo "Gate D-2 Passed: Clean util.rs without governance couplings."
             fi
           else
             echo "util.rs not present, skipping check."
