@@ -1,6 +1,6 @@
 ---
 title: CI/Infra Fix — Principle Gate False-Positive & Runner Issues
-status: resolved
+status: open
 date: 2026-10-09
 author: squad-lead
 source: investigasi langsung PR #18 (https://github.com/diezy-realm/galleon-fleet/pull/18) — lihat 2026-10-09-remediation-progress-handoff.md §UPDATE untuk kronologi penemuan
@@ -11,35 +11,27 @@ scope: 4 masalah CI yang ditemukan saat PR #18 (dev-task-2 remediation batch) di
 
 Dokumen ini **bukan** bagian dari sprint 0-8 (yang itu scope fitur produk). Ini 4 task perbaikan CI/governance-tooling yang ditemukan saat cross-check PR #18 — dampaknya LEBIH LUAS dari PR #18 sendiri (akan terus salah-flag PR Rust/Go/Web manapun berikutnya kalau tidak diperbaiki).
 
-> **Update 2026-10-09 — perbaikan tuntas dan terverifikasi di seluruh workflow:**
-> Seluruh 4 task (T-CI-01 s/d T-CI-04) telah selesai diimplementasikan dan diverifikasi faktual secara lokal dan bertahap:
-> - **Langkah 1 (T-CI-04):** Web dependency alignment (`esbuild@^0.28.0` & lockfile sync) — Commit `b2eb20f23`.
-> - **Langkah 2 (T-CI-02):** Multi-OS runner sccache installer pada Desktop Check & SOP Eval Replay — Commit `eb5164e5f`.
-> - **Langkah 3 (T-CI-01 & T-CI-03):** Script unwrap sadar modul test Rust dan script Gate D-2 evaluasi 2-lapis — Commit `9e58839b4`.
-> - **Langkah 4 (Verifikasi):** Probe failure & pass cases membuktikan deteksi bekerja 100% akurat tanpa false-positive.
+> **Update 2026-10-09 — ditemukan WORKFLOW KEDUA dengan bug yang sama:** investigasi tambahan terhadap 2 check yang sebelumnya belum dianalisis (`Principle Checklist & Standards Gate` dan `SOP Eval Replay`) menemukan root cause T-CI-01 dan T-CI-02 masing-masing muncul di **dua file workflow**, bukan satu:
+> - **T-CI-01** (unwrap-filter): bug identik juga ada di `.github/workflows/pr-testing-gate.yml` (job `Principle Checklist & Standards Gate`), bukan hanya `principle-review-trigger.yml`. Karena job itu fail duluan di gate unwrap, Gate D-1/D-2/test suite di workflow yang sama ikut `skipped` — Gate D-2 di `pr-testing-gate.yml` belum pernah genuinely dijalankan untuk PR #18.
+> - **T-CI-02** (sccache): root cause identik juga muncul di job `SOP Eval Replay (Advisory Non-Blocking)`, step `cargo metadata`. Job ini **dikonfirmasi non-blocking merge** (advisory, Owner bisa bypass) — tapi root cause sccache globalnya tetap relevan diperbaiki karena dipakai banyak job lain yang genuinely blocking.
+> - Detail lengkap + command yang sudah diverifikasi: lihat update di masing-masing file `T-CI-01-unwrap-filter-false-positive.md` dan `T-CI-02-sccache-runner-failure.md`.
+> - **Implikasi untuk eksekusi:** memperbaiki SATU file workflow saja (misal hanya `principle-review-trigger.yml`) TIDAK CUKUP membuat PR #18 hijau — `pr-testing-gate.yml` punya bug sama dan harus diperbaiki bersamaan di task yang sama (T-CI-01), bukan task terpisah.
+
+**Jangan centang checkbox manapun di bawah hanya karena logic/script sudah diubah** — DoD setiap task mensyaratkan PR TEST nyata yang membuktikan behavior lama vs baru, karena ini task memperbaiki *gate itu sendiri* (kalau gate-nya salah pakai cara yang sama untuk verifikasi, risiko bug berulang).
 
 ## Peta task
 
-| Task | Status | Commit | Dampak & Workflow |
+| Task | Dampak | Prioritas | File |
 |---|---|---|---|
-| [`T-CI-01-unwrap-filter-false-positive.md`](T-CI-01-unwrap-filter-false-positive.md) | **RESOLVED** | `9e58839b4` | Exclude inline `mod tests` & file `tests.rs` via `scripts/ci/check_production_unwrap.py` di `principle-review-trigger.yml` + `pr-testing-gate.yml` |
-| [`T-CI-02-sccache-runner-failure.md`](T-CI-02-sccache-runner-failure.md) | **RESOLVED** | `eb5164e5f` | Pasang `mozilla-actions/sccache-action@v0.0.8` di `desktop-check.yml` (3 OS) + `sop-eval-advisory.yml` |
-| [`T-CI-03-gate-d2-regex-overbroad.md`](T-CI-03-gate-d2-regex-overbroad.md) | **RESOLVED** | `9e58839b4` | Deteksi 2-lapis arsitektural via `scripts/ci/check_gate_d2.py` di `principle-review-trigger.yml` + `pr-testing-gate.yml` |
-| [`T-CI-04-galleon-web-dependency-conflict.md`](T-CI-04-galleon-web-dependency-conflict.md) | **RESOLVED** | `b2eb20f23` | Bump `esbuild` ke `^0.28.0` di `web/package.json` & lockfile murni tanpa `--force`/`--legacy-peer-deps` |
+| [`T-CI-01-unwrap-filter-false-positive.md`](T-CI-01-unwrap-filter-false-positive.md) | Setiap PR Rust besar — salah-flag inline `#[cfg(test)] mod tests` sebagai production unwrap. **2 file workflow terdampak:** `principle-review-trigger.yml` + `pr-testing-gate.yml` | **Tinggi** (blocking, luas) | 2 Principle Gate workflows |
+| [`T-CI-02-sccache-runner-failure.md`](T-CI-02-sccache-runner-failure.md) | Setiap job CI yang menjalankan `cargo` tanpa install sccache dulu. **Terdampak:** Desktop Check (3 OS, blocking) + SOP Eval Replay (advisory, non-blocking) | **Tinggi** (blocking, luas) | Desktop Check + SOP Eval workflows |
+| [`T-CI-03-gate-d2-regex-overbroad.md`](T-CI-03-gate-d2-regex-overbroad.md) | Setiap PR yang menyentuh `clawcrew-channels/src/util.rs` dengan cfg-gate per-channel baru. Berlaku di kedua Principle Gate workflow setelah gate unwrap-nya lolos | Menengah | 2 Principle Gate workflows |
+| [`T-CI-04-galleon-web-dependency-conflict.md`](T-CI-04-galleon-web-dependency-conflict.md) | Setiap PR yang menyentuh `web/` — blocking total, nol terkait kode | **Tinggi** (blocking total, tapi fix sederhana) | `web/package.json` |
 
-## Hasil Pembuktian & Verifikasi (2026-10-09)
+## Kenapa dipisah dari PR #18 / sprint dev-task-2
 
-1. **T-CI-04 (Web Build & Typecheck):**
-   - `npm install` berhasil bersih dengan lockfile sinkron (`found 0 vulnerabilities`).
-   - `npm run typecheck`, `npm run lint`, dan `npm run build` tuntas sukses 100%.
-2. **T-CI-02 (Runner Caching & sccache):**
-   - Step `sccache-action` dipasang sebelum invocation cargo pada seluruh OS runner.
-   - Variabel lingkungan `RUSTC_WRAPPER: "sccache"` dan `SCCACHE_GHA_ENABLED: "true"` tervalidasi.
-3. **T-CI-01 (Principle Gate unwrap):**
-   - Probe kode produksi dengan `unwrap()`: **Terdeteksi & Gagal** (`Exit code: 1`).
-   - Probe kode unit test di dalam `#[cfg(test)] mod tests` dengan `unwrap()`: **Lolos** (`Exit code: 0`).
-   - Evaluasi terhadap commit PR #18 (`secrets.rs`, `agent_scoped.rs`, `sqlite.rs`): **0 pelanggaran**.
-4. **T-CI-03 (Gate D-2 Governance Coupling):**
-   - Evaluasi terhadap 59 kandidat di `crates/clawcrew-channels/src/util.rs`: **100% lolos**.
-   - Menjawab arahan Lead: Gate D-2 di `pr-testing-gate.yml` kini berjalan otomatis tanpa memunculkan false-positive `::warning::`.
+PR #18 berisi kerja FITUR (vault rotate, loop-detector wiring, tracing, dll). Ke-4 masalah ini adalah TOOLING yang menilai PR tersebut — mencampur keduanya dalam satu PR akan membuat review Principle (manusia) sulit membedakan "bug kode" vs "bug alat ukur kode". Rekomendasi: PR #18 lanjut ke review manusia dengan catatan manual override untuk 4 check ini (sudah diverifikasi false-positive/infra, lihat investigasi di `2026-10-09-remediation-progress-handoff.md`), sementara 4 task CI-fix ini dikerjakan di PR terpisah yang menyasar `.github/workflows/` dan `web/package.json`.
 
+## Urutan eksekusi yang disarankan
+
+Tidak saling dependen secara teknis — bisa paralel. Tapi serialkan T-CI-01 dan T-CI-03 (keduanya edit file workflow yang sama, `principle-review-trigger.yml` DAN `pr-testing-gate.yml`) untuk hindari race-condition edit seperti yang sudah tercatat di lesson project. T-CI-01 harus menyentuh KEDUA file workflow dalam satu PR/commit yang sama — menyelesaikan satu lalu lupa yang lain akan membuat PR tetap merah di gate yang belum diperbaiki.
