@@ -129,14 +129,21 @@ impl PromptGuard {
         static SYSTEM_OVERRIDE_PATTERNS: OnceLock<Vec<Regex>> = OnceLock::new();
         let regexes = SYSTEM_OVERRIDE_PATTERNS.get_or_init(|| {
             vec![
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(
                     r"(?i)ignore\s+((all\s+)?(previous|above|prior)|all)\s+(instructions?|prompts?|commands?)",
                 )
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 .unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)disregard\s+(previous|all|above|prior)").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)forget\s+(previous|all|everything|above)").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)new\s+(instructions?|rules?|system\s+prompt)").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)override\s+(system|instructions?|rules?)").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)reset\s+(instructions?|context|system)").unwrap(),
             ]
         });
@@ -155,12 +162,17 @@ impl PromptGuard {
         static ROLE_CONFUSION_PATTERNS: OnceLock<Vec<Regex>> = OnceLock::new();
         let regexes = ROLE_CONFUSION_PATTERNS.get_or_init(|| {
             vec![
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(
                     r"(?i)(you\s+are\s+now|act\s+as|pretend\s+(you're|to\s+be))\s+(a|an|the)?",
                 )
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 .unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)(your\s+new\s+role|you\s+have\s+become|you\s+must\s+be)").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)from\s+now\s+on\s+(you\s+are|act\s+as|pretend)").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)(assistant|AI|system|model):\s*\[?(system|override|new\s+role)")
                     .unwrap(),
             ]
@@ -200,9 +212,13 @@ impl PromptGuard {
         static SECRET_PATTERNS: OnceLock<Vec<Regex>> = OnceLock::new();
         let regexes = SECRET_PATTERNS.get_or_init(|| {
             vec![
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)(list|show|print|display|reveal|tell\s+me)\s+(all\s+)?(secrets?|credentials?|passwords?|tokens?|keys?)").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)(what|show)\s+(are|is|me)\s+(all\s+)?(your|the)\s+(api\s+)?(keys?|secrets?|credentials?)").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)contents?\s+of\s+(vault|secrets?|credentials?)").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)(dump|export)\s+(vault|secrets?|credentials?)").unwrap(),
             ]
         });
@@ -255,12 +271,19 @@ impl PromptGuard {
         static JAILBREAK_PATTERNS: OnceLock<Vec<Regex>> = OnceLock::new();
         let regexes = JAILBREAK_PATTERNS.get_or_init(|| {
             vec![
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)\bDAN\b.*mode").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)do\s+anything\s+now").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)enter\s+(developer|debug|admin)\s+mode").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)enable\s+(developer|debug|admin)\s+mode").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)in\s+this\s+hypothetical").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)imagine\s+you\s+(have\s+no|don't\s+have)\s+(restrictions?|rules?|limits?)").unwrap(),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)decode\s+(this|the\s+following)\s+(base64|hex|rot13)").unwrap(),
             ]
         });

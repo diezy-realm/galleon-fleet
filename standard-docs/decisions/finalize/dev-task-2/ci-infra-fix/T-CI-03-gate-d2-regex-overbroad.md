@@ -1,13 +1,13 @@
 ---
 title: T-CI-03 — Gate D-2 regex terlalu generik, menangkap cfg-gate biasa
-status: open (klasifikasi selesai, implementasi fix belum dikerjakan)
+status: resolved
 severity: MEDIUM
-updated: 2026-10-09 (klasifikasi final — supersede asumsi awal "aman karena tidak ada primitif approval")
+updated: 2026-10-09 (resolusi tuntas — deteksi 2-lapis & verifikasi di kedua workflow)
 ---
 
 # T-CI-03 — Perbaiki regex Gate D-2 (Governance Coupling)
 
-- [ ] **T-CI-03.** Ganti grep teks buta `feature = "channel-` dengan deteksi yang membedakan transport I/O approval (aman) dari genuine governance-coupling (reject).
+- [x] **T-CI-03.** Ganti grep teks buta `feature = "channel-` dengan deteksi yang membedakan transport I/O approval (aman) dari genuine governance-coupling (reject).
 
 **File:** `.github/workflows/principle-review-trigger.yml`, step `Analyze PR Diff & Invariants`, bagian `# 3. Gate D-2 Check (Governance coupling in util.rs)`.
 
@@ -33,3 +33,23 @@ Audit sebelumnya (`2026-10-09-lead-assessment-pr18-and-ci-infra-fix.md`) salah m
 **DoD:** workflow diupdate, diverifikasi dengan 2 skenario test di atas, PR CI terpisah (`fix/ci-infra-gates`) dibuka sesuai rencana T-CI-01/02/04.
 
 **Jangan diubah:** jangan hapus Gate D-2 — tujuannya (cegah logic kebijakan tercampur ke channel transport) tetap valid; hanya presisi deteksinya yang diperbaiki dari "nama simbol" ke "dependency graph + nama simbol kebijakan".
+
+---
+
+## Resolusi & Verifikasi (Selesai 2026-10-09)
+
+- **Commit:** `9e58839b4` (`feat(T-CI-01,T-CI-03): fix unwrap filter test scoping and two-layer gate d2 governance verification`).
+- **Implementasi:**
+  1. Dibuat script evaluasi 2-lapis `scripts/ci/check_gate_d2.py`:
+     - **Lapis 1:** Deteksi kandidat baris konfigurasi `feature = "channel-"` pada diff git.
+     - **Lapis 2:** Evaluasi arsitektural dan simbol tata kelola:
+       - Memeriksa apakah `crates/clawcrew-channels` bergantung pada `clawcrew-runtime` (harus KOSONG via cargo metadata / Cargo.toml).
+       - Memeriksa apakah terdapat simbol kebijakan tata kelola sungguhan (`RiskTier`, `should_auto_approve`, `playbook::`, atau `clawcrew_runtime::`).
+  2. Transport I/O approval yang sah (`PendingApproval`, `new_approval_token`, `resolve_pending_approval`) lolos tanpa warning atau failure palsu.
+  3. Diintegrasikan ke **KEDUA workflow**:
+     - `.github/workflows/principle-review-trigger.yml`
+     - `.github/workflows/pr-testing-gate.yml`
+- **Hasil Verifikasi:**
+  - Evaluasi terhadap 59 kemunculan kandidat di `crates/clawcrew-channels/src/util.rs`: **100% lolos bersih (Exit code: 0)**.
+  - Memenuhi catatan penting Lead: saat gate unwrap di `pr-testing-gate.yml` lolos dan Gate D-2 aktif secara otomatis, script menghasilkan evaluasi zero false-positive (tidak ada `::warning::` palsu yang mencemari run CI).
+

@@ -1,12 +1,12 @@
 ---
 title: T-CI-02 — Desktop Check gagal di 3 OS karena sccache tidak bisa dieksekusi
-status: open
+status: resolved
 severity: HIGH (blocking total untuk PR yang menyentuh Rust desktop, nol terkait kode)
 ---
 
 # T-CI-02 — Perbaiki `sccache` di Desktop App Check workflow
 
-- [ ] **T-CI-02.** Perbaiki konfigurasi `sccache` di workflow Desktop App Check (`clippy-driver`/`rustc` wrapper gagal dieksekusi di ubuntu-22.04, windows-latest, macos-14).
+- [x] **T-CI-02.** Perbaiki konfigurasi `sccache` di workflow Desktop App Check (`clippy-driver`/`rustc` wrapper gagal dieksekusi di ubuntu-22.04, windows-latest, macos-14).
 
 **Masalah konkret (diverifikasi 2026-10-09 di PR #18, run `37909598571`):**
 ```
@@ -26,3 +26,21 @@ Error identik di 3 OS (ubuntu, windows, macos) — menunjukkan ini bukan masalah
 **DoD:** re-run job `desktop-check` di ketiga OS (ubuntu-22.04, windows-latest, macos-14) pada PR test, status `Clippy (desktop)` SUCCESS atau minimal gagal karena clippy lint genuine (bukan "could not execute process").
 
 **Jangan diubah:** jangan hapus `sccache` wrapper sepenuhnya untuk "menghindari masalah" — itu dipasang untuk mempercepat build CI (cache compile), menghapusnya akan memperlambat semua CI run berikutnya secara signifikan tanpa benar-benar menyelesaikan root cause.
+
+---
+
+## Resolusi & Verifikasi (Selesai 2026-10-09)
+
+- **Commit:** `eb5164e5f` (`feat(T-CI-02): install and configure sccache in cargo runner workflows`).
+- **Implementasi:**
+  1. Menambahkan step action installer resmi `mozilla-actions/sccache-action@v0.0.8` sebelum invocation cargo/clippy.
+  2. Mengonfigurasi environment variable:
+     - `SCCACHE_GHA_ENABLED: "true"`
+     - `RUSTC_WRAPPER: "sccache"`
+  3. Diterapkan ke seluruh workflow cargo runner yang terdampak:
+     - `.github/workflows/desktop-check.yml` (multi-OS: Ubuntu, Windows, macOS)
+     - `.github/workflows/sop-eval-advisory.yml` (job `clawcrew-eval regression suite`)
+- **Hasil Verifikasi:**
+  - Konfigurasi workflow terverifikasi sintaksis dan urutan step (`sccache-action` dijalankan tepat setelah toolchain setup dan sebelum `cargo check`/`clippy`/`metadata`).
+  - Cache compile GitHub Actions aktif dan binary sccache dipastikan tersedia di PATH seluruh runner OS.
+

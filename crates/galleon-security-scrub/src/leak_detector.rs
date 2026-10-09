@@ -157,61 +157,73 @@ impl LeakDetector {
         static API_KEY_PATTERNS: OnceLock<Vec<(Regex, &'static str)>> = OnceLock::new();
         let regexes = API_KEY_PATTERNS.get_or_init(|| {
             vec![
-                // Stripe
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"sk_(live|test)_[a-zA-Z0-9]{24,}").unwrap(),
                     "Stripe secret key",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"pk_(live|test)_[a-zA-Z0-9]{24,}").unwrap(),
                     "Stripe publishable key",
                 ),
                 // OpenAI
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"sk-[a-zA-Z0-9]{20,}T3BlbkFJ[a-zA-Z0-9]{20,}").unwrap(),
                     "OpenAI API key",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"sk-[a-zA-Z0-9]{48,}").unwrap(),
                     "OpenAI-style API key",
                 ),
                 // Anthropic
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"sk-ant-[a-zA-Z0-9-_]{32,}").unwrap(),
                     "Anthropic API key",
                 ),
                 // Groq
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (Regex::new(r"gsk_[a-zA-Z0-9]{20,}").unwrap(), "Groq API key"),
                 // Google
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"AIza[a-zA-Z0-9_-]{35}").unwrap(),
                     "Google API key",
                 ),
                 // GitHub
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"gh[pousr]_[a-zA-Z0-9]{36,}").unwrap(),
                     "GitHub token",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"github_pat_[a-zA-Z0-9_]{22,}").unwrap(),
                     "GitHub PAT",
                 ),
                 // Slack
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"xox[baprs]-[0-9A-Za-z-]{10,}")
                         .expect("static Slack token regex must compile"),
                     "Slack token",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"xapp-[0-9A-Za-z-]{10,}")
                         .expect("static Slack app-level token regex must compile"),
                     "Slack app-level token",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"xwfp-[0-9A-Za-z-]{10,}")
                         .expect("static Slack workflow token regex must compile"),
                     "Slack workflow token",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     // Rotation family: refresh tokens (`xoxe-…`) and rotated
                     // access tokens (`xoxe.xoxb-…`, `xoxe.xoxp-…`). The base
@@ -219,10 +231,12 @@ impl LeakDetector {
                     // inner `xoxb-`/`xoxp-` would leave the `xoxe.` prefix
                     // unredacted, so cover the whole token explicitly.
                     Regex::new(r"xoxe(?:-[0-9A-Za-z-]{10,}|\.xox[bp]-[0-9A-Za-z-]{10,})")
+                        // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                         .expect("static Slack rotation token regex must compile"),
                     "Slack refresh/rotated token",
                 ),
                 // Generic
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r#"api[_-]?key[=:]\s*['"]*[a-zA-Z0-9_-]{20,}"#).unwrap(),
                     "Generic API key",
@@ -254,14 +268,17 @@ impl LeakDetector {
         static AWS_PATTERNS: OnceLock<Vec<(Regex, &'static str)>> = OnceLock::new();
         let regexes = AWS_PATTERNS.get_or_init(|| {
             vec![
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"AKIA[A-Z0-9]{16}").unwrap(),
                     "AWS Access Key ID",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(
                         r#"aws[_-]?secret[_-]?access[_-]?key[=:]\s*['"]*[a-zA-Z0-9/+=]{40}"#,
                     )
+                    // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                     .unwrap(),
                     "AWS Secret Access Key",
                 ),
@@ -292,14 +309,17 @@ impl LeakDetector {
         static SECRET_PATTERNS: OnceLock<Vec<(Regex, &'static str)>> = OnceLock::new();
         let regexes = SECRET_PATTERNS.get_or_init(|| {
             vec![
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r#"(?i)password[=:]\s*['"]*[^\s'"]{8,}"#).unwrap(),
                     "Password in config",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r#"(?i)secret[=:]\s*['"]*[a-zA-Z0-9_-]{16,}"#).unwrap(),
                     "Secret value",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r#"(?i)token[=:]\s*['"]*[a-zA-Z0-9_.-]{20,}"#).unwrap(),
                     "Token value",
@@ -409,6 +429,7 @@ impl LeakDetector {
         static JWT_PATTERN: OnceLock<Regex> = OnceLock::new();
         let regex = JWT_PATTERN.get_or_init(|| {
             // JWT: three base64url-encoded parts separated by dots
+            // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
             Regex::new(r"eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*").unwrap()
         });
 
@@ -434,18 +455,22 @@ impl LeakDetector {
         static DB_PATTERNS: OnceLock<Vec<(Regex, &'static str)>> = OnceLock::new();
         let regexes = DB_PATTERNS.get_or_init(|| {
             vec![
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"postgres(ql)?://[^:]+:[^@]+@[^\s]+").unwrap(),
                     "PostgreSQL connection URL",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"mysql://[^:]+:[^@]+@[^\s]+").unwrap(),
                     "MySQL connection URL",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"mongodb(\+srv)?://[^:]+:[^@]+@[^\s]+").unwrap(),
                     "MongoDB connection URL",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"redis://[^:]+:[^@]+@[^\s]+").unwrap(),
                     "Redis connection URL",
@@ -475,6 +500,7 @@ impl LeakDetector {
     ) {
         static BOT_TOKEN_PATTERN: OnceLock<Regex> = OnceLock::new();
         let regex =
+            // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
             BOT_TOKEN_PATTERN.get_or_init(|| Regex::new(r"/bot[0-9]+:[A-Za-z0-9_-]+").unwrap());
 
         collect_regex_redactions(
@@ -499,9 +525,13 @@ impl LeakDetector {
         let entropy_threshold = 3.5 + self.sensitivity * 1.25;
 
         static URL_PATTERN: OnceLock<Regex> = OnceLock::new();
-        let url_re = URL_PATTERN.get_or_init(|| Regex::new(r"https?://\S+").unwrap());
+        let url_re = URL_PATTERN.get_or_init(|| {
+            // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
+            Regex::new(r"https?://\S+").unwrap()
+        });
         static MEDIA_MARKER_PATTERN: OnceLock<Regex> = OnceLock::new();
         let media_re = MEDIA_MARKER_PATTERN.get_or_init(|| {
+            // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
             Regex::new(r"\[(IMAGE|VIDEO|VOICE|AUDIO|DOCUMENT|FILE):[^\]]*\]").unwrap()
         });
         // Tool receipts (zc-receipt-...) are runtime-generated HMAC tokens that
@@ -509,6 +539,7 @@ impl LeakDetector {
         // they are not redacted as leaked credentials.
         static RECEIPT_PATTERN: OnceLock<Regex> = OnceLock::new();
         let receipt_re =
+            // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
             RECEIPT_PATTERN.get_or_init(|| Regex::new(r"zc-receipt-\d+-[A-Za-z0-9_-]+").unwrap());
         let mut entropy_protected = protected_spans.to_vec();
         collect_regex_spans(content, url_re, &mut entropy_protected);

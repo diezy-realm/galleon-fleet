@@ -625,6 +625,7 @@ impl ReceiptGenerator {
         use sha2::Sha256;
         type HmacSha256 = Hmac<Sha256>;
 
+        // INVARIANT: HMAC-SHA256 (and all HMAC variants) accept any key length by design; the spec defines HMAC as working with any key length
         let mut mac = HmacSha256::new_from_slice(&self.key).expect("HMAC accepts any key length");
         mac.update(tool_name.as_bytes());
         mac.update(b"|");
