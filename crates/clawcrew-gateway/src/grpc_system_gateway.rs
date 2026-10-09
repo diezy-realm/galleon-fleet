@@ -27,6 +27,8 @@ pub struct SystemGatewayService {
     auth_token: Option<String>,
     /// Optional Memory backend for learned rule persistence (BL-01)
     memory: Option<std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>>,
+    /// Device registry backed by SQLite for SSOT device pairing (BG-C2 / T-08)
+    device_registry: Option<std::sync::Arc<crate::api_pairing::DeviceRegistry>>,
 }
 
 impl std::fmt::Debug for SystemGatewayService {
@@ -53,6 +55,7 @@ impl SystemGatewayService {
         let memory = clawcrew_memory::sqlite::SqliteMemory::new("gateway", &root)
             .ok()
             .map(|m| std::sync::Arc::new(m) as std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>);
+        let device_registry = Some(std::sync::Arc::new(crate::api_pairing::DeviceRegistry::new(&root)));
         Self {
             workspace_root,
             vault_dir: Some(vault_dir),
@@ -60,7 +63,17 @@ impl SystemGatewayService {
             model_provider: None,
             auth_token: None,
             memory,
+            device_registry,
         }
+    }
+
+    /// Configure a custom device registry for device pairing SSOT (BG-C2 / T-08)
+    pub fn with_device_registry(
+        mut self,
+        registry: std::sync::Arc<crate::api_pairing::DeviceRegistry>,
+    ) -> Self {
+        self.device_registry = Some(registry);
+        self
     }
 
     /// Configure a custom memory backend for learned rule persistence (BL-01)
@@ -758,6 +771,118 @@ impl SystemGateway for SystemGatewayService {
         }
 
         Ok(Response::new(RetrieveLearnedRulesResponse { rules }))
+    }
+
+    async fn sync_paired_device(
+        &self,
+        request: Request<SyncPairedDeviceRequest>,
+    ) -> Result<Response<SyncPairedDeviceResponse>, Status> {
+        let req = request.into_inner();
+        let Some(registry) = self.device_registry.as_ref() else {
+            return Err(Status::internal("device registry not configured"));
+        };
+
+        let now = chrono::Utc::now();
+        let token_hash = if req.token_hash.is_empty() {
+            format!("dev-tok-{}", req.device_id)
+        } else {
+            req.token_hash
+        };
+
+        let info = crate::api_pairing::DeviceInfo {
+            id: req.device_id.clone(),
+            name: if req.device_name.is_empty() { None } else { Some(req.device_name) },
+            device_type: if req.platform.is_empty() { None } else { Some(req.platform) },
+            paired_at: now,
+            last_seen: now,
+            ip_address: None,
+            capabilities: None,
+        };
+
+        match registry.register(token_hash, info) {
+            Ok(()) => {
+                ::clawcrew_log::record!(
+                    INFO,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        .with_attrs(::serde_json::json!({"device_id": &req.device_id})),
+                    "device synchronized to Rust SQLite DeviceRegistry SSOT (BG-C2)"
+                );
+                Ok(Response::new(SyncPairedDeviceResponse {
+                    success: true,
+                    error: String::new(),
+                }))
+            }
+            Err(e) => {
+                ::clawcrew_log::record!(
+                    ERROR,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        .with_attrs(::serde_json::json!({"device_id": &req.device_id, "error": e.to_string()})),
+                    "failed to sync device to Rust SQLite DeviceRegistry"
+                );
+                Ok(Response::new(SyncPairedDeviceResponse {
+                    success: false,
+                    error: e.to_string(),
+                }))
+            }
+        }
+    }
+
+    async fn list_paired_devices(
+        &self,
+        _request: Request<ListPairedDevicesRequest>,
+    ) -> Result<Response<ListPairedDevicesResponse>, Status> {
+        let Some(registry) = self.device_registry.as_ref() else {
+            return Err(Status::internal("device registry not configured"));
+        };
+
+        match registry.list() {
+            Ok(devices) => {
+                let records = devices
+                    .into_iter()
+                    .map(|d| DeviceRecord {
+                        id: d.id,
+                        name: d.name.unwrap_or_default(),
+                        device_type: d.device_type.unwrap_or_default(),
+                        paired_at: d.paired_at.to_rfc3339(),
+                        last_seen: d.last_seen.to_rfc3339(),
+                        ip_address: d.ip_address.unwrap_or_default(),
+                    })
+                    .collect();
+                Ok(Response::new(ListPairedDevicesResponse { devices: records }))
+            }
+            Err(e) => Err(Status::internal(format!("failed to list devices from registry: {e}"))),
+        }
+    }
+
+    async fn revoke_paired_device(
+        &self,
+        request: Request<RevokePairedDeviceRequest>,
+    ) -> Result<Response<RevokePairedDeviceResponse>, Status> {
+        let req = request.into_inner();
+        let Some(registry) = self.device_registry.as_ref() else {
+            return Err(Status::internal("device registry not configured"));
+        };
+
+        match registry.revoke(&req.device_id) {
+            Ok(deleted_token_hash) => {
+                let success = deleted_token_hash.is_some();
+                ::clawcrew_log::record!(
+                    INFO,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Revoke)
+                        .with_attrs(::serde_json::json!({"device_id": &req.device_id, "revoked": success})),
+                    "device revoked from Rust SQLite DeviceRegistry SSOT"
+                );
+                Ok(Response::new(RevokePairedDeviceResponse {
+                    success,
+                    error: if success { String::new() } else { "device not found".to_string() },
+                }))
+            }
+            Err(e) => Ok(Response::new(RevokePairedDeviceResponse {
+                success: false,
+                error: e.to_string(),
+            })),
+        }
     }
 }
 

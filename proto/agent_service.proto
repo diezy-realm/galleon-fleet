@@ -35,6 +35,15 @@ service SystemGateway {
     
     // Retrieves learned rules filtered by scope (BL-01)
     rpc RetrieveLearnedRules(RetrieveLearnedRulesRequest) returns (RetrieveLearnedRulesResponse);
+
+    // Synchronizes a paired device to Rust persistent SQLite DeviceRegistry (BG-C2 / T-08)
+    rpc SyncPairedDevice(SyncPairedDeviceRequest) returns (SyncPairedDeviceResponse);
+
+    // Lists all paired devices from Rust persistent SQLite DeviceRegistry (BG-C2 / T-08)
+    rpc ListPairedDevices(ListPairedDevicesRequest) returns (ListPairedDevicesResponse);
+
+    // Revokes a paired device from Rust persistent SQLite DeviceRegistry (BG-C2 / T-08)
+    rpc RevokePairedDevice(RevokePairedDeviceRequest) returns (RevokePairedDeviceResponse);
 }
 
 // ======================================
@@ -229,4 +238,45 @@ message LearnedRule {
     bool approved = 6;
     bool reverted = 7;
 }
+
+// ======================================
+// Device Registry Sync (BG-C2 / T-08)
+// ======================================
+
+message SyncPairedDeviceRequest {
+    string device_id = 1;
+    string device_name = 2;
+    string platform = 3;
+    string token_hash = 4;
+}
+
+message SyncPairedDeviceResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+message ListPairedDevicesRequest {}
+
+message DeviceRecord {
+    string id = 1;
+    string name = 2;
+    string device_type = 3;
+    string paired_at = 4;
+    string last_seen = 5;
+    string ip_address = 6;
+}
+
+message ListPairedDevicesResponse {
+    repeated DeviceRecord devices = 1;
+}
+
+message RevokePairedDeviceRequest {
+    string device_id = 1;
+}
+
+message RevokePairedDeviceResponse {
+    bool success = 1;
+    string error = 2;
+}
+
 

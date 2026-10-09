@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.12
 // 	protoc        v7.36.0
-// source: proto/agent_service.proto
+// source: agent_service.proto
 
 package pb
 
@@ -54,11 +54,11 @@ func (x HealthCheckResponse_ServingStatus) String() string {
 }
 
 func (HealthCheckResponse_ServingStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_agent_service_proto_enumTypes[0].Descriptor()
+	return file_agent_service_proto_enumTypes[0].Descriptor()
 }
 
 func (HealthCheckResponse_ServingStatus) Type() protoreflect.EnumType {
-	return &file_proto_agent_service_proto_enumTypes[0]
+	return &file_agent_service_proto_enumTypes[0]
 }
 
 func (x HealthCheckResponse_ServingStatus) Number() protoreflect.EnumNumber {
@@ -67,7 +67,7 @@ func (x HealthCheckResponse_ServingStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HealthCheckResponse_ServingStatus.Descriptor instead.
 func (HealthCheckResponse_ServingStatus) EnumDescriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{1, 0}
+	return file_agent_service_proto_rawDescGZIP(), []int{1, 0}
 }
 
 type TurnResponse_EventType int32
@@ -115,11 +115,11 @@ func (x TurnResponse_EventType) String() string {
 }
 
 func (TurnResponse_EventType) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_agent_service_proto_enumTypes[1].Descriptor()
+	return file_agent_service_proto_enumTypes[1].Descriptor()
 }
 
 func (TurnResponse_EventType) Type() protoreflect.EnumType {
-	return &file_proto_agent_service_proto_enumTypes[1]
+	return &file_agent_service_proto_enumTypes[1]
 }
 
 func (x TurnResponse_EventType) Number() protoreflect.EnumNumber {
@@ -128,7 +128,7 @@ func (x TurnResponse_EventType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TurnResponse_EventType.Descriptor instead.
 func (TurnResponse_EventType) EnumDescriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{3, 0}
+	return file_agent_service_proto_rawDescGZIP(), []int{3, 0}
 }
 
 type HealthCheckRequest struct {
@@ -140,7 +140,7 @@ type HealthCheckRequest struct {
 
 func (x *HealthCheckRequest) Reset() {
 	*x = HealthCheckRequest{}
-	mi := &file_proto_agent_service_proto_msgTypes[0]
+	mi := &file_agent_service_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -152,7 +152,7 @@ func (x *HealthCheckRequest) String() string {
 func (*HealthCheckRequest) ProtoMessage() {}
 
 func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[0]
+	mi := &file_agent_service_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -165,7 +165,7 @@ func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
 func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{0}
+	return file_agent_service_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *HealthCheckRequest) GetService() string {
@@ -184,7 +184,7 @@ type HealthCheckResponse struct {
 
 func (x *HealthCheckResponse) Reset() {
 	*x = HealthCheckResponse{}
-	mi := &file_proto_agent_service_proto_msgTypes[1]
+	mi := &file_agent_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -196,7 +196,7 @@ func (x *HealthCheckResponse) String() string {
 func (*HealthCheckResponse) ProtoMessage() {}
 
 func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[1]
+	mi := &file_agent_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -209,7 +209,7 @@ func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
 func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{1}
+	return file_agent_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *HealthCheckResponse) GetStatus() HealthCheckResponse_ServingStatus {
@@ -231,7 +231,7 @@ type TurnRequest struct {
 
 func (x *TurnRequest) Reset() {
 	*x = TurnRequest{}
-	mi := &file_proto_agent_service_proto_msgTypes[2]
+	mi := &file_agent_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -243,7 +243,7 @@ func (x *TurnRequest) String() string {
 func (*TurnRequest) ProtoMessage() {}
 
 func (x *TurnRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[2]
+	mi := &file_agent_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -256,7 +256,7 @@ func (x *TurnRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnRequest.ProtoReflect.Descriptor instead.
 func (*TurnRequest) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{2}
+	return file_agent_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *TurnRequest) GetSessionId() string {
@@ -299,7 +299,7 @@ type TurnResponse struct {
 
 func (x *TurnResponse) Reset() {
 	*x = TurnResponse{}
-	mi := &file_proto_agent_service_proto_msgTypes[3]
+	mi := &file_agent_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -311,7 +311,7 @@ func (x *TurnResponse) String() string {
 func (*TurnResponse) ProtoMessage() {}
 
 func (x *TurnResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[3]
+	mi := &file_agent_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -324,7 +324,7 @@ func (x *TurnResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnResponse.ProtoReflect.Descriptor instead.
 func (*TurnResponse) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{3}
+	return file_agent_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *TurnResponse) GetType() TurnResponse_EventType {
@@ -366,7 +366,7 @@ type QueryRequest struct {
 
 func (x *QueryRequest) Reset() {
 	*x = QueryRequest{}
-	mi := &file_proto_agent_service_proto_msgTypes[4]
+	mi := &file_agent_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -378,7 +378,7 @@ func (x *QueryRequest) String() string {
 func (*QueryRequest) ProtoMessage() {}
 
 func (x *QueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[4]
+	mi := &file_agent_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -391,7 +391,7 @@ func (x *QueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryRequest.ProtoReflect.Descriptor instead.
 func (*QueryRequest) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{4}
+	return file_agent_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *QueryRequest) GetQuery() string {
@@ -424,7 +424,7 @@ type QueryResponse struct {
 
 func (x *QueryResponse) Reset() {
 	*x = QueryResponse{}
-	mi := &file_proto_agent_service_proto_msgTypes[5]
+	mi := &file_agent_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -436,7 +436,7 @@ func (x *QueryResponse) String() string {
 func (*QueryResponse) ProtoMessage() {}
 
 func (x *QueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[5]
+	mi := &file_agent_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -449,7 +449,7 @@ func (x *QueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryResponse.ProtoReflect.Descriptor instead.
 func (*QueryResponse) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{5}
+	return file_agent_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *QueryResponse) GetMatches() []*QueryMatch {
@@ -471,7 +471,7 @@ type QueryMatch struct {
 
 func (x *QueryMatch) Reset() {
 	*x = QueryMatch{}
-	mi := &file_proto_agent_service_proto_msgTypes[6]
+	mi := &file_agent_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -483,7 +483,7 @@ func (x *QueryMatch) String() string {
 func (*QueryMatch) ProtoMessage() {}
 
 func (x *QueryMatch) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[6]
+	mi := &file_agent_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -496,7 +496,7 @@ func (x *QueryMatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryMatch.ProtoReflect.Descriptor instead.
 func (*QueryMatch) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{6}
+	return file_agent_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *QueryMatch) GetId() string {
@@ -539,7 +539,7 @@ type ToolCallRequest struct {
 
 func (x *ToolCallRequest) Reset() {
 	*x = ToolCallRequest{}
-	mi := &file_proto_agent_service_proto_msgTypes[7]
+	mi := &file_agent_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -551,7 +551,7 @@ func (x *ToolCallRequest) String() string {
 func (*ToolCallRequest) ProtoMessage() {}
 
 func (x *ToolCallRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[7]
+	mi := &file_agent_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -564,7 +564,7 @@ func (x *ToolCallRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToolCallRequest.ProtoReflect.Descriptor instead.
 func (*ToolCallRequest) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{7}
+	return file_agent_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ToolCallRequest) GetToolName() string {
@@ -607,7 +607,7 @@ type ToolCallResponse struct {
 
 func (x *ToolCallResponse) Reset() {
 	*x = ToolCallResponse{}
-	mi := &file_proto_agent_service_proto_msgTypes[8]
+	mi := &file_agent_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -619,7 +619,7 @@ func (x *ToolCallResponse) String() string {
 func (*ToolCallResponse) ProtoMessage() {}
 
 func (x *ToolCallResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[8]
+	mi := &file_agent_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -632,7 +632,7 @@ func (x *ToolCallResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToolCallResponse.ProtoReflect.Descriptor instead.
 func (*ToolCallResponse) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{8}
+	return file_agent_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ToolCallResponse) GetSuccess() bool {
@@ -672,7 +672,7 @@ type SecretRequest struct {
 
 func (x *SecretRequest) Reset() {
 	*x = SecretRequest{}
-	mi := &file_proto_agent_service_proto_msgTypes[9]
+	mi := &file_agent_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -684,7 +684,7 @@ func (x *SecretRequest) String() string {
 func (*SecretRequest) ProtoMessage() {}
 
 func (x *SecretRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[9]
+	mi := &file_agent_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -697,7 +697,7 @@ func (x *SecretRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SecretRequest.ProtoReflect.Descriptor instead.
 func (*SecretRequest) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{9}
+	return file_agent_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *SecretRequest) GetKeyName() string {
@@ -717,7 +717,7 @@ type SecretResponse struct {
 
 func (x *SecretResponse) Reset() {
 	*x = SecretResponse{}
-	mi := &file_proto_agent_service_proto_msgTypes[10]
+	mi := &file_agent_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -729,7 +729,7 @@ func (x *SecretResponse) String() string {
 func (*SecretResponse) ProtoMessage() {}
 
 func (x *SecretResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[10]
+	mi := &file_agent_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -742,7 +742,7 @@ func (x *SecretResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SecretResponse.ProtoReflect.Descriptor instead.
 func (*SecretResponse) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{10}
+	return file_agent_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *SecretResponse) GetFound() bool {
@@ -770,7 +770,7 @@ type TaskExecutionRequest struct {
 
 func (x *TaskExecutionRequest) Reset() {
 	*x = TaskExecutionRequest{}
-	mi := &file_proto_agent_service_proto_msgTypes[11]
+	mi := &file_agent_service_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -782,7 +782,7 @@ func (x *TaskExecutionRequest) String() string {
 func (*TaskExecutionRequest) ProtoMessage() {}
 
 func (x *TaskExecutionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[11]
+	mi := &file_agent_service_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -795,7 +795,7 @@ func (x *TaskExecutionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TaskExecutionRequest.ProtoReflect.Descriptor instead.
 func (*TaskExecutionRequest) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{11}
+	return file_agent_service_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *TaskExecutionRequest) GetTaskId() string {
@@ -823,7 +823,7 @@ type TaskExecutionResponse struct {
 
 func (x *TaskExecutionResponse) Reset() {
 	*x = TaskExecutionResponse{}
-	mi := &file_proto_agent_service_proto_msgTypes[12]
+	mi := &file_agent_service_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -835,7 +835,7 @@ func (x *TaskExecutionResponse) String() string {
 func (*TaskExecutionResponse) ProtoMessage() {}
 
 func (x *TaskExecutionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[12]
+	mi := &file_agent_service_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -848,7 +848,7 @@ func (x *TaskExecutionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TaskExecutionResponse.ProtoReflect.Descriptor instead.
 func (*TaskExecutionResponse) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{12}
+	return file_agent_service_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *TaskExecutionResponse) GetSuccess() bool {
@@ -888,7 +888,7 @@ type ExecuteTurnRequest struct {
 
 func (x *ExecuteTurnRequest) Reset() {
 	*x = ExecuteTurnRequest{}
-	mi := &file_proto_agent_service_proto_msgTypes[13]
+	mi := &file_agent_service_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -900,7 +900,7 @@ func (x *ExecuteTurnRequest) String() string {
 func (*ExecuteTurnRequest) ProtoMessage() {}
 
 func (x *ExecuteTurnRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[13]
+	mi := &file_agent_service_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -913,7 +913,7 @@ func (x *ExecuteTurnRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteTurnRequest.ProtoReflect.Descriptor instead.
 func (*ExecuteTurnRequest) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{13}
+	return file_agent_service_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ExecuteTurnRequest) GetSessionId() string {
@@ -977,7 +977,7 @@ type TurnChatMessage struct {
 
 func (x *TurnChatMessage) Reset() {
 	*x = TurnChatMessage{}
-	mi := &file_proto_agent_service_proto_msgTypes[14]
+	mi := &file_agent_service_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -989,7 +989,7 @@ func (x *TurnChatMessage) String() string {
 func (*TurnChatMessage) ProtoMessage() {}
 
 func (x *TurnChatMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[14]
+	mi := &file_agent_service_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1002,7 +1002,7 @@ func (x *TurnChatMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnChatMessage.ProtoReflect.Descriptor instead.
 func (*TurnChatMessage) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{14}
+	return file_agent_service_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *TurnChatMessage) GetRole() string {
@@ -1044,7 +1044,7 @@ type TurnToolDefinition struct {
 
 func (x *TurnToolDefinition) Reset() {
 	*x = TurnToolDefinition{}
-	mi := &file_proto_agent_service_proto_msgTypes[15]
+	mi := &file_agent_service_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1056,7 +1056,7 @@ func (x *TurnToolDefinition) String() string {
 func (*TurnToolDefinition) ProtoMessage() {}
 
 func (x *TurnToolDefinition) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[15]
+	mi := &file_agent_service_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1069,7 +1069,7 @@ func (x *TurnToolDefinition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnToolDefinition.ProtoReflect.Descriptor instead.
 func (*TurnToolDefinition) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{15}
+	return file_agent_service_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *TurnToolDefinition) GetName() string {
@@ -1108,7 +1108,7 @@ type TurnToken struct {
 
 func (x *TurnToken) Reset() {
 	*x = TurnToken{}
-	mi := &file_proto_agent_service_proto_msgTypes[16]
+	mi := &file_agent_service_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1120,7 +1120,7 @@ func (x *TurnToken) String() string {
 func (*TurnToken) ProtoMessage() {}
 
 func (x *TurnToken) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[16]
+	mi := &file_agent_service_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1133,7 +1133,7 @@ func (x *TurnToken) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnToken.ProtoReflect.Descriptor instead.
 func (*TurnToken) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{16}
+	return file_agent_service_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *TurnToken) GetEvent() isTurnToken_Event {
@@ -1217,7 +1217,7 @@ type TokenChunk struct {
 
 func (x *TokenChunk) Reset() {
 	*x = TokenChunk{}
-	mi := &file_proto_agent_service_proto_msgTypes[17]
+	mi := &file_agent_service_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1229,7 +1229,7 @@ func (x *TokenChunk) String() string {
 func (*TokenChunk) ProtoMessage() {}
 
 func (x *TokenChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[17]
+	mi := &file_agent_service_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1242,7 +1242,7 @@ func (x *TokenChunk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TokenChunk.ProtoReflect.Descriptor instead.
 func (*TokenChunk) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{17}
+	return file_agent_service_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *TokenChunk) GetDelta() string {
@@ -1270,7 +1270,7 @@ type TurnToolCall struct {
 
 func (x *TurnToolCall) Reset() {
 	*x = TurnToolCall{}
-	mi := &file_proto_agent_service_proto_msgTypes[18]
+	mi := &file_agent_service_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1282,7 +1282,7 @@ func (x *TurnToolCall) String() string {
 func (*TurnToolCall) ProtoMessage() {}
 
 func (x *TurnToolCall) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[18]
+	mi := &file_agent_service_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1295,7 +1295,7 @@ func (x *TurnToolCall) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnToolCall.ProtoReflect.Descriptor instead.
 func (*TurnToolCall) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{18}
+	return file_agent_service_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *TurnToolCall) GetId() string {
@@ -1320,18 +1320,19 @@ func (x *TurnToolCall) GetArgumentsJson() string {
 }
 
 type TurnComplete struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	FinishReason     string                 `protobuf:"bytes,1,opt,name=finish_reason,json=finishReason,proto3" json:"finish_reason,omitempty"` // "stop", "tool_calls", "length"
-	PromptTokens     int32                  `protobuf:"varint,2,opt,name=prompt_tokens,json=promptTokens,proto3" json:"prompt_tokens,omitempty"`
-	CompletionTokens int32                  `protobuf:"varint,3,opt,name=completion_tokens,json=completionTokens,proto3" json:"completion_tokens,omitempty"`
-	TotalTokens      int32                  `protobuf:"varint,4,opt,name=total_tokens,json=totalTokens,proto3" json:"total_tokens,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	FinishReason      string                 `protobuf:"bytes,1,opt,name=finish_reason,json=finishReason,proto3" json:"finish_reason,omitempty"` // "stop", "tool_calls", "length"
+	PromptTokens      int32                  `protobuf:"varint,2,opt,name=prompt_tokens,json=promptTokens,proto3" json:"prompt_tokens,omitempty"`
+	CompletionTokens  int32                  `protobuf:"varint,3,opt,name=completion_tokens,json=completionTokens,proto3" json:"completion_tokens,omitempty"`
+	TotalTokens       int32                  `protobuf:"varint,4,opt,name=total_tokens,json=totalTokens,proto3" json:"total_tokens,omitempty"`
+	LoopDetectorStats *LoopDetectorStats     `protobuf:"bytes,5,opt,name=loop_detector_stats,json=loopDetectorStats,proto3,oneof" json:"loop_detector_stats,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *TurnComplete) Reset() {
 	*x = TurnComplete{}
-	mi := &file_proto_agent_service_proto_msgTypes[19]
+	mi := &file_agent_service_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1343,7 +1344,7 @@ func (x *TurnComplete) String() string {
 func (*TurnComplete) ProtoMessage() {}
 
 func (x *TurnComplete) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[19]
+	mi := &file_agent_service_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1356,7 +1357,7 @@ func (x *TurnComplete) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnComplete.ProtoReflect.Descriptor instead.
 func (*TurnComplete) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{19}
+	return file_agent_service_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *TurnComplete) GetFinishReason() string {
@@ -1387,6 +1388,89 @@ func (x *TurnComplete) GetTotalTokens() int32 {
 	return 0
 }
 
+func (x *TurnComplete) GetLoopDetectorStats() *LoopDetectorStats {
+	if x != nil {
+		return x.LoopDetectorStats
+	}
+	return nil
+}
+
+type LoopDetectorStats struct {
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	TotalCalls          int32                  `protobuf:"varint,1,opt,name=total_calls,json=totalCalls,proto3" json:"total_calls,omitempty"`
+	ExactRepeatTriggers int32                  `protobuf:"varint,2,opt,name=exact_repeat_triggers,json=exactRepeatTriggers,proto3" json:"exact_repeat_triggers,omitempty"`
+	PingPongTriggers    int32                  `protobuf:"varint,3,opt,name=ping_pong_triggers,json=pingPongTriggers,proto3" json:"ping_pong_triggers,omitempty"`
+	NoProgressTriggers  int32                  `protobuf:"varint,4,opt,name=no_progress_triggers,json=noProgressTriggers,proto3" json:"no_progress_triggers,omitempty"`
+	State               int32                  `protobuf:"varint,5,opt,name=state,proto3" json:"state,omitempty"` // 0 = nominal, 1 = warning, 2 = block, 3 = tripped
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *LoopDetectorStats) Reset() {
+	*x = LoopDetectorStats{}
+	mi := &file_agent_service_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoopDetectorStats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoopDetectorStats) ProtoMessage() {}
+
+func (x *LoopDetectorStats) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoopDetectorStats.ProtoReflect.Descriptor instead.
+func (*LoopDetectorStats) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *LoopDetectorStats) GetTotalCalls() int32 {
+	if x != nil {
+		return x.TotalCalls
+	}
+	return 0
+}
+
+func (x *LoopDetectorStats) GetExactRepeatTriggers() int32 {
+	if x != nil {
+		return x.ExactRepeatTriggers
+	}
+	return 0
+}
+
+func (x *LoopDetectorStats) GetPingPongTriggers() int32 {
+	if x != nil {
+		return x.PingPongTriggers
+	}
+	return 0
+}
+
+func (x *LoopDetectorStats) GetNoProgressTriggers() int32 {
+	if x != nil {
+		return x.NoProgressTriggers
+	}
+	return 0
+}
+
+func (x *LoopDetectorStats) GetState() int32 {
+	if x != nil {
+		return x.State
+	}
+	return 0
+}
+
 type TurnError struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ErrorCode     string                 `protobuf:"bytes,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
@@ -1397,7 +1481,7 @@ type TurnError struct {
 
 func (x *TurnError) Reset() {
 	*x = TurnError{}
-	mi := &file_proto_agent_service_proto_msgTypes[20]
+	mi := &file_agent_service_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1409,7 +1493,7 @@ func (x *TurnError) String() string {
 func (*TurnError) ProtoMessage() {}
 
 func (x *TurnError) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[20]
+	mi := &file_agent_service_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1422,7 +1506,7 @@ func (x *TurnError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TurnError.ProtoReflect.Descriptor instead.
 func (*TurnError) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{20}
+	return file_agent_service_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *TurnError) GetErrorCode() string {
@@ -1450,7 +1534,7 @@ type StoreLearnedRuleRequest struct {
 
 func (x *StoreLearnedRuleRequest) Reset() {
 	*x = StoreLearnedRuleRequest{}
-	mi := &file_proto_agent_service_proto_msgTypes[21]
+	mi := &file_agent_service_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1462,7 +1546,7 @@ func (x *StoreLearnedRuleRequest) String() string {
 func (*StoreLearnedRuleRequest) ProtoMessage() {}
 
 func (x *StoreLearnedRuleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[21]
+	mi := &file_agent_service_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1475,7 +1559,7 @@ func (x *StoreLearnedRuleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StoreLearnedRuleRequest.ProtoReflect.Descriptor instead.
 func (*StoreLearnedRuleRequest) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{21}
+	return file_agent_service_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *StoreLearnedRuleRequest) GetRule() string {
@@ -1510,7 +1594,7 @@ type StoreLearnedRuleResponse struct {
 
 func (x *StoreLearnedRuleResponse) Reset() {
 	*x = StoreLearnedRuleResponse{}
-	mi := &file_proto_agent_service_proto_msgTypes[22]
+	mi := &file_agent_service_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1522,7 +1606,7 @@ func (x *StoreLearnedRuleResponse) String() string {
 func (*StoreLearnedRuleResponse) ProtoMessage() {}
 
 func (x *StoreLearnedRuleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[22]
+	mi := &file_agent_service_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1535,7 +1619,7 @@ func (x *StoreLearnedRuleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StoreLearnedRuleResponse.ProtoReflect.Descriptor instead.
 func (*StoreLearnedRuleResponse) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{22}
+	return file_agent_service_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *StoreLearnedRuleResponse) GetId() string {
@@ -1569,7 +1653,7 @@ type RetrieveLearnedRulesRequest struct {
 
 func (x *RetrieveLearnedRulesRequest) Reset() {
 	*x = RetrieveLearnedRulesRequest{}
-	mi := &file_proto_agent_service_proto_msgTypes[23]
+	mi := &file_agent_service_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1581,7 +1665,7 @@ func (x *RetrieveLearnedRulesRequest) String() string {
 func (*RetrieveLearnedRulesRequest) ProtoMessage() {}
 
 func (x *RetrieveLearnedRulesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[23]
+	mi := &file_agent_service_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1594,7 +1678,7 @@ func (x *RetrieveLearnedRulesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RetrieveLearnedRulesRequest.ProtoReflect.Descriptor instead.
 func (*RetrieveLearnedRulesRequest) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{23}
+	return file_agent_service_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *RetrieveLearnedRulesRequest) GetScopeKey() string {
@@ -1620,7 +1704,7 @@ type RetrieveLearnedRulesResponse struct {
 
 func (x *RetrieveLearnedRulesResponse) Reset() {
 	*x = RetrieveLearnedRulesResponse{}
-	mi := &file_proto_agent_service_proto_msgTypes[24]
+	mi := &file_agent_service_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1632,7 +1716,7 @@ func (x *RetrieveLearnedRulesResponse) String() string {
 func (*RetrieveLearnedRulesResponse) ProtoMessage() {}
 
 func (x *RetrieveLearnedRulesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[24]
+	mi := &file_agent_service_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1645,7 +1729,7 @@ func (x *RetrieveLearnedRulesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RetrieveLearnedRulesResponse.ProtoReflect.Descriptor instead.
 func (*RetrieveLearnedRulesResponse) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{24}
+	return file_agent_service_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *RetrieveLearnedRulesResponse) GetRules() []*LearnedRule {
@@ -1670,7 +1754,7 @@ type LearnedRule struct {
 
 func (x *LearnedRule) Reset() {
 	*x = LearnedRule{}
-	mi := &file_proto_agent_service_proto_msgTypes[25]
+	mi := &file_agent_service_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1682,7 +1766,7 @@ func (x *LearnedRule) String() string {
 func (*LearnedRule) ProtoMessage() {}
 
 func (x *LearnedRule) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_agent_service_proto_msgTypes[25]
+	mi := &file_agent_service_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1695,7 +1779,7 @@ func (x *LearnedRule) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LearnedRule.ProtoReflect.Descriptor instead.
 func (*LearnedRule) Descriptor() ([]byte, []int) {
-	return file_proto_agent_service_proto_rawDescGZIP(), []int{25}
+	return file_agent_service_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *LearnedRule) GetId() string {
@@ -1747,11 +1831,391 @@ func (x *LearnedRule) GetReverted() bool {
 	return false
 }
 
-var File_proto_agent_service_proto protoreflect.FileDescriptor
+type SyncPairedDeviceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	DeviceName    string                 `protobuf:"bytes,2,opt,name=device_name,json=deviceName,proto3" json:"device_name,omitempty"`
+	Platform      string                 `protobuf:"bytes,3,opt,name=platform,proto3" json:"platform,omitempty"`
+	TokenHash     string                 `protobuf:"bytes,4,opt,name=token_hash,json=tokenHash,proto3" json:"token_hash,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
 
-const file_proto_agent_service_proto_rawDesc = "" +
+func (x *SyncPairedDeviceRequest) Reset() {
+	*x = SyncPairedDeviceRequest{}
+	mi := &file_agent_service_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyncPairedDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyncPairedDeviceRequest) ProtoMessage() {}
+
+func (x *SyncPairedDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyncPairedDeviceRequest.ProtoReflect.Descriptor instead.
+func (*SyncPairedDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *SyncPairedDeviceRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *SyncPairedDeviceRequest) GetDeviceName() string {
+	if x != nil {
+		return x.DeviceName
+	}
+	return ""
+}
+
+func (x *SyncPairedDeviceRequest) GetPlatform() string {
+	if x != nil {
+		return x.Platform
+	}
+	return ""
+}
+
+func (x *SyncPairedDeviceRequest) GetTokenHash() string {
+	if x != nil {
+		return x.TokenHash
+	}
+	return ""
+}
+
+type SyncPairedDeviceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Error         string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SyncPairedDeviceResponse) Reset() {
+	*x = SyncPairedDeviceResponse{}
+	mi := &file_agent_service_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyncPairedDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyncPairedDeviceResponse) ProtoMessage() {}
+
+func (x *SyncPairedDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyncPairedDeviceResponse.ProtoReflect.Descriptor instead.
+func (*SyncPairedDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *SyncPairedDeviceResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *SyncPairedDeviceResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+type ListPairedDevicesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPairedDevicesRequest) Reset() {
+	*x = ListPairedDevicesRequest{}
+	mi := &file_agent_service_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPairedDevicesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPairedDevicesRequest) ProtoMessage() {}
+
+func (x *ListPairedDevicesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPairedDevicesRequest.ProtoReflect.Descriptor instead.
+func (*ListPairedDevicesRequest) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{29}
+}
+
+type DeviceRecord struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	DeviceType    string                 `protobuf:"bytes,3,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
+	PairedAt      string                 `protobuf:"bytes,4,opt,name=paired_at,json=pairedAt,proto3" json:"paired_at,omitempty"`
+	LastSeen      string                 `protobuf:"bytes,5,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
+	IpAddress     string                 `protobuf:"bytes,6,opt,name=ip_address,json=ipAddress,proto3" json:"ip_address,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeviceRecord) Reset() {
+	*x = DeviceRecord{}
+	mi := &file_agent_service_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceRecord) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceRecord) ProtoMessage() {}
+
+func (x *DeviceRecord) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceRecord.ProtoReflect.Descriptor instead.
+func (*DeviceRecord) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *DeviceRecord) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *DeviceRecord) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *DeviceRecord) GetDeviceType() string {
+	if x != nil {
+		return x.DeviceType
+	}
+	return ""
+}
+
+func (x *DeviceRecord) GetPairedAt() string {
+	if x != nil {
+		return x.PairedAt
+	}
+	return ""
+}
+
+func (x *DeviceRecord) GetLastSeen() string {
+	if x != nil {
+		return x.LastSeen
+	}
+	return ""
+}
+
+func (x *DeviceRecord) GetIpAddress() string {
+	if x != nil {
+		return x.IpAddress
+	}
+	return ""
+}
+
+type ListPairedDevicesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Devices       []*DeviceRecord        `protobuf:"bytes,1,rep,name=devices,proto3" json:"devices,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPairedDevicesResponse) Reset() {
+	*x = ListPairedDevicesResponse{}
+	mi := &file_agent_service_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPairedDevicesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPairedDevicesResponse) ProtoMessage() {}
+
+func (x *ListPairedDevicesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPairedDevicesResponse.ProtoReflect.Descriptor instead.
+func (*ListPairedDevicesResponse) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *ListPairedDevicesResponse) GetDevices() []*DeviceRecord {
+	if x != nil {
+		return x.Devices
+	}
+	return nil
+}
+
+type RevokePairedDeviceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokePairedDeviceRequest) Reset() {
+	*x = RevokePairedDeviceRequest{}
+	mi := &file_agent_service_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokePairedDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokePairedDeviceRequest) ProtoMessage() {}
+
+func (x *RevokePairedDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokePairedDeviceRequest.ProtoReflect.Descriptor instead.
+func (*RevokePairedDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *RevokePairedDeviceRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+type RevokePairedDeviceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Error         string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokePairedDeviceResponse) Reset() {
+	*x = RevokePairedDeviceResponse{}
+	mi := &file_agent_service_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokePairedDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokePairedDeviceResponse) ProtoMessage() {}
+
+func (x *RevokePairedDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokePairedDeviceResponse.ProtoReflect.Descriptor instead.
+func (*RevokePairedDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *RevokePairedDeviceResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *RevokePairedDeviceResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+var File_agent_service_proto protoreflect.FileDescriptor
+
+const file_agent_service_proto_rawDesc = "" +
 	"\n" +
-	"\x19proto/agent_service.proto\x12\x0eclawcrew.agent\".\n" +
+	"\x13agent_service.proto\x12\x0eclawcrew.agent\".\n" +
 	"\x12HealthCheckRequest\x12\x18\n" +
 	"\aservice\x18\x01 \x01(\tR\aservice\"\x9c\x01\n" +
 	"\x13HealthCheckResponse\x12I\n" +
@@ -1862,12 +2326,21 @@ const file_proto_agent_service_proto_rawDesc = "" +
 	"\fTurnToolCall\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
-	"\x0earguments_json\x18\x03 \x01(\tR\rargumentsJson\"\xa8\x01\n" +
+	"\x0earguments_json\x18\x03 \x01(\tR\rargumentsJson\"\x98\x02\n" +
 	"\fTurnComplete\x12#\n" +
 	"\rfinish_reason\x18\x01 \x01(\tR\ffinishReason\x12#\n" +
 	"\rprompt_tokens\x18\x02 \x01(\x05R\fpromptTokens\x12+\n" +
 	"\x11completion_tokens\x18\x03 \x01(\x05R\x10completionTokens\x12!\n" +
-	"\ftotal_tokens\x18\x04 \x01(\x05R\vtotalTokens\"D\n" +
+	"\ftotal_tokens\x18\x04 \x01(\x05R\vtotalTokens\x12V\n" +
+	"\x13loop_detector_stats\x18\x05 \x01(\v2!.clawcrew.agent.LoopDetectorStatsH\x00R\x11loopDetectorStats\x88\x01\x01B\x16\n" +
+	"\x14_loop_detector_stats\"\xde\x01\n" +
+	"\x11LoopDetectorStats\x12\x1f\n" +
+	"\vtotal_calls\x18\x01 \x01(\x05R\n" +
+	"totalCalls\x122\n" +
+	"\x15exact_repeat_triggers\x18\x02 \x01(\x05R\x13exactRepeatTriggers\x12,\n" +
+	"\x12ping_pong_triggers\x18\x03 \x01(\x05R\x10pingPongTriggers\x120\n" +
+	"\x14no_progress_triggers\x18\x04 \x01(\x05R\x12noProgressTriggers\x12\x14\n" +
+	"\x05state\x18\x05 \x01(\x05R\x05state\"D\n" +
 	"\tTurnError\x12\x1d\n" +
 	"\n" +
 	"error_code\x18\x01 \x01(\tR\terrorCode\x12\x18\n" +
@@ -1906,35 +2379,65 @@ const file_proto_agent_service_proto_rawDesc = "" +
 	"\n" +
 	"ScopeEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\xfa\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x92\x01\n" +
+	"\x17SyncPairedDeviceRequest\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1f\n" +
+	"\vdevice_name\x18\x02 \x01(\tR\n" +
+	"deviceName\x12\x1a\n" +
+	"\bplatform\x18\x03 \x01(\tR\bplatform\x12\x1d\n" +
+	"\n" +
+	"token_hash\x18\x04 \x01(\tR\ttokenHash\"J\n" +
+	"\x18SyncPairedDeviceResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x14\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error\"\x1a\n" +
+	"\x18ListPairedDevicesRequest\"\xac\x01\n" +
+	"\fDeviceRecord\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
+	"\vdevice_type\x18\x03 \x01(\tR\n" +
+	"deviceType\x12\x1b\n" +
+	"\tpaired_at\x18\x04 \x01(\tR\bpairedAt\x12\x1b\n" +
+	"\tlast_seen\x18\x05 \x01(\tR\blastSeen\x12\x1d\n" +
+	"\n" +
+	"ip_address\x18\x06 \x01(\tR\tipAddress\"S\n" +
+	"\x19ListPairedDevicesResponse\x126\n" +
+	"\adevices\x18\x01 \x03(\v2\x1c.clawcrew.agent.DeviceRecordR\adevices\"8\n" +
+	"\x19RevokePairedDeviceRequest\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"L\n" +
+	"\x1aRevokePairedDeviceResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x14\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error2\xfa\x01\n" +
 	"\vAgentEngine\x12H\n" +
 	"\tStartTurn\x12\x1b.clawcrew.agent.TurnRequest\x1a\x1c.clawcrew.agent.TurnResponse0\x01\x12I\n" +
 	"\n" +
 	"QuickQuery\x12\x1c.clawcrew.agent.QueryRequest\x1a\x1d.clawcrew.agent.QueryResponse\x12V\n" +
-	"\vHealthCheck\x12\".clawcrew.agent.HealthCheckRequest\x1a#.clawcrew.agent.HealthCheckResponse2\xc2\x04\n" +
+	"\vHealthCheck\x12\".clawcrew.agent.HealthCheckRequest\x1a#.clawcrew.agent.HealthCheckResponse2\x80\a\n" +
 	"\rSystemGateway\x12V\n" +
 	"\x11ExecuteNativeTool\x12\x1f.clawcrew.agent.ToolCallRequest\x1a .clawcrew.agent.ToolCallResponse\x12S\n" +
 	"\x12GetDecryptedSecret\x12\x1d.clawcrew.agent.SecretRequest\x1a\x1e.clawcrew.agent.SecretResponse\x12Z\n" +
 	"\vExecuteTask\x12$.clawcrew.agent.TaskExecutionRequest\x1a%.clawcrew.agent.TaskExecutionResponse\x12N\n" +
 	"\vExecuteTurn\x12\".clawcrew.agent.ExecuteTurnRequest\x1a\x19.clawcrew.agent.TurnToken0\x01\x12e\n" +
 	"\x10StoreLearnedRule\x12'.clawcrew.agent.StoreLearnedRuleRequest\x1a(.clawcrew.agent.StoreLearnedRuleResponse\x12q\n" +
-	"\x14RetrieveLearnedRules\x12+.clawcrew.agent.RetrieveLearnedRulesRequest\x1a,.clawcrew.agent.RetrieveLearnedRulesResponseB2Z0github.com/diezy-labs/claw-crew/engine/pkg/pb;pbb\x06proto3"
+	"\x14RetrieveLearnedRules\x12+.clawcrew.agent.RetrieveLearnedRulesRequest\x1a,.clawcrew.agent.RetrieveLearnedRulesResponse\x12e\n" +
+	"\x10SyncPairedDevice\x12'.clawcrew.agent.SyncPairedDeviceRequest\x1a(.clawcrew.agent.SyncPairedDeviceResponse\x12h\n" +
+	"\x11ListPairedDevices\x12(.clawcrew.agent.ListPairedDevicesRequest\x1a).clawcrew.agent.ListPairedDevicesResponse\x12k\n" +
+	"\x12RevokePairedDevice\x12).clawcrew.agent.RevokePairedDeviceRequest\x1a*.clawcrew.agent.RevokePairedDeviceResponseB2Z0github.com/diezy-labs/claw-crew/engine/pkg/pb;pbb\x06proto3"
 
 var (
-	file_proto_agent_service_proto_rawDescOnce sync.Once
-	file_proto_agent_service_proto_rawDescData []byte
+	file_agent_service_proto_rawDescOnce sync.Once
+	file_agent_service_proto_rawDescData []byte
 )
 
-func file_proto_agent_service_proto_rawDescGZIP() []byte {
-	file_proto_agent_service_proto_rawDescOnce.Do(func() {
-		file_proto_agent_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_agent_service_proto_rawDesc), len(file_proto_agent_service_proto_rawDesc)))
+func file_agent_service_proto_rawDescGZIP() []byte {
+	file_agent_service_proto_rawDescOnce.Do(func() {
+		file_agent_service_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_agent_service_proto_rawDesc), len(file_agent_service_proto_rawDesc)))
 	})
-	return file_proto_agent_service_proto_rawDescData
+	return file_agent_service_proto_rawDescData
 }
 
-var file_proto_agent_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_agent_service_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
-var file_proto_agent_service_proto_goTypes = []any{
+var file_agent_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_agent_service_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
+var file_agent_service_proto_goTypes = []any{
 	(HealthCheckResponse_ServingStatus)(0), // 0: clawcrew.agent.HealthCheckResponse.ServingStatus
 	(TurnResponse_EventType)(0),            // 1: clawcrew.agent.TurnResponse.EventType
 	(*HealthCheckRequest)(nil),             // 2: clawcrew.agent.HealthCheckRequest
@@ -1957,86 +2460,103 @@ var file_proto_agent_service_proto_goTypes = []any{
 	(*TokenChunk)(nil),                     // 19: clawcrew.agent.TokenChunk
 	(*TurnToolCall)(nil),                   // 20: clawcrew.agent.TurnToolCall
 	(*TurnComplete)(nil),                   // 21: clawcrew.agent.TurnComplete
-	(*TurnError)(nil),                      // 22: clawcrew.agent.TurnError
-	(*StoreLearnedRuleRequest)(nil),        // 23: clawcrew.agent.StoreLearnedRuleRequest
-	(*StoreLearnedRuleResponse)(nil),       // 24: clawcrew.agent.StoreLearnedRuleResponse
-	(*RetrieveLearnedRulesRequest)(nil),    // 25: clawcrew.agent.RetrieveLearnedRulesRequest
-	(*RetrieveLearnedRulesResponse)(nil),   // 26: clawcrew.agent.RetrieveLearnedRulesResponse
-	(*LearnedRule)(nil),                    // 27: clawcrew.agent.LearnedRule
-	nil,                                    // 28: clawcrew.agent.QueryMatch.MetadataEntry
-	nil,                                    // 29: clawcrew.agent.StoreLearnedRuleRequest.ScopeEntry
-	nil,                                    // 30: clawcrew.agent.LearnedRule.ScopeEntry
+	(*LoopDetectorStats)(nil),              // 22: clawcrew.agent.LoopDetectorStats
+	(*TurnError)(nil),                      // 23: clawcrew.agent.TurnError
+	(*StoreLearnedRuleRequest)(nil),        // 24: clawcrew.agent.StoreLearnedRuleRequest
+	(*StoreLearnedRuleResponse)(nil),       // 25: clawcrew.agent.StoreLearnedRuleResponse
+	(*RetrieveLearnedRulesRequest)(nil),    // 26: clawcrew.agent.RetrieveLearnedRulesRequest
+	(*RetrieveLearnedRulesResponse)(nil),   // 27: clawcrew.agent.RetrieveLearnedRulesResponse
+	(*LearnedRule)(nil),                    // 28: clawcrew.agent.LearnedRule
+	(*SyncPairedDeviceRequest)(nil),        // 29: clawcrew.agent.SyncPairedDeviceRequest
+	(*SyncPairedDeviceResponse)(nil),       // 30: clawcrew.agent.SyncPairedDeviceResponse
+	(*ListPairedDevicesRequest)(nil),       // 31: clawcrew.agent.ListPairedDevicesRequest
+	(*DeviceRecord)(nil),                   // 32: clawcrew.agent.DeviceRecord
+	(*ListPairedDevicesResponse)(nil),      // 33: clawcrew.agent.ListPairedDevicesResponse
+	(*RevokePairedDeviceRequest)(nil),      // 34: clawcrew.agent.RevokePairedDeviceRequest
+	(*RevokePairedDeviceResponse)(nil),     // 35: clawcrew.agent.RevokePairedDeviceResponse
+	nil,                                    // 36: clawcrew.agent.QueryMatch.MetadataEntry
+	nil,                                    // 37: clawcrew.agent.StoreLearnedRuleRequest.ScopeEntry
+	nil,                                    // 38: clawcrew.agent.LearnedRule.ScopeEntry
 }
-var file_proto_agent_service_proto_depIdxs = []int32{
+var file_agent_service_proto_depIdxs = []int32{
 	0,  // 0: clawcrew.agent.HealthCheckResponse.status:type_name -> clawcrew.agent.HealthCheckResponse.ServingStatus
 	1,  // 1: clawcrew.agent.TurnResponse.type:type_name -> clawcrew.agent.TurnResponse.EventType
 	8,  // 2: clawcrew.agent.QueryResponse.matches:type_name -> clawcrew.agent.QueryMatch
-	28, // 3: clawcrew.agent.QueryMatch.metadata:type_name -> clawcrew.agent.QueryMatch.MetadataEntry
+	36, // 3: clawcrew.agent.QueryMatch.metadata:type_name -> clawcrew.agent.QueryMatch.MetadataEntry
 	16, // 4: clawcrew.agent.ExecuteTurnRequest.messages:type_name -> clawcrew.agent.TurnChatMessage
 	17, // 5: clawcrew.agent.ExecuteTurnRequest.tools:type_name -> clawcrew.agent.TurnToolDefinition
 	19, // 6: clawcrew.agent.TurnToken.token:type_name -> clawcrew.agent.TokenChunk
 	20, // 7: clawcrew.agent.TurnToken.tool_call:type_name -> clawcrew.agent.TurnToolCall
 	21, // 8: clawcrew.agent.TurnToken.complete:type_name -> clawcrew.agent.TurnComplete
-	22, // 9: clawcrew.agent.TurnToken.error:type_name -> clawcrew.agent.TurnError
-	29, // 10: clawcrew.agent.StoreLearnedRuleRequest.scope:type_name -> clawcrew.agent.StoreLearnedRuleRequest.ScopeEntry
-	27, // 11: clawcrew.agent.RetrieveLearnedRulesResponse.rules:type_name -> clawcrew.agent.LearnedRule
-	30, // 12: clawcrew.agent.LearnedRule.scope:type_name -> clawcrew.agent.LearnedRule.ScopeEntry
-	4,  // 13: clawcrew.agent.AgentEngine.StartTurn:input_type -> clawcrew.agent.TurnRequest
-	6,  // 14: clawcrew.agent.AgentEngine.QuickQuery:input_type -> clawcrew.agent.QueryRequest
-	2,  // 15: clawcrew.agent.AgentEngine.HealthCheck:input_type -> clawcrew.agent.HealthCheckRequest
-	9,  // 16: clawcrew.agent.SystemGateway.ExecuteNativeTool:input_type -> clawcrew.agent.ToolCallRequest
-	11, // 17: clawcrew.agent.SystemGateway.GetDecryptedSecret:input_type -> clawcrew.agent.SecretRequest
-	13, // 18: clawcrew.agent.SystemGateway.ExecuteTask:input_type -> clawcrew.agent.TaskExecutionRequest
-	15, // 19: clawcrew.agent.SystemGateway.ExecuteTurn:input_type -> clawcrew.agent.ExecuteTurnRequest
-	23, // 20: clawcrew.agent.SystemGateway.StoreLearnedRule:input_type -> clawcrew.agent.StoreLearnedRuleRequest
-	25, // 21: clawcrew.agent.SystemGateway.RetrieveLearnedRules:input_type -> clawcrew.agent.RetrieveLearnedRulesRequest
-	5,  // 22: clawcrew.agent.AgentEngine.StartTurn:output_type -> clawcrew.agent.TurnResponse
-	7,  // 23: clawcrew.agent.AgentEngine.QuickQuery:output_type -> clawcrew.agent.QueryResponse
-	3,  // 24: clawcrew.agent.AgentEngine.HealthCheck:output_type -> clawcrew.agent.HealthCheckResponse
-	10, // 25: clawcrew.agent.SystemGateway.ExecuteNativeTool:output_type -> clawcrew.agent.ToolCallResponse
-	12, // 26: clawcrew.agent.SystemGateway.GetDecryptedSecret:output_type -> clawcrew.agent.SecretResponse
-	14, // 27: clawcrew.agent.SystemGateway.ExecuteTask:output_type -> clawcrew.agent.TaskExecutionResponse
-	18, // 28: clawcrew.agent.SystemGateway.ExecuteTurn:output_type -> clawcrew.agent.TurnToken
-	24, // 29: clawcrew.agent.SystemGateway.StoreLearnedRule:output_type -> clawcrew.agent.StoreLearnedRuleResponse
-	26, // 30: clawcrew.agent.SystemGateway.RetrieveLearnedRules:output_type -> clawcrew.agent.RetrieveLearnedRulesResponse
-	22, // [22:31] is the sub-list for method output_type
-	13, // [13:22] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	23, // 9: clawcrew.agent.TurnToken.error:type_name -> clawcrew.agent.TurnError
+	22, // 10: clawcrew.agent.TurnComplete.loop_detector_stats:type_name -> clawcrew.agent.LoopDetectorStats
+	37, // 11: clawcrew.agent.StoreLearnedRuleRequest.scope:type_name -> clawcrew.agent.StoreLearnedRuleRequest.ScopeEntry
+	28, // 12: clawcrew.agent.RetrieveLearnedRulesResponse.rules:type_name -> clawcrew.agent.LearnedRule
+	38, // 13: clawcrew.agent.LearnedRule.scope:type_name -> clawcrew.agent.LearnedRule.ScopeEntry
+	32, // 14: clawcrew.agent.ListPairedDevicesResponse.devices:type_name -> clawcrew.agent.DeviceRecord
+	4,  // 15: clawcrew.agent.AgentEngine.StartTurn:input_type -> clawcrew.agent.TurnRequest
+	6,  // 16: clawcrew.agent.AgentEngine.QuickQuery:input_type -> clawcrew.agent.QueryRequest
+	2,  // 17: clawcrew.agent.AgentEngine.HealthCheck:input_type -> clawcrew.agent.HealthCheckRequest
+	9,  // 18: clawcrew.agent.SystemGateway.ExecuteNativeTool:input_type -> clawcrew.agent.ToolCallRequest
+	11, // 19: clawcrew.agent.SystemGateway.GetDecryptedSecret:input_type -> clawcrew.agent.SecretRequest
+	13, // 20: clawcrew.agent.SystemGateway.ExecuteTask:input_type -> clawcrew.agent.TaskExecutionRequest
+	15, // 21: clawcrew.agent.SystemGateway.ExecuteTurn:input_type -> clawcrew.agent.ExecuteTurnRequest
+	24, // 22: clawcrew.agent.SystemGateway.StoreLearnedRule:input_type -> clawcrew.agent.StoreLearnedRuleRequest
+	26, // 23: clawcrew.agent.SystemGateway.RetrieveLearnedRules:input_type -> clawcrew.agent.RetrieveLearnedRulesRequest
+	29, // 24: clawcrew.agent.SystemGateway.SyncPairedDevice:input_type -> clawcrew.agent.SyncPairedDeviceRequest
+	31, // 25: clawcrew.agent.SystemGateway.ListPairedDevices:input_type -> clawcrew.agent.ListPairedDevicesRequest
+	34, // 26: clawcrew.agent.SystemGateway.RevokePairedDevice:input_type -> clawcrew.agent.RevokePairedDeviceRequest
+	5,  // 27: clawcrew.agent.AgentEngine.StartTurn:output_type -> clawcrew.agent.TurnResponse
+	7,  // 28: clawcrew.agent.AgentEngine.QuickQuery:output_type -> clawcrew.agent.QueryResponse
+	3,  // 29: clawcrew.agent.AgentEngine.HealthCheck:output_type -> clawcrew.agent.HealthCheckResponse
+	10, // 30: clawcrew.agent.SystemGateway.ExecuteNativeTool:output_type -> clawcrew.agent.ToolCallResponse
+	12, // 31: clawcrew.agent.SystemGateway.GetDecryptedSecret:output_type -> clawcrew.agent.SecretResponse
+	14, // 32: clawcrew.agent.SystemGateway.ExecuteTask:output_type -> clawcrew.agent.TaskExecutionResponse
+	18, // 33: clawcrew.agent.SystemGateway.ExecuteTurn:output_type -> clawcrew.agent.TurnToken
+	25, // 34: clawcrew.agent.SystemGateway.StoreLearnedRule:output_type -> clawcrew.agent.StoreLearnedRuleResponse
+	27, // 35: clawcrew.agent.SystemGateway.RetrieveLearnedRules:output_type -> clawcrew.agent.RetrieveLearnedRulesResponse
+	30, // 36: clawcrew.agent.SystemGateway.SyncPairedDevice:output_type -> clawcrew.agent.SyncPairedDeviceResponse
+	33, // 37: clawcrew.agent.SystemGateway.ListPairedDevices:output_type -> clawcrew.agent.ListPairedDevicesResponse
+	35, // 38: clawcrew.agent.SystemGateway.RevokePairedDevice:output_type -> clawcrew.agent.RevokePairedDeviceResponse
+	27, // [27:39] is the sub-list for method output_type
+	15, // [15:27] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
-func init() { file_proto_agent_service_proto_init() }
-func file_proto_agent_service_proto_init() {
-	if File_proto_agent_service_proto != nil {
+func init() { file_agent_service_proto_init() }
+func file_agent_service_proto_init() {
+	if File_agent_service_proto != nil {
 		return
 	}
-	file_proto_agent_service_proto_msgTypes[7].OneofWrappers = []any{}
-	file_proto_agent_service_proto_msgTypes[8].OneofWrappers = []any{}
-	file_proto_agent_service_proto_msgTypes[13].OneofWrappers = []any{}
-	file_proto_agent_service_proto_msgTypes[14].OneofWrappers = []any{}
-	file_proto_agent_service_proto_msgTypes[16].OneofWrappers = []any{
+	file_agent_service_proto_msgTypes[7].OneofWrappers = []any{}
+	file_agent_service_proto_msgTypes[8].OneofWrappers = []any{}
+	file_agent_service_proto_msgTypes[13].OneofWrappers = []any{}
+	file_agent_service_proto_msgTypes[14].OneofWrappers = []any{}
+	file_agent_service_proto_msgTypes[16].OneofWrappers = []any{
 		(*TurnToken_Token)(nil),
 		(*TurnToken_ToolCall)(nil),
 		(*TurnToken_Complete)(nil),
 		(*TurnToken_Error)(nil),
 	}
+	file_agent_service_proto_msgTypes[19].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_agent_service_proto_rawDesc), len(file_proto_agent_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_agent_service_proto_rawDesc), len(file_agent_service_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   29,
+			NumMessages:   37,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_proto_agent_service_proto_goTypes,
-		DependencyIndexes: file_proto_agent_service_proto_depIdxs,
-		EnumInfos:         file_proto_agent_service_proto_enumTypes,
-		MessageInfos:      file_proto_agent_service_proto_msgTypes,
+		GoTypes:           file_agent_service_proto_goTypes,
+		DependencyIndexes: file_agent_service_proto_depIdxs,
+		EnumInfos:         file_agent_service_proto_enumTypes,
+		MessageInfos:      file_agent_service_proto_msgTypes,
 	}.Build()
-	File_proto_agent_service_proto = out.File
-	file_proto_agent_service_proto_goTypes = nil
-	file_proto_agent_service_proto_depIdxs = nil
+	File_agent_service_proto = out.File
+	file_agent_service_proto_goTypes = nil
+	file_agent_service_proto_depIdxs = nil
 }
