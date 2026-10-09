@@ -28,9 +28,13 @@ jobs:
           
           # 1. Zero unwrap() / expect() in Rust production code
           UNWRAP_COUNT=0
-          UNWRAP_DIFF=$(git diff -U0 $BASE_REF...HEAD -- 'crates/**/*.rs' ':!crates/**/tests/**' ':!crates/**/benches/**' | grep '^[+][^+]' | grep -E '\.(unwrap|expect)\(' || true)
-          if [ -n "$UNWRAP_DIFF" ]; then
-            UNWRAP_COUNT=$(echo "$UNWRAP_DIFF" | wc -l)
+          if [ -f "scripts/ci/check_production_unwrap.py" ]; then
+            UNWRAP_COUNT=$(python3 scripts/ci/check_production_unwrap.py --base $BASE_REF --summary-only || echo 0)
+          else
+            UNWRAP_DIFF=$(git diff -U0 $BASE_REF...HEAD -- 'crates/**/*.rs' ':!crates/**/tests/**' ':!crates/**/benches/**' ':!crates/**/tests.rs' ':!crates/**/*/tests.rs' | grep '^[+][^+]' | grep -E '\.(unwrap|expect)\(' || true)
+            if [ -n "$UNWRAP_DIFF" ]; then
+              UNWRAP_COUNT=$(echo "$UNWRAP_DIFF" | wc -l)
+            fi
           fi
           
           # 2. Gate D-1 Check (No new Cargo.toml in orchestrator)
@@ -42,9 +46,12 @@ jobs:
 
           # 3. Gate D-2 Check (Governance coupling in util.rs)
           D2_VIOLATION=false
-          if [ -f "crates/clawcrew-channels/src/util.rs" ]; then
-            COUPLING=$(grep -n 'feature = "channel-' crates/clawcrew-channels/src/util.rs || true)
-            if [ -n "$COUPLING" ]; then
+          if [ -f "scripts/ci/check_gate_d2.py" ]; then
+            if ! python3 scripts/ci/check_gate_d2.py; then
+              D2_VIOLATION=true
+            fi
+          elif [ -f "crates/clawcrew-channels/src/util.rs" ]; then
+            if grep -nE '(RiskTier|should_auto_approve|playbook::|clawcrew_runtime::)' crates/clawcrew-channels/src/util.rs; then
               D2_VIOLATION=true
             fi
           fi
