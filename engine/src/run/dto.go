@@ -77,6 +77,7 @@ type Run struct {
 	Workspace    WorkspaceConfig `json:"workspace"`
 	Options      RunOptions      `json:"options"`
 	TasksSummary TasksSummary    `json:"tasks_summary"`
+	LoopDetectorStats *LoopDetectorStats `json:"loop_detector_stats,omitempty"`
 	CreatedAt    time.Time       `json:"created_at"`
 	StartedAt    *time.Time      `json:"started_at,omitempty"`
 	CompletedAt  *time.Time      `json:"completed_at,omitempty"`

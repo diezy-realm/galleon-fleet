@@ -71,6 +71,17 @@ func (s *MemoryStore) UpdateStatus(ctx context.Context, runID string, status Run
 	return nil
 }
 
+func (s *MemoryStore) UpdateLoopDetectorStats(ctx context.Context, runID string, stats *LoopDetectorStats) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	r, ok := s.runs[runID]
+	if !ok {
+		return appErrors.New(appErrors.CodeNotFound, fmt.Sprintf("run not found: %s", runID), appErrors.LayerService)
+	}
+	r.LoopDetectorStats = stats
+	return nil
+}
+
 func (s *MemoryStore) List(ctx context.Context) ([]*Run, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -254,6 +265,17 @@ func (s *runService) CreateRun(ctx context.Context, req *CreateRunRequest, reqID
 
 func (s *runService) GetRun(ctx context.Context, runID string) (*Run, error) {
 	return s.store.Get(ctx, runID)
+}
+
+func (s *runService) UpdateLoopDetectorStats(ctx context.Context, runID string, stats *LoopDetectorStats) error {
+	if err := s.store.UpdateLoopDetectorStats(ctx, runID, stats); err != nil {
+		return err
+	}
+	s.PublishEvent(runID, "run.loop_detector_stats", map[string]any{
+		"run_id":              runID,
+		"loop_detector_stats": stats,
+	}, "")
+	return nil
 }
 
 func (s *runService) CancelRun(ctx context.Context, runID string) error {

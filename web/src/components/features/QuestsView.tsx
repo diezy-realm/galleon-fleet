@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Map,
   Plus,
@@ -31,6 +31,7 @@ export const QuestsView: React.FC = () => {
     quests,
     createQuest,
     runQuestVoyage,
+    syncQuestTelemetry,
     ships,
     crew,
     workspaces,
@@ -88,6 +89,12 @@ export const QuestsView: React.FC = () => {
   });
 
   const selectedQuest = quests.find((q) => q.id === selectedQuestId) || quests[0];
+
+  useEffect(() => {
+    if (selectedQuest?.id) {
+      syncQuestTelemetry(selectedQuest.id);
+    }
+  }, [selectedQuest?.id, syncQuestTelemetry]);
 
   const handleCreateQuestSubmit = (e: React.FormEvent) => {
     e.preventDefault();

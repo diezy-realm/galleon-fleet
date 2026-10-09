@@ -21,7 +21,8 @@ import {
   JournalSession,
   QuestStatus,
   SettingsCategory,
-  FleetSettings
+  FleetSettings,
+  CircuitBreakerTelemetry
 } from '../types';
 
 interface FleetState {
@@ -133,6 +134,7 @@ interface FleetState {
   hydrateFleet: () => Promise<void>;
   hydrateSeedData: () => Promise<void>;
   ringDeckBell: () => Promise<string>;
+  syncQuestTelemetry: (questId: string) => Promise<void>;
 
   // Captain's Journal Actions
   createJournalSession: (title: string, workspaceId?: string) => void;
@@ -462,6 +464,36 @@ export const useFleetStore = create<FleetState>((set, get) => ({
 
   ringDeckBell: async () => {
     return await apiClient.ringDeckBell();
+  },
+
+  syncQuestTelemetry: async (questId: string) => {
+    try {
+      const runData = await apiClient.get<any>(`/v1/runs/${questId}`).catch(() => null);
+      if (runData && runData.loop_detector_stats) {
+        const stats = runData.loop_detector_stats;
+        const statusMap: Record<number, 'normal' | 'warning' | 'blocked' | 'break'> = {
+          0: 'normal',
+          1: 'warning',
+          2: 'blocked',
+          3: 'break',
+        };
+        const cbTelemetry: CircuitBreakerTelemetry = {
+          totalCalls: stats.total_calls ?? stats.TotalCalls ?? 0,
+          exactRepeats: stats.exact_repeat_triggers ?? stats.ExactRepeatTriggers ?? 0,
+          pingPongCycles: stats.ping_pong_triggers ?? stats.PingPongTriggers ?? 0,
+          noProgressCount: stats.no_progress_triggers ?? stats.NoProgressTriggers ?? 0,
+          status: statusMap[stats.state ?? stats.State] || 'normal',
+        };
+        set((state) => {
+          const nextQuests = state.quests.map((q) =>
+            q.id === questId ? { ...q, circuitBreaker: cbTelemetry } : q
+          );
+          return { quests: nextQuests };
+        });
+      }
+    } catch (err) {
+      console.warn(`[Store] syncQuestTelemetry failed for ${questId}:`, err);
+    }
   },
 
   updateSettings: (updater, logAudit) => {

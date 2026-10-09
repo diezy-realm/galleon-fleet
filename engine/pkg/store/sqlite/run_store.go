@@ -103,6 +103,16 @@ func (s *RunStore) UpdateStatus(ctx context.Context, id string, status run.RunSt
 	return s.Save(ctx, r)
 }
 
+// UpdateLoopDetectorStats updates the loop detector telemetry for a Run in SQLite.
+func (s *RunStore) UpdateLoopDetectorStats(ctx context.Context, id string, stats *run.LoopDetectorStats) error {
+	r, err := s.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+	r.LoopDetectorStats = stats
+	return s.Save(ctx, r)
+}
+
 // List returns all Run entities in SQLite ordered by creation time descending.
 func (s *RunStore) List(ctx context.Context) ([]*run.Run, error) {
 	query := `SELECT request_json FROM runs ORDER BY created_at DESC;`

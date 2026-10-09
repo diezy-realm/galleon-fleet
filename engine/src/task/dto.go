@@ -1,6 +1,10 @@
 package task
 
-import "time"
+import (
+	"time"
+
+	"github.com/diezy-realm/galleon-fleet/engine/src/run"
+)
 
 // TaskStatus defines the execution lifecycle state of a task
 type TaskStatus string
@@ -57,8 +61,9 @@ type Task struct {
 	Description  string     `json:"description,omitempty"`
 	AssignedTo   string     `json:"assigned_to,omitempty"`
 	Status       TaskStatus `json:"status"`
-	Dependencies []string   `json:"dependencies,omitempty"`
-	CreatedAt    time.Time  `json:"created_at"`
+	Dependencies []string               `json:"dependencies,omitempty"`
+	LoopDetectorStats *run.LoopDetectorStats `json:"loop_detector_stats,omitempty"`
+	CreatedAt    time.Time              `json:"created_at"`
 	StartedAt    *time.Time `json:"started_at,omitempty"`
 	CompletedAt  *time.Time `json:"completed_at,omitempty"`
 	ErrorMessage string     `json:"error_message,omitempty"`

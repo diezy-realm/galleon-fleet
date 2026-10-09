@@ -245,6 +245,16 @@ func (s *DiskStore) Get(ctx context.Context, id string) (*run.Run, error) {
 	return s.GetRun(ctx, id)
 }
 
+// UpdateLoopDetectorStats updates the loop detector circuit breaker telemetry on disk.
+func (s *DiskStore) UpdateLoopDetectorStats(ctx context.Context, id string, stats *run.LoopDetectorStats) error {
+	r, err := s.GetRun(ctx, id)
+	if err != nil {
+		return err
+	}
+	r.LoopDetectorStats = stats
+	return s.SaveRun(ctx, r)
+}
+
 // UpdateStatus applies a validated monotonic state transition and persists it.
 // Mirrors MemoryStore.UpdateStatus so disk and memory stores behave identically.
 func (s *DiskStore) UpdateStatus(ctx context.Context, id string, status run.RunStatus, errMsg string) error {
