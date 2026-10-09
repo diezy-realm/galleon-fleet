@@ -96,10 +96,10 @@ pub async fn forget_all_for_agent(
     let entries = memory.list(None, None).await?;
     let mut deleted = 0;
     for entry in entries {
-        if entry.agent_id.as_deref() == Some(agent_id) {
-            if memory.forget_for_agent(&entry.key, agent_id).await? {
-                deleted += 1;
-            }
+        if entry.agent_id.as_deref() == Some(agent_id)
+            && memory.forget_for_agent(&entry.key, agent_id).await?
+        {
+            deleted += 1;
         }
     }
     Ok(deleted)

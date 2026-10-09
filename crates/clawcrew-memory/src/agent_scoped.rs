@@ -1,5 +1,6 @@
 use super::traits::{
-    ExportFilter, Memory, MemoryCategory, MemoryEntry, ProceduralMessage, StoreOptions,
+    BackendHygieneReport, ExportFilter, Memory, MemoryCategory, MemoryEntry, ProceduralMessage,
+    RetentionPolicy, StoreOptions,
 };
 use anyhow::Result;
 use async_trait::async_trait;
@@ -538,6 +539,10 @@ impl Memory for AgentScopedMemory {
         // contained: it does not mutate row attribution or expose
         // cross-agent content to the caller.
         self.inner.reindex().await
+    }
+
+    async fn apply_retention(&self, policy: &RetentionPolicy) -> Result<BackendHygieneReport> {
+        self.inner.apply_retention(policy).await
     }
 
     async fn store_procedural(

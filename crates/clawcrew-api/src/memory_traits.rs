@@ -257,6 +257,23 @@ pub enum MemoryPolicyDecision {
     Deny { reason: String },
 }
 
+/// Retention policy based on duration and memory category (BL-31).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct RetentionPolicy {
+    pub conversation_retention_days: Option<u32>,
+    pub daily_retention_days: Option<u32>,
+    pub core_retention_days: Option<u32>,
+    pub dry_run: bool,
+}
+
+/// Result report from applying retention policy to a memory backend (BL-31).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct BackendHygieneReport {
+    pub backend_name: String,
+    pub pruned_entries: u64,
+    pub bytes_reclaimed: u64,
+}
+
 /// Core memory trait — implement for any persistence backend
 #[async_trait]
 pub trait Memory: Send + Sync + crate::attribution::Attributable {
@@ -470,6 +487,20 @@ pub trait Memory: Send + Sync + crate::attribution::Attributable {
     /// derived indexes (e.g. `SqliteMemory`).
     async fn reindex(&self) -> anyhow::Result<usize> {
         Ok(0)
+    }
+
+    /// Apply data retention policy to prune expired records across this backend (BL-31).
+    ///
+    /// Default: no-op implementation returning 0 pruned entries.
+    async fn apply_retention(
+        &self,
+        _policy: &RetentionPolicy,
+    ) -> anyhow::Result<BackendHygieneReport> {
+        Ok(BackendHygieneReport {
+            backend_name: self.name().to_string(),
+            pruned_entries: 0,
+            bytes_reclaimed: 0,
+        })
     }
 
     /// Hot-swap the embedding provider after a `config/set` provider-profile
