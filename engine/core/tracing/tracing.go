@@ -45,6 +45,10 @@ func StartSpan(ctx context.Context, name string) (context.Context, *Span) {
 	if parent, ok := ctx.Value(currentSpanKey).(*Span); ok && parent != nil {
 		traceID = parent.TraceID
 		parentSpanID = parent.SpanID
+	} else if reqID, ok := ctx.Value("request_id").(string); ok && reqID != "" {
+		traceID = reqID
+	} else if traceIDVal, ok := ctx.Value("trace_id").(string); ok && traceIDVal != "" {
+		traceID = traceIDVal
 	} else {
 		traceID = GenerateID(16) // 128-bit trace ID
 	}
@@ -59,6 +63,8 @@ func StartSpan(ctx context.Context, name string) (context.Context, *Span) {
 	}
 
 	childCtx := context.WithValue(ctx, currentSpanKey, span)
+	childCtx = context.WithValue(childCtx, "trace_id", traceID)
+	childCtx = context.WithValue(childCtx, "request_id", traceID)
 	return childCtx, span
 }
 

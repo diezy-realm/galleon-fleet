@@ -8,6 +8,7 @@ import (
 
 	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
+	"github.com/diezy-realm/galleon-fleet/engine/core/tracing"
 	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -18,6 +19,12 @@ import (
 func withRequestIDMetadata(ctx context.Context) context.Context {
 	if reqID, ok := ctx.Value("request_id").(string); ok && reqID != "" {
 		return metadata.AppendToOutgoingContext(ctx, "x-request-id", reqID)
+	}
+	if traceID, ok := ctx.Value("trace_id").(string); ok && traceID != "" {
+		return metadata.AppendToOutgoingContext(ctx, "x-request-id", traceID)
+	}
+	if span := tracing.SpanFromContext(ctx); span != nil && span.TraceID != "" {
+		return metadata.AppendToOutgoingContext(ctx, "x-request-id", span.TraceID)
 	}
 	return ctx
 }
