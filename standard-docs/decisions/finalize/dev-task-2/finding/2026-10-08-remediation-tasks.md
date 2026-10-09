@@ -29,7 +29,7 @@ Audit lanjutan 2026-10-09 (`2026-10-09-architectural-decisions-analysis.md`) men
 
 ## T-00 — Buka PR nyata dari `feat/refactoring-finalize-01` ke `testing`
 
-- [ ] **T-00.** Buka PR dari branch `feat/refactoring-finalize-01` (remote SHA `d6ddd4c6` saat audit) ke `testing`.
+- [x] **T-00.** Buka PR dari branch `feat/refactoring-finalize-01` ke `testing` — **SELESAI & TERBUKA**: [PR #18](https://github.com/diezy-realm/galleon-fleet/pull/18).
 
 **Masalah:** Branch sudah di-push ke remote, tapi nol PR pernah dibuka. Semua `[x]`/`status: completed` di sprint 0-8 tidak punya bukti proses sesuai `dev-task-2/README.md` sendiri ("Centang `[x]` HANYA setelah PR merge + gerbang lulus + Principle approve").
 
@@ -249,7 +249,7 @@ Audit lanjutan 2026-10-09 (`2026-10-09-architectural-decisions-analysis.md`) men
 
 | Task | Severity | Sprint asal | Status keputusan & Eksekusi |
 |---|---|---|---|
-| [ ] T-00 | CRITICAL (proses) | semua | **Siap buka PR** — Semua remediation commit T-01 s/d T-08 sudah siap di branch `feat/refactoring-finalize-01` |
+| [x] T-00 | CRITICAL (proses) | semua | **SELESAI & TERBUKA**: [PR #18](https://github.com/diezy-realm/galleon-fleet/pull/18) ke branch `testing` |
 | [x] T-01 | CRITICAL | 4 (BR-D3) | **SELESAI & TERVERIFIKASI** (`0e197e110`): 15 file dibersihkan dari `verifiable_intent`, 0 referensi tersisa |
 | [x] T-02 | HIGH | 4 (BG-F5) | **SELESAI & TERVERIFIKASI** (`506b9c879`): `tracing.StartSpan` & `trace_id` sinkron di Go HTTP delivery & gRPC, test lulus |
 | [x] T-03 | HIGH | 6 (BL-30) | **SELESAI & TERVERIFIKASI** (`95d346eb0`): `forget_all_for_agent` terimplementasi di trait Memory & AgentScopedMemory |
