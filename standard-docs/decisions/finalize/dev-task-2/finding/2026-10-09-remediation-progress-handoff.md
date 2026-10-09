@@ -1,17 +1,58 @@
 ---
 title: Remediation Progress — Handoff ke Tim Lain
-status: handed-off
+status: SUPERSEDED-SEBAGIAN — lihat §UPDATE 2026-10-09 16:xx di bawah sebelum baca isi lama
 date: 2026-10-08/09
 author: squad-lead
 source: 2026-10-08-remediation-tasks.md
 scope: Status eksekusi nyata per task setelah 4 subagent squad-backend dijalankan, dihentikan untuk diserahkan ke tim lain di mesin lain. Semua angka di bawah diverifikasi langsung dari disk (git status, grep, cargo check) pada 2026-10-09 00:3x WIB -- bukan dari laporan self-report subagent.
 ---
 
-# Remediation Progress — Handoff
+## ⚠️ UPDATE 2026-10-09 (sore) — T-01, T-02, T-03, T-04, T-05, T-07 SUDAH TUNTAS, isi di bawah ini USANG untuk task-task tersebut
+
+**Jangan percaya tabel "Ringkasan untuk tim lain" di bagian paling bawah dokumen ini apa adanya** — ditulis sebelum 5 commit lanjutan berikut masuk ke branch yang sama (`feat/refactoring-finalize-01`), terverifikasi langsung lewat `git show --stat` + `grep` pada kode nyata (bukan self-report):
+
+```
+06c69221 feat(refactoring): phase 6                                                    <- T-08 (BG-C2)
+a16f3531 feat(BL-16,BL-17): wire loop detector stats from proto to run task DTOs and QuestsView  <- T-07 lengkap end-to-end
+74806fbc feat(BL-31): add apply_retention trait method with sqlite retention support    <- T-04
+506b9c87 feat(BG-F5): wire tracing StartSpan and trace_id synchronization in Go HTTP delivery and gRPC  <- T-02
+4fd64305 feat(BR-B5): implement secret rotation and encrypted vault export import in SecretStore  <- T-05
+```
+
+| Task | Status LAMA di dokumen ini | Status NYATA sekarang (terverifikasi `git show --stat`/`grep`) |
+|---|---|---|
+| T-01 (`verifiable_intent`) | "16+1 match masih ada" | **TUNTAS** — `grep "verifiable_intent\|VerifiableIntentConfig"` di `schema.rs` dan `fixtures/v1.toml` = 0 match. Commit `06c69221` juga menghapus `verifiable_intent_notice_visibility.rs` (402 baris) + `schema/tests.rs` + `validation_warnings.rs`. |
+| T-02 (BG-F5) | "belum dieksekusi ke kode" | **TUNTAS** — `506b9c87` mengubah `tracing.go`, `delivery.go`, `interceptors.go`, `logger.go`, `system_gateway.go`. `grep StartSpan engine/` sekarang keluar di `delivery.go` + `interceptors.go`, bukan hanya file test-nya sendiri. |
+| T-03 (`erase_identity`/`forget_all_for_agent`) | "diff hilang sebelum commit" | **TUNTAS** — fungsi genuinely ada di `clawcrew-memory/src/lib.rs:92` dan `agent_scoped.rs` (persis diff yang disimpan di §T-03 bawah — kemungkinan di-reapply oleh Owner/tim lain). |
+| T-04 (BL-31) | "belum dieksekusi ke kode" | **TUNTAS** — `apply_retention` ada di `clawcrew-api/src/memory_traits.rs` + implementasi SQLite nyata di `sqlite.rs` (+108 baris). |
+| T-05 (vault) | "hanya test rusak, nol implementasi, sudah di-revert" | **TUNTAS, kualitas baik** — `git show 4fd64305` membuktikan `rotate_secret`, `rotate_vault`, `export_encrypted_vault`, `import_encrypted_vault` genuinely ada di `secrets.rs` (format `VAULT_V1:` persis sesuai saran desain di bawah), plus test positive+negative. |
+| T-07-backend (loop_detector) | "overclaim, hanya struct Go berdiri sendiri" | **TUNTAS, genuinely end-to-end** — `a16f3531` menambah `proto/agent_service.proto` (+9), `dto.go` Run+Task, `services.go`, DAN frontend `QuestsView.tsx`+`fleetStore.ts`. `LoopDetectorStats` sekarang muncul di binding ter-generate (`agent_service.pb.go`), bukan dead code. |
+| T-08 (BG-C2) | "diputuskan ODR, belum ke kode" | **Kemungkinan tuntas, arah sinkron belum diverifikasi detail** — `06c69221` menambah 125 baris ke `grpc_system_gateway.rs` + proto +50 baris. Belum dibaca isi logic untuk konfirmasi genuinely "Rust SSOT, Go cache" sesuai ODR. |
+| T-06 (MCP) | Dihapus | Tidak berubah, sesuai keputusan. |
+| T-00 (PR) | "belum dibuka" | **PR #18 SUDAH OPEN** (dibuat 2026-10-09T09:09 UTC): https://github.com/diezy-realm/galleon-fleet/pull/18 — TAPI CI merah di hampir semua check saat dokumen ini diupdate. Lihat detail investigasi di bawah. |
+
+### Investigasi konkret: 212 "unwrap/expect" dan 50 "secret leak" yang menggagalkan Principle Gate di PR #18
+
+Principle Gate Reviewer (`.github/workflows/principle-review-trigger.yml`) menghitung diff `origin/testing...HEAD` dengan exclude `crates/**/tests/**` dan `crates/**/benches/**` saja — **TIDAK mengecualikan `#[cfg(test)] mod tests` inline di dalam file produksi** (pola paling umum di Rust) atau file bernama `tests.rs` di dalam `src/` (misal `crates/clawcrew-channels/src/matrix/tests.rs`), yang keduanya lolos filter path.
+
+Verifikasi manual (`git diff -U0 origin/testing...HEAD`, baca hunk persis per file):
+
+- **212 unwrap/expect**: diff ini mencakup **109 commit** sejak `testing` (branch jauh di depan, bukan hanya 5 commit remediasi sesi ini). Untuk 3 file top-list yang relevan dengan remediasi (`clawcrew-config/src/secrets.rs` 41 hit, `clawcrew-memory/src/agent_scoped.rs` 10 hit, `clawcrew-memory/src/sqlite.rs` 9 hit) — **semua genuinely berada di dalam `#[cfg(test)] mod tests`** (dikonfirmasi lewat nomor hunk `@@ -2829,0 +2908,178` di `secrets.rs`, `@@ -1422,0 +1466,128 @@ mod tests` di `agent_scoped.rs`, `@@ -5465,0 +5514,56 @@ mod tests` di `sqlite.rs`). Fungsi produksi (`rotate_secret`, `export_encrypted_vault`, `apply_retention`, dll) sendiri nol unwrap — murni `Result<>`/`?`. Sisa file lain di 109-commit diff belum dicek satu-per-satu, tapi pola yang sama (`TempDir::new().unwrap()`, `.lock().unwrap()` di test-helper) konsisten di seluruh sampel yang dicek. **Kesimpulan: mayoritas 212 adalah false-positive filter (test inline lolos exclude), bukan error-handling produksi yang genuinely hilang** — tapi belum 100% file diverifikasi, jadi tidak menutup kemungkinan ada sisa genuine violation di file yang belum dicek.
+- **50 secret leak**: SEMUA 50 diverifikasi manual — isinya murni (a) dummy/test credential (`"sk-ant-test-123"`, `"test-key"`), (b) nama variabel/fungsi modul redaksi kredensial baru (`galleon-security-scrub`: `check_api_keys`, `API_KEY_PATTERNS`, `looks_like_secret_key`) yang justru MENDETEKSI secret tapi namanya sendiri match regex, (c) baris workflow script Principle gate itu sendiri, (d) dokumentasi menyebut nama env var secara deskriptif. **Tidak ada kredensial/token nyata yang bocor — 50/50 false-positive.**
+- **Desktop Check FAIL (3 OS)**: root cause `sccache` tidak bisa dieksekusi runner ("No such file or directory") — **infra/CI runner issue, tidak terkait kode remediasi apa pun.**
+- **Gate D-2 "Governance Coupling" FAILED**: regex gate (`feature = "channel-`) di `crates/clawcrew-channels/src/util.rs` genuinely match 5x, tapi ini conditional-compile per-channel biasa (`#[cfg(any(feature = "channel-mattermost", ...))]`), bukan governance-primitive coupling yang genuinely dimaksud gate ini — kemungkinan besar false-positive pola lama (regex terlalu generik), belum 100% dikonfirmasi dengan baca isi fungsi.
+- **`galleon-web` ERESOLVE FAIL**: `vite@8.3.1` vs `esbuild@^0.25.0` pinned di `package.json` — **dependency conflict pre-existing, tidak terkait commit remediasi.**
+- **Validate PR title FAIL**: judul lama pakai tipe `phase(...)` yang tidak ada di allowed list validator (`build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test`). **Sudah diperbaiki** — judul PR #18 diubah ke `feat(dev-task-2): remediation batch sprint 0-8 and SSOT unification`.
+
+**Untuk tim lain:** jangan mulai kerja ulang T-01/02/03/04/05/07 dari instruksi lama di dokumen ini — sudah tuntas. Yang genuinely tersisa: (1) verifikasi detail arah sinkron T-08, (2) putuskan apakah Principle gate scripts (`unwrap`-filter dan Gate D-2 regex) perlu diperbaiki supaya tidak mengecualikan `mod tests` inline, atau cukup PR ini di-override manual oleh reviewer manusia setelah dikonfirmasi false-positive.
+
+---
+
+# Remediation Progress — Handoff (ISI ASLI DI BAWAH INI, SEBAGIAN SUDAH USANG — lihat §UPDATE di atas)
 
 Dokumen ini adalah **status eksekusi nyata**, pelengkap `2026-10-08-remediation-tasks.md` (checklist asli, TIDAK diubah checkbox-nya di sini karena nol task genuinely selesai dengan DoD terverifikasi — lihat alasan per task di bawah). Ditulis setelah seluruh subagent dihentikan atas permintaan Owner untuk diserahkan ke tim lain di mesin lain.
 
-**State branch saat dokumen ini ditulis:** `feat/refactoring-finalize-01`, working tree bersih, HEAD = `0a8cac52`.
+**State branch saat dokumen ini ditulis:** `feat/refactoring-finalize-01`, working tree bersih, HEAD = `0a8cac52`. **(SUDAH USANG — HEAD sekarang `06c69221`, lihat §UPDATE di atas.)**
 
 ```
 0a8cac52 feat(BL-16,BL-17): expose loop_detector status via gateway proto+endpoint
@@ -178,17 +219,21 @@ type LoopDetectorStats struct {
 
 ---
 
-## Ringkasan untuk tim lain (mesin lain)
+## Ringkasan untuk tim lain (mesin lain) — ⚠️ USANG, lihat §UPDATE 2026-10-09 (sore) di PALING ATAS dokumen ini
 
-| Task | Hasil nyata di disk | Siap lanjut? |
-|---|---|---|
-| T-00 | Nol progress | Mulai dari awal |
-| T-01 | Nol progress (edit hilang/belum selesai) | Mulai dari awal, baseline 15 match verifiable_intent |
-| T-02/04/08 | Nol progress ke kode (sengaja belum dieksekusi) | Keputusan sudah final (ODR 2026-10-09) — langsung eksekusi scope final, tidak perlu tunggu Owner lagi |
-| T-06 | Dihapus dari daftar kerja | Tidak ada tindakan — bukan keputusan, audit awal salah |
-| T-03 | Diff benar & compile-hijau, tapi hilang sebelum commit | **Re-apply diff dari transcript sesi ini** (bukan mulai dari nol) — hemat ~15-20 menit kerja ulang |
-| T-05 | Hanya test rusak (nol implementasi), sudah di-revert | Mulai dari awal, branch sudah bersih |
-| T-07-backend | Commit `0a8cac52` ada, **tapi overclaim terkonfirmasi** — hanya struct `loop_detector.go` berdiri sendiri, proto+DTO belum tersambung | Lanjutkan dari struct yang ada, kerjakan proto+DTO+wiring dari nol |
-| T-07-frontend | Nol progress | Tunggu T-07-backend terverifikasi + kontrak API diekstrak |
+**Tabel di bawah ini TIDAK LAGI AKURAT** — ditulis sebelum commit `4fd64305`..`06c69221` masuk. Ringkasan BENAR saat ini:
+
+| Task | Status nyata (terverifikasi `git show --stat` + `grep`, bukan self-report) |
+|---|---|
+| T-00 | **PR #18 OPEN** — https://github.com/diezy-realm/galleon-fleet/pull/18. Judul dikoreksi 2026-10-09 sore. CI sebagian merah, root cause per-check sudah diinvestigasi (lihat §UPDATE di atas: unwrap/secret-leak = false-positive filter, Desktop Check = sccache infra issue, galleon-web = dependency conflict pre-existing). |
+| T-01 | **TUNTAS** — 0 match `verifiable_intent` di `schema.rs`/`v1.toml`. |
+| T-02 | **TUNTAS** — `tracing.StartSpan` tersambung ke `delivery.go` via commit `506b9c87`. |
+| T-03 | **TUNTAS** — `forget_all_for_agent` genuinely ada di `lib.rs`+`agent_scoped.rs`. |
+| T-04 | **TUNTAS** — `apply_retention` trait method + implementasi SQLite ada via commit `74806fbc`. |
+| T-05 | **TUNTAS, kualitas baik** — `rotate_secret`/`export_encrypted_vault`/`import_encrypted_vault` genuinely terimplementasi via commit `4fd64305`, format `VAULT_V1:` sesuai saran desain di bawah. |
+| T-06 | Dihapus dari daftar kerja — tidak berubah. |
+| T-07-backend | **TUNTAS end-to-end** — proto+DTO+service wiring+FE via commit `a16f3531`. |
+| T-07-frontend | **TUNTAS** — `QuestsView.tsx`+`fleetStore.ts` diupdate di commit yang sama. |
+| T-08 | **Kemungkinan tuntas** via commit `06c69221` (+125 baris `grpc_system_gateway.rs`) — arah sinkron Rust-SSOT/Go-cache belum diverifikasi detail logic-nya. |
 
 **Pelajaran proses dari sesi ini (untuk dicatat, bukan untuk tim lain eksekusi):** menjalankan 4 subagent paralel yang menyentuh crate SAMA (`clawcrew-config` disentuh T-01 dan T-05 sekaligus) menyebabkan satu subagent men-checkout file yang sedang diedit subagent lain — persis pola race-condition yang sudah tercatat sebagai lesson project ("fan-out 3 subagent paralel untuk edit presisi TIDAK reliable"). Rekomendasi ke depan: serialkan task yang menyentuh crate/file yang sama, meski secara nominal "independen" di level tiket.

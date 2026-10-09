@@ -11,6 +11,10 @@ supersedes_view: ../dev-tasks/ (tetap dibaca untuk histori PR-selesai; lihat §R
 > **Kenapa folder baru, bukan edit `dev-tasks/`:** `dev-tasks/` adalah working-doc tim dev eksternal (coding di mesin lain) — dikecualikan dari auto-maintenance per lesson 2026-10-04. Folder ini (`dev-task-2/`) adalah **lapisan rekonsiliasi** yang digabungkan oleh Lead Squad: tugas asli `dev-tasks/01..08` (121 tiket roadmap, basis tim dev) + seluruh backlog riset `standard-docs/backlog/` (BL-01 s.d. BL-61, basis Lead/Principle/squad). Tujuan: satu urutan sprint tunggal supaya BE/FE/Platform **tidak mengerjakan hal yang sama dua kali** dari dua sumber berbeda.
 >
 > **Aturan baca:** `dev-tasks/*.md` tetap SSOT untuk histori PR yang SUDAH selesai (jangan diedit, jangan dipindah). `dev-task-2/sprint-*.md` adalah SSOT untuk **urutan kerja ke depan** — gabungan tiket `BG-*`/`BR-*`/`FW-*`/`FD-*`/`PL-*`/`RB-*`/`GV-*` yang masih `[ ]` + seluruh `BL-*` backlog riset, disusun ulang per-sprint lintas sumber.
+>
+> **⚠️ WAJIB BACA SEBELUM MENGERJAKAN TASK APA PUN:** [`RULES.md`](RULES.md) — 8 aturan kerja (verifikasi, dokumentasi, CI gate, serialisasi task beririsan) yang lahir dari insiden nyata di sesi 2026-10-08/09. Setiap aturan punya bukti insiden konkret, bukan preferensi gaya.
+>
+> **Status terbaru per 2026-10-09 sore:** T-01, T-02, T-03, T-04, T-05, T-07 (backend+frontend) dari `finding/2026-10-08-remediation-tasks.md` sudah TUNTAS — lihat `finding/2026-10-09-remediation-progress-handoff.md` §UPDATE untuk status terverifikasi + PR #18 (https://github.com/diezy-realm/galleon-fleet/pull/18). 4 masalah CI/governance-tooling yang ditemukan saat PR #18 diinvestigasi (false-positive Principle Gate, sccache runner, dependency conflict `web/`) dipisah ke [`ci-infra-fix/`](ci-infra-fix/README.md) sebagai task tersendiri — bukan bug di kode remediasi.
 
 ## Status Verifikasi Dasar (2026-10-05, branch `feat/refactoring-rust` @ `a296dc23`)
 

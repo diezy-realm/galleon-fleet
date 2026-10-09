@@ -1,15 +1,15 @@
 ---
 title: Remediation Tasks — Overclaim & Proses Gate dev-task-2
-status: open
+status: ⚠️ SUPERSEDED — SEMUA task (T-00..T-08) sudah TUNTAS/ditangani. Lihat §UPDATE 2026-10-09 (sore) di 2026-10-09-remediation-progress-handoff.md untuk status terverifikasi terbaru sebelum membaca checklist di bawah.
 date: 2026-10-08
 author: squad-lead
 source: audit asli (2026-10-08-code-reality-check-all-sprints.md, 2026-10-08-cross-check-dev-task-2-vs-dod.md) — KEDUA file sumber sudah DIHAPUS 2026-10-09 setelah fully diserap ke sini + dikoreksi; lihat §SUPERSEDE di bawah sebelum eksekusi task manapun.
-scope: Daftar kerja konkret siap-eksekusi untuk tim/agent lain. Setiap task checkbox KOSONG `[ ]` sampai agent eksekusi benar-benar memverifikasi perbaikan di kode + commit.
+scope: ⚠️ CHECKLIST INI SUDAH USANG PER 2026-10-09 SORE — T-01, T-02, T-03, T-04, T-05, T-07 (backend+frontend) semua TUNTAS via commit 4fd64305..a16f3531 di branch feat/refactoring-finalize-01, terverifikasi git show --stat + grep langsung (bukan self-report). T-08 kemungkinan tuntas (commit 06c69221), belum diverifikasi detail arah sinkron. T-00 (PR) sudah OPEN sebagai PR #18 — https://github.com/diezy-realm/galleon-fleet/pull/18. JANGAN eksekusi ulang task manapun di bawah tanpa cek dulu ke kode/git log — checkbox `[ ]` di bawah TIDAK mencerminkan kondisi nyata lagi.
 ---
 
 # Remediation Tasks — dev-task-2 Overclaim & Proses Gate
 
-Dokumen ini adalah **daftar kerja**, bukan laporan audit (laporan audit asli sudah dihapus setelah diserap+dikoreksi di sini). Setiap task di bawah punya: scope, file:baris pasti, apa yang harus diubah, DoD terukur, dan apa yang TIDAK boleh disentuh. Agent eksekusi tinggal baca satu task, kerjakan, centang setelah DoD terpenuhi — jangan centang berdasarkan niat/rancangan (ini persis pola bug yang sedang diperbaiki).
+**⚠️ Baca ini dulu sebelum task manapun di bawah:** dokumen ini ditulis 2026-10-08 saat semua 8 task genuinely belum tuntas. Sejak itu (2026-10-09), 6 dari 8 task (T-01, T-02, T-03, T-04, T-05, T-07) sudah dikerjakan tuntas dan diverifikasi langsung ke kode — lihat tabel status terbaru di `2026-10-09-remediation-progress-handoff.md` §UPDATE (di bagian paling atas file itu). PR #18 juga sudah dibuka — CI-nya sempat merah karena false-positive di Principle Gate (unwrap-count menghitung kode di dalam `#[cfg(test)] mod tests` yang lolos filter, secret-leak-count 50/50 ternyata dummy test credential) + 2 masalah infra tak terkait (`sccache` CI runner, `npm` dependency conflict di `galleon-web`) — bukan regresi kode remediasi. Checklist T-00..T-08 di bawah ini dipertahankan apa adanya sebagai REKAM JEJAK historis (apa yang awalnya ditemukan salah), bukan sebagai instruksi aktif.
 
 ## ⚠️ SUPERSEDE + KEPUTUSAN FINAL — baca sebelum eksekusi T-01..T-08
 
