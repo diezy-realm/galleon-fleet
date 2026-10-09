@@ -6,8 +6,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
+
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
 )
 
 func TestPairingService_BG_C2(t *testing.T) {
@@ -178,5 +181,110 @@ func TestPairingDeliveryHTTP_BG_C2(t *testing.T) {
 	handler.handleRevoke(revokeRec, revokeReq)
 	if revokeRec.Code != http.StatusOK {
 		t.Fatalf("expected 200 OK for revoke, got %d", revokeRec.Code)
+	}
+}
+
+type mockDeviceSyncProvider struct {
+	mu      sync.Mutex
+	devices map[string]*pb.DeviceRecord
+}
+
+func newMockDeviceSyncProvider() *mockDeviceSyncProvider {
+	return &mockDeviceSyncProvider{
+		devices: make(map[string]*pb.DeviceRecord),
+	}
+}
+
+func (m *mockDeviceSyncProvider) SyncPairedDevice(ctx context.Context, devID, devName, platform, tokenHash string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.devices[devID] = &pb.DeviceRecord{
+		Id:         devID,
+		Name:       devName,
+		DeviceType: platform,
+		PairedAt:   time.Now().UTC().Format(time.RFC3339),
+		LastSeen:   time.Now().UTC().Format(time.RFC3339),
+	}
+	return nil
+}
+
+func (m *mockDeviceSyncProvider) ListPairedDevices(ctx context.Context) ([]*pb.DeviceRecord, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := make([]*pb.DeviceRecord, 0, len(m.devices))
+	for _, d := range m.devices {
+		out = append(out, d)
+	}
+	return out, nil
+}
+
+func (m *mockDeviceSyncProvider) RevokePairedDevice(ctx context.Context, devID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.devices, devID)
+	return nil
+}
+
+func TestPairingService_SynchronizeWithRustRegistrySSOT(t *testing.T) {
+	ctx := context.Background()
+	tokenStore := NewMemoryTokenStore()
+	mockSSOT := newMockDeviceSyncProvider()
+
+	// 1. Inisialisasi pairing service dengan mock sync provider ke Rust SSOT
+	svc := NewPairingServiceWithSync(tokenStore, mockSSOT)
+
+	sess, err := svc.Initiate(ctx, InitiatePairingRequest{DeviceName: "MacBook Pro M3", TTL: 5 * time.Minute})
+	if err != nil {
+		t.Fatalf("Initiate failed: %v", err)
+	}
+
+	// 2. Claim device di Go engine
+	claimResp, err := svc.Claim(ctx, ClaimPairingRequest{
+		Code:       sess.Code,
+		Token:      sess.Token,
+		DeviceID:   "dev-mac-007",
+		DeviceName: "MacBook Pro M3",
+		Platform:   "darwin",
+	})
+	if err != nil {
+		t.Fatalf("Claim failed: %v", err)
+	}
+	if claimResp.DeviceID != "dev-mac-007" {
+		t.Fatalf("expected device dev-mac-007, got %s", claimResp.DeviceID)
+	}
+
+	// 3. Verifikasi device tersinkronisasi ke SSOT (Rust DeviceRegistry)
+	ssotDevices, err := mockSSOT.ListPairedDevices(ctx)
+	if err != nil || len(ssotDevices) != 1 {
+		t.Fatalf("expected 1 device in SSOT, got %d (err: %v)", len(ssotDevices), err)
+	}
+	if ssotDevices[0].Id != "dev-mac-007" {
+		t.Fatalf("expected SSOT device dev-mac-007, got %s", ssotDevices[0].Id)
+	}
+
+	// 4. Simulasi Go engine restart:
+	// In-memory cache kosong, tokenStore baru, tetapi syncProvider tetap mengarah ke SSOT yang sama
+	newEngineTokenStore := NewMemoryTokenStore()
+	restartedSvc := NewPairingServiceWithSync(newEngineTokenStore, mockSSOT)
+
+	// ListDevices harus merehidrasi state dari SSOT tanpa requiring re-pairing
+	rehydratedDevices, err := restartedSvc.ListDevices(ctx)
+	if err != nil {
+		t.Fatalf("ListDevices after restart failed: %v", err)
+	}
+	if len(rehydratedDevices) != 1 {
+		t.Fatalf("expected 1 rehydrated device after restart, got %d", len(rehydratedDevices))
+	}
+	if rehydratedDevices[0].DeviceID != "dev-mac-007" {
+		t.Fatalf("expected rehydrated device dev-mac-007, got %s", rehydratedDevices[0].DeviceID)
+	}
+
+	// 5. Revoke device dan verifikasi propagasi ke SSOT
+	if err := restartedSvc.RevokeDevice(ctx, "dev-mac-007"); err != nil {
+		t.Fatalf("RevokeDevice failed: %v", err)
+	}
+	ssotAfterRevoke, _ := mockSSOT.ListPairedDevices(ctx)
+	if len(ssotAfterRevoke) != 0 {
+		t.Fatalf("expected 0 devices in SSOT after revoke, got %d", len(ssotAfterRevoke))
 	}
 }

@@ -57,6 +57,18 @@ func (m *mockGatewayClient) RetrieveLearnedRules(ctx context.Context, scopeKey, 
 	return nil, nil
 }
 
+func (m *mockGatewayClient) SyncPairedDevice(ctx context.Context, devID, devName, platform, tokenHash string) error {
+	return nil
+}
+
+func (m *mockGatewayClient) ListPairedDevices(ctx context.Context) ([]*pb.DeviceRecord, error) {
+	return nil, nil
+}
+
+func (m *mockGatewayClient) RevokePairedDevice(ctx context.Context, devID string) error {
+	return nil
+}
+
 func (m *mockGatewayClient) Close() error {
 	return nil
 }

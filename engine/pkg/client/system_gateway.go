@@ -37,6 +37,9 @@ type SystemGatewayClient interface {
 	ExecuteTurn(ctx context.Context, req *pb.ExecuteTurnRequest) (pb.SystemGateway_ExecuteTurnClient, error)
 	StoreLearnedRule(ctx context.Context, rule string, scope map[string]string, reversible bool) (*pb.StoreLearnedRuleResponse, error)
 	RetrieveLearnedRules(ctx context.Context, scopeKey, scopeValue string) ([]*pb.LearnedRule, error)
+	SyncPairedDevice(ctx context.Context, devID, devName, platform, tokenHash string) error
+	ListPairedDevices(ctx context.Context) ([]*pb.DeviceRecord, error)
+	RevokePairedDevice(ctx context.Context, devID string) error
 	Close() error
 }
 
@@ -218,6 +221,63 @@ func (c *systemGatewayClient) RetrieveLearnedRules(ctx context.Context, scopeKey
 	}
 
 	return resp.GetRules(), nil
+}
+
+func (c *systemGatewayClient) SyncPairedDevice(ctx context.Context, devID, devName, platform, tokenHash string) error {
+	client, err := c.getClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.SyncPairedDevice(ctx, &pb.SyncPairedDeviceRequest{
+		DeviceId:   devID,
+		DeviceName: devName,
+		Platform:   platform,
+		TokenHash:  tokenHash,
+	})
+	if err != nil {
+		return appErrors.Wrap(err, appErrors.CodeInternal, "failed to sync paired device to Rust registry", appErrors.LayerExternal)
+	}
+
+	if !resp.GetSuccess() {
+		return appErrors.New(appErrors.CodeInternal, resp.GetError(), appErrors.LayerExternal)
+	}
+
+	return nil
+}
+
+func (c *systemGatewayClient) ListPairedDevices(ctx context.Context) ([]*pb.DeviceRecord, error) {
+	client, err := c.getClient()
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.ListPairedDevices(ctx, &pb.ListPairedDevicesRequest{})
+	if err != nil {
+		return nil, appErrors.Wrap(err, appErrors.CodeInternal, "failed to list paired devices from Rust registry", appErrors.LayerExternal)
+	}
+
+	return resp.GetDevices(), nil
+}
+
+func (c *systemGatewayClient) RevokePairedDevice(ctx context.Context, devID string) error {
+	client, err := c.getClient()
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.RevokePairedDevice(ctx, &pb.RevokePairedDeviceRequest{
+		DeviceId: devID,
+	})
+	if err != nil {
+		return appErrors.Wrap(err, appErrors.CodeInternal, "failed to revoke paired device in Rust registry", appErrors.LayerExternal)
+	}
+
+	if !resp.GetSuccess() {
+		return appErrors.New(appErrors.CodeInternal, resp.GetError(), appErrors.LayerExternal)
+	}
+
+	return nil
 }
 
 func (c *systemGatewayClient) Close() error {

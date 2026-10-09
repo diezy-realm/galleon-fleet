@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
 	qrcode "github.com/skip2/go-qrcode"
 )
 
@@ -56,6 +57,13 @@ type ClaimPairingResponse struct {
 	ExpiresAt    time.Time     `json:"expires_at"`
 }
 
+// DeviceSyncProvider defines the SSOT sync interface with Rust DeviceRegistry (BG-C2 / T-08)
+type DeviceSyncProvider interface {
+	SyncPairedDevice(ctx context.Context, devID, devName, platform, tokenHash string) error
+	ListPairedDevices(ctx context.Context) ([]*pb.DeviceRecord, error)
+	RevokePairedDevice(ctx context.Context, devID string) error
+}
+
 // PairingService manages authorized device pairing ceremonies via QR code (BG-C2)
 type PairingService interface {
 	Initiate(ctx context.Context, req InitiatePairingRequest) (*PairingSession, error)
@@ -63,11 +71,13 @@ type PairingService interface {
 	ListDevices(ctx context.Context) ([]*PairedDevice, error)
 	RevokeDevice(ctx context.Context, deviceID string) error
 	IsRateLimited(clientIP string) bool
+	SetSyncProvider(provider DeviceSyncProvider)
 }
 
 type memoryPairingService struct {
 	mu           sync.RWMutex
 	tokenStore   TokenStore
+	syncProvider DeviceSyncProvider
 	sessions     map[string]*PairingSession // code -> session
 	devices      map[string]*PairedDevice   // deviceID -> device
 	failedCounts map[string]int             // clientIP -> failures
@@ -76,13 +86,25 @@ type memoryPairingService struct {
 
 // NewPairingService creates a pairing service integrated with the identity token store
 func NewPairingService(tokenStore TokenStore) PairingService {
+	return NewPairingServiceWithSync(tokenStore, nil)
+}
+
+// NewPairingServiceWithSync creates a pairing service with an external SSOT sync provider (BG-C2 / T-08)
+func NewPairingServiceWithSync(tokenStore TokenStore, syncProvider DeviceSyncProvider) PairingService {
 	return &memoryPairingService{
 		tokenStore:   tokenStore,
+		syncProvider: syncProvider,
 		sessions:     make(map[string]*PairingSession),
 		devices:      make(map[string]*PairedDevice),
 		failedCounts: make(map[string]int),
 		lockoutUntil: make(map[string]time.Time),
 	}
+}
+
+func (s *memoryPairingService) SetSyncProvider(provider DeviceSyncProvider) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.syncProvider = provider
 }
 
 func (s *memoryPairingService) IsRateLimited(clientIP string) bool {
@@ -214,6 +236,11 @@ func (s *memoryPairingService) Claim(ctx context.Context, req ClaimPairingReques
 	ttl := 30 * 24 * time.Hour
 	rec := s.tokenStore.Register(sessionToken, devicePrincipal, ttl)
 
+	// Synchronize to Rust DeviceRegistry SSOT (BG-C2 / T-08)
+	if s.syncProvider != nil {
+		_ = s.syncProvider.SyncPairedDevice(ctx, req.DeviceID, deviceName, req.Platform, session.Token)
+	}
+
 	return &ClaimPairingResponse{
 		SessionToken: sessionToken,
 		DeviceID:     req.DeviceID,
@@ -223,8 +250,34 @@ func (s *memoryPairingService) Claim(ctx context.Context, req ClaimPairingReques
 }
 
 func (s *memoryPairingService) ListDevices(ctx context.Context) ([]*PairedDevice, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Rehydrate from Rust DeviceRegistry SSOT if provider configured (survives engine restart)
+	if s.syncProvider != nil {
+		if records, err := s.syncProvider.ListPairedDevices(ctx); err == nil {
+			for _, rec := range records {
+				if _, exists := s.devices[rec.GetId()]; !exists {
+					pairedAt, _ := time.Parse(time.RFC3339, rec.GetPairedAt())
+					if pairedAt.IsZero() {
+						pairedAt = time.Now()
+					}
+					lastSeen, _ := time.Parse(time.RFC3339, rec.GetLastSeen())
+					if lastSeen.IsZero() {
+						lastSeen = time.Now()
+					}
+					s.devices[rec.GetId()] = &PairedDevice{
+						DeviceID:   rec.GetId(),
+						DeviceName: rec.GetName(),
+						Platform:   rec.GetDeviceType(),
+						PairedAt:   pairedAt,
+						LastSeenAt: lastSeen,
+						Revoked:    false,
+					}
+				}
+			}
+		}
+	}
 
 	devices := make([]*PairedDevice, 0, len(s.devices))
 	for _, dev := range s.devices {
@@ -245,5 +298,11 @@ func (s *memoryPairingService) RevokeDevice(ctx context.Context, deviceID string
 
 	// Invalidate any active session tokens belonging to this device
 	s.tokenStore.RevokeByDeviceID(deviceID)
+
+	// Propagate revocation to Rust DeviceRegistry SSOT
+	if s.syncProvider != nil {
+		_ = s.syncProvider.RevokePairedDevice(ctx, deviceID)
+	}
+
 	return nil
 }

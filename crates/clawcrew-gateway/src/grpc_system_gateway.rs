@@ -609,6 +609,7 @@ impl SystemGateway for SystemGatewayService {
                         prompt_tokens: 0,
                         completion_tokens: (total_chars / 4) as i32,
                         total_tokens: (total_chars / 4) as i32,
+                        loop_detector_stats: None,
                     })),
                 })).await;
             } else {
@@ -644,6 +645,7 @@ impl SystemGateway for SystemGatewayService {
                         prompt_tokens: 10,
                         completion_tokens: 20,
                         total_tokens: 30,
+                        loop_detector_stats: None,
                     })),
                 })).await;
             }
@@ -869,7 +871,7 @@ impl SystemGateway for SystemGatewayService {
                 let success = deleted_token_hash.is_some();
                 ::clawcrew_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Revoke)
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_attrs(::serde_json::json!({"device_id": &req.device_id, "revoked": success})),
                     "device revoked from Rust SQLite DeviceRegistry SSOT"
                 );
