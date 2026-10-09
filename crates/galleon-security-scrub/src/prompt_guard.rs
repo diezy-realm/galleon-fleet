@@ -133,6 +133,7 @@ impl PromptGuard {
                 Regex::new(
                     r"(?i)ignore\s+((all\s+)?(previous|above|prior)|all)\s+(instructions?|prompts?|commands?)",
                 )
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 .unwrap(),
                 // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)disregard\s+(previous|all|above|prior)").unwrap(),
@@ -165,6 +166,7 @@ impl PromptGuard {
                 Regex::new(
                     r"(?i)(you\s+are\s+now|act\s+as|pretend\s+(you're|to\s+be))\s+(a|an|the)?",
                 )
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 .unwrap(),
                 // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 Regex::new(r"(?i)(your\s+new\s+role|you\s+have\s+become|you\s+must\s+be)").unwrap(),

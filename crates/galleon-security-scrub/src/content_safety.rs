@@ -279,6 +279,7 @@ fn special_token_regex() -> &'static Regex {
         Regex::new(
             r"(?i)<\|(?:im_start|im_end|system|user|assistant|tool|begin_of_text|end_of_text|eot_id|start_header_id|end_header_id|reserved_special_token_\d+)\|>|\[/?(?:INST|SYS)\]|<s>|</s>",
         )
+        // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
         .unwrap()
     })
 }

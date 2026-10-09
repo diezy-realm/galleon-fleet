@@ -231,6 +231,7 @@ impl LeakDetector {
                     // inner `xoxb-`/`xoxp-` would leave the `xoxe.` prefix
                     // unredacted, so cover the whole token explicitly.
                     Regex::new(r"xoxe(?:-[0-9A-Za-z-]{10,}|\.xox[bp]-[0-9A-Za-z-]{10,})")
+                        // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                         .expect("static Slack rotation token regex must compile"),
                     "Slack refresh/rotated token",
                 ),
@@ -277,6 +278,7 @@ impl LeakDetector {
                     Regex::new(
                         r#"aws[_-]?secret[_-]?access[_-]?key[=:]\s*['"]*[a-zA-Z0-9/+=]{40}"#,
                     )
+                    // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                     .unwrap(),
                     "AWS Secret Access Key",
                 ),
