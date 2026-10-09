@@ -43,10 +43,10 @@ jobs:
           if grep -q '^engine/' changed_files.txt || grep -q '\.go$' changed_files.txt; then
             TOUCHES_GO=true
           fi
-          if grep -q '^apps/tauri-2/' changed_files.txt; then
+          if grep -q '^apps/tauri/' changed_files.txt; then
             TOUCHES_TAURI=true
           fi
-          if grep -q '^web-2/' changed_files.txt; then
+          if grep -q '^web/' changed_files.txt; then
             TOUCHES_WEB=true
           fi
           
