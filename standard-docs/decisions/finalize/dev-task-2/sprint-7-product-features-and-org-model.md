@@ -80,11 +80,11 @@ depends_on: Sprint 4 §E (BG-F1/F3 org model), Sprint 1 §A (BG-B4 untuk FW-C5)
 
 **JANGAN DIUBAH:** `MemoryProposal` type existing — tiket ini menambah alur DI ATASNYA, bukan redesign struct.
 
-- [x] **BG-F6 · G-37 · PR-99 (P3, S)** ADR opsional Delegated Authority Chain (rujukan `research/verifiable-intent-assessment.md` §3c — di-upgrade jadi gate WAJIB sebelum desain fitur commerce, bukan lagi opsional, per keputusan Owner 2026-10-05).
+- [x] **BG-F6 · G-37 · PR-99 (P3, S)** ADR opsional Delegated Authority Chain (rujukan `archive/research-closed-loop/verifiable-intent-assessment.md` §3c — di-upgrade jadi gate WAJIB sebelum desain fitur commerce, bukan lagi opsional, per keputusan Owner 2026-10-05).
 
 #### Detail Eksekusi — BG-F6
 
-**Langkah pengerjaan:** Tulis ADR (dokumen, bukan kode) di `standard-docs/decisions/owner-decisions/` merujuk `research/verifiable-intent-assessment.md` §3c — definisikan Delegated Authority Chain sebagai GATE WAJIB (bukan opsional, sesuai update judul tiket) sebelum desain fitur commerce apa pun dimulai.
+**Langkah pengerjaan:** Tulis ADR (dokumen, bukan kode) di `standard-docs/decisions/owner-decisions/` merujuk `archive/research-closed-loop/verifiable-intent-assessment.md` §3c — definisikan Delegated Authority Chain sebagai GATE WAJIB (bukan opsional, sesuai update judul tiket) sebelum desain fitur commerce apa pun dimulai.
 
 **Dependency:** Prasyarat untuk §C (Payment-Lockout Gate) secara konseptual — ADR ini mendefinisikan model otoritas yang BL-40-44 implementasikan.
 

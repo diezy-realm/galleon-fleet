@@ -1,7 +1,7 @@
 # Owner Decision Record — 2026-10-05: Delegated Authority Chain (DAC)
 
 > **Status:** Accepted. Mandatory Gate.
-> **Referensi:** `research/verifiable-intent-assessment.md` §3c, ODR-21 (Addendum 4), Invariant F1.
+> **Referensi:** `archive/research-closed-loop/verifiable-intent-assessment.md` §3c, ODR-21 (Addendum 4), Invariant F1.
 > **ID Tiket:** BG-F6 · G-37 · PR-99
 
 ---

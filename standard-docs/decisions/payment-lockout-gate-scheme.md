@@ -195,6 +195,6 @@ Kekhawatiran Achmad **valid dan tepat waktu** — justru karena belum ada satu p
 - `crates/clawcrew-runtime/src/security/playbook.rs` — pola `requires_approval: bool` existing untuk aksi berdampak tinggi.
 - `crates/clawcrew-tools/src/node_capabilities.rs` — pola `RiskLevel`/`NodeCapabilityDef` yang dicontoh untuk `ToolManifest.payment_category`.
 - `standard-docs/product/galleon-product-definition.md` §5 — "aksi berdampak tinggi... bayar... wajib persetujuan; default read-only."
-- `standard-docs/research/verifiable-intent-assessment.md` — konteks AP2/FIDO/G-37, hubungan dengan skema ini.
+- `standard-docs/archive/research-closed-loop/verifiable-intent-assessment.md` — konteks AP2/FIDO/G-37, hubungan dengan skema ini.
 - `standard-docs/research/payment-lockout-gate-industry-research.md` — riset pembanding industri (AP2 v0.2 spec, MCP tool annotations, OpenAI/Stripe/Comet, insiden Guardio Labs & Replit, Plaid/PSD2, OWASP Agentic Top 10 ASI03/ASI09/ASI10) yang jadi dasar penguatan §3.1 (expiry), §3.4 (rujukan insiden Replit), §3.5 (state mentah bukan ringkasan agent), §1 (bukti insiden Comet).
 - Grep seluruh repo (2026-10-05): nol hasil untuk tool/kapabilitas pembayaran existing di `crates/clawcrew-tools/`.

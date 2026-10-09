@@ -116,7 +116,7 @@ depends_on: Sprint 0-1 (BG-C1 untuk auth; persistensi Go untuk BG-D-series)
 
 #### Detail Eksekusi — BR-D3
 
-**TIDAK DIVERIFIKASI sesi ini** — lokasi modul `verifiable_intent` belum dicari (disebut di `research/verifiable-intent-assessment.md` menurut Sprint 7 §B BG-F6, kemungkinan terkait). **Langkah pertama WAJIB:** `grep -rn "verifiable_intent" crates/` untuk lokasi persis, dan baca ODR-21 (`standard-docs/decisions/owner-decisions/`) untuk konteks keputusan sebelum menghapus apa pun.
+**TIDAK DIVERIFIKASI sesi ini** — lokasi modul `verifiable_intent` belum dicari (disebut di `archive/research-closed-loop/verifiable-intent-assessment.md` menurut Sprint 7 §B BG-F6, kemungkinan terkait). **Langkah pertama WAJIB:** `grep -rn "verifiable_intent" crates/` untuk lokasi persis, dan baca ODR-21 (`standard-docs/decisions/owner-decisions/`) untuk konteks keputusan sebelum menghapus apa pun.
 
 **Langkah pengerjaan:** Git tag `archive/pre-galleon` pada commit SEBELUM penghapusan (preservasi history, bukan hard-delete tanpa jejak) — pola yang sama dengan praktik archival lain di project ini — BARU hapus modul.
 

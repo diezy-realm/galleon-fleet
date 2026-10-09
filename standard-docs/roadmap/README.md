@@ -2,7 +2,7 @@
 
 > **Dasar:** `decisions/owner-decisions/ODR-2026-10-04-product-direction.md`, `product/galleon-product-definition.md`, `foundation/`.
 > **Aturan:** semua kotak `[ ]` = belum dikerjakan. Centang hanya setelah DoD tiket terpenuhi dan bukti (PR/commit) dicatat di baris tiket.
-> **Tidak menduplikasi** `decisions/finalize/task-breakdown.md` (GRUP 0–8) dan Phase 5 Rust; keduanya dirujuk lewat kolom *Ref*.
+> **Tidak menduplikasi** `archive/decisions-finalize-legacy/task-breakdown.md` (GRUP 0–8) dan Phase 5 Rust; keduanya dirujuk lewat kolom *Ref*.
 
 ## Lane
 

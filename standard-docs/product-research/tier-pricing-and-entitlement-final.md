@@ -5,7 +5,7 @@ date: 2026-10-06
 author: squad-lead
 supersedes:
   - standard-docs/product-research/community-tier-licensing-enforcement.md
-  - standard-docs/product-research/tier-enforcement-method-d-c-deep-dive.md
+  - standard-docs/archive/product-research-superseded/tier-enforcement-method-d-c-deep-dive.md
 depends_on:
   - standard-docs/product/galleon-product-definition.md
   - standard-docs/product-research/market-strategic-report-oct2026.md

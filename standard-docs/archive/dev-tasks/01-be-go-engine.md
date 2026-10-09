@@ -48,7 +48,7 @@ Konvensi: `tech-stack/go-conventions.md`. Gerbang: GW-2 (+GW-4/8 untuk keamanan)
 - [ ] **BG-F3 · G-26 · PR-54 (P2, M) Audit trail & policy SSOT** read-only ke UI/Tauri.
 - [ ] **BG-F4 · G-24 · PR-96 (P2, L) Learning by consent lanjutan:** tipe `MemoryProposal` sudah ada (T-3.2 ✔); tinggal alur umpan balik → persetujuan Owner → versi/rollback di atas store baru. Dep: BG-B4.
 - [ ] **BG-F5 · G-28 · PR-96 (P3, M) Observabilitas:** zap + request-id Go→Rust; scrubbing.
-- [ ] **BG-F6 · G-37 · PR-99 (P3, S) ADR opsional Delegated Authority Chain** (rujukan `research/verifiable-intent-assessment.md`).
+- [ ] **BG-F6 · G-37 · PR-99 (P3, S) ADR opsional Delegated Authority Chain** (rujukan `archive/research-closed-loop/verifiable-intent-assessment.md`).
 
 ## Selesai (arsip, terbukti di kode)
 

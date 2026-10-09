@@ -122,7 +122,7 @@ Penamaan PR: `<type>(<scope>): …` (conventional commits). Tidak ada footer atr
 - [ ] **PR-96** `feat/learning-by-consent-and-observability` · G-24, G-28 · GW-2,8 · PR-43, PR-53 · umpan balik → memori terpersetujui, versi/rollback; zap + request-id Go→Rust · L
 - [ ] **PR-97** `refactor/rust-heavy-crates-audit` · R-18 · GW-1,7 · PR-60 · audit `tools`/`config`/`providers`; tanpa pemecahan spekulatif · M
 - [ ] **PR-98** `feat/web-i18n-a11y` · U-14 · GW-3 · PR-72 · M
-- [ ] **PR-99** `docs/adr-delegated-authority-chain` · G-37 · GW-7 · PR-44, PR-53 · ADR opsional; rujukan `research/verifiable-intent-assessment.md` · S
+- [ ] **PR-99** `docs/adr-delegated-authority-chain` · G-37 · GW-7 · PR-44, PR-53 · ADR opsional; rujukan `archive/research-closed-loop/verifiable-intent-assessment.md` · S
 - [ ] **PR-100** `feat/native-tool-contract` · G-29 · GW-1,2,4,8 · PR-05 · SSOT daftar tool + skema argumen di `proto/`, `workspace_path` terisi, test kontrak Go↔Rust; ⚑ · L
 
 ## 4. Branch integrasi (GW-6) & checklist Principle
