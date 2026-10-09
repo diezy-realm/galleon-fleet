@@ -157,7 +157,6 @@ impl LeakDetector {
         static API_KEY_PATTERNS: OnceLock<Vec<(Regex, &'static str)>> = OnceLock::new();
         let regexes = API_KEY_PATTERNS.get_or_init(|| {
             vec![
-                // Stripe
                 // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
                     Regex::new(r"sk_(live|test)_[a-zA-Z0-9]{24,}").unwrap(),
@@ -200,8 +199,8 @@ impl LeakDetector {
                     Regex::new(r"gh[pousr]_[a-zA-Z0-9]{36,}").unwrap(),
                     "GitHub token",
                 ),
+                // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                 (
-                    // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
                     Regex::new(r"github_pat_[a-zA-Z0-9_]{22,}").unwrap(),
                     "GitHub PAT",
                 ),

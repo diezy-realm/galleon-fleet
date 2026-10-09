@@ -188,6 +188,7 @@ impl PrometheusObserver {
             prometheus::Opts::new("clawcrew_cache_hit_rate", "Ratio of cache hits to total requests"),
             &["cache_type"],
         )
+        // INVARIANT: metric name/help/labels are static string literals verified at compile time; Opts::new only fails on invalid UTF-8 or empty name, neither possible here
         .expect("valid metric");
 
         // Register all metrics
