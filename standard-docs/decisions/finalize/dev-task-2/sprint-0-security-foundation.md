@@ -1,8 +1,7 @@
 ---
 sprint: 0
 title: Security Foundation — Identity, Approval-Gate, Sandbox
-status: completed
-depends_on: none (selesai secara menyeluruh)
+status: in-progress (10/11 checklist [x]; 1 item masih [ ] -- BR-B5 vault rotate/export/import, kode sudah ada di PR #18 tapi belum merge ke testing)
 ---
 
 # Sprint 0 — Security Foundation
