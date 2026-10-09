@@ -4623,7 +4623,6 @@ auto_save = true
             file_download: FileDownloadConfig::default(),
             plugins: PluginsConfig::default(),
             locale: None,
-            verifiable_intent: VerifiableIntentConfig::default(),
             claude_code: ClaudeCodeConfig::default(),
             claude_code_runner: ClaudeCodeRunnerConfig::default(),
             codex_cli: CodexCliConfig::default(),
@@ -5763,7 +5762,6 @@ default_temperature = 0.7
             file_download: FileDownloadConfig::default(),
             plugins: PluginsConfig::default(),
             locale: None,
-            verifiable_intent: VerifiableIntentConfig::default(),
             claude_code: ClaudeCodeConfig::default(),
             claude_code_runner: ClaudeCodeRunnerConfig::default(),
             codex_cli: CodexCliConfig::default(),
@@ -11641,97 +11639,6 @@ group_policy = "disabled"
             !warnings.iter().any(|w| w.path.contains("custom.vllm")),
             "custom honors wire_api and must not warn",
         );
-    }
-
-    /// The section is opt-in, so an operator who has not touched it is told
-    /// nothing.
-    #[test]
-    async fn verifiable_intent_disabled_does_not_warn() {
-        let mut config = Config::default();
-        suppress_semantic_memory_warning(&mut config);
-        assert!(!config.verifiable_intent.enabled);
-
-        assert!(
-            !config
-                .collect_warnings()
-                .iter()
-                .any(|w| w.code == "verifiable_intent_tool_withheld"),
-        );
-    }
-
-    /// Opting in produces the structured warning. This is the delivery path
-    /// that survives `observability.log_persistence = "none"`, since
-    /// `clawcrew doctor` prints this list to stdout and the config API returns
-    /// it, neither of which goes through the log writer.
-    #[test]
-    async fn verifiable_intent_enabled_warns_that_the_tool_is_withheld() {
-        let mut config = Config::default();
-        suppress_semantic_memory_warning(&mut config);
-        config.verifiable_intent.enabled = true;
-
-        let warnings = config.collect_warnings();
-        let withheld: Vec<_> = warnings
-            .iter()
-            .filter(|w| w.code == "verifiable_intent_tool_withheld")
-            .collect();
-
-        assert_eq!(withheld.len(), 1, "exactly one notice, got {warnings:?}");
-        assert_eq!(withheld[0].path, "verifiable_intent.enabled");
-        assert!(
-            withheld[0].message.contains("vi_verify"),
-            "the message must name the withheld tool: {}",
-            withheld[0].message
-        );
-    }
-
-    /// Every `LogPersistence` variant, walked through a `match` rather than
-    /// listed.
-    ///
-    /// Adding a variant makes the `match` non-exhaustive, so a new policy forces
-    /// a decision here instead of being covered silently. An array literal keeps
-    /// compiling unchanged and covers one policy less.
-    ///
-    /// The compile error is the whole of the guarantee. An arm returning `None`
-    /// satisfies it while leaving the variant out of the returned list, so this
-    /// forces the update to be considered rather than making it correct.
-    fn every_log_persistence() -> Vec<LogPersistence> {
-        let mut all = Vec::new();
-        let mut next = Some(LogPersistence::None);
-        while let Some(policy) = next {
-            all.push(policy);
-            next = match policy {
-                LogPersistence::None => Some(LogPersistence::Rolling),
-                LogPersistence::Rolling => Some(LogPersistence::Full),
-                LogPersistence::Full => Some(LogPersistence::Rotating),
-                LogPersistence::Rotating => None,
-            };
-        }
-        all
-    }
-
-    /// The config surface does not consult the observability policy, which is
-    /// the property that makes it a second channel rather than a second copy
-    /// of the same one. Asserting it here pins the independence at the unit
-    /// level; the process-level proof lives in the component test.
-    ///
-    /// Every current variant is covered rather than the three that motivated the
-    /// change. See [`every_log_persistence`] for the extent of that.
-    #[test]
-    async fn verifiable_intent_warning_is_independent_of_log_persistence() {
-        for policy in every_log_persistence() {
-            let mut config = Config::default();
-            suppress_semantic_memory_warning(&mut config);
-            config.verifiable_intent.enabled = true;
-            config.observability.log_persistence = policy;
-
-            assert!(
-                config
-                    .collect_warnings()
-                    .iter()
-                    .any(|w| w.code == "verifiable_intent_tool_withheld"),
-                "the notice must survive log_persistence = {policy:?}",
-            );
-        }
     }
 
     #[cfg(unix)]

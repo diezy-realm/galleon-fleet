@@ -648,15 +648,6 @@ pub struct Config {
     #[serde(default)]
     pub locale: Option<String>,
 
-    /// Verifiable Intent (VI) credential issuance and constraint checking
-    /// (`[verifiable_intent]`). No credential chain verifier exists yet, so the
-    /// `vi_verify` tool is not registered for the model and this section does not
-    /// currently enable verification of anything.
-    #[serde(default)]
-    #[nested]
-    #[group = "Agent"]
-    pub verifiable_intent: VerifiableIntentConfig,
-
     /// Claude Code tool configuration (`[claude_code]`).
     #[serde(default)]
     #[nested]
@@ -5783,53 +5774,6 @@ impl Default for McpConfig {
             enabled: default_mcp_enabled(),
             deferred_loading: default_deferred_loading(),
             servers: Vec::new(),
-        }
-    }
-}
-
-/// Verifiable Intent (VI) credential issuance and constraint checking
-/// (`[verifiable_intent]` section).
-///
-/// ClawCrew implements issuance, crypto, types and constraint checking, but not
-/// a credential chain verifier. Until one exists the `vi_verify` tool is
-/// withheld from the model-visible registry, so neither key below enables
-/// verification of a credential. The library paths are unaffected.
-///
-/// Enabling the section reports that gap two ways. The runtime traces it at
-/// each config application, which needs log persistence to be on to reach a
-/// sink. `clawcrew doctor` and the config API also report it as the
-/// `verifiable_intent_tool_withheld` validation warning, which stays available
-/// when persistence is off.
-#[derive(Debug, Clone, Serialize, Deserialize, Configurable)]
-#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
-#[prefix = "verifiable_intent"]
-pub struct VerifiableIntentConfig {
-    /// Opt in to the VI section (default: false).
-    ///
-    /// While the tool is withheld this does not enable credential verification
-    /// on commerce tool calls. It currently causes a warning naming that gap,
-    /// emitted once per config application: at process startup, and again when
-    /// a daemon reload re-reads config from disk.
-    #[serde(default)]
-    pub enabled: bool,
-
-    /// Intended strictness mode for constraint evaluation.
-    ///
-    /// Accepts `"strict"` or `"permissive"`, and defaults to `"strict"`. No
-    /// production code reads it while the tool is withheld.
-    #[serde(default = "default_vi_strictness")]
-    pub strictness: String,
-}
-
-fn default_vi_strictness() -> String {
-    "strict".to_owned()
-}
-
-impl Default for VerifiableIntentConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            strictness: default_vi_strictness(),
         }
     }
 }
@@ -20972,7 +20916,6 @@ impl Default for Config {
             file_download: FileDownloadConfig::default(),
             plugins: PluginsConfig::default(),
             locale: None,
-            verifiable_intent: VerifiableIntentConfig::default(),
             claude_code: ClaudeCodeConfig::default(),
             claude_code_runner: ClaudeCodeRunnerConfig::default(),
             codex_cli: CodexCliConfig::default(),
@@ -22628,40 +22571,6 @@ impl Config {
         }
     }
 
-    /// Report that opting into `[verifiable_intent]` does not currently enable
-    /// credential verification, because `vi_verify` is withheld from the
-    /// model-visible registry until a chain verifier exists.
-    ///
-    /// The runtime already traces this at config load. That trace reaches a
-    /// sink only when log persistence is on, so under
-    /// `observability.log_persistence = "none"` it is delivered nowhere. This
-    /// warning is the channel that survives: `clawcrew doctor` prints the
-    /// structured list to stdout and the config API returns it in its
-    /// response, neither of which depends on the log writer.
-    ///
-    /// Same class as `memory_config_knob_inert` — a knob that is set, accepted,
-    /// and currently has no runtime consumer.
-    ///
-    /// The change that re-registers `vi_verify` must delete this check and the
-    /// runtime trace together, or an operator is told the capability is
-    /// unavailable while the model is calling it.
-    fn collect_verifiable_intent_warnings(
-        &self,
-        warnings: &mut Vec<crate::validation_warnings::ValidationWarning>,
-    ) {
-        if !self.verifiable_intent.enabled {
-            return;
-        }
-        warnings.push(crate::validation_warnings::ValidationWarning::new(
-            crate::validation_warnings::VERIFIABLE_INTENT_TOOL_WITHHELD,
-            "verifiable_intent.enabled is set, but the vi_verify tool is withheld from the \
-             model-visible registry until a credential chain verifier exists. Enabling the \
-             section does not enable credential verification on commerce tool calls. The \
-             issuance and verification library paths are unaffected.",
-            "verifiable_intent.enabled",
-        ));
-    }
-
     /// Collect non-fatal validation warnings — config that loads and
     /// validates successfully (`validate()` returns `Ok(())`) but will fail
     /// at runtime because of a logical inconsistency the schema cannot
@@ -22689,7 +22598,6 @@ impl Config {
         // warning when the more specific cross-provider diagnostic already
         // covers the same path.
         self.collect_context_compression_ignored_warnings(&mut warnings);
-        self.collect_verifiable_intent_warnings(&mut warnings);
         warnings.extend(validate_memory_semantics(&self.memory));
         for (alias, wa) in &self.channels.whatsapp {
             warnings.extend(validate_whatsapp_semantics(alias, wa));
@@ -24299,22 +24207,6 @@ impl Config {
         // collect_warnings; emit them to tracing here so the existing log
         // behavior is preserved, with the single documented exception below.
         for w in self.collect_warnings() {
-            // One code is held back from this loop on purpose. The runtime
-            // already records the withheld-capability notice itself, with an
-            // explicit `System` category and the same code and path, once at
-            // every config application. Records emitted here carry no category
-            // and are stored as `internal`, which the dashboard Logs view hides
-            // by default, so tracing it here as well leaves a hidden second copy
-            // of a notice an operator is supposed to read. Every command that
-            // loads config a second time inside a live process writes that pair.
-            //
-            // `collect_warnings` still returns it, so `clawcrew doctor` and the
-            // config API report it exactly as before; only this tracing copy is
-            // dropped. The change that re-registers the tool retires this skip
-            // together with the runtime record it defers to.
-            if w.code == crate::validation_warnings::VERIFIABLE_INTENT_TOOL_WITHHELD {
-                continue;
-            }
             ::clawcrew_log::record!(
                 WARN,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
