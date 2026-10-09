@@ -15,6 +15,8 @@ error: could not execute process `sccache /home/runner/.rustup/toolchains/1.96.0
 ```
 Error identik di 3 OS (ubuntu, windows, macos) — menunjukkan ini bukan masalah platform-spesifik, kemungkinan besar `sccache` binary tidak terinstall/tidak ada di `PATH` saat step `Clippy (desktop)` dijalankan, atau env var `RUSTC_WRAPPER=sccache` diset tapi action yang menginstall sccache gagal/berubah versi.
 
+> **Scope diperluas 2026-10-09:** root cause identik (`could not execute process 'sccache ... rustc -vV' (never executed)`) juga ditemukan di job **`SOP Eval Replay (Advisory Non-Blocking)`**, step `Run clawcrew-eval regression suite` — gagal persis di `cargo metadata` sebelum test apapun jalan. Job ini dikonfirmasi tidak blocking merge (advisory, bisa di-bypass), tapi root cause-nya sama: workspace `.cargo/config.toml` set `rustc-wrapper = "sccache"` global, dan SETIAP job CI yang menjalankan `cargo` tanpa install sccache dulu akan kena error yang sama. Perbaikan T-CI-02 sebaiknya diterapkan di level yang mencakup semua job cargo (atau cek satu per satu workflow mana saja yang menjalankan `cargo`/`cargo metadata` tanpa step install sccache), bukan hanya `desktop-check.yml`.
+
 **Langkah:**
 1. Baca workflow Desktop App Check (`.github/workflows/*.yml` yang menjalankan job `desktop-check`) — temukan step mana yang set `RUSTC_WRAPPER` dan step mana yang seharusnya menginstall `sccache`.
 2. Cek apakah action installer sccache (`mozilla-actions/sccache-action` atau sejenis) ada di workflow dan masih versi yang valid — kemungkinan root cause adalah action tidak dipanggil SEBELUM step clippy, atau versi action yang dipin sudah tidak ada / berubah nama.

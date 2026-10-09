@@ -10,6 +10,8 @@ severity: HIGH (blocking, dampak luas — bukan spesifik PR #18)
 
 **File:** `.github/workflows/principle-review-trigger.yml`, step `Analyze PR Diff & Invariants`, baris yang menghitung `UNWRAP_DIFF`/`UNWRAP_COUNT`.
 
+> **Scope diperluas 2026-10-09:** bug filter yang SAMA PERSIS (`':!crates/**/tests/**' ':!crates/**/benches/**'`, tanpa exclude `mod tests` inline) juga ditemukan di workflow KEDUA: **`.github/workflows/pr-testing-gate.yml`**, job `Principle Checklist & Standards Gate`, step `Gate: No unwrap() / expect() in production code`. Diverifikasi gagal persis di baris yang sama (`self.runs.lock().unwrap()`, `TempDir::new().unwrap()`, dll — pola idiomatik test). Perbaikan HARUS diterapkan ke KEDUA file workflow, bukan hanya `principle-review-trigger.yml`, atau PR #18 (dan PR berikutnya) akan tetap merah di salah satu gate meski yang lain sudah diperbaiki. Catatan tambahan: karena job ini fail di step unwrap, step `Gate D-1`/`Gate D-2`/test suite di workflow yang sama ikut `skipped` — artinya Gate D-2 di `pr-testing-gate.yml` belum pernah genuinely dijalankan untuk PR #18 (bukan lolos, tapi belum sempat dicek). T-CI-03 (Gate D-2 fix) juga perlu diterapkan ke workflow ini setelah gate unwrap-nya lolos.
+
 **Masalah konkret (diverifikasi 2026-10-09 di PR #18):**
 ```bash
 UNWRAP_DIFF=$(git diff -U0 $BASE_REF...HEAD -- 'crates/**/*.rs' ':!crates/**/tests/**' ':!crates/**/benches/**' | grep '^[+][^+]' | grep -E '\.(unwrap|expect)\(' || true)
