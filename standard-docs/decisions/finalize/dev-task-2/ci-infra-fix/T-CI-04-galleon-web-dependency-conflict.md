@@ -1,12 +1,12 @@
 ---
 title: T-CI-04 — galleon-web npm ERESOLVE (vite vs esbuild dependency conflict)
-status: open
+status: resolved
 severity: HIGH (blocking total untuk semua PR yang menyentuh web/, tapi fix sederhana)
 ---
 
 # T-CI-04 — Perbaiki konflik dependency `vite`/`esbuild` di `web/`
 
-- [ ] **T-CI-04.** Selaraskan versi `esbuild` dengan yang diminta `vite@8.3.1` (atau downgrade `vite`) di `web/package.json`.
+- [x] **T-CI-04.** Selaraskan versi `esbuild` dengan yang diminta `vite@8.3.1` (atau downgrade `vite`) di `web/package.json`.
 
 **Masalah konkret (diverifikasi 2026-10-09 di PR #18, run `37909598782`):**
 ```
@@ -30,3 +30,19 @@ npm error Conflicting peer dependency: esbuild@0.28.2
 **DoD:** `npm install` di `web/` sukses tanpa `--force`/`--legacy-peer-deps` (keduanya menyembunyikan masalah, bukan menyelesaikannya), `npm run build` hijau, job `galleon-web (Lint, Typecheck, Build)` SUCCESS di PR test.
 
 **Jangan diubah:** jangan pakai `--force` atau `--legacy-peer-deps` sebagai fix permanen di CI config — itu menyembunyikan ketidakcocokan versi, bukan menyelesaikannya, dan berisiko lolos ke runtime behavior yang tidak terduga.
+
+---
+
+## Resolusi & Verifikasi (Selesai 2026-10-09)
+
+- **Commit:** `b2eb20f23` (`feat(T-CI-04): align esbuild with vite 8.3 peer requirement`).
+- **Implementasi:**
+  1. Mengupdate `web/package.json` menaikkan `devDependencies.esbuild` dari `^0.25.0` ke `^0.28.0` untuk memenuhi peer optional dependency `vite@8.3.1` (`^0.27.0 || ^0.28.0`).
+  2. Menjalankan `npm install` murni tanpa argumen `--force` atau `--legacy-peer-deps`.
+  3. Mengupdate dan melakukan sinkronisasi `web/package-lock.json`.
+- **Hasil Verifikasi Faktual:**
+  - `npm install`: Sukses (`added 0 packages, and audited 171 packages in 2s, found 0 vulnerabilities`).
+  - `npm run typecheck`: Sukses (`tsc -b`).
+  - `npm run lint`: Sukses (`eslint .`).
+  - `npm run build`: Sukses (`vite build` selesai dalam 1.25s, menghasilkan bundle produksi di `web/dist/`).
+

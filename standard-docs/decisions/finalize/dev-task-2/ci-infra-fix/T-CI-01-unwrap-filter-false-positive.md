@@ -1,12 +1,12 @@
 ---
 title: T-CI-01 — Principle Gate unwrap-filter tidak exclude inline mod tests
-status: open
+status: resolved
 severity: HIGH (blocking, dampak luas — bukan spesifik PR #18)
 ---
 
 # T-CI-01 — Perbaiki filter `unwrap()`/`expect()` di Principle Gate
 
-- [ ] **T-CI-01.** Ubah metode deteksi `unwrap()`/`expect()` di Principle Gate agar tidak menghitung kode di dalam `#[cfg(test)] mod tests { ... }` inline, atau ganti strategi deteksi ke tool yang paham AST (bukan regex teks diff).
+- [x] **T-CI-01.** Ubah metode deteksi `unwrap()`/`expect()` di Principle Gate agar tidak menghitung kode di dalam `#[cfg(test)] mod tests { ... }` inline, atau ganti strategi deteksi ke tool yang paham AST (bukan regex teks diff).
 
 **File:** `.github/workflows/principle-review-trigger.yml`, step `Analyze PR Diff & Invariants`, baris yang menghitung `UNWRAP_DIFF`/`UNWRAP_COUNT`.
 
@@ -35,3 +35,23 @@ Filter path hanya mengecualikan folder `tests/` dan file di `benches/`. **Tidak 
 **DoD:** jalankan filter baru terhadap diff PR #18 (`git diff -U0 origin/testing...HEAD -- 'crates/**/*.rs' <exclude-baru>`), hasil `grep '^[+][^+]' | grep -E '\.(unwrap|expect)\('` = 0 match untuk `secrets.rs`/`agent_scoped.rs`/`sqlite.rs` (atau match yang tersisa genuinely di luar `mod tests`, didokumentasikan file:baris). Buka PR test kecil (tambah 1 unwrap di `mod tests` + 1 unwrap genuinely di luar `mod tests` di file dummy) untuk membuktikan filter baru lolos yang pertama dan tetap menangkap yang kedua.
 
 **Jangan diubah:** jangan hapus gate ini sepenuhnya (zero-unwrap di produksi adalah aturan eksplisit `AGENTS.md`) — task ini memperbaiki akurasi deteksi, bukan menghapus pengecekan.
+
+---
+
+## Resolusi & Verifikasi (Selesai 2026-10-09)
+
+- **Commit:** `9e58839b4` (`feat(T-CI-01,T-CI-03): fix unwrap filter test scoping and two-layer gate d2 governance verification`).
+- **Implementasi:**
+  1. Dibuat script `scripts/ci/check_production_unwrap.py` dengan parser hunk diff git yang cerdas dan sadar konteks test di Rust.
+  2. Mengecualikan:
+     - Folder: `tests/`, `benches/`
+     - File: `tests.rs`, `*_tests.rs`, `benchmarks.rs`, `*_benchmarks.rs`
+     - Blok kode inline: `#[cfg(test)] mod tests { ... }` dan `pub(crate) mod tests { ... }` hingga kurung kurawal penutup.
+  3. Script diintegrasikan ke **KEDUA workflow terdampak**:
+     - `.github/workflows/principle-review-trigger.yml`
+     - `.github/workflows/pr-testing-gate.yml`
+- **Hasil Verifikasi Faktual:**
+  - Audit file sampel PR #18 (`secrets.rs`, `agent_scoped.rs`, `sqlite.rs`, `amqp.rs`, `api_sop.rs`): menghasilkan 0 pelanggaran.
+  - Uji Probe 1 (Unwrap palsu di dalam `mod tests`): **Lolos** (`Exit code: 0 - PASSED: Zero unwrap()/expect() calls in Rust production paths`).
+  - Uji Probe 2 (Unwrap asli di luar test/jalur produksi): **Terdeteksi & Blokir** (`Exit code: 1 - FAILED: Found 1 unwrap call(s) in Rust production paths`).
+
