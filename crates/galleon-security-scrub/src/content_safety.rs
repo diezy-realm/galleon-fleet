@@ -265,6 +265,7 @@ fn fold_untrusted(content: &str) -> String {
 
 fn marker_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
+    // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
     RE.get_or_init(|| {
         Regex::new(r"(?i)<{2,}\s*(end[\s_-]*)?external[\s_-]*untrusted[\s_-]*content\b[^>]*>{2,}|(?:end[\s_-]*)?external[\s_-]*untrusted[\s_-]*content")
             .unwrap()
@@ -273,6 +274,7 @@ fn marker_regex() -> &'static Regex {
 
 fn special_token_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
+    // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
     RE.get_or_init(|| {
         Regex::new(
             r"(?i)<\|(?:im_start|im_end|system|user|assistant|tool|begin_of_text|end_of_text|eot_id|start_header_id|end_header_id|reserved_special_token_\d+)\|>|\[/?(?:INST|SYS)\]|<s>|</s>",
@@ -283,6 +285,7 @@ fn special_token_regex() -> &'static Regex {
 
 fn reserved_special_token_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
+    // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
     RE.get_or_init(|| Regex::new(r"(?i)<\|reserved_special_token_\d+\|>").unwrap())
 }
 

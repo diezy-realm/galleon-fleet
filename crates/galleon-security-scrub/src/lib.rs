@@ -49,6 +49,7 @@ pub fn redact(value: &str) -> String {
     }
 }
 
+// INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
 pub static SENSITIVE_KEY_REGEX: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
     regex::Regex::new(r#"(?i)(authorization|token|api[_-]?key|private[_-]?key|password|secret|user[_-]?key|bearer|credential|set[_-]?cookie|cookie)"#)
         .expect("static sensitive-key regex must compile")

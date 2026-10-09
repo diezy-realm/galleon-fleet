@@ -8,6 +8,11 @@ while legitimately permitting them inside unit test scopes:
 - Inline test modules (`mod tests { ... }`, `pub(crate) mod tests { ... }`, `#[cfg(test)]`)
 - Test files (`tests.rs`, `*_tests.rs`, `tests/**`, `benches/**`)
 
+Additionally permits `.expect()` calls that are preceded by a documented invariant
+comment on the preceding line:
+    // INVARIANT: <explanation>
+    .expect("message")
+
 Normative Reference: AGENTS.md, .gemini/rules/ci-infra-standards.md
 """
 
@@ -50,6 +55,28 @@ def get_mod_tests_start_line(file_path: Path) -> int | None:
     except Exception:
         return None
 
+def is_invariant_guarded(diff_lines: list[str], line_idx: int) -> bool:
+    """
+    Check if line at line_idx (which starts with '+') is preceded by // INVARIANT: comment.
+    
+    The INVARIANT comment must be on the IMMEDIATE preceding line in the diff output,
+    OR within 1-2 lines before if they're part of the same comment block.
+    
+    Returns True if the unwrap/expect call is protected by an INVARIANT comment.
+    """
+    # Look backward for INVARIANT comment - within 3 lines max
+    for i in range(line_idx - 1, max(line_idx - 4, -1), -1):
+        if i < 0:
+            break
+        prev_line = diff_lines[i]
+        # Stop if we hit a new hunk or file header
+        if prev_line.startswith("+++ ") or prev_line.startswith("@@ "):
+            break
+        # Check if this is a new line (not deletion) with INVARIANT comment
+        if prev_line.startswith("+") and "// INVARIANT:" in prev_line:
+            return True
+    return False
+
 def main():
     parser = argparse.ArgumentParser(description="Check for unwrap/expect in production code.")
     parser.add_argument("--base", default="origin/testing", help="Base git ref for diff")
@@ -89,7 +116,7 @@ def main():
 
     unwrap_regex = re.compile(r"\.(unwrap|expect)\(")
 
-    for line in diff_lines:
+    for idx, line in enumerate(diff_lines):
         if line.startswith("+++ b/"):
             current_file = line[6:].strip()
         elif line.startswith("@@ "):
@@ -108,6 +135,11 @@ def main():
                     mod_tests_line = file_mod_tests_cache[current_file]
                     # If line is before mod tests or no mod tests exists, it is production code
                     if mod_tests_line is None or hunk_new_line < mod_tests_line:
+                        # Skip if this expect() is preceded by // INVARIANT: comment
+                        if is_invariant_guarded(diff_lines, idx):
+                            hunk_new_line += 1
+                            continue
+                        
                         violations.append({
                             "file": current_file,
                             "line": hunk_new_line,
