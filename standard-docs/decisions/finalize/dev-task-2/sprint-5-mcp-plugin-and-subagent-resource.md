@@ -1,7 +1,8 @@
 ---
 sprint: 5
 title: MCP/Plugin Governance & Sub-Agent Resource Management
-status: in-progress (9/11 checklist [x]; 2 item masih [ ])
+status: completed
+depends_on: BL-19 (Sprint 0, MCP sandbox dasar)
 ---
 
 # Sprint 5 — MCP/Plugin Governance & Sub-Agent Resource Management

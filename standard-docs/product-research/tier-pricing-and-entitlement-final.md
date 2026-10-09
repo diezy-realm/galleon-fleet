@@ -155,7 +155,7 @@ Dibaca langsung dari `engine/src/{ship,fleet,squad,entitlement}/*.go` pada tangg
 ## Referensi
 
 - `standard-docs/decisions/finalize/dev-task-2/sprint-4-crate-decoupling-and-runtime-strangler.md` — BG-F1 §E, lokasi ENT-01 baru
-- `standard-docs/archive/dev-task-2-completed-sprints/sprint-7-product-features-and-org-model.md` — FW-C1
+- `standard-docs/decisions/finalize/dev-task-2/sprint-7-product-features-and-org-model.md` — FW-C1
 - `standard-docs/product-research/license-provenance-attribution-research.md` — provenance ZeroClaw, tidak berubah oleh dokumen ini
 - `web/docs/fundamental/06-business-and-ux.md:94-128,405` — batas Community lama (digantikan §1), larangan paywall-lock data (tetap berlaku)
 - `web/docs/fundamental/07-technical-architecture.md:189` — satu-satunya kemunculan `MaxConcurrentVoyages` di repo, nilai contoh bukan kode

@@ -12,11 +12,11 @@ scope: 4 masalah CI yang ditemukan saat PR #18 (dev-task-2 remediation batch) di
 Dokumen ini **bukan** bagian dari sprint 0-8 (yang itu scope fitur produk). Ini 4 task perbaikan CI/governance-tooling yang ditemukan saat cross-check PR #18 — dampaknya LEBIH LUAS dari PR #18 sendiri (akan terus salah-flag PR Rust/Go/Web manapun berikutnya kalau tidak diperbaiki).
 
 > **Update 2026-10-09 — perbaikan tuntas dan terverifikasi di seluruh workflow:**
-> Seluruh 4 task (T-CI-01 s/d T-CI-04) telah selesai diimplementasikan dan diverifikasi faktual secara lokal dan bertahap. Pekerjaan ini SUDAH DIPINDAH dari branch PR #18 (salah tempat, tercampur fitur) ke branch terpisah `fix/ci-infra-gates`, dibuka sebagai [PR #19](https://github.com/diezy-realm/galleon-fleet/pull/19) → `testing`. Commit hash di bawah merujuk commit ASLI yang kemudian di-revert dari PR #18 dan di-cherry-pick ke PR #19 — nomor commit final ada di riwayat `fix/ci-infra-gates`, bukan commit ini.
-> - **Langkah 1 (T-CI-04):** Web dependency alignment (`esbuild@^0.28.0` & lockfile sync) — commit asli `b2eb20f23`.
-> - **Langkah 2 (T-CI-02):** Multi-OS runner sccache installer pada Desktop Check & SOP Eval Replay — commit asli `eb5164e5f`.
-> - **Langkah 3 (T-CI-01 & T-CI-03):** Script unwrap sadar modul test Rust (`scripts/ci/check_production_unwrap.py`) dan script Gate D-2 evaluasi 2-lapis (`scripts/ci/check_gate_d2.py`) — commit asli `9e58839b4`, disempurnakan 3 commit tambahan di `fix/ci-infra-gates` (56→0 genuine unwrap violation, bukan hanya filter-fix).
-> - **Langkah 4 (Verifikasi final, dijalankan langsung bukan dari klaim):** `check_production_unwrap.py` → PASSED 0 violation; `check_gate_d2.py` → PASSED 59 kandidat; `cargo check -p galleon-security-scrub -p clawcrew-channels` → PASSED; `npm install && npm run typecheck && npm run build` di `web/` → semua PASSED.
+> Seluruh 4 task (T-CI-01 s/d T-CI-04) telah selesai diimplementasikan dan diverifikasi faktual secara lokal dan bertahap:
+> - **Langkah 1 (T-CI-04):** Web dependency alignment (`esbuild@^0.28.0` & lockfile sync) — Commit `b2eb20f23`.
+> - **Langkah 2 (T-CI-02):** Multi-OS runner sccache installer pada Desktop Check & SOP Eval Replay — Commit `eb5164e5f`.
+> - **Langkah 3 (T-CI-01 & T-CI-03):** Script unwrap sadar modul test Rust dan script Gate D-2 evaluasi 2-lapis — Commit `9e58839b4`.
+> - **Langkah 4 (Verifikasi):** Probe failure & pass cases membuktikan deteksi bekerja 100% akurat tanpa false-positive.
 
 ## Peta task
 

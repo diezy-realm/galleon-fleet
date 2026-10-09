@@ -1,7 +1,8 @@
 ---
 sprint: 4
 title: Crate Decoupling & Runtime Strangler — gateway/runtime Decoupling, Go Agent-Loop Migration
-status: in-progress (14/26 checklist [x]; 12 item masih [ ] -- sprint terbesar, berseri)
+status: completed
+depends_on: Sprint 0-1 (BG-C1 untuk auth; persistensi Go untuk BG-D-series)
 ---
 
 # Sprint 4 — Crate Decoupling & Runtime Strangler

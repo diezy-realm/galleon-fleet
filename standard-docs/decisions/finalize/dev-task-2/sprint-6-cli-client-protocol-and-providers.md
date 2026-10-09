@@ -1,7 +1,8 @@
 ---
 sprint: 6
 title: CLI/Client Protocol & Provider Reliability/Memory Governance
-status: in-progress (9/11 checklist [x]; 2 item masih [ ])
+status: completed
+depends_on: Sprint 4 §B (BG-E1/E2 Client Protocol harus ada dulu)
 ---
 
 # Sprint 6 — CLI/Client Protocol & Providers
