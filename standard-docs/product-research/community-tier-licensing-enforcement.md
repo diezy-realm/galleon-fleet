@@ -242,7 +242,7 @@ Definisikan `QuotaPolicy` interface dan `CommunityPolicy` hardcoded di `engine/s
 
 - `standard-docs/product/galleon-product-definition.md`
 - `standard-docs/decisions/finalize/dev-task-2/sprint-4-crate-decoupling-and-runtime-strangler.md` — BG-F1 §E
-- `standard-docs/decisions/finalize/dev-task-2/sprint-7-product-features-and-org-model.md` — FW-C1
+- `standard-docs/archive/dev-task-2-completed-sprints/sprint-7-product-features-and-org-model.md` — FW-C1
 - `standard-docs/decisions/sop-constraint-layer-design.md`
 - Riset eksternal: DotScramble Ed25519 license system (Hashnode, 2026-06-29)
 - ZeroClaw upstream: `github.com/zeroclaw-labs/zeroclaw`
