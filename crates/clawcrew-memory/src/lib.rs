@@ -41,6 +41,7 @@ pub mod scanned;
 pub mod snapshot;
 pub mod sqlite;
 mod sqlite_permissions;
+pub mod strategy;
 pub mod threat;
 pub mod traits;
 pub mod vector;
@@ -58,6 +59,7 @@ pub use embeddings::EmbeddingIdentity;
 pub use lucid::LucidMemory;
 pub use markdown::MarkdownMemory;
 pub use none::NoneMemory;
+pub use strategy::DefaultMemoryStrategy;
 #[allow(unused_imports)]
 pub use policy::PolicyEnforcer;
 #[cfg(feature = "memory-postgres")]

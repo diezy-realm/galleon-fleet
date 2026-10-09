@@ -31,7 +31,7 @@ env:
 
 jobs:
   build:
-    name: clawcrew-desktop (${{ matrix.os }})
+    name: desktop-check (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     strategy:
@@ -69,5 +69,5 @@ jobs:
         shell: bash
         run: mkdir -p web/dist && touch web/dist/.gitkeep
 
-      - name: Clippy (clawcrew-desktop)
-        run: cargo clippy -p clawcrew-desktop --all-targets -- -D warnings
+      - name: Clippy (desktop)
+        run: cargo clippy --manifest-path apps/tauri/Cargo.toml --all-targets -- -D warnings

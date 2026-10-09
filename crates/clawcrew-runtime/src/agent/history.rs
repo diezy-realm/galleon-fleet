@@ -555,9 +555,7 @@ pub fn load_interactive_session_history(
 /// produced via `get_required_cli_string("history-trim-breadcrumb")`, which
 /// currently resolves to this same English text in every locale. Checking
 /// the canonical value makes restore independent of the current process
-/// locale.
-pub const HISTORY_TRIM_BREADCRUMB_CANONICAL: &str =
-    "[earlier turns omitted to fit the context window]";
+pub use clawcrew_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL;
 
 pub fn is_history_trim_breadcrumb_text(text: &str) -> bool {
     if text == HISTORY_TRIM_BREADCRUMB_CANONICAL {

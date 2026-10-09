@@ -14,7 +14,6 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/src/artifact"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
 	"github.com/diezy-labs/claw-crew/engine/src/fleet"
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
 	"github.com/diezy-labs/claw-crew/engine/src/memory"
 	qmorch "github.com/diezy-labs/claw-crew/engine/src/orchestrator"
 	"github.com/diezy-labs/claw-crew/engine/src/persistence"
@@ -34,9 +33,8 @@ func InitializeApp(cfg *config.AppConfig) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	provider := llm.NewProvider(cfg, systemGatewayClient)
-	toolDispatcher := llm.NewToolDispatcher(systemGatewayClient)
-	orchestrator := crew.NewService(provider, toolDispatcher, systemGatewayClient)
+	toolDispatcher := crew.NewToolDispatcher(systemGatewayClient)
+	orchestrator := crew.NewService(toolDispatcher, systemGatewayClient)
 	vectorStore := memory.NewVectorStore()
 	crewRegistry := crew.NewRegistry()
 	grpcHandler := crew.NewGRPCHandler(orchestrator, vectorStore, crewRegistry)
@@ -56,10 +54,9 @@ func InitializeApp(cfg *config.AppConfig) (*App, error) {
 	taskHTTPHandler := task.NewHTTPHandler(taskService)
 	toolRegistry := tool.NewRegistry()
 	toolGate := tool.NewApprovalGate(runService)
-	// F3-1: route native builtin tool execution through the Rust SystemGateway
+	// F3-1 / Fail-Closed: route native builtin tool execution through the Rust SystemGateway
 	// (:50052) so bash/read_file/write/git run inside the Landlock sandbox, not
-	// in-process. The client structurally satisfies tool.SystemGateway; a nil/
-	// unavailable gateway falls back to in-process execution inside the client.
+	// in-process. A nil/unavailable gateway fails closed and rejects execution (BG-A2 / G-03).
 	toolService := tool.NewService(toolRegistry, toolGate, runService).WithSystemGateway(systemGatewayClient)
 	toolHTTPHandler := tool.NewHTTPHandler(toolService)
 	artifactRepo, err := persistence.NewDiskArtifactStore(cfg.DataDir)
@@ -71,8 +68,8 @@ func InitializeApp(cfg *config.AppConfig) (*App, error) {
 	workflowRegistry := workflow.NewRegistry()
 	workflowService := workflow.NewService(workflowRegistry, taskService)
 	workflowHTTPHandler := workflow.NewHTTPHandler(workflowService)
-	fleetService := fleet.NewService(provider)
-	objectiveProposer := qmorch.NewService(provider, fleetService)
+	fleetService := fleet.NewService(systemGatewayClient)
+	objectiveProposer := qmorch.NewService(systemGatewayClient, fleetService)
 	fleetService.SetObjectiveProposer(objectiveProposer)
 	fleetHTTPHandler := fleet.NewHTTPHandler(fleetService)
 	app := NewApp(cfg, server, metricsServer, grpcHandler, runHTTPHandler, taskHTTPHandler, toolHTTPHandler, artifactHTTPHandler, workflowHTTPHandler, fleetHTTPHandler)

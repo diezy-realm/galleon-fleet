@@ -4,6 +4,8 @@ use regex::Regex;
 use std::{collections::HashSet, sync::LazyLock};
 pub use clawcrew_api::model_provider::strip_think_tags;
 
+pub mod history_pruner;
+
 /// A single parsed tool call extracted from LLM output.
 #[derive(Debug, Clone)]
 pub struct ParsedToolCall {

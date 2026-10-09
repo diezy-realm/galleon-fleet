@@ -1,129 +1,137 @@
 # Galleon Fleet AI: Architecture & Layering Specification
 
-This document defines the canonical 3-tier architecture, system boundaries, interaction flows, and coding standards for the Galleon Fleet AI repository.
+> **Status:** Canonical Architecture Reference  
+> **Source of Truth:** [`standard-docs/tech-standart/architecture/00-overview.md`](../standard-docs/tech-standart/architecture/00-overview.md) & [`01-boundary-policy.md`](../standard-docs/tech-standart/architecture/01-boundary-policy.md)  
+> **Replaces:** Legacy ClawCrew 3-tier model with the official Galleon 4-Tier Model.
 
 ---
 
-## 1. High-Level Architecture & Clean Separation of Concerns
+## 1. High-Level 4-Tier Architecture
 
-The codebase is strictly structured into three distinct operational tiers:
+Galleon Fleet is strictly structured into four distinct operational tiers:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           TIER 1: INTERFACE LAYER                           │
-│           Web App / PWA (`web-2/`) & Desktop Webview (`apps/tauri-2`)       │
+│                           TIER 4: UI LAYER (`web/`)                         │
+│                    Web App & Desktop Frontend (React 19)                    │
 │                                                                             │
-│   • React 19 + TypeScript + Tailwind CSS                                    │
+│   • React 19 + TypeScript + Tailwind CSS 4                                  │
 │   • State Management: Zustand (`useFleetStore`)                             │
-│   • Client Bridge: `apiClient.ts` (gRPC-Web / HTTP Proxy / Tauri IPC)       │
-│   • STRICT RULE: Pure presentation. Zero backend logic. Zero data mocking.  │
-└───────────────────────┬─────────────────────────────────┬───────────────────┘
-                        │ HTTP / gRPC                     │ Tauri Native IPC
-                        │ (Fleet Operations & AI)         │ (Core OS Execution)
-                        ▼                                 ▼
-┌─────────────────────────────────────────┐  ┌────────────────────────────────┐
-│       TIER 2: GO ORCHESTRATOR           │  │      TIER 3: RUST CORE         │
-│               (`engine/`)               │  │ (`crates/`, `apps/tauri-2/src`)│
-│                                         │  │                                │
-│ • High-level Agent Engine & Brain       │  │ • Native Host Execution & PTY  │
-│ • Fleet Missions, Quests, & Workflows   │  │ • Security Sandbox (Landlock)  │
-│ • Crew, Squad, & Ship Governance        │  │ • Host Hardware Sysinfo (OS)   │
-│ • Memory Indexing & Vector Search       │  │ • Encrypted Secret Vault       │
-│ • Persistence (`DiskStore` / JSON DB)   │  │ • Tauri v2 Desktop Wrapper     │
-│ • Services: gRPC (:50051), HTTP (:9090) │  │ • Service: `SystemGateway`     │
-└────────────────────┬────────────────────┘  └────────────────┬───────────────┘
-                     │                                        ▲
-                     │   gRPC: `SystemGateway.ExecuteTool`    │
-                     └────────────────────────────────────────┘
+│   • Client Bridge: `apiClient.ts` (HTTP / SSE proxy ke Go :9090)            │
+│   • STRICT RULE: Pure presentation. Zero backend logic. Zero direct LLM SDK.│
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │ HTTP :9090 (REST / SSE)
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      TIER 3: AI ORCHESTRATOR (`engine/`)                    │
+│                            Go 1.27 (Google Wire DI)                         │
+│                                                                             │
+│   • High-level Agent Engine & Single Brain (`StartTurn`)                    │
+│   • Fleet Governance, Missions, Ships, Squads, Crew Roster                  │
+│   • Policies & Approval Gate SSOT (Risk-Tiers, Audit Log)                   │
+│   • Memory Indexing, RAG, & Persistent Storage (SQLite / Postgres)          │
+│   • Multi-surface Gateway: WebAuthn, QR Device Pairing                      │
+│   • Services: gRPC (:50051 Internal), HTTP (:9090 Frontend-facing)          │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │ gRPC :50052 (`SystemGatewayService`)
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       TIER 2: SYSTEM CORE (`crates/`)                       │
+│                        Rust 2024 Edition (27 Crates)                        │
+│                                                                             │
+│   • Security Microkernel: OS Sandboxing (Landlock / Seatbelt / AppContainer)│
+│   • LLM Execution SSOT (OpenAI, Gemini, Bedrock, Anthropic via providers)   │
+│   • Native Tools Execution (Shell, File I/O, Git, Sysinfo)                  │
+│   • Secret Vault (AES-256-GCM encrypted in ~/.config/galleon/vault/)        │
+│   • WASI Plugin Host (Wasmtime, signed components)                          │
+│   • Channel Adapters (Tier A: Discord, Slack, WhatsApp, Telegram, Matrix)   │
+│   • STRICT RULE: Leaf service. Zero crew orchestration. Zero unwrap().      │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                       ▲
+                                       │ Tauri IPC (`invoke`)
+┌──────────────────────────────────────┴──────────────────────────────────────┐
+│                    TIER 1: DESKTOP SHELL (`apps/tauri/`)                    │
+│                        Tauri v2 (`galleon-desktop`)                         │
+│                                                                             │
+│   • Window Lifecycle, System Tray, OS Dialogs, Native Notifications         │
+│   • Desktop App Packaging (`.exe`, `.dmg`, `.AppImage`)                     │
+│   • Thin Proxy to Go :9090. Zero business logic. Zero fake metrics.         │
+│   • FORBIDDEN: Direct terminal execution (wajib lewat Go policy + Rust).    │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. In-Depth Comparison: `apps/tauri-2` vs `crates/` vs `engine/`
+## 2. In-Depth Comparison: Tiers & Boundaries
 
-| Dimensi | `apps/tauri-2` (Desktop Shell) | `crates/` (Rust System Core) | `engine/` (Go Orchestrator) |
-|---|---|---|---|
-| **Peran Utama** | Desktop Window Shell & OS Wrapper | Security Microkernel & Native Tools | AI Brain & Workflow Orchestrator |
-| **Bahasa & Runtime** | Rust (Tauri v2 + WRY/Webview2) | Rust (2024 Edition, Tokio async) | Go 1.25+ / Go 1.27 (Google Wire DI) |
-| **Lokasi Kode** | `apps/tauri-2/src/main.rs` | `crates/clawcrew-*`, `crates/galleon-*` | `engine/src/`, `engine/cmd/agent-engine/` |
-| **Tugas Riil** | 1. Membungkus UI `web-2` jadi native `.exe` / desktop window.<br>2. Tray icon, system tray menu di taskbar.<br>3. Native OS dialogs (file picker, alert) & notification.<br>4. Forwarding low-level OS command ke local desktop. | 1. Sandboxing OS dengan Linux Landlock LSM / Windows integrity.<br>2. Eksekusi native tools (bash, terminal PTY, disk read/write).<br>3. Hardware telemetry (CPU/RAM/GPU kernel metrics).<br>4. Network discovery & A2A mesh via mDNS (`clawcrew-gateway`).<br>5. External channel adapters (Discord, Slack, Matrix).<br>6. WASI/Wasmtime sandboxed plugins. | 1. Otak keputusan AI & Agent state machine (`StartTurn`).<br>2. Perencanaan misi, Quests breakdown, Map steps.<br>3. Fleet governance: Ships, Squads, Crew berths, Approvals.<br>4. Semantic memory, vector embeddings, SQLite FTS5 RAG.<br>5. Persistensi kanonikal data armada via `DiskStore`.<br>6. Treasury cost tracking & token expenditure. |
-| **Jalur Komunikasi (Inbound)** | Tauri IPC `invoke('cmd', payload)` dari Webview. | gRPC Server `SystemGateway` (:50052) dipanggil oleh Go; atau direct CLI. | 1. gRPC Server `AgentEngine` (:50051).<br>2. HTTP Gateway (:9090) dipanggil via reverse proxy `web-2`. |
-| **Jalur Komunikasi (Outbound)** | IPC response / Webview event emit. | Mengembalikan ToolCallResponse / Exit Code ke Go Orchestrator. | 1. gRPC Client ke Rust `SystemGateway` (:50052) untuk run tools.<br>2. Stream TurnResponse ke Frontend/UI. |
-| **Yang DILARANG di sini** | Dilarang menaruh business logic orkestrasi agen atau data fleet. | Dilarang menduplikasi logic quest/crew planning yang milik Go. | Dilarang mengakses kernel/hardware tanpa melalui sandbox Rust Core. |
-
----
-
-## 3. Tier Boundaries & Responsibilities
-
-### Tier 1: Interface Layer (`web-2/`)
-- **Location:** `web-2/src/`
-- **Responsibilities:**
-  - Rendering UI views (Quarterdeck, Mission Board, Crew, Ships, Artifacts, Harbor, Crow's Nest, Engine Room).
-  - Client-side navigation, theme toggling, and input capture.
-  - Calling backend APIs via `apiClient.ts`.
-- **Strict Invariants:**
-  - **NO backend logic or file persistence inside `server.ts` or `.tsx`.** `web-2/server.ts` acts solely as a static asset server and reverse proxy forwarding `/api/*` to the Go Orchestrator.
-  - **NO client-side data mocking or hardcoded HTML arrays.**
-  - **All dynamic data must be fetched from Go Orchestrator or Rust Core.**
-
-### Tier 2: Orchestrator Layer (`engine/`)
-- **Location:** `engine/`
-- **Language:** Go 1.25+ / Go 1.27
-- **Responsibilities:**
-  - Agent Engine lifecycle (`StartTurn`, `QuickQuery`).
-  - Fleet state, Quests, Squads, Crew members, Approvals, Treasury, Artifacts.
-  - Executive briefing, Crow's Nest doctor diagnostics, disaster recovery snapshots.
-  - Persistent storage in JSON/JSONL via `DiskStore`.
-  - Exposes gRPC server on `:50051` and HTTP REST endpoints on `:9090` (proxied by web gateway).
-  - Invokes Rust Core via `SystemGateway` gRPC client whenever native shell or tool execution is needed.
-
-### Tier 3: System Core Layer (`crates/`, `apps/tauri-2/`)
-- **Location:** `crates/clawcrew-*`, `apps/tauri-2/src/`
-- **Language:** Rust (2024 edition)
-- **Responsibilities:**
-  - Low-level OS execution, terminal processes, and PTY sessions.
-  - Kernel-level sandboxing (Landlock LSM).
-  - Host OS metrics (raw CPU, RAM, Windows/Linux kernel metrics).
-  - Encrypted secret vault and credentials.
-  - Desktop native windowing shell (Tauri v2).
-  - Exposes `SystemGateway` gRPC service for Go and desktop IPC handlers for local webview.
+| Dimensi | Tier 1: Desktop Shell (`apps/tauri/`) | Tier 2: System Core (`crates/`) | Tier 3: AI Orchestrator (`engine/`) | Tier 4: UI Layer (`web/`) |
+|---|---|---|---|---|
+| **Peran Utama** | Desktop Window Shell & OS Wrapper | Security Microkernel & Execution Leaf | AI Brain & Workflow Orchestrator | Presentation & User Interaction |
+| **Bahasa & Runtime** | Rust (Tauri v2) | Rust 2024 (Tokio async) | Go 1.27 (Google Wire DI) | TypeScript, React 19, Tailwind 4 |
+| **Lokasi Kode** | `apps/tauri/` | `crates/*` | `engine/src/`, `engine/cmd/` | `web/src/` |
+| **Tugas Riil** | 1. Membungkus UI `web/` jadi native desktop window.<br>2. Tray icon & system menu.<br>3. Dialog OS native.<br>4. Forwarding IPC ke Go engine :9090. | 1. Sandboxing OS (Landlock LSM).<br>2. Eksekusi native tools (fs, shell, git).<br>3. **LLM Provider Execution SSOT** (ADR 0001).<br>4. AES-256-GCM Vault.<br>5. WASI plugin runtime & channel adapters. | 1. Keputusan AI & Turn state machine (`StartTurn`).<br>2. Fleet governance: Ships, Squads, Crews.<br>3. Policy & Approval gates.<br>4. Vector memory & persistent storage (SQLite/Postgres).<br>5. WebAuthn & QR device pairing. | 1. Render UI components.<br>2. Client-side routing.<br>3. State management via Zustand (`useFleetStore`).<br>4. HTTP / SSE client via `apiClient.ts`. |
+| **Inbound Interface** | Tauri IPC `invoke('cmd')` | gRPC `:50052` (`SystemGatewayService`) | HTTP `:9090`, gRPC `:50051` | Browser DOM & User Events |
+| **Outbound Interface** | HTTP ke Go :9090 | Return gRPC stream/response ke Go | gRPC client ke Rust :50052, SSE stream ke UI | HTTP request ke Go :9090 |
+| **DILARANG Keras** | Business logic, direct terminal exec (ODR-07), fake metrics (ADR 0003). | Crew orchestration, RAG memory, fleet governance. | Shell/fs exec lokal tanpa Rust (wajib fail-closed), direct vendor LLM calls. | Backend server logic (Express `server.ts`), direct LLM SDK (`@google/genai`). |
 
 ---
 
 ## 3. Communication & Data Flow
 
-### A. Agent Turn & Fleet Execution Flow
-1. User enters task/prompt in `web-2/` UI (Quartermaster Office or Mission Board).
-2. UI calls `apiClient.chatQuartermaster(content)` or `createQuest(quest)`.
-3. Request is routed via HTTP/gRPC to **Go Orchestrator (`engine/`)**.
-4. Go Orchestrator analyzes the objective, plans task execution, and checks policies.
-5. If the agent needs to run a shell command or read disk files, Go calls **Rust Core (`SystemGateway.ExecuteNativeTool`)** via gRPC.
-6. Rust Core executes the tool inside the Landlock OS sandbox, enforcing security policies, and returns the result.
-7. Go Orchestrator records the output, updates memory, and streams events back to UI.
+### A. Crew Turn Execution Flow
+```
+1. User mengirim prompt di UI (`web/`)
+   ↓ HTTP POST /api/fleet/crews/{id}/run
+2. Go HTTP Handler (`engine/src/fleet/`)
+   ↓ memanggil crew.Services.StartTurn()
+3. Go Orchestrator (`engine/src/crew/services.go`)
+   ↓ Menyusun turn context (history pesan, tools allowlist, memory)
+   ↓ Membuka gRPC stream ke Rust SystemGateway.ExecuteTurn (ADR 0001)
+4. Rust Turn Executor (`crates/clawcrew-providers/`)
+   ↓ Memanggil vendor LLM (OpenAI / Gemini / Bedrock / Anthropic)
+   ↓ Streaming tokens kembali ke Go melalui gRPC
+5. Go Engine
+   ↓ Memvalidasi tool calls terhadap policy & approval gate
+   ↓ Jika tool aman/disetujui → panggil Rust ExecuteNativeTool (sandboxed)
+   ↓ Menyimpan hasil ke SQLite/Postgres & memori RAG
+   ↓ Meneruskan event stream via SSE ke UI
+6. UI memperbarui tampilan chat secara real-time
+```
 
-### B. Fleet Persistence Flow
-1. User creates or modifies a quest, crew berth, ship charter, or policy directive in UI.
-2. UI triggers action in `useFleetStore`, which calls `apiClient.saveCollection(name, data)`.
-3. Go Orchestrator receives the update at `/api/collections/{name}`, validates the schema, and saves it to disk via Go's persistence layer.
-4. Changes are durable and synchronized across all interface views.
+### B. Terminal Execution Flow (ODR-07 Anti-Injection)
+```
+UI / Tauri ──► HTTP POST /api/engine/execute (Go :9090)
+                    │
+                    ▼
+           Go Policy & Approval Gate (fleet/policies.go)
+           [Cek Risk Tier & Izin User / Approvals]
+                    │
+                    ▼ (Jika Disetujui)
+           gRPC ExecuteNativeTool ke Rust Gateway (:50052)
+                    │
+                    ▼
+           Rust OS Sandbox (Landlock / Seatbelt)
+                    │
+                    ▼ (Kembalikan Output)
+           Rust ──► Go Audit Log ──► UI Response
+```
 
 ---
 
-## 4. Coding Standards
+## 4. Coding & Quality Standards
 
-### Go Standards (`engine/`)
-- **Package Layout:** Clean architecture (`engine/cmd/`, `engine/app/`, `engine/core/`, `engine/src/<domain>/`, `engine/pkg/`).
-- **Standard Library First:** Favor `net/http`, `log/slog`, `context`, `sync`, and `encoding/json` before external dependencies.
-- **Error Handling:** Explicit error checking and propagation using `github.com/diezy-labs/claw-crew/engine/core/errors`. Zero unhandled errors.
-- **Dependency Injection:** Wire (`github.com/google/wire`) providers in `wire.go`.
-- **Logging:** Structured logging only via `slog.Info`, `slog.Error`, `slog.Warn`.
-
-### Rust Standards (`crates/`, `apps/tauri-2/`)
-- **Error Propagation:** Always return `Result<T, E>` and use `?`. Do not use `unwrap()` or `expect()` in production paths.
-- **Safety & Isolation:** External actions must default closed. Sandboxed execution must respect Landlock boundaries.
-- **Integration Tests:** Move integration tests to `tests/` directories; keep inline `#[test]` minimal.
-
-### TypeScript / Frontend Standards (`web-2/`)
-- **Strict Typing:** All props, stores, and API clients must be strictly typed matching `src/types/index.ts`. No `any` escapes.
-- **Zero Mocking In UI:** Components must never contain fallback mock arrays. All state originates from `useFleetStore` backed by real API calls.
-- **Component Hygiene:** Reusable components follow atomic design (`components/common/` for UI primitives, `components/features/` for domain views).
+- **Rust Standards:**
+  - Wajib zero `unwrap()` dan `expect()` di jalur produksi.
+  - Poison recovery pada Mutex: `poisoned.into_inner()` + log warning.
+  - Standar ukuran file $\le 800$ baris, fungsi $\le 60$ baris.
+  - Gunakan `cargo nextest run` untuk testing.
+  - Prefix crate baru: `galleon-*`.
+- **Go Standards:**
+  - Clean architecture: `engine/src/<domain>/` (`services.go`, `store.go`, `handlers.go`).
+  - Google Wire DI di `engine/app/wire.go`.
+  - Fail-closed: Jika Rust gateway offline, tolak tool execution dengan error; dilarang fallback lokal.
+  - Structured logging dengan zap/slog dan error wrapping `%w`.
+- **UI / Frontend Standards:**
+  - TypeScript strict mode, zero `any`.
+  - Zero backend logic di `web/` (hapus Express `server.ts`).
+  - Hapus `@google/genai` dan artefak AI Studio dari `web/`.

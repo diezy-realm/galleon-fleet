@@ -5,22 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/core/config"
-	"github.com/diezy-labs/claw-crew/engine/pkg/client"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
 )
 
 func TestCrewOrchestratorTurn(t *testing.T) {
-	cfg := &config.AppConfig{}
-	gateway, err := client.NewSystemGatewayClient("")
-	if err != nil {
-		t.Fatalf("failed to create gateway: %v", err)
-	}
+	gateway, cleanup := startMockGatewayServer(t)
+	defer cleanup()
 
-	provider := llm.NewProvider(cfg, gateway)
-	dispatcher := llm.NewToolDispatcher(gateway)
-	orchestrator := crew.NewService(provider, dispatcher, gateway)
+	dispatcher := crew.NewToolDispatcher(gateway)
+	orchestrator := crew.NewService(dispatcher, gateway)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -76,15 +69,11 @@ func TestCrewOrchestratorTurn(t *testing.T) {
 }
 
 func TestCrewCancelTurn(t *testing.T) {
-	cfg := &config.AppConfig{}
-	gateway, err := client.NewSystemGatewayClient("")
-	if err != nil {
-		t.Fatalf("failed to create gateway: %v", err)
-	}
+	gateway, cleanup := startMockGatewayServer(t)
+	defer cleanup()
 
-	provider := llm.NewProvider(cfg, gateway)
-	dispatcher := llm.NewToolDispatcher(gateway)
-	orchestrator := crew.NewService(provider, dispatcher, gateway)
+	dispatcher := crew.NewToolDispatcher(gateway)
+	orchestrator := crew.NewService(dispatcher, gateway)
 
 	ctx := context.Background()
 	turnReq := &crew.TurnRequest{

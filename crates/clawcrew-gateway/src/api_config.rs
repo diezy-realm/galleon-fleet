@@ -2621,7 +2621,7 @@ fn build_etag_for(body: &serde_json::Value) -> String {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::{GatewayRateLimiter, IdempotencyStore, nodes};
     use async_trait::async_trait;
@@ -2683,7 +2683,7 @@ mod tests {
         }
     }
 
-    fn test_state(config: clawcrew_config::schema::Config) -> AppState {
+    pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
         let memory: Arc<dyn clawcrew_memory::Memory> =
             Arc::new(clawcrew_memory::NoneMemory::new("api-config-test"));
         AppState {

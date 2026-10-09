@@ -3,7 +3,7 @@
 use anyhow::Context as _;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
-use clawcrew_runtime::i18n;
+use galleon_i18n as i18n;
 
 use super::embed::{DiscordEmbed, EmbedAuthor, EmbedField, EmbedFooter, EmbedMedia};
 

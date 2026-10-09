@@ -144,7 +144,7 @@ impl IdempotencyStore {
         }
     }
 
-    fn record_if_new(&self, key: &str) -> bool {
+    pub(crate) fn record_if_new(&self, key: &str) -> bool {
         let now = Instant::now();
         let mut entries = self.entries.lock();
 

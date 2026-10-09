@@ -66,6 +66,8 @@ async fn execute_native_tool(
     let request = tonic::Request::new(ToolCallRequest {
         tool_name: tool_name.to_string(),
         arguments_json: arguments_json.to_string(),
+        workspace_path: None,
+        timeout_seconds: None,
     });
     grpc.unary(request, path, ProstCodec::default())
         .await

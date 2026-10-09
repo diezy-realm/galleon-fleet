@@ -13,8 +13,8 @@ use clawcrew_api::channel::{
 use clawcrew_config::schema::{
     Config, DEFAULT_MULTI_MESSAGE_DELAY_MS, StreamMode, TELEGRAM_OFFICIAL_API_BASE_URL,
 };
-use clawcrew_runtime::i18n;
-use clawcrew_runtime::security::pairing::PairingGuard;
+use galleon_i18n as i18n;
+use clawcrew_config::pairing::PairingGuard;
 
 /// How long a successful `getUpdates` exchange stays evidence that the listener
 /// is working.
@@ -47,6 +47,9 @@ const TELEGRAM_MAX_MESSAGE_LENGTH: usize = 4096;
 
 /// Prefix for synthetic draft ids returned by `send_draft` in MultiMessage mode.
 const TELEGRAM_MULTI_MESSAGE_SYNTHETIC_PREFIX: &str = "multi_message_synthetic:";
+
+pub type TelegramSkillsResolver =
+    Arc<dyn Fn(&Path) -> Vec<clawcrew_api::skill::Skill> + Send + Sync>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct MultiDraftKey {
@@ -978,6 +981,8 @@ pub struct TelegramChannel {
     fixture_http_client: Option<reqwest::Client>,
     /// Pre-computed tool command specs (name, description) for bot command registration.
     tool_command_specs: Vec<(String, String)>,
+    skills: Vec<clawcrew_api::skill::Skill>,
+    skills_resolver: Option<TelegramSkillsResolver>,
     /// Pending approval requests: callback_data key → oneshot sender.
     /// `listen()` resolves these when a matching `callback_query` arrives.
     pending_approvals:
@@ -2161,7 +2166,7 @@ impl TelegramChannel {
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
-                            "error": clawcrew_runtime::security::scrub(&error.to_string()),
+                            "error": galleon_security_scrub::scrub(&error.to_string()),
                         })),
                     "Telegram model picker callback acknowledgement failed"
                 );
@@ -2224,7 +2229,7 @@ impl TelegramChannel {
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
-                            "error": clawcrew_runtime::security::scrub(&error.to_string()),
+                            "error": galleon_security_scrub::scrub(&error.to_string()),
                             "picker_message_id": message_id,
                         })),
                     "Telegram model picker keyboard cleanup failed"
@@ -2303,7 +2308,7 @@ impl TelegramChannel {
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
-                            "error": clawcrew_runtime::security::scrub(&error.to_string()),
+                            "error": galleon_security_scrub::scrub(&error.to_string()),
                             "picker_message_id": message_id,
                         })),
                     "Telegram model picker edit failed; restoring prior keyboard"
@@ -2583,6 +2588,8 @@ impl TelegramChannel {
             #[cfg(test)]
             fixture_http_client: None,
             tool_command_specs: Vec::new(),
+            skills: Vec::new(),
+            skills_resolver: None,
             pending_approvals: Arc::new(tokio::sync::Mutex::new(std::collections::HashMap::new())),
             pending_model_pickers: tokio::sync::Mutex::new(HashMap::new()),
             approval_timeout_secs: 120,
@@ -2720,6 +2727,21 @@ impl TelegramChannel {
     /// Configure workspace directory for saving downloaded attachments.
     pub fn with_workspace_dir(mut self, dir: std::path::PathBuf) -> Self {
         self.workspace_dir = Some(dir);
+        self
+    }
+
+    /// Configure skills for bot command registration.
+    pub fn with_skills(mut self, skills: Vec<clawcrew_api::skill::Skill>) -> Self {
+        self.skills = skills;
+        self
+    }
+
+    /// Configure dynamic skills resolver for bot command registration.
+    pub fn with_skills_resolver(
+        mut self,
+        resolver: TelegramSkillsResolver,
+    ) -> Self {
+        self.skills_resolver = Some(resolver);
         self
     }
 
@@ -3162,7 +3184,7 @@ impl TelegramChannel {
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                        .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                        .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                     "TTS disabled"
                 ),
             }
@@ -3688,9 +3710,17 @@ impl TelegramChannel {
             .collect();
 
         // Collect commands from installed skills.
-        if let Some(ref workspace_dir) = self.workspace_dir {
-            let skills = clawcrew_runtime::skills::load_skills(workspace_dir);
+        let skills = if let Some(ref resolver) = self.skills_resolver {
+            if let Some(ref workspace_dir) = self.workspace_dir {
+                resolver(workspace_dir)
+            } else {
+                self.skills.clone()
+            }
+        } else {
+            self.skills.clone()
+        };
 
+        if !skills.is_empty() {
             for skill in &skills {
                 let sanitized = sanitize_telegram_command_name(&skill.name);
                 if sanitized.is_empty() {
@@ -3817,7 +3847,7 @@ impl TelegramChannel {
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                        .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                        .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                     "Failed to register Telegram bot commands"
                 );
             }
@@ -3907,7 +3937,7 @@ impl TelegramChannel {
                                 ::clawcrew_log::Action::Note
                             )
                             .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                            .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                             "TTS voice reply failed"
                         );
                     }
@@ -3976,7 +4006,7 @@ impl TelegramChannel {
                                 ::clawcrew_log::Action::Note
                             )
                             .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                            .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                             "TTS voice reply failed"
                         );
                     }
@@ -4166,7 +4196,7 @@ impl TelegramChannel {
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                        .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                        .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                     "Failed to fetch bot username"
                 );
                 None
@@ -4835,7 +4865,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                 WARN,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                     .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                    .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                    .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                 "Failed to create telegram_files directory"
             );
             return AttachmentMaterialization::RetryTransient;
@@ -4850,7 +4880,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
-                            "error": clawcrew_runtime::security::scrub(&format!("{}", e)),
+                            "error": galleon_security_scrub::scrub(&format!("{}", e)),
                             "classification": format!("{:?}", e.kind),
                         })),
                     "Failed to get attachment file path"
@@ -4871,7 +4901,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                        .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                        .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                     "Failed to download attachment"
                 );
                 return AttachmentMaterialization::RetryTransient;
@@ -4905,7 +4935,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                 WARN,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                     .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                    .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                    .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                 &format!("Failed to save attachment to {}", local_path.display())
             );
             return AttachmentMaterialization::RetryTransient;
@@ -5213,7 +5243,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
-                            "error": clawcrew_runtime::security::scrub(&format!("{}", e)),
+                            "error": galleon_security_scrub::scrub(&format!("{}", e)),
                             "reason": format!("{reason:?}"),
                         })),
                     "Failed to notify sender about skipped voice message"
@@ -5330,7 +5360,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
-                            "error": clawcrew_runtime::security::scrub(&format!("{}", e)),
+                            "error": galleon_security_scrub::scrub(&format!("{}", e)),
                             "classification": format!("{:?}", e.kind),
                         })),
                     "Failed to get voice file path"
@@ -5365,7 +5395,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                        .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                        .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                     "Failed to download voice file"
                 );
                 return UpdateDisposition::RetryTransient;
@@ -5379,7 +5409,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                        .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                        .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                     "Voice transcription failed"
                 );
                 return UpdateDisposition::RetryTransient;
@@ -6170,7 +6200,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Unknown)
                         .with_attrs(
-                            ::serde_json::json!({"url": target, "error": clawcrew_runtime::security::scrub(&format!("{}", e))})
+                            ::serde_json::json!({"url": target, "error": galleon_security_scrub::scrub(&format!("{}", e))})
                         ),
                     "Telegram send media by URL failed; falling back to text link"
                 );
@@ -6744,7 +6774,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                     .with_outcome(::clawcrew_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
-                        "approval_id": clawcrew_runtime::security::scrub(approval_id)
+                        "approval_id": galleon_security_scrub::scrub(approval_id)
                     })),
                 "approval callback lost the resolution race; card left untouched"
             );
@@ -6794,7 +6824,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                 WARN,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                     .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                    .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                    .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                 "answerCallbackQuery failed"
             );
         }
@@ -6854,7 +6884,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
                             WARN,
                             ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                                 .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                                .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                                .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                             "editMessageText (approval resolution) request failed"
                         );
                     }
@@ -7616,7 +7646,7 @@ impl Channel for TelegramChannel {
                             ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                                 .with_outcome(::clawcrew_log::EventOutcome::Unknown)
                                 .with_attrs(
-                                    ::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e)), "message_id": message_id})
+                                    ::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e)), "message_id": message_id})
                                 ),
                             "Invalid Telegram message_id ''"
                         );
@@ -7792,7 +7822,7 @@ impl Channel for TelegramChannel {
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_outcome(::clawcrew_log::EventOutcome::Unknown)
                         .with_attrs(
-                            ::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e)), "message_id": message_id})
+                            ::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e)), "message_id": message_id})
                         ),
                     "Invalid Telegram message_id ''"
                 );
@@ -7967,7 +7997,7 @@ impl Channel for TelegramChannel {
                     DEBUG,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                         .with_attrs(
-                            ::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e)), "message_id": message_id})
+                            ::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e)), "message_id": message_id})
                         ),
                     "Invalid Telegram draft message_id ''"
                 );
@@ -8098,7 +8128,7 @@ impl Channel for TelegramChannel {
                         ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                             .with_outcome(::clawcrew_log::EventOutcome::Unknown)
                             .with_attrs(
-                                ::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})
+                                ::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})
                             ),
                         "startup probe error; retrying in 5s"
                     );
@@ -8228,7 +8258,7 @@ impl Channel for TelegramChannel {
                         ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                             .with_outcome(::clawcrew_log::EventOutcome::Unknown)
                             .with_attrs(
-                                ::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})
+                                ::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})
                         ),
                         "poll error"
                     );
@@ -8246,7 +8276,7 @@ impl Channel for TelegramChannel {
                         ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                             .with_outcome(::clawcrew_log::EventOutcome::Unknown)
                             .with_attrs(
-                                ::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})
+                                ::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})
                         ),
                         "parse error"
                     );
@@ -8359,7 +8389,7 @@ Ensure only one `clawcrew` process is using this bot token."
                 ::clawcrew_log::record!(
                     DEBUG,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_attrs(::serde_json::json!({"error": clawcrew_runtime::security::scrub(&format!("{}", e))})),
+                        .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                     "health check failed"
                 );
                 false

@@ -57,53 +57,9 @@ pub fn scrub_credentials(input: &str) -> String {
         .to_string()
 }
 
-pub(crate) static SENSITIVE_KEY_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"(?i)(authorization|token|api[_-]?key|password|secret|user[_-]?key|bearer|credential|set[_-]?cookie|cookie)"#)
-        .expect("static sensitive-key regex must compile")
-});
-const REDACTED_CREDENTIAL_VALUE: &str = "[REDACTED]";
-
-/// Whether a JSON key denotes a credential value on a human-facing surface.
-///
-/// Keep every rendering boundary on this classifier so a top-level scalar does
-/// not lose the credential context before structured redaction can inspect it.
-pub fn is_credential_key(key: &str) -> bool {
-    crate::approval::looks_like_secret_key(key) || SENSITIVE_KEY_REGEX.is_match(key)
-}
-
-/// Structured-aware credential scrub for a JSON value bound for a human-facing
-/// surface. Object entries whose key names a credential have their entire value
-/// replaced with a marker, preserving the key. Every other string leaf still
-/// runs through the text [`scrub_credentials`] so inline `token=...` patterns
-/// inside unrelated fields are caught too. Serialize-then-scrub would corrupt
-/// key names that merely contain a sensitive word (e.g. `access_token`), so this
-/// walks the value instead. Same rendering-boundary contract as
-/// [`scrub_credentials`].
-pub fn scrub_credentials_value(value: serde_json::Value) -> serde_json::Value {
-    match value {
-        serde_json::Value::Object(map) => {
-            let scrubbed = map
-                .into_iter()
-                .map(|(key, val)| {
-                    if is_credential_key(&key) {
-                        (
-                            key,
-                            serde_json::Value::String(REDACTED_CREDENTIAL_VALUE.to_string()),
-                        )
-                    } else {
-                        (key, scrub_credentials_value(val))
-                    }
-                })
-                .collect();
-            serde_json::Value::Object(scrubbed)
-        }
-        serde_json::Value::Array(items) => {
-            serde_json::Value::Array(items.into_iter().map(scrub_credentials_value).collect())
-        }
-        serde_json::Value::String(s) => serde_json::Value::String(scrub_credentials(&s)),
-        other => other,
-    }
-}
+pub use galleon_security_scrub::{
+    is_credential_key, scrub_credentials_value, SENSITIVE_KEY_REGEX,
+};
 
 #[cfg(test)]
 mod tests {

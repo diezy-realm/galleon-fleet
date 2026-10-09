@@ -1374,6 +1374,217 @@ pub trait Channel: Send + Sync + crate::attribution::Attributable {
     }
 }
 
+// ── Drafting & Streaming Types ──────────────────────────────────────
+
+/// Shared one-shot acknowledgement slot for [`StreamDelta::FlushBarrier`].
+pub type FlushBarrierAck =
+    std::sync::Arc<std::sync::Mutex<Option<tokio::sync::oneshot::Sender<()>>>>;
+
+/// Placeholder text used for newly opened draft messages.
+pub const DRAFT_PLACEHOLDER: &str = "...";
+/// Prefix for liveness-only thinking/reasoning progress.
+pub const THINKING_STATUS_PREFIX: &str = "\u{1f914} ";
+/// Prefix for opt-in raw reasoning progress.
+pub const REASONING_FULL_PREFIX: &str = THINKING_STATUS_PREFIX;
+pub const THINKING_STATUS_LABEL: &str = "Thinking...";
+pub const THINKING_STATUS_ROUND_PREFIX: &str = "Thinking (round ";
+pub const THINKING_STATUS_ROUND_SUFFIX: &str = ")...";
+
+/// Status-mode reasoning tick that does not expose raw reasoning text.
+pub fn thinking_status_text(iteration: usize) -> String {
+    let round = iteration + 1;
+    if round == 1 {
+        format!("{THINKING_STATUS_PREFIX}{THINKING_STATUS_LABEL}\n")
+    } else {
+        format!(
+            "{THINKING_STATUS_PREFIX}{THINKING_STATUS_ROUND_PREFIX}{round}{THINKING_STATUS_ROUND_SUFFIX}\n"
+        )
+    }
+}
+
+/// Parse the label portion of a generated status-mode reasoning line.
+pub fn thinking_status_label_round(label: &str) -> Option<usize> {
+    if label == THINKING_STATUS_LABEL {
+        return Some(1);
+    }
+    label
+        .strip_prefix(THINKING_STATUS_ROUND_PREFIX)
+        .and_then(|rest| rest.strip_suffix(THINKING_STATUS_ROUND_SUFFIX))
+        .and_then(|round| round.parse::<usize>().ok())
+        .filter(|round| *round > 1)
+}
+
+/// Comparable round number for a generated status-mode reasoning line.
+pub fn thinking_status_round(text: &str) -> Option<usize> {
+    let label = text
+        .strip_prefix(THINKING_STATUS_PREFIX)?
+        .strip_suffix('\n')?;
+    thinking_status_label_round(label)
+}
+
+/// Whether a progress line is one of the liveness-only thinking status lines.
+pub fn is_thinking_status_text(text: &str) -> bool {
+    thinking_status_round(text).is_some()
+}
+
+/// Delta sent from the agent loop to the channel's draft updater.
+/// Append-only — no clear/reset variant exists by design.
+#[derive(Debug, Clone)]
+pub enum StreamDelta {
+    /// Response text to append to the message buffer.
+    Text(String),
+    /// Ephemeral tool progress (not part of the response body).
+    Status(String),
+    /// A pending tool call. Channel draft consumers decide how to render its
+    /// arguments; the runtime keeps this event structured to avoid coupling a
+    /// transport-specific disclosure policy into the agent loop.
+    ToolStart {
+        tool: String,
+        arguments: std::sync::Arc<serde_json::Value>,
+        /// Canonical trust origin carried from the resolved static or activated
+        /// tool. `None` means the name did not resolve in either registry.
+        tool_provenance: Option<crate::attribution::ToolProvenance>,
+    },
+    /// A completed tool call paired with its original arguments.
+    ToolComplete {
+        tool: String,
+        arguments: std::sync::Arc<serde_json::Value>,
+        /// The same trust origin observed when the matching start event was
+        /// emitted; consumers must treat `None` as untrusted.
+        tool_provenance: Option<crate::attribution::ToolProvenance>,
+        secs: u64,
+        success: bool,
+        error: Option<String>,
+    },
+    /// Provider reasoning text. Channel surfaces must opt in before rendering.
+    Reasoning(String),
+    /// Typed, non-sensitive agent lifecycle progress.
+    Lifecycle(ProgressEvent),
+    /// Rendezvous barrier: flush any buffered draft narration for the
+    /// in-flight turn, then ack.
+    FlushBarrier(FlushBarrierAck),
+}
+
+/// Alias for channel draft events (identical to [`StreamDelta`]).
+pub type DraftEvent = StreamDelta;
+
+impl StreamDelta {
+    /// Render structured tool events with the historical conservative policy.
+    #[must_use]
+    pub fn legacy_status(&self) -> Option<String> {
+        match self {
+            Self::ToolStart { tool, arguments, .. } => {
+                let hint = arguments.as_object().and_then(|map| {
+                    match tool.as_str() {
+                        "shell" => map.get("command"),
+                        "file_read" | "file_write" => map.get("path"),
+                        _ => map.get("action").or_else(|| map.get("query")),
+                    }
+                    .and_then(|v| v.as_str())
+                });
+                match hint {
+                    Some(h) => Some(format!("\u{23f3} {tool}: {h}\n")),
+                    None => Some(format!("\u{23f3} {tool}\n")),
+                }
+            }
+            Self::ToolComplete {
+                tool,
+                secs,
+                success,
+                error,
+                ..
+            } => {
+                if *success {
+                    Some(format!("\u{2705} {tool} ({secs}s)\n"))
+                } else if let Some(reason) = error {
+                    Some(format!("\u{274c} {tool} ({secs}s): {reason}\n"))
+                } else {
+                    Some(format!("\u{274c} {tool} ({secs}s)\n"))
+                }
+            }
+            Self::Text(_)
+            | Self::Status(_)
+            | Self::Reasoning(_)
+            | Self::Lifecycle(_)
+            | Self::FlushBarrier(_) => None,
+        }
+    }
+
+    /// Build a flush barrier event plus the receiver that resolves once the
+    /// consumer acks it (or drops the event).
+    pub fn flush_barrier() -> (Self, tokio::sync::oneshot::Receiver<()>) {
+        let (ack_tx, ack_rx) = tokio::sync::oneshot::channel();
+        (
+            Self::FlushBarrier(std::sync::Arc::new(std::sync::Mutex::new(Some(ack_tx)))),
+            ack_rx,
+        )
+    }
+
+    /// Fire a barrier ack exactly once across all clones of the event.
+    pub fn ack_flush_barrier(ack: &FlushBarrierAck) {
+        if let Ok(mut slot) = ack.lock()
+            && let Some(tx) = slot.take()
+        {
+            let _ = tx.send(());
+        }
+    }
+}
+
+/// Execution outcome of an agent turn initiated by a channel message.
+#[derive(Debug)]
+pub enum ChannelTurnResult {
+    Completed(String),
+    Cancelled,
+    Failed(anyhow::Error),
+}
+
+/// Context passed to a [`ChannelTurnRunner`] for executing a single channel turn.
+pub type ReceiptGeneratorFn = dyn Fn(&str, &serde_json::Value, &str) -> String + Send + Sync;
+
+pub struct ChannelTurnContext {
+    pub msg: ChannelMessage,
+    pub delta_tx: Option<tokio::sync::mpsc::Sender<StreamDelta>>,
+    pub cancellation_token: CancellationToken,
+    pub approval_channel: Option<std::sync::Arc<dyn Channel>>,
+    pub model_provider: std::sync::Arc<dyn crate::model_provider::ModelProvider>,
+    pub model: String,
+    pub temperature: Option<f64>,
+    pub max_tool_iterations: usize,
+    pub tools_registry: Option<std::sync::Arc<crate::tool::ScopedToolRegistry>>,
+    pub observer: Option<std::sync::Arc<dyn crate::observability_traits::Observer>>,
+    pub turn_id: Option<String>,
+    pub agent_alias: Option<String>,
+    pub model_provider_name: String,
+    pub receipts_collector: Option<std::sync::Arc<std::sync::Mutex<Vec<String>>>>,
+    pub generate_receipt: Option<std::sync::Arc<ReceiptGeneratorFn>>,
+}
+
+/// Trait abstracting turn execution for channel messages,
+/// decoupling channel routing from the concrete agent runtime loop.
+#[async_trait]
+pub trait ChannelTurnRunner: Send + Sync {
+    async fn run_channel_turn(
+        &self,
+        ctx: ChannelTurnContext,
+        history: &mut Vec<crate::model_provider::ChatMessage>,
+    ) -> ChannelTurnResult;
+}
+
+/// A no-op turn runner for testing or channel-only listener verification.
+#[derive(Debug, Default, Clone)]
+pub struct NoopChannelTurnRunner;
+
+#[async_trait]
+impl ChannelTurnRunner for NoopChannelTurnRunner {
+    async fn run_channel_turn(
+        &self,
+        _ctx: ChannelTurnContext,
+        _history: &mut Vec<crate::model_provider::ChatMessage>,
+    ) -> ChannelTurnResult {
+        ChannelTurnResult::Completed("noop".to_string())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

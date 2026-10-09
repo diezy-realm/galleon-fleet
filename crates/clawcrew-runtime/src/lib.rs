@@ -10,6 +10,7 @@ pub mod identity;
 pub mod migration;
 pub mod util;
 
+pub mod acp;
 pub mod agent;
 pub mod approval;
 pub mod browse;

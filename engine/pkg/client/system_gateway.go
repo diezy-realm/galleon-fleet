@@ -18,6 +18,7 @@ type SystemGatewayClient interface {
 	ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string) (string, error)
 	GetDecryptedSecret(ctx context.Context, keyName string) (string, error)
 	ExecuteTask(ctx context.Context, taskID, taskData string) (string, error)
+	ExecuteTurn(ctx context.Context, req *pb.ExecuteTurnRequest) (pb.SystemGateway_ExecuteTurnClient, error)
 	Close() error
 }
 
@@ -85,9 +86,11 @@ func (c *systemGatewayClient) ExecuteNativeTool(ctx context.Context, toolName, a
 
 	client, err := c.getClient()
 	if err != nil {
-		// Fallback for mocked or standalone environments
-		log.WarnContext(ctx, "executing tool locally in standalone mock mode", slog.String("tool", toolName))
-		return `{"status": "mock_executed", "output": "Execution via standalone Go engine"}`, nil
+		log.ErrorContext(ctx, "failed to get Rust SystemGateway client, rejecting execution",
+			slog.String("tool", toolName),
+			slog.String("error", err.Error()),
+		)
+		return "", appErrors.Wrap(err, appErrors.CodeUnavailable, "Rust SystemGateway unreachable: native tool execution rejected (fail-closed boundary enforced)", appErrors.LayerExternal)
 	}
 
 	resp, err := client.ExecuteNativeTool(ctx, &pb.ToolCallRequest{
@@ -145,6 +148,21 @@ func (c *systemGatewayClient) ExecuteTask(ctx context.Context, taskID, taskData 
 
 	return resp.GetOutput(), nil
 }
+
+func (c *systemGatewayClient) ExecuteTurn(ctx context.Context, req *pb.ExecuteTurnRequest) (pb.SystemGateway_ExecuteTurnClient, error) {
+	client, err := c.getClient()
+	if err != nil {
+		return nil, err
+	}
+
+	stream, err := client.ExecuteTurn(ctx, req)
+	if err != nil {
+		return nil, appErrors.Wrap(err, appErrors.CodeInternal, "failed to start ExecuteTurn streaming via Rust gateway", appErrors.LayerExternal)
+	}
+
+	return stream, nil
+}
+
 
 func (c *systemGatewayClient) Close() error {
 	c.mu.Lock()

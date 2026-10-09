@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -17,7 +17,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
+	"github.com/diezy-labs/claw-crew/engine/pkg/client"
+	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
 )
 
 var safeFilenameRegex = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
@@ -26,10 +27,11 @@ type fleetService struct {
 	mu          sync.RWMutex
 	fleets      map[string]*Fleet
 	dataDir     string
-	llmProvider llm.Provider
+	gateway     client.SystemGatewayClient
 	diagnostics []DiagnosticItem
 	snapshots   []SnapshotItem
 	proposer    ObjectiveProposer
+	terminalAudit *TerminalAuditLedger
 }
 
 // ObjectiveProposer is the objective-branch dependency the Quartermaster router
@@ -48,19 +50,30 @@ type ProposedFleetOrder struct {
 	Status      string `json:"status"` // awaiting_pirate_king_approval
 }
 
-func NewService(llmProvider llm.Provider) Service {
-	// Look for web-2/data or fallback to local data dir
-	dataDir := filepath.Join("..", "web-2", "data")
-	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
-		dataDir = filepath.Join("data")
+// resolveDataDir determines the canonical data directory for fleet collections and snapshots (BG-A6 / G-38).
+func resolveDataDir() string {
+	if env := os.Getenv("GALLEON_DATA_DIR"); env != "" {
+		return env
 	}
+	if env := os.Getenv("FLEET_DATA_DIR"); env != "" {
+		return env
+	}
+	// Prefer engine/data if running from repo root, else fallback to data
+	if fi, err := os.Stat("engine"); err == nil && fi.IsDir() {
+		return filepath.Join("engine", "data")
+	}
+	return filepath.Join("data")
+}
+
+func NewService(gateway client.SystemGatewayClient) Service {
+	dataDir := resolveDataDir()
 	_ = os.MkdirAll(dataDir, 0755)
 
 	// Initial diagnostics use mock status. GetDiagnostics() overlays real signals.
 	initialDiags := []DiagnosticItem{
 		{ID: "d-1", Component: "Sovereign Gateway (Warp Engine)", Status: "unknown", Latency: "unknown", Detail: "Gateway status not checked."},
 		{ID: "d-2", Component: "Kernel Landlock LSM Sandboxing", Status: "unknown", Latency: "unknown", Detail: "Landlock check requires system-specific tools."},
-		{ID: "d-3", Component: "Ollama Local LLM Bridge", Status: "unknown", Latency: "unknown", Detail: "Ollama ping pending."},
+		{ID: "d-3", Component: "System Gateway LLM Provider Core", Status: "unknown", Latency: "unknown", Detail: "LLM execution delegated to System Gateway (:50052)."},
 		{ID: "d-4", Component: "SQLite FTS5 Semantic Memory", Status: "unknown", Latency: "unknown", Detail: "Memory stats pending runtime read."},
 		{ID: "d-5", Component: "Disaster Recovery Daemon", Status: "unknown", Latency: "unknown", Detail: "Snapshot integrity check pending."},
 	}
@@ -87,11 +100,12 @@ func NewService(llmProvider llm.Provider) Service {
 	}
 
 	return &fleetService{
-		fleets:      make(map[string]*Fleet),
-		dataDir:     dataDir,
-		llmProvider: llmProvider,
-		diagnostics: initialDiags,
-		snapshots:   initialSnaps,
+		fleets:        make(map[string]*Fleet),
+		dataDir:       dataDir,
+		gateway:       gateway,
+		diagnostics:   initialDiags,
+		snapshots:     initialSnaps,
+		terminalAudit: NewTerminalAuditLedger(1000),
 	}
 }
 
@@ -275,23 +289,6 @@ func (s *fleetService) GetHarborProviders(ctx context.Context) ([]HarborProvider
 	}, nil
 }
 
-// checkOllama pings the Ollama endpoint with a 100ms timeout. Returns status, latency, detail.
-func checkOllama(ctx context.Context) (status, latency, detail string) {
-	client := &http.Client{Timeout: 100 * time.Millisecond}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost:11434/api/tags", nil)
-	if err != nil {
-		return "error", "0ms", fmt.Sprintf("Ollama check failed: %v", err)
-	}
-	start := time.Now()
-	resp, err := client.Do(req)
-	if err != nil {
-		return "unavailable", "0ms", "Ollama not responding (daemon may be offline)."
-	}
-	defer resp.Body.Close()
-	lat := time.Since(start)
-	return "healthy", fmt.Sprintf("%dms", lat.Milliseconds()), fmt.Sprintf("Ollama API accessible (%d models).", resp.StatusCode)
-}
-
 // checkGateway checks if the gRPC server is listening on :50052 (100ms dial timeout).
 func checkGateway(ctx context.Context) (status, latency, detail string) {
 	dialer := &net.Dialer{Timeout: 100 * time.Millisecond}
@@ -308,10 +305,7 @@ func checkGateway(ctx context.Context) (status, latency, detail string) {
 // checkSnapshots checks if snapshot directory exists with at least one recent file.
 func checkSnapshots() (status, latency, detail string) {
 	start := time.Now()
-	dataDir := filepath.Join("..", "web-2", "data")
-	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
-		dataDir = filepath.Join("data")
-	}
+	dataDir := resolveDataDir()
 	// Look for files matching snap-* pattern
 	matches, _ := filepath.Glob(filepath.Join(dataDir, "snap-*"))
 	lat := time.Since(start)
@@ -337,10 +331,10 @@ func (s *fleetService) GetDiagnostics(ctx context.Context) ([]DiagnosticItem, er
 	copy(out, s.diagnostics)
 
 	// Check d-1: Gateway (port 50052)
-	status, latency, detail := checkGateway(ctx)
+	gwStatus, gwLatency, gwDetail := checkGateway(ctx)
 	for i := range out {
 		if out[i].ID == "d-1" {
-			out[i].Status, out[i].Latency, out[i].Detail = status, latency, detail
+			out[i].Status, out[i].Latency, out[i].Detail = gwStatus, gwLatency, gwDetail
 			break
 		}
 	}
@@ -348,11 +342,18 @@ func (s *fleetService) GetDiagnostics(ctx context.Context) ([]DiagnosticItem, er
 	// Check d-2: Landlock — keep as-is (system-dependent, no portable way)
 	// (d-2 remains "unknown" with explanatory detail)
 
-	// Check d-3: Ollama
-	status, latency, detail = checkOllama(ctx)
+	// Check d-3: LLM Provider Core (delegated to Rust System Gateway :50052 per ADR 0001)
 	for i := range out {
 		if out[i].ID == "d-3" {
-			out[i].Status, out[i].Latency, out[i].Detail = status, latency, detail
+			if gwStatus == "healthy" {
+				out[i].Status = "healthy"
+				out[i].Latency = gwLatency
+				out[i].Detail = "LLM execution ready via System Gateway (:50052)."
+			} else {
+				out[i].Status = "unavailable"
+				out[i].Latency = "0ms"
+				out[i].Detail = "System Gateway (:50052) offline - LLM execution unavailable."
+			}
 			break
 		}
 	}
@@ -373,10 +374,10 @@ func (s *fleetService) GetDiagnostics(ctx context.Context) ([]DiagnosticItem, er
 	}
 
 	// Check d-5: Disaster Recovery (snapshots)
-	status, latency, detail = checkSnapshots()
+	snapStatus, snapLatency, snapDetail := checkSnapshots()
 	for i := range out {
 		if out[i].ID == "d-5" {
-			out[i].Status, out[i].Latency, out[i].Detail = status, latency, detail
+			out[i].Status, out[i].Latency, out[i].Detail = snapStatus, snapLatency, snapDetail
 			break
 		}
 	}
@@ -459,6 +460,9 @@ func (s *fleetService) GetFleetPolicies(ctx context.Context) (map[string]any, er
 
 func (s *fleetService) getCollectionPath(name string) string {
 	safeName := safeFilenameRegex.ReplaceAllString(name, "")
+	if safeName == "" {
+		safeName = "invalid"
+	}
 	return filepath.Join(s.dataDir, safeName+".json")
 }
 
@@ -597,32 +601,34 @@ func (s *fleetService) objectiveAck(prompt string) *QuartermasterChatResponse {
 	}
 }
 
-// streamComplete runs a single-shot LLM completion by collecting the stream.
-// The producer goroutine owns closing chunkCh so the range terminates (no deadlock).
+// streamComplete runs a single-shot LLM completion by collecting the stream from Rust SystemGateway.
 func (s *fleetService) streamComplete(ctx context.Context, system, userMsg string) (string, error) {
-	if s.llmProvider == nil {
-		return "", errors.New("no llm provider configured")
+	if s.gateway == nil {
+		return "", errors.New("no system gateway configured")
 	}
-	req := &llm.ChatRequest{
-		Model:  "quartermaster-model",
-		System: system,
-		Messages: []llm.Message{
+	stream, err := s.gateway.ExecuteTurn(ctx, &pb.ExecuteTurnRequest{
+		Model:        "quartermaster-model",
+		SystemPrompt: system,
+		Messages: []*pb.TurnChatMessage{
 			{Role: "user", Content: userMsg},
 		},
+	})
+	if err != nil {
+		return "", err
 	}
-	chunkCh := make(chan *llm.ChatChunk)
-	errCh := make(chan error, 1)
-	go func() {
-		defer close(chunkCh)
-		errCh <- s.llmProvider.StreamChat(ctx, req, chunkCh)
-	}()
 
 	var sb strings.Builder
-	for chunk := range chunkCh {
-		sb.WriteString(chunk.ContentChunk)
-	}
-	if err := <-errCh; err != nil {
-		return "", err
+	for {
+		token, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return "", err
+		}
+		if ev, ok := token.Event.(*pb.TurnToken_Token); ok && !ev.Token.IsThought {
+			sb.WriteString(ev.Token.Delta)
+		}
 	}
 	return sb.String(), nil
 }
@@ -670,3 +676,175 @@ func (s *fleetService) GetSeedData(ctx context.Context) (map[string]any, error) 
 
 	return seedData, nil
 }
+
+func (s *fleetService) ExecuteTerminal(ctx context.Context, req TerminalExecRequest) (*TerminalExecResponse, error) {
+	start := time.Now()
+	riskTier, reason, evalErr := EvaluateTerminalCommand(req.Command)
+
+	// Injeksi atau syntax terlarang langsung ditolak
+	if evalErr != nil || riskTier == RiskTierBlocked {
+		auditID := ""
+		if s.terminalAudit != nil {
+			auditID = s.terminalAudit.Record(TerminalAuditRecord{
+				Timestamp:  start,
+				Command:    req.Command,
+				RiskTier:   riskTier,
+				Approved:   req.Approved,
+				ApprovedBy: req.ApprovedBy,
+				Success:    false,
+				ExitCode:   1,
+				Duration:   time.Since(start).String(),
+				Error:      reason,
+			})
+		}
+		return &TerminalExecResponse{
+			Stdout:           "",
+			Stderr:           fmt.Sprintf("Security policy rejection: %s", reason),
+			ExitCode:         1,
+			Duration:         time.Since(start).String(),
+			RiskTier:         riskTier,
+			RequiresApproval: false,
+			AuditID:          auditID,
+			Error:            reason,
+		}, nil
+	}
+
+	// High risk command wajib mendapat approval
+	if riskTier == RiskTierHighRisk && !req.Approved {
+		auditID := ""
+		if s.terminalAudit != nil {
+			auditID = s.terminalAudit.Record(TerminalAuditRecord{
+				Timestamp:  start,
+				Command:    req.Command,
+				RiskTier:   riskTier,
+				Approved:   false,
+				ApprovedBy: req.ApprovedBy,
+				Success:    false,
+				ExitCode:   1,
+				Duration:   time.Since(start).String(),
+				Error:      "approval required",
+			})
+		}
+		return &TerminalExecResponse{
+			Stdout:           "[Approval required: high risk command requires explicit approval]",
+			Stderr:           reason,
+			ExitCode:         1,
+			Duration:         time.Since(start).String(),
+			RiskTier:         riskTier,
+			RequiresApproval: true,
+			AuditID:          auditID,
+			Error:            "approval required",
+		}, nil
+	}
+
+	// Fail-closed gate: SystemGateway wajib ada
+	if s.gateway == nil {
+		if s.terminalAudit != nil {
+			s.terminalAudit.Record(TerminalAuditRecord{
+				Timestamp:  start,
+				Command:    req.Command,
+				RiskTier:   riskTier,
+				Approved:   req.Approved,
+				ApprovedBy: req.ApprovedBy,
+				Success:    false,
+				ExitCode:   1,
+				Duration:   time.Since(start).String(),
+				Error:      "SystemGateway unavailable (fail-closed)",
+			})
+		}
+		return nil, fmt.Errorf("fail-closed boundary enforced: system gateway unavailable")
+	}
+
+	// Encode JSON arguments envelope for SystemGateway "bash" tool
+	argsPayload, err := json.Marshal(map[string]string{
+		"command": req.Command,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode command arguments: %w", err)
+	}
+
+	rawResp, err := s.gateway.ExecuteNativeTool(ctx, "bash", string(argsPayload))
+	durationStr := time.Since(start).String()
+	if err != nil {
+		auditID := ""
+		if s.terminalAudit != nil {
+			auditID = s.terminalAudit.Record(TerminalAuditRecord{
+				Timestamp:  start,
+				Command:    req.Command,
+				RiskTier:   riskTier,
+				Approved:   req.Approved,
+				ApprovedBy: req.ApprovedBy,
+				Success:    false,
+				ExitCode:   1,
+				Duration:   durationStr,
+				Error:      err.Error(),
+			})
+		}
+		return &TerminalExecResponse{
+			Stdout:           "",
+			Stderr:           err.Error(),
+			ExitCode:         1,
+			Duration:         durationStr,
+			RiskTier:         riskTier,
+			RequiresApproval: false,
+			AuditID:          auditID,
+			Error:            err.Error(),
+		}, nil
+	}
+
+	// Parse gateway response wrapper
+	var gwWrap struct {
+		Success bool   `json:"success"`
+		Output  string `json:"output"`
+		Error   string `json:"error"`
+	}
+	if err := json.Unmarshal([]byte(rawResp), &gwWrap); err != nil {
+		return nil, fmt.Errorf("malformed gateway response: %w", err)
+	}
+
+	var inner struct {
+		Stdout   string `json:"stdout"`
+		Stderr   string `json:"stderr"`
+		ExitCode int    `json:"exit_code"`
+	}
+	if gwWrap.Output != "" {
+		_ = json.Unmarshal([]byte(gwWrap.Output), &inner)
+	}
+	if !gwWrap.Success && inner.Stderr == "" {
+		inner.Stderr = gwWrap.Error
+	}
+
+	auditID := ""
+	if s.terminalAudit != nil {
+		auditID = s.terminalAudit.Record(TerminalAuditRecord{
+			Timestamp:  start,
+			Command:    req.Command,
+			RiskTier:   riskTier,
+			Approved:   req.Approved,
+			ApprovedBy: req.ApprovedBy,
+			Success:    gwWrap.Success,
+			ExitCode:   inner.ExitCode,
+			Duration:   durationStr,
+			Error:      gwWrap.Error,
+		})
+	}
+
+	return &TerminalExecResponse{
+		Stdout:           inner.Stdout,
+		Stderr:           inner.Stderr,
+		ExitCode:         inner.ExitCode,
+		Duration:         durationStr,
+		RiskTier:         riskTier,
+		RequiresApproval: false,
+		AuditID:          auditID,
+		Error:            gwWrap.Error,
+	}, nil
+}
+
+func (s *fleetService) GetTerminalAudit(ctx context.Context, limit int) ([]TerminalAuditRecord, error) {
+	if s.terminalAudit == nil {
+		return []TerminalAuditRecord{}, nil
+	}
+	return s.terminalAudit.List(limit), nil
+}
+

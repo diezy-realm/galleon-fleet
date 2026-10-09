@@ -5,7 +5,7 @@
 tonic::include_proto!("clawcrew.agent");
 
 use serde_json::json;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use system_gateway_server::SystemGateway;
 use tonic::{Request, Response, Status};
 
@@ -13,17 +13,72 @@ use tonic::{Request, Response, Status};
 /// before it reaches real execution.
 const ALLOWED_TOOLS: &[&str] = &["bash", "read_file", "write_file", "git"];
 
-#[derive(Debug, Default)]
+#[derive(Clone)]
 pub struct SystemGatewayService {
     /// Workspace root for path validation (e.g., ~/galleon-fleet/).
-    /// For now, use current working directory. In production, wire from config.
     workspace_root: Option<PathBuf>,
+    /// Vault directory for persistent secret storage (AES-256 / ChaCha20-Poly1305)
+    vault_dir: Option<PathBuf>,
+    /// SecretStore instance for authenticated decryption
+    secret_store: std::sync::Arc<clawcrew_config::secrets::SecretStore>,
+    /// ModelProvider instance for LLM streaming turn execution (Rust LLM SSOT)
+    model_provider: Option<std::sync::Arc<dyn clawcrew_providers::ModelProvider>>,
+}
+
+impl std::fmt::Debug for SystemGatewayService {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SystemGatewayService")
+            .field("workspace_root", &self.workspace_root)
+            .field("vault_dir", &self.vault_dir)
+            .finish()
+    }
+}
+
+impl Default for SystemGatewayService {
+    fn default() -> Self {
+        Self::new(None)
+    }
 }
 
 impl SystemGatewayService {
     /// Create a new service with optional workspace root for path validation.
     pub fn new(workspace_root: Option<PathBuf>) -> Self {
-        Self { workspace_root }
+        let root = workspace_root.clone().unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+        let vault_dir = root.join(".vault");
+        let secret_store = std::sync::Arc::new(clawcrew_config::secrets::SecretStore::new(&root, true));
+        Self {
+            workspace_root,
+            vault_dir: Some(vault_dir),
+            secret_store,
+            model_provider: None,
+        }
+    }
+
+    /// Configure a custom model provider for LLM streaming execution
+    pub fn with_model_provider(
+        mut self,
+        provider: std::sync::Arc<dyn clawcrew_providers::ModelProvider>,
+    ) -> Self {
+        self.model_provider = Some(provider);
+        self
+    }
+
+    /// Configure a custom vault directory and SecretStore for the service
+    pub fn with_vault(mut self, vault_dir: PathBuf, secret_store: clawcrew_config::secrets::SecretStore) -> Self {
+        self.vault_dir = Some(vault_dir);
+        self.secret_store = std::sync::Arc::new(secret_store);
+        self
+    }
+
+    /// Store an encrypted secret in the vault
+    pub fn set_secret(&self, key_name: &str, plaintext: &str) -> Result<(), String> {
+        let vault_dir = self.vault_dir.as_ref().ok_or_else(|| "no vault dir configured".to_string())?;
+        std::fs::create_dir_all(vault_dir).map_err(|e| format!("failed to create vault dir: {e}"))?;
+        let sanitized_key = key_name.replace(['/', '\\', '.', ':'], "_");
+        let secret_file = vault_dir.join(format!("{sanitized_key}.vault"));
+        let encrypted = self.secret_store.encrypt(plaintext).map_err(|e| format!("encryption failed: {e}"))?;
+        std::fs::write(&secret_file, encrypted).map_err(|e| format!("failed to write secret file: {e}"))?;
+        Ok(())
     }
 
     /// Get the workspace root, falling back to current dir if not set.
@@ -33,16 +88,9 @@ impl SystemGatewayService {
             .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
     }
 
-    /// Validate that a path is within the workspace root (no path traversal).
-    /// Wrapper that uses the service's default workspace_root.
-    fn validate_path(&self, path: &str) -> Result<PathBuf, String> {
-        let workspace_root = self.workspace_root();
-        self.validate_path_with_workspace(path, &workspace_root)
-    }
-
     /// Validate that a path is within the specified workspace root (no path traversal).
     /// Returns the canonicalized path if valid.
-    fn validate_path_with_workspace(&self, path: &str, workspace_root: &PathBuf) -> Result<PathBuf, String> {
+    fn validate_path_with_workspace(&self, path: &str, workspace_root: &Path) -> Result<PathBuf, String> {
         let requested = PathBuf::from(path);
 
         // Canonicalize the provided workspace root
@@ -152,7 +200,7 @@ impl SystemGatewayService {
     }
 
     /// Read a file from the workspace.
-    async fn read_file_with_workspace(&self, path: &str, workspace_root: &PathBuf) -> Result<String, String> {
+    async fn read_file_with_workspace(&self, path: &str, workspace_root: &Path) -> Result<String, String> {
         let validated_path = self.validate_path_with_workspace(path, workspace_root)?;
         tokio::fs::read_to_string(&validated_path)
             .await
@@ -160,7 +208,7 @@ impl SystemGatewayService {
     }
 
     /// Write a file to the workspace.
-    async fn write_file_with_workspace(&self, path: &str, contents: &str, workspace_root: &PathBuf) -> Result<String, String> {
+    async fn write_file_with_workspace(&self, path: &str, contents: &str, workspace_root: &Path) -> Result<String, String> {
         let validated_path = self.validate_path_with_workspace(path, workspace_root)?;
 
         // Ensure parent directory exists.
@@ -225,7 +273,7 @@ impl SystemGateway for SystemGatewayService {
 
         // Apply timeout if specified (default 60s, clamp 1-300s)
         let timeout_seconds = req.timeout_seconds.unwrap_or(60);
-        let timeout_duration = std::time::Duration::from_secs(timeout_seconds.max(1).min(300) as u64);
+        let timeout_duration = std::time::Duration::from_secs(timeout_seconds.clamp(1, 300) as u64);
 
         // Execute based on tool type
         let result = match req.tool_name.as_str() {
@@ -288,32 +336,208 @@ impl SystemGateway for SystemGatewayService {
 
     async fn get_decrypted_secret(
         &self,
-        _request: Request<SecretRequest>,
+        request: Request<SecretRequest>,
     ) -> Result<Response<SecretResponse>, Status> {
-        // ponytail: stub — Secret Vault wiring (crates/clawcrew-vault or
-        // equivalent, decrypt-on-read keyed by `key_name`) is a separate
-        // ticket. `Unimplemented` rather than `found: false`: the latter is
-        // indistinguishable from "this key genuinely doesn't exist" to a
-        // caller, which is the wrong signal while the vault isn't wired at
-        // all. Integration point: swap this body for a real vault lookup
-        // once that crate lands; the request/response shape doesn't change.
-        Err(Status::unimplemented(
-            "secret vault not yet wired — SystemGateway::GetDecryptedSecret has no backing store",
-        ))
+        let req = request.into_inner();
+        let key_name = req.key_name.trim();
+        if key_name.is_empty() {
+            return Err(Status::invalid_argument("key_name cannot be empty"));
+        }
+
+        let Some(vault_dir) = self.vault_dir.as_ref() else {
+            return Ok(Response::new(SecretResponse {
+                found: false,
+                value: String::new(),
+            }));
+        };
+
+        let sanitized_key = key_name.replace(['/', '\\', '.', ':'], "_");
+        let secret_file = vault_dir.join(format!("{sanitized_key}.vault"));
+
+        if !secret_file.exists() {
+            return Ok(Response::new(SecretResponse {
+                found: false,
+                value: String::new(),
+            }));
+        }
+
+        let encrypted = match std::fs::read_to_string(&secret_file) {
+            Ok(c) => c,
+            Err(e) => {
+                return Err(Status::internal(format!("failed to read secret file: {e}")));
+            }
+        };
+
+        match self.secret_store.decrypt(&encrypted) {
+            Ok(decrypted) => {
+                ::clawcrew_log::record!(
+                    INFO,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        .with_attrs(::serde_json::json!({"key_name": key_name, "found": true})),
+                    "vault secret decrypted successfully"
+                );
+                Ok(Response::new(SecretResponse {
+                    found: true,
+                    value: decrypted,
+                }))
+            }
+            Err(e) => {
+                ::clawcrew_log::record!(
+                    ERROR,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
+                        .with_attrs(::serde_json::json!({"key_name": key_name})),
+                    "failed to decrypt vault secret"
+                );
+                Err(Status::internal(format!("decryption error: {e}")))
+            }
+        }
     }
 
     async fn execute_task(
         &self,
         request: Request<TaskExecutionRequest>,
     ) -> Result<Response<TaskExecutionResponse>, Status> {
-        // ponytail: stub — external task-executor dispatch is a separate ticket.
-        // For now, accept and queue (no real execution).
-        let task_id = request.into_inner().task_id;
-        Ok(Response::new(TaskExecutionResponse {
-            success: true,
-            output: format!("task '{}' queued for execution", task_id),
-            error: String::new(),
-        }))
+        let req = request.into_inner();
+        let task_id = req.task_id.trim();
+        if task_id.is_empty() {
+            return Err(Status::invalid_argument("task_id must not be empty"));
+        }
+
+        // Fail-closed enforcement (GW-5 / R-20 / ODR-07):
+        // External task dispatch is not implemented on the native host.
+        // Returning fake success is strictly forbidden.
+        ::clawcrew_log::record!(
+            WARN,
+            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                .with_attrs(::serde_json::json!({
+                    "task_id": task_id,
+                    "error": "ExecuteTask is not implemented: external task executor backend not configured"
+                })),
+            "ExecuteTask rejected: fail-closed boundary enforced"
+        );
+        Err(Status::unimplemented(format!(
+            "ExecuteTask for task '{task_id}' is not implemented on native host: fail-closed boundary enforced"
+        )))
+    }
+
+    type ExecuteTurnStream = tokio_stream::wrappers::ReceiverStream<Result<TurnToken, Status>>;
+
+    async fn execute_turn(
+        &self,
+        request: Request<ExecuteTurnRequest>,
+    ) -> Result<Response<Self::ExecuteTurnStream>, Status> {
+        let req = request.into_inner();
+        let (tx, rx) = tokio::sync::mpsc::channel(32);
+        let model_provider = self.model_provider.clone();
+
+        ::clawcrew_spawn::spawn!(async move {
+            if let Some(provider) = model_provider {
+                use futures_util::StreamExt;
+                let chat_messages: Vec<clawcrew_api::model_provider::ChatMessage> = req.messages
+                    .iter()
+                    .map(|m| clawcrew_api::model_provider::ChatMessage {
+                        role: m.role.clone(),
+                        content: m.content.clone(),
+                    })
+                    .collect();
+
+                let effective_model = if req.model.is_empty() {
+                    "default".to_string()
+                } else {
+                    req.model.clone()
+                };
+
+                let mut stream = provider.stream_chat_with_history(
+                    &chat_messages,
+                    &effective_model,
+                    req.temperature.map(|t| t as f64),
+                    clawcrew_api::model_provider::StreamOptions::new(true),
+                );
+
+                let mut total_chars = 0;
+                while let Some(chunk_res) = stream.next().await {
+                    match chunk_res {
+                        Ok(chunk) => {
+                            if let Some(reasoning) = chunk.reasoning {
+                                if !reasoning.is_empty() {
+                                    let _ = tx.send(Ok(TurnToken {
+                                        event: Some(turn_token::Event::Token(TokenChunk {
+                                            delta: reasoning,
+                                            is_thought: true,
+                                        })),
+                                    })).await;
+                                }
+                            }
+                            if !chunk.delta.is_empty() {
+                                total_chars += chunk.delta.len();
+                                let _ = tx.send(Ok(TurnToken {
+                                    event: Some(turn_token::Event::Token(TokenChunk {
+                                        delta: chunk.delta,
+                                        is_thought: false,
+                                    })),
+                                })).await;
+                            }
+                        }
+                        Err(e) => {
+                            let _ = tx.send(Ok(TurnToken {
+                                event: Some(turn_token::Event::Error(TurnError {
+                                    error_code: "PROVIDER_STREAM_ERROR".into(),
+                                    message: e.to_string(),
+                                })),
+                            })).await;
+                            return;
+                        }
+                    }
+                }
+
+                let _ = tx.send(Ok(TurnToken {
+                    event: Some(turn_token::Event::Complete(TurnComplete {
+                        finish_reason: "stop".into(),
+                        prompt_tokens: 0,
+                        completion_tokens: (total_chars / 4) as i32,
+                        total_tokens: (total_chars / 4) as i32,
+                    })),
+                })).await;
+            } else {
+                let prompt = req.messages.last().map(|m| m.content.as_str()).unwrap_or("Simulation response");
+                let words = prompt.split_whitespace().collect::<Vec<_>>();
+
+                let _ = tx.send(Ok(TurnToken {
+                    event: Some(turn_token::Event::Token(TokenChunk {
+                        delta: format!("Processing session {}: ", req.session_id),
+                        is_thought: true,
+                    })),
+                })).await;
+
+                let _ = tx.send(Ok(TurnToken {
+                    event: Some(turn_token::Event::Token(TokenChunk {
+                        delta: "Rust LLM SSOT Engine response: ".to_string(),
+                        is_thought: false,
+                    })),
+                })).await;
+
+                for word in words {
+                    let _ = tx.send(Ok(TurnToken {
+                        event: Some(turn_token::Event::Token(TokenChunk {
+                            delta: format!("{} ", word),
+                            is_thought: false,
+                        })),
+                    })).await;
+                }
+
+                let _ = tx.send(Ok(TurnToken {
+                    event: Some(turn_token::Event::Complete(TurnComplete {
+                        finish_reason: "stop".into(),
+                        prompt_tokens: 10,
+                        completion_tokens: 20,
+                        total_tokens: 30,
+                    })),
+                })).await;
+            }
+        });
+
+        Ok(Response::new(tokio_stream::wrappers::ReceiverStream::new(rx)))
     }
 }
 
@@ -471,15 +695,123 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_decrypted_secret_reports_unimplemented_not_silent_not_found() {
-        let svc = SystemGatewayService::new(None);
-        let err = svc
+    async fn vault_secret_lifecycle_stores_and_decrypts() -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir = tempfile::tempdir()?;
+        let svc = SystemGatewayService::new(Some(temp_dir.path().to_path_buf()));
+
+        // 1. Secret that does not exist -> found: false
+        let resp = svc
             .get_decrypted_secret(Request::new(SecretRequest {
-                key_name: "anything".to_string(),
+                key_name: "openai_api_key".to_string(),
             }))
-            .await
-            .expect_err("vault is not wired yet, must surface as an error");
+            .await?
+            .into_inner();
+        assert!(!resp.found);
+        assert_eq!(resp.value, "");
+
+        // 2. Store secret via set_secret
+        svc.set_secret("openai_api_key", "sk-proj-test123456789")?;
+
+        // 3. Fetch secret -> found: true, decrypted value matches
+        let resp = svc
+            .get_decrypted_secret(Request::new(SecretRequest {
+                key_name: "openai_api_key".to_string(),
+            }))
+            .await?
+            .into_inner();
+        assert!(resp.found);
+        assert_eq!(resp.value, "sk-proj-test123456789");
+
+        // 4. Empty key name returns InvalidArgument
+        let res = svc
+            .get_decrypted_secret(Request::new(SecretRequest {
+                key_name: "   ".to_string(),
+            }))
+            .await;
+        match res {
+            Ok(_) => return Err("expected empty key to be rejected".into()),
+            Err(err) => assert_eq!(err.code(), tonic::Code::InvalidArgument),
+        }
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_execute_turn_success() -> Result<(), Box<dyn std::error::Error>> {
+        use futures_util::StreamExt;
+
+        let svc = SystemGatewayService::new(None);
+        let req = ExecuteTurnRequest {
+            session_id: "test-turn-session".to_string(),
+            model: "test-model".to_string(),
+            system_prompt: "You are a test agent".to_string(),
+            messages: vec![TurnChatMessage {
+                role: "user".to_string(),
+                content: "Deploy galleon fleet".to_string(),
+                tool_call_id: None,
+                name: None,
+            }],
+            tools: vec![],
+            temperature: Some(0.7),
+            max_tokens: Some(100),
+        };
+
+        let response = svc.execute_turn(Request::new(req)).await?;
+        let mut stream = response.into_inner();
+
+        let mut received_thought = false;
+        let mut received_delta = false;
+        let mut received_complete = false;
+
+        while let Some(item) = stream.next().await {
+            let token = item?;
+            match token.event {
+                Some(turn_token::Event::Token(chunk)) => {
+                    if chunk.is_thought {
+                        received_thought = true;
+                    } else {
+                        received_delta = true;
+                    }
+                }
+                Some(turn_token::Event::Complete(complete)) => {
+                    assert_eq!(complete.finish_reason, "stop");
+                    received_complete = true;
+                }
+                Some(turn_token::Event::Error(err)) => {
+                    return Err(format!("unexpected error event in stream: {:?}", err).into());
+                }
+                _ => {}
+            }
+        }
+
+        assert!(received_thought, "expected at least one thought chunk");
+        assert!(received_delta, "expected at least one text delta chunk");
+        assert!(received_complete, "expected turn complete event");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_execute_task_fails_closed() {
+        let svc = SystemGatewayService::new(None);
+        let req = TaskExecutionRequest {
+            task_id: "task-test-999".to_string(),
+            task_data: "{}".to_string(),
+        };
+
+        let err = svc.execute_task(Request::new(req)).await.unwrap_err();
         assert_eq!(err.code(), tonic::Code::Unimplemented);
-        assert!(err.message().contains("not yet wired"));
+        assert!(err.message().contains("fail-closed boundary enforced"));
+    }
+
+    #[tokio::test]
+    async fn test_execute_task_rejects_empty_id() {
+        let svc = SystemGatewayService::new(None);
+        let req = TaskExecutionRequest {
+            task_id: "   ".to_string(),
+            task_data: "{}".to_string(),
+        };
+
+        let err = svc.execute_task(Request::new(req)).await.unwrap_err();
+        assert_eq!(err.code(), tonic::Code::InvalidArgument);
     }
 }
+

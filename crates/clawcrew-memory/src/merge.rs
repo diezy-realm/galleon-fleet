@@ -40,6 +40,7 @@ mod tests {
             key: "key".into(),
             content: content.into(),
             category: MemoryCategory::Core,
+            scope: Default::default(),
             timestamp: "now".into(),
             session_id: None,
             score: None,

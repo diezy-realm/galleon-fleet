@@ -16,7 +16,7 @@ use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::Message as WsMessage;
 use clawcrew_api::channel::{Channel, ChannelConversationScope, ChannelMessage, SendMessage};
 use clawcrew_config::schema::{StreamMode, WeComWsConfig};
-use clawcrew_runtime::i18n;
+use galleon_i18n as i18n;
 use clawcrew_tool_call_parser::TERMINAL_MARKERS;
 
 // ── Constants ────────────────────────────────────────────────────────

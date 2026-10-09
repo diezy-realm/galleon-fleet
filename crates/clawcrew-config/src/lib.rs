@@ -9,6 +9,7 @@
 pub mod alias_refs;
 pub mod api_error;
 pub mod autonomy;
+pub mod classifier;
 pub mod comment_writer;
 pub mod cost;
 pub mod domain_matcher;
@@ -19,6 +20,7 @@ pub mod migration;
 pub mod multi_agent;
 pub mod pairing;
 pub mod paths;
+pub mod peers;
 pub mod platform;
 pub mod policy;
 pub mod presets;
@@ -34,6 +36,7 @@ pub mod skill_bundles;
 pub mod traits;
 pub mod typed_value;
 pub mod validation_warnings;
+pub mod thinking;
 pub mod write_lock;
 
 /// Shim module so `Configurable` derive macro's generated `crate::config::*` paths resolve.

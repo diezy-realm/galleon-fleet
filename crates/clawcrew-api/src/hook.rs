@@ -183,6 +183,52 @@ pub trait HookHandler: Send + Sync {
     }
 }
 
+/// Trait for dispatching channel message hooks (inbound and outbound).
+#[async_trait]
+pub trait ChannelHookRunner: Send + Sync {
+    /// Hook invoked when a message is received from a channel.
+    async fn run_on_message_received(
+        &self,
+        message: ChannelMessage,
+    ) -> HookResult<ChannelMessage>;
+
+    /// Hook invoked before sending a message to a channel.
+    async fn run_on_message_sending(
+        &self,
+        channel: String,
+        recipient: String,
+        content: String,
+    ) -> HookResult<(String, String, String)>;
+
+    /// Hook invoked after a message is sent to a channel.
+    async fn run_on_message_sent(&self, channel: &str, recipient: &str, content: &str);
+}
+
+/// A no-op channel hook runner that passes all messages through unchanged.
+#[derive(Debug, Default, Clone)]
+pub struct NoopChannelHookRunner;
+
+#[async_trait]
+impl ChannelHookRunner for NoopChannelHookRunner {
+    async fn run_on_message_received(
+        &self,
+        message: ChannelMessage,
+    ) -> HookResult<ChannelMessage> {
+        HookResult::Continue(message)
+    }
+
+    async fn run_on_message_sending(
+        &self,
+        channel: String,
+        recipient: String,
+        content: String,
+    ) -> HookResult<(String, String, String)> {
+        HookResult::Continue((channel, recipient, content))
+    }
+
+    async fn run_on_message_sent(&self, _channel: &str, _recipient: &str, _content: &str) {}
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

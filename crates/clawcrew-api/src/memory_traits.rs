@@ -143,7 +143,7 @@ impl<'de> serde::Deserialize<'de> for MemoryCategory {
 }
 
 /// Defines the ownership and isolation boundary for a memory entry.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum MemoryScope {
     /// Global memory belonging to the user across all contexts.
@@ -153,13 +153,8 @@ pub enum MemoryScope {
     /// Memory isolated to a particular project or repository.
     Project,
     /// Memory isolated to an active workspace/session.
+    #[default]
     Workspace,
-}
-
-impl Default for MemoryScope {
-    fn default() -> Self {
-        Self::Workspace
-    }
 }
 
 impl std::fmt::Display for MemoryCategory {
@@ -726,6 +721,29 @@ pub trait MemoryStrategy: Send + Sync {
     /// Run memory governance (cleanup, archiving, background consolidation).
     async fn run_governance(&self) -> anyhow::Result<()>;
 }
+
+/// A no-op implementation of [`MemoryStrategy`] that performs no consolidation or governance.
+#[derive(Debug, Default, Clone)]
+pub struct NoopMemoryStrategy;
+
+#[async_trait]
+impl MemoryStrategy for NoopMemoryStrategy {
+    async fn consolidate_turn(
+        &self,
+        _user_message: &str,
+        _assistant_response: &str,
+        _provider: &dyn crate::model_provider::ModelProvider,
+        _model: &str,
+        _temperature: Option<f64>,
+    ) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    async fn run_governance(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

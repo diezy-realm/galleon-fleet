@@ -6,7 +6,7 @@ license.workspace = true
 description = "Bluesky channel feature-crate (RF-B1 split; AT Protocol session/record + notification-poll body ported from clawcrew-channels::bluesky)."
 repository.workspace = true
 homepage.workspace = true
-publish = false
+publish = true
 
 [dependencies]
 # RF-B1: the ported AT Protocol body is a `com.atproto` HTTP client over

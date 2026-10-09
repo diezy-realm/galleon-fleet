@@ -2,7 +2,9 @@ package crew
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"sync"
 	"time"
@@ -11,26 +13,23 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/core/logger"
 	"github.com/diezy-labs/claw-crew/engine/core/metrics"
 	"github.com/diezy-labs/claw-crew/engine/pkg/client"
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
+	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
 )
 
 type service struct {
 	mu          sync.RWMutex
 	activeTurns map[string]context.CancelFunc
-	llmProvider llm.Provider
-	dispatcher  llm.ToolDispatcher
+	dispatcher  ToolDispatcher
 	gateway     client.SystemGatewayClient
 }
 
-// NewService creates a new crew.Orchestrator instance with LLM and tool gateway injected
+// NewService creates a new crew.Orchestrator instance with tool dispatcher and Rust SystemGateway client
 func NewService(
-	llmProvider llm.Provider,
-	dispatcher llm.ToolDispatcher,
+	dispatcher ToolDispatcher,
 	gateway client.SystemGatewayClient,
 ) Orchestrator {
 	return &service{
 		activeTurns: make(map[string]context.CancelFunc),
-		llmProvider: llmProvider,
 		dispatcher:  dispatcher,
 		gateway:     gateway,
 	}
@@ -79,125 +78,142 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 		slog.String("agent_id", agentID),
 	)
 
-	// 1. Prepare LLM ChatRequest
-	chatReq := &llm.ChatRequest{
-		Messages: []llm.Message{
+	// 1. Prepare protobuf ExecuteTurnRequest for Rust SystemGateway
+	protoReq := &pb.ExecuteTurnRequest{
+		SessionId: req.SessionID,
+		Model:     "gpt-4o",
+		Messages: []*pb.TurnChatMessage{
 			{Role: "user", Content: req.Prompt},
 		},
-		Tools: s.dispatcher.GetAvailableTools(),
+	}
+	if s.dispatcher != nil {
+		for _, t := range s.dispatcher.GetAvailableTools() {
+			paramBytes, _ := json.Marshal(t.Parameters)
+			protoReq.Tools = append(protoReq.Tools, &pb.TurnToolDefinition{
+				Name:           t.Name,
+				Description:    t.Description,
+				ParametersJson: string(paramBytes),
+			})
+		}
 	}
 
-	chunkCh := make(chan *llm.ChatChunk, 32)
-	llmErrCh := make(chan error, 1)
+	// 2. Concurrently invoke Rust SystemGateway ExecuteTurn stream (Rust LLM SSOT)
+	stream, err := s.gateway.ExecuteTurn(turnCtx, protoReq)
+	if err != nil {
+		return appErrors.Wrap(err, appErrors.CodeUnavailable, "failed to initiate ExecuteTurn with Rust gateway", appErrors.LayerService)
+	}
 
-	// 2. Concurrently invoke LLM provider stream
-	go func() {
-		defer close(chunkCh)
-		llmErrCh <- s.llmProvider.StreamChat(turnCtx, chatReq, chunkCh)
-	}()
-
-	// 3. Process incoming streaming chunks from LLM
-	for chunk := range chunkCh {
-		if chunk.Error != nil {
-			return appErrors.Wrap(chunk.Error, appErrors.CodeInternal, "error receiving LLM chunk", appErrors.LayerService)
-		}
-
-		// Emit Thought chunk if present
-		if chunk.ThoughtChunk != "" {
+	// 3. Process incoming streaming tokens from Rust Gateway
+	for {
+		token, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
 			select {
 			case <-turnCtx.Done():
 				return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
-			case eventCh <- &TurnEvent{
-				Type:    EventThoughtChunk,
-				Content: chunk.ThoughtChunk,
-			}:
+			default:
+				return appErrors.Wrap(err, appErrors.CodeInternal, "error receiving stream token from Rust gateway", appErrors.LayerService)
 			}
 		}
 
-		// Emit Text chunk if present
-		if chunk.ContentChunk != "" {
-			select {
-			case <-turnCtx.Done():
-				return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
-			case eventCh <- &TurnEvent{
-				Type:    EventTextChunk,
-				Content: chunk.ContentChunk,
-			}:
+		switch ev := token.Event.(type) {
+		case *pb.TurnToken_Token:
+			if ev.Token.IsThought {
+				select {
+				case <-turnCtx.Done():
+					return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
+				case eventCh <- &TurnEvent{
+					Type:    EventThoughtChunk,
+					Content: ev.Token.Delta,
+				}:
+				}
+			} else {
+				select {
+				case <-turnCtx.Done():
+					return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
+				case eventCh <- &TurnEvent{
+					Type:    EventTextChunk,
+					Content: ev.Token.Delta,
+				}:
+				}
 			}
-		}
 
-		// Process Tool Calls if emitted by LLM
-		for _, tc := range chunk.ToolCalls {
-			// Notify client that tool call started
+		case *pb.TurnToken_ToolCall:
+			tc := ev.ToolCall
 			select {
 			case <-turnCtx.Done():
 				return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
 			case eventCh <- &TurnEvent{
 				Type:    EventToolCallStarted,
-				Content: fmt.Sprintf("Executing tool '%s' with arguments: %s", tc.Name, tc.Arguments),
+				Content: fmt.Sprintf("Executing tool '%s' with arguments: %s", tc.Name, tc.ArgumentsJson),
 			}:
 			}
 
-			// Dispatch tool execution
-			res, err := s.dispatcher.Dispatch(turnCtx, &tc)
-			if err != nil {
-				log.WarnContext(ctx, "tool execution failed",
-					slog.String("tool", tc.Name),
-					slog.String("error", err.Error()),
-				)
-				select {
-				case <-turnCtx.Done():
-					return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
-				case eventCh <- &TurnEvent{
-					Type:         EventError,
-					Content:      fmt.Sprintf("Tool '%s' error: %s", tc.Name, err.Error()),
-					ErrorMessage: err.Error(),
-				}:
-				}
-				continue
-			}
-
-			// Handle subagent spawning
-			if res.IsSubagentAction {
-				select {
-				case <-turnCtx.Done():
-					return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
-				case eventCh <- &TurnEvent{
-					Type:       EventSubagentSpawned,
-					Content:    fmt.Sprintf("Spawned subagent '%s' for delegated task: %s", res.SubagentID, res.SubagentTask),
-					SubagentID: res.SubagentID,
-				}:
+			if s.dispatcher != nil {
+				res, err := s.dispatcher.Dispatch(turnCtx, &ToolCall{
+					ID:        tc.Id,
+					Name:      tc.Name,
+					Arguments: tc.ArgumentsJson,
+				})
+				if err != nil {
+					log.WarnContext(ctx, "tool execution failed",
+						slog.String("tool", tc.Name),
+						slog.String("error", err.Error()),
+					)
+					select {
+					case <-turnCtx.Done():
+						return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
+					case eventCh <- &TurnEvent{
+						Type:         EventError,
+						Content:      fmt.Sprintf("Tool '%s' error: %s", tc.Name, err.Error()),
+						ErrorMessage: err.Error(),
+					}:
+					}
+					continue
 				}
 
-				// Spawn subagent asynchronously with coordination
-				subagentWg.Add(1)
-				go func(subID, subTask string) {
-					defer subagentWg.Done()
-					s.runSubagent(turnCtx, subID, subTask, eventCh)
-				}(res.SubagentID, res.SubagentTask)
-			} else {
-				// Tool execution completed successfully
-				select {
-				case <-turnCtx.Done():
-					return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
-				case eventCh <- &TurnEvent{
-					Type:    EventToolCallFinished,
-					Content: fmt.Sprintf("Tool '%s' finished: %s", tc.Name, res.Output),
-				}:
+				if res.IsSubagentAction {
+					select {
+					case <-turnCtx.Done():
+						return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
+					case eventCh <- &TurnEvent{
+						Type:       EventSubagentSpawned,
+						Content:    fmt.Sprintf("Spawned subagent '%s' for delegated task: %s", res.SubagentID, res.SubagentTask),
+						SubagentID: res.SubagentID,
+					}:
+					}
+
+					subagentWg.Add(1)
+					go func(subID, subTask string) {
+						defer subagentWg.Done()
+						s.runSubagent(turnCtx, subID, subTask, eventCh)
+					}(res.SubagentID, res.SubagentTask)
+				} else {
+					select {
+					case <-turnCtx.Done():
+						return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
+					case eventCh <- &TurnEvent{
+						Type:    EventToolCallFinished,
+						Content: fmt.Sprintf("Tool '%s' finished: %s", tc.Name, res.Output),
+					}:
+					}
 				}
 			}
+
+		case *pb.TurnToken_Error:
+			return appErrors.New(appErrors.CodeInternal, ev.Error.Message, appErrors.LayerService)
+
+		case *pb.TurnToken_Complete:
+			// Turn generation complete
 		}
 	}
 
-	// 4. Wait for LLM stream to conclude
-	if err := <-llmErrCh; err != nil && err != context.Canceled {
-		return appErrors.Wrap(err, appErrors.CodeInternal, "LLM streaming failed", appErrors.LayerService)
-	}
-
-	// 5. Wait for any running subagent goroutines to finish
+	// 4. Wait for any running subagent goroutines to finish
 	subagentWg.Wait()
 
-	// 6. Emit Turn Completed event
+	// 5. Emit Turn Completed event
 	select {
 	case <-turnCtx.Done():
 		return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
@@ -215,32 +231,34 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 	return nil
 }
 
-// runSubagent handles parallel subagent turn execution
+// runSubagent handles parallel subagent turn execution via Rust SystemGateway
 func (s *service) runSubagent(ctx context.Context, subagentID, task string, eventCh chan<- *TurnEvent) {
 	metrics.ActiveAgents.Inc()
 	defer metrics.ActiveAgents.Dec()
 
-	subChunkCh := make(chan *llm.ChatChunk, 16)
-	subReq := &llm.ChatRequest{
-		Messages: []llm.Message{
+	stream, err := s.gateway.ExecuteTurn(ctx, &pb.ExecuteTurnRequest{
+		SessionId: fmt.Sprintf("subagent-%s", subagentID),
+		Messages: []*pb.TurnChatMessage{
 			{Role: "system", Content: fmt.Sprintf("You are sub-agent '%s' tasked with: %s", subagentID, task)},
 			{Role: "user", Content: task},
 		},
+	})
+	if err != nil {
+		return
 	}
 
-	go func() {
-		defer close(subChunkCh)
-		_ = s.llmProvider.StreamChat(ctx, subReq, subChunkCh)
-	}()
-
-	for chunk := range subChunkCh {
-		if chunk.ContentChunk != "" {
+	for {
+		token, err := stream.Recv()
+		if err != nil {
+			break
+		}
+		if ev, ok := token.Event.(*pb.TurnToken_Token); ok && ev.Token.Delta != "" {
 			select {
 			case <-ctx.Done():
 				return
 			case eventCh <- &TurnEvent{
 				Type:       EventTextChunk,
-				Content:    chunk.ContentChunk,
+				Content:    ev.Token.Delta,
 				SubagentID: subagentID,
 			}:
 			}

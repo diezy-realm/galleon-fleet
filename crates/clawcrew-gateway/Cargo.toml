@@ -14,15 +14,17 @@ clawcrew-api.workspace = true
 clawcrew-spawn.workspace = true
 clawcrew-config.workspace = true
 clawcrew-tls.workspace = true
-clawcrew-infra.workspace = true
+clawcrew-infra = { workspace = true, features = ["schema-export"] }
 clawcrew-log.workspace = true
 clawcrew-memory.workspace = true
 clawcrew-providers.workspace = true
-clawcrew-channels = { workspace = true, default-features = false, features = ["channel-acp-server"] }
+clawcrew-channels = { workspace = true, default-features = false }
 clawcrew-runtime.workspace = true
 clawcrew-tools.workspace = true
 clawcrew-hardware.workspace = true
 clawcrew-plugins = { workspace = true, optional = true }
+clawcrew-routing.workspace = true
+galleon-security-scrub.workspace = true
 
 # gRPC server for SystemGateway (D1): Go engine -> Rust native-tool execution.
 # `prost` must stay a direct dep: tonic-build's generated code references

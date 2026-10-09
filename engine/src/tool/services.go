@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -91,6 +90,29 @@ func withWorkspaceRoot(args, workspaceRoot string) (string, error) {
 	return string(out), nil
 }
 
+// executeViaGateway dispatches native tool execution across the SystemGateway gRPC boundary (fail-closed, BG-A1 / G-01).
+func executeViaGateway(ctx context.Context, execCtx *ExecutionContext, toolName, args string) (string, []string, error) {
+	if execCtx == nil || execCtx.Gateway == nil {
+		return "", nil, appErrors.New(appErrors.CodeUnavailable, fmt.Sprintf("native tool %s execution rejected: SystemGateway is required (fail-closed boundary enforced)", toolName), appErrors.LayerService)
+	}
+	resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, toolName, args)
+	if err != nil {
+		return "", nil, err
+	}
+	var res struct {
+		Success bool   `json:"success"`
+		Output  string `json:"output"`
+		Error   string `json:"error"`
+	}
+	if err := json.Unmarshal([]byte(resp), &res); err != nil {
+		return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+	}
+	if !res.Success {
+		return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+	}
+	return res.Output, nil, nil
+}
+
 // Builtin WriteFileTool
 type WriteFileTool struct{}
 
@@ -121,28 +143,7 @@ func (t *WriteFileTool) Execute(ctx context.Context, args string, workspaceRoot 
 }
 
 func (t *WriteFileTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
-	var input struct {
-		Path    string `json:"path"`
-		Content string `json:"content"`
-	}
-	if err := json.Unmarshal([]byte(args), &input); err != nil {
-		return "", nil, err
-	}
-
-	workspaceRoot := getWorkspaceRoot(execCtx)
-	safePath, err := ValidateSandboxPath(workspaceRoot, input.Path)
-	if err != nil {
-		return "", nil, err
-	}
-
-	if err := os.MkdirAll(filepath.Dir(safePath), 0755); err != nil {
-		return "", nil, err
-	}
-
-	if err := os.WriteFile(safePath, []byte(input.Content), 0644); err != nil {
-		return "", nil, err
-	}
-	return fmt.Sprintf("Successfully wrote %d bytes to %s", len(input.Content), input.Path), nil, nil
+	return executeViaGateway(ctx, execCtx, t.Name(), args)
 }
 
 // Builtin EditFileTool
@@ -175,37 +176,7 @@ func (t *EditFileTool) Execute(ctx context.Context, args string, workspaceRoot s
 }
 
 func (t *EditFileTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
-	var input struct {
-		Path        string `json:"path"`
-		Target      string `json:"target"`
-		Replacement string `json:"replacement"`
-	}
-	if err := json.Unmarshal([]byte(args), &input); err != nil {
-		return "", nil, err
-	}
-
-	workspaceRoot := getWorkspaceRoot(execCtx)
-	safePath, err := ValidateSandboxPath(workspaceRoot, input.Path)
-	if err != nil {
-		return "", nil, err
-	}
-
-	data, err := os.ReadFile(safePath)
-	if err != nil {
-		return "", nil, err
-	}
-
-	original := string(data)
-	if !strings.Contains(original, input.Target) {
-		return "", nil, fmt.Errorf("target substring not found in %s", input.Path)
-	}
-
-	updated := strings.Replace(original, input.Target, input.Replacement, 1)
-	if err := os.WriteFile(safePath, []byte(updated), 0644); err != nil {
-		return "", nil, err
-	}
-
-	return fmt.Sprintf("Successfully updated %s", input.Path), nil, nil
+	return executeViaGateway(ctx, execCtx, t.Name(), args)
 }
 
 // Builtin ExecuteCommandTool
@@ -238,31 +209,7 @@ func (t *ExecuteCommandTool) Execute(ctx context.Context, args string, workspace
 }
 
 func (t *ExecuteCommandTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
-	var input struct {
-		Command string `json:"command"`
-	}
-	if err := json.Unmarshal([]byte(args), &input); err != nil {
-		return "", nil, err
-	}
-
-	workspaceRoot := getWorkspaceRoot(execCtx)
-
-	var cmd *exec.Cmd
-	if strings.Contains(strings.ToLower(os.Getenv("OS")), "windows") {
-		cmd = exec.CommandContext(ctx, "cmd", "/c", input.Command)
-	} else {
-		cmd = exec.CommandContext(ctx, "sh", "-c", input.Command)
-	}
-
-	if workspaceRoot != "" {
-		cmd.Dir = workspaceRoot
-	}
-
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return string(out), nil, fmt.Errorf("command execution error: %w (output: %s)", err, string(out))
-	}
-	return string(out), nil, nil
+	return executeViaGateway(ctx, execCtx, t.Name(), args)
 }
 
 // Builtin GitDiffTool
@@ -295,16 +242,7 @@ func (t *GitDiffTool) Execute(ctx context.Context, args string, workspaceRoot st
 }
 
 func (t *GitDiffTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
-	workspaceRoot := getWorkspaceRoot(execCtx)
-	cmd := exec.CommandContext(ctx, "git", "diff")
-	if workspaceRoot != "" {
-		cmd.Dir = workspaceRoot
-	}
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", nil, fmt.Errorf("git diff error: %w", err)
-	}
-	return string(out), nil, nil
+	return executeViaGateway(ctx, execCtx, t.Name(), args)
 }
 
 // registerBuiltinTools registers all native Phase 3 tools
@@ -344,7 +282,7 @@ type toolService struct {
 	gate       ApprovalGate
 	policy     PolicyEngine
 	runService run.Service
-	gateway    SystemGateway // when set, native builtins run in the Rust sandbox, not in-process (F3-1)
+	gateway    SystemGateway // when set, native builtins run in the Rust sandbox; when nil, native calls fail closed (F3-1)
 }
 
 // NewService creates a tool service
@@ -359,7 +297,7 @@ func NewService(registry Registry, gate ApprovalGate, runService run.Service) Se
 
 // WithSystemGateway routes native builtin tool execution through the Rust
 // SystemGateway gRPC instead of executing in-process (F3-1). Returns the same
-// service for chaining; a nil gateway leaves in-process execution unchanged.
+// service for chaining; a nil gateway fails closed and rejects native tool calls.
 func (s *toolService) WithSystemGateway(gw SystemGateway) Service {
 	s.gateway = gw
 	return s
@@ -419,6 +357,11 @@ func (s *toolService) ExecuteWithContext(ctx context.Context, execCtx *Execution
 			RiskTier:         t.RiskTier(),
 			RequiresApproval: t.RiskTier() == RiskTierWrite || t.RiskTier() == RiskTierExecute,
 		}
+	}
+
+	// Fail-closed gate: if tool requires SystemGateway and gateway is not wired, reject immediately
+	if toolDef.Source == "native" && s.gateway == nil {
+		return "", appErrors.New(appErrors.CodeUnavailable, fmt.Sprintf("native tool %s execution rejected: SystemGateway is not wired (fail-closed boundary enforced)", toolName), appErrors.LayerService)
 	}
 
 	// 3. Policy Engine Evaluation (FR-03, Level 2 maturity)
@@ -510,6 +453,8 @@ func (s *toolService) ExecuteWithContext(ctx context.Context, execCtx *Execution
 			return "", encErr
 		}
 		output, err = s.gateway.ExecuteNativeTool(ctx, toolName, gwArgs)
+	} else if toolDef.Source == "native" {
+		return "", appErrors.New(appErrors.CodeUnavailable, fmt.Sprintf("native tool %s execution rejected: SystemGateway is not wired (fail-closed boundary enforced)", toolName), appErrors.LayerService)
 	} else {
 		output, artifactIDs, err = t.ExecuteWithContext(ctx, execCtx, args)
 	}

@@ -16,9 +16,10 @@ clawcrew-config = { workspace = true, default-features = false }
 clawcrew-log.workspace = true
 clawcrew-memory.workspace = true
 clawcrew-providers.workspace = true
-clawcrew-runtime.workspace = true
 clawcrew-tool-call-parser.workspace = true
 clawcrew-tools.workspace = true
+galleon-i18n.workspace = true
+galleon-security-scrub.workspace = true
 # RF-B1: the Signal channel is split into its own feature-crate. The monolith
 # re-exports it (`pub use galleon_channel_signal as signal`) so existing callers
 # (`crate::signal::SignalChannel`) keep compiling. Optional, behind
@@ -118,6 +119,7 @@ serde_json = { version = "1.0", default-features = false, features = ["std"] }
 sha2 = "0.10"
 tokio = { version = "1.50", default-features = false, features = [
   "fs",
+  "io-std",
   "io-util",
   "macros",
   "net",
@@ -266,7 +268,7 @@ channel-signal = ["dep:galleon-channel-signal"]
 channel-mattermost = ["ws-transport"]
 channel-irc = ["tls-client"]
 channel-twitch = ["channel-irc"]
-channel-imessage = ["galleon-channel-imessage/channel-imessage"]
+channel-imessage = ["dep:galleon-channel-imessage"]
 channel-dingtalk = ["ws-transport"]
 channel-qq = ["ws-transport"]
 channel-bluesky = ["dep:galleon-channel-bluesky"]
@@ -300,10 +302,6 @@ voice-wake = ["dep:cpal"]
 libc = "0.2"
 
 [dev-dependencies]
-# Enables the runtime crate's test-only `ScopedToolRegistry::from_raw_for_test`
-# so channel test fixtures can mint the now-sealed `ChannelRuntimeContext`
-# tools registry. dev-dependency only: never enabled in the shipped channels lib.
-clawcrew-runtime = { workspace = true, features = ["test-util"] }
 axum = { version = "0.8", default-features = false, features = [
   "http1",
   "json",

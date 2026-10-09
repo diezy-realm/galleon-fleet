@@ -166,6 +166,17 @@ pub enum IngressDecision {
     Drop { reason: String },
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct IngressPolicy {
+    _private: (),
+}
+
+#[must_use]
+pub fn ingress_policy(text: &str, ctx: &IngressContext, policy: &IngressPolicy) -> IngressDecision {
+    let _ = (text, ctx, policy);
+    IngressDecision::Loop
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

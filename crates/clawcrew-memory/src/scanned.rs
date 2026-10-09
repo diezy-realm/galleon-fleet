@@ -949,6 +949,7 @@ mod tests {
             key: key.into(),
             content: content.into(),
             category: MemoryCategory::Core,
+            scope: Default::default(),
             timestamp: "2026-01-01T00:00:00Z".into(),
             session_id: None,
             score: None,

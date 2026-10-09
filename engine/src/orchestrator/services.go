@@ -9,22 +9,25 @@ package orchestrator
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"strings"
 
+	"github.com/diezy-labs/claw-crew/engine/pkg/client"
+	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
 	"github.com/diezy-labs/claw-crew/engine/src/fleet"
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
 )
 
 type orchestratorService struct {
-	llmProvider  llm.Provider
+	gateway      client.SystemGatewayClient
 	fleetService fleet.Service
 }
 
-func NewService(llmProvider llm.Provider, fleetService fleet.Service) Service {
+func NewService(gateway client.SystemGatewayClient, fleetService fleet.Service) Service {
 	return &orchestratorService{
-		llmProvider:  llmProvider,
+		gateway:      gateway,
 		fleetService: fleetService,
 	}
 }
@@ -85,33 +88,40 @@ func (s *orchestratorService) IntakeObjective(ctx context.Context, req Objective
 	return proposal, nil
 }
 
-// draftSquad runs one Quartermaster LLM completion for an objective and collects
-// the stream. The producer goroutine owns closing chunkCh so the range below
-// terminates (fixes the earlier deadlock).
 func (s *orchestratorService) draftSquad(ctx context.Context, objective string) (string, error) {
+	if s.gateway == nil {
+		return "", errors.New("system gateway is required for quartermaster LLM execution")
+	}
 	sysPrompt := "You are the Quartermaster of Galleon Fleet. Break down this objective into necessary specialized roles."
-	chatReq := &llm.ChatRequest{
-		Model:  "quartermaster-model",
-		System: sysPrompt,
-		Messages: []llm.Message{
+	protoReq := &pb.ExecuteTurnRequest{
+		Model:        "quartermaster-model",
+		SystemPrompt: sysPrompt,
+		Messages: []*pb.TurnChatMessage{
 			{Role: "user", Content: objective},
 		},
 	}
 
-	chunkCh := make(chan *llm.ChatChunk)
-	errCh := make(chan error, 1)
-	go func() {
-		defer close(chunkCh)
-		errCh <- s.llmProvider.StreamChat(ctx, chatReq, chunkCh)
-	}()
-
-	var sb strings.Builder
-	for chunk := range chunkCh {
-		sb.WriteString(chunk.ContentChunk)
-	}
-	if err := <-errCh; err != nil {
+	stream, err := s.gateway.ExecuteTurn(ctx, protoReq)
+	if err != nil {
 		return "", fmt.Errorf("quartermaster LLM failed: %w", err)
 	}
+
+	var sb strings.Builder
+	for {
+		chunk, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return "", fmt.Errorf("quartermaster LLM stream failed: %w", err)
+		}
+		if ev, ok := chunk.Event.(*pb.TurnToken_Token); ok && !ev.Token.IsThought {
+			sb.WriteString(ev.Token.Delta)
+		} else if ev, ok := chunk.Event.(*pb.TurnToken_Error); ok {
+			return "", fmt.Errorf("quartermaster LLM returned error: %s", ev.Error.GetMessage())
+		}
+	}
+
 	return sb.String(), nil
 }
 

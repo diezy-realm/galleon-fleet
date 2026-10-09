@@ -1,4 +1,63 @@
+use std::sync::{Arc, Mutex};
 use crate::plan::PlanEntry;
+
+/// Callback type for checking if model has been switched during tool execution.
+/// Returns Some((model_provider, model)) if a switch was requested, None otherwise.
+pub type ModelSwitchCallback = Arc<Mutex<Option<(String, String)>>>;
+
+/// The provider/model that actually served the most recent LLM call in a tool loop.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ServedRoute {
+    pub provider_name: String,
+    pub model: String,
+}
+
+/// Shared sink a caller hands the loop to observe the final serving route.
+pub type ServedRouteSink = Arc<Mutex<Option<ServedRoute>>>;
+
+/// Error sentinel indicating that the tool loop execution was cancelled.
+#[derive(Debug)]
+pub struct ToolLoopCancelled;
+
+impl std::fmt::Display for ToolLoopCancelled {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("tool loop cancelled")
+    }
+}
+
+impl std::error::Error for ToolLoopCancelled {}
+
+/// Whether this error was caused by a cancelled tool loop.
+pub fn is_tool_loop_cancelled(err: &anyhow::Error) -> bool {
+    err.chain().any(|source| source.is::<ToolLoopCancelled>())
+}
+
+/// Sentential error carrying a requested model switch from within a tool turn.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ModelSwitchRequested {
+    pub model_provider: String,
+    pub model: String,
+}
+
+impl std::fmt::Display for ModelSwitchRequested {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "model switch requested to {} {}",
+            self.model_provider, self.model
+        )
+    }
+}
+
+impl std::error::Error for ModelSwitchRequested {}
+
+/// Extract requested model switch targets if the error contains [`ModelSwitchRequested`].
+pub fn is_model_switch_requested(err: &anyhow::Error) -> Option<(String, String)> {
+    err.chain()
+        .filter_map(|source| source.downcast_ref::<ModelSwitchRequested>())
+        .map(|e| (e.model_provider.clone(), e.model.clone()))
+        .next()
+}
 
 /// Structured metadata for a tool that produced a file artifact (e.g.
 /// `deliver_file`). Carried on [`TurnEvent::ToolResult`] so a channel attaches
@@ -80,6 +139,13 @@ impl TokenCountSource {
         }
     }
 }
+
+pub const NO_TOOLS_TASK_FRAMING: &str = "No tools are available for this turn";
+pub const NATIVE_TOOLS_TASK_FRAMING: &str = "Use tools when the request requires action";
+
+/// Canonical English breadcrumb emitted when prior turns are trimmed from history.
+pub const HISTORY_TRIM_BREADCRUMB_CANONICAL: &str =
+    "[earlier turns omitted to fit the context window]";
 
 #[non_exhaustive]
 #[derive(Debug, Clone)]

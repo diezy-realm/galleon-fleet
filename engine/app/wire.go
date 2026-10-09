@@ -9,7 +9,6 @@ import (
 	"github.com/diezy-labs/claw-crew/engine/src/artifact"
 	"github.com/diezy-labs/claw-crew/engine/src/crew"
 	"github.com/diezy-labs/claw-crew/engine/src/fleet"
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
 	"github.com/diezy-labs/claw-crew/engine/src/memory"
 	"github.com/diezy-labs/claw-crew/engine/src/run"
 	"github.com/diezy-labs/claw-crew/engine/src/task"
@@ -24,13 +23,12 @@ import (
 // wired post-construction in wire_gen.go via fleetService.SetObjectiveProposer,
 // because orchestrator imports fleet (dependency inversion breaks the cycle) and
 // Wire cannot express a setter call. If you regenerate wire_gen.go, re-add that
-// manual step (construct qmorch.NewService(provider, fleetService) and inject it).
+// manual step (construct qmorch.NewService(systemGatewayClient, fleetService) and inject it).
 func InitializeApp(cfg *config.AppConfig) (*App, error) {
 	wire.Build(
 		NewGRPCServer,
 		ProvideMetricsServer,
 		client.Set,
-		llm.Set,
 		memory.Set,
 		crew.Set,
 		run.Set,

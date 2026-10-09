@@ -13,11 +13,7 @@ use clawcrew_api::channel::Channel;
 use clawcrew_api::webhook::PluginWebhookRegistryLease;
 use clawcrew_config::schema::Config;
 
-/// Whether this build can execute WASM plugins.
-///
-/// Consumers use this value instead of duplicating the runtime crate's feature
-/// decision in their own feature tables.
-pub const WASM_PLUGIN_SUPPORT_COMPILED: bool = cfg!(feature = "plugins-wasm");
+pub use clawcrew_api::plugin::WASM_PLUGIN_SUPPORT_COMPILED;
 
 #[cfg(feature = "plugins-wasm")]
 use clawcrew_plugins::PluginCapability;

@@ -1,72 +1,35 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
-import path from "path";
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import { defineConfig } from 'vite';
 
-const gatewayHost = process.env.CLAWCREW_GATEWAY_HOST ?? "127.0.0.1";
-const gatewayPort = process.env.CLAWCREW_GATEWAY_PORT ?? "42617";
-const gatewayTarget = `http://${gatewayHost}:${gatewayPort}`;
-
-// Extra Host header values the dev server will accept, comma-separated, e.g.
-// CLAWCREW_WEB_ALLOWED_HOSTS=my-box.internal,dev.example.com. Unset → Vite default.
-const allowedHosts = process.env.CLAWCREW_WEB_ALLOWED_HOSTS
-  ?.split(",")
-  .map((h) => h.trim())
-  .filter(Boolean);
-
-export default defineConfig(({ command }) => ({
-  base: command === "serve" ? "/" : "/_app/",
-  plugins: [
-    react(),
-    tailwindcss(),
-    // Dev-only: the production gateway serves static assets under `/_app/*` by
-    // stripping that prefix and reading from `web/dist/` (see
-    // crates/clawcrew-gateway/src/static_files.rs). Vite dev doesn't know about
-    // that prefix and would 404 on `/_app/logo.png`, so mirror the gateway's
-    // strip-prefix behaviour here. Keeps `${basePath}/_app/...` URLs in the SPA
-    // working identically in dev and prod without copying assets into a
-    // `public/_app/` mirror.
-    {
-      name: "clawcrew-dev-app-prefix",
-      apply: "serve",
-      configureServer(server) {
-        server.middlewares.use((req, _res, next) => {
-          if (req.url?.startsWith("/_app/")) {
-            req.url = req.url.slice("/_app".length);
-          }
-          next();
-        });
+export default defineConfig(() => {
+  return {
+    plugins: [react(), tailwindcss()],
+    resolve: {
+      alias: {
+        '@': path.resolve('.'),
       },
+      dedupe: ['react', 'react-dom'],
     },
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'zustand', 'lucide-react'],
     },
-  },
-  build: {
-    outDir: "dist",
-    target: ["chrome111", "edge111", "firefox113", "safari16.2"],
-  },
-  server: {
-    allowedHosts,
-    proxy: {
-      "/api":            { target: gatewayTarget, changeOrigin: true },
-      "^/acp(?:\\?.*)?$": { target: gatewayTarget, changeOrigin: true, ws: true },
-      "/ws":             { target: gatewayTarget, changeOrigin: true, ws: true },
-      "/admin":          { target: gatewayTarget, changeOrigin: true },
-      "/health":         { target: gatewayTarget, changeOrigin: true },
-      "/metrics":        { target: gatewayTarget, changeOrigin: true },
-      // Exact-match the gateway pairing endpoints (/pair, /pair/code) so the
-      // prefix doesn't swallow the client route /pairing — a bare "/pair" key
-      // proxies /pairing to the gateway, which serves its own built UI and
-      // breaks a refresh on the pairing page (same fix as the /acp regex above).
-      "^/pair(?:/code)?(?:\\?.*)?$": { target: gatewayTarget, changeOrigin: true },
-      "/webhook":        { target: gatewayTarget, changeOrigin: true },
-      "/whatsapp":       { target: gatewayTarget, changeOrigin: true },
-      "/linq":           { target: gatewayTarget, changeOrigin: true },
-      "/nextcloud-talk": { target: gatewayTarget, changeOrigin: true },
-      "/hooks":          { target: gatewayTarget, changeOrigin: true },
+    server: {
+      port: 3000,
+      host: '0.0.0.0',
+      allowedHosts: true as const,
+      proxy: {
+        '/api': {
+          target: process.env.ENGINE_URL || 'http://127.0.0.1:9090',
+          changeOrigin: true,
+        },
+      },
+      // HMR is disabled in AI Studio via DISABLE_HMR env var.
+      // Do not modify—file watching is disabled to prevent flickering during agent edits.
+      hmr: process.env.DISABLE_HMR !== 'true',
+      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
+      watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
-  },
-}));
+  };
+});

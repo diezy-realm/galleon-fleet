@@ -214,6 +214,7 @@ const (
 	SystemGateway_ExecuteNativeTool_FullMethodName  = "/clawcrew.agent.SystemGateway/ExecuteNativeTool"
 	SystemGateway_GetDecryptedSecret_FullMethodName = "/clawcrew.agent.SystemGateway/GetDecryptedSecret"
 	SystemGateway_ExecuteTask_FullMethodName        = "/clawcrew.agent.SystemGateway/ExecuteTask"
+	SystemGateway_ExecuteTurn_FullMethodName        = "/clawcrew.agent.SystemGateway/ExecuteTurn"
 )
 
 // SystemGatewayClient is the client API for SystemGateway service.
@@ -228,6 +229,8 @@ type SystemGatewayClient interface {
 	GetDecryptedSecret(ctx context.Context, in *SecretRequest, opts ...grpc.CallOption) (*SecretResponse, error)
 	// ExecuteTask route for external task execution (engine -> executor)
 	ExecuteTask(ctx context.Context, in *TaskExecutionRequest, opts ...grpc.CallOption) (*TaskExecutionResponse, error)
+	// Executes an LLM generation turn with vendor streaming (ADR 0001: Rust LLM SSOT)
+	ExecuteTurn(ctx context.Context, in *ExecuteTurnRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TurnToken], error)
 }
 
 type systemGatewayClient struct {
@@ -268,6 +271,25 @@ func (c *systemGatewayClient) ExecuteTask(ctx context.Context, in *TaskExecution
 	return out, nil
 }
 
+func (c *systemGatewayClient) ExecuteTurn(ctx context.Context, in *ExecuteTurnRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TurnToken], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SystemGateway_ServiceDesc.Streams[0], SystemGateway_ExecuteTurn_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[ExecuteTurnRequest, TurnToken]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SystemGateway_ExecuteTurnClient = grpc.ServerStreamingClient[TurnToken]
+
 // SystemGatewayServer is the server API for SystemGateway service.
 // All implementations must embed UnimplementedSystemGatewayServer
 // for forward compatibility.
@@ -280,6 +302,8 @@ type SystemGatewayServer interface {
 	GetDecryptedSecret(context.Context, *SecretRequest) (*SecretResponse, error)
 	// ExecuteTask route for external task execution (engine -> executor)
 	ExecuteTask(context.Context, *TaskExecutionRequest) (*TaskExecutionResponse, error)
+	// Executes an LLM generation turn with vendor streaming (ADR 0001: Rust LLM SSOT)
+	ExecuteTurn(*ExecuteTurnRequest, grpc.ServerStreamingServer[TurnToken]) error
 	mustEmbedUnimplementedSystemGatewayServer()
 }
 
@@ -298,6 +322,9 @@ func (UnimplementedSystemGatewayServer) GetDecryptedSecret(context.Context, *Sec
 }
 func (UnimplementedSystemGatewayServer) ExecuteTask(context.Context, *TaskExecutionRequest) (*TaskExecutionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ExecuteTask not implemented")
+}
+func (UnimplementedSystemGatewayServer) ExecuteTurn(*ExecuteTurnRequest, grpc.ServerStreamingServer[TurnToken]) error {
+	return status.Error(codes.Unimplemented, "method ExecuteTurn not implemented")
 }
 func (UnimplementedSystemGatewayServer) mustEmbedUnimplementedSystemGatewayServer() {}
 func (UnimplementedSystemGatewayServer) testEmbeddedByValue()                       {}
@@ -374,6 +401,17 @@ func _SystemGateway_ExecuteTask_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SystemGateway_ExecuteTurn_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ExecuteTurnRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SystemGatewayServer).ExecuteTurn(m, &grpc.GenericServerStream[ExecuteTurnRequest, TurnToken]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SystemGateway_ExecuteTurnServer = grpc.ServerStreamingServer[TurnToken]
+
 // SystemGateway_ServiceDesc is the grpc.ServiceDesc for SystemGateway service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -394,6 +432,12 @@ var SystemGateway_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SystemGateway_ExecuteTask_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "ExecuteTurn",
+			Handler:       _SystemGateway_ExecuteTurn_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "agent_service.proto",
 }

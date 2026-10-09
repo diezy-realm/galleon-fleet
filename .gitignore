@@ -1,7 +1,8 @@
 /target
 /target-*/
+/bin/
 /engine/bin/
-apps/tauri-2/target/
+apps/tauri/target/
 
 # Desktop installer build artifacts
 *.dmg
@@ -130,3 +131,4 @@ target/openapi.json
 .worktrees/
 .zero-to-5/
 graphify-out/
+node_modules

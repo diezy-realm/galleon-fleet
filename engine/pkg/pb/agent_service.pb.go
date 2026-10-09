@@ -528,11 +528,13 @@ func (x *QueryMatch) GetMetadata() map[string]string {
 }
 
 type ToolCallRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ToolName      string                 `protobuf:"bytes,1,opt,name=tool_name,json=toolName,proto3" json:"tool_name,omitempty"` // e.g. "bash", "write_to_file", "read_file"
-	ArgumentsJson string                 `protobuf:"bytes,2,opt,name=arguments_json,json=argumentsJson,proto3" json:"arguments_json,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ToolName       string                 `protobuf:"bytes,1,opt,name=tool_name,json=toolName,proto3" json:"tool_name,omitempty"` // e.g. "bash", "write_to_file", "read_file"
+	ArgumentsJson  string                 `protobuf:"bytes,2,opt,name=arguments_json,json=argumentsJson,proto3" json:"arguments_json,omitempty"`
+	WorkspacePath  *string                `protobuf:"bytes,3,opt,name=workspace_path,json=workspacePath,proto3,oneof" json:"workspace_path,omitempty"`     // per-request workspace override
+	TimeoutSeconds *int32                 `protobuf:"varint,4,opt,name=timeout_seconds,json=timeoutSeconds,proto3,oneof" json:"timeout_seconds,omitempty"` // hard timeout (1-300s)
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ToolCallRequest) Reset() {
@@ -579,11 +581,26 @@ func (x *ToolCallRequest) GetArgumentsJson() string {
 	return ""
 }
 
+func (x *ToolCallRequest) GetWorkspacePath() string {
+	if x != nil && x.WorkspacePath != nil {
+		return *x.WorkspacePath
+	}
+	return ""
+}
+
+func (x *ToolCallRequest) GetTimeoutSeconds() int32 {
+	if x != nil && x.TimeoutSeconds != nil {
+		return *x.TimeoutSeconds
+	}
+	return 0
+}
+
 type ToolCallResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	Output        string                 `protobuf:"bytes,2,opt,name=output,proto3" json:"output,omitempty"`
 	Error         string                 `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	ExitCode      *int32                 `protobuf:"varint,4,opt,name=exit_code,json=exitCode,proto3,oneof" json:"exit_code,omitempty"` // process exit code
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -637,6 +654,13 @@ func (x *ToolCallResponse) GetError() string {
 		return x.Error
 	}
 	return ""
+}
+
+func (x *ToolCallResponse) GetExitCode() int32 {
+	if x != nil && x.ExitCode != nil {
+		return *x.ExitCode
+	}
+	return 0
 }
 
 type SecretRequest struct {
@@ -735,10 +759,11 @@ func (x *SecretResponse) GetValue() string {
 	return ""
 }
 
+// Task execution request/response for external executor
 type TaskExecutionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TaskId        string                 `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
-	TaskData      string                 `protobuf:"bytes,2,opt,name=task_data,json=taskData,proto3" json:"task_data,omitempty"`
+	TaskData      string                 `protobuf:"bytes,2,opt,name=task_data,json=taskData,proto3" json:"task_data,omitempty"` // JSON-encoded task payload
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -847,6 +872,573 @@ func (x *TaskExecutionResponse) GetError() string {
 	return ""
 }
 
+// LLM Execution turn messages (ADR 0001: Rust LLM SSOT)
+type ExecuteTurnRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Model         string                 `protobuf:"bytes,2,opt,name=model,proto3" json:"model,omitempty"`
+	SystemPrompt  string                 `protobuf:"bytes,3,opt,name=system_prompt,json=systemPrompt,proto3" json:"system_prompt,omitempty"`
+	Messages      []*TurnChatMessage     `protobuf:"bytes,4,rep,name=messages,proto3" json:"messages,omitempty"`
+	Tools         []*TurnToolDefinition  `protobuf:"bytes,5,rep,name=tools,proto3" json:"tools,omitempty"`
+	Temperature   *float32               `protobuf:"fixed32,6,opt,name=temperature,proto3,oneof" json:"temperature,omitempty"`
+	MaxTokens     *int32                 `protobuf:"varint,7,opt,name=max_tokens,json=maxTokens,proto3,oneof" json:"max_tokens,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExecuteTurnRequest) Reset() {
+	*x = ExecuteTurnRequest{}
+	mi := &file_agent_service_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExecuteTurnRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExecuteTurnRequest) ProtoMessage() {}
+
+func (x *ExecuteTurnRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExecuteTurnRequest.ProtoReflect.Descriptor instead.
+func (*ExecuteTurnRequest) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ExecuteTurnRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *ExecuteTurnRequest) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *ExecuteTurnRequest) GetSystemPrompt() string {
+	if x != nil {
+		return x.SystemPrompt
+	}
+	return ""
+}
+
+func (x *ExecuteTurnRequest) GetMessages() []*TurnChatMessage {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
+func (x *ExecuteTurnRequest) GetTools() []*TurnToolDefinition {
+	if x != nil {
+		return x.Tools
+	}
+	return nil
+}
+
+func (x *ExecuteTurnRequest) GetTemperature() float32 {
+	if x != nil && x.Temperature != nil {
+		return *x.Temperature
+	}
+	return 0
+}
+
+func (x *ExecuteTurnRequest) GetMaxTokens() int32 {
+	if x != nil && x.MaxTokens != nil {
+		return *x.MaxTokens
+	}
+	return 0
+}
+
+type TurnChatMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Role          string                 `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"` // "system", "user", "assistant", "tool"
+	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	ToolCallId    *string                `protobuf:"bytes,3,opt,name=tool_call_id,json=toolCallId,proto3,oneof" json:"tool_call_id,omitempty"`
+	Name          *string                `protobuf:"bytes,4,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TurnChatMessage) Reset() {
+	*x = TurnChatMessage{}
+	mi := &file_agent_service_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TurnChatMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TurnChatMessage) ProtoMessage() {}
+
+func (x *TurnChatMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TurnChatMessage.ProtoReflect.Descriptor instead.
+func (*TurnChatMessage) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *TurnChatMessage) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *TurnChatMessage) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *TurnChatMessage) GetToolCallId() string {
+	if x != nil && x.ToolCallId != nil {
+		return *x.ToolCallId
+	}
+	return ""
+}
+
+func (x *TurnChatMessage) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+type TurnToolDefinition struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Name           string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description    string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	ParametersJson string                 `protobuf:"bytes,3,opt,name=parameters_json,json=parametersJson,proto3" json:"parameters_json,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *TurnToolDefinition) Reset() {
+	*x = TurnToolDefinition{}
+	mi := &file_agent_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TurnToolDefinition) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TurnToolDefinition) ProtoMessage() {}
+
+func (x *TurnToolDefinition) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TurnToolDefinition.ProtoReflect.Descriptor instead.
+func (*TurnToolDefinition) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *TurnToolDefinition) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TurnToolDefinition) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *TurnToolDefinition) GetParametersJson() string {
+	if x != nil {
+		return x.ParametersJson
+	}
+	return ""
+}
+
+type TurnToken struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Event:
+	//
+	//	*TurnToken_Token
+	//	*TurnToken_ToolCall
+	//	*TurnToken_Complete
+	//	*TurnToken_Error
+	Event         isTurnToken_Event `protobuf_oneof:"event"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TurnToken) Reset() {
+	*x = TurnToken{}
+	mi := &file_agent_service_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TurnToken) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TurnToken) ProtoMessage() {}
+
+func (x *TurnToken) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TurnToken.ProtoReflect.Descriptor instead.
+func (*TurnToken) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *TurnToken) GetEvent() isTurnToken_Event {
+	if x != nil {
+		return x.Event
+	}
+	return nil
+}
+
+func (x *TurnToken) GetToken() *TokenChunk {
+	if x != nil {
+		if x, ok := x.Event.(*TurnToken_Token); ok {
+			return x.Token
+		}
+	}
+	return nil
+}
+
+func (x *TurnToken) GetToolCall() *TurnToolCall {
+	if x != nil {
+		if x, ok := x.Event.(*TurnToken_ToolCall); ok {
+			return x.ToolCall
+		}
+	}
+	return nil
+}
+
+func (x *TurnToken) GetComplete() *TurnComplete {
+	if x != nil {
+		if x, ok := x.Event.(*TurnToken_Complete); ok {
+			return x.Complete
+		}
+	}
+	return nil
+}
+
+func (x *TurnToken) GetError() *TurnError {
+	if x != nil {
+		if x, ok := x.Event.(*TurnToken_Error); ok {
+			return x.Error
+		}
+	}
+	return nil
+}
+
+type isTurnToken_Event interface {
+	isTurnToken_Event()
+}
+
+type TurnToken_Token struct {
+	Token *TokenChunk `protobuf:"bytes,1,opt,name=token,proto3,oneof"`
+}
+
+type TurnToken_ToolCall struct {
+	ToolCall *TurnToolCall `protobuf:"bytes,2,opt,name=tool_call,json=toolCall,proto3,oneof"`
+}
+
+type TurnToken_Complete struct {
+	Complete *TurnComplete `protobuf:"bytes,3,opt,name=complete,proto3,oneof"`
+}
+
+type TurnToken_Error struct {
+	Error *TurnError `protobuf:"bytes,4,opt,name=error,proto3,oneof"`
+}
+
+func (*TurnToken_Token) isTurnToken_Event() {}
+
+func (*TurnToken_ToolCall) isTurnToken_Event() {}
+
+func (*TurnToken_Complete) isTurnToken_Event() {}
+
+func (*TurnToken_Error) isTurnToken_Event() {}
+
+type TokenChunk struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Delta         string                 `protobuf:"bytes,1,opt,name=delta,proto3" json:"delta,omitempty"`
+	IsThought     bool                   `protobuf:"varint,2,opt,name=is_thought,json=isThought,proto3" json:"is_thought,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TokenChunk) Reset() {
+	*x = TokenChunk{}
+	mi := &file_agent_service_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TokenChunk) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TokenChunk) ProtoMessage() {}
+
+func (x *TokenChunk) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TokenChunk.ProtoReflect.Descriptor instead.
+func (*TokenChunk) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *TokenChunk) GetDelta() string {
+	if x != nil {
+		return x.Delta
+	}
+	return ""
+}
+
+func (x *TokenChunk) GetIsThought() bool {
+	if x != nil {
+		return x.IsThought
+	}
+	return false
+}
+
+type TurnToolCall struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	ArgumentsJson string                 `protobuf:"bytes,3,opt,name=arguments_json,json=argumentsJson,proto3" json:"arguments_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TurnToolCall) Reset() {
+	*x = TurnToolCall{}
+	mi := &file_agent_service_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TurnToolCall) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TurnToolCall) ProtoMessage() {}
+
+func (x *TurnToolCall) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TurnToolCall.ProtoReflect.Descriptor instead.
+func (*TurnToolCall) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *TurnToolCall) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *TurnToolCall) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TurnToolCall) GetArgumentsJson() string {
+	if x != nil {
+		return x.ArgumentsJson
+	}
+	return ""
+}
+
+type TurnComplete struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	FinishReason     string                 `protobuf:"bytes,1,opt,name=finish_reason,json=finishReason,proto3" json:"finish_reason,omitempty"` // "stop", "tool_calls", "length"
+	PromptTokens     int32                  `protobuf:"varint,2,opt,name=prompt_tokens,json=promptTokens,proto3" json:"prompt_tokens,omitempty"`
+	CompletionTokens int32                  `protobuf:"varint,3,opt,name=completion_tokens,json=completionTokens,proto3" json:"completion_tokens,omitempty"`
+	TotalTokens      int32                  `protobuf:"varint,4,opt,name=total_tokens,json=totalTokens,proto3" json:"total_tokens,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *TurnComplete) Reset() {
+	*x = TurnComplete{}
+	mi := &file_agent_service_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TurnComplete) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TurnComplete) ProtoMessage() {}
+
+func (x *TurnComplete) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TurnComplete.ProtoReflect.Descriptor instead.
+func (*TurnComplete) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *TurnComplete) GetFinishReason() string {
+	if x != nil {
+		return x.FinishReason
+	}
+	return ""
+}
+
+func (x *TurnComplete) GetPromptTokens() int32 {
+	if x != nil {
+		return x.PromptTokens
+	}
+	return 0
+}
+
+func (x *TurnComplete) GetCompletionTokens() int32 {
+	if x != nil {
+		return x.CompletionTokens
+	}
+	return 0
+}
+
+func (x *TurnComplete) GetTotalTokens() int32 {
+	if x != nil {
+		return x.TotalTokens
+	}
+	return 0
+}
+
+type TurnError struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ErrorCode     string                 `protobuf:"bytes,1,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TurnError) Reset() {
+	*x = TurnError{}
+	mi := &file_agent_service_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TurnError) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TurnError) ProtoMessage() {}
+
+func (x *TurnError) ProtoReflect() protoreflect.Message {
+	mi := &file_agent_service_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TurnError.ProtoReflect.Descriptor instead.
+func (*TurnError) Descriptor() ([]byte, []int) {
+	return file_agent_service_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *TurnError) GetErrorCode() string {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ""
+}
+
+func (x *TurnError) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_agent_service_proto protoreflect.FileDescriptor
 
 const file_agent_service_proto_rawDesc = "" +
@@ -897,27 +1489,91 @@ const file_agent_service_proto_rawDesc = "" +
 	"\bmetadata\x18\x04 \x03(\v2(.clawcrew.agent.QueryMatch.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"U\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd6\x01\n" +
 	"\x0fToolCallRequest\x12\x1b\n" +
 	"\ttool_name\x18\x01 \x01(\tR\btoolName\x12%\n" +
-	"\x0earguments_json\x18\x02 \x01(\tR\rargumentsJson\"Z\n" +
+	"\x0earguments_json\x18\x02 \x01(\tR\rargumentsJson\x12*\n" +
+	"\x0eworkspace_path\x18\x03 \x01(\tH\x00R\rworkspacePath\x88\x01\x01\x12,\n" +
+	"\x0ftimeout_seconds\x18\x04 \x01(\x05H\x01R\x0etimeoutSeconds\x88\x01\x01B\x11\n" +
+	"\x0f_workspace_pathB\x12\n" +
+	"\x10_timeout_seconds\"\x8a\x01\n" +
 	"\x10ToolCallResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x16\n" +
 	"\x06output\x18\x02 \x01(\tR\x06output\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error\"*\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\x12 \n" +
+	"\texit_code\x18\x04 \x01(\x05H\x00R\bexitCode\x88\x01\x01B\f\n" +
+	"\n" +
+	"_exit_code\"*\n" +
 	"\rSecretRequest\x12\x19\n" +
 	"\bkey_name\x18\x01 \x01(\tR\akeyName\"<\n" +
 	"\x0eSecretResponse\x12\x14\n" +
 	"\x05found\x18\x01 \x01(\bR\x05found\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value2\xfa\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"L\n" +
+	"\x14TaskExecutionRequest\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x1b\n" +
+	"\ttask_data\x18\x02 \x01(\tR\btaskData\"_\n" +
+	"\x15TaskExecutionResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x16\n" +
+	"\x06output\x18\x02 \x01(\tR\x06output\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\xcf\x02\n" +
+	"\x12ExecuteTurnRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x14\n" +
+	"\x05model\x18\x02 \x01(\tR\x05model\x12#\n" +
+	"\rsystem_prompt\x18\x03 \x01(\tR\fsystemPrompt\x12;\n" +
+	"\bmessages\x18\x04 \x03(\v2\x1f.clawcrew.agent.TurnChatMessageR\bmessages\x128\n" +
+	"\x05tools\x18\x05 \x03(\v2\".clawcrew.agent.TurnToolDefinitionR\x05tools\x12%\n" +
+	"\vtemperature\x18\x06 \x01(\x02H\x00R\vtemperature\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"max_tokens\x18\a \x01(\x05H\x01R\tmaxTokens\x88\x01\x01B\x0e\n" +
+	"\f_temperatureB\r\n" +
+	"\v_max_tokens\"\x99\x01\n" +
+	"\x0fTurnChatMessage\x12\x12\n" +
+	"\x04role\x18\x01 \x01(\tR\x04role\x12\x18\n" +
+	"\acontent\x18\x02 \x01(\tR\acontent\x12%\n" +
+	"\ftool_call_id\x18\x03 \x01(\tH\x00R\n" +
+	"toolCallId\x88\x01\x01\x12\x17\n" +
+	"\x04name\x18\x04 \x01(\tH\x01R\x04name\x88\x01\x01B\x0f\n" +
+	"\r_tool_call_idB\a\n" +
+	"\x05_name\"s\n" +
+	"\x12TurnToolDefinition\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12'\n" +
+	"\x0fparameters_json\x18\x03 \x01(\tR\x0eparametersJson\"\xf4\x01\n" +
+	"\tTurnToken\x122\n" +
+	"\x05token\x18\x01 \x01(\v2\x1a.clawcrew.agent.TokenChunkH\x00R\x05token\x12;\n" +
+	"\ttool_call\x18\x02 \x01(\v2\x1c.clawcrew.agent.TurnToolCallH\x00R\btoolCall\x12:\n" +
+	"\bcomplete\x18\x03 \x01(\v2\x1c.clawcrew.agent.TurnCompleteH\x00R\bcomplete\x121\n" +
+	"\x05error\x18\x04 \x01(\v2\x19.clawcrew.agent.TurnErrorH\x00R\x05errorB\a\n" +
+	"\x05event\"A\n" +
+	"\n" +
+	"TokenChunk\x12\x14\n" +
+	"\x05delta\x18\x01 \x01(\tR\x05delta\x12\x1d\n" +
+	"\n" +
+	"is_thought\x18\x02 \x01(\bR\tisThought\"Y\n" +
+	"\fTurnToolCall\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12%\n" +
+	"\x0earguments_json\x18\x03 \x01(\tR\rargumentsJson\"\xa8\x01\n" +
+	"\fTurnComplete\x12#\n" +
+	"\rfinish_reason\x18\x01 \x01(\tR\ffinishReason\x12#\n" +
+	"\rprompt_tokens\x18\x02 \x01(\x05R\fpromptTokens\x12+\n" +
+	"\x11completion_tokens\x18\x03 \x01(\x05R\x10completionTokens\x12!\n" +
+	"\ftotal_tokens\x18\x04 \x01(\x05R\vtotalTokens\"D\n" +
+	"\tTurnError\x12\x1d\n" +
+	"\n" +
+	"error_code\x18\x01 \x01(\tR\terrorCode\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xfa\x01\n" +
 	"\vAgentEngine\x12H\n" +
 	"\tStartTurn\x12\x1b.clawcrew.agent.TurnRequest\x1a\x1c.clawcrew.agent.TurnResponse0\x01\x12I\n" +
 	"\n" +
 	"QuickQuery\x12\x1c.clawcrew.agent.QueryRequest\x1a\x1d.clawcrew.agent.QueryResponse\x12V\n" +
-	"\vHealthCheck\x12\".clawcrew.agent.HealthCheckRequest\x1a#.clawcrew.agent.HealthCheckResponse2\xbc\x01\n" +
+	"\vHealthCheck\x12\".clawcrew.agent.HealthCheckRequest\x1a#.clawcrew.agent.HealthCheckResponse2\xe8\x02\n" +
 	"\rSystemGateway\x12V\n" +
 	"\x11ExecuteNativeTool\x12\x1f.clawcrew.agent.ToolCallRequest\x1a .clawcrew.agent.ToolCallResponse\x12S\n" +
-	"\x12GetDecryptedSecret\x12\x1d.clawcrew.agent.SecretRequest\x1a\x1e.clawcrew.agent.SecretResponseB2Z0github.com/diezy-labs/claw-crew/engine/pkg/pb;pbb\x06proto3"
+	"\x12GetDecryptedSecret\x12\x1d.clawcrew.agent.SecretRequest\x1a\x1e.clawcrew.agent.SecretResponse\x12Z\n" +
+	"\vExecuteTask\x12$.clawcrew.agent.TaskExecutionRequest\x1a%.clawcrew.agent.TaskExecutionResponse\x12N\n" +
+	"\vExecuteTurn\x12\".clawcrew.agent.ExecuteTurnRequest\x1a\x19.clawcrew.agent.TurnToken0\x01B2Z0github.com/diezy-labs/claw-crew/engine/pkg/pb;pbb\x06proto3"
 
 var (
 	file_agent_service_proto_rawDescOnce sync.Once
@@ -932,7 +1588,7 @@ func file_agent_service_proto_rawDescGZIP() []byte {
 }
 
 var file_agent_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_agent_service_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_agent_service_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_agent_service_proto_goTypes = []any{
 	(HealthCheckResponse_ServingStatus)(0), // 0: clawcrew.agent.HealthCheckResponse.ServingStatus
 	(TurnResponse_EventType)(0),            // 1: clawcrew.agent.TurnResponse.EventType
@@ -947,28 +1603,48 @@ var file_agent_service_proto_goTypes = []any{
 	(*ToolCallResponse)(nil),               // 10: clawcrew.agent.ToolCallResponse
 	(*SecretRequest)(nil),                  // 11: clawcrew.agent.SecretRequest
 	(*SecretResponse)(nil),                 // 12: clawcrew.agent.SecretResponse
-	nil,                                    // 13: clawcrew.agent.QueryMatch.MetadataEntry
+	(*TaskExecutionRequest)(nil),           // 13: clawcrew.agent.TaskExecutionRequest
+	(*TaskExecutionResponse)(nil),          // 14: clawcrew.agent.TaskExecutionResponse
+	(*ExecuteTurnRequest)(nil),             // 15: clawcrew.agent.ExecuteTurnRequest
+	(*TurnChatMessage)(nil),                // 16: clawcrew.agent.TurnChatMessage
+	(*TurnToolDefinition)(nil),             // 17: clawcrew.agent.TurnToolDefinition
+	(*TurnToken)(nil),                      // 18: clawcrew.agent.TurnToken
+	(*TokenChunk)(nil),                     // 19: clawcrew.agent.TokenChunk
+	(*TurnToolCall)(nil),                   // 20: clawcrew.agent.TurnToolCall
+	(*TurnComplete)(nil),                   // 21: clawcrew.agent.TurnComplete
+	(*TurnError)(nil),                      // 22: clawcrew.agent.TurnError
+	nil,                                    // 23: clawcrew.agent.QueryMatch.MetadataEntry
 }
 var file_agent_service_proto_depIdxs = []int32{
 	0,  // 0: clawcrew.agent.HealthCheckResponse.status:type_name -> clawcrew.agent.HealthCheckResponse.ServingStatus
 	1,  // 1: clawcrew.agent.TurnResponse.type:type_name -> clawcrew.agent.TurnResponse.EventType
 	8,  // 2: clawcrew.agent.QueryResponse.matches:type_name -> clawcrew.agent.QueryMatch
-	13, // 3: clawcrew.agent.QueryMatch.metadata:type_name -> clawcrew.agent.QueryMatch.MetadataEntry
-	4,  // 4: clawcrew.agent.AgentEngine.StartTurn:input_type -> clawcrew.agent.TurnRequest
-	6,  // 5: clawcrew.agent.AgentEngine.QuickQuery:input_type -> clawcrew.agent.QueryRequest
-	2,  // 6: clawcrew.agent.AgentEngine.HealthCheck:input_type -> clawcrew.agent.HealthCheckRequest
-	9,  // 7: clawcrew.agent.SystemGateway.ExecuteNativeTool:input_type -> clawcrew.agent.ToolCallRequest
-	11, // 8: clawcrew.agent.SystemGateway.GetDecryptedSecret:input_type -> clawcrew.agent.SecretRequest
-	5,  // 9: clawcrew.agent.AgentEngine.StartTurn:output_type -> clawcrew.agent.TurnResponse
-	7,  // 10: clawcrew.agent.AgentEngine.QuickQuery:output_type -> clawcrew.agent.QueryResponse
-	3,  // 11: clawcrew.agent.AgentEngine.HealthCheck:output_type -> clawcrew.agent.HealthCheckResponse
-	10, // 12: clawcrew.agent.SystemGateway.ExecuteNativeTool:output_type -> clawcrew.agent.ToolCallResponse
-	12, // 13: clawcrew.agent.SystemGateway.GetDecryptedSecret:output_type -> clawcrew.agent.SecretResponse
-	9,  // [9:14] is the sub-list for method output_type
-	4,  // [4:9] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	23, // 3: clawcrew.agent.QueryMatch.metadata:type_name -> clawcrew.agent.QueryMatch.MetadataEntry
+	16, // 4: clawcrew.agent.ExecuteTurnRequest.messages:type_name -> clawcrew.agent.TurnChatMessage
+	17, // 5: clawcrew.agent.ExecuteTurnRequest.tools:type_name -> clawcrew.agent.TurnToolDefinition
+	19, // 6: clawcrew.agent.TurnToken.token:type_name -> clawcrew.agent.TokenChunk
+	20, // 7: clawcrew.agent.TurnToken.tool_call:type_name -> clawcrew.agent.TurnToolCall
+	21, // 8: clawcrew.agent.TurnToken.complete:type_name -> clawcrew.agent.TurnComplete
+	22, // 9: clawcrew.agent.TurnToken.error:type_name -> clawcrew.agent.TurnError
+	4,  // 10: clawcrew.agent.AgentEngine.StartTurn:input_type -> clawcrew.agent.TurnRequest
+	6,  // 11: clawcrew.agent.AgentEngine.QuickQuery:input_type -> clawcrew.agent.QueryRequest
+	2,  // 12: clawcrew.agent.AgentEngine.HealthCheck:input_type -> clawcrew.agent.HealthCheckRequest
+	9,  // 13: clawcrew.agent.SystemGateway.ExecuteNativeTool:input_type -> clawcrew.agent.ToolCallRequest
+	11, // 14: clawcrew.agent.SystemGateway.GetDecryptedSecret:input_type -> clawcrew.agent.SecretRequest
+	13, // 15: clawcrew.agent.SystemGateway.ExecuteTask:input_type -> clawcrew.agent.TaskExecutionRequest
+	15, // 16: clawcrew.agent.SystemGateway.ExecuteTurn:input_type -> clawcrew.agent.ExecuteTurnRequest
+	5,  // 17: clawcrew.agent.AgentEngine.StartTurn:output_type -> clawcrew.agent.TurnResponse
+	7,  // 18: clawcrew.agent.AgentEngine.QuickQuery:output_type -> clawcrew.agent.QueryResponse
+	3,  // 19: clawcrew.agent.AgentEngine.HealthCheck:output_type -> clawcrew.agent.HealthCheckResponse
+	10, // 20: clawcrew.agent.SystemGateway.ExecuteNativeTool:output_type -> clawcrew.agent.ToolCallResponse
+	12, // 21: clawcrew.agent.SystemGateway.GetDecryptedSecret:output_type -> clawcrew.agent.SecretResponse
+	14, // 22: clawcrew.agent.SystemGateway.ExecuteTask:output_type -> clawcrew.agent.TaskExecutionResponse
+	18, // 23: clawcrew.agent.SystemGateway.ExecuteTurn:output_type -> clawcrew.agent.TurnToken
+	17, // [17:24] is the sub-list for method output_type
+	10, // [10:17] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_agent_service_proto_init() }
@@ -976,13 +1652,23 @@ func file_agent_service_proto_init() {
 	if File_agent_service_proto != nil {
 		return
 	}
+	file_agent_service_proto_msgTypes[7].OneofWrappers = []any{}
+	file_agent_service_proto_msgTypes[8].OneofWrappers = []any{}
+	file_agent_service_proto_msgTypes[13].OneofWrappers = []any{}
+	file_agent_service_proto_msgTypes[14].OneofWrappers = []any{}
+	file_agent_service_proto_msgTypes[16].OneofWrappers = []any{
+		(*TurnToken_Token)(nil),
+		(*TurnToken_ToolCall)(nil),
+		(*TurnToken_Complete)(nil),
+		(*TurnToken_Error)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_agent_service_proto_rawDesc), len(file_agent_service_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   12,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

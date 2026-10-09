@@ -73,4 +73,69 @@ func TestDirectDispatchDenial(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("RejectNativeToolServiceWithoutGateway", func(t *testing.T) {
+		activeRun, err := runSvc.CreateRun(ctx, &run.CreateRunRequest{
+			CrewID: "crew_sec",
+			Input:  run.RunInput{Prompt: "Fail-closed gateway test"},
+		}, "req_sec_2", "")
+		if err != nil {
+			t.Fatalf("failed to create run: %v", err)
+		}
+
+		// toolSvc has NO gateway wired (gateway is nil).
+		// Under fail-closed policy (Lane D1), any native tool execution MUST be rejected.
+		_, err = toolSvc.ExecuteWithContext(ctx, &tool.ExecutionContext{
+			ActorID: "agent_qa",
+			RunID:   activeRun.ID,
+		}, "write_file", `{"path":"test.txt","content":"hello"}`, ".", false)
+		if err == nil {
+			t.Fatalf("expected error when gateway is nil, got nil")
+		}
+		if appErr, ok := err.(*appErrors.AppError); ok {
+			if appErr.Code != appErrors.CodeUnavailable {
+				t.Errorf("expected CodeUnavailable, got %v", appErr.Code)
+			}
+		} else {
+			t.Errorf("expected *appErrors.AppError, got %T: %v", err, err)
+		}
+	})
+
+	t.Run("RejectDirectBuiltinExecutionWithoutGateway", func(t *testing.T) {
+		execCtx := &tool.ExecutionContext{
+			ActorID: "agent_qa",
+			RunID:   "run_test",
+		}
+
+		builtins := []tool.Tool{
+			&tool.RunLinterTool{},
+			&tool.RunTestsTool{},
+			&tool.GitStatusTool{},
+			&tool.GitCreateBranchTool{},
+			&tool.GitCommitTool{},
+			tool.NewWebFetchTool(),
+			&tool.WriteFileTool{},
+			&tool.EditFileTool{},
+			&tool.ExecuteCommandTool{},
+			&tool.GitDiffTool{},
+			&tool.SandboxedCodeRunnerTool{},
+		}
+
+		for _, b := range builtins {
+			t.Run(b.Name(), func(t *testing.T) {
+				_, _, err := b.ExecuteWithContext(ctx, execCtx, `{}`)
+				if err == nil {
+					t.Fatalf("expected fail-closed rejection for %s when gateway is nil, got nil", b.Name())
+				}
+				if appErr, ok := err.(*appErrors.AppError); ok {
+					if appErr.Code != appErrors.CodeUnavailable {
+						t.Errorf("expected CodeUnavailable for %s, got %v", b.Name(), appErr.Code)
+					}
+				} else {
+					t.Errorf("expected *appErrors.AppError for %s, got %T: %v", b.Name(), err, err)
+				}
+			})
+		}
+	})
 }
+

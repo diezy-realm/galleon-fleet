@@ -1,154 +1,178 @@
-# Steering: Galleon Architecture & Codebase Navigation
+# Steering: Galleon Fleet AI Workspace & Codebase Navigation
 
-This steering document governs how AI agents architect, implement, query, and navigate the Galleon Fleet AI codebase. It applies to all agent sessions (Antigravity, Claude Code, subagents).
-
-Related documents & skills:
-- Architecture & Layering Specification: [`.gemini/architecture.md`](architecture.md)
-- Rust Standards: [`.gemini/rules/rust-standards.md`](rules/rust-standards.md)
-- Graph-First Codebase Navigation: [`.gemini/skills/graphify/SKILL.md`](skills/graphify/SKILL.md)
+> **Status:** Canonical Workspace Steering (Normative)  
+> **Repository:** `diezy-realm/galleon-fleet`  
+> **Brand Identity:** Galleon Fleet (`galleon-fleet`) | CLI: `galleon`  
+> **Highest Authority:** [`standard-docs/`](../standard-docs/) (ODR-01 s/d ODR-25, Tech Standards, PR Plan)  
+> **Applies to:** Semua AI agent (Antigravity, Claude Code, subagents, developer tools).
 
 ---
 
-## 1. 3-Tier Layering Governance (STRICT RULE)
+## 1. Otoritas Tertinggi & Hierarki Keputusan
 
-All implementations MUST adhere to the following separation of concerns:
+Jika terdapat kontradiksi antara dokumen mana pun di repo ini, urutan otoritas penentu kebenaran (Single Source of Truth) adalah:
+1. **Owner Decision Records (ODR):** [`standard-docs/decisions/owner-decisions/`](../standard-docs/decisions/owner-decisions/) (ODR-01 s/d ODR-25). Bersifat mutlak & *immutable*.
+2. **Definisi Produk Resmi:** [`standard-docs/product/galleon-product-definition.md`](../standard-docs/product/galleon-product-definition.md).
+3. **Standar Teknis & Batasan Arsitektur:** [`standard-docs/tech-standart/`](../standard-docs/tech-standart/).
+4. **Roadmap & Master PR Plan:** [`standard-docs/roadmap/PR-plan.md`](../standard-docs/roadmap/PR-plan.md).
+5. **Steering Dokumen ini (`.gemini/steering.md`):** Panduan operasional harian agent.
 
-| Component | Lokasi | Bahasa & Runtime | Tugas Riil di Repo | Jalur Akses / Komunikasi |
+---
+
+## 2. Arsitektur Kanonikal 4-Tier & Strict Boundary Policy
+
+Galleon beroperasi dalam **4 tier ketat** dengan batas tanggung jawab tegas ([`01-boundary-policy.md`](../standard-docs/tech-standart/architecture/01-boundary-policy.md)):
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        TIER 4: UI LAYER (`web/`)                       │
+│                   React 19 + TypeScript + Tailwind CSS 4               │
+│         Zero backend logic. Zero fake data. Zero direct LLM call.      │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ HTTP :9090 (REST/SSE)
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                   TIER 3: AI ORCHESTRATOR (`engine/`)                  │
+│                     Go 1.27 (Google Wire DI, slog/zap)                 │
+│       Otak Tunggal: Turn Lifecycle, DAG, Fleet Governance, Memory      │
+└───────────────────┬────────────────────────────────┬───────────────────┘
+                    │ gRPC :50052                    ▲ IPC (proxy ke :9090)
+                    ▼ (SystemGateway)                │
+┌────────────────────────────────────────┐  ┌────────────────────────────┐
+│      TIER 2: SYSTEM CORE (`crates/`)   │  │ TIER 1: DESKTOP (`apps/    │
+│            Rust 2024 (27 crates)       │  │          tauri/`)          │
+│ Sandbox, Vault AES-256, LLM SSOT, WASI │  │ Tauri v2 OS Shell & Window │
+└────────────────────────────────────────┘  └────────────────────────────┘
+```
+
+### Matriks Tanggung Jawab & Larangan
+
+| Tier | Path Aktif | Port / Protokol | Tanggung Jawab Resmi (Owned) | Hal Terlarang (FORBIDDEN) |
 |---|---|---|---|---|
-| **Desktop Shell** | `apps/tauri-2/` | Rust (Tauri v2 + WRY) | Window framing, system tray icon, OS dialogs/notifikasi, packaging desktop `.exe`. | **Tauri IPC** (`invoke`) dari webview React. |
-| **System Core** | `crates/` | Rust (2024 edition) | Security microkernel (`clawcrew-runtime`), Landlock LSM sandboxing, native tool execution (`clawcrew-tools`), mDNS/A2A network (`clawcrew-gateway`), channel adapters (`clawcrew-channels`), WASI plugins (`clawcrew-plugins`). | **gRPC Server** `SystemGateway` (:50052) dipanggil oleh Go; atau direct CLI. |
-| **AI Orchestrator** | `engine/` | Go 1.25+ / Go 1.27 | Agent Brain (`StartTurn`), Fleet governance (Quests, Ships, Squads, Crew, Approvals), vector memory RAG (`memory/`), persistensi kanonikal `DiskStore`. | **gRPC Server** `AgentEngine` (:50051) & **HTTP Gateway** (:9090). |
-| **Interface / UI** | `web-2/` | TypeScript, React 19 | Visual rendering, view-models (`useFleetStore`), client-bridge (`apiClient.ts`). Zero backend APIs. | HTTP reverse proxy ke Go (:9090) / Tauri IPC. |
+| **Tier 1: Desktop Shell** | `apps/tauri/` | Tauri IPC (`invoke`) | Window lifecycle, tray icon, dialog native OS, bundling installer (`.exe`/`.dmg`). | ❌ Business logic, eksekusi terminal langsung (ODR-07), data palsu (ADR 0003). |
+| **Tier 2: System Core** | `crates/` | gRPC Server `:50052` (`SystemGateway`) | Security microkernel, sandbox (Landlock/Seatbelt), **LLM Execution SSOT** (`clawcrew-providers`), secrets Vault (AES-256-GCM), native tools, WASI host, channel adapters. | ❌ Fleet governance, turn orchestration, RAG vector memory (milik Go). Rust = leaf service. |
+| **Tier 3: AI Orchestrator** | `engine/` | gRPC Server `:50051`, HTTP `:9090` | **Agent Brain**: turn state machine (`StartTurn`), task graph, fleet policies & approval gate, memori persisten (SQLite/Postgres), pairing/QR gateway. | ❌ Eksekusi shell/fs lokal tanpa Rust (wajib fail-closed), direct vendor LLM call (wajib delegasi ke Rust via gRPC). |
+| **Tier 4: UI Layer** | `web/` | HTTP proxy ke Go `:9090` | Rendering komponen, view model Zustand, client routing. | ❌ Backend logic di Express (`server.ts` harus dibersihkan, ADR 0002), direct LLM SDK (`@google/genai` dilarang, ODR-08). |
 
-*Detail arsitektur, boundary invariants, dan sequence diagram terdokumentasi lengkap di [`.gemini/architecture.md`](architecture.md).*
+### Invarian Keras (Hard Invariants):
+1. **Frontend → Go → Rust (Dilarang Frontend → Rust):** Go engine adalah satu-satunya gerbang kebijakan (*governance & anti-injection*). Frontend dilarang memanggil Rust gRPC `:50052` langsung.
+2. **LLM SSOT = Rust `clawcrew-providers` (ADR 0001):** Semua vendor LLM dijalankan di Rust. Go engine menyusun konteks pesan dan mendelegasikan inferensi ke Rust via gRPC `ExecuteTurn`.
+3. **Eksekusi Terminal Terproteksi (ODR-07):** Alur terminal wajib: `Tauri/Web` $\rightarrow$ `Go Engine (Policy & Approval)` $\rightarrow$ `Rust SystemGateway (Sandbox)`.
+4. **Secrets SSOT = Rust Vault:** API key dan kredensial tersimpan di `~/.config/galleon/vault/` (AES-256-GCM terenkripsi). Wajib credential scrubbing di log.
+5. **No Shared Database:** Tiap tier mengisolasi storage-nya sendiri. Komunikasi lintas tier hanya via API.
 
 ---
 
-## 2. Graph-First Codebase Navigation Principle
+## 3. Empat Permukaan Akses & Channel Messaging
 
-**Graph first, grep second, manual browsing never.**
+- **4 Permukaan Akses Produk (ODR-02):**
+  - **CLI:** Binary Rust `galleon` sebagai klien tipis ke Go engine `:9090` (ODR-12).
+  - **Desktop:** Tauri v2 di `apps/tauri/` (hanya proxy ke Go + fitur OS).
+  - **Web:** Dashboard React 19 di `web/`.
+  - **QR Pairing:** Otentikasi dan login perangkat tambahan terikat token via Nginx/Go.
+- **Distribusi Channel Messaging (ODR-04):**
+  - **Tier A (Embed/Default):** Slack, WhatsApp, Discord, Telegram, Matrix (ikut instalasi default).
+  - **Tier B (Compiled Feature-Crates `galleon-channel-<name>`):** WeChat, QQ, Signal, iMessage, AMQP, IRC.
+  - **Tier C (WASI Plugin Sandbox):** Channel niche inbound/webhook (Nostr, Twitch, dll.) dengan verifikasi signature.
 
-All codebase queries — symbol lookup, path discovery, dependency tracing, module understanding, call-flow tracing, and architecture questions — MUST follow this resolution order:
+---
 
-1. **Graphify indexing** → Refresh or build the knowledge graph first.
-2. **Graphify query** → Query `graphify-out/` with `query`, `path`, or `explain`.
-3. **Grep** → Use targeted `grep`/`Select-String` only for line-level detail after Graphify has identified the target file(s) and symbol(s).
-4. **Direct file read** → Open specific files only after the Graphify query and targeted search have identified them.
+## 4. Standar Kode & Kualitas Produksi
 
-For every query/path/flow investigation, run `graphify update .` when
-`graphify-out/graph.json` exists. If it does not exist, run `graphify .` first.
-This indexing step is mandatory even when the requested lookup appears simple.
-VS Code Copilot follows the project-scoped rules in `.github/copilot-instructions.md`.
+### A. Standar Rust (Rust 2024 / MSRV 1.82+)
+- **Zero `unwrap()` / `expect()` di Jalur Produksi:** Wajib menggunakan error propagation `?` dengan `thiserror` atau `Result<T>`. Pengecualian hanya untuk test atau invarian terdokumentasi `// INVARIANT: ...`.
+- **Mutex Poison Recovery:** Tangani mutex lock dengan `poisoned.into_inner()` + log warning, jangan `.expect("lock poisoned")`.
+- **Standar Ukuran File & Fungsi (Ratchet Rule):**
+  - File non-test: target $\le 800$ baris (warning $> 2.000$, gagal CI $> 5.000$).
+  - Fungsi: target $\le 60$ baris.
+  - Crate: target $\le 30\text{k}$ LOC.
+- **Mandatory Fast Test Runner (`cargo-nextest`):**
+  ```powershell
+  # Test spesifik per crate
+  cargo nextest run -p <crate-name>
+  # Test spesifik fungsi test
+  cargo nextest run -p <crate-name> -E 'test(<test_fn>)'
+  # Workspace test
+  cargo nextest run --workspace
+  ```
+- **Targeted Checking (Cepat & Tanpa Lock Contention di Windows):**
+  ```powershell
+  $env:CARGO_TARGET_DIR="target/agent"; cargo check -p <crate-name>
+  cargo clippy -p <crate-name> -- -D warnings
+  ```
 
-> **NEVER** start with broad recursive grep, `find`, or directory walks to understand architecture, locate symbols, or discover relationships. Use the graph.
+### B. Standar Go (Go 1.27)
+- **Dependency Injection:** Google Wire (`engine/app/wire.go` $\rightarrow$ `wire_gen.go`).
+- **Fail-Closed Policy:** Delegasi tool ke Rust via `ExecuteNativeTool`. Jika Rust offline, kembalikan error tertolak (fail-closed), dilarang fallback mengeksekusi shell/fs lokal di Go.
+- **Logging & Errors:** Structured logging via `zap`/`slog`. Error pembungkus wajib `%w`.
+- **Pengujian:** `go test -race ./...` di folder `engine/`.
 
-## Graphify Output Structure
+### C. Standar Web & UI (React 19 + TypeScript + Tailwind 4)
+- **Zero Backend Logic:** Pindahkan logika Express di `server.ts` ke Go engine.
+- **Zero Client LLM Calls:** Hapus `@google/genai` dari `web/package.json`.
+- **Type Safety:** TypeScript strict mode, zero `any`. Gunakan `apiClient.ts` untuk komunikasi dengan Go `:9090`.
+
+---
+
+## 5. Protokol Navigasi Codebase (Graphify-First)
+
+> **Graph first, grep second, manual browsing never.**
+
+Semua pencarian simbol, penelusuran dependensi, pemahaman arsitektur, dan flow panggilan HARUS mengikuti urutan ini:
+
+1. **Cek ketersediaan Graphify (`graphify-out/`):**
+   ```powershell
+   Test-Path graphify-out/graph.json
+   ```
+   Jika belum ada, bangun dengan `graphify .`. Jika sudah ada perubahan besar, perbarui dengan `graphify update .`.
+2. **Kueri Knowledge Graph:**
+   - Gunakan `graphify query "konsep/fitur"` untuk pencarian semantik.
+   - Gunakan `graphify path "A" "B"` untuk menelusuri relasi antar komponen.
+   - Baca `graphify-out/GRAPH_REPORT.md` untuk gambaran god nodes dan klaster modul.
+3. **Targeted Grep:** Gunakan `Select-String` baris demi baris HANYA setelah file target diidentifikasi oleh Graphify:
+   ```powershell
+   # BENAR: Graphify menemukan file, lakukan pencarian presisi
+   Select-String -Pattern "pub struct SystemGateway" crates/clawcrew-gateway/src/grpc_system_gateway.rs
+   ```
+4. **Direct File Read:** Buka file hanya pada baris yang relevan dari hasil langkah 2 & 3.
+5. **Dilarang keras:** Melakukan recursive grep buta (`Get-ChildItem -Recurse | Select-String`) ke seluruh repo tanpa memanfaatkan graph.
+
+---
+
+## 6. Model Otomatisasi & Tata Kelola 3-Tier
+
+Pengembangan dan review PR diatur dengan model eskalasi 3-Tier ([`3-TIER-AUTOMATION-MODEL.md`](../standard-docs/decisions/governance/3-TIER-AUTOMATION-MODEL.md)):
 
 ```
-graphify-out/
-├── graph.html        # Interactive graph visualization
-├── GRAPH_REPORT.md   # God nodes, surprising connections, suggested questions
-├── graph.json        # Persistent knowledge graph (query without re-reading)
-├── obsidian/         # Open as Obsidian vault for visual exploration
-├── wiki/             # Wikipedia-style articles for agent navigation
-└── cache/            # SHA256 cache — re-runs only process changed files
-    ├── ast/          # Per-file AST analysis
-    ├── semantic/     # Semantic relationship extraction
-    └── stat-index.json  # File metadata and hash index
+PR Diajukan ke Testing
+         │
+         ▼
+┌───────────────────────────────┐
+│ Cek Severity & Kata Kunci?    │
+└───────────────────────────────┘
+         │
+         ├─► [TIER 1: NORMAL/MINOR] ──► Principle Bot AUTO-APPROVE & Auto-Merge (0 min Owner)
+         │
+         ├─► [TIER 2: CRITICAL/HIGH] ──► Lead Squad Analisis (3 Opsi) ──► Owner Memilih (5-15 min)
+         │
+         └─► [TIER 3: STRATEGIS/SCOPE] ─► Diskusi Lead + PO ──────────► Owner Memutuskan (10-30 min)
 ```
 
-## Agent Query Protocol
+### Konvensi Git & PR:
+- Gunakan branch non-`master` / non-`main`.
+- Target PR ke `main` / `testing`.
+- Gunakan Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`).
+- Pisahkan commit per concern (ODR-10).
+- Dilarang menyertakan bot/AI attribution footer di PR description atau commit body.
+- Deklarasikan dependensi tugas dengan `Depends on #...` dan `Supersedes #...`.
 
-### Step 1: Check graph availability
+---
 
-Before any codebase query, verify that `graphify-out/` exists:
+## 7. Referensi Cepat Roadmap & PR Plan
 
-```powershell
-# Windows (pwsh)
-Test-Path graphify-out/graph.json
-
-# If missing, generate the graph first:
-graphify .
-# Or if graphify CLI is unavailable:
-python -m graphify .
-```
-
-If `graphify-out/` does not exist or `graph.json` is missing, **generate the graph before proceeding**. Do not skip this step.
-
-### Step 2: Query the graph
-
-Use graphify's query capabilities to answer questions:
-
-```powershell
-# Semantic query — find concepts and relationships
-graphify query "what modules handle task cancellation?"
-
-# Path query — find connections between concepts
-graphify path "TaskRecord" "SessionLifecycle"
-
-# For structural queries, read graph.json or the wiki/
-```
-
-For agents without CLI access to `graphify`, read these files in order:
-
-1. `graphify-out/GRAPH_REPORT.md` — Architecture overview, god nodes, key connections.
-2. `graphify-out/wiki/` — Per-module and per-concept articles.
-3. `graphify-out/graph.json` — Raw graph data for programmatic queries.
-4. `graphify-out/cache/stat-index.json` — File index with sizes, hashes, and word counts.
-
-### Step 3: Targeted grep for detail
-
-After graphify identifies the relevant file(s), use `Select-String` for line-level precision:
-
-```powershell
-# GOOD: graphify told us TaskRecord is in task_registry.rs
-Select-String -Pattern "pub struct TaskRecord" crates/clawcrew-runtime/src/control_plane/task_registry.rs
-
-# BAD: blind recursive search without checking the graph
-Get-ChildItem -Recurse -Filter "*.rs" | Select-String "TaskRecord"
-```
-
-### Step 4: Read file content
-
-Open only the specific files and line ranges that step 2 and 3 identified.
-
-## When to Re-index
-
-Run `graphify . --update` (incremental) when:
-
-- New modules or crates are added.
-- Major refactors change module boundaries.
-- Before starting a new architectural task (P0, P1, P2, etc.).
-
-Run `graphify .` (full re-index) when:
-
-- The graph is more than a week old.
-- The codebase has undergone a large merge or rebase.
-
-## Anti-Patterns (Prohibited)
-
-| ❌ Don't | ✅ Do instead |
-|---|---|
-| `Get-ChildItem -Recurse \| Select-String "pattern"` as first step | `graphify query "what handles pattern?"` |
-| Browsing random directories to "understand the codebase" | Read `GRAPH_REPORT.md` for architecture overview |
-| Opening 10+ files to find a symbol definition | Query the graph, then open the one identified file |
-| Guessing file paths from memory | Check `stat-index.json` or the graph for canonical paths |
-| Skipping graph when it exists | Always check graph first, even for "simple" lookups |
-
-## Subagent Directive
-
-All subagents (research, implementation, review) inherit this steering. When spawning subagents:
-
-- Include "Use graphify-out/ for codebase navigation per steering.md" in the subagent prompt.
-- Subagents MUST set their working directory to the repository root before any graphify or file operation.
-
-## Compatibility
-
-This steering is designed to work with:
-
-- **Antigravity** (this platform) — via `.gemini/steering.md`
-- **Claude Code** — via `.claude/CLAUDE.md` reference
-- **Other AI agents** — via `AGENTS.md` reference
-
-The canonical source of truth for this policy is this file: `.gemini/steering.md`.
-
+Untuk eksekusi task, rujuk ke tabel master 121 tiket di [`standard-docs/roadmap/PR-plan.md`](../standard-docs/roadmap/PR-plan.md):
+- **Gelombang 0 (P0 Dasar & Keamanan):** PR-00 s/d PR-06 (R-00 inventory, U-01 frontendDist, U-06 terminal removal, G-01 fail-closed).
+- **Gelombang 1 (Pembersihan & Gate CI):** PR-10 s/d PR-22 (Zero unwrap gate, boundary gates, AI studio artifact cleanup, Ollama probe removal).
+- **Gelombang 2 (Persistensi & Pemisahan Engine):** PR-30 s/d PR-72 (SQLite store, QR pairing, Agent loop ke Go, Channel decoupling).
+- **Gelombang 3 (Rebranding Galleon):** PR-80 s/d PR-88 (Rename crates, env vars, binaries `galleon`/`galleoncode`/`galleonrelay`).
+- **Gelombang 4 (Platform & Release):** PR-90 s/d PR-99 (Nginx TLS, Tauri sidecar, Release pipeline).

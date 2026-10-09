@@ -768,6 +768,7 @@ mod tests {
             key: key.into(),
             content: content.into(),
             category,
+            scope: Default::default(),
             timestamp: "2026-06-30T00:00:00Z".into(),
             session_id: session_id.map(str::to_string),
             score: Some(score),
