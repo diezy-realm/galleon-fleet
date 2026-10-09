@@ -91,6 +91,10 @@ pub fn migrate_legacy_jsonl_in_place(path: &Path) -> Result<()> {
         use std::os::unix::fs::PermissionsExt;
         let _ = fs::set_permissions(&tmp, fs::Permissions::from_mode(0o600));
     }
+    #[cfg(windows)]
+    {
+        let _ = crate::writer::restrict_log_file_acl_by_path(&tmp);
+    }
     fs::rename(&tmp, path).with_context(|| {
         format!(
             "renaming migration temp {} → {}",
@@ -136,6 +140,10 @@ fn create_migration_temp(path: &Path) -> Result<(File, MigrationTempCleanup)> {
     let file = opts
         .open(path)
         .with_context(|| format!("creating migration temp {}", path.display()))?;
+    #[cfg(windows)]
+    {
+        let _ = crate::writer::restrict_log_file_acl(&file, path);
+    }
     Ok((file, MigrationTempCleanup::new(path.to_path_buf())))
 }
 

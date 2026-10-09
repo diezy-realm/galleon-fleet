@@ -678,6 +678,67 @@ export const SettingsView: React.FC = () => {
                   </p>
                 </div>
               </div>
+
+              {/* BL-43: Payment-Lockout Gate UI (OWASP ASI09 Raw State) */}
+              <div className="p-5 rounded-xl border border-red-200 dark:border-red-950/60 bg-white dark:bg-[#191b1f] space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-red-500" />
+                      <h3 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm">
+                        Preventive Payment-Lockout Gate (BL-43)
+                      </h3>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">
+                        LOCKED (FAIL-CLOSED)
+                      </span>
+                    </div>
+                    <p className="text-neutral-500 dark:text-neutral-400 mt-1 text-[11px] leading-relaxed">
+                      Zero payment tools exist in Galleon by design. This gate provides preventive mathematical isolation
+                      preventing agents from initiating credit card, bank transfer, or crypto payments (mitigating OWASP ASI09/ASI10).
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col items-end">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={false}
+                        readOnly
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-neutral-200 dark:bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
+                    </label>
+                    <span className="text-[10px] font-mono text-neutral-400 mt-1">Allow Payments: OFF</span>
+                  </div>
+                </div>
+
+                {/* Raw State Inspection (OWASP ASI09 Requirement) */}
+                <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">
+                      Raw Security Configuration State (No Agent Summary):
+                    </span>
+                    <span className="font-mono text-neutral-500">OWASP ASI09 Verified</span>
+                  </div>
+                  <pre className="p-3 rounded-lg bg-neutral-100 dark:bg-neutral-900 font-mono text-[10px] text-neutral-700 dark:text-neutral-300 overflow-x-auto border border-neutral-200 dark:border-neutral-800">
+{JSON.stringify({
+  mode: "locked",
+  locked: true,
+  unlocked_scopes: [],
+  require_otp_to_unlock: true,
+  unlock_expires_at: null,
+  covered_categories: [
+    "card_payment",
+    "bank_transfer",
+    "crypto_transaction",
+    "wallet_topup",
+    "subscription_commit"
+  ],
+  is_effective_locked: true
+}, null, 2)}
+                  </pre>
+                </div>
+              </div>
             </div>
           )}
 

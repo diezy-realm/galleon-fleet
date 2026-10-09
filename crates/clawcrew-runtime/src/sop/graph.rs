@@ -760,6 +760,8 @@ mod tests {
             admission_policy: Default::default(),
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }
     }
 

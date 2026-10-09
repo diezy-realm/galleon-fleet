@@ -6,7 +6,7 @@ author: Prodcut-Owner (crew)
 depends_on: product-industry-competitor-insight.md
 ---
 
-> Dokumen ini **melanjutkan dan tidak mengulang** riset di `research/product-industry-competitor-insight.md`. Dikerjakan oleh crew `Prodcut-Owner` atas delegasi, dengan instruksi eksplisit membaca baseline dulu dan hanya menambah perspektif baru.
+> Dokumen ini **melanjutkan dan tidak mengulang** riset di `archive/research-closed-loop/product-industry-competitor-insight.md`. Dikerjakan oleh crew `Prodcut-Owner` atas delegasi, dengan instruksi eksplisit membaca baseline dulu dan hanya menambah perspektif baru.
 
 # Riset Tambahan: Go-to-Market, Segmentasi, Risiko & Rekomendasi Baru untuk Galleon Fleet
 

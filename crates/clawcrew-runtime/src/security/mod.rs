@@ -1,5 +1,6 @@
 //! Security subsystem for policy enforcement, sandboxing, and secret management.
 
+pub mod appcontainer;
 pub mod audit;
 pub mod auth_provider;
 #[cfg(feature = "sandbox-bubblewrap")]
@@ -22,6 +23,7 @@ pub mod leak_detector;
 pub mod nevis;
 pub mod otp;
 pub mod pairing;
+pub mod payment_lock;
 pub mod playbook;
 pub mod policy;
 pub mod principal_resolver;
@@ -35,6 +37,7 @@ pub mod vulnerability;
 pub mod webauthn;
 
 #[allow(unused_imports)]
+pub use appcontainer::AppContainerSandbox;
 pub use audit::{AuditEvent, AuditEventType, AuditLogger};
 #[allow(unused_imports)]
 pub use detect::create_sandbox;
@@ -56,6 +59,7 @@ pub use ingress::{IngressPolicy, ingress_policy};
 pub use otp::OtpValidator;
 #[allow(unused_imports)]
 pub use pairing::PairingGuard;
+pub use payment_lock::{PaymentLockDenied, PaymentLockManager, PaymentLockRawState};
 pub use policy::{AutonomyLevel, SecurityPolicy};
 #[allow(unused_imports)]
 pub use secrets::SecretStore;

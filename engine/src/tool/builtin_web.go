@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 )
 
 // WebFetchTool implements web.fetch with robust SSRF protections

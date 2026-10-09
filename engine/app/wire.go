@@ -4,16 +4,16 @@
 package app
 
 import (
-	"github.com/diezy-labs/claw-crew/engine/core/config"
-	"github.com/diezy-labs/claw-crew/engine/pkg/client"
-	"github.com/diezy-labs/claw-crew/engine/src/artifact"
-	"github.com/diezy-labs/claw-crew/engine/src/crew"
-	"github.com/diezy-labs/claw-crew/engine/src/fleet"
-	"github.com/diezy-labs/claw-crew/engine/src/memory"
-	"github.com/diezy-labs/claw-crew/engine/src/run"
-	"github.com/diezy-labs/claw-crew/engine/src/task"
-	"github.com/diezy-labs/claw-crew/engine/src/tool"
-	"github.com/diezy-labs/claw-crew/engine/src/workflow"
+	"github.com/diezy-realm/galleon-fleet/engine/core/config"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/client"
+	"github.com/diezy-realm/galleon-fleet/engine/src/artifact"
+	"github.com/diezy-realm/galleon-fleet/engine/src/crew"
+	"github.com/diezy-realm/galleon-fleet/engine/src/fleet"
+	"github.com/diezy-realm/galleon-fleet/engine/src/memory"
+	"github.com/diezy-realm/galleon-fleet/engine/src/run"
+	"github.com/diezy-realm/galleon-fleet/engine/src/task"
+	"github.com/diezy-realm/galleon-fleet/engine/src/tool"
+	"github.com/diezy-realm/galleon-fleet/engine/src/workflow"
 	"github.com/google/wire"
 )
 

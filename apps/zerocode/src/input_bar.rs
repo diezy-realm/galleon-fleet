@@ -1142,8 +1142,14 @@ impl InputBarState {
 
     // ── Attachment management ────────────────────────────────
 
-    pub fn add_attachment(&mut self, att: PendingAttachment) {
+    pub const MAX_ATTACHMENTS_PER_MESSAGE: usize = 10;
+
+    pub fn add_attachment(&mut self, att: PendingAttachment) -> bool {
+        if self.pending_attachments.len() >= Self::MAX_ATTACHMENTS_PER_MESSAGE {
+            return false;
+        }
         self.pending_attachments.push(att);
+        true
     }
 
     pub fn load_for_edit(&mut self, text: String, attachments: Vec<PendingAttachment>) {
@@ -1255,6 +1261,13 @@ impl InputBarState {
                 ExplorerAction::Confirm(paths) => {
                     match PendingAttachment::from_explorer_paths(&paths) {
                         Ok(atts) => {
+                            if self.pending_attachments.len() + atts.len() > Self::MAX_ATTACHMENTS_PER_MESSAGE {
+                                self.file_explorer = None;
+                                return InputBarAction::StatusMessage(format!(
+                                    "Cannot attach more than {} attachments per message",
+                                    Self::MAX_ATTACHMENTS_PER_MESSAGE
+                                ));
+                            }
                             let labels: Vec<String> = atts.iter().map(|a| a.label()).collect();
                             for att in atts {
                                 self.pending_attachments.push(att);
@@ -1707,6 +1720,12 @@ impl InputBarState {
     }
 
     fn handle_clipboard_image(&mut self) -> InputBarAction {
+        if self.pending_attachments.len() >= Self::MAX_ATTACHMENTS_PER_MESSAGE {
+            return InputBarAction::StatusMessage(format!(
+                "Cannot attach more than {} attachments per message",
+                Self::MAX_ATTACHMENTS_PER_MESSAGE
+            ));
+        }
         match clipboard::read_clipboard_image() {
             Some((bytes, mime)) => {
                 let ext = mime.rsplit('/').next().unwrap_or("png");

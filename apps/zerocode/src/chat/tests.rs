@@ -11733,3 +11733,43 @@
             "the pane must not answer requests behind the app router"
         );
     }
+
+    #[test]
+    fn uploading_eleventh_attachment_rejected_in_front_app() {
+        let mut state = state();
+        for i in 0..10 {
+            assert!(
+                state.input_bar.add_attachment(PendingAttachment {
+                    path: std::path::PathBuf::from(format!("/tmp/file_{i}.txt")),
+                    filename: format!("file_{i}.txt"),
+                    mime_type: "text/plain".to_string(),
+                    size_bytes: 100,
+                    source: crate::attachment::AttachmentSource::File,
+                }),
+                "adding up to 10 attachments must succeed"
+            );
+        }
+        assert_eq!(state.input_bar.pending_attachments().len(), 10);
+
+        let eleventh_accepted = state.input_bar.add_attachment(PendingAttachment {
+            path: std::path::PathBuf::from("/tmp/file_11.txt"),
+            filename: "file_11.txt".to_string(),
+            mime_type: "text/plain".to_string(),
+            size_bytes: 100,
+            source: crate::attachment::AttachmentSource::File,
+        });
+        assert!(!eleventh_accepted, "11th attachment must be rejected in input bar");
+        assert_eq!(state.input_bar.pending_attachments().len(), 10);
+
+        let atts: Vec<PendingAttachment> = (0..11)
+            .map(|i| PendingAttachment {
+                path: std::path::PathBuf::from(format!("/tmp/file_{i}.txt")),
+                filename: format!("file_{i}.txt"),
+                mime_type: "text/plain".to_string(),
+                size_bytes: 100,
+                source: crate::attachment::AttachmentSource::File,
+            })
+            .collect();
+        let res = state.enqueue_message("test".to_string(), atts);
+        assert!(res.is_err(), "enqueue_message with 11 attachments must be rejected");
+    }

@@ -9,18 +9,20 @@ import (
 	"sync"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/logger"
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
-	"github.com/diezy-labs/claw-crew/engine/pkg/client"
-	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/client"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
 )
 
 type service struct {
-	mu          sync.RWMutex
-	activeTurns map[string]context.CancelFunc
-	dispatcher  ToolDispatcher
-	gateway     client.SystemGatewayClient
+	mu              sync.RWMutex
+	activeTurns     map[string]context.CancelFunc
+	dispatcher      ToolDispatcher
+	gateway         client.SystemGatewayClient
+	activeSubagents int
+	maxSubagents    int
 }
 
 // NewService creates a new crew.Orchestrator instance with tool dispatcher and Rust SystemGateway client
@@ -29,10 +31,17 @@ func NewService(
 	gateway client.SystemGatewayClient,
 ) Orchestrator {
 	return &service{
-		activeTurns: make(map[string]context.CancelFunc),
-		dispatcher:  dispatcher,
-		gateway:     gateway,
+		activeTurns:  make(map[string]context.CancelFunc),
+		dispatcher:   dispatcher,
+		gateway:      gateway,
+		maxSubagents: 4, // Default sub-agent concurrency ceiling (BG-D1 / BL-18)
 	}
+}
+
+func (s *service) SetMaxSubagents(max int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.maxSubagents = max
 }
 
 func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<- *TurnEvent) error {
@@ -175,8 +184,30 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 				}
 
 				if res.IsSubagentAction {
+					// BG-D1 / BL-18: Subagent resource-gate (cap active concurrent sub-agents)
+					// Must be checked BEFORE subagentWg.Add(1) and goroutine spawn!
+					s.mu.Lock()
+					if s.maxSubagents > 0 && s.activeSubagents >= s.maxSubagents {
+						s.mu.Unlock()
+						select {
+						case <-turnCtx.Done():
+							return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
+						case eventCh <- &TurnEvent{
+							Type:       EventToolCallFinished,
+							Content:    fmt.Sprintf("Resource gate rejection: maximum concurrent sub-agents reached (%d/%d)", s.activeSubagents, s.maxSubagents),
+							SubagentID: res.SubagentID,
+						}:
+						}
+						continue
+					}
+					s.activeSubagents++
+					s.mu.Unlock()
+
 					select {
 					case <-turnCtx.Done():
+						s.mu.Lock()
+						s.activeSubagents--
+						s.mu.Unlock()
 						return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
 					case eventCh <- &TurnEvent{
 						Type:       EventSubagentSpawned,
@@ -188,6 +219,11 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 					subagentWg.Add(1)
 					go func(subID, subTask string) {
 						defer subagentWg.Done()
+						defer func() {
+							s.mu.Lock()
+							s.activeSubagents--
+							s.mu.Unlock()
+						}()
 						s.runSubagent(turnCtx, subID, subTask, eventCh)
 					}(res.SubagentID, res.SubagentTask)
 				} else {
@@ -277,6 +313,42 @@ func (s *service) CancelTurn(ctx context.Context, sessionID string) error {
 
 	cancel()
 	delete(s.activeTurns, sessionID)
+	return nil
+}
+
+// HandoffSubagent performs subagent handoff / A2A delegation carrying an artifact reference
+// with the resource-gate check inherited from BG-D1 (BG-D4 / eks-BL-18 part 2).
+func (s *service) HandoffSubagent(ctx context.Context, req *HandoffRequest, eventCh chan<- *TurnEvent) error {
+	s.mu.Lock()
+	if s.maxSubagents > 0 && s.activeSubagents >= s.maxSubagents {
+		s.mu.Unlock()
+		return appErrors.New(appErrors.CodeFailedPrecondition,
+			fmt.Sprintf("resource gate rejection: maximum concurrent sub-agents reached (%d/%d)", s.activeSubagents, s.maxSubagents),
+			appErrors.LayerService)
+	}
+	s.activeSubagents++
+	s.mu.Unlock()
+
+	defer func() {
+		s.mu.Lock()
+		s.activeSubagents--
+		s.mu.Unlock()
+	}()
+
+	if eventCh != nil {
+		eventCh <- &TurnEvent{
+			Type:       EventSubagentSpawned,
+			Content:    fmt.Sprintf("Handoff to subagent '%s' with artifact '%s': %s", req.ToAgentID, req.ArtifactRef, req.TaskDescription),
+			SubagentID: req.ToAgentID,
+		}
+	}
+
+	taskWithArtifact := req.TaskDescription
+	if req.ArtifactRef != "" {
+		taskWithArtifact = fmt.Sprintf("[Handoff Artifact: %s] %s", req.ArtifactRef, req.TaskDescription)
+	}
+
+	s.runSubagent(ctx, req.ToAgentID, taskWithArtifact, eventCh)
 	return nil
 }
 

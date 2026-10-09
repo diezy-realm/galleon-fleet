@@ -82,5 +82,40 @@
     "status": "active",
     "lastVoyage": "30m ago",
     "costLast30Days": 1.25
+  },
+  {
+    "id": "crew-content-copywriter",
+    "name": "Content Copywriter",
+    "shipId": "ship-growth",
+    "squadId": "squad-growth",
+    "role": "Marketing Copywriter & Creative Author",
+    "purpose": "Authors engaging marketing copy, social media announcements, product release blogs, and campaign content adhering to brand voice.",
+    "skills": ["Copywriting", "Audience Engagement", "SEO Content", "Social Media Narrative", "Brand Tone Calibration"],
+    "steering": "Write concise, value-focused prose emphasizing benefits and developer delight over generic buzzwords.",
+    "tools": ["content_editor", "seo_analyzer", "copy_lint"],
+    "modelProfile": "Claude 3.7 Sonnet (Creative Flow)",
+    "authority": "draft_only",
+    "memoryScope": "ship",
+    "status": "active",
+    "lastVoyage": "15m ago",
+    "costLast30Days": 0.52
+  },
+  {
+    "id": "crew-marketing-strategist",
+    "name": "Campaign & Distribution Strategist",
+    "shipId": "ship-growth",
+    "squadId": "squad-growth",
+    "role": "Marketing Strategist & Distribution Lead",
+    "purpose": "Formulates multi-channel release campaigns, content calendars, and community communication matrices.",
+    "skills": ["Campaign Planning", "Channel Distribution", "Audience Segmentation", "Engagement Analytics"],
+    "steering": "Align messaging frequency with developer release milestones; coordinate embargo schedules with product leads.",
+    "tools": ["campaign_planner", "channel_scheduler", "metrics_monitor"],
+    "modelProfile": "Gemini 2.5 Pro",
+    "authority": "draft_only",
+    "memoryScope": "ship",
+    "status": "active",
+    "lastVoyage": "45m ago",
+    "costLast30Days": 0.38
   }
 ]
+

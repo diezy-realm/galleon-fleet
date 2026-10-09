@@ -4,9 +4,17 @@
 //! gateway services can perform credential scrubbing without linking to the
 //! runtime monolith.
 
+pub mod content_safety;
 pub mod leak_detector;
+pub mod prompt_guard;
 
+pub use content_safety::{
+    cap_untrusted, frame_untrusted, new_marker_id, sanitize_untrusted,
+    sanitize_untrusted_topic, scan_untrusted, scrub_outbound, ContentSafety, FramingPolicy,
+    OutboundPolicy, ScanOutcome, ScanPolicy, ScreenVerdict,
+};
 pub use leak_detector::{LeakDetector, LeakResult};
+pub use prompt_guard::{GuardAction, GuardResult, PromptGuard};
 pub use clawcrew_config::schema::LeakDetectionConfig;
 
 /// Scrub credential leaks from arbitrary text before it crosses into a log
@@ -41,6 +49,7 @@ pub fn redact(value: &str) -> String {
     }
 }
 
+// INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
 pub static SENSITIVE_KEY_REGEX: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
     regex::Regex::new(r#"(?i)(authorization|token|api[_-]?key|private[_-]?key|password|secret|user[_-]?key|bearer|credential|set[_-]?cookie|cookie)"#)
         .expect("static sensitive-key regex must compile")

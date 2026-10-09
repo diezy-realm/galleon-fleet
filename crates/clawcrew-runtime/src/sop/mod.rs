@@ -4,6 +4,7 @@ pub mod audit;
 pub mod binding;
 pub mod capability;
 pub mod condition;
+pub mod constraint;
 pub mod dispatch;
 pub mod engine;
 pub mod executor;
@@ -24,6 +25,7 @@ pub mod wire;
 
 pub use approval::ApprovalDecision;
 pub use audit::SopAuditLogger;
+pub use constraint::{ConstraintKind, RoleRestrictionHook, SopConstraint};
 pub use dispatch::SopRuntimeDispatcher;
 #[allow(unused_imports)]
 pub use binding::{
@@ -493,6 +495,8 @@ fn load_sop(sop_dir: &Path, default_execution_mode: SopExecutionMode) -> Result<
         admission_policy,
         max_pending_approvals,
         agent,
+        raci,
+        constraints,
     } = manifest.sop;
 
     // When deterministic=true, override execution_mode to Deterministic
@@ -517,6 +521,8 @@ fn load_sop(sop_dir: &Path, default_execution_mode: SopExecutionMode) -> Result<
         admission_policy,
         max_pending_approvals,
         agent,
+        raci,
+        constraints,
     };
     capability::SopCapabilityRegistry::with_builtins().validate_sop(&sop)?;
     Ok(sop)
@@ -571,6 +577,8 @@ pub enum SopStepSyntaxKey {
     Prompt,
     Policy,
     Edit,
+    Do,
+    Dont,
     ContinuationBody,
 }
 
@@ -598,6 +606,8 @@ impl SopStepSyntaxKey {
             Self::Prompt => &["prompt:"],
             Self::Policy => &["policy:"],
             Self::Edit => &["edit:"],
+            Self::Do => &["do:"],
+            Self::Dont => &["dont:", "don't:"],
             Self::StepsSection | Self::NumberedItem | Self::BoldTitle | Self::ContinuationBody => {
                 &[]
             }
@@ -711,6 +721,14 @@ pub const SOP_STEP_SYNTAX_CATALOG: &[SopStepSyntaxSpec] = &[
     SopStepSyntaxSpec {
         key: SopStepSyntaxKey::Edit,
         description: "`- edit:` opts a checkpoint into editing the named field before resume.",
+    },
+    SopStepSyntaxSpec {
+        key: SopStepSyntaxKey::Do,
+        description: "`- do:` provides positive behavioral guidance that the agent should follow during this step.",
+    },
+    SopStepSyntaxSpec {
+        key: SopStepSyntaxKey::Dont,
+        description: "`- dont:` (or `- don't:`) provides negative behavioral guidance of actions the agent must avoid during this step.",
     },
     SopStepSyntaxSpec {
         key: SopStepSyntaxKey::ContinuationBody,
@@ -870,6 +888,18 @@ pub fn parse_steps(md: &str) -> Vec<SopStep> {
                             Some(val.to_string())
                         };
                     }
+                    SopStepSyntaxKey::Do => {
+                        let val = val.trim();
+                        if !val.is_empty() {
+                            current.dos.push(val.to_string());
+                        }
+                    }
+                    SopStepSyntaxKey::Dont => {
+                        let val = val.trim();
+                        if !val.is_empty() {
+                            current.donts.push(val.to_string());
+                        }
+                    }
                     SopStepSyntaxKey::StepsSection
                     | SopStepSyntaxKey::NumberedItem
                     | SopStepSyntaxKey::BoldTitle
@@ -922,6 +952,8 @@ struct StepParseState {
     policy: Option<String>,
     gate_prompt: Option<String>,
     edit: Option<String>,
+    dos: Vec<String>,
+    donts: Vec<String>,
 }
 
 impl StepParseState {
@@ -956,6 +988,8 @@ impl StepParseState {
             policy: self.policy.take(),
             gate_prompt: self.gate_prompt.take(),
             edit: self.edit.take(),
+            dos: std::mem::take(&mut self.dos),
+            donts: std::mem::take(&mut self.donts),
         });
         *self = Self::default();
     }
@@ -1168,6 +1202,12 @@ fn render_step_bullets(step: &SopStep) -> Vec<String> {
             bullets.push(format!("call: {rendered}"));
         }
     }
+    for do_item in &step.dos {
+        bullets.push(format!("do: {do_item}"));
+    }
+    for dont_item in &step.donts {
+        bullets.push(format!("dont: {dont_item}"));
+    }
 
     bullets
 }
@@ -1338,6 +1378,10 @@ pub fn validate_sop_strict(sop: &Sop) -> SopValidation {
         blocking.push("SOP name is empty".into());
     }
 
+    if sop.raci.as_ref().is_some_and(|r| r.accountable.trim().is_empty()) {
+        blocking.push("SOP RACI accountable role must not be empty".into());
+    }
+
     let mut seen = std::collections::HashSet::new();
     for step in &sop.steps {
         if step.title.trim().is_empty() {
@@ -1406,6 +1450,8 @@ mod tests {
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }]);
         let action = engine
             .start_run(
@@ -1585,6 +1631,8 @@ mod tests {
             admission_policy: Default::default(),
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }
     }
 
@@ -2090,5 +2138,153 @@ mod tests {
             crate::sop::types::SopAdmissionPolicy::Drop
         );
         assert_eq!(sop.max_pending_approvals, 1);
+    }
+
+    #[test]
+    fn parse_steps_populates_dos_and_donts_for_marketing_role() {
+        let md = r#"
+## Steps
+
+1. **Draft Copy** - Write headline and caption for social announcement.
+   - agent: copywriter
+   - do: Focus on benefits over raw specs
+   - do: Maintain enthusiastic and professional brand tone
+   - dont: Jangan bocorkan tanggal embargo sebelum disetujui
+   - don't: Do not use unverified competitor benchmarks
+"#;
+        let steps = parse_steps(md);
+        assert_eq!(steps.len(), 1);
+        let step = &steps[0];
+        assert_eq!(step.agent.as_deref(), Some("copywriter"));
+        assert_eq!(
+            step.dos,
+            vec![
+                "Focus on benefits over raw specs",
+                "Maintain enthusiastic and professional brand tone"
+            ]
+        );
+        assert_eq!(
+            step.donts,
+            vec![
+                "Jangan bocorkan tanggal embargo sebelum disetujui",
+                "Do not use unverified competitor benchmarks"
+            ]
+        );
+
+        // Roundtrip via render_steps
+        let rendered = render_steps(&steps);
+        assert!(rendered.contains("- do: Focus on benefits over raw specs"));
+        assert!(rendered.contains("- dont: Jangan bocorkan tanggal embargo sebelum disetujui"));
+        let parsed_again = parse_steps(&rendered);
+        assert_eq!(parsed_again[0].dos, step.dos);
+        assert_eq!(parsed_again[0].donts, step.donts);
+    }
+
+    #[test]
+    fn parse_steps_backward_compatibility_empty_dos_donts() {
+        let md = r#"
+## Steps
+
+1. **Legacy Step** - No dos or donts present.
+   - tools: shell, file_read
+"#;
+        let steps = parse_steps(md);
+        assert_eq!(steps.len(), 1);
+        assert!(steps[0].dos.is_empty());
+        assert!(steps[0].donts.is_empty());
+    }
+
+    #[test]
+    fn validate_sop_strict_rejects_empty_raci_accountable() {
+        use crate::sop::types::RaciAssignment;
+
+        let mut sop = Sop {
+            name: "marketing-press-release".into(),
+            description: "Press release SOP".into(),
+            triggers: vec![SopTrigger::Manual],
+            steps: vec![SopStep {
+                number: 1,
+                title: "Draft".into(),
+                body: "Write text".into(),
+                ..SopStep::default()
+            }],
+            raci: Some(RaciAssignment {
+                responsible: vec!["copywriter".into()],
+                accountable: "   ".into(), // Empty / whitespace must be rejected
+                consulted: vec![],
+                informed: vec!["marketing_head".into()],
+            }),
+            ..Sop::default()
+        };
+
+        let val = validate_sop_strict(&sop);
+        assert!(!val.is_ok());
+        assert!(
+            val.blocking
+                .iter()
+                .any(|b| b.contains("SOP RACI accountable role must not be empty")),
+            "expected accountable empty blocking error, got: {:?}",
+            val.blocking
+        );
+
+        // Fixing accountable makes it pass
+        sop.raci.as_mut().unwrap().accountable = "head_of_marketing".into();
+        let val_fixed = validate_sop_strict(&sop);
+        assert!(val_fixed.is_ok(), "blocking: {:?}", val_fixed.blocking);
+    }
+
+    #[test]
+    fn validate_sop_strict_accepts_none_raci() {
+        let sop = Sop {
+            name: "engineering-deploy".into(),
+            description: "Deploy SOP".into(),
+            triggers: vec![SopTrigger::Manual],
+            steps: vec![SopStep {
+                number: 1,
+                title: "Build".into(),
+                body: "Compile binary".into(),
+                ..SopStep::default()
+            }],
+            raci: None,
+            ..Sop::default()
+        };
+
+        let val = validate_sop_strict(&sop);
+        assert!(val.is_ok(), "blocking: {:?}", val.blocking);
+    }
+
+    #[test]
+    fn load_shared_engineering_and_marketing_sops_verifies_raci_dos_donts_and_constraints() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        let sops_dir = root.join("shared").join("sops");
+
+        // 1. Verify engineering feature delivery SOP
+        let eng_sop = load_sop_by_name(&sops_dir, "engineering-feature-delivery", SopExecutionMode::Supervised)
+            .expect("engineering-feature-delivery must load from shared/sops");
+        assert_eq!(eng_sop.name, "engineering-feature-delivery");
+        let eng_raci = eng_sop.raci.as_ref().expect("engineering SOP must define RACI");
+        assert_eq!(eng_raci.accountable, "crew-lead-engineer");
+        assert!(eng_raci.responsible.contains(&"crew-backend-engineer".to_string()));
+        assert_eq!(eng_sop.steps.len(), 3);
+        assert!(!eng_sop.steps[0].dos.is_empty(), "step 1 must have dos");
+        assert!(!eng_sop.steps[0].donts.is_empty(), "step 1 must have donts");
+        assert_eq!(eng_sop.constraints.len(), 2, "must define 2 constraints");
+
+        // 2. Verify marketing content delivery SOP (non-engineering, generic)
+        let mkt_sop = load_sop_by_name(&sops_dir, "marketing-content-delivery", SopExecutionMode::Supervised)
+            .expect("marketing-content-delivery must load from shared/sops");
+        assert_eq!(mkt_sop.name, "marketing-content-delivery");
+        let mkt_raci = mkt_sop.raci.as_ref().expect("marketing SOP must define RACI");
+        assert_eq!(mkt_raci.accountable, "crew-marketing-strategist");
+        assert!(mkt_raci.responsible.contains(&"crew-content-copywriter".to_string()));
+        assert_eq!(mkt_sop.steps.len(), 3);
+        assert!(!mkt_sop.steps[0].dos.is_empty(), "step 1 must have dos");
+        assert!(!mkt_sop.steps[0].donts.is_empty(), "step 1 must have donts");
+        assert_eq!(mkt_sop.constraints.len(), 2, "must define 2 constraints");
     }
 }

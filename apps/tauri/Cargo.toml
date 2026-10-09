@@ -1,7 +1,8 @@
 [package]
-name = "fleet-ai-desktop"
+name = "galleon-desktop"
+rust-version = "1.96.0"
 version = "2.4.0"
-description = "Fleet AI Desktop Environment"
+description = "Galleon Fleet Desktop Environment"
 authors = ["Captain & Sovereign Crew"]
 edition = "2021"
 

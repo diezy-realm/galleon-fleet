@@ -1,0 +1,25 @@
+[sop]
+name = "engineering-feature-delivery"
+description = "Standard operating procedure for delivering engineering features with SoD review and verification."
+version = "1.0.0"
+priority = "normal"
+execution_mode = "supervised"
+max_concurrent = 1
+
+[sop.raci]
+responsible = ["crew-frontend-engineer", "crew-backend-engineer"]
+accountable = "crew-lead-engineer"
+consulted = ["crew-qa-engineer"]
+informed = ["crew-product-manager"]
+
+[[sop.constraints]]
+type = "distinct_performer"
+step_a = 1
+step_b = 2
+reason = "Pull request author cannot review or approve their own feature changes"
+
+[[sop.constraints]]
+type = "role_restriction"
+role = "crew-qa-engineer"
+forbidden_tools = ["file_write", "git_push"]
+reason = "QA engineer role is restricted from direct production code mutations"

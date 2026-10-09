@@ -14,11 +14,12 @@ export const ApprovalForm: React.FC<ApprovalFormProps> = ({
   onBack,
   onSubmit
 }) => {
-  const { approvals, ships, crew } = useFleetStore();
+  const { approvals, ships, crew, handleApproval } = useFleetStore();
   const approval = approvals.find((a) => a.id === approvalId);
 
   const [decision, setDecision] = useState<'approve' | 'reject' | 'request_changes'>('approve');
   const [comments, setComments] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!approval) {
     return (
@@ -46,9 +47,20 @@ export const ApprovalForm: React.FC<ApprovalFormProps> = ({
   const ship = ships.find((s) => s.id === approval.shipId);
   const crewMember = crew.find((c) => c.id === approval.crewId);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit?.({ decision, comments: comments.trim() || undefined });
+    setIsSubmitting(true);
+    try {
+      if (onSubmit) {
+        onSubmit({ decision, comments: comments.trim() || undefined });
+      } else {
+        const storeDecision = decision === 'approve' ? 'approved' : 'rejected';
+        await handleApproval(approvalId, storeDecision, comments.trim() || undefined);
+        onBack?.();
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

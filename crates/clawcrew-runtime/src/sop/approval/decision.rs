@@ -48,6 +48,9 @@ pub enum ResolveOutcome {
     /// `approval_mode` forbids this principal from clearing the gate (an agent under
     /// `OutOfBandRequired`, or a non-agent under `AgentTool`). The gate stays open.
     RejectedSelfApproval,
+    /// A constraint forbids this principal from clearing the gate (e.g. Dynamic SoD DistinctPerformer:
+    /// PR author cannot approve their own PR at a review gate).
+    RejectedConstraint(String),
     /// Approved, but every execution slot is full: re-admitting the run would exceed
     /// the SOP's `max_concurrent` or the global `max_concurrent_total`. The gate is
     /// left `WaitingApproval` (untouched, re-resolvable, no ledger row, no claim);
@@ -71,6 +74,7 @@ impl ResolveOutcome {
             ResolveOutcome::AlreadyResolved => "already_resolved",
             ResolveOutcome::NotWaiting => "not_waiting",
             ResolveOutcome::RejectedSelfApproval => "rejected_self_approval",
+            ResolveOutcome::RejectedConstraint(_) => "rejected_constraint",
             ResolveOutcome::DeferredAtCapacity => "deferred_at_capacity",
         }
     }

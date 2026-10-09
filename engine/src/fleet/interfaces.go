@@ -3,6 +3,8 @@ package fleet
 import (
 	"context"
 	"time"
+
+	"github.com/diezy-realm/galleon-fleet/engine/src/entitlement"
 )
 
 type Fleet struct {
@@ -100,6 +102,8 @@ type Service interface {
 	GetSeedData(ctx context.Context) (map[string]any, error)
 	ExecuteTerminal(ctx context.Context, req TerminalExecRequest) (*TerminalExecResponse, error)
 	GetTerminalAudit(ctx context.Context, limit int) ([]TerminalAuditRecord, error)
+	GetEntitlementUsage(ctx context.Context) (*entitlement.UsageReport, error)
+	SetEntitlementPolicy(p entitlement.QuotaPolicy)
 	// SetObjectiveProposer injects the objective-branch dependency after
 	// construction (orchestrator imports fleet, so it is wired post-hoc).
 	SetObjectiveProposer(p ObjectiveProposer)

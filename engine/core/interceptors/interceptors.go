@@ -6,13 +6,24 @@ import (
 	"log/slog"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/logger"
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/core/tracing"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
+
+type wrappedServerStream struct {
+	grpc.ServerStream
+	ctx context.Context
+}
+
+func (w *wrappedServerStream) Context() context.Context {
+	return w.ctx
+}
 
 // UnaryServerInterceptor provides logging, metrics, and error translation for unary RPCs
 func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
@@ -24,6 +35,16 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	) (any, error) {
 		start := time.Now()
 		log := logger.Get()
+
+		if md, ok := metadata.FromIncomingContext(ctx); ok {
+			if vals := md.Get("x-request-id"); len(vals) > 0 && vals[0] != "" {
+				ctx = context.WithValue(ctx, "request_id", vals[0])
+				ctx = context.WithValue(ctx, "trace_id", vals[0])
+			}
+		}
+
+		ctx, span := tracing.StartSpan(ctx, "gRPC "+info.FullMethod)
+		defer span.End()
 
 		resp, err := handler(ctx, req)
 		duration := time.Since(start).Seconds()
@@ -45,6 +66,7 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 			metrics.GRPCRequestsTotal.WithLabelValues(info.FullMethod, statusCode.String()).Inc()
 
 			log.ErrorContext(ctx, "grpc unary request failed",
+				slog.String("trace_id", span.TraceID),
 				slog.String("method", info.FullMethod),
 				slog.Float64("duration_sec", duration),
 				slog.String("status_code", statusCode.String()),
@@ -56,6 +78,7 @@ func UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		metrics.GRPCRequestsTotal.WithLabelValues(info.FullMethod, codes.OK.String()).Inc()
 
 		log.DebugContext(ctx, "grpc unary request completed",
+			slog.String("trace_id", span.TraceID),
 			slog.String("method", info.FullMethod),
 			slog.Float64("duration_sec", duration),
 			slog.String("status_code", codes.OK.String()),
@@ -77,11 +100,27 @@ func StreamServerInterceptor() grpc.StreamServerInterceptor {
 		log := logger.Get()
 		ctx := ss.Context()
 
+		if md, ok := metadata.FromIncomingContext(ctx); ok {
+			if vals := md.Get("x-request-id"); len(vals) > 0 && vals[0] != "" {
+				ctx = context.WithValue(ctx, "request_id", vals[0])
+				ctx = context.WithValue(ctx, "trace_id", vals[0])
+			}
+		}
+
+		ctx, span := tracing.StartSpan(ctx, "gRPC stream "+info.FullMethod)
+		defer span.End()
+
+		wrapped := &wrappedServerStream{
+			ServerStream: ss,
+			ctx:          ctx,
+		}
+
 		log.InfoContext(ctx, "grpc stream started",
+			slog.String("trace_id", span.TraceID),
 			slog.String("method", info.FullMethod),
 		)
 
-		err := handler(srv, ss)
+		err := handler(srv, wrapped)
 		duration := time.Since(start).Seconds()
 
 		metrics.GRPCRequestDuration.WithLabelValues(info.FullMethod).Observe(duration)
@@ -101,6 +140,7 @@ func StreamServerInterceptor() grpc.StreamServerInterceptor {
 			metrics.GRPCRequestsTotal.WithLabelValues(info.FullMethod, statusCode.String()).Inc()
 
 			log.ErrorContext(ctx, "grpc stream failed",
+				slog.String("trace_id", span.TraceID),
 				slog.String("method", info.FullMethod),
 				slog.Float64("duration_sec", duration),
 				slog.String("status_code", statusCode.String()),
@@ -112,6 +152,7 @@ func StreamServerInterceptor() grpc.StreamServerInterceptor {
 		metrics.GRPCRequestsTotal.WithLabelValues(info.FullMethod, codes.OK.String()).Inc()
 
 		log.InfoContext(ctx, "grpc stream completed",
+			slog.String("trace_id", span.TraceID),
 			slog.String("method", info.FullMethod),
 			slog.Float64("duration_sec", duration),
 			slog.String("status_code", codes.OK.String()),

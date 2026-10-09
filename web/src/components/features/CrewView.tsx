@@ -16,7 +16,8 @@ import {
   Compass,
   Cpu,
   Edit2,
-  Check
+  Check,
+  MessageSquare
 } from 'lucide-react';
 import { useFleetStore } from '../../store/fleetStore';
 import { CrewMember } from '../../types';
@@ -35,6 +36,7 @@ export const CrewView: React.FC = () => {
     steeringDirectives,
     addCrewMember,
     updateCrewMember,
+    createJournalSession,
     setActiveTab
   } = useFleetStore();
 
@@ -379,6 +381,19 @@ export const CrewView: React.FC = () => {
                       ${member.costLast30Days.toFixed(2)}/mo
                     </span>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      createJournalSession(`Chat with ${member.name}`);
+                      setActiveTab('captains-journal');
+                    }}
+                    className="w-full mt-2 py-1.5 px-3 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 text-xs font-semibold hover:bg-teal-100 dark:hover:bg-teal-900/60 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Chat in Journal
+                  </button>
                 </div>
               }
             />

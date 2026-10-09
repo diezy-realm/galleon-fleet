@@ -23,6 +23,12 @@ pub struct SystemGatewayService {
     secret_store: std::sync::Arc<clawcrew_config::secrets::SecretStore>,
     /// ModelProvider instance for LLM streaming turn execution (Rust LLM SSOT)
     model_provider: Option<std::sync::Arc<dyn clawcrew_providers::ModelProvider>>,
+    /// Optional authorization token required for privileged RPCs like GetDecryptedSecret
+    auth_token: Option<String>,
+    /// Optional Memory backend for learned rule persistence (BL-01)
+    memory: Option<std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>>,
+    /// Device registry backed by SQLite for SSOT device pairing (BG-C2 / T-08)
+    device_registry: Option<std::sync::Arc<crate::api_pairing::DeviceRegistry>>,
 }
 
 impl std::fmt::Debug for SystemGatewayService {
@@ -46,12 +52,43 @@ impl SystemGatewayService {
         let root = workspace_root.clone().unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
         let vault_dir = root.join(".vault");
         let secret_store = std::sync::Arc::new(clawcrew_config::secrets::SecretStore::new(&root, true));
+        let memory = clawcrew_memory::sqlite::SqliteMemory::new("gateway", &root)
+            .ok()
+            .map(|m| std::sync::Arc::new(m) as std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>);
+        let device_registry = Some(std::sync::Arc::new(crate::api_pairing::DeviceRegistry::new(&root)));
         Self {
             workspace_root,
             vault_dir: Some(vault_dir),
             secret_store,
             model_provider: None,
+            auth_token: None,
+            memory,
+            device_registry,
         }
+    }
+
+    /// Configure a custom device registry for device pairing SSOT (BG-C2 / T-08)
+    pub fn with_device_registry(
+        mut self,
+        registry: std::sync::Arc<crate::api_pairing::DeviceRegistry>,
+    ) -> Self {
+        self.device_registry = Some(registry);
+        self
+    }
+
+    /// Configure a custom memory backend for learned rule persistence (BL-01)
+    pub fn with_memory(
+        mut self,
+        memory: std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>,
+    ) -> Self {
+        self.memory = Some(memory);
+        self
+    }
+
+    /// Configure an authorization token required for privileged caller access (BR-B5).
+    pub fn with_auth_token(mut self, token: impl Into<String>) -> Self {
+        self.auth_token = Some(token.into());
+        self
     }
 
     /// Configure a custom model provider for LLM streaming execution
@@ -70,6 +107,11 @@ impl SystemGatewayService {
         self
     }
 
+    /// Access the underlying SecretStore
+    pub fn secret_store(&self) -> std::sync::Arc<clawcrew_config::secrets::SecretStore> {
+        std::sync::Arc::clone(&self.secret_store)
+    }
+
     /// Store an encrypted secret in the vault
     pub fn set_secret(&self, key_name: &str, plaintext: &str) -> Result<(), String> {
         let vault_dir = self.vault_dir.as_ref().ok_or_else(|| "no vault dir configured".to_string())?;
@@ -79,6 +121,53 @@ impl SystemGatewayService {
         let encrypted = self.secret_store.encrypt(plaintext).map_err(|e| format!("encryption failed: {e}"))?;
         std::fs::write(&secret_file, encrypted).map_err(|e| format!("failed to write secret file: {e}"))?;
         Ok(())
+    }
+
+    /// Rotate an existing secret: ensures it exists, encrypts new plaintext, and overwrites atomically (BR-B5).
+    pub fn rotate_secret(&self, key_name: &str, new_plaintext: &str) -> Result<(), String> {
+        let vault_dir = self.vault_dir.as_ref().ok_or_else(|| "no vault dir configured".to_string())?;
+        let sanitized_key = key_name.replace(['/', '\\', '.', ':'], "_");
+        let secret_file = vault_dir.join(format!("{sanitized_key}.vault"));
+        if !secret_file.exists() {
+            return Err(format!("cannot rotate nonexistent secret `{key_name}`"));
+        }
+        self.set_secret(key_name, new_plaintext)
+    }
+
+    /// Export all encrypted vault items for backup or migration without revealing plaintext (BR-B5).
+    pub fn export_encrypted_vault(&self) -> Result<std::collections::HashMap<String, String>, String> {
+        let vault_dir = self.vault_dir.as_ref().ok_or_else(|| "no vault dir configured".to_string())?;
+        if !vault_dir.exists() {
+            return Ok(std::collections::HashMap::new());
+        }
+        let mut exported = std::collections::HashMap::new();
+        let entries = std::fs::read_dir(vault_dir).map_err(|e| format!("failed to read vault dir: {e}"))?;
+        for entry in entries {
+            let entry = entry.map_err(|e| format!("vault entry error: {e}"))?;
+            let path = entry.path();
+            if path.extension().and_then(|ext| ext.to_str()) == Some("vault") {
+                if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                    let content = std::fs::read_to_string(&path)
+                        .map_err(|e| format!("failed to read `{}`: {e}", path.display()))?;
+                    exported.insert(stem.to_string(), content);
+                }
+            }
+        }
+        Ok(exported)
+    }
+
+    /// Import encrypted vault items for migration across environments (BR-B5).
+    pub fn import_encrypted_vault(&self, exported: &std::collections::HashMap<String, String>) -> Result<usize, String> {
+        let vault_dir = self.vault_dir.as_ref().ok_or_else(|| "no vault dir configured".to_string())?;
+        std::fs::create_dir_all(vault_dir).map_err(|e| format!("failed to create vault dir: {e}"))?;
+        let mut imported = 0;
+        for (key, encrypted_val) in exported {
+            let sanitized_key = key.replace(['/', '\\', '.', ':'], "_");
+            let secret_file = vault_dir.join(format!("{sanitized_key}.vault"));
+            std::fs::write(&secret_file, encrypted_val).map_err(|e| format!("failed to write `{}`: {e}", secret_file.display()))?;
+            imported += 1;
+        }
+        Ok(imported)
     }
 
     /// Get the workspace root, falling back to current dir if not set.
@@ -338,6 +427,29 @@ impl SystemGateway for SystemGatewayService {
         &self,
         request: Request<SecretRequest>,
     ) -> Result<Response<SecretResponse>, Status> {
+        if let Some(expected_token) = &self.auth_token {
+            let authorized = request
+                .metadata()
+                .get("authorization")
+                .and_then(|v| v.to_str().ok())
+                .map(|auth_header| {
+                    let token = auth_header.strip_prefix("Bearer ").unwrap_or(auth_header).trim();
+                    token == expected_token
+                })
+                .unwrap_or(false);
+
+            if !authorized {
+                ::clawcrew_log::record!(
+                    WARN,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        .with_attrs(::serde_json::json!({"action": "get_decrypted_secret", "reason": "unauthorized"})),
+                    "GetDecryptedSecret rejected: caller is not authorized"
+                );
+                return Err(Status::unauthenticated("unauthorized secret access"));
+            }
+        }
+
         let req = request.into_inner();
         let key_name = req.key_name.trim();
         if key_name.is_empty() {
@@ -497,6 +609,7 @@ impl SystemGateway for SystemGatewayService {
                         prompt_tokens: 0,
                         completion_tokens: (total_chars / 4) as i32,
                         total_tokens: (total_chars / 4) as i32,
+                        loop_detector_stats: None,
                     })),
                 })).await;
             } else {
@@ -532,12 +645,246 @@ impl SystemGateway for SystemGatewayService {
                         prompt_tokens: 10,
                         completion_tokens: 20,
                         total_tokens: 30,
+                        loop_detector_stats: None,
                     })),
                 })).await;
             }
         });
 
         Ok(Response::new(tokio_stream::wrappers::ReceiverStream::new(rx)))
+    }
+
+    async fn store_learned_rule(
+        &self,
+        request: Request<StoreLearnedRuleRequest>,
+    ) -> Result<Response<StoreLearnedRuleResponse>, Status> {
+        let req = request.into_inner();
+        let rule = req.rule.trim();
+        if rule.is_empty() {
+            return Err(Status::invalid_argument("rule cannot be empty"));
+        }
+
+        let Some(memory) = self.memory.as_ref() else {
+            return Err(Status::internal("memory backend not configured"));
+        };
+
+        let id = format!("rule-{}", uuid::Uuid::new_v4());
+        let now_str = chrono::Utc::now().to_rfc3339();
+        let rule_json = serde_json::json!({
+            "id": &id,
+            "rule": rule,
+            "scope": req.scope,
+            "reversible": req.reversible,
+            "created_at": &now_str,
+            "approved": true,
+            "reverted": false,
+        });
+
+        let key = format!("learned_rule:{}", id);
+        let content = rule_json.to_string();
+
+        match memory.store(&key, &content, clawcrew_api::memory_traits::MemoryCategory::Core, None).await {
+            Ok(_) => {
+                ::clawcrew_log::record!(
+                    INFO,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        .with_attrs(::serde_json::json!({"rule_id": &id, "scope": req.scope})),
+                    "learned rule stored successfully"
+                );
+                Ok(Response::new(StoreLearnedRuleResponse {
+                    id,
+                    success: true,
+                    error: String::new(),
+                }))
+            }
+            Err(e) => {
+                ::clawcrew_log::record!(
+                    ERROR,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
+                        .with_attrs(::serde_json::json!({"error": e.to_string()})),
+                    "failed to store learned rule"
+                );
+                Ok(Response::new(StoreLearnedRuleResponse {
+                    id: String::new(),
+                    success: false,
+                    error: e.to_string(),
+                }))
+            }
+        }
+    }
+
+    async fn retrieve_learned_rules(
+        &self,
+        request: Request<RetrieveLearnedRulesRequest>,
+    ) -> Result<Response<RetrieveLearnedRulesResponse>, Status> {
+        let req = request.into_inner();
+        let Some(memory) = self.memory.as_ref() else {
+            return Err(Status::internal("memory backend not configured"));
+        };
+
+        let entries = memory
+            .list(Some(&clawcrew_api::memory_traits::MemoryCategory::Core), None)
+            .await
+            .map_err(|e| Status::internal(format!("failed to list memory entries: {e}")))?;
+
+        let mut rules = Vec::new();
+        for entry in entries {
+            if !entry.key.starts_with("learned_rule:") {
+                continue;
+            }
+            if let Ok(v) = serde_json::from_str::<serde_json::Value>(&entry.content) {
+                let id = v.get("id").and_then(|x| x.as_str()).unwrap_or(&entry.key).to_string();
+                let rule_text = v.get("rule").and_then(|x| x.as_str()).unwrap_or(&entry.content).to_string();
+                let reversible = v.get("reversible").and_then(|x| x.as_bool()).unwrap_or(true);
+                let created_at = v.get("created_at").and_then(|x| x.as_str()).unwrap_or(&entry.timestamp).to_string();
+                let approved = v.get("approved").and_then(|x| x.as_bool()).unwrap_or(true);
+                let reverted = v.get("reverted").and_then(|x| x.as_bool()).unwrap_or(false);
+
+                let mut scope = std::collections::HashMap::new();
+                if let Some(s) = v.get("scope").and_then(|x| x.as_object()) {
+                    for (k, val) in s {
+                        if let Some(v_str) = val.as_str() {
+                            scope.insert(k.clone(), v_str.to_string());
+                        }
+                    }
+                }
+
+                // Apply scope filter if specified
+                if !req.scope_key.is_empty() {
+                    if let Some(val) = scope.get(&req.scope_key) {
+                        if !req.scope_value.is_empty() && val != &req.scope_value {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+
+                rules.push(LearnedRule {
+                    id,
+                    rule: rule_text,
+                    scope,
+                    reversible,
+                    created_at,
+                    approved,
+                    reverted,
+                });
+            }
+        }
+
+        Ok(Response::new(RetrieveLearnedRulesResponse { rules }))
+    }
+
+    async fn sync_paired_device(
+        &self,
+        request: Request<SyncPairedDeviceRequest>,
+    ) -> Result<Response<SyncPairedDeviceResponse>, Status> {
+        let req = request.into_inner();
+        let Some(registry) = self.device_registry.as_ref() else {
+            return Err(Status::internal("device registry not configured"));
+        };
+
+        let now = chrono::Utc::now();
+        let token_hash = if req.token_hash.is_empty() {
+            format!("dev-tok-{}", req.device_id)
+        } else {
+            req.token_hash
+        };
+
+        let info = crate::api_pairing::DeviceInfo {
+            id: req.device_id.clone(),
+            name: if req.device_name.is_empty() { None } else { Some(req.device_name) },
+            device_type: if req.platform.is_empty() { None } else { Some(req.platform) },
+            paired_at: now,
+            last_seen: now,
+            ip_address: None,
+            capabilities: None,
+        };
+
+        match registry.register(token_hash, info) {
+            Ok(()) => {
+                ::clawcrew_log::record!(
+                    INFO,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        .with_attrs(::serde_json::json!({"device_id": &req.device_id})),
+                    "device synchronized to Rust SQLite DeviceRegistry SSOT (BG-C2)"
+                );
+                Ok(Response::new(SyncPairedDeviceResponse {
+                    success: true,
+                    error: String::new(),
+                }))
+            }
+            Err(e) => {
+                ::clawcrew_log::record!(
+                    ERROR,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        .with_attrs(::serde_json::json!({"device_id": &req.device_id, "error": e.to_string()})),
+                    "failed to sync device to Rust SQLite DeviceRegistry"
+                );
+                Ok(Response::new(SyncPairedDeviceResponse {
+                    success: false,
+                    error: e.to_string(),
+                }))
+            }
+        }
+    }
+
+    async fn list_paired_devices(
+        &self,
+        _request: Request<ListPairedDevicesRequest>,
+    ) -> Result<Response<ListPairedDevicesResponse>, Status> {
+        let Some(registry) = self.device_registry.as_ref() else {
+            return Err(Status::internal("device registry not configured"));
+        };
+
+        match registry.list() {
+            Ok(devices) => {
+                let records = devices
+                    .into_iter()
+                    .map(|d| DeviceRecord {
+                        id: d.id,
+                        name: d.name.unwrap_or_default(),
+                        device_type: d.device_type.unwrap_or_default(),
+                        paired_at: d.paired_at.to_rfc3339(),
+                        last_seen: d.last_seen.to_rfc3339(),
+                        ip_address: d.ip_address.unwrap_or_default(),
+                    })
+                    .collect();
+                Ok(Response::new(ListPairedDevicesResponse { devices: records }))
+            }
+            Err(e) => Err(Status::internal(format!("failed to list devices from registry: {e}"))),
+        }
+    }
+
+    async fn revoke_paired_device(
+        &self,
+        request: Request<RevokePairedDeviceRequest>,
+    ) -> Result<Response<RevokePairedDeviceResponse>, Status> {
+        let req = request.into_inner();
+        let Some(registry) = self.device_registry.as_ref() else {
+            return Err(Status::internal("device registry not configured"));
+        };
+
+        match registry.revoke(&req.device_id) {
+            Ok(deleted_token_hash) => {
+                let success = deleted_token_hash.is_some();
+                ::clawcrew_log::record!(
+                    INFO,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        .with_attrs(::serde_json::json!({"device_id": &req.device_id, "revoked": success})),
+                    "device revoked from Rust SQLite DeviceRegistry SSOT"
+                );
+                Ok(Response::new(RevokePairedDeviceResponse {
+                    success,
+                    error: if success { String::new() } else { "device not found".to_string() },
+                }))
+            }
+            Err(e) => Ok(Response::new(RevokePairedDeviceResponse {
+                success: false,
+                error: e.to_string(),
+            })),
+        }
     }
 }
 
@@ -813,5 +1160,162 @@ mod tests {
         let err = svc.execute_task(Request::new(req)).await.unwrap_err();
         assert_eq!(err.code(), tonic::Code::InvalidArgument);
     }
+
+    // ── BR-B5: Vault Rotation, Export, Migration, and Authorization ─────────
+
+    #[tokio::test]
+    async fn vault_rotation_and_migration_lifecycle() -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir_a = tempfile::tempdir()?;
+        let svc_a = SystemGatewayService::new(Some(temp_dir_a.path().to_path_buf()));
+
+        // Store secret
+        svc_a.set_secret("db_pass", "super_secret_initial_123")?;
+
+        // Rotate secret successfully
+        svc_a.rotate_secret("db_pass", "rotated_secret_456")?;
+        let resp = svc_a
+            .get_decrypted_secret(Request::new(SecretRequest {
+                key_name: "db_pass".to_string(),
+            }))
+            .await?
+            .into_inner();
+        assert_eq!(resp.value, "rotated_secret_456");
+
+        // Rotating nonexistent secret must fail
+        assert!(svc_a.rotate_secret("nonexistent", "val").is_err());
+
+        // Export encrypted vault
+        let exported = svc_a.export_encrypted_vault()?;
+        assert!(exported.contains_key("db_pass"));
+        // Exported payload must be encrypted, not plaintext!
+        assert_ne!(exported["db_pass"], "rotated_secret_456");
+
+        // Migrate/import into service B (using shared secret store key)
+        let temp_dir_b = tempfile::tempdir()?;
+        let svc_b = SystemGatewayService::new(Some(temp_dir_b.path().to_path_buf()))
+            .with_vault(temp_dir_b.path().join("vault"), (*svc_a.secret_store()).clone());
+        let imported_count = svc_b.import_encrypted_vault(&exported)?;
+        assert_eq!(imported_count, 1);
+
+        // Fetch from service B: succeeds with same key
+        let resp_b = svc_b
+            .get_decrypted_secret(Request::new(SecretRequest {
+                key_name: "db_pass".to_string(),
+            }))
+            .await?
+            .into_inner();
+        assert_eq!(resp_b.value, "rotated_secret_456");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn get_decrypted_secret_requires_authorization_when_configured() -> Result<(), Box<dyn std::error::Error>> {
+        let temp_dir = tempfile::tempdir()?;
+        let svc = SystemGatewayService::new(Some(temp_dir.path().to_path_buf()))
+            .with_auth_token("trusted-internal-bearer-999");
+
+        svc.set_secret("api_token", "secret-payload-xyz")?;
+
+        // 1. Unauthenticated request without metadata -> rejected with Unauthenticated
+        let unauthed_req = Request::new(SecretRequest {
+            key_name: "api_token".to_string(),
+        });
+        let err = svc.get_decrypted_secret(unauthed_req).await.unwrap_err();
+        assert_eq!(err.code(), tonic::Code::Unauthenticated);
+
+        // 2. Request with invalid token -> rejected
+        let mut bad_req = Request::new(SecretRequest {
+            key_name: "api_token".to_string(),
+        });
+        bad_req.metadata_mut().insert(
+            "authorization",
+            "Bearer wrong-token".parse().unwrap(),
+        );
+        let err = svc.get_decrypted_secret(bad_req).await.unwrap_err();
+        assert_eq!(err.code(), tonic::Code::Unauthenticated);
+
+        // 3. Request with valid token -> authorized & succeeds
+        let mut good_req = Request::new(SecretRequest {
+            key_name: "api_token".to_string(),
+        });
+        good_req.metadata_mut().insert(
+            "authorization",
+            "Bearer trusted-internal-bearer-999".parse().unwrap(),
+        );
+        let resp = svc.get_decrypted_secret(good_req).await?.into_inner();
+        assert!(resp.found);
+        assert_eq!(resp.value, "secret-payload-xyz");
+
+        Ok(())
+    }
+
+    // ── BR-B4: Credential Scrubbing in Logs (ExecuteTurn & Vault) ────────────
+
+    #[test]
+    fn credential_scrubbing_protects_secrets_in_logs() {
+        let raw_prompt = "Hello, my secret token is sk-proj-1234567890abcdef and password is password123!";
+        let scrubbed = galleon_security_scrub::scrub(raw_prompt);
+
+        assert!(
+            !scrubbed.contains("sk-proj-1234567890abcdef"),
+            "secret key must be redacted in scrubbed log"
+        );
+        assert!(
+            scrubbed.contains("[REDACTED]") || !scrubbed.contains("1234567890"),
+            "scrubbed content should mask the credential"
+        );
+    }
+
+    // ── BL-01: Learned Rules Persistence via gRPC ────────────────────────────
+
+    #[tokio::test]
+    async fn store_and_retrieve_learned_rules_persists_across_queries() -> anyhow::Result<()> {
+        let temp_dir = tempfile::tempdir()?;
+        let svc = SystemGatewayService::new(Some(temp_dir.path().to_path_buf()));
+
+        // 1. Store a learned rule
+        let mut scope = std::collections::HashMap::new();
+        scope.insert("fleet".to_string(), "black-pearl".to_string());
+        scope.insert("ship".to_string(), "flagship".to_string());
+
+        let store_req = Request::new(StoreLearnedRuleRequest {
+            rule: "Always check fuel before sailing".to_string(),
+            scope: scope.clone(),
+            reversible: true,
+        });
+
+        let store_resp = svc.store_learned_rule(store_req).await?.into_inner();
+        assert!(store_resp.success);
+        assert!(!store_resp.id.is_empty());
+
+        // 2. Retrieve without filter
+        let ret_req = Request::new(RetrieveLearnedRulesRequest {
+            scope_key: String::new(),
+            scope_value: String::new(),
+        });
+        let ret_resp = svc.retrieve_learned_rules(ret_req).await?.into_inner();
+        assert_eq!(ret_resp.rules.len(), 1);
+        assert_eq!(ret_resp.rules[0].rule, "Always check fuel before sailing");
+        assert_eq!(ret_resp.rules[0].scope.get("fleet").map(String::as_str), Some("black-pearl"));
+
+        // 3. Retrieve with matching filter
+        let filter_req = Request::new(RetrieveLearnedRulesRequest {
+            scope_key: "fleet".to_string(),
+            scope_value: "black-pearl".to_string(),
+        });
+        let filter_resp = svc.retrieve_learned_rules(filter_req).await?.into_inner();
+        assert_eq!(filter_resp.rules.len(), 1);
+
+        // 4. Retrieve with non-matching filter
+        let non_match_req = Request::new(RetrieveLearnedRulesRequest {
+            scope_key: "fleet".to_string(),
+            scope_value: "flying-dutchman".to_string(),
+        });
+        let non_match_resp = svc.retrieve_learned_rules(non_match_req).await?.into_inner();
+        assert_eq!(non_match_resp.rules.len(), 0);
+
+        Ok(())
+    }
 }
+
 

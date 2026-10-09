@@ -625,6 +625,7 @@ impl ReceiptGenerator {
         use sha2::Sha256;
         type HmacSha256 = Hmac<Sha256>;
 
+        // INVARIANT: HMAC-SHA256 (and all HMAC variants) accept any key length by design; the spec defines HMAC as working with any key length
         let mut mac = HmacSha256::new_from_slice(&self.key).expect("HMAC accepts any key length");
         mac.update(tool_name.as_bytes());
         mac.update(b"|");
@@ -1055,7 +1056,10 @@ enum InboundSlot {
     Ready(InboundTurn),
     Debounced {
         turn: InboundTurn,
-        content: tokio::sync::oneshot::Receiver<String>,
+        content: tokio::sync::oneshot::Receiver<(
+            String,
+            Vec<clawcrew_api::media::MediaAttachment>,
+        )>,
     },
 }
 
@@ -1646,6 +1650,36 @@ fn send_conversation_busy(
     }
 }
 
+/// Layer 2 hard limits on attachments per inbound turn (post-debounce aggregation).
+pub const MAX_ATTACHMENTS_PER_TURN: usize = 10;
+/// Total byte limit per turn across all attachments (default 50 MiB).
+pub const MAX_ATTACHMENT_BYTES_PER_TURN: u64 = 50 * 1024 * 1024;
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum AttachmentLimitError {
+    TooManyAttachments { count: usize, max: usize },
+    TooManyBytes { total_bytes: u64, max: u64 },
+}
+
+pub fn enforce_attachment_limits(
+    msg: &clawcrew_api::channel::ChannelMessage,
+) -> Result<(), AttachmentLimitError> {
+    if msg.attachments.len() > MAX_ATTACHMENTS_PER_TURN {
+        return Err(AttachmentLimitError::TooManyAttachments {
+            count: msg.attachments.len(),
+            max: MAX_ATTACHMENTS_PER_TURN,
+        });
+    }
+    let total_bytes: u64 = msg.attachments.iter().map(|a| a.byte_size()).sum();
+    if total_bytes > MAX_ATTACHMENT_BYTES_PER_TURN {
+        return Err(AttachmentLimitError::TooManyBytes {
+            total_bytes,
+            max: MAX_ATTACHMENT_BYTES_PER_TURN,
+        });
+    }
+    Ok(())
+}
+
 /// Resolve debounce content and the modifying inbound hook concurrently, then
 /// commit final lane admission in receive order within the source
 /// conversation; cross-source convergence order follows hook completion.
@@ -1658,8 +1692,9 @@ async fn route_inbound_slot(
     let InboundTurn { mut turn, order } = match slot {
         InboundSlot::Ready(turn) => turn,
         InboundSlot::Debounced { mut turn, content } => match content.await {
-            Ok(combined) => {
+            Ok((combined, attachments)) => {
                 turn.turn.msg.content = combined;
+                turn.turn.msg.attachments = attachments;
                 turn
             }
             Err(_) => return,
@@ -1671,6 +1706,27 @@ async fn route_inbound_slot(
         .as_ref()
         .is_some_and(|registration| registration.cancellation.is_cancelled())
     {
+        return;
+    }
+
+    if let Err(err) = enforce_attachment_limits(&turn.msg) {
+        ::clawcrew_log::record!(
+            WARN,
+            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                .with_attrs(::serde_json::json!({
+                    "reason": format!("{err:?}"),
+                    "attachments_count": turn.msg.attachments.len(),
+                })),
+            "attachment limit exceeded in inbound turn"
+        );
+        send_conversation_busy(
+            &turn.ctx,
+            &turn.msg,
+            "attachment_limit_exceeded",
+            &busy_notice_budget,
+            &busy_notice_tasks,
+        );
+        order.finish();
         return;
     }
 
@@ -1742,6 +1798,7 @@ fn spawn_inbound_routing(
 type DebounceBucketExtension = (
     tokio::sync::oneshot::Receiver<String>,
     tokio::sync::OwnedSemaphorePermit,
+    Vec<clawcrew_api::media::MediaAttachment>,
 );
 
 /// Retire the open debounce bucket a cancelled turn owns.
@@ -1774,8 +1831,9 @@ async fn retire_owned_bucket(
 
 fn spawn_debounce_forwarder(
     first: tokio::sync::oneshot::Receiver<String>,
+    first_attachments: Vec<clawcrew_api::media::MediaAttachment>,
 ) -> (
-    tokio::sync::oneshot::Receiver<String>,
+    tokio::sync::oneshot::Receiver<(String, Vec<clawcrew_api::media::MediaAttachment>)>,
     tokio::sync::mpsc::UnboundedSender<DebounceBucketExtension>,
 ) {
     let (slot_tx, slot_rx) = tokio::sync::oneshot::channel();
@@ -1790,16 +1848,18 @@ fn spawn_debounce_forwarder(
         // aggregate budget just like queued and active turns, and a sustained
         // flood is refused at receive time instead of growing the bucket.
         let mut extension_permits = Vec::new();
+        let mut accumulated_attachments = first_attachments;
         loop {
             match pending.await {
                 Ok(combined) => {
-                    let _ = slot_tx.send(combined);
+                    let _ = slot_tx.send((combined, accumulated_attachments));
                     drop(extension_permits);
                     return;
                 }
                 Err(_) => match updates_rx.recv().await {
-                    Some((next, permit)) => {
+                    Some((next, permit, mut ext_attachments)) => {
                         extension_permits.push(permit);
+                        accumulated_attachments.append(&mut ext_attachments);
                         pending = next;
                     }
                     // No replacement is coming: the dispatch loop dropped the
@@ -8753,6 +8813,50 @@ async fn process_channel_message_body(
             .await;
     }
 
+    // ── Content Safety (BL-14): Screen and sanitize untrusted channel content ──
+    let content_safety = galleon_security_scrub::ContentSafety::from_sop_config(&ctx.prompt_config.sop);
+    let (sanitized_content, safety_outcome) = content_safety.screen_content(&msg.content);
+
+    match safety_outcome {
+        galleon_security_scrub::ScanOutcome::Blocked { reason } => {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    .with_attrs(::serde_json::json!({
+                        "channel": msg.channel,
+                        "sender": msg.sender,
+                        "reason": reason,
+                    })),
+                "inbound channel message rejected by ContentSafety guard"
+            );
+            if let Some(channel) = target_channel.as_ref() {
+                let rejection_notice = "⚠️ Message refused: unsafe content or potential prompt injection detected.";
+                let _ = channel
+                    .send(&SendMessage::reply_to(&msg, rejection_notice).suppress_voice())
+                    .await;
+            }
+            return;
+        }
+        galleon_security_scrub::ScanOutcome::Suspicious { patterns, score } => {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    .with_attrs(::serde_json::json!({
+                        "channel": msg.channel,
+                        "sender": msg.sender,
+                        "patterns": patterns,
+                        "score": score,
+                    })),
+                "inbound channel message flagged suspicious by ContentSafety guard"
+            );
+            msg.content = sanitized_content;
+        }
+        galleon_security_scrub::ScanOutcome::Safe => {
+            msg.content = sanitized_content;
+        }
+    }
+
     let history_key = runtime_conversation_history_key(ctx.as_ref(), &msg);
     stamp_session_routing_context(ctx.as_ref(), &msg, &history_key);
     if msg.passive_context {
@@ -11315,6 +11419,7 @@ async fn run_message_dispatch_loop(
                 &ctx.prompt_config.channels.telegram,
             );
 
+            let mut msg = msg;
             match ctx
                 .debouncer
                 .debounce_with_window(&debounce_key, &msg.content, debounce_window)
@@ -11334,33 +11439,36 @@ async fn run_message_dispatch_loop(
                     // liveness would race the window expiry, and a receiver
                     // sent to a forwarder whose bucket just fired would be
                     // dropped unread — silently losing the new message.
-                    let (rx, pending_work) = match debounce_buckets.get(&debounce_key) {
-                        Some(bucket) if extended => match bucket.send((rx, pending_work)) {
-                            Ok(()) => continue,
-                            // An extended bucket always has a live forwarder
-                            // (it can only retire after consuming the bucket's
-                            // final receiver). If the invariant ever breaks,
-                            // reserving a fresh slot loses ordering but never
-                            // the message.
-                            Err(returned) => {
-                                ::clawcrew_log::record!(
-                                    WARN,
-                                    ::clawcrew_log::Event::new(
-                                        module_path!(),
-                                        ::clawcrew_log::Action::Note
-                                    )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                                    .with_attrs(::serde_json::json!({"debounce": debounce_key})),
-                                    "debounce forwarder retired before its bucket was delivered"
-                                );
-                                debounce_buckets.remove(&debounce_key);
-                                returned.0
+                    let (rx, pending_work, first_attachments) = match debounce_buckets.get(&debounce_key) {
+                        Some(bucket) if extended => {
+                            let attachments = std::mem::take(&mut msg.attachments);
+                            match bucket.send((rx, pending_work, attachments)) {
+                                Ok(()) => continue,
+                                // An extended bucket always has a live forwarder
+                                // (it can only retire after consuming the bucket's
+                                // final receiver). If the invariant ever breaks,
+                                // reserving a fresh slot loses ordering but never
+                                // the message.
+                                Err(returned) => {
+                                    ::clawcrew_log::record!(
+                                        WARN,
+                                        ::clawcrew_log::Event::new(
+                                            module_path!(),
+                                            ::clawcrew_log::Action::Note
+                                        )
+                                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                        .with_attrs(::serde_json::json!({"debounce": debounce_key})),
+                                        "debounce forwarder retired before its bucket was delivered"
+                                    );
+                                    debounce_buckets.remove(&debounce_key);
+                                    returned.0
+                                }
                             }
-                        },
-                        _ => (rx, pending_work),
+                        }
+                        _ => (rx, pending_work, std::mem::take(&mut msg.attachments)),
                     };
 
-                    let (content, bucket) = spawn_debounce_forwarder(rx);
+                    let (content, bucket) = spawn_debounce_forwarder(rx, first_attachments);
                     debounce_buckets.retain(|_, open| !open.is_closed());
                     debounce_bucket_owners.retain(|key, _| debounce_buckets.contains_key(key));
                     debounce_buckets.insert(debounce_key.clone(), bucket);

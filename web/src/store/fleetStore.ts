@@ -21,7 +21,8 @@ import {
   JournalSession,
   QuestStatus,
   SettingsCategory,
-  FleetSettings
+  FleetSettings,
+  CircuitBreakerTelemetry
 } from '../types';
 
 interface FleetState {
@@ -119,7 +120,7 @@ interface FleetState {
   createQuest: (quest: Partial<Quest>) => void;
   updateQuestStatus: (id: string, status: QuestStatus) => void;
   runQuestVoyage: (id: string) => void;
-  handleApproval: (id: string, decision: 'approved' | 'rejected') => void;
+  handleApproval: (id: string, decision: 'approved' | 'rejected', reason?: string) => Promise<void>;
   promoteArtifactToTreasure: (id: string) => void;
   saveArtifact: (artifact: Omit<Artifact, 'id' | 'createdAt'>) => void;
   addCrewMember: (crewData: Omit<CrewMember, 'id'>) => void;
@@ -133,6 +134,7 @@ interface FleetState {
   hydrateFleet: () => Promise<void>;
   hydrateSeedData: () => Promise<void>;
   ringDeckBell: () => Promise<string>;
+  syncQuestTelemetry: (questId: string) => Promise<void>;
 
   // Captain's Journal Actions
   createJournalSession: (title: string, workspaceId?: string) => void;
@@ -464,6 +466,36 @@ export const useFleetStore = create<FleetState>((set, get) => ({
     return await apiClient.ringDeckBell();
   },
 
+  syncQuestTelemetry: async (questId: string) => {
+    try {
+      const runData = await apiClient.get<any>(`/v1/runs/${questId}`).catch(() => null);
+      if (runData && runData.loop_detector_stats) {
+        const stats = runData.loop_detector_stats;
+        const statusMap: Record<number, 'normal' | 'warning' | 'blocked' | 'break'> = {
+          0: 'normal',
+          1: 'warning',
+          2: 'blocked',
+          3: 'break',
+        };
+        const cbTelemetry: CircuitBreakerTelemetry = {
+          totalCalls: stats.total_calls ?? stats.TotalCalls ?? 0,
+          exactRepeats: stats.exact_repeat_triggers ?? stats.ExactRepeatTriggers ?? 0,
+          pingPongCycles: stats.ping_pong_triggers ?? stats.PingPongTriggers ?? 0,
+          noProgressCount: stats.no_progress_triggers ?? stats.NoProgressTriggers ?? 0,
+          status: statusMap[stats.state ?? stats.State] || 'normal',
+        };
+        set((state) => {
+          const nextQuests = state.quests.map((q) =>
+            q.id === questId ? { ...q, circuitBreaker: cbTelemetry } : q
+          );
+          return { quests: nextQuests };
+        });
+      }
+    } catch (err) {
+      console.warn(`[Store] syncQuestTelemetry failed for ${questId}:`, err);
+    }
+  },
+
   updateSettings: (updater, logAudit) => {
     set((state) => {
       const nextSettings = updater(state.settings);
@@ -692,9 +724,15 @@ export const useFleetStore = create<FleetState>((set, get) => ({
     });
   },
 
-  handleApproval: (id, decision) => {
+  handleApproval: async (id, decision, reason) => {
     const appr = get().approvals.find((a) => a.id === id);
     if (!appr) return;
+
+    try {
+      await apiClient.approveToolExecution(id, decision, reason);
+    } catch (err) {
+      console.warn(`[Approval] Backend tool execution call failed for ${id}:`, err);
+    }
 
     set((state) => {
       const nextApprovals = state.approvals.map((a) => (a.id === id ? { ...a, status: decision } : a));

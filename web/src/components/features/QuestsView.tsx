@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Map,
   Plus,
@@ -31,6 +31,7 @@ export const QuestsView: React.FC = () => {
     quests,
     createQuest,
     runQuestVoyage,
+    syncQuestTelemetry,
     ships,
     crew,
     workspaces,
@@ -88,6 +89,12 @@ export const QuestsView: React.FC = () => {
   });
 
   const selectedQuest = quests.find((q) => q.id === selectedQuestId) || quests[0];
+
+  useEffect(() => {
+    if (selectedQuest?.id) {
+      syncQuestTelemetry(selectedQuest.id);
+    }
+  }, [selectedQuest?.id, syncQuestTelemetry]);
 
   const handleCreateQuestSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -365,6 +372,38 @@ export const QuestsView: React.FC = () => {
                     </p>
                   </div>
                 )}
+
+                {/* Circuit Breaker & Loop Detector Telemetry (BL-16 & BL-17) */}
+                <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-teal-500" />
+                    <div>
+                      <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                        Circuit Breaker Guardrail
+                      </span>
+                      <p className="text-[11px] text-neutral-500">
+                        {selectedQuest.circuitBreaker
+                          ? `Calls: ${selectedQuest.circuitBreaker.totalCalls} | Exact Repeats: ${selectedQuest.circuitBreaker.exactRepeats} | Ping-Pong: ${selectedQuest.circuitBreaker.pingPongCycles}`
+                          : 'Nominal — 3-pattern detection active (exact-repeat, ping-pong, no-progress)'}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <span
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase ${
+                        selectedQuest.circuitBreaker?.status === 'break'
+                          ? 'bg-rose-500/20 text-rose-500 border border-rose-500/30'
+                          : selectedQuest.circuitBreaker?.status === 'blocked'
+                          ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30'
+                          : selectedQuest.circuitBreaker?.status === 'warning'
+                          ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30'
+                          : 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
+                      }`}
+                    >
+                      {selectedQuest.circuitBreaker?.status ?? 'Normal (Protected)'}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
           </div>

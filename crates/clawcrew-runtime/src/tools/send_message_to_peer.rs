@@ -523,6 +523,7 @@ mod tests {
             },
         );
 
+        const MAX_PEER_MAP_CHARS: usize = 4_000;
         let peer_map = render_sender_peer_map_for_channel(
             &config,
             "aa",

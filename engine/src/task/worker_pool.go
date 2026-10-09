@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 )
 
 // Job represents a background task execution payload

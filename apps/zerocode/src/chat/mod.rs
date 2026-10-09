@@ -9675,6 +9675,7 @@ impl ChatState {
     }
 
     const QUEUE_CAP: usize = 32;
+    pub const MAX_ATTACHMENTS_PER_MESSAGE: usize = 10;
     const QUEUE_SIDEBAR_COLS_MIN: u16 = 24;
     const QUEUE_SIDEBAR_COLS_MAX: u16 = 80;
     const QUEUE_SIDEBAR_COLS_STEP: u16 = 4;
@@ -9695,6 +9696,14 @@ impl ChatState {
             let cleanup_report = cleanup_attachment_temps(&attachments);
             self.surface_cleanup_report(cleanup_report);
             return Err(crate::i18n::t("zc-queue-empty"));
+        }
+        if attachments.len() > Self::MAX_ATTACHMENTS_PER_MESSAGE {
+            let cleanup_report = cleanup_attachment_temps(&attachments);
+            self.surface_cleanup_report(cleanup_report);
+            return Err(format!(
+                "Cannot attach more than {} attachments per message",
+                Self::MAX_ATTACHMENTS_PER_MESSAGE
+            ));
         }
         let pending = self.message_queue.len();
         if pending >= Self::QUEUE_CAP {
@@ -9724,6 +9733,14 @@ impl ChatState {
             let cleanup_report = cleanup_attachment_temps(&attachments);
             self.surface_cleanup_report(cleanup_report);
             return Err(crate::i18n::t("zc-queue-empty"));
+        }
+        if attachments.len() > Self::MAX_ATTACHMENTS_PER_MESSAGE {
+            let cleanup_report = cleanup_attachment_temps(&attachments);
+            self.surface_cleanup_report(cleanup_report);
+            return Err(format!(
+                "Cannot attach more than {} attachments per message",
+                Self::MAX_ATTACHMENTS_PER_MESSAGE
+            ));
         }
         if self.message_queue.len() >= Self::QUEUE_CAP {
             let cleanup_report = cleanup_attachment_temps(&attachments);

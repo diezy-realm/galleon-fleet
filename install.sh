@@ -409,6 +409,7 @@ Options:
   --full               Install everything: the 'full' feature preset plus every
                        installable app (implies --source)
   --minimal            Alias for --preset minimal
+  --tier-b             Include Tier B regional channels (Signal, Bluesky, iMessage)
   --features X,Y       Select specific features — source only (comma-separated)
   --apps X,Y           Select apps to install (e.g. zerocode); "none" to skip all
   --with-gateway       Force the gateway feature on (overrides preset/feature default)
@@ -782,6 +783,9 @@ fi
 while [ $# -gt 0 ]; do
   case "$1" in
   --minimal) MINIMAL=true ;;
+  --tier-b)
+    USER_FEATURES="${USER_FEATURES:+$USER_FEATURES,}channel-signal,channel-bluesky,channel-imessage"
+    ;;
   --preset)
     if [ $# -lt 2 ]; then
       die "Missing value for --preset. Expected: --preset minimal|full"

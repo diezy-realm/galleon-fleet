@@ -8,7 +8,7 @@ depends_on: plugin-mcp-architecture-audit.md, fleet-wide-mcp-governance-followup
 
 # Backlog — Plugin & MCP Architecture Gaps
 
-> Diturunkan dari `research/plugin-mcp-architecture-audit.md` dan `research/fleet-wide-mcp-governance-followup.md`.
+> Diturunkan dari `research/plugin-mcp-architecture-audit.md` dan `archive/research-closed-loop/fleet-wide-mcp-governance-followup.md`.
 > Nomor lanjutan dari BL-18 (`backlog/subagent-resource-management-backlog.md`).
 
 ---

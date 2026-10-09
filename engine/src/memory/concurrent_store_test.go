@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/src/memory"
+	"github.com/diezy-realm/galleon-fleet/engine/src/memory"
 )
 
 func TestVectorStore_ConcurrentUpsertAndSearch(t *testing.T) {

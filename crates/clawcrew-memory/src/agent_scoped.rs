@@ -1,5 +1,6 @@
 use super::traits::{
-    ExportFilter, Memory, MemoryCategory, MemoryEntry, ProceduralMessage, StoreOptions,
+    BackendHygieneReport, ExportFilter, Memory, MemoryCategory, MemoryEntry, ProceduralMessage,
+    RetentionPolicy, StoreOptions,
 };
 use anyhow::Result;
 use async_trait::async_trait;
@@ -163,6 +164,40 @@ impl AgentScopedMemory {
             }
             fetch_limit = next_fetch_limit;
         }
+    }
+
+    /// Erase all memory rows attributed to `agent_id` through the wrapper.
+    ///
+    /// Refuses cross-agent erase if `agent_id != self.agent_id`.
+    pub async fn forget_all_for_agent(&self, agent_id: &str) -> Result<usize> {
+        if agent_id != self.agent_id {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    .with_attrs(::serde_json::json!({
+                        "target_agent": agent_id,
+                        "bound_agent": self.agent_id,
+                    })),
+                "forget_all_for_agent refused: cross-agent erase through wrapper"
+            );
+            anyhow::bail!("AgentScopedMemory refuses cross-agent erase: bound agent and target agent differ");
+        }
+        let mut total_deleted = 0;
+        let keys: Vec<String> = {
+            let entries = self.inner.list(None, None).await?;
+            self.filter_attributed_entries(entries)
+                .into_iter()
+                .filter(|e| e.agent_id.as_deref() == Some(agent_id))
+                .map(|e| e.key)
+                .collect()
+        };
+        for key in keys {
+            if self.inner.forget_for_agent(&key, agent_id).await? {
+                total_deleted += 1;
+            }
+        }
+        Ok(total_deleted)
     }
 }
 
@@ -458,6 +493,10 @@ impl Memory for AgentScopedMemory {
         self.inner.forget_for_agent(key, agent_id).await
     }
 
+    async fn forget_all_for_agent(&self, agent_id: &str) -> Result<u64> {
+        self.forget_all_for_agent(agent_id).await.map(|n| n as u64)
+    }
+
     async fn count(&self) -> Result<usize> {
         // Scope to the bound + allowlisted agents so a wrapper-using
         // caller does not see the install-wide row total.
@@ -500,6 +539,10 @@ impl Memory for AgentScopedMemory {
         // contained: it does not mutate row attribution or expose
         // cross-agent content to the caller.
         self.inner.reindex().await
+    }
+
+    async fn apply_retention(&self, policy: &RetentionPolicy) -> Result<BackendHygieneReport> {
+        self.inner.apply_retention(policy).await
     }
 
     async fn store_procedural(
@@ -1418,6 +1461,134 @@ mod tests {
         assert!(
             !hits.iter().any(|e| e.key == "rogue-key"),
             "caller allowlist must be intersected, not unioned"
+        );
+    }
+
+    #[tokio::test]
+    async fn forget_all_for_agent_deletes_all_rows_for_bound_agent() {
+        let (_tmp, inner) = fresh_sqlite();
+        let uuids = provision_agents(&inner, &["alpha", "beta"]).await;
+        let alpha_uuid = &uuids[0];
+        let beta_uuid = &uuids[1];
+
+        inner
+            .store_with_agent(
+                "alpha-1",
+                "val 1",
+                MemoryCategory::Core,
+                None,
+                None,
+                None,
+                Some(alpha_uuid),
+            )
+            .await
+            .unwrap();
+        inner
+            .store_with_agent(
+                "alpha-2",
+                "val 2",
+                MemoryCategory::Core,
+                None,
+                None,
+                None,
+                Some(alpha_uuid),
+            )
+            .await
+            .unwrap();
+        inner
+            .store_with_agent(
+                "beta-1",
+                "beta val",
+                MemoryCategory::Core,
+                None,
+                None,
+                None,
+                Some(beta_uuid),
+            )
+            .await
+            .unwrap();
+
+        let wrapper =
+            AgentScopedMemory::new(as_dyn(inner.clone()), alpha_uuid, vec![beta_uuid.clone()]);
+
+        let deleted = wrapper.forget_all_for_agent(alpha_uuid).await.unwrap();
+        assert_eq!(deleted, 2);
+
+        // Alpha's rows are gone
+        assert!(
+            inner
+                .get_for_agent("alpha-1", alpha_uuid)
+                .await
+                .unwrap()
+                .is_none()
+        );
+        assert!(
+            inner
+                .get_for_agent("alpha-2", alpha_uuid)
+                .await
+                .unwrap()
+                .is_none()
+        );
+        // Beta's row remains intact
+        assert!(
+            inner
+                .get_for_agent("beta-1", beta_uuid)
+                .await
+                .unwrap()
+                .is_some()
+        );
+    }
+
+    #[tokio::test]
+    async fn forget_all_for_agent_refuses_cross_agent_erase() {
+        let (_tmp, inner) = fresh_sqlite();
+        let uuids = provision_agents(&inner, &["alpha", "beta"]).await;
+        let alpha_uuid = &uuids[0];
+        let beta_uuid = &uuids[1];
+
+        let wrapper = AgentScopedMemory::new(as_dyn(inner), alpha_uuid, vec![beta_uuid.clone()]);
+
+        let err = wrapper
+            .forget_all_for_agent(beta_uuid)
+            .await
+            .expect_err("wrapper must refuse erasing another agent's memory");
+        assert!(
+            err.to_string().contains("refuses cross-agent erase"),
+            "expected cross-agent refusal, got: {err}"
+        );
+    }
+
+    #[tokio::test]
+    async fn forget_all_for_agent_deletes_rows_from_allowlisted_peers_via_inner_backend() {
+        let (_tmp, inner) = fresh_sqlite();
+        let uuids = provision_agents(&inner, &["alpha", "beta"]).await;
+        let _alpha_uuid = &uuids[0];
+        let beta_uuid = &uuids[1];
+
+        inner
+            .store_with_agent(
+                "beta-1",
+                "beta val",
+                MemoryCategory::Core,
+                None,
+                None,
+                None,
+                Some(beta_uuid),
+            )
+            .await
+            .unwrap();
+
+        let inner_dyn = as_dyn(inner.clone());
+        let deleted = crate::forget_all_for_agent(&inner_dyn, beta_uuid)
+            .await
+            .unwrap();
+        assert_eq!(deleted, 1);
+        assert!(
+            inner
+                .get_for_agent("beta-1", beta_uuid)
+                .await
+                .unwrap()
+                .is_none()
         );
     }
 }

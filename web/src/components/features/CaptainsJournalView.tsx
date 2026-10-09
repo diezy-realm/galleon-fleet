@@ -33,7 +33,9 @@ export const CaptainsJournalView: React.FC = () => {
     archiveJournalSession,
     convertJournalToArtifact,
     convertJournalToQuest,
-    selectedWorkspace
+    selectedWorkspace,
+    projects,
+    trainingSkills
   } = useFleetStore();
 
   const [search, setSearch] = useState('');
@@ -41,6 +43,31 @@ export const CaptainsJournalView: React.FC = () => {
   const [newTitlePrompt, setNewTitlePrompt] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [autocompleteType, setAutocompleteType] = useState<'project' | 'skill' | null>(null);
+  const [autocompleteQuery, setAutocompleteQuery] = useState('');
+
+  const handleInputChange = (val: string) => {
+    setInput(val);
+    const lastWord = val.split(' ').pop() || '';
+    if (lastWord.startsWith('@')) {
+      setAutocompleteType('project');
+      setAutocompleteQuery(lastWord.slice(1).toLowerCase());
+    } else if (lastWord.startsWith('/')) {
+      setAutocompleteType('skill');
+      setAutocompleteQuery(lastWord.slice(1).toLowerCase());
+    } else {
+      setAutocompleteType(null);
+    }
+  };
+
+  const handleSelectAutocomplete = (replacement: string) => {
+    const words = input.split(' ');
+    words.pop();
+    const prefix = autocompleteType === 'project' ? '@' : '/';
+    words.push(`${prefix}${replacement} `);
+    setInput(words.join(' '));
+    setAutocompleteType(null);
+  };
 
   const activeSession =
     journalSessions.find((s) => s.id === selectedJournalSessionId) || journalSessions[0];
@@ -367,26 +394,65 @@ export const CaptainsJournalView: React.FC = () => {
             </div>
 
             {/* Journal Composer */}
-            <form
-              onSubmit={handleSend}
-              className="p-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 flex items-center gap-2 shrink-0"
-            >
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Write private notes or consult with Quartermaster..."
-                className="flex-1 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-xs text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-teal-500"
-              />
-              <button
-                type="submit"
-                disabled={!input.trim()}
-                className="px-4 py-2 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity flex items-center gap-1.5"
+            <div className="relative shrink-0">
+              {autocompleteType && (
+                <div className="absolute bottom-full left-3 mb-1 w-64 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg overflow-hidden text-xs z-20">
+                  <div className="px-2.5 py-1.5 bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-100 dark:border-neutral-800 text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">
+                    {autocompleteType === 'project' ? 'Mention Project (@)' : 'Select Skill (/)'}
+                  </div>
+                  <div className="max-h-36 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800/40">
+                    {autocompleteType === 'project'
+                      ? projects
+                          .filter((p) => p.toLowerCase().includes(autocompleteQuery))
+                          .slice(0, 5)
+                          .map((p) => (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => handleSelectAutocomplete(p)}
+                              className="w-full text-left px-3 py-1.5 hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-teal-600 dark:hover:text-teal-400 font-mono transition-colors"
+                            >
+                              @{p}
+                            </button>
+                          ))
+                      : trainingSkills
+                          .filter((s) => s.name.toLowerCase().includes(autocompleteQuery))
+                          .slice(0, 5)
+                          .map((s) => (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => handleSelectAutocomplete(s.name.toLowerCase().replace(/\s+/g, '-'))}
+                              className="w-full text-left px-3 py-1.5 hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-teal-600 dark:hover:text-teal-400 font-mono transition-colors"
+                            >
+                              /{s.name.toLowerCase().replace(/\s+/g, '-')}
+                            </button>
+                          ))}
+                  </div>
+                </div>
+              )}
+
+              <form
+                onSubmit={handleSend}
+                className="p-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 flex items-center gap-2"
               >
-                <Send className="w-3.5 h-3.5" />
-                <span>Note</span>
-              </button>
-            </form>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  placeholder="Write private notes or consult with Quartermaster (use @project or /skill)..."
+                  className="flex-1 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-2 text-xs text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                />
+                <button
+                  type="submit"
+                  disabled={!input.trim()}
+                  className="px-4 py-2 rounded-lg bg-teal-600 dark:bg-teal-500 text-white dark:text-neutral-950 text-xs font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity flex items-center gap-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Note</span>
+                </button>
+              </form>
+            </div>
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center text-xs text-neutral-400">

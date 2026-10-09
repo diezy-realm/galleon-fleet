@@ -9,6 +9,7 @@ type Store interface {
 	Save(ctx context.Context, r *Run) error
 	Get(ctx context.Context, id string) (*Run, error)
 	UpdateStatus(ctx context.Context, id string, status RunStatus, errMsg string) error
+	UpdateLoopDetectorStats(ctx context.Context, id string, stats *LoopDetectorStats) error
 	List(ctx context.Context) ([]*Run, error)
 }
 
@@ -30,6 +31,7 @@ type EventHub interface {
 type Service interface {
 	CreateRun(ctx context.Context, req *CreateRunRequest, reqID, idempotencyKey string) (*Run, error)
 	GetRun(ctx context.Context, runID string) (*Run, error)
+	UpdateLoopDetectorStats(ctx context.Context, runID string, stats *LoopDetectorStats) error
 	CancelRun(ctx context.Context, runID string) error
 	GetRunContext(runID string) (context.Context, bool)
 	SubscribeEvents(runID string) (<-chan *RunEvent, func())

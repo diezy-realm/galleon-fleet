@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
 )
 
 // HTTPHandler handles REST endpoints for workflows and SOPs

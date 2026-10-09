@@ -221,6 +221,23 @@ pub fn trim_to_recent_turns_with_crumb(
     let kept_turns = total_turns - dropped_turns;
     let tokens_after = estimate_history_tokens(&kept);
 
+    let trimmed_tokens = tokens_before.saturating_sub(tokens_after);
+    ::clawcrew_log::record!(
+        INFO,
+        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::serde_json::json!({
+                "action": "trim_history",
+                "tokens_before": tokens_before,
+                "tokens_after": tokens_after,
+                "trimmed": trimmed_tokens,
+                "dropped_messages": dropped_messages,
+                "dropped_turns": dropped_turns,
+                "kept_turns": kept_turns
+            })
+        ),
+        "history trimmed to fit token budget"
+    );
+
     TrimResult {
         history: kept,
         dropped_messages,
@@ -230,6 +247,18 @@ pub fn trim_to_recent_turns_with_crumb(
         tokens_after,
         trimmed: true,
     }
+}
+
+/// Calculate dynamic trim budget aligning with rolling cache performance (R-89).
+/// When cache hit rate is high, retains slightly more context to maintain prefix stability.
+#[must_use]
+pub fn dynamic_trim_budget(base_budget: usize, cache_hit_rate: f64) -> usize {
+    if cache_hit_rate <= 0.0 {
+        return base_budget;
+    }
+    // High hit rate (>0.8) retains up to 20% more context before trimming to avoid breaking prompt cache
+    let bonus_multiplier = 1.0 + (cache_hit_rate.clamp(0.0, 1.0) * 0.2);
+    (base_budget as f64 * bonus_multiplier) as usize
 }
 
 pub fn trim_to_reported_budget(

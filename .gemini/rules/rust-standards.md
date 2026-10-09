@@ -28,7 +28,7 @@ Edition: **Rust 2024** | MSRV: **1.82+**
 ## 5. Strict Error Handling
 - Use `thiserror` for error enums; define `pub type Result<T> = std::result::Result<T, Error>` at crate roots.
 - **NEVER use `unwrap()` or `expect()` in production paths.** Always propagate errors with `?`.
-- `unwrap()` / `expect()` are permitted only in tests or with documented safe invariants.
+- `unwrap()` / `expect()` are permitted **exclusively** inside test scopes (`#[cfg(test)] mod tests { ... }`, standalone `tests.rs`, integration `tests/` directory) or with explicit documented safe invariants (`// INVARIANT: ...`). Test helpers and fixtures must never be placed outside `#[cfg(test)]`.
 
 ## 6. Concurrency & Async Patterns
 - Tokio runtime standard across binaries (`#[tokio::main]`) and tests (`#[tokio::test]`).
@@ -63,7 +63,7 @@ Edition: **Rust 2024** | MSRV: **1.82+**
   ```powershell
   $env:CARGO_TARGET_DIR="target/agent"; cargo check -p <crate-name>
   ```
-- **Compiler Caching (`sccache`):** `sccache` diaktifkan di `.cargo/config.toml` (`rustc-wrapper = "sccache"`). Gunakan `sccache --show-stats` untuk memantau cache hit.
+- **Compiler Caching (`sccache`):** `sccache` diaktifkan di `.cargo/config.toml` (`rustc-wrapper = "sccache"`). Gunakan `sccache --show-stats` untuk memantau cache hit. Di CI runner, pastikan binary `sccache` diinstal via action sebelum Cargo dijalankan, atau gunakan `RUSTC_WRAPPER=""` jika job tidak menggunakan cache. Dilarang menghapus baris wrapper dari `.cargo/config.toml`.
 
 
 

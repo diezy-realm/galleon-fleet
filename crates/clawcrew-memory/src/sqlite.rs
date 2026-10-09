@@ -1,7 +1,7 @@
 use super::embeddings::EmbeddingProvider;
 use super::traits::{
-    ExportFilter, Memory, MemoryCategory, MemoryEntry, MemoryStats, StoreOptions,
-    is_recent_recall_query,
+    BackendHygieneReport, ExportFilter, Memory, MemoryCategory, MemoryEntry, MemoryStats,
+    RetentionPolicy, StoreOptions, is_recent_recall_query,
 };
 use super::vector;
 use anyhow::Context;
@@ -2225,6 +2225,54 @@ impl Memory for SqliteMemory {
         tokio::task::spawn_blocking(move || -> anyhow::Result<String> {
             let conn = conn.lock();
             clawcrew_config::schema::v2::sqlite_ensure_agent_uuid(&conn, &alias)
+        })
+        .await?
+    }
+
+    async fn apply_retention(
+        &self,
+        policy: &RetentionPolicy,
+    ) -> anyhow::Result<BackendHygieneReport> {
+        let conn = self.conn.clone();
+        let policy = policy.clone();
+
+        tokio::task::spawn_blocking(move || -> anyhow::Result<BackendHygieneReport> {
+            let conn = conn.lock();
+            let mut total_pruned: u64 = 0;
+
+            let categories_to_check = [
+                ("conversation", policy.conversation_retention_days),
+                ("daily", policy.daily_retention_days),
+                ("core", policy.core_retention_days),
+            ];
+
+            for (cat, days_opt) in categories_to_check {
+                if let Some(days) = days_opt {
+                    let modifier = format!("-{} days", days);
+                    if policy.dry_run {
+                        let count: i64 = conn.query_row(
+                            "SELECT COUNT(*) FROM memories \
+                             WHERE category = ?1 AND pinned = 0 AND datetime(created_at) < datetime('now', ?2)",
+                            params![cat, modifier],
+                            |row| row.get(0),
+                        )?;
+                        total_pruned += count as u64;
+                    } else {
+                        let affected = conn.execute(
+                            "DELETE FROM memories \
+                             WHERE category = ?1 AND pinned = 0 AND datetime(created_at) < datetime('now', ?2)",
+                            params![cat, modifier],
+                        )?;
+                        total_pruned += affected as u64;
+                    }
+                }
+            }
+
+            Ok(BackendHygieneReport {
+                backend_name: "sqlite".to_string(),
+                pruned_entries: total_pruned,
+                bytes_reclaimed: 0,
+            })
         })
         .await?
     }
@@ -5462,5 +5510,61 @@ mod tests {
                 "list() must yield a deterministic order across reads"
             );
         }
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_apply_retention_pruning_and_dry_run() {
+        let (_dir, mem) = temp_sqlite();
+
+        // Store a conversation row
+        mem.store("conv_old", "old conversation content", MemoryCategory::Conversation, None)
+            .await
+            .unwrap();
+
+        // Store a pinned conversation row
+        mem.store_with_options(
+            "conv_pinned",
+            "pinned conversation content",
+            MemoryCategory::Conversation,
+            None,
+            StoreOptions { pinned: true, ..Default::default() },
+        )
+        .await
+        .unwrap();
+
+        // Artificially age the entries by updating created_at in sqlite
+        {
+            let conn = mem.conn.lock();
+            conn.execute(
+                "UPDATE memories SET created_at = datetime('now', '-40 days') WHERE key IN ('conv_old', 'conv_pinned')",
+                [],
+            )
+            .unwrap();
+        }
+
+        // 1. Dry run with 30-day retention: expects 1 unpinned row detected, 0 rows deleted
+        let policy_dry_run = RetentionPolicy {
+            conversation_retention_days: Some(30),
+            daily_retention_days: None,
+            core_retention_days: None,
+            dry_run: true,
+        };
+        let report = mem.apply_retention(&policy_dry_run).await.unwrap();
+        assert_eq!(report.pruned_entries, 1);
+        assert_eq!(report.backend_name, "sqlite");
+        assert!(mem.get("conv_old").await.unwrap().is_some());
+        assert!(mem.get("conv_pinned").await.unwrap().is_some());
+
+        // 2. Real run with 30-day retention: unpinned row deleted, pinned row preserved
+        let policy_real = RetentionPolicy {
+            conversation_retention_days: Some(30),
+            daily_retention_days: None,
+            core_retention_days: None,
+            dry_run: false,
+        };
+        let report_real = mem.apply_retention(&policy_real).await.unwrap();
+        assert_eq!(report_real.pruned_entries, 1);
+        assert!(mem.get("conv_old").await.unwrap().is_none());
+        assert!(mem.get("conv_pinned").await.unwrap().is_some());
     }
 }

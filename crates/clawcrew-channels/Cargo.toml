@@ -1,5 +1,6 @@
 [package]
 name = "clawcrew-channels"
+rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -297,6 +298,18 @@ channel-voice-call = ["dep:axum"]
 channel-acp-server = []
 channel-matrix = ["dep:matrix-sdk", "dep:mime_guess"]
 voice-wake = ["dep:cpal"]
+
+# Tier B Regional Channels feature bundle (BR-F3, BR-F4)
+channels-tier-b = [
+  "channel-dingtalk",
+  "channel-lark",
+  "channel-line",
+  "channel-mochat",
+  "channel-qq",
+  "channel-wechat",
+  "channel-wecom",
+  "channel-wecom-ws",
+]
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"

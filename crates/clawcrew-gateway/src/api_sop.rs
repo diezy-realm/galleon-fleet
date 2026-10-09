@@ -1,6 +1,6 @@
 //! Out-of-band SOP approval surface (EPIC C, C6; EPIC G broker).
 //!
-//! `GET /admin/sop/pending`, `POST /admin/sop/approve`, `POST /admin/sop/deny`.
+//! `GET /admin/sop/pending`, `POST /admin/sop/approve`, `POST /admin/sop/deny`, `GET /admin/sop/metrics`.
 //! Auth reuses the vetted `/admin/reload` gate: loopback is always allowed and
 //! attributed as `cli` UNLESS pairing is required and it also presents a valid
 //! bearer token, in which case it is attributed as `http` (the authenticated
@@ -14,13 +14,13 @@
 
 use std::net::SocketAddr;
 
-use axum::Json;
 use axum::extract::{ConnectInfo, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
+use axum::Json;
 use serde::Deserialize;
 
-use crate::{AdminReloadGate, AppState, admin_reload_gate};
+use crate::{admin_reload_gate, AdminReloadGate, AppState};
 use clawcrew_runtime::sop::approval::{
     ApprovalDecision, ApprovalPrincipal, BrokerOutcome, ResolveOutcome,
 };
@@ -117,6 +117,7 @@ fn outcome_response(outcome: &ResolveOutcome) -> (StatusCode, &'static str) {
         ResolveOutcome::AlreadyResolved => (StatusCode::OK, "already_resolved"),
         ResolveOutcome::NotWaiting => (StatusCode::NOT_FOUND, "not_waiting"),
         ResolveOutcome::RejectedSelfApproval => (StatusCode::FORBIDDEN, "rejected_self_approval"),
+        ResolveOutcome::RejectedConstraint(_) => (StatusCode::FORBIDDEN, "rejected_constraint"),
         // Approved, but re-admitting would exceed the concurrency caps: temporary
         // backpressure, retry once a slot frees (the gate stays waiting).
         ResolveOutcome::DeferredAtCapacity => {
@@ -165,6 +166,20 @@ pub async fn handle_sop_pending(
         StatusCode::OK,
         Json(serde_json::json!({ "pending": pending })),
     ))
+}
+
+/// GET /admin/sop/metrics - return a snapshot of global and per-SOP counters
+/// from the engine's metrics collector.
+pub async fn handle_sop_metrics(
+    State(state): State<AppState>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+) -> Result<impl IntoResponse, JsonErr> {
+    authorize(&state, &peer, &headers)?;
+    let engine = state.sop_engine.as_ref().ok_or_else(sop_disabled)?;
+    let guard = engine.lock().map_err(|_| lock_poisoned())?;
+    let snapshot = guard.metrics().snapshot();
+    Ok((StatusCode::OK, Json(snapshot)))
 }
 
 /// POST /admin/sop/approve - clear a waiting gate out-of-band.
@@ -297,18 +312,18 @@ pub(crate) mod tests {
     /// `policy = "prod"` approval gate, with group `release` = [`http:<token-hash>`]
     /// so the paired `token` (and only it) satisfies the policy over HTTP.
     pub(crate) fn state_with_policied_gate(token: &str) -> (AppState, String) {
-        use std::collections::HashMap;
-        use std::sync::{Arc, Mutex};
         use clawcrew_config::schema::{
             ApprovalGroupConfig, ApprovalPolicyConfig, SopApprovalConfig, SopConfig,
         };
         use clawcrew_runtime::security::pairing::PairingGuard;
         use clawcrew_runtime::sop::approval::ApprovalBroker;
-        use clawcrew_runtime::sop::engine::{SopEngine, now_iso8601};
+        use clawcrew_runtime::sop::engine::{now_iso8601, SopEngine};
         use clawcrew_runtime::sop::types::{
             Sop, SopAdmissionPolicy, SopEvent, SopExecutionMode, SopPriority, SopRunAction,
             SopStep, SopStepKind, SopTrigger, SopTriggerSource,
         };
+        use std::collections::HashMap;
+        use std::sync::{Arc, Mutex};
 
         let hash = PairingGuard::token_hash(token);
         let mut groups = HashMap::new();
@@ -354,6 +369,8 @@ pub(crate) mod tests {
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         };
         let mut engine = SopEngine::new(SopConfig {
             approval,
@@ -583,5 +600,74 @@ pub(crate) mod tests {
             Some(SopRunStatus::WaitingApproval),
             "the gate stays waiting - no fabricated identity may clear it"
         );
+    }
+
+    #[tokio::test]
+    async fn sop_metrics_endpoint_returns_snapshot_and_rejects_unauthorized() {
+        let token = "pair-token-metrics";
+        let (state, run_id) = state_with_policied_gate(token);
+        let loopback: SocketAddr = "127.0.0.1:9".parse().unwrap();
+        let remote: SocketAddr = "203.0.113.8:5000".parse().unwrap();
+
+        // 1. Unauthorized remote caller is rejected
+        let unauthorized_resp =
+            match handle_sop_metrics(State(state.clone()), ConnectInfo(remote), HeaderMap::new())
+                .await
+            {
+                Err(e) => e,
+                Ok(_) => panic!("unauthenticated remote call must fail authorization"),
+            };
+        assert_eq!(unauthorized_resp.0, StatusCode::UNAUTHORIZED);
+
+        // 2. Loopback caller gets 200 OK with valid metrics snapshot
+        let resp = handle_sop_metrics(
+            State(state.clone()),
+            ConnectInfo(loopback),
+            HeaderMap::new(),
+        )
+        .await
+        .expect("loopback call succeeds")
+        .into_response();
+        assert_eq!(resp.status(), StatusCode::OK);
+
+        let body_bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .expect("read body");
+        let json: serde_json::Value = serde_json::from_slice(&body_bytes).expect("parse json");
+
+        assert!(json.get("global").is_some());
+        assert!(json.get("per_sop").is_some());
+        assert!(json.get("pending_approvals").is_some());
+        assert!(json.get("pending_timeout_approvals").is_some());
+
+        // 3. Clear the gate to record an approval metric, then verify counter updates
+        let approve_resp = handle_sop_approve(
+            State(state.clone()),
+            ConnectInfo(loopback),
+            bearer(token),
+            Json(SopResolveBody {
+                run_id: run_id.clone(),
+                reason: None,
+            }),
+        )
+        .await
+        .expect("approve succeeds")
+        .into_response();
+        assert_eq!(approve_resp.status(), StatusCode::OK);
+
+        let resp2 = handle_sop_metrics(
+            State(state.clone()),
+            ConnectInfo(loopback),
+            HeaderMap::new(),
+        )
+        .await
+        .expect("loopback metrics call succeeds")
+        .into_response();
+        let body2 = axum::body::to_bytes(resp2.into_body(), usize::MAX)
+            .await
+            .expect("read body");
+        let json2: serde_json::Value = serde_json::from_slice(&body2).expect("parse json");
+        let global_approvals = json2["global"]["human_approvals"].as_u64().unwrap_or(0);
+        assert_eq!(global_approvals, 1);
     }
 }

@@ -1976,6 +1976,7 @@ dependencies = [
  "tracing-log",
  "tracing-subscriber",
  "uuid",
+ "windows",
 ]
 
 [[package]]
@@ -4333,8 +4334,11 @@ dependencies = [
 name = "galleon-security-scrub"
 version = "0.8.5"
 dependencies = [
+ "clawcrew-api",
  "clawcrew-config",
+ "rand 0.10.2",
  "regex",
+ "serde",
  "serde_json",
 ]
 

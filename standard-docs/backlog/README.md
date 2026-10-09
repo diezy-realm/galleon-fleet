@@ -1,7 +1,7 @@
 ---
-title: Index Backlog — Peta Lengkap BL-01 s.d. BL-39
+title: Index Backlog — Peta Lengkap BL-01 s.d. BL-82
 status: index
-date: 2026-10-05
+date: 2026-10-06
 author: squad-lead
 ---
 
@@ -130,6 +130,62 @@ author: squad-lead
 | BL-59 | Enforcement `DistinctPerformer` (Dynamic SoD) | MEDIUM | Aktif, setelah BL-58 |
 | BL-60 | Contoh SOP nyata "Engineering Feature Delivery" + sambung ke eval loop | LOW | Aktif, setelah BL-58 |
 | BL-61 | Contoh SOP non-engineering (Marketing) — bukti department-agnostic | LOW | Aktif, setelah BL-60 |
+
+### `ui-nice-to-have-backlog.md` (BL-62 s.d. BL-70)
+> 3 topik UI referensi KiroCrew: Right Rail tab Git+Sub-Agents, Captain's Journal workspace grouping, "+ New Chat" entry-point terpadu. Keputusan Achmad 2026-10-05: `Project` (repo nyata) dan `Workspace` (label governance) dipisah jadi 2 entity, TIDAK dilebur jadi satu folder lintas-fitur. Git ops wajib lewat Go sebagai policy gate (ODR-07 extended), exception hanya fetch API eksternal read-only.
+
+| BL | Judul | Severity | Status |
+|---|---|---|---|
+| BL-62 | `Project` entity + Go endpoint git-status (branch/dirty/ahead-behind) | MEDIUM-HIGH | Aktif |
+| BL-63 | Tab-switcher `RightRail.tsx`: Fleet Pulse \| Git \| Sub-Agents | MEDIUM | Aktif, setelah BL-62 |
+| BL-64 | Tab Sub-Agents — endpoint status sub-agent aktif | MEDIUM | **DITUNDA** — bergantung Gap #2 sub-agent persistence (`turn-resilience-and-steer-queue-audit.md`) |
+| BL-65 | Bugfix `selectedWorkspace` global nyasar di `handleCreateNew` Journal | **HIGH (bug nyata)** | Aktif — PRIORITASKAN, paling murah |
+| BL-66 | Grouping visual sidebar Journal per-`workspaceId` (meniru pola KiroCrew) | MEDIUM | Aktif, setelah BL-65 |
+| BL-67 | Tombol "+ New Entry" kontekstual per-section workspace | LOW-MEDIUM | Aktif, setelah BL-66 |
+| BL-68 | Upgrade `workspaces: string[]` → `Workspace{id,name}[]` + `JournalSession.projectId?` | MEDIUM | Aktif, paralel BL-62 |
+| BL-69 | Dropdown "+ New" di `AppSidebar.tsx` (Journal/Quest/Journal-in-Workspace) | MEDIUM | Aktif, setelah BL-68 |
+| BL-70 | "Ephemeral chat" | LOW | **TIDAK DIREKOMENDASIKAN (YAGNI)** — tanpa use-case eksplisit
+
+### `toolbox-parity-backlog.md` (BL-71 s.d. BL-79)
+> 3 topik UI referensi KiroCrew: Right Rail tab Git+Sub-Agents, Captain's Journal workspace grouping, "+ New Chat" entry-point terpadu, + 2 metode dipertajam 2026-10-05 (BL-78 Prompt Engineer sub-agent, BL-79 smart-rekomendasi top-bar). Keputusan Achmad 2026-10-05: `Project` (repo nyata) dan `Workspace` (label governance) dipisah jadi 2 entity, TIDAK dilebur jadi satu folder lintas-fitur. Git ops wajib lewat Go sebagai policy gate (ODR-07 extended), exception hanya fetch API eksternal read-only.
+
+| BL | Judul | Severity | Status |
+|---|---|---|---|
+| BL-62 | `Project` entity + Go endpoint git-status (branch/dirty/ahead-behind) | MEDIUM-HIGH | Aktif |
+| BL-63 | Tab-switcher `RightRail.tsx`: Fleet Pulse \| Git \| Sub-Agents | MEDIUM | Aktif, setelah BL-62 |
+| BL-64 | Tab Sub-Agents — endpoint status sub-agent aktif | MEDIUM | **DITUNDA** — bergantung Gap #2 sub-agent persistence (`turn-resilience-and-steer-queue-audit.md`) |
+| BL-65 | Bugfix `selectedWorkspace` global nyasar di `handleCreateNew` Journal | **HIGH (bug nyata)** | Aktif — PRIORITASKAN, paling murah |
+| BL-66 | Grouping visual sidebar Journal per-`workspaceId` (meniru pola KiroCrew) | MEDIUM | Aktif, setelah BL-65 |
+| BL-67 | Tombol "+ New Entry" kontekstual per-section workspace | LOW-MEDIUM | Aktif, setelah BL-66 |
+| BL-68 | Upgrade `workspaces: string[]` → `Workspace{id,name}[]` + `JournalSession.projectId?` | MEDIUM | Aktif, paralel BL-62 |
+| BL-69 | Dropdown "+ New" di `AppSidebar.tsx` (Journal/Quest/Journal-in-Workspace) | MEDIUM | Aktif, setelah BL-68 |
+| BL-70 | "Ephemeral chat" | LOW | **TIDAK DIREKOMENDASIKAN (YAGNI)** — tanpa use-case eksplisit
+
+### `toolbox-parity-backlog.md` (BL-71 s.d. BL-78)
+> Audit 8 fitur toolbox KiroCrew vs galleon-fleet (API vs UI, file:baris terverifikasi). Fitur 3 (Attachment) TIDAK diberi BL baru — bug-nya persis BL-52..55 existing, hanya dikonfirmasi ulang masih terbuka. BL-77 menyatu dengan BL-62/68/69 (`ui-nice-to-have-backlog.md`), bukan tiket independen.
+
+| BL | Judul | Severity | Status |
+|---|---|---|---|
+| BL-71 | Toggle approval-mode per-chat (Normal/Reads/Trust/YOLO) terhubung `RiskTier` API | MEDIUM-HIGH | Aktif, butuh keputusan desain kesesuaian model governance dulu |
+| BL-72 | Sambungkan `ApprovalForm.tsx` ke endpoint approve/deny nyata (saat ini mock) | MEDIUM | Aktif, murah |
+| BL-73 | Desain mekanisme nudge-interval+cycle-limit+stop-file untuk Quest-loop | HIGH (scope besar) | **EXPLORATORY** — butuh keputusan Owner |
+| BL-74 | Hapus context-window placeholder hardcoded `EngineRoomView.tsx:335` | LOW-MEDIUM | Aktif — PALING MURAH, kerjakan duluan |
+| BL-75 | Tombol "Chat" terikat entitas Crew/Squad/Ship | MEDIUM | Aktif, setelah BL-68 |
+| BL-76 | Autocomplete `@` (mention Project) + `/` (slash skill) di composer Journal | MEDIUM-HIGH | Aktif, setelah BL-62 |
+| BL-77 | Pindahkan switcher Workspace/Project ke bentuk benar (bar global) | MEDIUM | Aktif, MENYATU dengan BL-62/68/69 — jangan kerjakan terpisah |
+| BL-78 | **Spawn sub-agent "Prompt Engineer"** untuk mempertajam intent SEBELUM turn utama, hasil editable tidak auto-send, kemungkinan reuse delegasi BL-05 | MEDIUM-HIGH (fitur baru) | **EXPLORATORY** — metode dipertajam 2026-10-05, tetap butuh keputusan Owner |
+| BL-79 | **BARU** — Top-bar "smart rekomendasi": tarik kesimpulan post-response + array maks 5 (hybrid instruksi-prompt+hard-cap), klik gabung composer dengan separator `", "` | MEDIUM-HIGH (fitur baru) | **EXPLORATORY** — baru 2026-10-05, 1 pertanyaan terbuka tersisa (LLM utama vs sub-agent) |
+
+---
+
+### `tier-entitlement-pricing-backlog.md` (BL-80 s.d. BL-82)
+> Dari `product-research/tier-pricing-and-entitlement-final.md` (2026-10-06), menggantikan `community-tier-licensing-enforcement.md` + `tier-enforcement-method-d-c-deep-dive.md` (keduanya ditandai `status: superseded`). Dipetakan ke `dev-task-2/sprint-4-crate-decoupling-and-runtime-strangler.md` §E sekarang — tidak menunggu BG-F1 selesai, karena BL-81 adalah bagian dari scope BG-F1 itu sendiri.
+
+| BL | Judul | Severity | Status |
+|---|---|---|---|
+| BL-80 | `QuotaPolicy` interface + `CommunityPolicy`/`TeamPolicy`/`DockyardPolicy` di `entitlement/` | MEDIUM | Aktif — siap eksekusi |
+| BL-81 | Perbaiki 5 bug arsitektur (ID Ship kolisi, jalur tulis ganda, `ActiveShips` mati, 3-sumber-kebenaran, `squad.Squad` kosong) | **HIGH** | Aktif — PRIORITASKAN, prasyarat BL-80 bermakna |
+| BL-82 | Rename `engine/go.mod` module path sebelum modul Licensing privat dibangun | LOW (murah, urutan penting) | Aktif |
 
 ---
 

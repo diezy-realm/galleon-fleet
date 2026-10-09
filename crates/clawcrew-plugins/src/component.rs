@@ -393,6 +393,17 @@ impl PluginState {
         self.http.is_some()
     }
 
+    /// Whether this plugin instance is granted permission to read files (BL-23).
+    pub(crate) fn file_read_enabled(&self) -> bool {
+        self.scope.grants().allows(PluginPermission::FileRead)
+    }
+
+    /// Whether this plugin instance is granted permission to write files (BL-23).
+    pub(crate) fn file_write_enabled(&self) -> bool {
+        self.scope.grants().allows(PluginPermission::FileWrite)
+    }
+
+
     /// The inbound queue this plugin drains. Host code holds a clone to enqueue.
     pub(crate) fn inbound(&self) -> &InboundQueue {
         &self.inbound
@@ -1100,6 +1111,40 @@ mod tests {
             "HttpClient attaches the outbound HTTP context"
         );
     }
+
+    #[test]
+    fn file_permissions_enforced_by_scope_grants() {
+        let no_perm_state = PluginState::new(spec([PluginPermission::ConfigRead], 0));
+        assert!(
+            !no_perm_state.file_read_enabled(),
+            "FileRead must be false when permission not granted"
+        );
+        assert!(
+            !no_perm_state.file_write_enabled(),
+            "FileWrite must be false when permission not granted"
+        );
+
+        let read_state = PluginState::new(spec([PluginPermission::FileRead], 0));
+        assert!(
+            read_state.file_read_enabled(),
+            "FileRead must be true when granted"
+        );
+        assert!(
+            !read_state.file_write_enabled(),
+            "FileWrite must remain false when only FileRead is granted"
+        );
+
+        let write_state = PluginState::new(spec([PluginPermission::FileWrite], 0));
+        assert!(
+            !write_state.file_read_enabled(),
+            "FileRead must be false when only FileWrite is granted"
+        );
+        assert!(
+            write_state.file_write_enabled(),
+            "FileWrite must be true when granted"
+        );
+    }
+
 
     #[test]
     fn grant_does_not_enable_http_without_adapter_opt_in() {

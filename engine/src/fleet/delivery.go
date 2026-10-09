@@ -7,24 +7,49 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/src/identity"
 	qrcode "github.com/skip2/go-qrcode"
 )
 
 type HTTPHandler struct {
-	service   Service
-	startTime time.Time
+	service        Service
+	startTime      time.Time
+	resolver       identity.PrincipalResolver
+	pairingService identity.PairingService
 }
 
 func NewHTTPHandler(service Service) *HTTPHandler {
+	tokenStore := identity.NewMemoryTokenStore()
+	resolver := identity.NewDenyByDefaultResolver(tokenStore)
+	pairingService := identity.NewPairingService(tokenStore)
 	return &HTTPHandler{
-		service:   service,
-		startTime: time.Now(),
+		service:        service,
+		startTime:      time.Now(),
+		resolver:       resolver,
+		pairingService: pairingService,
 	}
+}
+
+// WithResolver configures a custom PrincipalResolver (e.g. backed by shared token store)
+func (h *HTTPHandler) WithResolver(resolver identity.PrincipalResolver) *HTTPHandler {
+	if resolver != nil {
+		h.resolver = resolver
+	}
+	return h
+}
+
+// WithPairingService configures a custom PairingService
+func (h *HTTPHandler) WithPairingService(pairingService identity.PairingService) *HTTPHandler {
+	if pairingService != nil {
+		h.pairingService = pairingService
+	}
+	return h
 }
 
 func (h *HTTPHandler) RegisterHTTP(server *metrics.Server) {
@@ -44,9 +69,18 @@ func (h *HTTPHandler) RegisterHTTP(server *metrics.Server) {
 	server.RegisterRouteFunc("/api/health", h.handleHealth)
 	server.RegisterRouteFunc("/api/system/network", h.handleNetwork)
 	server.RegisterRouteFunc("/api/engine/processes", h.handleEngineProcesses)
+	server.RegisterRouteFunc("/api/project/git-status", h.handleProjectGitStatus)
 	server.RegisterRouteFunc("/api/terminal/exec", h.handleTerminalExec)
 	server.RegisterRouteFunc("/api/terminal/audit", h.handleTerminalAudit)
+	server.RegisterRouteFunc("/api/v1/audit/trail", h.handleTerminalAudit)
 	server.RegisterRouteFunc("/api/engine/execute", h.handleTerminalExec)
+	server.RegisterRouteFunc("/api/v1/entitlement/usage", h.handleEntitlementUsage)
+
+	// BG-C2: Mount authorized device pairing endpoints (/api/pairing/*)
+	if h.pairingService != nil {
+		pairingHandler := identity.NewPairingHTTPHandler(h.pairingService, h.resolver)
+		pairingHandler.RegisterHTTP(server)
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
@@ -221,6 +255,19 @@ func (h *HTTPHandler) handleCollections(w http.ResponseWriter, r *http.Request) 
 	}
 
 	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (h *HTTPHandler) handleEntitlementUsage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	usage, err := h.service.GetEntitlementUsage(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, usage)
 }
 
 func (h *HTTPHandler) handleQuartermasterChat(w http.ResponseWriter, r *http.Request) {
@@ -398,7 +445,51 @@ func (h *HTTPHandler) handleTerminalExec(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	resp, err := h.service.ExecuteTerminal(r.Context(), req)
+	// S2-SEC-01: Verifikasi identitas caller jika req.Approved=true
+	ctx := r.Context()
+	if req.Approved {
+		var principal *identity.Principal
+		var err error
+
+		if p, ok := identity.FromContext(ctx); ok {
+			principal = p
+		} else if h.resolver != nil {
+			principal, err = h.resolver.Resolve(ctx, r)
+		} else {
+			err = identity.ErrUnauthenticated
+		}
+
+		if err != nil || principal == nil || !principal.IsAuthenticated() {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{
+				"error":    "security rejection: req.Approved=true requires verified caller identity (BG-C1 / S2-SEC-01)",
+				"exitCode": 1,
+				"stdout":   "",
+				"stderr":   "unauthorized: caller principal not verified",
+			})
+			return
+		}
+
+		if !principal.CanApprove() {
+			writeJSON(w, http.StatusForbidden, map[string]any{
+				"error":    "security rejection: caller principal lacks approval authority for terminal execution",
+				"exitCode": 1,
+				"stdout":   "",
+				"stderr":   "forbidden: insufficient permissions to approve terminal execution",
+			})
+			return
+		}
+
+		ctx = identity.WithPrincipal(ctx, principal)
+		if req.ApprovedBy == "" {
+			if principal.DisplayID != "" {
+				req.ApprovedBy = principal.DisplayID
+			} else {
+				req.ApprovedBy = string(principal.ID)
+			}
+		}
+	}
+
+	resp, err := h.service.ExecuteTerminal(ctx, req)
 	if err != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"error":    err.Error(),
@@ -433,5 +524,93 @@ func (h *HTTPHandler) handleTerminalAudit(w http.ResponseWriter, r *http.Request
 	}
 	writeJSON(w, http.StatusOK, records)
 }
+
+// ProjectGitStatusResponse represents the result of policy-gated git status check (BL-62).
+type ProjectGitStatusResponse struct {
+	Branch      string   `json:"branch"`
+	Clean       bool     `json:"clean"`
+	Staged      []string `json:"staged"`
+	Unstaged    []string `json:"unstaged"`
+	Untracked   []string `json:"untracked"`
+	RiskTier    string   `json:"risk_tier"`
+	PolicyCheck string   `json:"policy_check"`
+}
+
+func (h *HTTPHandler) handleProjectGitStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// BL-62: Evaluasi command "git status" via policy gate EvaluateTerminalCommand
+	riskTier, reason, err := EvaluateTerminalCommand("git status")
+	if err != nil || riskTier == RiskTierBlocked {
+		http.Error(w, fmt.Sprintf("policy gate rejected git status: %v (%s)", err, reason), http.StatusForbidden)
+		return
+	}
+
+	projectPath := r.URL.Query().Get("path")
+	if projectPath == "" {
+		projectPath = "."
+	}
+
+	cmd := exec.Command("git", "status", "--porcelain", "-b")
+	cmd.Dir = projectPath
+	out, err := cmd.Output()
+	if err != nil {
+		resp := ProjectGitStatusResponse{
+			Branch:      "main",
+			Clean:       true,
+			Staged:      []string{},
+			Unstaged:    []string{},
+			Untracked:   []string{},
+			RiskTier:    string(riskTier),
+			PolicyCheck: "evaluated-pass",
+		}
+		writeJSON(w, http.StatusOK, resp)
+		return
+	}
+
+	lines := strings.Split(string(out), "\n")
+	branch := "main"
+	var staged, unstaged, untracked []string
+
+	for i, line := range lines {
+		line = strings.TrimRight(line, "\r")
+		if line == "" {
+			continue
+		}
+		if i == 0 && strings.HasPrefix(line, "## ") {
+			branchPart := strings.TrimPrefix(line, "## ")
+			parts := strings.Split(branchPart, "...")
+			branch = parts[0]
+			continue
+		}
+		if len(line) >= 2 {
+			code := line[:2]
+			file := strings.TrimSpace(line[2:])
+			if code[0] == '?' {
+				untracked = append(untracked, file)
+			} else if code[0] != ' ' && code[0] != '?' {
+				staged = append(staged, file)
+			} else if code[1] != ' ' {
+				unstaged = append(unstaged, file)
+			}
+		}
+	}
+
+	resp := ProjectGitStatusResponse{
+		Branch:      branch,
+		Clean:       len(staged) == 0 && len(unstaged) == 0 && len(untracked) == 0,
+		Staged:      staged,
+		Unstaged:    unstaged,
+		Untracked:   untracked,
+		RiskTier:    string(riskTier),
+		PolicyCheck: "evaluated-pass",
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
 
 

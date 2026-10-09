@@ -145,6 +145,21 @@ pub enum SopTriggerSource {
     Subagent,
 }
 
+/// Incoming event that may trigger an SOP execution run.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+pub struct SopEvent {
+    pub source: SopTriggerSource,
+    /// Topic, path, or signal identifier (depends on source type).
+    #[serde(default)]
+    pub topic: Option<String>,
+    /// Raw payload (JSON string, sensor reading, etc.).
+    #[serde(default)]
+    pub payload: Option<String>,
+    /// When the event occurred (ISO-8601).
+    pub timestamp: String,
+}
+
 // ── Run Status ──────────────────────────────────────────────────
 
 /// Status of an SOP execution run.

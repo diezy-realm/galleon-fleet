@@ -1958,7 +1958,7 @@ pub async fn handle_api_session_delete(
         let mut tokens = state
             .cancel_tokens
             .lock()
-            .expect("cancel_tokens lock poisoned");
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         resolve_gateway_cancel_key(&id, |key| tokens.contains_key(key))
             .and_then(|cancel_key| tokens.remove(&cancel_key).map(|token| (cancel_key, token)))
     };
@@ -2193,7 +2193,7 @@ pub async fn handle_api_session_abort(
         let tokens = state
             .cancel_tokens
             .lock()
-            .expect("cancel_tokens lock poisoned");
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let cancel_key = resolve_gateway_cancel_key(&id, |key| tokens.contains_key(key));
         let token = cancel_key
             .as_deref()

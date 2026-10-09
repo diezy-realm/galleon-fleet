@@ -3,7 +3,7 @@ package sqlite
 import (
 	"context"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 )
 
 const ddl = `

@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/diezy-labs/claw-crew/engine/core/config"
+	"github.com/diezy-realm/galleon-fleet/engine/core/config"
 	"github.com/google/wire"
 )
 

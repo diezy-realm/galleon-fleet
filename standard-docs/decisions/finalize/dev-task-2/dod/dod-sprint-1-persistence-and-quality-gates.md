@@ -8,6 +8,7 @@ title: DoD & PR Checklist — Persistence & Quality Gates
 ## Gerbang Wajib
 
 - [ ] **GW-0 Hygiene** — sama seperti standar.
+- [ ] **GW-0b Commit/PR naming** — judul commit DAN judul PR memakai template `feat({tiket}): {deskripsi}` persis (lihat README §Konvensi Commit & PR); `{tiket}` cocok PERSIS ID di sprint file (case-sensitive); multi-tiket dipisah koma tanpa spasi (`BG-B3,BL-51`); PR description baris pertama menyebut `Sprint 1` eksplisit; commit di branch `feat/refactoring-finalize-01` saja (lihat README §Kebijakan Branch).
 - [ ] **GW-1 Rust** — `cargo fmt --all -- --check`; `cargo clippy -p <crate> -- -D warnings`; `cargo nextest run -p <crate>` (Windows: `$env:CARGO_TARGET_DIR="target/agent"`); **nol `unwrap()/expect()` baru**.
 - [ ] **GW-2 Go** — `go vet ./...`; `go test -race ./...`; migrasi data (BG-B3 Postgres) punya jalur rollback tertulis.
 - [ ] **GW-9 Rollback** — WAJIB untuk `BG-B3`/`BG-B4`/`BG-B5` (semua menyentuh persistensi) — PR migrasi data memuat jalur mundur eksplisit.

@@ -22,6 +22,7 @@ export type NavigationTab =
   | 'engine-room'
   | 'shipyard'
   | 'settings'
+  | 'organization'
   | 'quartermaster'; // backward compatibility alias
 
 export type TerminologyMode = 'adventure' | 'professional';
@@ -154,6 +155,7 @@ export interface JournalSession {
   title: string;
   updatedAt: string;
   workspaceId: string;
+  projectId?: string;
   lastNote: string;
   isPinned: boolean;
   isArchived: boolean;
@@ -299,11 +301,20 @@ export interface MapStep {
   outputArtifactType?: string;
 }
 
+export interface CircuitBreakerTelemetry {
+  totalCalls: number;
+  exactRepeats: number;
+  pingPongCycles: number;
+  noProgressCount: number;
+  status: 'normal' | 'warning' | 'blocked' | 'break';
+  lastTriggerReason?: string;
+}
+
 export interface Quest {
   id: string;
   title: string;
   objective: string;
-  workspaceId: string;
+  workspaceId?: string;
   projectId: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status: QuestStatus;
@@ -317,7 +328,9 @@ export interface Quest {
   createdAt: string;
   updatedAt: string;
   discoveriesCount: number;
+  circuitBreaker?: CircuitBreakerTelemetry;
 }
+
 
 export interface Discovery {
   id: string;

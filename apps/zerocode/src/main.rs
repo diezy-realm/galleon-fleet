@@ -58,8 +58,6 @@ mod widgets;
 mod wire;
 mod zerocode_pane;
 
-const DAEMON_CONNECT_INTERVAL: Duration = Duration::from_millis(50);
-const SPAWNED_DAEMON_CONNECT_TIMEOUT: Duration = Duration::from_secs(30);
 const DAEMON_STDERR_LIMIT: usize = 8 * 1024;
 
 /// Set to `true` once the alternate screen is active so signal/panic
@@ -570,12 +568,6 @@ fn format_startup_error(err: &anyhow::Error) -> String {
             &[("seconds", &timeout.timeout_seconds().to_string())],
         );
     }
-    if let Some(startup) = err.downcast_ref::<SpawnedDaemonStartupFailure>() {
-        return i18n::t_args(
-            "zc-error-spawned-daemon-startup",
-            &[("details", startup.details())],
-        );
-    }
     format!("{err:#}")
 }
 
@@ -947,7 +939,7 @@ async fn run() -> anyhow::Result<()> {
     // started it (initial connect failed → we started one). Only an owned
     // ephemeral daemon may be respawned on disconnect, and then exactly once,
     // gated on the liveness/grace check in app.rs.
-    let mut owned_daemon_pid: Option<u32> = None;
+    let owned_daemon_pid: Option<u32> = None;
     let (rpc, initial_leg) = match &target {
         ConnectTarget::LocalSocket(socket) => {
             #[cfg(unix)]
@@ -963,33 +955,14 @@ async fn run() -> anyhow::Result<()> {
             let client = match initial_connection {
                 Ok(c) => c,
                 Err(e) if is_terminal_connection_error(&e) => return Err(e),
-                Err(_) => {
-                    let config_dir = client::resolve_config_dir(cli.config_dir.as_deref())?;
-                    let mut daemon = spawn_owned_ephemeral_daemon(&config_dir, socket)?;
-                    #[cfg(unix)]
-                    let readiness = tokio::select! {
-                        result = await_spawned_daemon_ready(socket, &mut daemon) => result,
-                        _ = shutdown_signals.recv() => {
-                            return cleanup_spawned_daemon_after_signal(&mut daemon);
-                        }
-                    };
-                    #[cfg(not(unix))]
-                    let readiness = await_spawned_daemon_ready(socket, &mut daemon).await;
-
-                    match readiness {
-                        Ok(client) => {
-                            let owns_ephemeral =
-                                reconcile_spawned_daemon_identity(client.server_pid, &mut daemon)?;
-                            if owns_ephemeral {
-                                daemon.detach();
-                                owned_daemon_pid = client.server_pid;
-                            }
-                            client
-                        }
-                        Err(startup_error) => {
-                            return Err(spawned_daemon_startup_failure(startup_error, &mut daemon));
-                        }
-                    }
+                Err(e) => {
+                    anyhow::bail!(
+                        "Failed to connect to daemon at '{}': {}. \
+                         Automatic ephemeral daemon spawning has been disabled (BR-E3). \
+                         Please ensure the Galleon daemon / Client Protocol gateway is running.",
+                        socket.display(),
+                        e
+                    );
                 }
             };
             (client, ActiveLeg::Local)
@@ -1117,42 +1090,7 @@ async fn run_until_exit(
     }
 }
 
-pub(crate) fn spawn_owned_ephemeral_daemon(
-    config_dir: &std::path::Path,
-    socket: &std::path::Path,
-) -> anyhow::Result<SpawnedDaemon> {
-    SpawnedDaemon::spawn(ephemeral_daemon_command(config_dir, socket))
-}
-
-fn ephemeral_daemon_command(
-    config_dir: &std::path::Path,
-    socket: &std::path::Path,
-) -> std::process::Command {
-    let exe = std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|d| d.join("clawcrew")))
-        .unwrap_or_else(|| PathBuf::from("clawcrew"));
-
-    let mut cmd = std::process::Command::new(&exe);
-    configure_ephemeral_daemon_command(&mut cmd, config_dir, socket);
-
-    // Lower the daemon's log level to DEBUG when spawned ephemerally by
-    // zerocode so that the Logs pane can show debug events without any
-    // manual RUST_LOG override. Third-party crates stay at WARN to avoid
-    // noise. Honour an existing RUST_LOG if the user set one themselves.
-    if std::env::var_os("RUST_LOG").is_none() {
-        cmd.env(
-            "RUST_LOG",
-            "debug,matrix_sdk=warn,matrix_sdk_base=warn,matrix_sdk_crypto=warn,\
-             hyper=warn,reqwest=warn,tokio=warn,h2=warn",
-        );
-    }
-
-    cmd.stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::null());
-    cmd
-}
-
+#[cfg(test)]
 fn configure_ephemeral_daemon_command(
     cmd: &mut std::process::Command,
     config_dir: &std::path::Path,
@@ -1177,6 +1115,7 @@ pub(crate) struct SpawnedDaemon {
 }
 
 impl SpawnedDaemon {
+    #[cfg(test)]
     fn spawn(mut cmd: std::process::Command) -> anyhow::Result<Self> {
         use std::io::Read;
 
@@ -1358,6 +1297,7 @@ fn sanitize_daemon_stderr(bytes: &[u8]) -> String {
     rendered[start..].to_owned()
 }
 
+#[cfg(test)]
 fn reconcile_spawned_daemon_identity(
     server_pid: Option<u32>,
     daemon: &mut SpawnedDaemon,
@@ -1423,95 +1363,6 @@ impl std::fmt::Display for SpawnedDaemonExit {
 }
 
 impl std::error::Error for SpawnedDaemonExit {}
-
-#[derive(Debug)]
-struct SpawnedDaemonStartupFailure {
-    details: String,
-}
-
-impl SpawnedDaemonStartupFailure {
-    fn details(&self) -> &str {
-        &self.details
-    }
-}
-
-impl std::fmt::Display for SpawnedDaemonStartupFailure {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str(&self.details)
-    }
-}
-
-impl std::error::Error for SpawnedDaemonStartupFailure {}
-
-fn spawned_daemon_startup_failure(
-    startup_error: anyhow::Error,
-    daemon: &mut SpawnedDaemon,
-) -> anyhow::Error {
-    let startup_exit = startup_error.downcast_ref::<SpawnedDaemonExit>();
-    let mut details = if let Some(exit) = startup_exit {
-        format!("daemon exited before ready (status: {})", exit.status)
-    } else {
-        format_startup_error(&startup_error)
-    };
-
-    let cleanup = daemon.terminate_and_wait();
-    let stderr = startup_exit
-        .map(|exit| exit.stderr.as_str())
-        .filter(|stderr| !stderr.trim().is_empty())
-        .or_else(|| {
-            cleanup
-                .as_ref()
-                .ok()
-                .map(|exit| exit.stderr.as_str())
-                .filter(|stderr| !stderr.trim().is_empty())
-        })
-        .unwrap_or_default();
-    if !stderr.trim().is_empty() {
-        details.push_str("; stderr: ");
-        details.push_str(stderr.trim());
-    }
-    if let Err(error) = cleanup {
-        details.push_str("; cleanup also failed: ");
-        details.push_str(&format!("{error:#}"));
-    }
-
-    anyhow::Error::new(SpawnedDaemonStartupFailure { details })
-}
-
-async fn await_spawned_daemon_ready(
-    socket: &std::path::Path,
-    daemon: &mut SpawnedDaemon,
-) -> anyhow::Result<client::RpcClient> {
-    let socket_path = socket.display().to_string();
-    let readiness_seconds = SPAWNED_DAEMON_CONNECT_TIMEOUT.as_secs().to_string();
-    eprintln!(
-        "{}",
-        crate::i18n::t_args(
-            "zc-daemon-wait-notice",
-            &[("path", &socket_path), ("seconds", &readiness_seconds)],
-        )
-    );
-    let deadline = tokio::time::Instant::now() + SPAWNED_DAEMON_CONNECT_TIMEOUT;
-    loop {
-        if let Some(exit) = daemon.poll_exit()? {
-            return Err(anyhow::Error::new(exit));
-        }
-        if tokio::time::Instant::now() >= deadline {
-            anyhow::bail!(
-                "{}",
-                crate::i18n::t_args(
-                    "zc-error-daemon-not-ready-timeout",
-                    &[("path", &socket_path), ("seconds", &readiness_seconds)],
-                )
-            );
-        }
-        match client::RpcClient::connect(socket, None, None).await {
-            Ok(c) => return Ok(c),
-            Err(e) if is_terminal_connection_error(&e) => return Err(e),
-            Err(_) => tokio::time::sleep(DAEMON_CONNECT_INTERVAL).await,
-        }
-    }
-}
 
 fn is_daemon_version_mismatch(err: &anyhow::Error) -> bool {
     err.downcast_ref::<client::DaemonVersionMismatch>()

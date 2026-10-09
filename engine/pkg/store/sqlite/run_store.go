@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/src/run"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/src/run"
 )
 
 // RunStore provides SQLite-backed storage for runs and run events.
@@ -100,6 +100,16 @@ func (s *RunStore) UpdateStatus(ctx context.Context, id string, status run.RunSt
 		r.CompletedAt = &now
 	}
 
+	return s.Save(ctx, r)
+}
+
+// UpdateLoopDetectorStats updates the loop detector telemetry for a Run in SQLite.
+func (s *RunStore) UpdateLoopDetectorStats(ctx context.Context, id string, stats *run.LoopDetectorStats) error {
+	r, err := s.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+	r.LoopDetectorStats = stats
 	return s.Save(ctx, r)
 }
 

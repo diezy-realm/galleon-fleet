@@ -211,10 +211,15 @@ var AgentEngine_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	SystemGateway_ExecuteNativeTool_FullMethodName  = "/clawcrew.agent.SystemGateway/ExecuteNativeTool"
-	SystemGateway_GetDecryptedSecret_FullMethodName = "/clawcrew.agent.SystemGateway/GetDecryptedSecret"
-	SystemGateway_ExecuteTask_FullMethodName        = "/clawcrew.agent.SystemGateway/ExecuteTask"
-	SystemGateway_ExecuteTurn_FullMethodName        = "/clawcrew.agent.SystemGateway/ExecuteTurn"
+	SystemGateway_ExecuteNativeTool_FullMethodName    = "/clawcrew.agent.SystemGateway/ExecuteNativeTool"
+	SystemGateway_GetDecryptedSecret_FullMethodName   = "/clawcrew.agent.SystemGateway/GetDecryptedSecret"
+	SystemGateway_ExecuteTask_FullMethodName          = "/clawcrew.agent.SystemGateway/ExecuteTask"
+	SystemGateway_ExecuteTurn_FullMethodName          = "/clawcrew.agent.SystemGateway/ExecuteTurn"
+	SystemGateway_StoreLearnedRule_FullMethodName     = "/clawcrew.agent.SystemGateway/StoreLearnedRule"
+	SystemGateway_RetrieveLearnedRules_FullMethodName = "/clawcrew.agent.SystemGateway/RetrieveLearnedRules"
+	SystemGateway_SyncPairedDevice_FullMethodName     = "/clawcrew.agent.SystemGateway/SyncPairedDevice"
+	SystemGateway_ListPairedDevices_FullMethodName    = "/clawcrew.agent.SystemGateway/ListPairedDevices"
+	SystemGateway_RevokePairedDevice_FullMethodName   = "/clawcrew.agent.SystemGateway/RevokePairedDevice"
 )
 
 // SystemGatewayClient is the client API for SystemGateway service.
@@ -231,6 +236,16 @@ type SystemGatewayClient interface {
 	ExecuteTask(ctx context.Context, in *TaskExecutionRequest, opts ...grpc.CallOption) (*TaskExecutionResponse, error)
 	// Executes an LLM generation turn with vendor streaming (ADR 0001: Rust LLM SSOT)
 	ExecuteTurn(ctx context.Context, in *ExecuteTurnRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TurnToken], error)
+	// Stores a learned rule/correction in persistent memory (BL-01)
+	StoreLearnedRule(ctx context.Context, in *StoreLearnedRuleRequest, opts ...grpc.CallOption) (*StoreLearnedRuleResponse, error)
+	// Retrieves learned rules filtered by scope (BL-01)
+	RetrieveLearnedRules(ctx context.Context, in *RetrieveLearnedRulesRequest, opts ...grpc.CallOption) (*RetrieveLearnedRulesResponse, error)
+	// Synchronizes a paired device to Rust persistent SQLite DeviceRegistry (BG-C2 / T-08)
+	SyncPairedDevice(ctx context.Context, in *SyncPairedDeviceRequest, opts ...grpc.CallOption) (*SyncPairedDeviceResponse, error)
+	// Lists all paired devices from Rust persistent SQLite DeviceRegistry (BG-C2 / T-08)
+	ListPairedDevices(ctx context.Context, in *ListPairedDevicesRequest, opts ...grpc.CallOption) (*ListPairedDevicesResponse, error)
+	// Revokes a paired device from Rust persistent SQLite DeviceRegistry (BG-C2 / T-08)
+	RevokePairedDevice(ctx context.Context, in *RevokePairedDeviceRequest, opts ...grpc.CallOption) (*RevokePairedDeviceResponse, error)
 }
 
 type systemGatewayClient struct {
@@ -290,6 +305,56 @@ func (c *systemGatewayClient) ExecuteTurn(ctx context.Context, in *ExecuteTurnRe
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type SystemGateway_ExecuteTurnClient = grpc.ServerStreamingClient[TurnToken]
 
+func (c *systemGatewayClient) StoreLearnedRule(ctx context.Context, in *StoreLearnedRuleRequest, opts ...grpc.CallOption) (*StoreLearnedRuleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StoreLearnedRuleResponse)
+	err := c.cc.Invoke(ctx, SystemGateway_StoreLearnedRule_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *systemGatewayClient) RetrieveLearnedRules(ctx context.Context, in *RetrieveLearnedRulesRequest, opts ...grpc.CallOption) (*RetrieveLearnedRulesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RetrieveLearnedRulesResponse)
+	err := c.cc.Invoke(ctx, SystemGateway_RetrieveLearnedRules_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *systemGatewayClient) SyncPairedDevice(ctx context.Context, in *SyncPairedDeviceRequest, opts ...grpc.CallOption) (*SyncPairedDeviceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SyncPairedDeviceResponse)
+	err := c.cc.Invoke(ctx, SystemGateway_SyncPairedDevice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *systemGatewayClient) ListPairedDevices(ctx context.Context, in *ListPairedDevicesRequest, opts ...grpc.CallOption) (*ListPairedDevicesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPairedDevicesResponse)
+	err := c.cc.Invoke(ctx, SystemGateway_ListPairedDevices_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *systemGatewayClient) RevokePairedDevice(ctx context.Context, in *RevokePairedDeviceRequest, opts ...grpc.CallOption) (*RevokePairedDeviceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RevokePairedDeviceResponse)
+	err := c.cc.Invoke(ctx, SystemGateway_RevokePairedDevice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SystemGatewayServer is the server API for SystemGateway service.
 // All implementations must embed UnimplementedSystemGatewayServer
 // for forward compatibility.
@@ -304,6 +369,16 @@ type SystemGatewayServer interface {
 	ExecuteTask(context.Context, *TaskExecutionRequest) (*TaskExecutionResponse, error)
 	// Executes an LLM generation turn with vendor streaming (ADR 0001: Rust LLM SSOT)
 	ExecuteTurn(*ExecuteTurnRequest, grpc.ServerStreamingServer[TurnToken]) error
+	// Stores a learned rule/correction in persistent memory (BL-01)
+	StoreLearnedRule(context.Context, *StoreLearnedRuleRequest) (*StoreLearnedRuleResponse, error)
+	// Retrieves learned rules filtered by scope (BL-01)
+	RetrieveLearnedRules(context.Context, *RetrieveLearnedRulesRequest) (*RetrieveLearnedRulesResponse, error)
+	// Synchronizes a paired device to Rust persistent SQLite DeviceRegistry (BG-C2 / T-08)
+	SyncPairedDevice(context.Context, *SyncPairedDeviceRequest) (*SyncPairedDeviceResponse, error)
+	// Lists all paired devices from Rust persistent SQLite DeviceRegistry (BG-C2 / T-08)
+	ListPairedDevices(context.Context, *ListPairedDevicesRequest) (*ListPairedDevicesResponse, error)
+	// Revokes a paired device from Rust persistent SQLite DeviceRegistry (BG-C2 / T-08)
+	RevokePairedDevice(context.Context, *RevokePairedDeviceRequest) (*RevokePairedDeviceResponse, error)
 	mustEmbedUnimplementedSystemGatewayServer()
 }
 
@@ -325,6 +400,21 @@ func (UnimplementedSystemGatewayServer) ExecuteTask(context.Context, *TaskExecut
 }
 func (UnimplementedSystemGatewayServer) ExecuteTurn(*ExecuteTurnRequest, grpc.ServerStreamingServer[TurnToken]) error {
 	return status.Error(codes.Unimplemented, "method ExecuteTurn not implemented")
+}
+func (UnimplementedSystemGatewayServer) StoreLearnedRule(context.Context, *StoreLearnedRuleRequest) (*StoreLearnedRuleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StoreLearnedRule not implemented")
+}
+func (UnimplementedSystemGatewayServer) RetrieveLearnedRules(context.Context, *RetrieveLearnedRulesRequest) (*RetrieveLearnedRulesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RetrieveLearnedRules not implemented")
+}
+func (UnimplementedSystemGatewayServer) SyncPairedDevice(context.Context, *SyncPairedDeviceRequest) (*SyncPairedDeviceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SyncPairedDevice not implemented")
+}
+func (UnimplementedSystemGatewayServer) ListPairedDevices(context.Context, *ListPairedDevicesRequest) (*ListPairedDevicesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListPairedDevices not implemented")
+}
+func (UnimplementedSystemGatewayServer) RevokePairedDevice(context.Context, *RevokePairedDeviceRequest) (*RevokePairedDeviceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokePairedDevice not implemented")
 }
 func (UnimplementedSystemGatewayServer) mustEmbedUnimplementedSystemGatewayServer() {}
 func (UnimplementedSystemGatewayServer) testEmbeddedByValue()                       {}
@@ -412,6 +502,96 @@ func _SystemGateway_ExecuteTurn_Handler(srv interface{}, stream grpc.ServerStrea
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type SystemGateway_ExecuteTurnServer = grpc.ServerStreamingServer[TurnToken]
 
+func _SystemGateway_StoreLearnedRule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StoreLearnedRuleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemGatewayServer).StoreLearnedRule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemGateway_StoreLearnedRule_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemGatewayServer).StoreLearnedRule(ctx, req.(*StoreLearnedRuleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SystemGateway_RetrieveLearnedRules_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RetrieveLearnedRulesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemGatewayServer).RetrieveLearnedRules(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemGateway_RetrieveLearnedRules_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemGatewayServer).RetrieveLearnedRules(ctx, req.(*RetrieveLearnedRulesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SystemGateway_SyncPairedDevice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SyncPairedDeviceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemGatewayServer).SyncPairedDevice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemGateway_SyncPairedDevice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemGatewayServer).SyncPairedDevice(ctx, req.(*SyncPairedDeviceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SystemGateway_ListPairedDevices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPairedDevicesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemGatewayServer).ListPairedDevices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemGateway_ListPairedDevices_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemGatewayServer).ListPairedDevices(ctx, req.(*ListPairedDevicesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SystemGateway_RevokePairedDevice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokePairedDeviceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemGatewayServer).RevokePairedDevice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemGateway_RevokePairedDevice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemGatewayServer).RevokePairedDevice(ctx, req.(*RevokePairedDeviceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SystemGateway_ServiceDesc is the grpc.ServiceDesc for SystemGateway service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -430,6 +610,26 @@ var SystemGateway_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExecuteTask",
 			Handler:    _SystemGateway_ExecuteTask_Handler,
+		},
+		{
+			MethodName: "StoreLearnedRule",
+			Handler:    _SystemGateway_StoreLearnedRule_Handler,
+		},
+		{
+			MethodName: "RetrieveLearnedRules",
+			Handler:    _SystemGateway_RetrieveLearnedRules_Handler,
+		},
+		{
+			MethodName: "SyncPairedDevice",
+			Handler:    _SystemGateway_SyncPairedDevice_Handler,
+		},
+		{
+			MethodName: "ListPairedDevices",
+			Handler:    _SystemGateway_ListPairedDevices_Handler,
+		},
+		{
+			MethodName: "RevokePairedDevice",
+			Handler:    _SystemGateway_RevokePairedDevice_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

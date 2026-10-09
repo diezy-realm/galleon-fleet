@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/src/fleet"
+	"github.com/diezy-realm/galleon-fleet/engine/src/fleet"
 )
 
 // TestGetFleetPoliciesEndpoint verifies B3: GET /api/fleet/policies endpoint

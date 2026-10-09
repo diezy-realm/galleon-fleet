@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
 )
 
 func TestHandleNetworkQRCode(t *testing.T) {

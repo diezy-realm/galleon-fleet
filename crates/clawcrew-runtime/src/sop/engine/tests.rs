@@ -76,6 +76,8 @@
             admission_policy: crate::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }
     }
 
@@ -6611,6 +6613,8 @@
             admission_policy: crate::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }
     }
 
@@ -6939,6 +6943,8 @@ type = "manual"
             admission_policy: crate::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }
     }
 
@@ -7335,6 +7341,8 @@ type = "manual"
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }
     }
 
@@ -7510,6 +7518,8 @@ type = "manual"
             location: None,
             deterministic: true,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
         }
@@ -7541,6 +7551,8 @@ type = "manual"
             location: None,
             deterministic: true,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
         }
@@ -7581,6 +7593,8 @@ type = "manual"
             location: None,
             deterministic: true,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
         }
@@ -7615,6 +7629,8 @@ type = "manual"
             location: None,
             deterministic: true,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
         }
@@ -7668,6 +7684,8 @@ type = "manual"
             location: None,
             deterministic: true,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
         }
@@ -7851,6 +7869,8 @@ type = "manual"
             admission_policy: SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         };
         let mut engine = engine_with_sops(vec![sop]);
         let event = SopEvent {

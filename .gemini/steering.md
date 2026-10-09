@@ -80,7 +80,7 @@ Galleon beroperasi dalam **4 tier ketat** dengan batas tanggung jawab tegas ([`0
 ## 4. Standar Kode & Kualitas Produksi
 
 ### A. Standar Rust (Rust 2024 / MSRV 1.82+)
-- **Zero `unwrap()` / `expect()` di Jalur Produksi:** Wajib menggunakan error propagation `?` dengan `thiserror` atau `Result<T>`. Pengecualian hanya untuk test atau invarian terdokumentasi `// INVARIANT: ...`.
+- **Zero `unwrap()` / `expect()` di Jalur Produksi:** Wajib menggunakan error propagation `?` dengan `thiserror` atau `Result<T>`. Pengecualian hanya untuk test (`#[cfg(test)] mod tests`, file `tests.rs`, folder `tests/`) atau invarian terdokumentasi `// INVARIANT: ...`. Seluruh test helper mock/fixture yang memakai `unwrap()` dilarang berada di luar scope `#[cfg(test)]`.
 - **Mutex Poison Recovery:** Tangani mutex lock dengan `poisoned.into_inner()` + log warning, jangan `.expect("lock poisoned")`.
 - **Standar Ukuran File & Fungsi (Ratchet Rule):**
   - File non-test: target $\le 800$ baris (warning $> 2.000$, gagal CI $> 5.000$).
@@ -111,6 +111,14 @@ Galleon beroperasi dalam **4 tier ketat** dengan batas tanggung jawab tegas ([`0
 - **Zero Backend Logic:** Pindahkan logika Express di `server.ts` ke Go engine.
 - **Zero Client LLM Calls:** Hapus `@google/genai` dari `web/package.json`.
 - **Type Safety:** TypeScript strict mode, zero `any`. Gunakan `apiClient.ts` untuk komunikasi dengan Go `:9090`.
+- **Peer Dependency & Lockfile Hygiene:** Dilarang menggunakan bypass `--force` atau `--legacy-peer-deps` di CI workflow maupun instalasi lokal. Versi `vite` dan `esbuild` di `web/package.json` wajib selaras, dan `package-lock.json` wajib ter-commit sinkron.
+
+### D. Standar CI/Infra & Quality Gates (Ref: `.gemini/rules/ci-infra-standards.md`)
+Berdasarkan investigasi konkrit CI PR #18 (`ci-infra-fix/`), 4 pilar tata kelola CI/Infra berikut mengikat seluruh agent dan PR:
+1. **Zero-Unwrap Invariant Scoping:** Pengecekan CI diff wajib mengecualikan file `tests.rs` (`':!crates/**/tests.rs'`, `':!crates/**/*/tests.rs'`) dan blok `#[cfg(test)] mod tests`. Dilarang menandai helper unit test sebagai pelanggaran produksi.
+2. **Compiler Toolchain & sccache Isolation:** Karena `rustc-wrapper = "sccache"` aktif di `.cargo/config.toml`, setiap job CI yang memanggil `cargo` wajib menginstal binary `sccache` di runner PATH terlebih dahulu (misal via `mozilla-actions/sccache-action`), atau meng-override dengan `RUSTC_WRAPPER=""`. Dilarang menghapus konfigurasi caching dari `.cargo/config.toml`.
+3. **Pemisahan Channel Transport vs Governance (Gate D-2):** Conditional compilation `#[cfg(feature = "channel-*")]` pada fungsi utilitas murni di `crates/clawcrew-channels/src/util.rs` (HTTP limiter, string formatter, breadcrumbs) adalah SAH. **Koreksi 2026-10-09:** `util.rs` genuinely berisi `PendingApproval`/`resolve_pending_approval`/`new_approval_token` (bukan tidak ada sama sekali seperti klaim versi steering sebelumnya) — tapi ini SAH karena murni I/O/transport (generate token, tunggu balasan teks user per-channel), terbukti `clawcrew-channels` tidak depend ke `clawcrew-runtime` tempat logic kebijakan sungguhan (`approval/mod.rs`, `security/playbook.rs`) berada. Yang tetap dilarang keras: menaruh KEPUTUSAN kebijakan (risk-tier threshold, RACI, auto-approve criteria) atau dependency langsung ke `clawcrew-runtime`/Go policy di utilitas channel. Script gate D-2 wajib mendeteksi coupling tata kelola nyata (simbol kebijakan + dependency graph), bukan sekadar grep nama fitur channel ATAU grep nama simbol approval I/O semata.
+4. **Clean Web Packaging:** Seluruh dependensi web wajib resolvable dengan `npm ci` / `npm install` murni tanpa konflik `ERESOLVE`.
 
 ---
 
@@ -159,12 +167,25 @@ PR Diajukan ke Testing
 ```
 
 ### Konvensi Git & PR:
-- Gunakan branch non-`master` / non-`main`.
+- **Disiplin Konvensi Commit & PR (WAJIB):** Pastikan setiap commit baru wajib mengikuti format tiket kanonikal:
+  ```
+  feat({tiket}): {deskripsi}
+  ```
+  *(Contoh: `feat(BL-32): pulihkan verifikasi whatsapp signature`)*
+  - `{tiket}` = ID tiket persis dari sprint/backlog (`BG-A4`, `BL-52`, `S2-SEC-01`, dst.). Jika menuntaskan >1 tiket: `feat(BL-52,BL-14): ...`.
+  - Prefix SELALU `feat(...)` untuk seluruh pekerjaan sprint `dev-task-2` agar penomoran tiket seragam (bukan dicampur `fix(...)`/`chore(...)`).
+  - Judul PR DAN judul commit wajib memakai format template ini.
+- Gunakan branch non-`master` / non-`main` (branch fitur aktif: `feat/refactoring-finalize-01`, dilarang sub-branch liar).
 - Target PR ke `main` / `testing`.
-- Gunakan Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`).
 - Pisahkan commit per concern (ODR-10).
 - Dilarang menyertakan bot/AI attribution footer di PR description atau commit body.
 - Deklarasikan dependensi tugas dengan `Depends on #...` dan `Supersedes #...`.
+
+### Penandaan & Pelaporan Penyelesaian Tugas (DoD Tracking):
+- **Wajib Tandai `[x]` & Beri Deskripsi:** Setiap kali suatu tiket atau task selesai dikerjakan dan diverifikasi:
+  - Wajib mengubah tanda checkbox dari `[ ]` menjadi `[x]` pada berkas sprint terkait di [`standard-docs/decisions/finalize/dev-task-2/sprint-*.md`](../standard-docs/decisions/finalize/dev-task-2/).
+  - Wajib menambahkan **keterangan/deskripsi konkret penyelesaian** tepat di bawah atau di samping tiket tersebut (mencakup: commit hash, file yang diubah/dibuat, ringkasan solusi, dan bukti hasil test/verifikasi yang dijalankan).
+  - Jangan biarkan tiket yang sudah selesai tanpa centang `[x]` atau tanpa deskripsi pembuktian.
 
 ---
 

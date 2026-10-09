@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/diezy-labs/claw-crew/engine/app"
-	"github.com/diezy-labs/claw-crew/engine/core/config"
-	"github.com/diezy-labs/claw-crew/engine/core/logger"
+	"github.com/diezy-realm/galleon-fleet/engine/app"
+	"github.com/diezy-realm/galleon-fleet/engine/core/config"
+	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
 )
 
 func main() {

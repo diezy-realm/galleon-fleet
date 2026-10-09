@@ -845,8 +845,8 @@ async fn handle_socket(
                         let _ = sender.send(Message::Text(err.to_string().into())).await;
                         continue;
                     }
-                    if let Some(tx) = pending_approvals.lock().remove(request_id) {
-                        let _ = tx.send(decision.expect("checked above"));
+                    if let (Some(decision), Some(tx)) = (decision, pending_approvals.lock().remove(request_id)) {
+                        let _ = tx.send(decision);
                     } else {
                         ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"request_id": request_id})), "approval_response with no matching pending request");
                     }
@@ -1606,8 +1606,8 @@ async fn process_chat_message(
                                         if request_id.is_empty() || decision.is_none() {
                                             continue;
                                         }
-                                        if let Some(tx) = pending_approvals.lock().remove(request_id) {
-                                            let _ = tx.send(decision.expect("checked above"));
+                                        if let (Some(decision), Some(tx)) = (decision, pending_approvals.lock().remove(request_id)) {
+                                            let _ = tx.send(decision);
                                         } else {
                                             ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"request_id": request_id})), "approval_response with no matching pending request (mid-turn)");
                                         }

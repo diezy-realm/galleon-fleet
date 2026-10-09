@@ -3,7 +3,7 @@ pub use clawcrew_api::ingress::{IngressPolicy, ingress_policy};
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::ingress::{SourceClass, Transport, TrustClass};
+    use clawcrew_api::ingress::{IngressContext, IngressDecision, SourceClass, Transport, TrustClass};
 
     #[test]
     fn default_policy_returns_loop_for_internal() {

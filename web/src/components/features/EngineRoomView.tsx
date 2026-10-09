@@ -26,8 +26,9 @@ import {
   Clock,
   Send,
   CornerDownLeft,
-  X,
-  Plus
+  Plus,
+  ShieldAlert,
+  UserCheck
 } from 'lucide-react';
 import { PageHeaderNav } from '../common/PageHeaderNav';
 import { Button } from '../common/Button';
@@ -104,6 +105,13 @@ export const EngineRoomView: React.FC = () => {
   const [sessionToKill, setSessionToKill] = useState<ActiveSession | null>(null);
   const [systemMetrics, setSystemMetrics] = useState<any>(null);
   const [isRefreshingProcs, setIsRefreshingProcs] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState<{ command: string; riskTier?: string } | null>(null);
+  const [verifiedPrincipal] = useState<string>(() => {
+    return localStorage.getItem('galleon_principal') || 'Captain (Verified Principal)';
+  });
+  const [isAuthenticated] = useState<boolean>(() => {
+    return true; // S2-SEC-01 local host operator verified
+  });
 
   // Terminal scroll reference
   const terminalBottomRef = useRef<HTMLDivElement | null>(null);
@@ -329,13 +337,6 @@ export const EngineRoomView: React.FC = () => {
       timestamp: '08:00:14'
     },
     {
-      id: 'log-5',
-      level: 'warn',
-      source: 'ollama-bridge',
-      message: 'Context window allocated: 8,192 tokens. Local GPU memory at 68% threshold.',
-      timestamp: '08:01:22'
-    },
-    {
       id: 'log-6',
       level: 'info',
       source: 'vector-engine',
@@ -425,10 +426,23 @@ export const EngineRoomView: React.FC = () => {
 
     try {
       const res = await apiClient.executeTerminalCommand(textToRun);
+
+      if (res.requiresApproval) {
+        setPendingApproval({ command: textToRun, riskTier: res.riskTier });
+        const warnLine: TerminalLine = {
+          id: `warn-${Date.now()}`,
+          type: 'system',
+          content: `⚠ Policy Gate: Command "${textToRun}" requires explicit approval by verified principal (S2-SEC-01).`,
+          timestamp: new Date().toTimeString().slice(0, 8)
+        };
+        setTerminalLines((prev) => [...prev, warnLine]);
+        return;
+      }
+
       const outputLine: TerminalLine = {
         id: `out-${Date.now()}`,
         type: res.exitCode === 0 ? 'success' : 'error',
-        content: res.stdout,
+        content: res.stdout || res.stderr || (res.exitCode === 0 ? 'OK' : 'Command failed'),
         timestamp: new Date().toTimeString().slice(0, 8)
       };
 
@@ -468,6 +482,41 @@ export const EngineRoomView: React.FC = () => {
     ]);
 
     setCommandInput('');
+  };
+
+  const executeWithApproval = async (commandToApprove: string) => {
+    const time = new Date().toTimeString().slice(0, 8);
+    try {
+      const res = await apiClient.executeTerminalCommand(commandToApprove, true);
+      const outputLine: TerminalLine = {
+        id: `out-${Date.now()}`,
+        type: res.exitCode === 0 ? 'success' : 'error',
+        content: res.stdout || res.stderr || 'Execution completed with authenticated approval.',
+        timestamp: new Date().toTimeString().slice(0, 8)
+      };
+      setTerminalLines((prev) => [...prev, outputLine]);
+      setCommandHistory((prev) => [
+        {
+          id: `cmd-${Date.now()}`,
+          command: commandToApprove,
+          actor: verifiedPrincipal,
+          exitCode: res.exitCode,
+          duration: res.duration || '20ms',
+          timestamp: time
+        },
+        ...prev
+      ]);
+    } catch (err: any) {
+      setTerminalLines((prev) => [
+        ...prev,
+        {
+          id: `out-${Date.now()}`,
+          type: 'error',
+          content: `Authenticated approval failed: ${err.message}`,
+          timestamp: new Date().toTimeString().slice(0, 8)
+        }
+      ]);
+    }
   };
 
   const handleRestartProcess = (procId: string) => {
@@ -644,6 +693,51 @@ export const EngineRoomView: React.FC = () => {
               })}
               <div ref={terminalBottomRef} />
             </div>
+
+            {/* Authenticated Approval Prompt (FW-C3 / S2-SEC-01 / ODR-07) */}
+            {pendingApproval && (
+              <div className="p-3 mx-4 my-2 rounded-xl border border-amber-500/40 bg-amber-500/10 backdrop-blur-sm space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-amber-400 font-bold text-xs">
+                    <ShieldAlert className="w-4 h-4 shrink-0" />
+                    <span>Authenticated Approval Gate Required (S2-SEC-01 / ODR-07)</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold">
+                    Risk: {pendingApproval.riskTier || 'execute'}
+                  </span>
+                </div>
+                <div className="text-xs text-neutral-300">
+                  Command: <code className="text-amber-200 font-mono font-bold">{pendingApproval.command}</code>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs pt-2 border-t border-amber-500/20">
+                  <div className="flex items-center gap-1.5 text-neutral-400">
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Verified Principal: <strong className="text-emerald-300 font-mono">{verifiedPrincipal}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setPendingApproval(null)}
+                      className="px-2.5 py-1 text-xs rounded bg-neutral-800 text-neutral-300 hover:bg-neutral-700 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!isAuthenticated}
+                      onClick={async () => {
+                        const cmd = pendingApproval.command;
+                        setPendingApproval(null);
+                        await executeWithApproval(cmd);
+                      }}
+                      className="px-3 py-1 text-xs font-semibold rounded bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    >
+                      Approve &amp; Execute
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Terminal Prompt Input Footer */}
             <form

@@ -8,6 +8,7 @@ title: DoD & PR Checklist — Security Foundation
 ## Gerbang Wajib (dari `roadmap/PR-plan.md` §1)
 
 - [ ] **GW-0 Hygiene** — `git diff --check`; tidak ada secret (`gitleaks`); commit conventional + trailer; tidak ada perubahan di luar scope tiket.
+- [ ] **GW-0b Commit/PR naming** — judul commit DAN judul PR memakai template `feat({tiket}): {deskripsi}` persis (lihat README §Konvensi Commit & PR); `{tiket}` cocok PERSIS ID di sprint file (case-sensitive); multi-tiket dipisah koma tanpa spasi (`BL-32,BL-14`); PR description baris pertama menyebut `Sprint 0` eksplisit; commit dilakukan di branch `feat/refactoring-finalize-01` (bukan sub-branch baru kecuali darurat + wajib sync balik, lihat README §Kebijakan Branch).
 - [ ] **GW-1 Rust** — `cargo fmt --all -- --check`; `cargo clippy -p <crate> -- -D warnings`; `cargo nextest run -p <crate>`; **nol `unwrap()/expect()` baru di jalur produksi**; tidak ada `#[allow(dead_code)]` baru.
 - [ ] **GW-2 Go** — `go vet ./...`; `go test -race ./...`; `wire` regen bersih (`git diff --exit-code engine/app/wire_gen.go`); wrap error `%w`; zap.
 - [ ] **GW-4 Boundary** — UI/Tauri → Go :9090 → Rust :50052; tidak ada shell/fs di Go atau Tauri; policy hanya di `fleet/policies.go`; rahasia hanya di Vault.
@@ -16,12 +17,12 @@ title: DoD & PR Checklist — Security Foundation
 
 ## Acceptance Criteria Spesifik Sprint Ini
 
-- [ ] `S2-SEC-01`: test negatif membuktikan `req.Approved=true` TANPA principal terverifikasi dari `BG-C1` DITOLAK (bukan hanya diterima dengan warning).
-- [ ] `BG-C1`: test negatif "tanpa kredensial → ditolak" lolos untuk SETIAP endpoint yang bergantung principal resolver (bukan hanya satu contoh).
-- [ ] `BL-32`: `cargo test -p clawcrew-gateway --features channel-whatsapp-cloud` lolos PENUH termasuk drift-guard; test integrasi HTTP baru (signature salah → 401) ada dan lolos.
-- [ ] `BR-B3`: sandbox deny-by-default terbukti test per-OS (Landlock/Seatbelt/AppContainer) — minimal 1 OS yang relevan ke target rilis, bukan placeholder skip-all.
-- [ ] `BL-19`: MCP stdio child process sandboxed — buktikan dengan test yang mencoba akses file/network di luar scope dan assert DITOLAK.
-- [ ] `BL-14`: `ContentSafety` aktif terverifikasi di SEMUA channel non-SOP yang ada saat ini (daftar eksplisit channel yang dicek, bukan klaim umum "semua channel").
+- [x] `S2-SEC-01`: test negatif membuktikan `req.Approved=true` TANPA principal terverifikasi dari `BG-C1` DITOLAK (bukan hanya diterima dengan warning).
+- [x] `BG-C1`: test negatif "tanpa kredensial → ditolak" lolos untuk SETIAP endpoint yang bergantung principal resolver (bukan hanya satu contoh).
+- [x] `BL-32`: `cargo nextest run -p clawcrew-gateway --features channel-whatsapp-cloud` lolos PENUH termasuk drift-guard; test integrasi HTTP baru (signature salah → 401) ada dan lolos.
+- [x] `BR-B3`: sandbox deny-by-default terbukti test per-OS (Landlock/Seatbelt/AppContainer) — minimal 1 OS yang relevan ke target rilis, bukan placeholder skip-all.
+- [x] `BL-19`: MCP stdio child process sandboxed — buktikan dengan test yang mencoba akses file/network di luar scope dan assert DITOLAK.
+- [x] `BL-14`: `ContentSafety` aktif terverifikasi di SEMUA channel non-SOP yang ada saat ini (daftar eksplisit channel yang dicek, bukan klaim umum "semua channel").
 
 ## Checklist Review Principle (7 Security Gates existing + tambahan sprint ini)
 

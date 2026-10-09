@@ -893,7 +893,6 @@ mod tests {
             ("gemini_cli", SectionGroup::Integrations),
             ("opencode_cli", SectionGroup::Integrations),
             ("sop", SectionGroup::Agent),
-            ("verifiable_intent", SectionGroup::Agent),
             ("shell_tool", SectionGroup::Tools),
             ("observability", SectionGroup::Operations),
             ("gateway", SectionGroup::Network),

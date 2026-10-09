@@ -1,5 +1,6 @@
 //! Plugin manifest — `~/.clawcrew/tools/<name>/tool.toml` schema.
 
+use clawcrew_config::schema::PaymentActionCategory;
 use serde::Deserialize;
 
 /// Full plugin manifest — parsed from `tool.toml`.
@@ -14,6 +15,10 @@ pub struct ToolManifest {
     /// Parameter definitions used to build the JSON Schema for the LLM.
     #[serde(default)]
     pub parameters: Vec<ParameterDef>,
+    /// Optional financial/payment capability classification (BL-42).
+    /// Enforces fail-closed: tools handling financial operations must declare this.
+    #[serde(default)]
+    pub payment_category: Option<PaymentActionCategory>,
 }
 
 /// Tool identity metadata.

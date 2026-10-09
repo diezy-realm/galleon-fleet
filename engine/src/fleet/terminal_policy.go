@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/core/logger"
+	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
 )
 
 type RiskTier string

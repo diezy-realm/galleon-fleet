@@ -16,7 +16,7 @@ crates/
 ├── clawcrew-providers/       # LLM vendor APIs (SSOT ADR 0001)
 ├── clawcrew-channel-*/       # Channel plugins (Discord, Telegram, etc.)
 ├── clawcrew-tools-*/         # Native tools (filesystem, shell, network)
-└── [27 total crates]
+└── [33 core workspace crates + fixtures & tools; limit: <50]
 ```
 
 **Root `Cargo.toml`:**

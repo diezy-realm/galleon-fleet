@@ -5,4 +5,5 @@ type Ship struct {
 	FleetID   string   `json:"fleet_id"`
 	CharterID string   `json:"charter_id"`
 	SquadIDs  []string `json:"squad_ids"`
+	CrewIDs   []string `json:"crew_ids"`
 }

@@ -91,9 +91,38 @@ pub struct KnowledgeNode {
     pub title: String,
     pub content: String,
     pub tags: Vec<String>,
+    #[serde(default)]
+    pub citations: Vec<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub source_project: Option<String>,
+}
+
+impl KnowledgeNode {
+    /// Validates citations for integrity and provenance (R-92).
+    /// Ensures all citations are non-empty and formatted as valid references or URIs.
+    pub fn verify_citations(&self) -> anyhow::Result<()> {
+        for citation in &self.citations {
+            let trimmed = citation.trim();
+            if trimmed.is_empty() {
+                anyhow::bail!("citation cannot be empty or whitespace");
+            }
+            if !trimmed.starts_with("http://")
+                && !trimmed.starts_with("https://")
+                && !trimmed.starts_with("file://")
+                && !trimmed.starts_with("standard-docs/")
+                && !trimmed.starts_with("docs/")
+                && !trimmed.starts_with("ADR-")
+                && !trimmed.starts_with("PR-")
+                && !trimmed.contains('/')
+                && !trimmed.contains('\\')
+                && !trimmed.contains(':')
+            {
+                anyhow::bail!("citation '{citation}' is not a valid reference or URI format");
+            }
+        }
+        Ok(())
+    }
 }
 
 /// A directed edge in the knowledge graph.
@@ -150,6 +179,7 @@ impl KnowledgeGraph {
                 title TEXT NOT NULL,
                 content TEXT NOT NULL,
                 tags TEXT NOT NULL DEFAULT '',
+                citations TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
                 source_project TEXT
@@ -191,19 +221,23 @@ impl KnowledgeGraph {
             CREATE INDEX IF NOT EXISTS idx_edges_to ON edges(to_id);",
         )?;
 
+        // Ensure citations column exists if database already initialized (R-92 backward compatibility)
+        let _ = conn.execute("ALTER TABLE nodes ADD COLUMN citations TEXT NOT NULL DEFAULT ''", []);
+
         Ok(Self {
             conn: Mutex::new(conn),
             max_nodes,
         })
     }
 
-    /// Add a node to the graph. Returns the generated node id.
-    pub fn add_node(
+    /// Add a node to the graph with explicit citations (R-92). Returns the generated node id.
+    pub fn add_node_with_citations(
         &self,
         node_type: NodeType,
         title: &str,
         content: &str,
         tags: &[String],
+        citations: &[String],
         source_project: Option<&str>,
     ) -> anyhow::Result<String> {
         let conn = self.conn.lock();
@@ -231,16 +265,18 @@ impl KnowledgeGraph {
         let id = Uuid::new_v4().to_string();
         let now = Utc::now().to_rfc3339();
         let tags_str = tags.join(",");
+        let citations_str = serde_json::to_string(citations).unwrap_or_default();
 
         conn.execute(
-            "INSERT INTO nodes (id, node_type, title, content, tags, created_at, updated_at, source_project)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            "INSERT INTO nodes (id, node_type, title, content, tags, citations, created_at, updated_at, source_project)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             params![
                 id,
                 node_type.as_str(),
                 title,
                 content,
                 tags_str,
+                citations_str,
                 now,
                 now,
                 source_project,
@@ -248,6 +284,18 @@ impl KnowledgeGraph {
         )?;
 
         Ok(id)
+    }
+
+    /// Add a node to the graph without citations. Returns the generated node id.
+    pub fn add_node(
+        &self,
+        node_type: NodeType,
+        title: &str,
+        content: &str,
+        tags: &[String],
+        source_project: Option<&str>,
+    ) -> anyhow::Result<String> {
+        self.add_node_with_citations(node_type, title, content, tags, &[], source_project)
     }
 
     /// Add a directed edge between two nodes.
@@ -283,7 +331,7 @@ impl KnowledgeGraph {
     pub fn get_node(&self, id: &str) -> anyhow::Result<Option<KnowledgeNode>> {
         let conn = self.conn.lock();
         let mut stmt = conn.prepare(
-            "SELECT id, node_type, title, content, tags, created_at, updated_at, source_project
+            "SELECT id, node_type, title, content, tags, citations, created_at, updated_at, source_project
              FROM nodes WHERE id = ?1",
         )?;
 
@@ -298,7 +346,7 @@ impl KnowledgeGraph {
     pub fn query_by_tags(&self, tags: &[String]) -> anyhow::Result<Vec<KnowledgeNode>> {
         let conn = self.conn.lock();
         let mut stmt = conn.prepare(
-            "SELECT id, node_type, title, content, tags, created_at, updated_at, source_project
+            "SELECT id, node_type, title, content, tags, citations, created_at, updated_at, source_project
              FROM nodes ORDER BY updated_at DESC",
         )?;
 
@@ -313,7 +361,9 @@ impl KnowledgeGraph {
         Ok(results)
     }
 
-    /// Full-text search across node titles, content, and tags.
+    /// Keyword & BM25 rank similarity search across node titles, content, and tags using SQLite FTS5.
+    /// Note (R-92 / anti-configuration-lies): This is an FTS5 lexical/keyword relevance search (BM25),
+    /// not dense vector embedding search. Use for fast full-text text similarity queries.
     pub fn query_by_similarity(
         &self,
         query: &str,
@@ -334,7 +384,7 @@ impl KnowledgeGraph {
         }
 
         let mut stmt = conn.prepare(
-            "SELECT n.id, n.node_type, n.title, n.content, n.tags,
+            "SELECT n.id, n.node_type, n.title, n.content, n.tags, n.citations,
                     n.created_at, n.updated_at, n.source_project,
                     rank
              FROM nodes_fts f
@@ -348,7 +398,7 @@ impl KnowledgeGraph {
         let mut rows = stmt.query(params![sanitized, limit])?;
         while let Some(row) = rows.next()? {
             let node = row_to_node(row)?;
-            let rank: f64 = row.get(8)?;
+            let rank: f64 = row.get(9)?;
             results.push(SearchResult {
                 node,
                 score: -rank, // FTS5 rank is negative (lower = better), invert for intuitive scoring
@@ -361,14 +411,14 @@ impl KnowledgeGraph {
     pub fn find_related(&self, node_id: &str) -> anyhow::Result<Vec<(KnowledgeNode, Relation)>> {
         let conn = self.conn.lock();
         let mut stmt = conn.prepare(
-            "SELECT n.id, n.node_type, n.title, n.content, n.tags,
+            "SELECT n.id, n.node_type, n.title, n.content, n.tags, n.citations,
                     n.created_at, n.updated_at, n.source_project,
                     e.relation
              FROM edges e
              JOIN nodes n ON n.id = e.to_id
              WHERE e.from_id = ?1
              UNION ALL
-             SELECT n.id, n.node_type, n.title, n.content, n.tags,
+             SELECT n.id, n.node_type, n.title, n.content, n.tags, n.citations,
                     n.created_at, n.updated_at, n.source_project,
                     e.relation
              FROM edges e
@@ -380,7 +430,7 @@ impl KnowledgeGraph {
         let mut rows = stmt.query(params![node_id])?;
         while let Some(row) = rows.next()? {
             let node = row_to_node(row)?;
-            let relation_str: String = row.get(8)?;
+            let relation_str: String = row.get(9)?;
             let relation = Relation::parse(&relation_str)?;
             results.push((node, relation));
         }
@@ -396,7 +446,7 @@ impl KnowledgeGraph {
         let conn = self.conn.lock();
         let limit = sql_limit(limit)?;
         let mut stmt = conn.prepare(
-            "SELECT n.id, n.node_type, n.title, n.content, n.tags,
+            "SELECT n.id, n.node_type, n.title, n.content, n.tags, n.citations,
                     n.created_at, n.updated_at, n.source_project,
                     e.relation
              FROM edges e
@@ -410,7 +460,7 @@ impl KnowledgeGraph {
         let mut rows = stmt.query(params![node_id, limit])?;
         while let Some(row) = rows.next()? {
             let node = row_to_node(row)?;
-            let relation_str: String = row.get(8)?;
+            let relation_str: String = row.get(9)?;
             let relation = Relation::parse(&relation_str)?;
             results.push((node, relation));
         }
@@ -426,7 +476,7 @@ impl KnowledgeGraph {
         let conn = self.conn.lock();
         let limit = sql_limit(limit)?;
         let mut stmt = conn.prepare(
-            "SELECT n.id, n.node_type, n.title, n.content, n.tags,
+            "SELECT n.id, n.node_type, n.title, n.content, n.tags, n.citations,
                     n.created_at, n.updated_at, n.source_project,
                     e.relation
              FROM edges e
@@ -440,7 +490,7 @@ impl KnowledgeGraph {
         let mut rows = stmt.query(params![node_id, limit])?;
         while let Some(row) = rows.next()? {
             let node = row_to_node(row)?;
-            let relation_str: String = row.get(8)?;
+            let relation_str: String = row.get(9)?;
             let relation = Relation::parse(&relation_str)?;
             results.push((node, relation));
         }
@@ -456,7 +506,7 @@ impl KnowledgeGraph {
         let conn = self.conn.lock();
         let limit = sql_limit(limit)?;
         let mut stmt = conn.prepare(
-            "SELECT id, node_type, title, content, tags, created_at, updated_at, source_project
+            "SELECT id, node_type, title, content, tags, citations, created_at, updated_at, source_project
              FROM nodes WHERE node_type = ?1 ORDER BY updated_at DESC LIMIT ?2",
         )?;
 
@@ -479,7 +529,7 @@ impl KnowledgeGraph {
         let conn = self.conn.lock();
         let limit = sql_limit(limit)?;
         let mut stmt = conn.prepare(
-            "SELECT n.id, n.node_type, n.title, n.content, n.tags,
+            "SELECT n.id, n.node_type, n.title, n.content, n.tags, n.citations,
                     n.created_at, n.updated_at, n.source_project
              FROM edges e
              JOIN nodes n ON n.id = e.to_id
@@ -512,7 +562,7 @@ impl KnowledgeGraph {
         let conn = self.conn.lock();
         let limit = sql_limit(limit)?;
         let mut stmt = conn.prepare(
-            "SELECT n.id, n.node_type, n.title, n.content, n.tags,
+            "SELECT n.id, n.node_type, n.title, n.content, n.tags, n.citations,
                     n.created_at, n.updated_at, n.source_project
              FROM edges e
              JOIN nodes n ON n.id = e.from_id
@@ -561,7 +611,7 @@ impl KnowledgeGraph {
                 JOIN edges e ON e.from_id = r.id OR e.to_id = r.id
                 WHERE r.depth < ?2
              )
-             SELECT DISTINCT n.id, n.node_type, n.title, n.content, n.tags,
+             SELECT DISTINCT n.id, n.node_type, n.title, n.content, n.tags, n.citations,
                     n.created_at, n.updated_at, n.source_project
              FROM reachable rc
              JOIN nodes n ON n.id = rc.id",
@@ -689,15 +739,26 @@ fn row_to_node(row: &rusqlite::Row<'_>) -> anyhow::Result<KnowledgeNode> {
     let title: String = row.get(2)?;
     let content: String = row.get(3)?;
     let tags_str: String = row.get(4)?;
-    let created_at_str: String = row.get(5)?;
-    let updated_at_str: String = row.get(6)?;
-    let source_project: Option<String> = row.get(7)?;
+    let citations_str: String = row.get(5)?;
+    let created_at_str: String = row.get(6)?;
+    let updated_at_str: String = row.get(7)?;
+    let source_project: Option<String> = row.get(8)?;
 
     let tags: Vec<String> = tags_str
         .split(',')
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .collect();
+
+    let citations: Vec<String> = if citations_str.starts_with('[') && citations_str.ends_with(']') {
+        serde_json::from_str(&citations_str).unwrap_or_default()
+    } else {
+        citations_str
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect()
+    };
 
     let created_at = DateTime::parse_from_rfc3339(&created_at_str)
         .map(|dt| dt.with_timezone(&Utc))
@@ -712,6 +773,7 @@ fn row_to_node(row: &rusqlite::Row<'_>) -> anyhow::Result<KnowledgeNode> {
         title,
         content,
         tags,
+        citations,
         created_at,
         updated_at,
         source_project,
@@ -1120,5 +1182,45 @@ mod tests {
                 .iter()
                 .any(|edge| edge.relation == Relation::InteractedWith)
         );
+    }
+
+    // ── R-92: Citations field and verification ───────────────────────────────
+
+    #[test]
+    fn node_citations_storage_and_verification() {
+        let (_tmp, graph) = test_graph();
+
+        let citations = vec![
+            "https://standard-docs.internal/adr/001".to_string(),
+            "docs/architecture/01-boundary-policy.md".to_string(),
+        ];
+
+        let node_id = graph
+            .add_node_with_citations(
+                NodeType::Lesson,
+                "Fail-closed boundary lessons",
+                "Always reject unknown tools before execution",
+                &["security".into(), "architecture".into()],
+                &citations,
+                Some("galleon-fleet"),
+            )
+            .unwrap();
+
+        let node = graph.get_node(&node_id).unwrap().expect("node must exist");
+        assert_eq!(node.citations.len(), 2);
+        assert_eq!(node.citations[0], "https://standard-docs.internal/adr/001");
+        assert_eq!(node.citations[1], "docs/architecture/01-boundary-policy.md");
+
+        // Verification must pass for valid citations
+        assert!(node.verify_citations().is_ok());
+
+        // Verification must fail for empty or invalid format citation
+        let mut bad_node = node.clone();
+        bad_node.citations.push("   ".to_string());
+        assert!(bad_node.verify_citations().is_err());
+
+        let mut invalid_format_node = node.clone();
+        invalid_format_node.citations = vec!["unanchored-claim-without-source".to_string()];
+        assert!(invalid_format_node.verify_citations().is_err());
     }
 }

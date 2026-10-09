@@ -210,7 +210,7 @@ Navigator responsibilities:
 7. Submit a Ship Report with status, evidence, discoveries, risk, cost, and recommendation.
 ## 9.3 Squad definition
 
-A Squad is a functional group inside a Ship. Community may have one active Squad per Ship; Pro/Team can contain multiple Squads.
+A Squad is a functional group inside a Ship. Community supports up to 2 Squads per Ship; Team and Dockyard support 6 and 12 Squads respectively across all Ships.
 
 Examples:
 

@@ -120,7 +120,22 @@ Tiga pola arsitektur ditemukan BERULANG di banyak tema independen — dicatat di
 2. **API/mekanisme yang dirancang benar tapi tidak pernah di-wire ke call-site produksi.** `capture_tool_input`/`capture_tool_output` (observability), kemungkinan `verify_whatsapp_signature` (channel — masih perlu `cargo test` untuk ground-truth). Pelajaran: menemukan ENTRY di registry/config TIDAK CUKUP untuk simpulkan fitur berfungsi — harus ditelusuri sampai implementasi nyata yang dipanggil.
 3. **Rigor keamanan tidak konsisten antar-subsistem yang risikonya sejenis.** WASM plugin sandboxing sangat ketat; MCP stdio nol sandboxing; native tool shell ketat. Sistem yang membuka pintu ke kode/proses eksternal seharusnya dikontain SETARA, tapi faktanya bervariasi tanpa alasan risk-based yang jelas.
 
+## Tema 15 — UI/UX Parity & Nice-to-Have (Referensi KiroCrew Toolbox)
+
+| Dokumen | Isi Ringkas | → Backlog |
+|---|---|---|
+| `ui-right-rail-journal-newchat-audit.md` | Audit 3 fitur UI referensi KiroCrew: Right Rail Git/Sub-Agent tab (ADA tapi isi beda total), Captain's Journal workspace grouping (flat, bug `selectedWorkspace` global salah-konteks), "+ New Chat" entry-point (nol tombol). Koreksi: `Workspace` scoped Journal saja, `Quest.workspaceId` dihapus (vestigial) | `ui-nice-to-have-backlog.md` (BL-62..70) |
+| `toolbox-parity-audit.md` | Audit 8 fitur toolbox KiroCrew vs galleon-fleet (approval-mode, attachment, quest-loop, context-bar, chat-to-entity, @/slash, project-bar, optimize-prompt) — pola backend-matang-UI-salah-bentuk (approval, project-bar) vs backend-ada-bug (attachment, re-konfirmasi BL-52) vs nol-total (quest-loop, chat-to-entity, @/slash, optimize-prompt) | `toolbox-parity-backlog.md` (BL-71..78) |
+
+## Tema 16 — Tier, Pricing, dan Entitlement (Pematangan Lanjutan, Menggantikan Riset Lama)
+
+| Dokumen | Isi Ringkas | → Backlog |
+|---|---|---|
+| `community-tier-licensing-enforcement.md` | **status: superseded** (2026-10-06) — angka Community lama (≤2 Ship/≤3 Squad), provenance ZeroClaw (Bagian 2 TETAP berlaku, lihat `license-provenance-attribution-research.md`), Metode D awal | → `tier-pricing-and-entitlement-final.md` |
+| `tier-enforcement-method-d-c-deep-dive.md` | **status: superseded** (2026-10-06) — 5 bug arsitektur (TETAP berlaku, dikutip ulang di dokumen baru), Q1-Q5 terbuka (sudah dijawab) | → `tier-pricing-and-entitlement-final.md` |
+| `tier-pricing-and-entitlement-final.md` | **status: final** — tangga tier (Community/Team/Dockyard/Private Dockyard dengan dimensi baru `CrewPerShip`/`ConcurrentVoyages`), harga flat ($15/$28), model entitlement D (pemisah paket) + P2 (token Ed25519 di modul tertutup REPO TERPISAH), 5 bug arsitektur diverifikasi ulang ke kode nyata (`ship`/`fleet`/`squad`/`entitlement` packages) | `tier-entitlement-pricing-backlog.md` (BL-80..82) |
+
 ## Lihat Juga
 
-- `standard-docs/backlog/README.md` — index backlog BL-01 s.d. BL-39 dengan status roadmap.
+- `standard-docs/backlog/README.md` — index backlog BL-01 s.d. BL-78 dengan status roadmap.
 - `standard-docs/roadmap/R-rust.md` — item roadmap resmi (R-00 s.d. R-87) yang diangkat dari backlog ini.

@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
-	"github.com/diezy-labs/claw-crew/engine/src/approval"
-	"github.com/diezy-labs/claw-crew/engine/src/memory"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/src/approval"
+	"github.com/diezy-realm/galleon-fleet/engine/src/memory"
 )
 
 func TestLearningGovernance_Lifecycle(t *testing.T) {

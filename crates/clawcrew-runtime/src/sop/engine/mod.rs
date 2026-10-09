@@ -399,6 +399,11 @@ impl SopEngine {
         Arc::clone(&self.approval_broker)
     }
 
+    /// Return the engine's metrics collector.
+    pub fn metrics(&self) -> &Arc<SopMetricsCollector> {
+        &self.metrics
+    }
+
     /// Resolve a gate or deterministic checkpoint THROUGH the broker (membership +
     /// quorum), then its single transition owner.
     /// This is the entry point out-of-band surfaces (gateway / CLI / tools) should
@@ -2099,6 +2104,32 @@ impl SopEngine {
             None
         };
 
+        // Enforce Dynamic Separation of Duties (DistinctPerformer) on step completion
+        let prior_results = &self
+            .active_runs
+            .get(run_id)
+            .ok_or_else(|| anyhow::Error::msg(format!("Active run not found: {run_id}")))?
+            .step_results;
+        if let Err(reason) = crate::sop::constraint::SopConstraint::check_distinct_performer(
+            &sop.constraints,
+            current_step.number,
+            recorded.effective_agent.as_deref(),
+            prior_results,
+        ) {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    .with_attrs(::serde_json::json!({
+                        "run_id": run_id,
+                        "step": current_step.number,
+                        "reason": reason,
+                    })),
+                "SOP engine: advance_step rejected by DistinctPerformer constraint"
+            );
+            bail!("Dynamic Separation of Duties violation: {reason}");
+        }
+
         self.record_step_result(run_id, recorded.clone())?;
         self.route_recorded_step(
             run_id,
@@ -2415,6 +2446,33 @@ impl SopEngine {
             return Ok(action);
         }
 
+        let performer = step.effective_agent(sop.agent.as_deref());
+        let prior_results = &self
+            .active_runs
+            .get(run_id)
+            .ok_or_else(|| anyhow::Error::msg(format!("Active run not found: {run_id}")))?
+            .step_results;
+        if let Err(reason) = crate::sop::constraint::SopConstraint::check_distinct_performer(
+            &sop.constraints,
+            step_number,
+            performer,
+            prior_results,
+        ) {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    .with_attrs(::serde_json::json!({
+                        "run_id": run_id,
+                        "step": step_number,
+                        "performer": performer,
+                        "reason": reason,
+                    })),
+                "SOP engine: dispatch rejected by DistinctPerformer constraint"
+            );
+            return self.finish_run(run_id, SopRunStatus::Failed, Some(reason));
+        }
+
         if let Some(run) = self.active_runs.get_mut(run_id) {
             run.current_step = step_number;
             run.status = SopRunStatus::Running;
@@ -2581,6 +2639,33 @@ impl SopEngine {
         let step = self.resolve_sop_step(sop, step_number)?;
         if let Some(action) = self.visit_bound_failure(run_id, step_number)? {
             return Ok(action);
+        }
+
+        let performer = step.effective_agent(sop.agent.as_deref());
+        let prior_results = &self
+            .active_runs
+            .get(run_id)
+            .ok_or_else(|| anyhow::Error::msg(format!("Active run not found: {run_id}")))?
+            .step_results;
+        if let Err(reason) = crate::sop::constraint::SopConstraint::check_distinct_performer(
+            &sop.constraints,
+            step_number,
+            performer,
+            prior_results,
+        ) {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    .with_attrs(::serde_json::json!({
+                        "run_id": run_id,
+                        "step": step_number,
+                        "performer": performer,
+                        "reason": reason,
+                    })),
+                "SOP engine: dispatch rejected by DistinctPerformer constraint"
+            );
+            return self.finish_run(run_id, SopRunStatus::Failed, Some(reason));
         }
 
         if let Some(run) = self.active_runs.get_mut(run_id) {
@@ -4626,7 +4711,7 @@ impl SopEngine {
         )
     }
 
-    fn resolve_active_run_sop(&self, run_id: &str) -> Result<(String, Sop)> {
+    pub(crate) fn resolve_active_run_sop(&self, run_id: &str) -> Result<(String, Sop)> {
         let sop_name = self
             .active_runs
             .get(run_id)
@@ -6044,6 +6129,20 @@ fn format_step_context(sop: &Sop, run: &SopRun, step: &SopStep, config: &SopConf
     }
 
     let _ = write!(ctx, "\nCurrent step: **{}**\n{}\n", step.title, step.body);
+
+    if !step.dos.is_empty() {
+        let _ = writeln!(ctx, "\nDo's:");
+        for item in &step.dos {
+            let _ = writeln!(ctx, "- {item}");
+        }
+    }
+
+    if !step.donts.is_empty() {
+        let _ = writeln!(ctx, "\nDon'ts:");
+        for item in &step.donts {
+            let _ = writeln!(ctx, "- {item}");
+        }
+    }
 
     if !step.suggested_tools.is_empty() {
         let _ = write!(

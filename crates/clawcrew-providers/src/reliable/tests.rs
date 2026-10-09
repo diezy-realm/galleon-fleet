@@ -4557,6 +4557,148 @@
     }
 
     #[tokio::test]
+    async fn cascading_all_down_fails_with_terminal_failure() {
+        let primary_calls = Arc::new(AtomicUsize::new(0));
+        let secondary_calls = Arc::new(AtomicUsize::new(0));
+        let tertiary_calls = Arc::new(AtomicUsize::new(0));
+
+        let model_provider = ReliableModelProvider::new_with_entries(
+            "test-cascade",
+            vec![
+                ReliableModelProviderEntry::new(
+                    "primary",
+                    "p1",
+                    Box::new(MockModelProvider {
+                        calls: Arc::clone(&primary_calls),
+                        fail_until_attempt: usize::MAX,
+                        response: "never",
+                        error: "primary server down (500)",
+                    }),
+                ),
+                ReliableModelProviderEntry::new(
+                    "secondary",
+                    "p2",
+                    Box::new(MockModelProvider {
+                        calls: Arc::clone(&secondary_calls),
+                        fail_until_attempt: usize::MAX,
+                        response: "never",
+                        error: "secondary server timeout (504)",
+                    }),
+                ),
+                ReliableModelProviderEntry::new(
+                    "tertiary",
+                    "p3",
+                    Box::new(MockModelProvider {
+                        calls: Arc::clone(&tertiary_calls),
+                        fail_until_attempt: usize::MAX,
+                        response: "never",
+                        error: "tertiary server unreachable (502)",
+                    }),
+                ),
+            ],
+            0,
+            1,
+        );
+
+        let messages = vec![ChatMessage::user("ping")];
+        let outcome = ProviderDispatch::from_ref(&model_provider)
+            .chat_accounted_outcome(
+                ChatRequest {
+                    messages: &messages,
+                    tools: None,
+                    thinking: None,
+                },
+                "target-model",
+                None,
+            )
+            .await;
+
+        // When all providers cascade down, result must be Err and each provider must have been tried
+        assert!(outcome.result.is_err(), "cascading-all-down must return Err");
+        assert_eq!(primary_calls.load(Ordering::SeqCst), 1);
+        assert_eq!(secondary_calls.load(Ordering::SeqCst), 1);
+        assert_eq!(tertiary_calls.load(Ordering::SeqCst), 1);
+        assert_eq!(outcome.accounting.attempts().len(), 3);
+    }
+
+    #[tokio::test]
+    async fn cooldown_expiry_restores_provider_availability() {
+        let primary_calls = Arc::new(AtomicUsize::new(0));
+        let fallback_calls = Arc::new(AtomicUsize::new(0));
+
+        let model_provider = ReliableModelProvider::new_with_entries(
+            "test-cooldown",
+            vec![
+                ReliableModelProviderEntry::new(
+                    "primary",
+                    "cooldown-key-1",
+                    Box::new(MockModelProvider {
+                        calls: Arc::clone(&primary_calls),
+                        fail_until_attempt: 1, // fails attempt 1, succeeds attempt 2
+                        response: "primary recovered",
+                        error: "429 Too Many Requests, Retry-After: 0",
+                    }),
+                ),
+                ReliableModelProviderEntry::new(
+                    "fallback",
+                    "cooldown-key-2",
+                    Box::new(MockModelProvider {
+                        calls: Arc::clone(&fallback_calls),
+                        fail_until_attempt: 0,
+                        response: "fallback served",
+                        error: "unused",
+                    }),
+                ),
+            ],
+            0,
+            1,
+        );
+
+        // Call 1: primary returns 429 with Retry-After: 0. Fallback serves request.
+        let messages = vec![ChatMessage::user("req-1")];
+        let outcome1 = ProviderDispatch::from_ref(&model_provider)
+            .chat_accounted_outcome(
+                ChatRequest {
+                    messages: &messages,
+                    tools: None,
+                    thinking: None,
+                },
+                "test-model",
+                None,
+            )
+            .await;
+        assert!(outcome1.result.is_ok());
+        assert_eq!(
+            outcome1.result.unwrap().response.text.as_deref(),
+            Some("fallback served")
+        );
+        assert_eq!(primary_calls.load(Ordering::SeqCst), 1);
+        assert_eq!(fallback_calls.load(Ordering::SeqCst), 1);
+
+        // Since Retry-After was 0, the cooldown expires immediately.
+        assert!(!model_provider.provider_cooldown_active("cooldown-key-1"));
+
+        // Call 2: primary is no longer in cooldown and is called again, succeeding.
+        let outcome2 = ProviderDispatch::from_ref(&model_provider)
+            .chat_accounted_outcome(
+                ChatRequest {
+                    messages: &messages,
+                    tools: None,
+                    thinking: None,
+                },
+                "test-model",
+                None,
+            )
+            .await;
+        assert!(outcome2.result.is_ok());
+        assert_eq!(
+            outcome2.result.unwrap().response.text.as_deref(),
+            Some("primary recovered")
+        );
+        assert_eq!(primary_calls.load(Ordering::SeqCst), 2);
+    }
+
+    #[tokio::test]
     async fn retryable_rate_limit_cools_down_provider_for_history_chat() {
         let primary_calls = Arc::new(AtomicUsize::new(0));
         let fallback_calls = Arc::new(AtomicUsize::new(0));

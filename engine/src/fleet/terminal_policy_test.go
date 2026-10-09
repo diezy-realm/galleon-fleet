@@ -9,7 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/pkg/pb"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
+	"github.com/diezy-realm/galleon-fleet/engine/src/identity"
 )
 
 type mockGatewayClient struct {
@@ -46,6 +47,26 @@ func (m *mockGatewayClient) ExecuteTask(ctx context.Context, taskID, taskData st
 
 func (m *mockGatewayClient) ExecuteTurn(ctx context.Context, req *pb.ExecuteTurnRequest) (pb.SystemGateway_ExecuteTurnClient, error) {
 	return nil, nil
+}
+
+func (m *mockGatewayClient) StoreLearnedRule(ctx context.Context, rule string, scope map[string]string, reversible bool) (*pb.StoreLearnedRuleResponse, error) {
+	return &pb.StoreLearnedRuleResponse{Success: true}, nil
+}
+
+func (m *mockGatewayClient) RetrieveLearnedRules(ctx context.Context, scopeKey, scopeValue string) ([]*pb.LearnedRule, error) {
+	return nil, nil
+}
+
+func (m *mockGatewayClient) SyncPairedDevice(ctx context.Context, devID, devName, platform, tokenHash string) error {
+	return nil
+}
+
+func (m *mockGatewayClient) ListPairedDevices(ctx context.Context) ([]*pb.DeviceRecord, error) {
+	return nil, nil
+}
+
+func (m *mockGatewayClient) RevokePairedDevice(ctx context.Context, devID string) error {
+	return nil
 }
 
 func (m *mockGatewayClient) Close() error {
@@ -146,19 +167,51 @@ func TestExecuteTerminalHighRiskRequiresApproval(t *testing.T) {
 		t.Errorf("gateway should NOT have been called without approval, called with %q", mockGw.lastToolName)
 	}
 
-	// High risk WITH approval -> must call gateway with "bash"
+	// S2-SEC-01 Negative Test: High risk WITH self-reported req.Approved=true but WITHOUT verified principal in ctx -> MUST BE REJECTED
 	reqApproved := TerminalExecRequest{
 		Command:    "rm -rf /tmp/test-dir",
 		Approved:   true,
-		ApprovedBy: "local_operator",
+		ApprovedBy: "unverified_attacker",
 	}
 
-	respApp, err := svc.ExecuteTerminal(context.Background(), reqApproved)
+	respUnverified, err := svc.ExecuteTerminal(context.Background(), reqApproved)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !respUnverified.RequiresApproval {
+		t.Error("S2-SEC-01 VIOLATION: expected requiresApproval=true when approved=true lacks verified principal")
+	}
+	if !strings.Contains(respUnverified.Stderr, "S2-SEC-01") {
+		t.Errorf("expected S2-SEC-01 security policy rejection message, got: %s", respUnverified.Stderr)
+	}
+	if mockGw.lastToolName != "" {
+		t.Errorf("gateway should NOT have been called for unverified approval, called with %q", mockGw.lastToolName)
+	}
+
+	// S2-SEC-01 Negative Test: High risk WITH verified principal but lacking approval authority (RoleViewer) -> MUST BE REJECTED
+	ctxViewer := identity.WithPrincipal(context.Background(), &identity.Principal{
+		ID:            "viewer_user",
+		Role:          identity.RoleViewer,
+		Authenticated: true,
+	})
+	respViewer, _ := svc.ExecuteTerminal(ctxViewer, reqApproved)
+	if !respViewer.RequiresApproval {
+		t.Error("S2-SEC-01 VIOLATION: viewer principal should NOT be permitted to approve high risk command")
+	}
+
+	// S2-SEC-01 Positive Test: High risk WITH verified Operator/Admin principal -> must call gateway with "bash"
+	ctxOperator := identity.WithPrincipal(context.Background(), &identity.Principal{
+		ID:            "local_operator",
+		Role:          identity.RoleOperator,
+		Authenticated: true,
+		Scopes:        []string{"terminal:approve"},
+	})
+	respApp, err := svc.ExecuteTerminal(ctxOperator, reqApproved)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if respApp.RequiresApproval {
-		t.Error("expected requiresApproval to be false when approved is true")
+		t.Error("expected requiresApproval to be false when approved is true with verified operator")
 	}
 	if mockGw.lastToolName != "bash" {
 		t.Errorf("expected gateway tool name 'bash', got %q", mockGw.lastToolName)
@@ -238,5 +291,78 @@ func TestHandleTerminalExecHTTP(t *testing.T) {
 	}
 	if auditList[len(auditList)-1].Command != "git status" {
 		t.Errorf("expected audited command 'git status', got %q", auditList[len(auditList)-1].Command)
+	}
+}
+
+func TestHandleTerminalExecHTTP_IdentityApprovalVerification_S2_SEC_01(t *testing.T) {
+	mockGw := &mockGatewayClient{
+		respSuccess: true,
+		respOutput:  `{"stdout":"removed test directory","exit_code":0}`,
+	}
+	svc := NewService(mockGw)
+
+	store := identity.NewMemoryTokenStore()
+	resolver := identity.NewDenyByDefaultResolver(store)
+	handler := NewHTTPHandler(svc).WithResolver(resolver)
+
+	operatorToken := "op-secret-token"
+	store.Register(operatorToken, &identity.Principal{
+		ID:            "op_alice",
+		Role:          identity.RoleOperator,
+		Authenticated: true,
+		Scopes:        []string{"terminal:approve"},
+	}, 0)
+
+	viewerToken := "viewer-secret-token"
+	store.Register(viewerToken, &identity.Principal{
+		ID:            "viewer_bob",
+		Role:          identity.RoleViewer,
+		Authenticated: true,
+	}, 0)
+
+	// 1. Negative Test: req.Approved=true WITHOUT credentials -> rejected with 401 Unauthorized
+	unauthBody, _ := json.Marshal(TerminalExecRequest{
+		Command:  "rm -rf /tmp/data",
+		Approved: true,
+	})
+	unauthReq := httptest.NewRequest(http.MethodPost, "/api/terminal/exec", bytes.NewReader(unauthBody))
+	unauthRec := httptest.NewRecorder()
+	handler.handleTerminalExec(unauthRec, unauthReq)
+	if unauthRec.Code != http.StatusUnauthorized {
+		t.Fatalf("S2-SEC-01 VIOLATION: expected 401 Unauthorized when approved=true lacks credentials, got %d", unauthRec.Code)
+	}
+
+	// 2. Negative Test: req.Approved=true WITH Viewer token -> rejected with 403 Forbidden
+	viewerBody, _ := json.Marshal(TerminalExecRequest{
+		Command:  "rm -rf /tmp/data",
+		Approved: true,
+	})
+	viewerReq := httptest.NewRequest(http.MethodPost, "/api/terminal/exec", bytes.NewReader(viewerBody))
+	viewerReq.Header.Set("Authorization", "Bearer "+viewerToken)
+	viewerRec := httptest.NewRecorder()
+	handler.handleTerminalExec(viewerRec, viewerReq)
+	if viewerRec.Code != http.StatusForbidden {
+		t.Fatalf("S2-SEC-01 VIOLATION: expected 403 Forbidden when caller lacks approval authority, got %d", viewerRec.Code)
+	}
+
+	// 3. Positive Test: req.Approved=true WITH Operator token -> succeeds with 200 OK
+	operatorBody, _ := json.Marshal(TerminalExecRequest{
+		Command:  "rm -rf /tmp/data",
+		Approved: true,
+	})
+	operatorReq := httptest.NewRequest(http.MethodPost, "/api/terminal/exec", bytes.NewReader(operatorBody))
+	operatorReq.Header.Set("Authorization", "Bearer "+operatorToken)
+	operatorRec := httptest.NewRecorder()
+	handler.handleTerminalExec(operatorRec, operatorReq)
+	if operatorRec.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for verified operator approval, got %d: %s", operatorRec.Code, operatorRec.Body.String())
+	}
+
+	var resp TerminalExecResponse
+	if err := json.Unmarshal(operatorRec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if resp.ExitCode != 0 {
+		t.Fatalf("expected exitCode 0, got %d", resp.ExitCode)
 	}
 }

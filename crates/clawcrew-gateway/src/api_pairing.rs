@@ -37,9 +37,9 @@ pub struct DeviceRegistry {
 }
 
 impl DeviceRegistry {
-    pub fn new(workspace_dir: &Path) -> Self {
+    pub fn try_new(workspace_dir: &Path) -> Result<Self, rusqlite::Error> {
         let db_path = workspace_dir.join("devices.db");
-        let conn = Connection::open(&db_path).expect("Failed to open device registry database");
+        let conn = Connection::open(&db_path)?;
         conn.execute_batch(
             "PRAGMA journal_mode = WAL;
              PRAGMA synchronous = NORMAL;
@@ -54,8 +54,7 @@ impl DeviceRegistry {
                 ip_address TEXT,
                 capabilities TEXT
             )",
-        )
-        .expect("Failed to create devices table");
+        )?;
 
         // Additive migration for DBs created before the capabilities column existed.
         // SQLite has no IF NOT EXISTS for columns; the duplicate-column error here is benign.
@@ -64,8 +63,7 @@ impl DeviceRegistry {
         // Warm the in-memory cache from DB
         let mut cache = HashMap::new();
         let mut stmt = conn
-            .prepare("SELECT token_hash, id, name, device_type, paired_at, last_seen, ip_address, capabilities FROM devices")
-            .expect("Failed to prepare device select");
+            .prepare("SELECT token_hash, id, name, device_type, paired_at, last_seen, ip_address, capabilities FROM devices")?;
         let rows = stmt
             .query_map([], |row| {
                 let token_hash: String = row.get(0)?;
@@ -97,16 +95,31 @@ impl DeviceRegistry {
                         capabilities,
                     },
                 ))
-            })
-            .expect("Failed to query devices");
-        for (hash, info) in rows.flatten() {
-            cache.insert(hash, info);
+            })?;
+        for item in rows {
+            if let Ok((hash, info)) = item {
+                cache.insert(hash, info);
+            }
         }
 
-        Self {
+        Ok(Self {
             cache: Mutex::new(cache),
             db_path,
-        }
+        })
+    }
+
+    pub fn new(workspace_dir: &Path) -> Self {
+        Self::try_new(workspace_dir).unwrap_or_else(|e| {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                &format!("Failed to initialize SQLite device registry at {}: {e}", workspace_dir.display())
+            );
+            Self {
+                cache: Mutex::new(HashMap::new()),
+                db_path: workspace_dir.join("devices.db"),
+            }
+        })
     }
 
     #[cfg(test)]

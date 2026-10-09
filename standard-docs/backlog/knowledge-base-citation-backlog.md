@@ -5,7 +5,7 @@ date: 2026-10-05
 author: squad-lead
 depends_on:
   - research/rag-vector-knowledge-base-audit.md
-  - research/perplexity-web-browsing-methodology.md
+  - archive/research-closed-loop/perplexity-web-browsing-methodology.md
 ---
 
 # Backlog — Knowledge-Base Citation & Library Activation
@@ -50,7 +50,7 @@ depends_on:
 
 ## BL-50 — Query Decomposition + Domain-Filtering sebagai SOP Riset Squad (P2, S)
 
-**Rujukan:** Pola Perplexity Search API Best Practices (`research/perplexity-web-browsing-methodology.md` §4, §2). Keputusan Achmad: terapkan ke SOP, BUKAN ke kode `web_search_tool.rs`.
+**Rujukan:** Pola Perplexity Search API Best Practices (`archive/research-closed-loop/perplexity-web-browsing-methodology.md` §4, §2). Keputusan Achmad: terapkan ke SOP, BUKAN ke kode `web_search_tool.rs`.
 
 **Scope:** Ini TIDAK butuh perubahan kode Rust — murni dokumentasi/prompt-level. Tambahkan ke steering/dokumen SOP riset (lokasi: steering workspace atau `standard-docs/` yang relevan untuk panduan kerja squad) dua prinsip: (1) **Query decomposition**: sebelum memanggil `web_search`/`web_fetch` untuk topik riset kompleks, pecah dulu jadi beberapa sub-pertanyaan spesifik dan jalankan sebagai batch terpisah — bukan satu query generik yang berharap mendapat semua jawaban sekali panggil. (2) **Domain-filtering untuk mode akademik**: saat riset bersifat akademik/butuh sumber otoritatif, tambahkan filter domain (`site:arxiv.org`, `site:*.edu`, nama jurnal spesifik) langsung di query string yang dikirim ke `web_search` — provider yang sudah ada (AnySearch/Serply) mendukung sintaks ini secara native, tidak perlu field baru di kode.
 

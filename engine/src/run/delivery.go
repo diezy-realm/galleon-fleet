@@ -1,12 +1,16 @@
 package run
 
 import (
+	"context"
 	"encoding/json/v2"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/core/tracing"
 )
 
 // HTTPHandler handles HTTP REST and SSE endpoints for Runs
@@ -37,11 +41,39 @@ func (h *HTTPHandler) handleRunsRoot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	reqID := r.Header.Get("X-Request-ID")
+	ctx, span := tracing.StartSpan(r.Context(), "HTTP POST /api/v1/runs")
+	defer span.End()
+
+	if reqID != "" {
+		span.TraceID = reqID
+		span.SetAttribute("request_id", reqID)
+	} else {
+		reqID = span.TraceID
+	}
+	span.SetAttribute("http.method", r.Method)
+	span.SetAttribute("http.url", r.URL.Path)
+
+	ctx = context.WithValue(ctx, "request_id", reqID)
+	ctx = context.WithValue(ctx, "trace_id", reqID)
+	r = r.WithContext(ctx)
+
+	log := logger.Get()
+	log.InfoContext(ctx, "handling create run HTTP request",
+		slog.String("trace_id", reqID),
+		slog.String("method", r.Method),
+		slog.String("url", r.URL.Path),
+	)
+
 	idempotencyKey := r.Header.Get("Idempotency-Key")
 
 	var req CreateRunRequest
 	if err := json.UnmarshalRead(r.Body, &req); err != nil {
+		log.WarnContext(ctx, "failed to parse create run json body",
+			slog.String("trace_id", reqID),
+			slog.String("error", err.Error()),
+		)
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-Request-ID", reqID)
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(`{"error":{"code":"INVALID_ARGUMENT","message":"invalid JSON body"}}`))
 		return
@@ -49,7 +81,12 @@ func (h *HTTPHandler) handleRunsRoot(w http.ResponseWriter, r *http.Request) {
 
 	run, err := h.service.CreateRun(r.Context(), &req, reqID, idempotencyKey)
 	if err != nil {
+		log.ErrorContext(ctx, "create run failed",
+			slog.String("trace_id", reqID),
+			slog.String("error", err.Error()),
+		)
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-Request-ID", reqID)
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"error":{"code":"FAILED","message":%q}}`, err.Error())))
 		return
@@ -64,9 +101,7 @@ func (h *HTTPHandler) handleRunsRoot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if reqID != "" {
-		w.Header().Set("X-Request-ID", reqID)
-	}
+	w.Header().Set("X-Request-ID", reqID)
 	w.WriteHeader(http.StatusAccepted)
 	data, _ := json.Marshal(resp)
 	_, _ = w.Write(data)
@@ -81,6 +116,33 @@ func (h *HTTPHandler) handleRunByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	runID := parts[0]
+
+	reqID := r.Header.Get("X-Request-ID")
+	ctx, span := tracing.StartSpan(r.Context(), fmt.Sprintf("HTTP %s /api/v1/runs/%s", r.Method, runID))
+	defer span.End()
+
+	if reqID != "" {
+		span.TraceID = reqID
+		span.SetAttribute("request_id", reqID)
+	} else {
+		reqID = span.TraceID
+	}
+	span.SetAttribute("http.method", r.Method)
+	span.SetAttribute("http.url", r.URL.Path)
+	span.SetAttribute("run_id", runID)
+
+	ctx = context.WithValue(ctx, "request_id", reqID)
+	ctx = context.WithValue(ctx, "trace_id", reqID)
+	r = r.WithContext(ctx)
+
+	w.Header().Set("X-Request-ID", reqID)
+
+	log := logger.Get()
+	log.DebugContext(ctx, "handling run by id HTTP request",
+		slog.String("trace_id", reqID),
+		slog.String("run_id", runID),
+		slog.String("method", r.Method),
+	)
 
 	// Check sub-routes: /events or /cancel
 	if len(parts) > 1 {
@@ -105,6 +167,11 @@ func (h *HTTPHandler) handleRunByID(w http.ResponseWriter, r *http.Request) {
 
 	run, err := h.service.GetRun(r.Context(), runID)
 	if err != nil {
+		log.WarnContext(ctx, "run not found",
+			slog.String("trace_id", reqID),
+			slog.String("run_id", runID),
+			slog.String("error", err.Error()),
+		)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"error":{"code":"RUN_NOT_FOUND","message":%q}}`, err.Error())))
@@ -139,6 +206,9 @@ func (h *HTTPHandler) handleEvents(w http.ResponseWriter, r *http.Request, runID
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
+	if reqID := r.Header.Get("X-Request-ID"); reqID != "" {
+		w.Header().Set("X-Request-ID", reqID)
+	}
 	w.WriteHeader(http.StatusOK)
 	flusher.Flush()
 
@@ -173,12 +243,18 @@ func (h *HTTPHandler) handleCancel(w http.ResponseWriter, r *http.Request, runID
 
 	if err := h.service.CancelRun(r.Context(), runID); err != nil {
 		w.Header().Set("Content-Type", "application/json")
+		if reqID := r.Header.Get("X-Request-ID"); reqID != "" {
+			w.Header().Set("X-Request-ID", reqID)
+		}
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"error":{"code":"FAILED_PRECONDITION","message":%q}}`, err.Error())))
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	if reqID := r.Header.Get("X-Request-ID"); reqID != "" {
+		w.Header().Set("X-Request-ID", reqID)
+	}
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(`{"status":"cancelled"}`))
 }

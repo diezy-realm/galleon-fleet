@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/id"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/id"
 )
 
 // FilterToolsForIntent performs intent-aware filtering to conserve model prompt tokens (FR-01, Phase T4)
@@ -125,6 +125,17 @@ func (t *DelegateTaskTool) ExecuteWithContext(ctx context.Context, execCtx *Exec
 
 	if strings.TrimSpace(input.SubagentRole) == "" || strings.TrimSpace(input.TaskPrompt) == "" {
 		return "", nil, appErrors.New(appErrors.CodeInvalidArgument, "subagent_role and task_prompt are required", appErrors.LayerService)
+	}
+
+	// BL-05: Delegation Depth Limit Enforcement (from QuotaPolicy / ExecutionContext)
+	if execCtx != nil && execCtx.MaxDelegationDepth != nil {
+		if execCtx.DelegationDepth >= *execCtx.MaxDelegationDepth {
+			return "", nil, appErrors.New(
+				appErrors.CodePermissionDenied,
+				fmt.Sprintf("delegation depth limit exceeded: current %d >= max %d", execCtx.DelegationDepth, *execCtx.MaxDelegationDepth),
+				appErrors.LayerService,
+			)
+		}
 	}
 
 	// Policy Ceiling Enforcement (Security Invariant):

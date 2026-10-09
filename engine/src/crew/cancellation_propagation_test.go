@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/src/crew"
+	"github.com/diezy-realm/galleon-fleet/engine/src/crew"
 )
 
 func TestCancellationPropagationToSubagents(t *testing.T) {

@@ -39,19 +39,35 @@ pub fn capture_tool_output(
     capture_with_policy(policy, tool, redacted)
 }
 
+/// Returns true if a tool is conversational (e.g. messaging, chat, channel reply).
+/// Conversational tools default to `ToolIoPolicy::Off` to safeguard user chat privacy.
+#[must_use]
+pub fn is_conversational_tool(tool: &str) -> bool {
+    let t = tool.trim().to_ascii_lowercase();
+    t == "send_message_to_peer"
+        || t == "send_message"
+        || t == "chat_message"
+        || t == "message_user"
+        || t == "channel_reply"
+        || t.contains("send_message")
+        || t.contains("chat")
+        || t.contains("conversation")
+}
+
 fn capture_with_policy(
     policy: &ResolvedPolicy,
     tool: &str,
     redacted: &str,
 ) -> Option<ToolIoCapture> {
-    if !policy.tool_io.captures_io() {
+    let effective_policy = policy.policy_for_tool(tool);
+    if !effective_policy.captures_io() {
         return None;
     }
     if policy.is_tool_denylisted(tool) {
         return None;
     }
     let original_bytes = redacted.len();
-    match policy.tool_io {
+    match effective_policy {
         ToolIoPolicy::Off => None,
         ToolIoPolicy::Full => Some(ToolIoCapture {
             text: redacted.to_string(),
@@ -212,5 +228,30 @@ mod tests {
     fn capture_tool_output_uses_the_same_policy_path() {
         let p = make_policy("off", 8192, vec![]);
         assert!(capture_tool_output(&p, "shell", "x").is_none());
+    }
+
+    #[test]
+    fn conversational_tool_io_defaults_to_off_while_technical_is_captured() {
+        let default_policy =
+            ResolvedPolicy::from_config(&LogConfig::default(), std::path::Path::new("/"));
+        // Technical tool like 'shell' or 'file_read' is Redacted (captured).
+        assert!(capture_tool_input(&default_policy, "shell", "echo hello").is_some());
+        // Conversational tool like 'send_message_to_peer' defaults to Off (omitted).
+        assert!(
+            capture_tool_input(&default_policy, "send_message_to_peer", "private msg").is_none()
+        );
+        assert!(
+            capture_tool_output(&default_policy, "send_message_to_peer", "peer reply").is_none()
+        );
+    }
+
+    #[test]
+    fn conversational_tool_io_can_be_explicitly_configured() {
+        let cfg = LogConfig {
+            log_conversational_tool_io: "redacted".into(),
+            ..LogConfig::default()
+        };
+        let policy = ResolvedPolicy::from_config(&cfg, std::path::Path::new("/"));
+        assert!(capture_tool_input(&policy, "send_message_to_peer", "hello").is_some());
     }
 }
