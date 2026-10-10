@@ -1695,6 +1695,7 @@ dependencies = [
  "ecb",
  "futures-util",
  "galleon-channel-bluesky",
+ "galleon-channel-dingtalk",
  "galleon-channel-imessage",
  "galleon-channel-irc",
  "galleon-channel-nostr",
@@ -4283,6 +4284,25 @@ dependencies = [
  "clawcrew-api",
  "clawcrew-config",
  "rand 0.10.2",
+]
+
+[[package]]
+name = "galleon-channel-dingtalk"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "futures-util",
+ "galleon-channel-core",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-tungstenite 0.29.0",
+ "uuid",
 ]
 
 [[package]]

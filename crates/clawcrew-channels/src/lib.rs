@@ -39,8 +39,11 @@ pub mod amqp;
 pub use galleon_channel_bluesky as bluesky;
 #[cfg(feature = "channel-clawdtalk")]
 pub mod clawdtalk;
+// RF-B1: the DingTalk channel now lives in its own feature-crate. Re-export it
+// under the historical `dingtalk` path so `crate::dingtalk::DingTalkChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-dingtalk")]
-pub mod dingtalk;
+pub use galleon_channel_dingtalk as dingtalk;
 #[cfg(feature = "channel-discord")]
 pub mod discord;
 #[cfg(feature = "channel-discord")]
