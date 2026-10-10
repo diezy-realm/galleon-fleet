@@ -66,11 +66,13 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 - **Tujuan:** `clawcrew-gateway` tidak lagi bergantung ke `clawcrew-runtime` (klaim lama: 426 referensi → 0).
 - **Ruang lingkup:** `crates/clawcrew-gateway/src/`.
 - **Status implementasi (in-progress):**
-  - Tahap 1 selesai: 48 referensi berhasil diputus (426 → 378 referensi).
+  - Tahap 1–3 selesai: 102 referensi berhasil diputus (426 → 324 referensi, pengurangan 24%).
   - 25 referensi `clawcrew_runtime::health` dialihkan langsung ke SSOT asalnya `clawcrew_infra::health`.
   - 14 referensi `clawcrew_runtime::security::pairing` dialihkan ke SSOT `clawcrew_config::pairing`.
   - 9 referensi `clawcrew_runtime::i18n` dialihkan ke crate independen `galleon_i18n`.
-  - Seluruh 40 unit test `clawcrew-gateway` lulus 100% di commit `9de342140`.
+  - 43 referensi `clawcrew_runtime::observability` (`Observer`, `ObserverEvent`, `ObserverMetric`, `NoopObserver`) dialihkan ke `clawcrew_api::observability_traits`.
+  - 11 referensi `clawcrew_runtime::tools` (`CanvasStore`, batas konten `MAX_CONTENT_SIZE`, `ALLOWED_CONTENT_TYPES`), `cost` (`CostTracker`), dan import lama `DefaultMemoryStrategy` dialihkan ke `clawcrew_tools::canvas` dan `clawcrew_config::cost`.
+  - Seluruh 40 unit test `clawcrew-gateway` lulus 100% di commit `9de342140`, `4ab9bf167`, dan `bc47ecaea`.
 - **DoD:** 0 referensi `clawcrew_runtime::` tersisa di `clawcrew-gateway/src/` kecuali pengecualian yang didiskusikan & didokumentasikan.
 
 ### T3-03 — Pecah `clawcrew-channels` jadi crate per-channel (BR-C6)
