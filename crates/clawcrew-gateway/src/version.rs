@@ -108,7 +108,7 @@ pub fn detect_restart() -> RestartInfo {
 }
 
 fn detect_restart_uncached() -> RestartInfo {
-    if clawcrew_runtime::restart::is_desktop_supervised() {
+    if clawcrew_infra::restart::is_desktop_supervised() {
         return RestartInfo {
             mode: RestartMode::DesktopSupervised,
             hint: get_required_cli_string("cli-gateway-restart-hint-process"),
@@ -735,7 +735,7 @@ async fn run_upgrade(
     match action {
         RestartAction::None => set_state(&progress, UpgradeState::Done),
         RestartAction::DesktopSupervised => {
-            if let Err(error) = clawcrew_runtime::restart::request_desktop_restart() {
+            if let Err(error) = clawcrew_infra::restart::request_desktop_restart() {
                 fail(
                     &progress,
                     format!("cannot arm desktop-supervised restart: {error}"),
@@ -763,7 +763,7 @@ async fn run_upgrade(
             //
             // Set the flag *before* sleeping so that an external SIGTERM
             // arriving during the grace window still finds it set.
-            clawcrew_runtime::restart::request_respawn();
+            clawcrew_infra::restart::request_respawn();
             set_state(&progress, UpgradeState::Restarting);
             tokio::time::sleep(RESTART_GRACE).await;
             match standalone_shutdown_tx {
@@ -803,7 +803,7 @@ fn trigger_graceful_shutdown() {
     }
     #[cfg(not(unix))]
     {
-        clawcrew_runtime::restart::request_shutdown();
+        clawcrew_infra::restart::request_shutdown();
     }
 }
 

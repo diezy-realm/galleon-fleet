@@ -1947,6 +1947,7 @@ dependencies = [
  "clawcrew-api",
  "clawcrew-log",
  "clawcrew-spawn",
+ "libc",
  "parking_lot",
  "portable-atomic",
  "rusqlite",
