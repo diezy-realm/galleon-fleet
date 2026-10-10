@@ -8,7 +8,7 @@ use axum::{
 };
 use base64::Engine;
 use serde::{Deserialize, Serialize};
-use clawcrew_runtime::browse::{
+use clawcrew_config::browse::{
     BrowseEntry, BrowseError, delete_agent_workspace_path, list_agent_workspace, list_directory,
     make_agent_workspace_directory, make_directory, move_agent_workspace_path,
     read_agent_workspace_file, remove_directory,

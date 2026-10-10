@@ -2731,7 +2731,7 @@ data: {\"type\":\"message_stop\"}\n\n",
             Duration::from_secs(WS_APPROVAL_TIMEOUT_SECS),
         ));
 
-        let handle: clawcrew_runtime::tools::PerToolChannelHandle =
+        let handle: clawcrew_tools::send_via::PerToolChannelHandle =
             Arc::new(parking_lot::RwLock::new(std::collections::HashMap::new()));
         handle.write().insert(
             WS_CHANNEL_KEY.to_string(),

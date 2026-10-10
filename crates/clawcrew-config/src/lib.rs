@@ -9,6 +9,7 @@
 pub mod alias_refs;
 pub mod api_error;
 pub mod autonomy;
+pub mod browse;
 pub mod classifier;
 pub mod comment_writer;
 pub mod cost;

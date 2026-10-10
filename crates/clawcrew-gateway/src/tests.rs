@@ -1716,7 +1716,7 @@ path = "{trigger_path}"
         assert_eq!(raw_parsed.gateway.paired_tokens.len(), 1);
         let on_disk = &raw_parsed.gateway.paired_tokens[0];
         assert!(
-            clawcrew_runtime::security::SecretStore::is_encrypted(on_disk),
+            clawcrew_config::secrets::SecretStore::is_encrypted(on_disk),
             "paired_token should be encrypted on disk"
         );
     }
