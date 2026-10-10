@@ -245,7 +245,14 @@ func (s *runService) CreateRun(ctx context.Context, req *CreateRunRequest, reqID
 		return nil, err
 	}
 
-	runCtx, cancel := context.WithCancel(context.Background())
+	runBgCtx := context.Background()
+	if reqID, ok := ctx.Value("request_id").(string); ok && reqID != "" {
+		runBgCtx = context.WithValue(runBgCtx, "request_id", reqID)
+	}
+	if traceID, ok := ctx.Value("trace_id").(string); ok && traceID != "" {
+		runBgCtx = context.WithValue(runBgCtx, "trace_id", traceID)
+	}
+	runCtx, cancel := context.WithCancel(runBgCtx)
 	s.cancels.Store(runID, cancel)
 	s.contexts.Store(runID, runCtx)
 

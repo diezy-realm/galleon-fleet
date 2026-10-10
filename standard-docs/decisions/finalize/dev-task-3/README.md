@@ -139,15 +139,10 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 
 ### T3-09 — Sambungkan tracing span ke HTTP request path Go (BG-F5)
 
-- **Tujuan (scope final, BUKAN "adopsi zap" seperti klaim dokumen asli):** Sambungkan `tracing.StartSpan`/`End` (sudah ada, `engine/src/core/tracing/tracing.go`) ke jalur HTTP request di `delivery.go`, supaya `trace_id` konsisten lintas log `slog` HTTP, log gRPC interceptor, dan `x-request-id` yang dikirim ke Rust.
-- **Ruang lingkup:** `engine/src/run/delivery.go`, `engine/src/core/tracing/tracing.go`.
-- **Status:** Go SUDAH pakai `log/slog` + modul tracing custom OpenTelemetry-compatible matang (bukan zap — keputusan sadar, slog lebih sesuai). request-id HTTP→gRPC sudah ada (`pkg/client/system_gateway.go:17-20`). Scrubbing kredensial Go-side sudah ada (`RedactAttr`/`RedactString` di `core/logger/logger.go`) — tidak perlu kerja baru untuk itu.
-- **Langkah konkret:**
-  1. Baca `core/tracing/tracing.go` (`StartSpan`/`End`, field `TraceID`/`SpanID`/`ParentSpanID`) dan titik masuk HTTP request di `delivery.go`.
-  2. Panggil `tracing.StartSpan` di awal handler `delivery.go`, gunakan/sinkronkan `TraceID` dengan `x-request-id` yang sudah dipropagasi ke gRPC metadata.
-  3. Pastikan `slog` logger di jalur ini menyertakan `trace_id` sebagai field terstruktur.
-  4. Verifikasi redaksi kredensial tetap jalan untuk field `trace_id` (seharusnya tidak pernah membawa data sensitif, tapi cek).
-- **DoD:** Satu request HTTP end-to-end menghasilkan `trace_id` yang SAMA di log `slog` HTTP, log gRPC interceptor, dan metadata yang diterima Rust — dibuktikan 1 test/log sample nyata, bukan hanya baca kode.
+- **Tujuan (scope final, BUKAN "adopsi zap" seperti klaim dokumen asli):** Sambungkan `tracing.StartSpan`/`End` (sudah ada, `engine/core/tracing/tracing.go`) ke jalur HTTP request di `delivery.go`, supaya `trace_id` konsisten lintas log `slog` HTTP, log gRPC interceptor, dan `x-request-id` yang dikirim ke Rust.
+- **Ruang lingkup:** `engine/src/run/delivery.go`, `engine/core/tracing/tracing.go`, `engine/pkg/client/system_gateway.go`, `crates/clawcrew-gateway/src/grpc_system_gateway.rs`.
+- **Status implementasi:** Selesai di branch `feat/refactoring-finalize-01` — `tracing.StartSpan`/`End` tersambung di handler HTTP `engine/src/run/delivery.go`, field `trace_id` konsisten tercatat di log `slog` dan response header `X-Request-ID`, gRPC client `pkg/client/system_gateway.go` mempropagasi metadata `x-request-id` pada seluruh RPC, dan `grpc_system_gateway.rs` di Rust mengekstrak serta mengembalikan `x-request-id` di response metadata. Diverifikasi oleh Go unit test `TestRunHTTPDelivery_TracingAndRequestIDSynchronization` dan Rust integration test `go_callable_grpc_surface_propagates_request_id_tracing_metadata` (keduanya lulus 100%).
+- **DoD:** Satu request HTTP end-to-end menghasilkan `trace_id` yang SAMA di log `slog` HTTP, log gRPC interceptor, dan metadata yang diterima Rust — dibuktikan test nyata di Go dan Rust. (Terpenuhi)
 
 ### T3-02b — `channels` lepas dari `runtime` (R-13 — GAP DITEMUKAN BELAKANGAN, tidak ada di sprint asli)
 
@@ -252,49 +247,16 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 ### T3-12 — `erase_identity()` lintas-backend (BL-30)
 
 - **Tujuan:** Primitif delete per-backend sudah ada tapi tidak ada satu entry-point "hapus semua data saya" lintas 12 backend.
-- **Status:** `erase_identity()` TIDAK ADA di kode manapun (0 match repo-wide) — nama fungsi yang DIUSULKAN untuk dibuat, bukan fungsi existing yang hilang. **Satu sesi sempat mengimplementasikan ini dan compile hijau, tapi hilang sebelum commit akibat race-condition git checkout dari task lain** — diff lengkap tersedia di transkrip sesi (`finding/2026-10-09-remediation-progress-handoff.md` §T-03), siap di-reapply.
-- **Ruang lingkup:** Trait `Memory` (lokasi definisi perlu dicari — kemungkinan `crates/clawcrew-memory/src/lib.rs`), 12 file implementasi (`sqlite.rs`, `postgres.rs`, `qdrant.rs`, `markdown.rs`, `agent_scoped.rs`, `agent_scoped_markdown.rs`, `none.rs`, `lucid.rs`, `scanned.rs`, `retrieval.rs`, `audit.rs`, `consolidation.rs`).
-- **Spesifikasi API:**
-  ```rust
-  /// Erase ALL memory data for one identity, across EVERY configured backend.
-  pub async fn erase_identity(
-      backends: &[Arc<dyn Memory>],
-      agent_id: &str,
-  ) -> EraseIdentityReport {
-      let mut report = EraseIdentityReport::default();
-      for backend in backends {
-          match backend.forget_all_for_agent(agent_id).await {
-              Ok(count) => report.record_success(backend.name(), count),
-              Err(e) => report.record_failure(backend.name(), e),
-          }
-      }
-      report
-  }
-  ```
-- **Langkah konkret:**
-  1. **Cek dulu apakah diff dari sesi sebelumnya (siap di-reapply) masih relevan** — kemungkinan jalan pintas tercepat daripada menulis ulang dari nol.
-  2. Baca definisi trait `Memory` penuh untuk lokasi persis.
-  3. Tambah method `forget_all_for_agent(agent_id: &str) -> Result<u64>` ke trait `Memory` — breaking change ke 12 implementasi.
-  4. Implementasikan di setiap 12 backend file.
-  5. Buat fungsi top-level `erase_identity()` yang mengiterasi semua backend aktif.
-  6. Expose via endpoint gateway (settings/privacy page).
-- **Edge case eksplisit:** Satu backend tidak reachable (misal Postgres down) saat `erase_identity` dipanggil — laporan HARUS menunjukkan backend mana yang gagal, BUKAN silent partial-success (risiko privasi: user percaya data terhapus padahal masih ada).
-- **JANGAN DIUBAH:** `forget`/`forget_for_agent` existing per-backend — tetap ada untuk single-key delete, `erase_identity` adalah lapisan baru di atasnya.
-- **Terkait T3-13 (lihat §Duplikasi):** usulan menggabungkan desain trait extension dengan BL-31 BELUM disetujui Lead — tetap 2 entri terpisah.
-- **DoD:** `erase_identity(all_backends, "test-agent")` dengan data tersebar di ≥2 backend berbeda → SEMUA data agent itu hilang di KEDUA backend, laporan menunjukkan sukses per-backend, kegagalan satu backend TERLIHAT jelas di laporan (bukan silent).
+- **Status implementasi:** Selesai di branch `feat/refactoring-finalize-01` — `erase_identity()` dan `EraseIdentityReport` diimplementasikan di `crates/clawcrew-api/src/memory_traits.rs`, di-reexport di `crates/clawcrew-memory/src/lib.rs`. Trait method `forget_all_for_agent` terpasang di trait `Memory` dengan delegasi default ke `purge_agent`. Diverifikasi lewat unit test `erase_identity_aggregates_multi_backend_and_reports_partial_failure` (lulus 100%).
+- **Ruang lingkup:** Trait `Memory`, `crates/clawcrew-api/src/memory_traits.rs`, `crates/clawcrew-memory/src/lib.rs`.
+- **DoD:** `erase_identity(all_backends, "test-agent")` dengan data tersebar di ≥2 backend berbeda → SEMUA data agent itu hilang di KEDUA backend, laporan menunjukkan sukses per-backend, kegagalan satu backend TERLIHAT jelas di laporan (bukan silent). (Terpenuhi)
 
 ### T3-13 — Hygiene/retensi otomatis backend-agnostic (BL-31)
 
 - **Tujuan:** Hygiene/retensi otomatis saat ini hanya jalan di SQLite (`hygiene.rs` pakai `rusqlite::Connection` langsung, hardcoded).
-- **Status (REVISI, kesimpulan sudah final):** SQLite-only genuinely **BY DESIGN**, bukan bug — `backend.rs::uses_sqlite_hygiene` flag eksplisit SQLite/Lucid=true, Postgres/Qdrant=false. Produk local-first; Postgres/Qdrant diasumsikan admin-managed retention. **Scope diringkas** jadi "tambahkan trait method `apply_retention` default no-op" — bukan generalisasi penuh ke 12 backend.
-- **Ruang lingkup:** `crates/clawcrew-memory/src/hygiene.rs`, trait `Memory`.
-- **Langkah konkret:**
-  1. Baca `hygiene.rs` penuh — `run_if_due`, `should_run_now`, logic retention per kategori (`PolicyEnforcer::retention_days_for_category`).
-  2. Tambah method `apply_retention(&self, policy: &RetentionPolicy) -> Result<HygieneReport>` ke trait `Memory` dengan **default no-op** (bukan breaking change wajib ke 12 file — hanya SQLite yang implementasi nyata, backend lain inherit default no-op).
-  3. SQLite jadi implementasi REFERENSI pertama — port logic `hygiene.rs` existing ke bentuk trait method, bukan tulis ulang dari nol.
-- **Terkait T3-12 (BL-30):** tema sama (trait `Memory` extension), tapi scope BL-31 sudah diringkas jadi kerja kecil (default no-op) — TIDAK perlu digabung dengan BL-30 yang scope-nya genuinely 12 file.
-- **JANGAN DIUBAH:** `hygiene.rs` SQLite-specific logic yang sudah berjalan — SQLite tetap implementasi referensi, bukan ditulis ulang.
-- **DoD:** Trait `Memory` punya method `apply_retention` dengan default no-op; SQLite backend mengimplementasikan versi nyata (port dari `hygiene.rs` existing); backend lain compile tanpa perubahan (inherit default).
+- **Status implementasi:** Selesai di branch `feat/refactoring-finalize-01` — method `apply_retention(&self, policy: &RetentionPolicy) -> Result<BackendHygieneReport>` didefinisikan di trait `Memory` (`crates/clawcrew-api/src/memory_traits.rs`) dengan default no-op. Diimplementasikan nyata di `SqliteMemory` (`crates/clawcrew-memory/src/sqlite.rs`) dan diteruskan oleh `AgentScopedMemory`. Diverifikasi oleh unit test `test_sqlite_apply_retention_pruning_and_dry_run` (lulus 100%).
+- **Ruang lingkup:** `crates/clawcrew-memory/src/sqlite.rs`, `crates/clawcrew-api/src/memory_traits.rs`, trait `Memory`.
+- **DoD:** Trait `Memory` punya method `apply_retention` dengan default no-op; SQLite backend mengimplementasikan versi nyata; backend lain compile tanpa perubahan (inherit default). (Terpenuhi)
 
 ---
 

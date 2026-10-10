@@ -227,6 +227,7 @@ func (c *systemGatewayClient) StoreLearnedRule(ctx context.Context, rule string,
 		return nil, err
 	}
 
+	ctx = withRequestIDMetadata(ctx)
 	resp, err := client.StoreLearnedRule(ctx, &pb.StoreLearnedRuleRequest{
 		Rule:       rule,
 		Scope:      scope,
@@ -245,6 +246,7 @@ func (c *systemGatewayClient) RetrieveLearnedRules(ctx context.Context, scopeKey
 		return nil, err
 	}
 
+	ctx = withRequestIDMetadata(ctx)
 	resp, err := client.RetrieveLearnedRules(ctx, &pb.RetrieveLearnedRulesRequest{
 		ScopeKey:   scopeKey,
 		ScopeValue: scopeValue,
@@ -262,6 +264,7 @@ func (c *systemGatewayClient) SyncPairedDevice(ctx context.Context, devID, devNa
 		return err
 	}
 
+	ctx = withRequestIDMetadata(ctx)
 	resp, err := client.SyncPairedDevice(ctx, &pb.SyncPairedDeviceRequest{
 		DeviceId:   devID,
 		DeviceName: devName,
@@ -285,6 +288,7 @@ func (c *systemGatewayClient) ListPairedDevices(ctx context.Context) ([]*pb.Devi
 		return nil, err
 	}
 
+	ctx = withRequestIDMetadata(ctx)
 	resp, err := client.ListPairedDevices(ctx, &pb.ListPairedDevicesRequest{})
 	if err != nil {
 		return nil, appErrors.Wrap(err, appErrors.CodeInternal, "failed to list paired devices from Rust registry", appErrors.LayerExternal)
@@ -299,6 +303,7 @@ func (c *systemGatewayClient) RevokePairedDevice(ctx context.Context, devID stri
 		return err
 	}
 
+	ctx = withRequestIDMetadata(ctx)
 	resp, err := client.RevokePairedDevice(ctx, &pb.RevokePairedDeviceRequest{
 		DeviceId: devID,
 	})

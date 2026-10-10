@@ -395,23 +395,59 @@ impl SystemGatewayService {
     }
 }
 
+/// Extract `x-request-id` from incoming gRPC request metadata for end-to-end tracing (BG-F5).
+pub fn extract_request_id<T>(request: &Request<T>) -> Option<String> {
+    request
+        .metadata()
+        .get("x-request-id")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string())
+}
+
+/// Attach `x-request-id` to outgoing gRPC response metadata if present (BG-F5).
+pub fn attach_request_id<T>(mut response: Response<T>, req_id: Option<&str>) -> Response<T> {
+    if let Some(id) = req_id {
+        if let Ok(val) = id.parse() {
+            response.metadata_mut().insert("x-request-id", val);
+        }
+    }
+    response
+}
+
 #[tonic::async_trait]
 impl SystemGateway for SystemGatewayService {
     async fn execute_native_tool(
         &self,
         request: Request<ToolCallRequest>,
     ) -> Result<Response<ToolCallResponse>, Status> {
+        let req_id = extract_request_id(&request);
         let req = request.into_inner();
+
+        if let Some(ref id) = req_id {
+            ::clawcrew_log::record!(
+                INFO,
+                ::clawcrew_log::Event::new("grpc_system_gateway", ::clawcrew_log::Action::Invoke)
+                    .with_attrs(::serde_json::json!({
+                        "trace_id": id,
+                        "tool": req.tool_name,
+                    })),
+                "grpc_system_gateway executing native tool"
+            );
+        }
+
         if !ALLOWED_TOOLS.contains(&req.tool_name.as_str()) {
-            return Ok(Response::new(ToolCallResponse {
-                success: false,
-                output: String::new(),
-                error: format!(
-                    "tool '{}' is not in the allowlist {ALLOWED_TOOLS:?}",
-                    req.tool_name
-                ),
-                exit_code: None,
-            }));
+            return Ok(attach_request_id(
+                Response::new(ToolCallResponse {
+                    success: false,
+                    output: String::new(),
+                    error: format!(
+                        "tool '{}' is not in the allowlist {ALLOWED_TOOLS:?}",
+                        req.tool_name
+                    ),
+                    exit_code: None,
+                }),
+                req_id.as_deref(),
+            ));
         }
 
         // Parse tool arguments (JSON format expected from engine).
@@ -424,12 +460,15 @@ impl SystemGateway for SystemGatewayService {
             match self.validate_path_with_workspace(ws_path, &self.workspace_root()) {
                 Ok(root) => root,
                 Err(e) => {
-                    return Ok(Response::new(ToolCallResponse {
-                        success: false,
-                        output: String::new(),
-                        error: format!("workspace path validation failed: {}", e),
-                        exit_code: None,
-                    }));
+                    return Ok(attach_request_id(
+                        Response::new(ToolCallResponse {
+                            success: false,
+                            output: String::new(),
+                            error: format!("workspace path validation failed: {}", e),
+                            exit_code: None,
+                        }),
+                        req_id.as_deref(),
+                    ));
                 }
             }
         } else {
@@ -479,24 +518,33 @@ impl SystemGateway for SystemGatewayService {
         };
 
         match result {
-            Ok(Ok(output)) => Ok(Response::new(ToolCallResponse {
-                success: true,
-                output,
-                error: String::new(),
-                exit_code: None,
-            })),
-            Ok(Err(error)) => Ok(Response::new(ToolCallResponse {
-                success: false,
-                output: String::new(),
-                error,
-                exit_code: None,
-            })),
-            Err(_) => Ok(Response::new(ToolCallResponse {
-                success: false,
-                output: String::new(),
-                error: format!("execution timed out after {} seconds", timeout_seconds),
-                exit_code: None,
-            })),
+            Ok(Ok(output)) => Ok(attach_request_id(
+                Response::new(ToolCallResponse {
+                    success: true,
+                    output,
+                    error: String::new(),
+                    exit_code: None,
+                }),
+                req_id.as_deref(),
+            )),
+            Ok(Err(error)) => Ok(attach_request_id(
+                Response::new(ToolCallResponse {
+                    success: false,
+                    output: String::new(),
+                    error,
+                    exit_code: None,
+                }),
+                req_id.as_deref(),
+            )),
+            Err(_) => Ok(attach_request_id(
+                Response::new(ToolCallResponse {
+                    success: false,
+                    output: String::new(),
+                    error: format!("execution timed out after {} seconds", timeout_seconds),
+                    exit_code: None,
+                }),
+                req_id.as_deref(),
+            )),
         }
     }
 
@@ -1036,8 +1084,21 @@ impl SystemGateway for SystemGatewayService {
 
     async fn get_native_tool_catalog(
         &self,
-        _request: Request<GetNativeToolCatalogRequest>,
+        request: Request<GetNativeToolCatalogRequest>,
     ) -> Result<Response<GetNativeToolCatalogResponse>, Status> {
+        let req_id = extract_request_id(&request);
+        if let Some(ref id) = req_id {
+            ::clawcrew_log::record!(
+                INFO,
+                ::clawcrew_log::Event::new("grpc_system_gateway", ::clawcrew_log::Action::Query)
+                    .with_attrs(::serde_json::json!({
+                        "trace_id": id,
+                        "catalog": "native_tools",
+                    })),
+                "grpc_system_gateway querying native tool catalog"
+            );
+        }
+
         let tools = vec![
             NativeToolDefinition {
                 name: "bash".to_string(),
@@ -1074,7 +1135,7 @@ impl SystemGateway for SystemGatewayService {
             },
         ];
 
-        Ok(Response::new(GetNativeToolCatalogResponse { tools }))
+        Ok(attach_request_id(Response::new(GetNativeToolCatalogResponse { tools }), req_id.as_deref()))
     }
 }
 

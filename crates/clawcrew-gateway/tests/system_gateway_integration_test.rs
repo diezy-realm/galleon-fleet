@@ -199,3 +199,44 @@ async fn go_callable_grpc_surface_returns_native_tool_catalog() {
 
     server.abort();
 }
+
+#[tokio::test]
+async fn go_callable_grpc_surface_propagates_request_id_tracing_metadata() {
+    let (channel, server, _addr) = spawn_server().await;
+
+    let mut grpc = tonic::client::Grpc::new(channel);
+    let path =
+        http::uri::PathAndQuery::from_static("/clawcrew.agent.SystemGateway/ExecuteNativeTool");
+    grpc.ready().await.expect("channel ready");
+
+    let test_trace_id = "test-trace-id-abc-98765";
+    let mut request = tonic::Request::new(ToolCallRequest {
+        tool_name: "bash".to_string(),
+        arguments_json: r#"{"command":"echo trace-ok"}"#.to_string(),
+        workspace_path: None,
+        timeout_seconds: None,
+    });
+    request
+        .metadata_mut()
+        .insert("x-request-id", test_trace_id.parse().unwrap());
+
+    let response: tonic::Response<ToolCallResponse> = grpc
+        .unary(request, path, ProstCodec::default())
+        .await
+        .expect("unary call succeeds");
+
+    let returned_trace_id = response
+        .metadata()
+        .get("x-request-id")
+        .and_then(|v| v.to_str().ok());
+
+    assert_eq!(
+        returned_trace_id,
+        Some(test_trace_id),
+        "Rust gateway must echo/propagate x-request-id in response metadata"
+    );
+    assert!(response.into_inner().output.contains("trace-ok"));
+
+    server.abort();
+}
+
