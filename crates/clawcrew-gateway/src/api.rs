@@ -267,7 +267,7 @@ pub struct StatusResponse {
     /// Configured agent alias used for per-agent resolution, or `null` for the install-wide view.
     pub agent_alias: Option<String>,
     /// Self-process resource snapshot; unsupported hosts report zero memory and a null CPU value.
-    pub process: clawcrew_runtime::process_stats::ProcessStats,
+    pub process: clawcrew_infra::process_stats::ProcessStats,
     /// Whether the gateway polls for newer releases and shows an update indicator.
     pub check_updates: bool,
     /// Whether browser-triggered self-upgrade is enabled.
@@ -357,7 +357,7 @@ pub async fn handle_api_status(
             ),
         };
 
-    let process = clawcrew_runtime::process_stats::sample();
+    let process = clawcrew_infra::process_stats::sample();
 
     // Upgrade affordance: whether the dashboard should poll for updates / offer
     // the upgrade button, and which restart command to show afterwards.
