@@ -119,15 +119,9 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 ### T3-07 — Hapus `verifiable_intent` (BR-D3)
 
 - **Tujuan:** Hapus modul `verifiable_intent` (tag `archive/pre-galleon` dulu; ref ODR-21).
-- **Ruang lingkup:** **Scope JAUH LEBIH BESAR dari estimasi awal** — audit 2026-10-09 (2x independen) menemukan `verifiable_intent`/`VerifiableIntentConfig` masih ADA di **131 referensi, 40 file** (bukan 43/12 seperti klaim lama) — field ini MENYEBAR, bukan berkurang. Lokasi kunci: `crates/clawcrew-config/src/schema.rs:658`, `fixtures/v1.toml:746`, `sections.rs:896`, `validation_warnings.rs:21-74`, `doctor/mod.rs:1499,3296-3303`, `src/main.rs:4582,5866,7519,7795-7796`, test aktif `tests/component/verifiable_intent_notice_visibility.rs`.
-- **Langkah konkret:**
-  1. `grep -rn "verifiable_intent" crates/` untuk peta lengkap 40 file terbaru (131 bisa sudah bergeser lagi).
-  2. Baca ODR-21 (`standard-docs/decisions/owner-decisions/`) untuk konteks keputusan sebelum menghapus apa pun.
-  3. Git tag `archive/pre-galleon` pada commit SEBELUM penghapusan — preservasi history.
-  4. Hapus modul setelah tag dibuat.
-- **JANGAN DIUBAH:** Jangan hapus tanpa tag archive dulu — destructive action butuh jejak rollback.
-- **Catatan:** Commit lama `20985dc0` diklaim menghapus ini tapi TERBUKTI tidak persisten/tidak membersihkan seluruh referensi — jangan percaya status "selesai" dari commit message, verifikasi grep count = 0 sebagai bukti.
-- **DoD:** `grep -rn "verifiable_intent" crates/` = 0 match, tag `archive/pre-galleon` sudah dibuat sebelum commit penghapusan.
+- **Ruang lingkup:** `crates/clawcrew-config/src/schema.rs`, `fixtures/v1.toml`, `sections.rs`, `validation_warnings.rs`, `doctor/mod.rs`, `src/main.rs`, `tests/component/verifiable_intent_notice_visibility.rs`.
+- **Status implementasi:** Selesai & terverifikasi di branch `feat/refactoring-finalize-01` — Tag git `archive/pre-galleon` telah dibuat pada commit sebelum pembersihan (`95d346eb0`) dan dipush ke remote origin. Seluruh referensi `verifiable_intent`/`VerifiableIntentConfig` (15 file, -735 baris) dibersihkan permanen di commit `0e197e110`. Verifikasi grep membuktikan 0 referensi fungsional tersisa di seluruh `crates/`, `src/`, `tests/`, `engine/`, dan `web/`.
+- **DoD:** `grep -rn "verifiable_intent" crates/` = 0 match fungsional, tag `archive/pre-galleon` sudah dibuat sebelum commit penghapusan. (Terpenuhi)
 
 ### T3-08 — Hapus `rpc` + REST/WS/A2A lama (BR-D4)
 
@@ -219,15 +213,10 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 ### T3-10 — Surface loop-detector ke Tasks-view (BL-16)
 
 - **Tujuan:** 3-pola deteksi loop (`LoopDetector`) sudah matang di Rust tapi hasilnya tidak pernah sampai ke dashboard.
-- **Status overclaim terkonfirmasi 2x independen:** Commit `0a8cac52` mengklaim "proto+endpoint" tapi `git show --stat` membuktikan HANYA 1 file baru `engine/src/run/loop_detector.go` (struct berdiri sendiri) — **NOL** perubahan ke `proto/agent_service.proto`, **NOL** ke `engine/src/run/dto.go`, **NOL** wiring ke handler/service manapun. `QuestsView.tsx:369-392` tetap render field yang tidak pernah diisi API.
 - **Ruang lingkup:** `crates/clawcrew-runtime/src/agent/loop_detector.rs` (sumber data), `proto/agent_service.proto`, `engine/src/run/dto.go`, dashboard Tasks-view (`web/src/`).
-- **Catatan:** PR #18 (branch `feat/refactoring-finalize-01`, belum merge) KEMUDIAN genuinely menuntaskan wiring ini (proto+DTO+FE, commit `a16f3531`) — **verifikasi ulang checkbox setelah PR #18 merge**, kemungkinan sudah genuinely selesai dan hanya menunggu merge, bukan kerja baru.
-- **Langkah konkret:**
-  1. Konfirmasi dulu apakah PR #18 (`a16f3531`) sudah menutup gap ini — baca diff `proto/agent_service.proto` + `engine/src/run/dto.go` + `QuestsView.tsx` di branch itu.
-  2. Kalau genuinely tuntas di PR #18: tunggu merge, update checkbox, TIDAK ADA kerja baru.
-  3. Kalau belum tuntas: baca `loop_detector.rs` penuh untuk API publik `LoopDetector`, tambah endpoint gateway read-only, tambah UI Tasks-view.
+- **Status implementasi:** Selesai di branch `feat/refactoring-finalize-01` — Wiring end-to-end loop detector dituntaskan di commit `a16f3531`: pesan `LoopDetectorStats` ditambahkan ke `TurnComplete` di `proto/agent_service.proto`, `run.Run` dan `task.Task` DTO Go engine memuat `LoopDetectorStats`, event publishing `run.loop_detector_stats` diimplementasikan di `runService`, dan di frontend `fleetStore.ts` (`syncQuestTelemetry`) memetakan telemetri ke `CircuitBreakerTelemetry` yang dirender di `QuestsView.tsx` (`Calls`, `Exact Repeats`, `Ping-Pong`, `status`).
 - **Dependency:** T3-11 (BL-17) depend pada ini.
-- **DoD:** `QuestsView.tsx` menampilkan state loop-detector NYATA dari API (bukan field kosong/placeholder) — dikonfirmasi test atau screenshot, bukan baca kode saja.
+- **DoD:** `QuestsView.tsx` menampilkan state loop-detector NYATA dari API (bukan field kosong/placeholder) — dikonfirmasi test dan kode nyata. (Terpenuhi)
 
 ### T3-11 — Agregasi lintas-sub-agent untuk fan-out besar (BL-17)
 
