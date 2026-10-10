@@ -351,6 +351,21 @@ func (h *HTTPHandler) handleSystemMetrics(w http.ResponseWriter, r *http.Request
 
 	usedMB := int(mem.Alloc / (1024 * 1024))
 	totalSysMB := int(mem.Sys / (1024 * 1024))
+	cpuUsage := 0.0
+
+	// Delegate OS-level telemetry (CPU/mem) to Rust SystemGateway (G-22 / T3-25)
+	if h.service != nil {
+		if sysMetrics, err := h.service.GetSystemMetrics(r.Context()); err == nil && sysMetrics != nil {
+			cpuUsage = sysMetrics.GetCpuUsagePercent()
+			if sysMetrics.GetMemoryUsedMb() > 0 {
+				usedMB = int(sysMetrics.GetMemoryUsedMb())
+			}
+			if sysMetrics.GetMemoryTotalMb() > 0 {
+				totalSysMB = int(sysMetrics.GetMemoryTotalMb())
+			}
+		}
+	}
+
 	var percent int
 	if totalSysMB > 0 {
 		percent = int((usedMB * 100) / totalSysMB)
@@ -359,7 +374,7 @@ func (h *HTTPHandler) handleSystemMetrics(w http.ResponseWriter, r *http.Request
 	// Canonical System Metrics SSOT satisfying both Web-2 browser view and Tauri desktop shell
 	metricsResponse := map[string]any{
 		// Web-2 browser telemetry shape
-		"cpuUsage": 1.5,
+		"cpuUsage": cpuUsage,
 		"memoryUsage": map[string]any{
 			"usedMB":  usedMB,
 			"totalMB": totalSysMB,

@@ -1137,6 +1137,40 @@ impl SystemGateway for SystemGatewayService {
 
         Ok(attach_request_id(Response::new(GetNativeToolCatalogResponse { tools }), req_id.as_deref()))
     }
+
+    async fn get_system_metrics(
+        &self,
+        request: Request<SystemMetricsRequest>,
+    ) -> Result<Response<SystemMetricsResponse>, Status> {
+        let req_id = extract_request_id(&request);
+        if let Some(ref id) = req_id {
+            ::clawcrew_log::record!(
+                INFO,
+                ::clawcrew_log::Event::new("grpc_system_gateway", ::clawcrew_log::Action::Query)
+                    .with_attrs(::serde_json::json!({
+                        "trace_id": id,
+                        "query": "system_metrics",
+                    })),
+                "grpc_system_gateway sampling real OS system metrics"
+            );
+        }
+
+        let stats = clawcrew_runtime::process_stats::sample();
+        let cpu_usage_percent = stats.cpu_percent.map(|v| v as f64).unwrap_or(0.0);
+        let memory_used_mb = stats.rss_bytes / (1024 * 1024);
+        let memory_total_mb = stats.system_ram_total_bytes / (1024 * 1024);
+
+        let resp = SystemMetricsResponse {
+            cpu_usage_percent,
+            memory_used_mb,
+            memory_total_mb,
+            num_cpus: stats.num_cpus,
+            rss_bytes: stats.rss_bytes,
+            system_ram_total_bytes: stats.system_ram_total_bytes,
+        };
+
+        Ok(attach_request_id(Response::new(resp), req_id.as_deref()))
+    }
 }
 
 #[cfg(test)]

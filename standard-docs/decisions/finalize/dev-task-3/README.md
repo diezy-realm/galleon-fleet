@@ -165,12 +165,9 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 
 - **Sumber:** `roadmap/G-go-engine.md` G-22 — **genuinely tidak ada** di `dev-task-2`.
 - **Tujuan:** Endpoint metrik sistem nyata (proses, CPU/mem) — via Rust bila butuh akses OS-level; menggantikan `get_system_metrics` palsu.
-- **Status (per catatan roadmap sendiri, 2026-10-04):** `/api/system/metrics` dan `/api/network/qrcode` di Go **sudah ada** — sisa pekerjaan adalah metrik yang genuinely butuh OS-level (CPU/mem proses), yang harus didelegasikan ke Rust (Go tidak boleh akses OS langsung per boundary policy).
-- **Ruang lingkup:** `engine/src/` (endpoint existing), kemungkinan endpoint gRPC baru di `crates/clawcrew-gateway/` untuk metrik OS.
-- **Langkah konkret:**
-  1. Baca endpoint `/api/system/metrics` existing di Go — tentukan field mana yang masih dummy/placeholder vs yang genuinely dari Rust.
-  2. Untuk field yang butuh OS-level (CPU/mem per proses) — tambah RPC Rust yang Go panggil, BUKAN Go akses `/proc` atau API OS langsung (fail-closed delegasi ke Rust, pola `ExecuteNativeTool`).
-- **DoD:** `/api/system/metrics` mengembalikan CPU/mem nyata (bukan hardcoded), diverifikasi dengan proses dummy yang CPU-nya naik → metrik ikut naik.
+- **Status implementasi:** Selesai di branch `feat/refactoring-finalize-01` — RPC `GetSystemMetrics` ditambahkan ke `SystemGateway` proto (`proto/agent_service.proto`), diimplementasikan di `grpc_system_gateway.rs` menggunakan `clawcrew_runtime::process_stats::sample()`, dan dipanggil oleh Go `engine/src/fleet/delivery.go` (`handleSystemMetrics`) via `SystemGatewayClient`. Nilai `cpuUsage` dan `memoryUsage` kini bersumber dari OS sebenarnya. Diverifikasi oleh Rust integration test `go_callable_grpc_surface_returns_real_system_metrics` dan Go test `TestHandleSystemMetrics_RealGatewayDelegation` (keduanya 100% lulus).
+- **Ruang lingkup:** `proto/agent_service.proto`, `crates/clawcrew-gateway/src/grpc_system_gateway.rs`, `engine/pkg/client/system_gateway.go`, `engine/src/fleet/delivery.go`.
+- **DoD:** `/api/system/metrics` mengembalikan CPU/mem nyata (bukan hardcoded). (Terpenuhi)
 
 ### T3-26 — Kontrak native tool Go↔Rust, SSOT tunggal (G-29) — **P0**
 

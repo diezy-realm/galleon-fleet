@@ -169,6 +169,13 @@ func (s *fleetService) GetMetrics(ctx context.Context) (*FleetMetrics, error) {
 	}, nil
 }
 
+func (s *fleetService) GetSystemMetrics(ctx context.Context) (*pb.SystemMetricsResponse, error) {
+	if s.gateway != nil {
+		return s.gateway.GetSystemMetrics(ctx)
+	}
+	return nil, errors.New("system gateway is unavailable")
+}
+
 // countCollection returns the length of a stored JSON array collection; a
 // missing/empty/unparseable collection is honestly 0 (C1). Caller holds s.mu.
 func (s *fleetService) countCollection(name string) int {

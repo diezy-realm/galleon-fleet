@@ -22,7 +22,7 @@ Ref: `finalize/task-breakdown.md` GRUP 1–5, `tech-standart/tech-stack/go-conve
 
 - [ ] **G-20 (P1, L) Pairing perangkat via QR:** buat token sekali pakai terikat perangkat, ekspirasi, daftar perangkat, revoke; endpoint `/api/pairing/*`. Acceptance: tanpa token valid, perangkat lain ditolak; rate-limit. (Menggantikan QR di `web/server.ts`.)
 - [ ] **G-21 (P1, M) Autentikasi perangkat/sesi** untuk akses remote (middleware) — dasar Nginx/VPS. Dep: G-20.
-- [ ] **G-22 (P1, M) Endpoint metrik sistem nyata** (proses, CPU/mem) — via Rust bila butuh OS; menggantikan `get_system_metrics` palsu. *Status 2026-10-04: endpoint `/api/system/metrics` & `/api/network/qrcode` di Go sudah ada; sisa metrik OS via Rust.*
+- [x] **G-22 (P1, M) Endpoint metrik sistem nyata** (proses, CPU/mem) [Selesai PR-finalize-01] RPC `GetSystemMetrics` via Rust SystemGateway (:50052) memetakan `process_stats::sample()` (CPU% dan RAM nyata); endpoint `/api/system/metrics` di Go mendelegasikan telemetri OS ke Rust. Test integrasi dan unit test lulus 100%.
 - [ ] **G-23 (P1, L) Model organisasi:** Quartermaster→Ship→Squad→Crew sebagai agregat persisten + API CRUD + validasi kuota/budget. Ref GRUP 4.
 - [ ] **G-24 (P2, L) Learning by consent (C5):** umpan balik → kandidat memori → persetujuan Owner → versi/rollback. Dep: G-13.
 - [ ] **G-25 (P2, M) Kontrak rute QM two-layer (C4)** + test. Ref GRUP 3.

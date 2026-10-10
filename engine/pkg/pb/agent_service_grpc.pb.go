@@ -221,6 +221,7 @@ const (
 	SystemGateway_ListPairedDevices_FullMethodName    = "/clawcrew.agent.SystemGateway/ListPairedDevices"
 	SystemGateway_RevokePairedDevice_FullMethodName   = "/clawcrew.agent.SystemGateway/RevokePairedDevice"
 	SystemGateway_GetNativeToolCatalog_FullMethodName = "/clawcrew.agent.SystemGateway/GetNativeToolCatalog"
+	SystemGateway_GetSystemMetrics_FullMethodName     = "/clawcrew.agent.SystemGateway/GetSystemMetrics"
 )
 
 // SystemGatewayClient is the client API for SystemGateway service.
@@ -249,6 +250,8 @@ type SystemGatewayClient interface {
 	RevokePairedDevice(ctx context.Context, in *RevokePairedDeviceRequest, opts ...grpc.CallOption) (*RevokePairedDeviceResponse, error)
 	// Returns the canonical SSOT catalog of native tools and their argument schemas (G-29 / T3-26)
 	GetNativeToolCatalog(ctx context.Context, in *GetNativeToolCatalogRequest, opts ...grpc.CallOption) (*GetNativeToolCatalogResponse, error)
+	// Returns real OS-level system metrics (CPU, RAM, process info) from the host (G-22 / T3-25)
+	GetSystemMetrics(ctx context.Context, in *SystemMetricsRequest, opts ...grpc.CallOption) (*SystemMetricsResponse, error)
 }
 
 type systemGatewayClient struct {
@@ -368,6 +371,16 @@ func (c *systemGatewayClient) GetNativeToolCatalog(ctx context.Context, in *GetN
 	return out, nil
 }
 
+func (c *systemGatewayClient) GetSystemMetrics(ctx context.Context, in *SystemMetricsRequest, opts ...grpc.CallOption) (*SystemMetricsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SystemMetricsResponse)
+	err := c.cc.Invoke(ctx, SystemGateway_GetSystemMetrics_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SystemGatewayServer is the server API for SystemGateway service.
 // All implementations must embed UnimplementedSystemGatewayServer
 // for forward compatibility.
@@ -394,6 +407,8 @@ type SystemGatewayServer interface {
 	RevokePairedDevice(context.Context, *RevokePairedDeviceRequest) (*RevokePairedDeviceResponse, error)
 	// Returns the canonical SSOT catalog of native tools and their argument schemas (G-29 / T3-26)
 	GetNativeToolCatalog(context.Context, *GetNativeToolCatalogRequest) (*GetNativeToolCatalogResponse, error)
+	// Returns real OS-level system metrics (CPU, RAM, process info) from the host (G-22 / T3-25)
+	GetSystemMetrics(context.Context, *SystemMetricsRequest) (*SystemMetricsResponse, error)
 	mustEmbedUnimplementedSystemGatewayServer()
 }
 
@@ -433,6 +448,9 @@ func (UnimplementedSystemGatewayServer) RevokePairedDevice(context.Context, *Rev
 }
 func (UnimplementedSystemGatewayServer) GetNativeToolCatalog(context.Context, *GetNativeToolCatalogRequest) (*GetNativeToolCatalogResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNativeToolCatalog not implemented")
+}
+func (UnimplementedSystemGatewayServer) GetSystemMetrics(context.Context, *SystemMetricsRequest) (*SystemMetricsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSystemMetrics not implemented")
 }
 func (UnimplementedSystemGatewayServer) mustEmbedUnimplementedSystemGatewayServer() {}
 func (UnimplementedSystemGatewayServer) testEmbeddedByValue()                       {}
@@ -628,6 +646,24 @@ func _SystemGateway_GetNativeToolCatalog_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SystemGateway_GetSystemMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SystemMetricsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemGatewayServer).GetSystemMetrics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SystemGateway_GetSystemMetrics_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemGatewayServer).GetSystemMetrics(ctx, req.(*SystemMetricsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SystemGateway_ServiceDesc is the grpc.ServiceDesc for SystemGateway service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -670,6 +706,10 @@ var SystemGateway_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNativeToolCatalog",
 			Handler:    _SystemGateway_GetNativeToolCatalog_Handler,
+		},
+		{
+			MethodName: "GetSystemMetrics",
+			Handler:    _SystemGateway_GetSystemMetrics_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

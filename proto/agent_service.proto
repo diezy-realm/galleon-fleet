@@ -47,6 +47,9 @@ service SystemGateway {
 
     // Returns the canonical SSOT catalog of native tools and their argument schemas (G-29 / T3-26)
     rpc GetNativeToolCatalog(GetNativeToolCatalogRequest) returns (GetNativeToolCatalogResponse);
+
+    // Returns real OS-level system metrics (CPU, RAM, process info) from the host (G-22 / T3-25)
+    rpc GetSystemMetrics(SystemMetricsRequest) returns (SystemMetricsResponse);
 }
 
 // ======================================
@@ -324,6 +327,17 @@ message EditFileToolArgs {
     string path = 1;
     string target = 2;
     string replacement = 3;
+}
+
+message SystemMetricsRequest {}
+
+message SystemMetricsResponse {
+    double cpu_usage_percent = 1;
+    uint64 memory_used_mb = 2;
+    uint64 memory_total_mb = 3;
+    uint32 num_cpus = 4;
+    uint64 rss_bytes = 5;
+    uint64 system_ram_total_bytes = 6;
 }
 
 

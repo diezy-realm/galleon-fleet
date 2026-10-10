@@ -14,7 +14,8 @@
 
 use clawcrew_gateway::grpc_system_gateway::{
     system_gateway_server::SystemGatewayServer, GetNativeToolCatalogRequest,
-    GetNativeToolCatalogResponse, SystemGatewayService, ToolCallRequest, ToolCallResponse,
+    GetNativeToolCatalogResponse, SystemGatewayService, SystemMetricsRequest,
+    SystemMetricsResponse, ToolCallRequest, ToolCallResponse,
 };
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -239,4 +240,28 @@ async fn go_callable_grpc_surface_propagates_request_id_tracing_metadata() {
 
     server.abort();
 }
+
+#[tokio::test]
+async fn go_callable_grpc_surface_returns_real_system_metrics() {
+    let (channel, server, _addr) = spawn_server().await;
+
+    let mut grpc = tonic::client::Grpc::new(channel);
+    let path =
+        http::uri::PathAndQuery::from_static("/clawcrew.agent.SystemGateway/GetSystemMetrics");
+    grpc.ready().await.expect("channel ready");
+
+    let request = tonic::Request::new(SystemMetricsRequest {});
+    let response: tonic::Response<SystemMetricsResponse> = grpc
+        .unary(request, path, ProstCodec::default())
+        .await
+        .expect("unary call succeeds");
+
+    let metrics = response.into_inner();
+    assert!(metrics.system_ram_total_bytes > 0, "expected system_ram_total_bytes > 0");
+    assert!(metrics.memory_total_mb > 0, "expected memory_total_mb > 0");
+    assert!(metrics.num_cpus > 0, "expected num_cpus > 0");
+
+    server.abort();
+}
+
 

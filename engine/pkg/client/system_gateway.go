@@ -43,6 +43,8 @@ type SystemGatewayClient interface {
 	SyncPairedDevice(ctx context.Context, devID, devName, platform, tokenHash string) error
 	ListPairedDevices(ctx context.Context) ([]*pb.DeviceRecord, error)
 	RevokePairedDevice(ctx context.Context, devID string) error
+	// Returns real OS-level system metrics from Rust platform (G-22 / T3-25)
+	GetSystemMetrics(ctx context.Context) (*pb.SystemMetricsResponse, error)
 	Close() error
 }
 
@@ -161,6 +163,21 @@ func (c *systemGatewayClient) GetNativeToolCatalog(ctx context.Context) ([]*pb.N
 		return nil, appErrors.Wrap(err, appErrors.CodeToolFailed, "failed to get native tool catalog", appErrors.LayerExternal)
 	}
 	return resp.GetTools(), nil
+}
+
+func (c *systemGatewayClient) GetSystemMetrics(ctx context.Context) (*pb.SystemMetricsResponse, error) {
+	client, err := c.getClient()
+	if err != nil {
+		return nil, appErrors.Wrap(err, appErrors.CodeUnavailable, "Rust SystemGateway unreachable", appErrors.LayerExternal)
+	}
+
+	ctx = withRequestIDMetadata(ctx)
+	resp, err := client.GetSystemMetrics(ctx, &pb.SystemMetricsRequest{})
+	if err != nil {
+		return nil, appErrors.Wrap(err, appErrors.CodeInternal, "failed to get system metrics from Rust gateway", appErrors.LayerExternal)
+	}
+
+	return resp, nil
 }
 
 func (c *systemGatewayClient) GetDecryptedSecret(ctx context.Context, keyName string) (string, error) {
