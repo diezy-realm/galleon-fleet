@@ -2063,7 +2063,7 @@ pub async fn handle_api_sessions_running(
         .filter_map(|meta| {
             let session_id = meta.key.strip_prefix("gw_")?;
             // Session metadata projection (P1.5): observable provider fallbacks.
-            let session_meta = clawcrew_runtime::session::metadata::session_metadata(&meta.key);
+            let session_meta = clawcrew_infra::session_metadata::session_metadata(&meta.key);
             Some(serde_json::json!({
                 "session_id": session_id,
                 "created_at": meta.created_at.to_rfc3339(),
@@ -2106,7 +2106,7 @@ pub async fn handle_api_sessions_stream(
                 .filter_map(|meta| {
                     let session_id = meta.key.strip_prefix(GW_SESSION_PREFIX)?;
                     let session_meta =
-                        clawcrew_runtime::session::metadata::session_metadata(&meta.key);
+                        clawcrew_infra::session_metadata::session_metadata(&meta.key);
                     Some(serde_json::json!({
                         "session_id": session_id,
                         "last_activity": meta.last_activity.to_rfc3339(),
