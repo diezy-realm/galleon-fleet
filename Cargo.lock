@@ -1699,6 +1699,7 @@ dependencies = [
  "galleon-channel-irc",
  "galleon-channel-nostr",
  "galleon-channel-signal",
+ "galleon-channel-twitch",
  "galleon-i18n",
  "galleon-security-scrub",
  "glob",
@@ -4349,6 +4350,18 @@ dependencies = [
  "serde_json",
  "tokio",
  "uuid",
+]
+
+[[package]]
+name = "galleon-channel-twitch"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-spawn",
+ "galleon-channel-irc",
+ "tokio",
 ]
 
 [[package]]

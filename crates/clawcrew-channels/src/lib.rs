@@ -94,8 +94,11 @@ pub use galleon_channel_signal as signal;
 pub mod slack;
 #[cfg(feature = "channel-telegram")]
 pub mod telegram;
+// RF-B1: the Twitch channel now lives in its own feature-crate. Re-export it
+// under the historical `twitch` path so `crate::twitch::TwitchChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-twitch")]
-pub mod twitch;
+pub use galleon_channel_twitch as twitch;
 #[cfg(feature = "channel-twitter")]
 pub mod twitter;
 #[cfg(feature = "channel-voice-call")]

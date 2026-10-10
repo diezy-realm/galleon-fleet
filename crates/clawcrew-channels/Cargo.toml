@@ -45,6 +45,10 @@ galleon-channel-irc = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_nostr as nostr`) so existing callers
 # (`crate::nostr::NostrChannel`) keep compiling. Optional, behind `channel-nostr`.
 galleon-channel-nostr = { workspace = true, optional = true }
+# RF-B1: the Twitch channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_twitch as twitch`) so existing callers
+# (`crate::twitch::TwitchChannel`) keep compiling. Optional, behind `channel-twitch`.
+galleon-channel-twitch = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -273,7 +277,7 @@ channel-slack = ["ws-transport"]
 channel-signal = ["dep:galleon-channel-signal"]
 channel-mattermost = ["ws-transport"]
 channel-irc = ["dep:galleon-channel-irc"]
-channel-twitch = ["channel-irc"]
+channel-twitch = ["dep:galleon-channel-twitch"]
 channel-imessage = ["dep:galleon-channel-imessage"]
 channel-dingtalk = ["ws-transport"]
 channel-qq = ["ws-transport"]

@@ -1,8 +1,8 @@
 //! Twitch chat channel — thin adapter over the IRC channel.
 
-use crate::irc::{IrcChannel, IrcChannelConfig};
 use anyhow::Result;
 use async_trait::async_trait;
+use galleon_channel_irc::{IrcChannel, IrcChannelConfig};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
