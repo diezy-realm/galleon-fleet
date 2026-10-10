@@ -94,7 +94,7 @@ pub use rate_limit::{RATE_LIMIT_WINDOW_SECS, RATE_LIMIT_MAX_KEYS_DEFAULT, IDEMPO
 // Types from other modules that extracted files need
 pub use clawcrew_config::schema::Config;
 pub use clawcrew_api::memory_traits::MemoryStrategy;
-pub use clawcrew_runtime::tools::CanvasStore;
+pub use clawcrew_tools::canvas::CanvasStore;
 pub use clawcrew_config::pairing::PairingCodePolicy;
 
 use std::net::{IpAddr, SocketAddr};

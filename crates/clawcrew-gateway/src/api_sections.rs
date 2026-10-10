@@ -1478,7 +1478,7 @@ mod tests {
             )),
             device_registry: None,
             pending_pairings: None,
-            canvas_store: clawcrew_runtime::tools::CanvasStore::new(),
+            canvas_store: clawcrew_tools::canvas::CanvasStore::new(),
             #[cfg(feature = "webauthn")]
             webauthn: None,
             cancel_tokens: std::sync::Arc::new(std::sync::Mutex::new(
