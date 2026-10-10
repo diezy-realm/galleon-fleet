@@ -33,6 +33,108 @@ export interface ProcessItem {
   status: 'running' | 'idle' | 'stopped';
 }
 
+export interface HarborProvider {
+  id: string;
+  name: string;
+  vendor: string;
+  status: string;
+  models: string[];
+  latencyMs: number;
+  capabilities: string[];
+}
+
+export interface DiagnosticItem {
+  id: string;
+  component: string;
+  status: 'healthy' | 'warning' | 'error';
+  latency: string;
+  detail: string;
+}
+
+export interface SnapshotItem {
+  id: string;
+  createdAt: string;
+  label: string;
+  sizeMB: number;
+  entityCount: number;
+  checksum: string;
+  includes: string[];
+}
+
+export interface ExecutiveBriefing {
+  title: string;
+  date: string;
+  admiralStatus: string;
+  keyAchievements: string[];
+  activeAlerts: string[];
+  treasuryBurnRate: string;
+  recommendedFocus: string;
+  generatedAt: string;
+}
+
+export interface FleetMetrics {
+  activeVessels: number;
+  underwayQuests: number;
+  pendingApprovals: number;
+  totalTreasuryLedgers: number;
+  totalArtifacts: number;
+  totalSpecialists: number;
+  totalSquads: number;
+  systemUptime: string;
+  gatewayLatencyMs: number;
+  activeWorkers: number;
+  memoryUsedMB: number;
+}
+
+export interface SystemMetrics {
+  cpuUsage: number;
+  memoryUsage: {
+    usedMB: number;
+    totalMB: number;
+    percent: number;
+  };
+  activeProcesses: number;
+  uptime: string;
+  platform: string;
+  arch: string;
+  goVersion: string;
+  gateway_latency_ms: number;
+  active_threads: number;
+  isolation_mode: string;
+  memory_db_mb: number;
+}
+
+export interface NetworkInterfaceInfo {
+  name: string;
+  address: string;
+  url: string;
+}
+
+export interface NetworkInfo {
+  status?: string;
+  local_address?: string;
+  gateway_port?: number;
+  engine_port?: number;
+  hostname?: string;
+  port?: number;
+  host?: string;
+  interfaces?: NetworkInterfaceInfo[];
+  preferredLanUrl?: string;
+  isProduction?: boolean;
+  platform?: string;
+  memoryUsageMB?: number;
+}
+
+export interface ProjectGitStatus {
+  branch: string;
+  clean: boolean;
+  staged: string[];
+  unstaged: string[];
+  untracked: string[];
+  risk_tier: string;
+  policy_check: string;
+}
+
 export const apiClient = {
   isTauri(): boolean {
     return isTauriEnvironment();
@@ -75,10 +177,10 @@ export const apiClient = {
     }
   },
 
-  async getFleetMetrics(): Promise<Record<string, unknown>> {
+  async getFleetMetrics(): Promise<FleetMetrics> {
     if (this.isTauri()) {
       try {
-        return await invokeTauri('get_fleet_metrics');
+        return await invokeTauri<FleetMetrics>('get_fleet_metrics');
       } catch (e) {
         console.warn('[API] Tauri get_fleet_metrics fallback:', e);
       }
@@ -100,10 +202,10 @@ export const apiClient = {
     return json.message || 'Bell chimed successfully';
   },
 
-  async getSystemMetrics(): Promise<Record<string, unknown>> {
+  async getSystemMetrics(): Promise<SystemMetrics> {
     if (this.isTauri()) {
       try {
-        return await invokeTauri('get_system_metrics');
+        return await invokeTauri<SystemMetrics>('get_system_metrics');
       } catch (e) {
         console.warn('[API] Tauri get_system_metrics fallback:', e);
       }
@@ -118,10 +220,10 @@ export const apiClient = {
     return res.json();
   },
 
-  async getExecutiveBriefing(): Promise<Record<string, unknown>[]> {
+  async getExecutiveBriefing(): Promise<ExecutiveBriefing> {
     if (this.isTauri()) {
       try {
-        return await invokeTauri<Record<string, unknown>[]>('get_executive_briefing');
+        return await invokeTauri<ExecutiveBriefing>('get_executive_briefing');
       } catch (e) {
         console.warn('[API] Tauri get_executive_briefing fallback:', e);
       }
@@ -130,10 +232,10 @@ export const apiClient = {
     return res.json();
   },
 
-  async getHarborProviders(): Promise<Record<string, unknown>[]> {
+  async getHarborProviders(): Promise<HarborProvider[]> {
     if (this.isTauri()) {
       try {
-        return await invokeTauri<Record<string, unknown>[]>('get_harbor_providers');
+        return await invokeTauri<HarborProvider[]>('get_harbor_providers');
       } catch (e) {
         console.warn('[API] Tauri get_harbor_providers fallback:', e);
       }
@@ -142,10 +244,10 @@ export const apiClient = {
     return res.json();
   },
 
-  async getDiagnostics(): Promise<Record<string, unknown>[]> {
+  async getDiagnostics(): Promise<DiagnosticItem[]> {
     if (this.isTauri()) {
       try {
-        return await invokeTauri<Record<string, unknown>[]>('get_diagnostics');
+        return await invokeTauri<DiagnosticItem[]>('get_diagnostics');
       } catch (e) {
         console.warn('[API] Tauri get_diagnostics fallback:', e);
       }
@@ -154,10 +256,10 @@ export const apiClient = {
     return res.json();
   },
 
-  async applyRemedy(): Promise<Record<string, unknown>> {
+  async applyRemedy(): Promise<DiagnosticItem[]> {
     if (this.isTauri()) {
       try {
-        return await invokeTauri('apply_remedy');
+        return await invokeTauri<DiagnosticItem[]>('apply_remedy');
       } catch (e) {
         console.warn('[API] Tauri apply_remedy fallback:', e);
       }
@@ -166,10 +268,10 @@ export const apiClient = {
     return res.json();
   },
 
-  async getSnapshots(): Promise<Record<string, unknown>[]> {
+  async getSnapshots(): Promise<SnapshotItem[]> {
     if (this.isTauri()) {
       try {
-        return await invokeTauri<Record<string, unknown>[]>('get_snapshots');
+        return await invokeTauri<SnapshotItem[]>('get_snapshots');
       } catch (e) {
         console.warn('[API] Tauri get_snapshots fallback:', e);
       }
@@ -178,10 +280,10 @@ export const apiClient = {
     return res.json();
   },
 
-  async createSnapshot(title?: string): Promise<Record<string, unknown>> {
+  async createSnapshot(title?: string): Promise<SnapshotItem> {
     if (this.isTauri()) {
       try {
-        return await invokeTauri('create_snapshot', { title: title || 'Manual Sovereign Fleet Snapshot' });
+        return await invokeTauri<SnapshotItem>('create_snapshot', { title: title || 'Manual Sovereign Fleet Snapshot' });
       } catch (e) {
         console.warn('[API] Tauri create_snapshot fallback:', e);
       }
@@ -306,13 +408,19 @@ export const apiClient = {
     return res.json();
   },
 
-  async getHealth(): Promise<Record<string, unknown>> {
+  async getHealth(): Promise<{ status: string; uptime: string; timestamp: string }> {
     const res = await fetch('/api/health');
     return res.json();
   },
 
-  async getNetwork(): Promise<Record<string, unknown>> {
+  async getNetwork(): Promise<NetworkInfo> {
     const res = await fetch('/api/system/network');
+    return res.json();
+  },
+
+  async getProjectGitStatus(path?: string): Promise<ProjectGitStatus> {
+    const query = path ? `?path=${encodeURIComponent(path)}` : '';
+    const res = await fetch(`/api/project/git-status${query}`);
     return res.json();
   },
 

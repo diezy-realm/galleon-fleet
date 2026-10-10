@@ -57,6 +57,17 @@ fn test_ui_tier_boundaries() {
                         trimmed
                     ));
                 }
+
+                // Forbid direct fetch(...) calls in UI components outside apiClient.ts (U-11 / ADR 0002)
+                let is_api_client = path.ends_with("apiClient.ts") || path.ends_with("apiClient.tsx");
+                if !is_api_client && (trimmed.contains("fetch(") || trimmed.starts_with("fetch(")) {
+                    violations.push(format!(
+                        "  {}:{}: Direct fetch() call in UI tier outside apiClient.ts (U-11 violation): {}",
+                        path.display(),
+                        lineno + 1,
+                        trimmed
+                    ));
+                }
             }
         }
     }

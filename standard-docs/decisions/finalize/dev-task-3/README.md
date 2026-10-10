@@ -204,14 +204,15 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 
 - **Sumber:** `roadmap/U-ui-desktop.md` U-10, U-11 — **genuinely tidak ada** di `dev-task-2`. Digabung karena tema identik (type-safety API client).
 - **Tujuan:**
-  - **U-10:** Tipe `HarborTool`, `ProcessItem`, dll diselaraskan dengan kontrak API Go — generate dari OpenAPI bila tersedia.
-  - **U-11:** `apiClient.ts` tunggal bertipe; larang `fetch` langsung di komponen (lint rule).
-- **Ruang lingkup:** `web/src/lib/apiClient.ts` (atau lokasi setara), lint config.
+  - **U-10:** Tipe `HarborProvider`, `ProcessItem`, `FleetMetrics`, `DiagnosticItem`, `SnapshotItem`, `ExecutiveBriefing`, `SystemMetrics`, `NetworkInfo`, `ProjectGitStatus` diselaraskan dengan kontrak API Go.
+  - **U-11:** `apiClient.ts` tunggal bertipe; larang `fetch` langsung di komponen (boundary gate / lint).
+- **Ruang lingkup:** `web/src/utils/apiClient.ts`, `web/src/components/`, `tests/architecture/tier_boundaries.rs`.
 - **Langkah konkret:**
-  1. Cek apakah Go sudah expose OpenAPI spec — kalau ya, generate tipe TS dari situ (hindari drift manual).
-  2. Kalau belum ada OpenAPI: definisikan tipe manual yang mencerminkan response shape Go persis, di satu file `apiClient.ts`.
-  3. Tambah lint rule (ESLint custom rule atau `no-restricted-syntax`) yang menolak `fetch(` langsung di luar `apiClient.ts`.
-- **DoD:** 0 pemanggilan `fetch` langsung di komponen (lint menegakkan), tipe response API tidak divergen dari kontrak Go nyata.
+  1. Go belum expose OpenAPI spec: definisikan interface TS terpusat yang mencerminkan response shape Go persis di `web/src/utils/apiClient.ts`.
+  2. Ganti seluruh sisa direct `fetch` di komponen (`RemoteAccessModal.tsx`) menjadi pemanggilan metode `apiClient.getNetwork()`.
+  3. Tambah boundary test enforcement di `tests/architecture/tier_boundaries.rs` (`test_ui_tier_boundaries`) yang menggagalkan build jika ada pemanggilan `fetch(` langsung di komponen UI di luar `apiClient.ts`.
+- **Status implementasi:** Selesai di branch `feat/refactoring-finalize-01` — tipe E2 kanonikal didefinisikan di `web/src/utils/apiClient.ts` (`HarborProvider`, `ProcessItem`, `DiagnosticItem`, `SnapshotItem`, `ExecutiveBriefing`, `FleetMetrics`, `SystemMetrics`, `NetworkInfo`, `ProjectGitStatus`), direct `fetch` di `RemoteAccessModal.tsx` dialihkan ke `apiClient.getNetwork()`, dan arsitektur gate `test_ui_tier_boundaries` diperluas untuk memastikan 0 direct `fetch()` di luar `apiClient.ts` (lulus 100%).
+- **DoD:** 0 pemanggilan `fetch` langsung di komponen (test boundary menegakkan), tipe response API tidak divergen dari kontrak Go nyata. (Terpenuhi)
 
 ---
 
