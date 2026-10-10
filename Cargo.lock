@@ -1695,6 +1695,7 @@ dependencies = [
  "ecb",
  "futures-util",
  "galleon-channel-bluesky",
+ "galleon-channel-clawdtalk",
  "galleon-channel-dingtalk",
  "galleon-channel-imessage",
  "galleon-channel-irc",
@@ -4273,6 +4274,21 @@ dependencies = [
  "clawcrew-api",
  "galleon-channel-core",
  "parking_lot",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "galleon-channel-clawdtalk"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
  "reqwest 0.12.28",
  "serde",
  "serde_json",

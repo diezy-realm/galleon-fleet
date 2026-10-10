@@ -37,8 +37,11 @@ pub mod amqp;
 // the orchestrator's `pub use crate::bluesky::BlueskyChannel` keep resolving.
 #[cfg(feature = "channel-bluesky")]
 pub use galleon_channel_bluesky as bluesky;
+// RF-B1: the ClawdTalk channel now lives in its own feature-crate. Re-export it
+// under the historical `clawdtalk` path so `crate::clawdtalk::ClawdTalkChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-clawdtalk")]
-pub mod clawdtalk;
+pub use galleon_channel_clawdtalk as clawdtalk;
 // RF-B1: the DingTalk channel now lives in its own feature-crate. Re-export it
 // under the historical `dingtalk` path so `crate::dingtalk::DingTalkChannel` and callers
 // keep resolving.

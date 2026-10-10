@@ -57,6 +57,10 @@ galleon-channel-dingtalk = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_mochat as mochat`) so existing callers
 # (`crate::mochat::MochatChannel`) keep compiling. Optional, behind `channel-mochat`.
 galleon-channel-mochat = { workspace = true, optional = true }
+# RF-B1: the ClawdTalk channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_clawdtalk as clawdtalk`) so existing callers
+# (`crate::clawdtalk::ClawdTalkChannel`) keep compiling. Optional, behind `channel-clawdtalk`.
+galleon-channel-clawdtalk = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -308,7 +312,7 @@ channel-wechat = [
 ]
 channel-wecom = []
 channel-wecom-ws = ["dep:aes", "dep:cbc", "ws-transport"]
-channel-clawdtalk = []
+channel-clawdtalk = ["dep:galleon-channel-clawdtalk"]
 channel-webhook = ["dep:axum"]
 channel-whatsapp-cloud = []
 channel-voice-call = ["dep:axum"]

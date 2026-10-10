@@ -1,6 +1,8 @@
-//! ClawdTalk voice channel - real-time voice calling via Telnyx SIP infrastructure.
-//! ClawdTalk (<https://clawdtalk.com>) provides AI-powered voice conversations
-//! using Telnyx's global SIP network for low-latency, high-quality calls.
+//! `galleon-channel-clawdtalk` — ClawdTalk voice channel feature-crate (RF-B1 split).
+//!
+//! Real-time voice calling via Telnyx SIP infrastructure.
+//! ClawdTalk provides AI-powered voice conversations using Telnyx's
+//! global SIP network for low-latency, high-quality calls.
 
 use async_trait::async_trait;
 use reqwest::Client;
