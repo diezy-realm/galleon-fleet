@@ -103,7 +103,7 @@ pub async fn handle_tools_param_options(
         let tools = clawcrew_runtime::tools::default_tools(security);
         let refs: Vec<&dyn clawcrew_api::tool::Tool> =
             tools.iter().map(std::convert::AsRef::as_ref).collect();
-        clawcrew_runtime::tools::param_options::resolve_options(
+        clawcrew_tools::param_options::resolve_options(
             body.domain,
             &config,
             &agent_alias,
@@ -111,7 +111,7 @@ pub async fn handle_tools_param_options(
             &refs,
         )
     } else {
-        clawcrew_runtime::tools::param_options::resolve_options(
+        clawcrew_tools::param_options::resolve_options(
             body.domain,
             &config,
             &agent_alias,
