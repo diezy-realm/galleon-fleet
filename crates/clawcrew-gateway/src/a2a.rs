@@ -213,7 +213,7 @@ fn agent_description(config: &Config, alias: &str) -> String {
 fn identity_description(config: &Config, alias: &str) -> Option<String> {
     let agent = config.agents.get(alias)?;
     let workspace_dir = config.agent_workspace_dir(alias);
-    let aieos = clawcrew_runtime::identity::load_aieos_identity(&agent.identity, &workspace_dir)
+    let aieos = clawcrew_config::identity::load_aieos_identity(&agent.identity, &workspace_dir)
         .ok()
         .flatten()?;
     let identity = aieos.identity?;
@@ -226,7 +226,7 @@ fn identity_description(config: &Config, alias: &str) -> Option<String> {
 }
 
 /// Build a name line from identity `names`, preferring the fullest form.
-fn identity_name_line(names: clawcrew_runtime::identity::Names) -> Option<String> {
+fn identity_name_line(names: clawcrew_config::identity::Names) -> Option<String> {
     if let Some(full) = names.full.filter(|s| !s.trim().is_empty()) {
         return Some(full);
     }

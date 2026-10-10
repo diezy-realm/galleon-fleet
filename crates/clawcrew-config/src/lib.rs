@@ -37,6 +37,7 @@ pub mod skill_bundles;
 pub mod traits;
 pub mod typed_value;
 pub mod validation_warnings;
+pub mod identity;
 pub mod thinking;
 pub mod write_lock;
 
