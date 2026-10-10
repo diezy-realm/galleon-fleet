@@ -1696,6 +1696,7 @@ dependencies = [
  "futures-util",
  "galleon-channel-bluesky",
  "galleon-channel-imessage",
+ "galleon-channel-irc",
  "galleon-channel-signal",
  "galleon-i18n",
  "galleon-security-scrub",
@@ -4295,6 +4296,18 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tokio",
+]
+
+[[package]]
+name = "galleon-channel-irc"
+version = "0.8.5"
+dependencies = [
+ "async-trait",
+ "clawcrew-api",
+ "galleon-channel-core",
+ "portable-atomic",
+ "tokio",
+ "tokio-rustls",
 ]
 
 [[package]]

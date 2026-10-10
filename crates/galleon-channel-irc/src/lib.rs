@@ -1,3 +1,14 @@
+//! `galleon-channel-irc` — RF-B1 IRC channel feature-crate.
+//!
+//! Ported from `clawcrew-channels::irc` following the RF-B1 pattern established
+//! by `galleon-channel-signal` and `galleon-channel-bluesky`.
+//!
+//! ## Seams closed by `galleon-channel-core`
+//!
+//! * **Allowlist policy.** Peer-policy allowlist checks call
+//!   [`galleon_channel_core::allowlist::is_user_allowed`] using the SSOT
+//!   peer-policy from `clawcrew_config::schema` without pulling `clawcrew-runtime`.
+
 use async_trait::async_trait;
 use portable_atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -263,7 +274,7 @@ impl IrcChannel {
 
     fn is_user_allowed(&self, nick: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed(&peers, nick, crate::allowlist::Match::CaseInsensitive)
+        galleon_channel_core::allowlist::is_user_allowed(&peers, nick, galleon_channel_core::allowlist::Match::CaseInsensitive)
     }
 
     fn is_mentioned(my_nick: &str, text: &str) -> bool {

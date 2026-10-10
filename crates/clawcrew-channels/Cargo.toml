@@ -32,10 +32,15 @@ galleon-channel-signal = { workspace = true, optional = true }
 # `channel-bluesky`.
 galleon-channel-bluesky = { workspace = true, optional = true }
 # RF-C1: the iMessage channel is split into its own feature-crate. The
+# RF-C1: the iMessage channel is split into its own feature-crate. The
 # monolith re-exports it (`pub use galleon_channel_imessage as imessage`) so
 # existing callers (`crate::imessage::IMessageChannel`) keep compiling.
 # Optional, behind `channel-imessage`.
 galleon-channel-imessage = { workspace = true, optional = true }
+# RF-B1: the IRC channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_irc as irc`) so existing callers
+# (`crate::irc::IrcChannel`) keep compiling. Optional, behind `channel-irc`.
+galleon-channel-irc = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -267,7 +272,7 @@ channel-discord = ["ws-transport"]
 channel-slack = ["ws-transport"]
 channel-signal = ["dep:galleon-channel-signal"]
 channel-mattermost = ["ws-transport"]
-channel-irc = ["tls-client"]
+channel-irc = ["dep:galleon-channel-irc"]
 channel-twitch = ["channel-irc"]
 channel-imessage = ["dep:galleon-channel-imessage"]
 channel-dingtalk = ["ws-transport"]

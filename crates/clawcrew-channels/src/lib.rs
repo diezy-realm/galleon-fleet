@@ -55,8 +55,11 @@ pub mod git;
 pub mod gmail_push;
 #[cfg(feature = "channel-imessage")]
 pub use galleon_channel_imessage as imessage;
+// RF-B1: the IRC channel now lives in its own feature-crate. Re-export it
+// under the historical `irc` path so `crate::irc::IrcChannel` and the
+// orchestrator's `pub use crate::irc::IrcChannel` keep resolving.
 #[cfg(feature = "channel-irc")]
-pub mod irc;
+pub use galleon_channel_irc as irc;
 #[cfg(feature = "channel-lark")]
 pub mod lark;
 #[cfg(feature = "channel-line")]
