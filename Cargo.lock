@@ -4302,12 +4302,16 @@ dependencies = [
 name = "galleon-channel-irc"
 version = "0.8.5"
 dependencies = [
+ "anyhow",
  "async-trait",
+ "chrono",
  "clawcrew-api",
+ "clawcrew-log",
  "galleon-channel-core",
  "portable-atomic",
  "tokio",
  "tokio-rustls",
+ "webpki-roots 1.0.9",
 ]
 
 [[package]]
