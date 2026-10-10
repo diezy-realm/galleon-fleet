@@ -1698,6 +1698,7 @@ dependencies = [
  "galleon-channel-dingtalk",
  "galleon-channel-imessage",
  "galleon-channel-irc",
+ "galleon-channel-mochat",
  "galleon-channel-nostr",
  "galleon-channel-signal",
  "galleon-channel-twitch",
@@ -4339,6 +4340,22 @@ dependencies = [
  "tokio-rustls",
  "toml 1.1.2+spec-1.1.0",
  "webpki-roots 1.0.9",
+]
+
+[[package]]
+name = "galleon-channel-mochat"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "galleon-channel-core",
+ "reqwest 0.12.28",
+ "serde_json",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

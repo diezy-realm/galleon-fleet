@@ -53,6 +53,10 @@ galleon-channel-twitch = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_dingtalk as dingtalk`) so existing callers
 # (`crate::dingtalk::DingTalkChannel`) keep compiling. Optional, behind `channel-dingtalk`.
 galleon-channel-dingtalk = { workspace = true, optional = true }
+# RF-B1: the Mochat channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_mochat as mochat`) so existing callers
+# (`crate::mochat::MochatChannel`) keep compiling. Optional, behind `channel-mochat`.
+galleon-channel-mochat = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -294,7 +298,7 @@ channel-filesystem = ["dep:notify", "dep:glob"]
 channel-amqp = ["dep:lapin", "dep:tokio-executor-trait", "dep:tokio-reactor-trait", "dep:async-reactor-trait", "dep:p12-keystore", "dep:rustls-pemfile"]
 channel-linq = []
 channel-nextcloud = []
-channel-mochat = []
+channel-mochat = ["dep:galleon-channel-mochat"]
 channel-wechat = [
   "dep:aes",
   "dep:ecb",

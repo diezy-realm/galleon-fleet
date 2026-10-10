@@ -1,3 +1,8 @@
+//! `galleon-channel-mochat` — Mochat customer service channel feature-crate (RF-B1 split).
+//!
+//! Integrates with the Mochat customer service platform API for receiving
+//! and sending messages through its HTTP endpoints.
+
 use async_trait::async_trait;
 use serde_json::json;
 use std::collections::HashSet;
@@ -8,6 +13,18 @@ use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
 /// Deduplication set capacity — evict half of entries when full.
 const DEDUP_CAPACITY: usize = 10_000;
+
+async fn ensure_success(
+    resp: reqwest::Response,
+    what: &str,
+) -> anyhow::Result<reqwest::Response> {
+    if resp.status().is_success() {
+        return Ok(resp);
+    }
+    let status = resp.status();
+    let err = resp.text().await.unwrap_or_default();
+    anyhow::bail!("{what} failed ({status}): {err}");
+}
 
 /// Mochat customer service channel.
 /// Integrates with the Mochat open-source customer service platform API
@@ -56,7 +73,11 @@ impl MochatChannel {
 
     fn is_user_allowed(&self, user_id: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed(&peers, user_id, crate::allowlist::Match::Sensitive)
+        galleon_channel_core::allowlist::is_user_allowed(
+            &peers,
+            user_id,
+            galleon_channel_core::allowlist::Match::Sensitive,
+        )
     }
 
     /// Check and insert message ID for deduplication.
@@ -115,7 +136,7 @@ impl Channel for MochatChannel {
             .send()
             .await?;
 
-        let resp = crate::util::ensure_success(resp, "Mochat send message").await?;
+        let resp = ensure_success(resp, "Mochat send message").await?;
 
         let result: serde_json::Value = resp.json().await?;
         let code = result.get("code").and_then(|v| v.as_i64()).unwrap_or(-1);
@@ -216,7 +237,7 @@ impl Channel for MochatChannel {
                                     c.get("text")
                                         .and_then(|t| t.as_str())
                                         .or_else(|| c.as_str())
-                                })
+                                    })
                                 .unwrap_or("")
                                 .trim();
 

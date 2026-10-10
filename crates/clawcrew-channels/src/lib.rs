@@ -73,8 +73,11 @@ pub mod linq;
 pub mod matrix;
 #[cfg(feature = "channel-mattermost")]
 pub mod mattermost;
+// RF-B1: the Mochat channel now lives in its own feature-crate. Re-export it
+// under the historical `mochat` path so `crate::mochat::MochatChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-mochat")]
-pub mod mochat;
+pub use galleon_channel_mochat as mochat;
 #[cfg(feature = "channel-nextcloud")]
 pub mod nextcloud_talk;
 // RF-B1: the Nostr channel now lives in its own feature-crate. Re-export it
