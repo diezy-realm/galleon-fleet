@@ -83,6 +83,45 @@ func TestHandleSystemMetrics(t *testing.T) {
 	}
 }
 
+func TestHandleSystemMetrics_RealGatewayDelegation(t *testing.T) {
+	mockGw := &mockGatewayClient{
+		respSuccess: true,
+	}
+	svc := NewService(mockGw)
+	handler := NewHTTPHandler(svc)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/system/metrics", nil)
+	rec := httptest.NewRecorder()
+
+	handler.handleSystemMetrics(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+
+	var resp map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	// Verify CPU and Memory values came from Rust gateway mock (3.25% CPU, 128MB used, 4096MB total)
+	cpuUsage, ok := resp["cpuUsage"].(float64)
+	if !ok || cpuUsage != 3.25 {
+		t.Errorf("expected cpuUsage from Rust gateway 3.25, got %v", resp["cpuUsage"])
+	}
+
+	memUsage, ok := resp["memoryUsage"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected memoryUsage map in response")
+	}
+	if usedMB, ok := memUsage["usedMB"].(float64); !ok || usedMB != 128 {
+		t.Errorf("expected usedMB from Rust gateway 128, got %v", memUsage["usedMB"])
+	}
+	if totalMB, ok := memUsage["totalMB"].(float64); !ok || totalMB != 4096 {
+		t.Errorf("expected totalMB from Rust gateway 4096, got %v", memUsage["totalMB"])
+	}
+}
+
 func TestHandleExtendedSystemEndpoints(t *testing.T) {
 	mockGw := &mockGatewayClient{
 		respSuccess: true,

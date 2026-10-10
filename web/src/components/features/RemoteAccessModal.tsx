@@ -70,10 +70,9 @@ export const RemoteAccessModal: React.FC<RemoteAccessModalProps> = ({
   const fetchNetworkData = async () => {
     setIsLoading(true);
     try {
-      // 1. Fetch server LAN network interfaces
-      const netRes = await fetch('/api/system/network');
-      if (netRes.ok) {
-        const data: NetworkInfo = await netRes.json();
+      // 1. Fetch server LAN network interfaces via centralized apiClient
+      const data = await apiClient.getNetwork();
+      if (data) {
         setNetworkInfo(data);
         // Default to current browser origin if on LAN, else preferred LAN URL
         const currentOrigin = window.location.origin;

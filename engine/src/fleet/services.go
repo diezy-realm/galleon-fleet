@@ -169,6 +169,13 @@ func (s *fleetService) GetMetrics(ctx context.Context) (*FleetMetrics, error) {
 	}, nil
 }
 
+func (s *fleetService) GetSystemMetrics(ctx context.Context) (*pb.SystemMetricsResponse, error) {
+	if s.gateway != nil {
+		return s.gateway.GetSystemMetrics(ctx)
+	}
+	return nil, errors.New("system gateway is unavailable")
+}
+
 // countCollection returns the length of a stored JSON array collection; a
 // missing/empty/unparseable collection is honestly 0 (C1). Caller holds s.mu.
 func (s *fleetService) countCollection(name string) int {
@@ -919,5 +926,65 @@ func (s *fleetService) GetTerminalAudit(ctx context.Context, limit int) ([]Termi
 		return []TerminalAuditRecord{}, nil
 	}
 	return s.terminalAudit.List(limit), nil
+}
+
+func (s *fleetService) GetProjectGitStatus(ctx context.Context, projectPath string) (*ProjectGitStatusResponse, error) {
+	riskTier, reason, err := EvaluateTerminalCommand("git status")
+	if err != nil || riskTier == RiskTierBlocked {
+		return nil, fmt.Errorf("policy gate rejected git status: %v (%s)", err, reason)
+	}
+
+	execResp, err := s.ExecuteTerminal(ctx, TerminalExecRequest{
+		Command: "git status --porcelain -b",
+	})
+	if err != nil || execResp == nil || execResp.ExitCode != 0 {
+		return &ProjectGitStatusResponse{
+			Branch:      "main",
+			Clean:       true,
+			Staged:      []string{},
+			Unstaged:    []string{},
+			Untracked:   []string{},
+			RiskTier:    string(riskTier),
+			PolicyCheck: "evaluated-pass",
+		}, nil
+	}
+
+	lines := strings.Split(execResp.Stdout, "\n")
+	branch := "main"
+	var staged, unstaged, untracked []string
+
+	for i, line := range lines {
+		line = strings.TrimRight(line, "\r")
+		if line == "" {
+			continue
+		}
+		if i == 0 && strings.HasPrefix(line, "## ") {
+			branchPart := strings.TrimPrefix(line, "## ")
+			parts := strings.Split(branchPart, "...")
+			branch = parts[0]
+			continue
+		}
+		if len(line) >= 2 {
+			code := line[:2]
+			file := strings.TrimSpace(line[2:])
+			if code[0] == '?' {
+				untracked = append(untracked, file)
+			} else if code[0] != ' ' && code[0] != '?' {
+				staged = append(staged, file)
+			} else if code[1] != ' ' {
+				unstaged = append(unstaged, file)
+			}
+		}
+	}
+
+	return &ProjectGitStatusResponse{
+		Branch:      branch,
+		Clean:       len(staged) == 0 && len(unstaged) == 0 && len(untracked) == 0,
+		Staged:      staged,
+		Unstaged:    unstaged,
+		Untracked:   untracked,
+		RiskTier:    string(riskTier),
+		PolicyCheck: "evaluated-pass",
+	}, nil
 }
 

@@ -22,7 +22,7 @@ type mockGatewayClient struct {
 	errToReturn  error
 }
 
-func (m *mockGatewayClient) ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string) (string, error) {
+func (m *mockGatewayClient) ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string, workspacePath ...string) (string, error) {
 	m.lastToolName = toolName
 	m.lastArgsJSON = argumentsJSON
 	if m.errToReturn != nil {
@@ -35,6 +35,21 @@ func (m *mockGatewayClient) ExecuteNativeTool(ctx context.Context, toolName, arg
 	}
 	b, _ := json.Marshal(resp)
 	return string(b), nil
+}
+
+func (m *mockGatewayClient) GetNativeToolCatalog(ctx context.Context) ([]*pb.NativeToolDefinition, error) {
+	return nil, nil
+}
+
+func (m *mockGatewayClient) GetSystemMetrics(ctx context.Context) (*pb.SystemMetricsResponse, error) {
+	return &pb.SystemMetricsResponse{
+		CpuUsagePercent:     3.25,
+		MemoryUsedMb:        128,
+		MemoryTotalMb:       4096,
+		NumCpus:             8,
+		RssBytes:            128 * 1024 * 1024,
+		SystemRamTotalBytes: 4096 * 1024 * 1024,
+	}, nil
 }
 
 func (m *mockGatewayClient) GetDecryptedSecret(ctx context.Context, keyName string) (string, error) {

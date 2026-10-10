@@ -273,7 +273,7 @@ func registerBuiltinTools(r Registry) {
 // to the Rust SystemGateway (F3-1). Declared locally to avoid a tool->client
 // import cycle; *client.systemGatewayClient satisfies it structurally.
 type SystemGateway interface {
-	ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string) (string, error)
+	ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string, workspacePath ...string) (string, error)
 }
 
 // toolService coordinates execution
@@ -452,7 +452,7 @@ func (s *toolService) ExecuteWithContext(ctx context.Context, execCtx *Execution
 		if encErr != nil {
 			return "", encErr
 		}
-		output, err = s.gateway.ExecuteNativeTool(ctx, toolName, gwArgs)
+		output, err = s.gateway.ExecuteNativeTool(ctx, toolName, gwArgs, workspaceRoot)
 	} else if toolDef.Source == "native" {
 		return "", appErrors.New(appErrors.CodeUnavailable, fmt.Sprintf("native tool %s execution rejected: SystemGateway is not wired (fail-closed boundary enforced)", toolName), appErrors.LayerService)
 	} else {

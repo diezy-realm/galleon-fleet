@@ -86,7 +86,7 @@ type mockToolGateway struct {
 	files map[string]string
 }
 
-func (m *mockToolGateway) ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string) (string, error) {
+func (m *mockToolGateway) ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string, workspacePath ...string) (string, error) {
 	var input map[string]any
 	_ = json.Unmarshal([]byte(argumentsJSON), &input)
 	switch toolName {
