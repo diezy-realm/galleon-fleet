@@ -92,8 +92,11 @@ pub use galleon_channel_nostr as nostr;
 pub mod notion;
 #[cfg(feature = "channel-qq")]
 pub mod qq;
+// RF-B1: the Reddit channel now lives in its own feature-crate. Re-export it
+// under the historical `reddit` path so `crate::reddit::RedditChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-reddit")]
-pub mod reddit;
+pub use galleon_channel_reddit as reddit;
 // RF-B1: the Signal channel now lives in its own feature-crate. Re-export it
 // under the historical `signal` path so `crate::signal::SignalChannel` and the
 // orchestrator's `pub use crate::signal::SignalChannel` keep resolving.

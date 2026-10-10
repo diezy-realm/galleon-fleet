@@ -1701,6 +1701,7 @@ dependencies = [
  "galleon-channel-irc",
  "galleon-channel-mochat",
  "galleon-channel-nostr",
+ "galleon-channel-reddit",
  "galleon-channel-signal",
  "galleon-channel-twitch",
  "galleon-i18n",
@@ -4386,6 +4387,24 @@ dependencies = [
  "nostr-sdk",
  "serde_json",
  "tokio",
+]
+
+[[package]]
+name = "galleon-channel-reddit"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "galleon-channel-core",
+ "parking_lot",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+ "toml 1.1.2+spec-1.1.0",
 ]
 
 [[package]]

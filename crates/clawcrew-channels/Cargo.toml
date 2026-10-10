@@ -61,6 +61,10 @@ galleon-channel-mochat = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_clawdtalk as clawdtalk`) so existing callers
 # (`crate::clawdtalk::ClawdTalkChannel`) keep compiling. Optional, behind `channel-clawdtalk`.
 galleon-channel-clawdtalk = { workspace = true, optional = true }
+# RF-B1: the Reddit channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_reddit as reddit`) so existing callers
+# (`crate::reddit::RedditChannel`) keep compiling. Optional, behind `channel-reddit`.
+galleon-channel-reddit = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -295,7 +299,7 @@ channel-dingtalk = ["dep:galleon-channel-dingtalk"]
 channel-qq = ["ws-transport"]
 channel-bluesky = ["dep:galleon-channel-bluesky"]
 channel-twitter = []
-channel-reddit = []
+channel-reddit = ["dep:galleon-channel-reddit"]
 channel-notion = []
 channel-mqtt = ["dep:rumqttc"]
 channel-filesystem = ["dep:notify", "dep:glob"]
