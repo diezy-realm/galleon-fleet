@@ -186,8 +186,8 @@ impl BroadcastObserver {
     }
 }
 
-impl clawcrew_runtime::observability::Observer for BroadcastObserver {
-    fn record_event(&self, event: &clawcrew_runtime::observability::ObserverEvent) {
+impl clawcrew_api::observability_traits::Observer for BroadcastObserver {
+    fn record_event(&self, event: &clawcrew_api::observability_traits::ObserverEvent) {
         // Helper for optional string fields
         fn add_optional_string(json: &mut serde_json::Value, key: &str, value: &Option<String>) {
             if let Some(value) = value {
@@ -200,7 +200,7 @@ impl clawcrew_runtime::observability::Observer for BroadcastObserver {
         // takes care of that fan-out. Here we only translate to JSON and
         // ship to SSE subscribers.
         let json = match event {
-            clawcrew_runtime::observability::ObserverEvent::LlmRequest {
+            clawcrew_api::observability_traits::ObserverEvent::LlmRequest {
                 model_provider,
                 model,
                 messages_count,
@@ -223,7 +223,7 @@ impl clawcrew_runtime::observability::Observer for BroadcastObserver {
                 add_optional_string(&mut json, "turn_id", turn_id);
                 json
             }
-            clawcrew_runtime::observability::ObserverEvent::ToolCall {
+            clawcrew_api::observability_traits::ObserverEvent::ToolCall {
                 tool,
                 duration,
                 success,
@@ -247,7 +247,7 @@ impl clawcrew_runtime::observability::Observer for BroadcastObserver {
                 add_optional_string(&mut json, "turn_id", turn_id);
                 json
             }
-            clawcrew_runtime::observability::ObserverEvent::ToolCallStart {
+            clawcrew_api::observability_traits::ObserverEvent::ToolCallStart {
                 tool,
                 channel,
                 agent_alias,
@@ -267,7 +267,7 @@ impl clawcrew_runtime::observability::Observer for BroadcastObserver {
                 add_optional_string(&mut json, "turn_id", turn_id);
                 json
             }
-            clawcrew_runtime::observability::ObserverEvent::Error { component, message } => {
+            clawcrew_api::observability_traits::ObserverEvent::Error { component, message } => {
                 serde_json::json!({
                     "type": "error",
                     "source": "observability",
@@ -276,7 +276,7 @@ impl clawcrew_runtime::observability::Observer for BroadcastObserver {
                     "timestamp": chrono::Utc::now().to_rfc3339(),
                 })
             }
-            clawcrew_runtime::observability::ObserverEvent::AgentStart {
+            clawcrew_api::observability_traits::ObserverEvent::AgentStart {
                 model_provider,
                 model,
                 channel,
@@ -295,7 +295,7 @@ impl clawcrew_runtime::observability::Observer for BroadcastObserver {
                 add_optional_string(&mut json, "turn_id", turn_id);
                 json
             }
-            clawcrew_runtime::observability::ObserverEvent::AgentEnd {
+            clawcrew_api::observability_traits::ObserverEvent::AgentEnd {
                 model_provider,
                 model,
                 duration,
@@ -332,7 +332,7 @@ impl clawcrew_runtime::observability::Observer for BroadcastObserver {
                 add_optional_string(&mut json, "turn_id", turn_id);
                 json
             }
-            clawcrew_runtime::observability::ObserverEvent::HistoryTrimmed {
+            clawcrew_api::observability_traits::ObserverEvent::HistoryTrimmed {
                 dropped_messages,
                 kept_turns,
                 reason,
@@ -384,7 +384,7 @@ impl clawcrew_runtime::observability::Observer for BroadcastObserver {
         let _ = self.tx.send(json);
     }
 
-    fn record_metric(&self, _metric: &clawcrew_runtime::observability::traits::ObserverMetric) {
+    fn record_metric(&self, _metric: &clawcrew_api::observability_traits::ObserverMetric) {
         // Metrics are not broadcast over SSE; the primary observer records them.
     }
 
@@ -400,7 +400,7 @@ impl clawcrew_runtime::observability::Observer for BroadcastObserver {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_runtime::observability::{Observer, ObserverEvent};
+    use clawcrew_api::observability_traits::{Observer, ObserverEvent};
 
     // The broadcast hook is process-wide; serialize hook-touching tests
     // within this test binary so they don't observe each other's state.

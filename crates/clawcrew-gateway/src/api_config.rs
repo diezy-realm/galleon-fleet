@@ -2724,7 +2724,7 @@ pub(crate) mod tests {
             nextcloud_talk_webhook_secret: std::collections::HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
