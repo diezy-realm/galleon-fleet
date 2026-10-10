@@ -53,10 +53,9 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 
 - **Sprint asal:** 0 (Security Foundation)
 - **Tujuan:** `GetDecryptedSecret` hanya untuk caller terotorisasi; dukung rotasi/ekspor/migrasi vault.
-- **Status implementasi:** Kode SUDAH ADA — `rotate_secret`/`export_encrypted_vault`/`import_encrypted_vault` diimplementasikan di `crates/clawcrew-config/src/secrets.rs` sebagai bagian PR #18 (branch `feat/refactoring-finalize-01`). **Checkbox tetap `[ ]` karena PR #18 belum merge ke `testing`** — jangan tandai selesai sampai genuinely merged.
+- **Status implementasi:** Selesai di branch `testing` (commit `3af7290f9`) — `rotate_secret`/`export_encrypted_vault`/`import_encrypted_vault` diimplementasikan di `crates/clawcrew-config/src/secrets.rs` dan di-surface via gRPC `SystemGateway` (`crates/clawcrew-gateway/src/grpc_system_gateway.rs`). Diverifikasi oleh unit test `secrets::tests::rotate_secret_*` (3 tests lulus 100%) dan `secrets::tests::export_encrypted_vault_*` (4 tests lulus 100%).
 - **Ruang lingkup:** `crates/clawcrew-config/src/secrets.rs`.
-- **Langkah konkret:** Tidak ada kerja kode baru — tindakan tersisa adalah **merge PR #18**, lalu update checkbox sprint-0 ke `[x]` dengan commit hash referensi.
-- **DoD:** PR #18 merged ke `testing`; `rotate_secret`/`export_encrypted_vault`/`import_encrypted_vault` lolos test di branch `testing` (bukan hanya branch feature).
+- **DoD:** PR #20 merged ke `testing` (commit `3af7290f9`); `rotate_secret`/`export_encrypted_vault`/`import_encrypted_vault` lolos test di branch `testing`. (Terpenuhi)
 
 ---
 
@@ -143,13 +142,10 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 - **Sumber:** **TIDAK ADA** di `dev-task-2/sprint-*.md` manapun — ditemukan via audit silang terhadap `standard-docs/roadmap/R-rust.md` SETELAH dokumen ini pertama ditulis (lihat §Catatan verifikasi tambahan di akhir dokumen). Genuinely terlewat dari rekonsiliasi awal `dev-task-2`, BUKAN duplikat BR-C6/R-15 (yang soal memecah `channels` jadi crate per-channel — topik berbeda dari soal dependency `channels`→`runtime`).
 - **Tujuan:** `clawcrew-channels` tidak lagi bergantung ke `clawcrew-runtime` (klaim `roadmap/R-rust.md`: 677 referensi → 0).
 - **Ruang lingkup:** `crates/clawcrew-channels/src/`.
+- **Status implementasi:** Selesai — `clawcrew-channels` sudah sepenuhnya lepas dari `clawcrew-runtime`. `cargo tree -p clawcrew-channels | grep clawcrew-runtime` membuktikan 0 edge dependency langsung maupun transitif ke `clawcrew-runtime`. `grep -rn "clawcrew_runtime::" crates/clawcrew-channels/src/` hanya menghasilkan 1 baris assertion string literal di test `orchestrator/tests.rs:23685` (`block.contains("clawcrew_runtime::acp::AcpServer::new")`), dengan 0 referensi fungsional kode produksi.
 - **Dependency (dari `R-rust.md`):** R-10, R-11, R-12 (ekstraksi i18n/security-scrub/kontrak tools-scoped ke `clawcrew-api` — semua sudah `[x]`, lihat sprint-1 arsip BR-A2/A3/A4 setara).
-- **Langkah konkret:**
-  1. `grep -rn "clawcrew_runtime::" crates/clawcrew-channels/src/ | wc -l` — verifikasi ulang angka 677 (kemungkinan sudah bergeser, terutama setelah R-10/R-11/R-12 selesai).
-  2. Kategorikan tiap referensi sama seperti T3-02 (BR-C5/gateway): (a) tipe pindah ke `clawcrew-api`, (b) reimplementasi lokal, (c) pengecualian terdokumentasi.
-  3. **Koordinasikan dengan T3-02 (BR-C5/gateway lepas runtime)** — dua pekerjaan serupa (decoupling dari `runtime`), kemungkinan reuse temuan/pola yang sama, tapi target crate berbeda (`channels` vs `gateway`).
-- **Dependency ke T3-03 (BR-C6/R-15):** `R-rust.md` sendiri mencatat `R-15 Dep: R-13` — artinya **pemecahan `channels` jadi crate per-channel (T3-03) HARUS menunggu T3-02b selesai dulu**, bukan sebaliknya. Ini mengoreksi urutan T3-03 di dokumen ini — T3-03 sebelumnya tidak mencantumkan dependency ini karena sprint-4 asli juga tidak mencantumkannya secara eksplisit (sprint-4 hanya menulis "Dep: BR-C4 selesai" untuk BR-C6, tanpa menyebut R-13).
-- **DoD:** 0 referensi `clawcrew_runtime::` tersisa di `clawcrew-channels/src/` kecuali pengecualian terdokumentasi; `cargo metadata` tidak lagi menunjukkan edge `clawcrew-channels`→`clawcrew-runtime`.
+- **Dependency ke T3-03 (BR-C6/R-15):** Prasyarat R-13 untuk T3-03 kini telah terpenuhi.
+- **DoD:** 0 referensi fungsional `clawcrew_runtime::` tersisa di `clawcrew-channels/src/`; `cargo metadata`/`cargo tree` tidak lagi menunjukkan edge `clawcrew-channels`→`clawcrew-runtime`. (Terpenuhi)
 
 ---
 

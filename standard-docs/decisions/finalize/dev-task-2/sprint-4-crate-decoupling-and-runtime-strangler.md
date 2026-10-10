@@ -1,7 +1,7 @@
 ---
 sprint: 4
 title: Crate Decoupling & Runtime Strangler — gateway/runtime Decoupling, Go Agent-Loop Migration
-status: in-progress (14/26 checklist [x]; 12 item masih [ ] -- sprint terbesar, berseri)
+status: in-progress (17/26 checklist [x]; 9 item masih [ ] -- sprint terbesar, berseri)
 ---
 
 # Sprint 4 — Crate Decoupling & Runtime Strangler
@@ -111,7 +111,7 @@ status: in-progress (14/26 checklist [x]; 12 item masih [ ] -- sprint terbesar, 
 
 **Dependency:** BG-D1 (hard).
 
-- [ ] **BR-D3 · R-38 · PR-59 (P2, S)** ⚑ Hapus `verifiable_intent` (tag `archive/pre-galleon` dulu; ODR-21).
+- [x] **BR-D3 · R-38 · PR-59 (P2, S)** ⚑ Hapus `verifiable_intent` (tag `archive/pre-galleon` dulu; ODR-21). (SELESAI: tag `archive/pre-galleon` dibuat pada commit `95d346eb0`, seluruh referensi fungsional dihapus bersih di commit `0e197e110`, merged ke `testing` commit `3af7290f9` via PR #20.)
 
 #### Detail Eksekusi — BR-D3
 
@@ -146,7 +146,7 @@ status: in-progress (14/26 checklist [x]; 12 item masih [ ] -- sprint terbesar, 
 
 - [ ] **BR-D1 · R-16 · PR-60 (P2, XL, berseri)** ⚑ Ramping runtime per modul (urutan R-00 §3). Syarat tiap modul: parity Go + eval hijau.
 - [ ] **BR-D2 · R-37 · PR-56 (P2, M)** Retarget `galleon-eval` ke jalur Go; pertahankan fixture trace. Dep: BG-D1.
-- [ ] **BR-D3 · R-38 · PR-59 (P2, S)** ⚑ Hapus `verifiable_intent` (tag `archive/pre-galleon` dulu; ODR-21). (REVISI 2026-10-09, terverifikasi 2x independen: `verifiable_intent`/`VerifiableIntentConfig` MASIH ADA — hitungan terbaru 131 referensi di 40 file, bahkan lebih banyak dari audit sebelumnya "43 di 12 file", mengindikasikan field ini makin menyebar bukan berkurang. `schema.rs:658`, `fixtures/v1.toml:746`, `sections.rs:896`, `validation_warnings.rs:21-74`, `doctor/mod.rs:1499,3296-3303`, `src/main.rs:4582,5866,7519,7795-7796`, test aktif di `tests/component/verifiable_intent_notice_visibility.rs`. Commit lama `20985dc0` TIDAK persisten/tidak membersihkan seluruh referensi.)
+- [x] **BR-D3 · R-38 · PR-59 (P2, S)** ⚑ Hapus `verifiable_intent` (tag `archive/pre-galleon` dulu; ODR-21). (SELESAI: tag `archive/pre-galleon` dibuat pada commit `95d346eb0`, seluruh referensi fungsional dihapus bersih di commit `0e197e110`, merged ke `testing` commit `3af7290f9` via PR #20.)
 - [ ] **BR-D4 · R-41 · PR-62 (P2, L)** ⚑ Hapus `rpc` + REST/WS/A2A lama setelah parity. Dep: BR-E3 (Sprint 6), BR-C5 (§A sprint ini).
 
 ## E. Observabilitas & Organisasi (dep ke persistensi Sprint 1)
@@ -173,7 +173,7 @@ status: in-progress (14/26 checklist [x]; 12 item masih [ ] -- sprint terbesar, 
 
 - [x] **BG-F2 · G-25 · PR-53 (P2, M)** Kontrak rute QM two-layer + test.
 - [x] **BG-F3 · G-26 · PR-54 (P2, M)** Audit trail & policy SSOT read-only ke UI/Tauri.
-- [ ] **BG-F5 · G-28 · PR-96 (P3, M)** Observabilitas: zap + request-id Go→Rust; scrubbing. (REVISI 2026-10-09, terverifikasi + rekomendasi diterapkan: klaim "zap" keliru — Go sudah pakai `log/slog` + modul tracing custom OpenTelemetry-compatible yang matang di `engine/src/core/logger/`, `core/tracing/` [JSON structured, log rotation, auto-redaksi kredensial via regex]. Zap TIDAK diadopsi — keputusan sadar, slog sudah lebih sesuai [stdlib, lebih ringan]. request-id HTTP→gRPC SUDAH ada [`pkg/client/system_gateway.go:17-20`]. Gap genuine yang TERSISA dan jadi scope task ini sekarang: `tracing.StartSpan` tidak pernah dipanggil dari `delivery.go` [HTTP handler] — trace_id tidak konsisten lintas HTTP→gRPC log. Checkbox turun ke `[ ]` sampai `StartSpan` disambungkan ke request path.)
+- [x] **BG-F5 · G-28 · PR-96 (P3, M)** Observabilitas: zap + request-id Go→Rust; scrubbing. (SELESAI: tracing.StartSpan tersambung di HTTP handler delivery.go, trace_id konsisten lintas log slog HTTP, gRPC client metadata x-request-id, dan grpc_system_gateway.rs di Rust. Uji Go TestRunHTTPDelivery_TracingAndRequestIDSynchronization dan Rust go_callable_grpc_surface_propagates_request_id_tracing_metadata lulus 100%, merged ke testing commit 3af7290f9 via PR #20.)
 
 #### Detail Eksekusi — BG-F5
 

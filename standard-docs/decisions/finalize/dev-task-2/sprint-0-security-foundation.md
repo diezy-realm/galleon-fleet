@@ -1,7 +1,7 @@
 ---
 sprint: 0
 title: Security Foundation — Identity, Approval-Gate, Sandbox
-status: in-progress (10/11 checklist [x]; 1 item masih [ ] -- BR-B5 vault rotate/export/import, kode sudah ada di PR #18 tapi belum merge ke testing)
+status: completed (11/11 checklist [x]; 0 item open -- BR-B5 vault rotate/export/import selesai & merged ke testing commit 3af7290f9)
 ---
 
 # Sprint 0 — Security Foundation
@@ -322,7 +322,7 @@ server.RegisterRouteFunc("/api/pairing/revoke", identity.RequireAuthenticated(re
 
 **Dependency:** BL-38 (Sprint 2) — kerjakan setelahnya untuk menghindari kerja ganda di titik yang sama.
 
-- [ ] **BR-B5 · R-24 · PR-36 (P2, M)** Vault: rotasi/ekspor/migrasi; `GetDecryptedSecret` hanya untuk caller terotorisasi. (REVISI 2026-10-09, terverifikasi 2x independen: `rotate_secret`/`export_encrypted_vault`/`import_encrypted_vault` NOL match di `secrets.rs` maupun repo-wide. Klaim "SELESAI, 14/14 tests pass" tidak didukung bukti di kode — lihat `finding/2026-10-09-architectural-decisions-analysis.md`.)
+- [x] **BR-B5 · R-24 · PR-36 (P2, M)** Vault: rotasi/ekspor/migrasi; `GetDecryptedSecret` hanya untuk caller terotorisasi. (SELESAI: `rotate_secret`, `export_encrypted_vault`, `import_encrypted_vault` diimplementasikan di `secrets.rs` dan terekspos via gRPC `SystemGateway`, lolos 7 unit test, merged ke `testing` di commit `3af7290f9` via PR #20.)
 
 #### Detail Eksekusi — BR-B5
 
