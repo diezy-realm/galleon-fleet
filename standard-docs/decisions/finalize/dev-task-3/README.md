@@ -66,22 +66,24 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 - **Tujuan:** `clawcrew-gateway` tidak lagi bergantung ke `clawcrew-runtime` (klaim lama: 426 referensi → 0).
 - **Ruang lingkup:** `crates/clawcrew-gateway/src/`.
 - **Status implementasi (in-progress):**
-  - Tahap 1–3 selesai: 102 referensi berhasil diputus (426 → 324 referensi, pengurangan 24%).
+  - Tahap 1–4 selesai: 106 referensi berhasil diputus (426 → 320 referensi, pengurangan 25%).
   - 25 referensi `clawcrew_runtime::health` dialihkan langsung ke SSOT asalnya `clawcrew_infra::health`.
   - 14 referensi `clawcrew_runtime::security::pairing` dialihkan ke SSOT `clawcrew_config::pairing`.
   - 9 referensi `clawcrew_runtime::i18n` dialihkan ke crate independen `galleon_i18n`.
   - 43 referensi `clawcrew_runtime::observability` (`Observer`, `ObserverEvent`, `ObserverMetric`, `NoopObserver`) dialihkan ke `clawcrew_api::observability_traits`.
   - 11 referensi `clawcrew_runtime::tools` (`CanvasStore`, batas konten `MAX_CONTENT_SIZE`, `ALLOWED_CONTENT_TYPES`), `cost` (`CostTracker`), dan import lama `DefaultMemoryStrategy` dialihkan ke `clawcrew_tools::canvas` dan `clawcrew_config::cost`.
-  - Seluruh 40 unit test `clawcrew-gateway` lulus 100% di commit `9de342140`, `4ab9bf167`, dan `bc47ecaea`.
+  - 4 referensi di Tahap 4 (`browse` dialihkan ke SSOT `clawcrew_config::browse`, `SecretStore` ke `clawcrew_config::secrets`, dan `PerToolChannelHandle` ke `clawcrew_tools::send_via`).
+  - Seluruh unit test terkait lulus 100% (52 test `browse` di `clawcrew-config`, compiler check gateway 0 error).
 - **DoD:** 0 referensi `clawcrew_runtime::` tersisa di `clawcrew-gateway/src/` kecuali pengecualian yang didiskusikan & didokumentasikan.
 
 ### T3-03 — Pecah `clawcrew-channels` jadi crate per-channel (BR-C6)
 
-- **Tujuan:** Pecah `channels` (198k LOC) → `galleon-channel-<nama>` satu crate per channel. Sudah selesai: `core`, `imessage`, `signal`, `bluesky`, `irc`.
+- **Tujuan:** Pecah `channels` (198k LOC) → `galleon-channel-<nama>` satu crate per channel. Sudah selesai: `core`, `imessage`, `signal`, `bluesky`, `irc`, `nostr`.
 - **Ruang lingkup:** `crates/clawcrew-channels/src/`, crate baru `galleon-channel-*`.
 - **Status implementasi (in-progress):**
-  - Crate `galleon-channel-irc` berhasil diekstrak mengikuti pola RF-B1: dipisahkan ke crate independen dengan dependency policy allowlist SSOT via `galleon-channel-core`, re-export `pub use galleon_channel_irc as irc`, terdaftar di arsitektur gate `tests/architecture/dependency_direction.rs`.
-  - 14/14 unit test `galleon-channel-irc` lulus 100%, compiler check lulus di commit `29aec5f46` & `bd9ee0252`.
+  - Crate `galleon-channel-irc` berhasil diekstrak (14/14 unit test ok, commit `29aec5f46` & `bd9ee0252`).
+  - Crate `galleon-channel-nostr` berhasil diekstrak mengikuti pola RF-B1: dipisahkan ke crate independen dengan dependency policy allowlist SSOT via `galleon-channel-core`, re-export `pub use galleon_channel_nostr as nostr`, monolith `src/nostr.rs` dihapus, terdaftar di arsitektur gate `tests/architecture/dependency_direction.rs` (commit `e31f0134f`).
+  - 12/12 unit test `galleon-channel-nostr` lulus 100%, compiler check dan architecture test lulus 100%.
 - **JANGAN DIUBAH:** Policy allowlist bersama tetap di `galleon-channel-core`, jangan reimplementasi per-channel.
 - **Dependency:** BR-C4 (sudah `[x]`, prasyarat terpenuhi).
 - **DoD:** Semua channel Tier A punya crate sendiri; `clawcrew-channels` monolith hanya menyisakan channel Tier B/C yang belum dijadwalkan.
