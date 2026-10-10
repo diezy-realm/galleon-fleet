@@ -2,7 +2,9 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,7 +33,8 @@ func withRequestIDMetadata(ctx context.Context) context.Context {
 
 // SystemGatewayClient defines the interface for calling Rust platform operations
 type SystemGatewayClient interface {
-	ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string) (string, error)
+	ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string, workspacePath ...string) (string, error)
+	GetNativeToolCatalog(ctx context.Context) ([]*pb.NativeToolDefinition, error)
 	GetDecryptedSecret(ctx context.Context, keyName string) (string, error)
 	ExecuteTask(ctx context.Context, taskID, taskData string) (string, error)
 	ExecuteTurn(ctx context.Context, req *pb.ExecuteTurnRequest) (pb.SystemGateway_ExecuteTurnClient, error)
@@ -99,7 +102,7 @@ func (c *systemGatewayClient) getClient() (pb.SystemGatewayClient, error) {
 	return c.client, nil
 }
 
-func (c *systemGatewayClient) ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string) (string, error) {
+func (c *systemGatewayClient) ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string, workspacePath ...string) (string, error) {
 	log := logger.Get()
 	log.InfoContext(ctx, "executing native tool via Rust gateway",
 		slog.String("tool", toolName),
@@ -114,10 +117,26 @@ func (c *systemGatewayClient) ExecuteNativeTool(ctx context.Context, toolName, a
 		return "", appErrors.Wrap(err, appErrors.CodeUnavailable, "Rust SystemGateway unreachable: native tool execution rejected (fail-closed boundary enforced)", appErrors.LayerExternal)
 	}
 
+	var wsPath *string
+	if len(workspacePath) > 0 && strings.TrimSpace(workspacePath[0]) != "" {
+		ws := workspacePath[0]
+		wsPath = &ws
+	} else if strings.TrimSpace(argumentsJSON) != "" {
+		var env map[string]any
+		if err := json.Unmarshal([]byte(argumentsJSON), &env); err == nil {
+			if ws, ok := env["__workspace_root"].(string); ok && strings.TrimSpace(ws) != "" {
+				wsPath = &ws
+			} else if ws, ok := env["workspace_path"].(string); ok && strings.TrimSpace(ws) != "" {
+				wsPath = &ws
+			}
+		}
+	}
+
 	ctx = withRequestIDMetadata(ctx)
 	resp, err := client.ExecuteNativeTool(ctx, &pb.ToolCallRequest{
 		ToolName:      toolName,
 		ArgumentsJson: argumentsJSON,
+		WorkspacePath: wsPath,
 	})
 	if err != nil {
 		return "", appErrors.Wrap(err, appErrors.CodeToolFailed, "Rust gateway tool execution error", appErrors.LayerExternal)
@@ -128,6 +147,20 @@ func (c *systemGatewayClient) ExecuteNativeTool(ctx context.Context, toolName, a
 	}
 
 	return resp.GetOutput(), nil
+}
+
+func (c *systemGatewayClient) GetNativeToolCatalog(ctx context.Context) ([]*pb.NativeToolDefinition, error) {
+	client, err := c.getClient()
+	if err != nil {
+		return nil, appErrors.Wrap(err, appErrors.CodeUnavailable, "Rust SystemGateway unreachable", appErrors.LayerExternal)
+	}
+
+	ctx = withRequestIDMetadata(ctx)
+	resp, err := client.GetNativeToolCatalog(ctx, &pb.GetNativeToolCatalogRequest{})
+	if err != nil {
+		return nil, appErrors.Wrap(err, appErrors.CodeToolFailed, "failed to get native tool catalog", appErrors.LayerExternal)
+	}
+	return resp.GetTools(), nil
 }
 
 func (c *systemGatewayClient) GetDecryptedSecret(ctx context.Context, keyName string) (string, error) {

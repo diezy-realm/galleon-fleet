@@ -188,8 +188,8 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
   3. Perbaiki mismatch `write_file` (`content` vs `contents`) sebagai bukti konkret pertama bahwa SSOT bekerja.
   4. `workspace_path` di proto perlu diisi — catatan roadmap: field ini "kini tak diisi `ExecuteNativeTool`".
   5. Tulis test kontrak yang gagal kalau Go dan Rust punya skema tool yang divergen.
-- **Dependency (dari roadmap):** G-01 (sudah `[x]`). Pasangan Rust: R-21 ("perluas cakupan" — perlu dicek apakah R-21 sendiri sudah ter-mapping; **R-21 di `R-rust.md` tidak ada** — kemungkinan ini typo/salah rujuk di dokumen roadmap asli ke R-nomor yang tidak eksis, catat sebagai ambiguitas, JANGAN diasumsikan ada tiket R-21 tersembunyi).
-- **DoD:** Test kontrak proto lulus di kedua sisi; `write_file`/`content` vs `contents` sudah konsisten; `workspace_path` terisi di semua panggilan `ExecuteNativeTool`.
+- **Status implementasi:** Selesai di branch `feat/refactoring-finalize-01` — skema proto SSOT didefinisikan (`GetNativeToolCatalog`, `WriteFileToolArgs` dengan kanonikal key `content`), mismatch `write_file` diselaraskan di Rust & Go, field `workspace_path` selalu terisi di `ToolCallRequest`, serta contract test Go (`native_tool_contract_test.go`) & Rust (`system_gateway_integration_test.rs`) lolos 100%. Spesifikasi terdokumentasi di `standard-docs/tech-standart/api-contracts/native-tool-catalog.md`.
+- **DoD:** Test kontrak proto lulus di kedua sisi; `write_file`/`content` vs `contents` sudah konsisten; `workspace_path` terisi di semua panggilan `ExecuteNativeTool`. (Terpenuhi)
 
 ### T3-27 — Hapus Express server, pindah UI metrics/QR ke endpoint Go (U-02, U-03, U-04)
 
