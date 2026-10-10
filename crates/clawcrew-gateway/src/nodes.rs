@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot};
-use clawcrew_runtime::security::pairing::{PairingGuard, constant_time_eq};
+use clawcrew_config::pairing::{PairingGuard, constant_time_eq};
 
 pub mod mdns;
 
@@ -424,7 +424,7 @@ mod tests {
     use super::*;
     use axum::http::{HeaderMap, StatusCode};
     use clawcrew_config::schema::NodesConfig;
-    use clawcrew_runtime::security::pairing::PairingGuard;
+    use clawcrew_config::pairing::PairingGuard;
 
     // ── Auth matrix tests (via check_node_auth — no WS handshake required) ──
 

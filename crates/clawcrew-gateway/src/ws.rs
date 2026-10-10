@@ -272,7 +272,7 @@ where
     let Some(decision) = decision.filter(|_| !run_id.is_empty()) else {
         let err = serde_json::json!({
             "type": "error",
-            "message": clawcrew_runtime::i18n::get_required_cli_string(
+            "message": galleon_i18n::get_required_cli_string(
                 "cli-sop-ws-invalid-approval"
             ),
             "code": "INVALID_APPROVAL_RESPONSE"
@@ -306,7 +306,7 @@ where
             }
             Some(Err(e)) => serde_json::json!({
                 "type": "error",
-                "message": clawcrew_runtime::i18n::get_required_cli_string_with_args(
+                "message": galleon_i18n::get_required_cli_string_with_args(
                     "cli-sop-ws-resolve-failed",
                     &[("error", &e.to_string())],
                 ),
@@ -314,7 +314,7 @@ where
             }),
             None => serde_json::json!({
                 "type": "error",
-                "message": clawcrew_runtime::i18n::get_required_cli_string(
+                "message": galleon_i18n::get_required_cli_string(
                     "cli-sop-ws-engine-lock-poisoned"
                 ),
                 "code": "SOP_LOCK_POISONED"
@@ -323,7 +323,7 @@ where
     } else {
         serde_json::json!({
             "type": "error",
-            "message": clawcrew_runtime::i18n::get_required_cli_string(
+            "message": galleon_i18n::get_required_cli_string(
                 "cli-sop-ws-subsystem-disabled"
             ),
             "code": "SOP_DISABLED"
@@ -1774,7 +1774,7 @@ async fn process_chat_message(
             };
             let durable = if needs_marker {
                 let marker =
-                    clawcrew_runtime::i18n::get_required_cli_string("turn-interrupted-by-user");
+                    galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
                 let truncated = if accumulated_text.is_empty() {
                     marker
                 } else {
@@ -2904,13 +2904,13 @@ data: {\"type\":\"message_stop\"}\n\n",
             "cli-sop-ws-engine-lock-poisoned",
             "cli-sop-ws-subsystem-disabled",
         ] {
-            let s = clawcrew_runtime::i18n::get_required_cli_string(key);
+            let s = galleon_i18n::get_required_cli_string(key);
             assert!(
                 !s.starts_with('{') || !s.ends_with('}'),
                 "fluent missing-key fallback leaked for {key}: {s:?}"
             );
         }
-        let resolved = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+        let resolved = galleon_i18n::get_required_cli_string_with_args(
             "cli-sop-ws-resolve-failed",
             &[("error", "boom")],
         );
@@ -3568,7 +3568,7 @@ data: {\"type\":\"message_stop\"}\n\n",
 
     #[tokio::test]
     async fn ws_sop_frame_enforces_policy_membership_via_auth_subject() {
-        use clawcrew_runtime::security::pairing::PairingGuard;
+        use clawcrew_config::pairing::PairingGuard;
         // Reuse the HTTP policied-gate harness: a run parked at a `prod` policy whose
         // group is granted to the paired-token subject (bare, any source).
         let (state, run_id) = crate::api_sop::tests::state_with_policied_gate("ws-tok");

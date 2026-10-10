@@ -29,7 +29,7 @@ struct ProviderHealthRow {
 }
 
 fn status_from_health(
-    health: &clawcrew_runtime::health::HealthSnapshot,
+    health: &clawcrew_infra::health::HealthSnapshot,
     provider: Option<&str>,
 ) -> (String, Option<String>, Option<String>, u64) {
     let entry = provider
@@ -55,7 +55,7 @@ pub async fn handle_providers_health(
         return response.into_response();
     }
     let config = state.config.read().clone();
-    let health = clawcrew_runtime::health::snapshot();
+    let health = clawcrew_infra::health::snapshot();
     let live: HashMap<String, ProviderHealthRecord> = provider_snapshot()
         .into_iter()
         .map(|record| (record.provider_name.clone(), record))

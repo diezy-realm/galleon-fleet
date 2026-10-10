@@ -964,9 +964,9 @@ mod tests {
     fn pairing_guard(
         require: bool,
         tokens: &[&str],
-    ) -> Arc<clawcrew_runtime::security::pairing::PairingGuard> {
+    ) -> Arc<clawcrew_config::pairing::PairingGuard> {
         let owned: Vec<String> = tokens.iter().map(|t| (*t).to_string()).collect();
-        Arc::new(clawcrew_runtime::security::pairing::PairingGuard::new(
+        Arc::new(clawcrew_config::pairing::PairingGuard::new(
             require,
             &owned,
             clawcrew_config::pairing::PairingCodePolicy::default(),

@@ -272,8 +272,8 @@
     async fn public_health_omits_component_error_details() {
         let component = format!("health-public-{}", uuid::Uuid::new_v4());
         let sensitive_error = "provider failed: token=not-for-public-health";
-        clawcrew_runtime::health::mark_component_ok(&component);
-        clawcrew_runtime::health::mark_component_error(&component, sensitive_error);
+        clawcrew_infra::health::mark_component_ok(&component);
+        clawcrew_infra::health::mark_component_error(&component, sensitive_error);
 
         let tmp = tempfile::TempDir::new().unwrap();
         let response = handle_health(State(admin_paircode_state(&tmp, false, false)))
@@ -292,7 +292,7 @@
         assert!(public_component.get("last_error").is_none());
         assert!(!json.to_string().contains(sensitive_error));
         assert_eq!(
-            clawcrew_runtime::health::snapshot().components[&component]
+            clawcrew_infra::health::snapshot().components[&component]
                 .last_error
                 .as_deref(),
             Some(sensitive_error)

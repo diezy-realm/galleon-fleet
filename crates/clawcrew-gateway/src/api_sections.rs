@@ -1434,7 +1434,7 @@ mod tests {
                 ),
             ),
             auto_save: false,
-            pairing: std::sync::Arc::new(clawcrew_runtime::security::pairing::PairingGuard::new(
+            pairing: std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
                 false,
                 &[],
                 clawcrew_config::pairing::PairingCodePolicy::default(),

@@ -1864,6 +1864,7 @@ dependencies = [
  "clawcrew-tools",
  "directories",
  "futures-util",
+ "galleon-i18n",
  "galleon-security-scrub",
  "hex",
  "hmac 0.12.1",
@@ -4306,11 +4307,14 @@ dependencies = [
  "async-trait",
  "chrono",
  "clawcrew-api",
+ "clawcrew-config",
  "clawcrew-log",
  "galleon-channel-core",
  "portable-atomic",
+ "serde_json",
  "tokio",
  "tokio-rustls",
+ "toml 1.1.2+spec-1.1.0",
  "webpki-roots 1.0.9",
 ]
 

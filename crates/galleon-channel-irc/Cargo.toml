@@ -24,6 +24,7 @@ clawcrew-log.workspace = true
 anyhow = "1.0"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 webpki-roots = "1.0.6"
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
 tokio-rustls = { version = "0.26.4", default-features = false, features = [
   "logging",
   "ring",
@@ -31,6 +32,8 @@ tokio-rustls = { version = "0.26.4", default-features = false, features = [
 ] }
 
 [dev-dependencies]
+clawcrew-config = { workspace = true, default-features = false }
+toml = "1.0"
 tokio = { version = "1.50", default-features = false, features = [
   "macros",
   "rt",

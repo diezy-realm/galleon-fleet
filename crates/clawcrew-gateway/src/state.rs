@@ -8,7 +8,7 @@ use clawcrew_memory::{self, Memory, MemoryCategory};
 use clawcrew_providers::{self, ModelProvider};
 use clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy;
 use clawcrew_runtime::cost::CostTracker;
-use clawcrew_runtime::security::pairing::PairingGuard;
+use clawcrew_config::pairing::PairingGuard;
 use clawcrew_runtime::tools::CanvasStore;
 use parking_lot::RwLock;
 

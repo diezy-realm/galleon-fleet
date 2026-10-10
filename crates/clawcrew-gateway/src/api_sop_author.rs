@@ -947,7 +947,7 @@ mod tests {
     use clawcrew_config::schema::{
         ApprovalGroupConfig, ApprovalPolicyConfig, SopApprovalConfig, SopConfig,
     };
-    use clawcrew_runtime::security::pairing::PairingGuard;
+    use clawcrew_config::pairing::PairingGuard;
     use clawcrew_runtime::sop::approval::ApprovalBroker;
     use clawcrew_runtime::sop::engine::{SopEngine, now_iso8601};
     use clawcrew_runtime::sop::types::{

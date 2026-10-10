@@ -24,7 +24,7 @@ use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use std::time::{Duration, Instant};
 use tokio::io::{AsyncBufReadExt, AsyncRead, BufReader};
-use clawcrew_runtime::i18n::get_required_cli_string;
+use galleon_i18n::get_required_cli_string;
 
 /// How long a successful version check is reused before re-querying GitHub.
 const CHECK_CACHE_TTL: Duration = Duration::from_secs(3600);

@@ -315,7 +315,7 @@ pub(crate) mod tests {
         use clawcrew_config::schema::{
             ApprovalGroupConfig, ApprovalPolicyConfig, SopApprovalConfig, SopConfig,
         };
-        use clawcrew_runtime::security::pairing::PairingGuard;
+        use clawcrew_config::pairing::PairingGuard;
         use clawcrew_runtime::sop::approval::ApprovalBroker;
         use clawcrew_runtime::sop::engine::{now_iso8601, SopEngine};
         use clawcrew_runtime::sop::types::{
@@ -438,7 +438,7 @@ pub(crate) mod tests {
         let other = "some-other-paired-token";
         let mut state_other = state.clone();
         state_other.pairing =
-            std::sync::Arc::new(clawcrew_runtime::security::pairing::PairingGuard::new(
+            std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
                 true,
                 &[token.to_string(), other.to_string()],
                 clawcrew_config::pairing::PairingCodePolicy::default(),
@@ -570,7 +570,7 @@ pub(crate) mod tests {
         // token string that legitimately satisfied membership when paired must NOT
         // grant an authenticated identity anymore.
         state.pairing =
-            std::sync::Arc::new(clawcrew_runtime::security::pairing::PairingGuard::new(
+            std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
                 false,
                 &[],
                 clawcrew_config::pairing::PairingCodePolicy::default(),

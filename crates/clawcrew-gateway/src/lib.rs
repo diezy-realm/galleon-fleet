@@ -261,7 +261,7 @@ pub fn client_key_from_request(
 
 pub(crate) async fn persist_pairing_tokens(
     config: Arc<parking_lot::RwLock<clawcrew_config::schema::Config>>,
-    pairing: &clawcrew_runtime::security::pairing::PairingGuard,
+    pairing: &clawcrew_config::pairing::PairingGuard,
     config_write_lock: Arc<tokio::sync::Mutex<()>>,
 ) -> anyhow::Result<()> {
     let _guard = config_write_lock.lock_owned().await;

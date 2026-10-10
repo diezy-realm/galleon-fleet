@@ -2630,7 +2630,7 @@ pub(crate) mod tests {
     use parking_lot::RwLock;
     use std::time::Duration;
     use clawcrew_providers::ModelProvider;
-    use clawcrew_runtime::security::pairing::PairingGuard;
+    use clawcrew_config::pairing::PairingGuard;
 
     #[test]
     fn invalid_etag_value_is_omitted_instead_of_panicking() {
