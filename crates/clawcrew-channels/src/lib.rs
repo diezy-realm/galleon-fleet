@@ -74,8 +74,11 @@ pub mod mattermost;
 pub mod mochat;
 #[cfg(feature = "channel-nextcloud")]
 pub mod nextcloud_talk;
+// RF-B1: the Nostr channel now lives in its own feature-crate. Re-export it
+// under the historical `nostr` path so `crate::nostr::NostrChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-nostr")]
-pub mod nostr;
+pub use galleon_channel_nostr as nostr;
 #[cfg(feature = "channel-notion")]
 pub mod notion;
 #[cfg(feature = "channel-qq")]

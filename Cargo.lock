@@ -1697,6 +1697,7 @@ dependencies = [
  "galleon-channel-bluesky",
  "galleon-channel-imessage",
  "galleon-channel-irc",
+ "galleon-channel-nostr",
  "galleon-channel-signal",
  "galleon-i18n",
  "galleon-security-scrub",
@@ -1716,7 +1717,6 @@ dependencies = [
  "md5",
  "mime_guess",
  "nanohtml2text",
- "nostr-sdk",
  "notify",
  "p12-keystore",
  "parking_lot",
@@ -4316,6 +4316,20 @@ dependencies = [
  "tokio-rustls",
  "toml 1.1.2+spec-1.1.0",
  "webpki-roots 1.0.9",
+]
+
+[[package]]
+name = "galleon-channel-nostr"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-log",
+ "galleon-channel-core",
+ "nostr-sdk",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

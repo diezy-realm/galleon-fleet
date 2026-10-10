@@ -41,6 +41,10 @@ galleon-channel-imessage = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_irc as irc`) so existing callers
 # (`crate::irc::IrcChannel`) keep compiling. Optional, behind `channel-irc`.
 galleon-channel-irc = { workspace = true, optional = true }
+# RF-B1: the Nostr channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_nostr as nostr`) so existing callers
+# (`crate::nostr::NostrChannel`) keep compiling. Optional, behind `channel-nostr`.
+galleon-channel-nostr = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -95,10 +99,6 @@ matrix-sdk = { version = "0.18", optional = true, default-features = false, feat
   "sqlite",
 ] }
 mime_guess = { version = "2", optional = true }
-nostr-sdk = { version = "0.44", default-features = false, features = [
-  "nip04",
-  "nip59",
-], optional = true }
 parking_lot = "0.12"
 portable-atomic = "1"
 prost = { version = "0.14", default-features = false, features = [
@@ -254,7 +254,7 @@ channel-git = ["provider-github", "provider-gitea"]
 provider-github = ["dep:jsonwebtoken", "dep:thiserror"]
 provider-gitea = []
 channel-line = ["dep:axum"]
-channel-nostr = ["dep:nostr-sdk"]
+channel-nostr = ["dep:galleon-channel-nostr"]
 whatsapp-web = [
   "dep:bytes",
   "dep:qrcode",
