@@ -1,4 +1,4 @@
-//! HTTP adapter over `clawcrew_runtime::browse::list_directory`.
+//! HTTP adapter over `clawcrew_config::browse::list_directory`.
 
 use axum::{
     Json,
