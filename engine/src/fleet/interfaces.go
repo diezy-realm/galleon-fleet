@@ -104,6 +104,7 @@ type Service interface {
 	GetSeedData(ctx context.Context) (map[string]any, error)
 	ExecuteTerminal(ctx context.Context, req TerminalExecRequest) (*TerminalExecResponse, error)
 	GetTerminalAudit(ctx context.Context, limit int) ([]TerminalAuditRecord, error)
+	GetProjectGitStatus(ctx context.Context, projectPath string) (*ProjectGitStatusResponse, error)
 	GetEntitlementUsage(ctx context.Context) (*entitlement.UsageReport, error)
 	SetEntitlementPolicy(p entitlement.QuotaPolicy)
 	// SetObjectiveProposer injects the objective-branch dependency after

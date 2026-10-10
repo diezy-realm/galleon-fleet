@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"runtime"
 	"strings"
 	"time"
@@ -557,22 +556,13 @@ func (h *HTTPHandler) handleProjectGitStatus(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// BL-62: Evaluasi command "git status" via policy gate EvaluateTerminalCommand
-	riskTier, reason, err := EvaluateTerminalCommand("git status")
-	if err != nil || riskTier == RiskTierBlocked {
-		http.Error(w, fmt.Sprintf("policy gate rejected git status: %v (%s)", err, reason), http.StatusForbidden)
-		return
-	}
-
 	projectPath := r.URL.Query().Get("path")
 	if projectPath == "" {
 		projectPath = "."
 	}
 
-	cmd := exec.Command("git", "status", "--porcelain", "-b")
-	cmd.Dir = projectPath
-	out, err := cmd.Output()
-	if err != nil {
+	if h.service == nil {
+		riskTier, _, _ := EvaluateTerminalCommand("git status")
 		resp := ProjectGitStatusResponse{
 			Branch:      "main",
 			Clean:       true,
@@ -586,42 +576,10 @@ func (h *HTTPHandler) handleProjectGitStatus(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	lines := strings.Split(string(out), "\n")
-	branch := "main"
-	var staged, unstaged, untracked []string
-
-	for i, line := range lines {
-		line = strings.TrimRight(line, "\r")
-		if line == "" {
-			continue
-		}
-		if i == 0 && strings.HasPrefix(line, "## ") {
-			branchPart := strings.TrimPrefix(line, "## ")
-			parts := strings.Split(branchPart, "...")
-			branch = parts[0]
-			continue
-		}
-		if len(line) >= 2 {
-			code := line[:2]
-			file := strings.TrimSpace(line[2:])
-			if code[0] == '?' {
-				untracked = append(untracked, file)
-			} else if code[0] != ' ' && code[0] != '?' {
-				staged = append(staged, file)
-			} else if code[1] != ' ' {
-				unstaged = append(unstaged, file)
-			}
-		}
-	}
-
-	resp := ProjectGitStatusResponse{
-		Branch:      branch,
-		Clean:       len(staged) == 0 && len(unstaged) == 0 && len(untracked) == 0,
-		Staged:      staged,
-		Unstaged:    unstaged,
-		Untracked:   untracked,
-		RiskTier:    string(riskTier),
-		PolicyCheck: "evaluated-pass",
+	resp, err := h.service.GetProjectGitStatus(r.Context(), projectPath)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
 	}
 
 	writeJSON(w, http.StatusOK, resp)

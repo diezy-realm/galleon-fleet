@@ -191,13 +191,14 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
   - **U-03:** QR pairing di UI pakai endpoint Go (G-20, sudah `[x]`) — tanpa paket `qrcode` di server.
   - **U-04:** Telemetri OS dari Go (G-22/T3-25), hapus dummy/derivasi lokal di UI.
 - **Ruang lingkup:** `web/server.ts`, `web/package.json` (scripts), komponen UI yang masih render metrik/QR lokal.
-- **Dependency:** U-02 depend G-20 (sudah `[x]`) + G-22 (T3-25, masih gap). U-04 depend langsung ke T3-25. **T3-25 harus selesai dulu** sebelum U-04 genuinely bisa menampilkan data nyata (bukan hanya menghapus dummy tanpa pengganti).
+- **Dependency:** U-02 depend G-20 (sudah `[x]`) + G-22 (T3-25, sudah `[x]`). U-04 depend langsung ke T3-25.
 - **Langkah konkret:**
   1. Verifikasi dulu apakah `web/server.ts` masih genuinely dipakai — U-16 (sudah `[x]`, Sprint awal) sudah menghapus endpoint RCE `/api/engine/execute` dari file ini, tapi file itu sendiri mungkin belum dihapus total.
   2. Hapus `server.ts` + skrip `tsx watch` sepenuhnya, pastikan `vite dev` + proxy config menggantikan fungsinya.
   3. QR pairing: ganti pemanggilan lokal ke `apiClient` yang hit endpoint Go `/api/pairing/*` (G-20).
   4. Telemetri OS: setelah T3-25 selesai, ganti dummy di UI dengan panggilan ke endpoint yang sudah genuinely return data OS nyata.
-- **DoD:** `web/server.ts` terhapus dari git; `npm run dev` murni Vite; QR pairing dan metrik OS di UI genuinely dari API Go, 0 dummy/hardcoded tersisa.
+- **Status implementasi:** Selesai di branch `feat/refactoring-finalize-01` — `web/server.ts` dihapus permanen, `web/package.json` diselaraskan ke murni Vite (`"dev": "vite"`, `"start": "vite preview"`), dependensi express dicopot. QR pairing dan telemetri OS sepenuhnya dialihkan ke Go engine (`/api/network/qrcode`, `/api/system/metrics` didukung oleh gateway Rust G-22). Uji arsitektur UI dan Go engine tier boundaries lulus 100%.
+- **DoD:** `web/server.ts` terhapus dari git; `npm run dev` murni Vite; QR pairing dan metrik OS di UI genuinely dari API Go, 0 dummy/hardcoded tersisa. (Terpenuhi)
 
 ### T3-28 — Tipe E2 & `apiClient.ts` tunggal bertipe (U-10, U-11)
 
