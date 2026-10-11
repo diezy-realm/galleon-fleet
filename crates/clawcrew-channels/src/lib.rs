@@ -29,9 +29,11 @@ pub mod transcription;
 pub mod tts;
 pub mod voice;
 
-// Feature-gated channels
+// RF-B1: the AMQP channel now lives in its own feature-crate. Re-export it
+// under the historical `amqp` path so `crate::amqp::AmqpChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-amqp")]
-pub mod amqp;
+pub use galleon_channel_amqp as amqp;
 // RF-B1: the Bluesky channel now lives in its own feature-crate. Re-export it
 // under the historical `bluesky` path so `crate::bluesky::BlueskyChannel` and
 // the orchestrator's `pub use crate::bluesky::BlueskyChannel` keep resolving.

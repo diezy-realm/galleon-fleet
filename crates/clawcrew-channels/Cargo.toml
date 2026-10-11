@@ -85,6 +85,10 @@ galleon-channel-nextcloud = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_filesystem as filesystem`) so existing callers
 # keep compiling. Optional, behind `channel-filesystem`.
 galleon-channel-filesystem = { workspace = true, optional = true }
+# RF-B1: the AMQP channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_amqp as amqp`) so existing callers
+# keep compiling. Optional, behind `channel-amqp`.
+galleon-channel-amqp = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -323,7 +327,7 @@ channel-reddit = ["dep:galleon-channel-reddit"]
 channel-notion = ["dep:galleon-channel-notion"]
 channel-mqtt = ["dep:rumqttc"]
 channel-filesystem = ["dep:galleon-channel-filesystem"]
-channel-amqp = ["dep:lapin", "dep:tokio-executor-trait", "dep:tokio-reactor-trait", "dep:async-reactor-trait", "dep:p12-keystore", "dep:rustls-pemfile"]
+channel-amqp = ["dep:galleon-channel-amqp"]
 channel-linq = ["dep:galleon-channel-linq"]
 channel-nextcloud = ["dep:galleon-channel-nextcloud"]
 channel-mochat = ["dep:galleon-channel-mochat"]

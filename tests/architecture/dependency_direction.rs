@@ -75,6 +75,7 @@ fn crate_dependency_direction_strictly_enforced() {
         "crates/galleon-channel-linq",
         "crates/galleon-channel-nextcloud",
         "crates/galleon-channel-filesystem",
+        "crates/galleon-channel-amqp",
     ] {
         let cargo_path = root.join(channel_crate).join("Cargo.toml");
         if cargo_path.exists() {

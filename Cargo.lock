@@ -1694,6 +1694,7 @@ dependencies = [
  "directories",
  "ecb",
  "futures-util",
+ "galleon-channel-amqp",
  "galleon-channel-bluesky",
  "galleon-channel-clawdtalk",
  "galleon-channel-dingtalk",
@@ -4273,6 +4274,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54614a3312934d066701a80f20f15fa3b56d67ac7722b39eea5b4c9dd1d66c94"
 dependencies = [
  "thread_local",
+]
+
+[[package]]
+name = "galleon-channel-amqp"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-reactor-trait",
+ "async-trait",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-infra",
+ "clawcrew-log",
+ "futures-util",
+ "galleon-channel-core",
+ "lapin",
+ "p12-keystore",
+ "portable-atomic",
+ "rustls-pemfile",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tokio-executor-trait",
+ "tokio-reactor-trait",
 ]
 
 [[package]]
