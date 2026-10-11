@@ -29,9 +29,10 @@ Prefer borrowed config, getters, resolver closures over live config, on-demand m
 5. Do not add heavy dependencies for minor convenience, speculative abstractions, or config keys and feature flags without a concrete use case.
 6. Add the smallest useful implementation and tests at the real behavior boundary.
 7. Validate at the change's risk level, report commands actually run, and document behavior, risk, side effects, and rollback.
-8. Use a non-`master` branch, open a PR to `master`, and never push directly to `master`.
+8. Use a non-`master` branch (checkout sub-branches from `testing` during active testing/staging cycles). Open a PR to the target branch (`testing` / `master`), and never push directly to `master` or base branches.
 9. Use conventional commits and the full PR template. Prefer small PRs and do not add bot or AI attribution footers.
 10. Declare stacked work with `Depends on #...` and replacement work with `Supersedes #...`.
+11. When a task or batch of work is completed and verified, immediately open a PR to the target branch (`testing` / `master`) and mark/update completed tasks in the canonical task documentation (`standard-docs/decisions/finalize/dev-task-*/README.md` and `standard-docs/roadmap/PR-plan.md`) with concrete facts (commits, metrics, tests).
 
 Subagents must set their working directory to the repository root before shell or filesystem work. Do not assume an inherited working directory.
 
