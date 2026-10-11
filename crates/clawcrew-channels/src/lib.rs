@@ -88,8 +88,11 @@ pub mod nextcloud_talk;
 // keep resolving.
 #[cfg(feature = "channel-nostr")]
 pub use galleon_channel_nostr as nostr;
+// RF-B1: the Notion channel now lives in its own feature-crate. Re-export it
+// under the historical `notion` path so `crate::notion::NotionChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-notion")]
-pub mod notion;
+pub use galleon_channel_notion as notion;
 #[cfg(feature = "channel-qq")]
 pub mod qq;
 // RF-B1: the Reddit channel now lives in its own feature-crate. Re-export it
