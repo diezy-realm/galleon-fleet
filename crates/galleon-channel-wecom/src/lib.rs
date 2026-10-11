@@ -1,6 +1,18 @@
-use async_trait::async_trait;
 use std::sync::Arc;
+use async_trait::async_trait;
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+
+async fn ensure_success(
+    resp: reqwest::Response,
+    what: &str,
+) -> anyhow::Result<reqwest::Response> {
+    if resp.status().is_success() {
+        return Ok(resp);
+    }
+    let status = resp.status();
+    let err = resp.text().await.unwrap_or_default();
+    anyhow::bail!("{what} failed ({status}): {err}");
+}
 
 /// WeCom (WeChat Enterprise) Bot Webhook channel.
 /// Sends messages via the WeCom Bot Webhook API. Incoming messages are received
@@ -41,9 +53,23 @@ impl WeComChannel {
 
     pub fn is_user_allowed(&self, user_id: &str) -> bool {
         let peers = (self.peer_resolver)();
-        let allowed =
-            crate::allowlist::is_user_allowed(&peers, user_id, crate::allowlist::Match::Sensitive);
-        ::clawcrew_log::record!(TRACE, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"channel": "wecom", "alias": self.alias, "user_id": user_id, "allowed": allowed})), "wecom allowlist decision");
+        let allowed = galleon_channel_core::allowlist::is_user_allowed(
+            &peers,
+            user_id,
+            galleon_channel_core::allowlist::Match::Sensitive,
+        );
+        ::clawcrew_log::record!(
+            TRACE,
+            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+                ::serde_json::json!({
+                    "channel": "wecom",
+                    "alias": self.alias,
+                    "user_id": user_id,
+                    "allowed": allowed
+                })
+            ),
+            "wecom allowlist decision"
+        );
         allowed
     }
 }
@@ -88,7 +114,7 @@ impl Channel for WeComChannel {
             .send()
             .await?;
 
-        let resp = crate::util::ensure_success(resp, "WeCom webhook send").await?;
+        let resp = ensure_success(resp, "WeCom webhook send").await?;
 
         // WeCom returns {"errcode":0,"errmsg":"ok"} on success.
         let result: serde_json::Value = resp.json().await?;

@@ -138,8 +138,10 @@ pub mod voice_wake;
 pub mod webhook;
 #[cfg(feature = "channel-wechat")]
 pub mod wechat;
+// RF-B1: the WeCom channel now lives in its own feature-crate. Re-export it
+// under the historical `wecom` path so callers keep resolving.
 #[cfg(feature = "channel-wecom")]
-pub mod wecom;
+pub use galleon_channel_wecom as wecom;
 #[cfg(feature = "channel-wecom-ws")]
 pub mod wecom_ws;
 #[cfg(any(feature = "channel-whatsapp-cloud", feature = "whatsapp-web"))]

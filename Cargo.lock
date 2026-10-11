@@ -1710,6 +1710,7 @@ dependencies = [
  "galleon-channel-signal",
  "galleon-channel-twitch",
  "galleon-channel-twitter",
+ "galleon-channel-wecom",
  "galleon-i18n",
  "galleon-security-scrub",
  "glob",
@@ -4571,6 +4572,21 @@ dependencies = [
  "tokio",
  "toml 1.1.2+spec-1.1.0",
  "uuid",
+]
+
+[[package]]
+name = "galleon-channel-wecom"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "galleon-channel-core",
+ "reqwest 0.12.28",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
