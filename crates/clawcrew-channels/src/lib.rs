@@ -53,8 +53,11 @@ pub mod discord;
 pub mod discord_slash_state;
 #[cfg(feature = "channel-email")]
 pub mod email_channel;
+// RF-B1: the Filesystem channel now lives in its own feature-crate. Re-export it
+// under the historical `filesystem` path so `crate::filesystem::FilesystemChannel`
+// and callers keep resolving.
 #[cfg(feature = "channel-filesystem")]
-pub mod filesystem;
+pub use galleon_channel_filesystem as filesystem;
 #[cfg(feature = "channel-git")]
 pub mod git;
 #[cfg(feature = "channel-email")]

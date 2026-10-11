@@ -1697,6 +1697,7 @@ dependencies = [
  "galleon-channel-bluesky",
  "galleon-channel-clawdtalk",
  "galleon-channel-dingtalk",
+ "galleon-channel-filesystem",
  "galleon-channel-imessage",
  "galleon-channel-irc",
  "galleon-channel-linq",
@@ -4331,6 +4332,28 @@ dependencies = [
  "tokio",
  "tokio-tungstenite 0.29.0",
  "uuid",
+]
+
+[[package]]
+name = "galleon-channel-filesystem"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-infra",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "galleon-channel-core",
+ "glob",
+ "notify",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "tokio",
 ]
 
 [[package]]
