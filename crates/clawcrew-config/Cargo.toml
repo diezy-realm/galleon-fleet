@@ -18,6 +18,7 @@ clawcrew-macros.workspace = true
 # give a security-relevant rule two definitions that can drift apart.
 clawcrew-infra.workspace = true
 anyhow = "1.0"
+base64 = { version = "0.22", optional = true }
 clap = { version = "4.5", optional = true, default-features = false, features = ["std", "derive"] }
 # OnboardUi needs dyn-compat; native AFIT isn't dyn-safe. Already built for api/channels/runtime.
 async-trait = "0.1"
@@ -31,6 +32,7 @@ parking_lot = "0.12"
 postgres = { version = "0.19", default-features = false, features = ["with-chrono-0_4"], optional = true }
 rand = "0.10"
 regex = "1.10"
+ring = { version = "0.17", optional = true }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls-webpki-roots-no-provider", "__rustls-ring"] }
 rusqlite = { version = "0.37", default-features = false, features = ["bundled"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "logging", "std", "tls12"], optional = true }
@@ -79,6 +81,7 @@ ws-transport = [
   "dep:webpki-roots",
   "tokio/net",
 ]
+webauthn = ["dep:base64", "dep:ring"]
 # Test-only fault-injection hooks (post-replace sync failure). Enabled by
 # downstream dev-dependencies only; never by a production dependency.
 test-helpers = []

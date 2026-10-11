@@ -1780,6 +1780,7 @@ version = "0.8.5"
 dependencies = [
  "anyhow",
  "async-trait",
+ "base64",
  "chacha20poly1305",
  "chrono",
  "clap",
@@ -1797,6 +1798,7 @@ dependencies = [
  "rand 0.10.2",
  "regex",
  "reqwest 0.12.28",
+ "ring",
  "rusqlite",
  "rustls",
  "rustls-pki-types",
