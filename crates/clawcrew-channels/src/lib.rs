@@ -111,8 +111,11 @@ pub mod telegram;
 // keep resolving.
 #[cfg(feature = "channel-twitch")]
 pub use galleon_channel_twitch as twitch;
+// RF-B1: the Twitter channel now lives in its own feature-crate. Re-export it
+// under the historical `twitter` path so `crate::twitter::TwitterChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-twitter")]
-pub mod twitter;
+pub use galleon_channel_twitter as twitter;
 #[cfg(feature = "channel-voice-call")]
 pub mod voice_call;
 #[cfg(feature = "voice-wake")]
