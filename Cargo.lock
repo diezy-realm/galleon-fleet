@@ -1699,6 +1699,7 @@ dependencies = [
  "galleon-channel-dingtalk",
  "galleon-channel-imessage",
  "galleon-channel-irc",
+ "galleon-channel-linq",
  "galleon-channel-mochat",
  "galleon-channel-nostr",
  "galleon-channel-notion",
@@ -4361,6 +4362,27 @@ dependencies = [
  "tokio-rustls",
  "toml 1.1.2+spec-1.1.0",
  "webpki-roots 1.0.9",
+]
+
+[[package]]
+name = "galleon-channel-linq"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "galleon-channel-core",
+ "hex",
+ "hmac 0.12.1",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

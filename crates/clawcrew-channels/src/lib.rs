@@ -70,8 +70,11 @@ pub use galleon_channel_irc as irc;
 pub mod lark;
 #[cfg(feature = "channel-line")]
 pub mod line;
+// RF-B1: the Linq channel now lives in its own feature-crate. Re-export it
+// under the historical `linq` path so `crate::linq::LinqChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-linq")]
-pub mod linq;
+pub use galleon_channel_linq as linq;
 #[cfg(feature = "channel-matrix")]
 pub mod matrix;
 #[cfg(feature = "channel-mattermost")]

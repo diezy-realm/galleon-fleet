@@ -73,6 +73,10 @@ galleon-channel-twitter = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_notion as notion`) so existing callers
 # (`crate::notion::NotionChannel`) keep compiling. Optional, behind `channel-notion`.
 galleon-channel-notion = { workspace = true, optional = true }
+# RF-B1: the Linq channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_linq as linq`) so existing callers
+# (`crate::linq::LinqChannel`) keep compiling. Optional, behind `channel-linq`.
+galleon-channel-linq = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -312,7 +316,7 @@ channel-notion = ["dep:galleon-channel-notion"]
 channel-mqtt = ["dep:rumqttc"]
 channel-filesystem = ["dep:notify", "dep:glob"]
 channel-amqp = ["dep:lapin", "dep:tokio-executor-trait", "dep:tokio-reactor-trait", "dep:async-reactor-trait", "dep:p12-keystore", "dep:rustls-pemfile"]
-channel-linq = []
+channel-linq = ["dep:galleon-channel-linq"]
 channel-nextcloud = []
 channel-mochat = ["dep:galleon-channel-mochat"]
 channel-wechat = [
