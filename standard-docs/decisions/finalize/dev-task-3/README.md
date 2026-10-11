@@ -66,7 +66,7 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 - **Tujuan:** `clawcrew-gateway` tidak lagi bergantung ke `clawcrew-runtime` (klaim lama: 426 referensi → 0).
 - **Ruang lingkup:** `crates/clawcrew-gateway/src/`.
 - **Status implementasi (in-progress):**
-  - Tahap 1–9 selesai: 119 referensi berhasil diputus (426 → 307 referensi, pengurangan ~28.0%).
+  - Tahap 1–10 selesai: 120 referensi berhasil diputus (426 → 306 referensi, pengurangan ~28.2%).
   - 25 referensi `clawcrew_runtime::health` dialihkan langsung ke SSOT asalnya `clawcrew_infra::health`.
   - 14 referensi `clawcrew_runtime::security::pairing` dialihkan ke SSOT `clawcrew_config::pairing`.
   - 9 referensi `clawcrew_runtime::i18n` dialihkan ke crate independen `galleon_i18n`.
@@ -78,13 +78,14 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
   - 2 referensi di Tahap 7 (`session_metadata` registry & fallback projections dialihkan ke SSOT `clawcrew_infra::session_metadata`, commit `ab232a143`). Referensi `session` di gateway turun menjadi 0.
   - 2 referensi di Tahap 8 (`param_options::resolve_options` dialihkan ke SSOT `clawcrew_tools::param_options`, commit `4637ed76a`). Referensi `tools` di gateway turun dari 3 menjadi 1.
   - 2 referensi di Tahap 9 (`identity::load_aieos_identity` & `Names` dialihkan ke SSOT `clawcrew_config::identity`, commit `eceb6d76a`). Referensi `identity` di gateway turun menjadi 0.
-  - Sisa 307 referensi runtime: `cron` (103), `sop` (93), `agent` (28), `control_plane` (24), `quickstart` (10), `integrations` (10), `observability` (9), `daemon` (9), `skills` (6), `rpc` (6), `doctor` (4), `security` (2), `tools` (1), `platform` (1), `acp` (1).
-  - Seluruh unit test terkait lulus 100% (15 test `identity`, 34 test `a2a`, 5 test `param_options`, 10 test `session_metadata`, 5 test `process_stats`, 5 test `restart`, 13 test `version`, compiler check gateway 0 error).
+  - 1 referensi di Tahap 10 (`audit::verify_chain` dialihkan ke SSOT `clawcrew_config::audit`, commit `6c50894b0`). Referensi `security` di gateway turun dari 2 menjadi 1.
+  - Sisa 306 referensi runtime: `cron` (103), `sop` (93), `agent` (28), `control_plane` (24), `quickstart` (10), `integrations` (10), `observability` (9), `daemon` (9), `skills` (6), `rpc` (6), `doctor` (4), `tools` (1), `security` (1), `platform` (1), `acp` (1).
+  - Seluruh unit test terkait lulus 100% (31 test `audit`, 3 test `api_audit`, 15 test `identity`, 34 test `a2a`, 5 test `param_options`, 10 test `session_metadata`, 5 test `process_stats`, 5 test `restart`, 13 test `version`, compiler check gateway 0 error).
 - **DoD:** 0 referensi `clawcrew_runtime::` tersisa di `clawcrew-gateway/src/` kecuali pengecualian yang didiskusikan & didokumentasikan.
 
 ### T3-03 — Pecah `clawcrew-channels` jadi crate per-channel (BR-C6)
 
-- **Tujuan:** Pecah `channels` (198k LOC) → `galleon-channel-<nama>` satu crate per channel. Sudah selesai: `core`, `signal`, `bluesky`, `imessage`, `irc`, `nostr`, `twitch`, `dingtalk`, `mochat`, `clawdtalk`, `reddit`.
+- **Tujuan:** Pecah `channels` (198k LOC) → `galleon-channel-<nama>` satu crate per channel. Sudah selesai: `core`, `signal`, `bluesky`, `imessage`, `irc`, `nostr`, `twitch`, `dingtalk`, `mochat`, `clawdtalk`, `reddit`, `twitter`.
 - **Ruang lingkup:** `crates/clawcrew-channels/src/`, crate baru `galleon-channel-*`.
 - **Status implementasi (in-progress):**
   - Crate `galleon-channel-irc` diekstrak (14/14 unit test ok, commit `29aec5f46` & `bd9ee0252`).
@@ -94,6 +95,7 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
   - Crate `galleon-channel-mochat` diekstrak ke crate independen `crates/galleon-channel-mochat` (9/9 unit test ok, commit `29294eede`).
   - Crate `galleon-channel-clawdtalk` diekstrak ke crate independen `crates/galleon-channel-clawdtalk` (5/5 unit test ok, commit `61b93cf7e`). Monolith `src/clawdtalk.rs` dihapus, re-export via `pub use galleon_channel_clawdtalk as clawdtalk`, terdaftar di arsitektur gate.
   - Crate `galleon-channel-reddit` diekstrak ke crate independen `crates/galleon-channel-reddit` (22/22 unit test ok, commit `8a3b8ed26`). Monolith `src/reddit.rs` dihapus, re-export via `pub use galleon_channel_reddit as reddit`, terdaftar di arsitektur gate.
+  - Crate `galleon-channel-twitter` diekstrak ke crate independen `crates/galleon-channel-twitter` (15/15 unit test ok, commit `1d40d2c49`). Monolith `src/twitter.rs` dihapus, re-export via `pub use galleon_channel_twitter as twitter`, terdaftar di arsitektur gate.
   - Seluruh unit test channel baru lulus 100%, compiler check dan architecture test `dependency_direction` lulus 100%.
 - **JANGAN DIUBAH:** Policy allowlist bersama tetap di `galleon-channel-core`, jangan reimplementasi per-channel.
 - **Dependency:** BR-C4 (sudah `[x]`, prasyarat terpenuhi).
