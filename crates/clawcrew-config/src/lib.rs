@@ -37,6 +37,7 @@ pub mod skill_bundles;
 pub mod traits;
 pub mod typed_value;
 pub mod validation_warnings;
+pub mod audit;
 pub mod identity;
 pub mod thinking;
 pub mod write_lock;
@@ -50,6 +51,7 @@ pub mod config {
 
 /// Shim module so `Configurable` derive macro's generated `crate::security::*` paths resolve.
 pub mod security {
+    pub use crate::audit;
     pub use crate::policy::SecurityPolicy;
     pub use crate::secrets::SecretStore;
 }
