@@ -84,8 +84,11 @@ pub mod mattermost;
 // keep resolving.
 #[cfg(feature = "channel-mochat")]
 pub use galleon_channel_mochat as mochat;
+// RF-B1: the Nextcloud Talk channel now lives in its own feature-crate. Re-export it
+// under the historical `nextcloud_talk` path so `crate::nextcloud_talk::NextcloudTalkChannel`
+// and callers keep resolving.
 #[cfg(feature = "channel-nextcloud")]
-pub mod nextcloud_talk;
+pub use galleon_channel_nextcloud as nextcloud_talk;
 // RF-B1: the Nostr channel now lives in its own feature-crate. Re-export it
 // under the historical `nostr` path so `crate::nostr::NostrChannel` and callers
 // keep resolving.

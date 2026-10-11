@@ -73,6 +73,7 @@ fn crate_dependency_direction_strictly_enforced() {
         "crates/galleon-channel-twitter",
         "crates/galleon-channel-notion",
         "crates/galleon-channel-linq",
+        "crates/galleon-channel-nextcloud",
     ] {
         let cargo_path = root.join(channel_crate).join("Cargo.toml");
         if cargo_path.exists() {

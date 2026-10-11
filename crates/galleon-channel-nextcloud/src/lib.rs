@@ -96,7 +96,7 @@ impl NextcloudTalkChannel {
 
     fn is_user_allowed(&self, actor_id: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed(&peers, actor_id, crate::allowlist::Match::Sensitive)
+        galleon_channel_core::allowlist::is_user_allowed(&peers, actor_id, galleon_channel_core::allowlist::Match::Sensitive)
     }
 
     /// Returns true if the given name/id belongs to this bot itself.
