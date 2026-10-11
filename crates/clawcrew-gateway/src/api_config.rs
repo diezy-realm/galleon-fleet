@@ -2749,6 +2749,8 @@ pub(crate) mod tests {
             sop_engine: None,
             sop_audit: None,
             diagnostics: None,
+            quickstart: None,
+            integration_catalog: None,
         }
     }
 

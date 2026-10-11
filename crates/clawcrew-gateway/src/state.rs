@@ -74,6 +74,8 @@ pub struct AppState {
     pub sop_engine: Option<Arc<std::sync::Mutex<clawcrew_runtime::sop::SopEngine>>>,
     pub sop_audit: Option<Arc<clawcrew_runtime::sop::SopAuditLogger>>,
     pub diagnostics: Option<Arc<dyn clawcrew_api::doctor::DiagnosticsRunner>>,
+    pub quickstart: Option<Arc<dyn clawcrew_config::quickstart::QuickstartRunner>>,
+    pub integration_catalog: Option<Arc<dyn clawcrew_config::integrations::IntegrationCatalogProvider>>,
 }
 
 /// Daemon-owned services whose lifecycle matches one supervised gateway run.

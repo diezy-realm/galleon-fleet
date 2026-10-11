@@ -220,6 +220,7 @@ mod tests {
     //! per-agent workspace — the behavior this PR introduces — rather than the
     //! daemon process CWD.
 
+    use super::*;
     use futures_util::{SinkExt, StreamExt};
     use tokio_tungstenite::tungstenite::Message;
 
@@ -277,43 +278,20 @@ mod tests {
             .to_string_lossy()
             .into_owned();
 
-        // Reserve an ephemeral port, then hand it to the gateway.
-        let probe = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
-        let port = probe.local_addr().unwrap().port();
-        drop(probe);
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind test listener");
+        let port = listener.local_addr().unwrap().port();
 
-        let (shutdown_tx, _shutdown_rx) = tokio::sync::watch::channel(false);
-        let (reload_tx, _reload_rx) = tokio::sync::watch::channel(false);
-        let reload_controls = clawcrew_runtime::daemon::GatewayReloadControls {
-            shutdown_tx: shutdown_tx.clone(),
-            reload_tx,
-        };
-
-        let server = clawcrew_spawn::spawn!(crate::run_gateway(
-            "127.0.0.1",
-            port,
-            cfg,
-            None,
-            Some(reload_controls),
-            None,
-            None,
-            None,
-            None,
-            None,
-        ));
-
-        // Wait until the gateway is accepting TCP connections.
-        let addr = format!("127.0.0.1:{port}");
-        tokio::time::timeout(std::time::Duration::from_secs(5), async {
-            loop {
-                if tokio::net::TcpStream::connect(&addr).await.is_ok() {
-                    break;
-                }
-                tokio::time::sleep(std::time::Duration::from_millis(25)).await;
-            }
-        })
-        .await
-        .expect("gateway should accept connections");
+        let state = crate::api::tests::test_state(cfg);
+        let app = axum::Router::new()
+            .route("/acp", axum::routing::get(handle_ws_acp))
+            .with_state(state);
+        let server = clawcrew_spawn::spawn!(async move {
+            axum::serve(listener, app)
+                .await
+                .expect("serve test acp endpoint");
+        });
 
         let url = format!("ws://127.0.0.1:{port}/acp");
         let (mut ws, _resp) = tokio_tungstenite::connect_async(&url)
@@ -361,7 +339,6 @@ mod tests {
         .await
         .expect("session/new response should arrive before timeout");
 
-        shutdown_tx.send(true).ok();
         server.abort();
 
         assert_eq!(

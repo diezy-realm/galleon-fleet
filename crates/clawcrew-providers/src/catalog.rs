@@ -222,6 +222,84 @@ pub async fn list_models_for_family(family: &str) -> Result<Vec<String>> {
     anyhow::bail!("no public catalog for family {family:?}")
 }
 
+pub async fn model_catalog_with_config(
+    config: Option<&clawcrew_config::schema::Config>,
+    model_provider: &str,
+) -> (
+    Vec<String>,
+    Option<std::collections::HashMap<String, clawcrew_api::model_provider::ModelPricing>>,
+    bool,
+) {
+    let resolved = config.and_then(|cfg| cfg.providers.models.find_by_name(model_provider));
+    let api_key = resolved
+        .as_ref()
+        .and_then(|(_family, _alias, base)| base.api_key.clone());
+    // Honor a configured custom endpoint so proxied / self-hosted OpenAI-compatible
+    // deployments list from their own `/models` rather than the family default.
+    let api_url = resolved.as_ref().and_then(|(_family, _alias, base)| {
+        base.uri
+            .as_deref()
+            .map(str::trim)
+            .filter(|u| !u.is_empty())
+            .map(ToString::to_string)
+    });
+    // `create_model_provider` and the chat-catalog ranker expect a bare family
+    // name, not a dotted ref. Prefer the family `find_by_name` resolved; when it
+    // could not (no config / unknown alias) strip any `<family>.<alias>` suffix
+    // ourselves so a dotted selector still constructs.
+    let family: &str = resolved
+        .as_ref()
+        .map(|(family, _alias, _base)| *family)
+        .unwrap_or_else(|| {
+            model_provider
+                .split_once('.')
+                .map_or(model_provider, |(f, _)| f)
+        });
+
+    let handle = crate::create_model_provider_with_url(
+        family,
+        api_key.as_deref(),
+        api_url.as_deref(),
+    );
+    if let Ok(handle) = handle
+        && let Ok(models) = crate::ProviderDispatch::from_ref(&*handle)
+            .list_models_with_pricing()
+            .await
+        && !models.is_empty()
+    {
+        let raw_pricing: std::collections::HashMap<
+            String,
+            clawcrew_api::model_provider::ModelPricing,
+        > = models
+            .iter()
+            .filter_map(|m| m.pricing.as_ref().map(|p| (m.id.clone(), p.clone())))
+            .collect();
+        let ids = models.into_iter().map(|m| m.id).collect();
+        let Some(ids) = sort_model_catalog_for_chat(family, ids)
+        else {
+            return (Vec::new(), None, false);
+        };
+        let pricing: std::collections::HashMap<String, clawcrew_api::model_provider::ModelPricing> =
+            ids.iter()
+                .filter_map(|id| raw_pricing.get(id).map(|p| (id.clone(), p.clone())))
+                .collect();
+        let pricing = if pricing.is_empty() {
+            None
+        } else {
+            Some(pricing)
+        };
+        return (ids, pricing, true);
+    }
+    match list_models_for_family(family).await {
+        Ok(models) if !models.is_empty() => (
+            sort_model_catalog_for_chat(family, models).unwrap_or_default(),
+            None,
+            true,
+        ),
+        _ => (Vec::new(), None, false),
+    }
+}
+
 #[must_use]
 pub fn sort_model_catalog_for_chat(provider: &str, models: Vec<String>) -> Option<Vec<String>> {
     let provider_l = provider.to_ascii_lowercase();

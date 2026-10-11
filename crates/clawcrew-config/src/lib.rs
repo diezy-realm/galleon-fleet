@@ -20,6 +20,7 @@ pub mod env_overrides;
 pub mod field_visibility;
 pub mod helpers;
 pub mod identity;
+pub mod integrations;
 pub mod migration;
 pub mod multi_agent;
 pub mod pairing;
@@ -30,6 +31,7 @@ pub mod policy;
 pub mod presets;
 pub mod provider_aliases;
 pub mod providers;
+pub mod quickstart;
 pub mod scattered_types;
 pub mod schema;
 #[cfg(feature = "schema-export")]

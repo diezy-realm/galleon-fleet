@@ -8,9 +8,8 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use clawcrew_config::presets::BuilderSubmission;
-use clawcrew_runtime::quickstart::{
-    AppliedAgent, QuickstartError, QuickstartStep, Surface, apply_with_surface, record_dismissed,
-    validate_only_with_surface,
+use clawcrew_config::quickstart::{
+    AppliedAgent, FieldDescriptor, FieldSection, QuickstartError, QuickstartStep, Surface,
 };
 
 use super::AppState;
@@ -40,19 +39,23 @@ pub async fn handle_state(State(state): State<AppState>, headers: HeaderMap) -> 
         return e.into_response();
     }
     let cfg = state.config.read().clone();
-    let body = clawcrew_runtime::quickstart::snapshot_state(&cfg);
+    let body = state
+        .quickstart
+        .as_ref()
+        .map(|q| q.snapshot_state(&cfg))
+        .unwrap_or_else(|| serde_json::json!({}));
     (StatusCode::OK, Json(body)).into_response()
 }
 
 #[derive(Debug, Deserialize)]
 pub struct FieldsRequest {
-    pub section: clawcrew_runtime::quickstart::FieldSection,
+    pub section: FieldSection,
     pub type_key: String,
 }
 
 #[derive(Debug, Serialize)]
 pub struct FieldsResult {
-    pub fields: Vec<clawcrew_runtime::quickstart::FieldDescriptor>,
+    pub fields: Vec<FieldDescriptor>,
 }
 
 pub async fn handle_fields(
@@ -63,9 +66,12 @@ pub async fn handle_fields(
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    let body = FieldsResult {
-        fields: clawcrew_runtime::quickstart::field_shape(req.section, &req.type_key),
-    };
+    let fields = state
+        .quickstart
+        .as_ref()
+        .map(|q| q.field_shape(req.section, &req.type_key))
+        .unwrap_or_default();
+    let body = FieldsResult { fields };
     (StatusCode::OK, Json(body)).into_response()
 }
 
@@ -78,9 +84,12 @@ pub async fn handle_validate(
         return e.into_response();
     }
     let cfg = state.config.read().clone();
-    let body = match validate_only_with_surface(&submission, &cfg, Surface::Web) {
-        Ok(()) => ValidateResult::Ok,
-        Err(errors) => ValidateResult::Errors { errors },
+    let body = match &state.quickstart {
+        Some(runner) => match runner.validate_only(&submission, &cfg, Surface::Web) {
+            Ok(()) => ValidateResult::Ok,
+            Err(errors) => ValidateResult::Errors { errors },
+        },
+        None => ValidateResult::Ok,
     };
     (StatusCode::OK, Json(body)).into_response()
 }
@@ -103,7 +112,9 @@ pub async fn handle_dismiss(
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    record_dismissed(&req.run_id, req.surface, req.last_step);
+    if let Some(runner) = &state.quickstart {
+        runner.record_dismissed(&req.run_id, req.surface, req.last_step);
+    }
     (StatusCode::NO_CONTENT, ()).into_response()
 }
 
@@ -115,14 +126,27 @@ pub async fn handle_apply(
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    // Held through the swap below (and across `apply_with_surface`'s own
+    let Some(runner) = state.quickstart.clone() else {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ApplyResult::Errors {
+                errors: vec![QuickstartError::new(
+                    QuickstartStep::Agent,
+                    "quickstart",
+                    "quickstart runner not available",
+                )],
+            }),
+        )
+            .into_response();
+    };
+    // Held through the swap below (and across `apply`'s own
     // save, which runs while this guard is held) so a concurrent config
     // writer can't land between this read and the swap.
     let _cfg_guard = std::sync::Arc::clone(&state.config_write_lock)
         .lock_owned()
         .await;
     let mut working = state.config.read().clone();
-    let result = apply_with_surface(submission, &mut working, Surface::Web).await;
+    let result = runner.apply(submission, &mut working, Surface::Web).await;
     let body = match result {
         Ok(agent) => {
             *state.config.write() = working;
@@ -181,5 +205,5 @@ fn signal_daemon_reload(state: &AppState) -> bool {
 }
 
 // Per-family alias collection lives in
-// `clawcrew_runtime::quickstart::snapshot_state` so both transports
+// `clawcrew_config::quickstart::QuickstartRunner::snapshot_state` so both transports
 // share one implementation.

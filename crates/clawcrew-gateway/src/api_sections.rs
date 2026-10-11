@@ -56,13 +56,13 @@ pub async fn handle_catalog_models(
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    let local = clawcrew_runtime::quickstart::model_provider_is_local(&q.model_provider);
+    let local = clawcrew_providers::model_provider_is_local(&q.model_provider);
     // Snapshot config so the catalog resolves the alias credential and can reach
     // the native /models endpoint (surfacing new native-only models that the
     // models.dev snapshot may not carry yet) instead of silently falling back.
     let cfg = state.config.read().clone();
     let (models, pricing, live) =
-        clawcrew_runtime::quickstart::model_catalog_with_config(Some(&cfg), &q.model_provider)
+        clawcrew_providers::catalog::model_catalog_with_config(Some(&cfg), &q.model_provider)
             .await;
     axum::Json(CatalogModelsResult {
         model_provider: q.model_provider,
@@ -156,7 +156,7 @@ fn quickstart_agent_missing_requirements(
             missing.push(format!("Choose a model for model provider `{model_ref}`."));
         } else if !model_provider_alias_usable(
             provider,
-            clawcrew_runtime::quickstart::model_provider_is_local(family),
+            clawcrew_providers::model_provider_is_local(family),
         ) {
             missing.push(format!(
                 "Set credential/auth for model provider `{model_ref}`."
@@ -533,7 +533,7 @@ fn any_usable_model_provider(cfg: &clawcrew_config::schema::Config) -> bool {
         .any(|(family, _, base)| {
             model_provider_alias_usable(
                 base,
-                clawcrew_runtime::quickstart::model_provider_is_local(family),
+                clawcrew_providers::model_provider_is_local(family),
             )
         })
 }
@@ -1489,6 +1489,8 @@ mod tests {
             sop_engine: None,
             sop_audit: None,
             diagnostics: None,
+            quickstart: None,
+            integration_catalog: None,
         }
     }
 

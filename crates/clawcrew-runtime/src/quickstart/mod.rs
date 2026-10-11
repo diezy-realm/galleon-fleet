@@ -1,6 +1,5 @@
 //! Quickstart apply path.
 
-use serde::{Deserialize, Serialize};
 
 use clawcrew_config::helpers::kebab_to_snake;
 use clawcrew_config::presets::{
@@ -12,32 +11,13 @@ use clawcrew_config::traits::AliasSource;
 
 /// Which surface invoked the Quickstart. Stamped on every event in
 /// the apply path so SSE/dashboard consumers can filter by origin
-/// without parsing message strings.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum Surface {
-    Web,
-    Tui,
-    Cli,
-    Test,
-}
-
-impl Surface {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Surface::Web => "web",
-            Surface::Tui => "tui",
-            Surface::Cli => "cli",
-            Surface::Test => "test",
-        }
-    }
-}
+pub use clawcrew_config::quickstart::{AppliedAgent, QuickstartStep, Surface};
 
 /// Per-run attribution carried through the apply path so every emitted
 /// event lands with the same correlation id. Constructed by `apply`
 /// and `validate_only`; threaded down into `apply_into` and the
 /// per-selector helpers via `&RunCtx`.
-struct RunCtx {
+pub(crate) struct RunCtx {
     run_id: String,
     surface: Surface,
 }
@@ -74,72 +54,9 @@ fn merge_attrs(base: serde_json::Value, extra: serde_json::Value) -> serde_json:
     serde_json::Value::Object(base_map)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct AppliedAgent {
-    pub alias: String,
-    pub model_provider: String,
-    pub risk_profile: String,
-    pub runtime_profile: String,
-    pub channels: Vec<String>,
-    pub memory_backend: String,
-}
+pub use clawcrew_config::quickstart::QuickstartError;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum QuickstartStep {
-    ModelProvider,
-    RiskProfile,
-    RuntimeProfile,
-    Memory,
-    Channels,
-    PeerGroups,
-    Agent,
-}
-
-impl QuickstartStep {
-    #[must_use]
-    pub fn label(self) -> &'static str {
-        match self {
-            Self::ModelProvider => "Model provider",
-            Self::RiskProfile => "Risk profile",
-            Self::RuntimeProfile => "Runtime profile",
-            Self::Memory => "Memory",
-            Self::Channels => "Channels",
-            Self::PeerGroups => "Peer groups",
-            Self::Agent => "Agent",
-        }
-    }
-
-    #[must_use]
-    pub fn label_key(self) -> &'static str {
-        match self {
-            Self::ModelProvider => "cli-quickstart-step-model-provider",
-            Self::RiskProfile => "cli-quickstart-step-risk-profile",
-            Self::RuntimeProfile => "cli-quickstart-step-runtime-profile",
-            Self::Memory => "cli-quickstart-step-memory",
-            Self::Channels => "cli-quickstart-step-channels",
-            Self::PeerGroups => "cli-quickstart-step-peer-groups",
-            Self::Agent => "cli-quickstart-step-agent",
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct QuickstartError {
-    pub step: QuickstartStep,
-    pub field: String,
-    pub message: String,
-}
-
-impl QuickstartError {
-    fn new(step: QuickstartStep, field: impl Into<String>, message: impl Into<String>) -> Self {
-        Self {
-            step,
-            field: field.into(),
-            message: message.into(),
-        }
-    }
-
+pub(crate) trait QuickstartErrorExt {
     fn for_surface(
         ctx: Option<&RunCtx>,
         step: QuickstartStep,
@@ -147,27 +64,28 @@ impl QuickstartError {
         fallback: impl Into<String>,
         key: &str,
         args: &[(&str, &str)],
-    ) -> Self {
+    ) -> QuickstartError;
+}
+
+impl QuickstartErrorExt for QuickstartError {
+    fn for_surface(
+        ctx: Option<&RunCtx>,
+        step: QuickstartStep,
+        field: impl Into<String>,
+        fallback: impl Into<String>,
+        key: &str,
+        args: &[(&str, &str)],
+    ) -> QuickstartError {
         let fallback = fallback.into();
         if !matches!(ctx.map(|ctx| ctx.surface), Some(Surface::Cli)) {
-            return Self::new(step, field, fallback);
+            return QuickstartError::new(step, field, fallback);
         }
 
-        Self::new(
+        QuickstartError::new(
             step,
             field,
             crate::i18n::get_required_cli_string_with_args(key, args),
         )
-    }
-}
-
-impl std::fmt::Display for QuickstartError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.field.is_empty() {
-            write!(f, "{:?}: {}", self.step, self.message)
-        } else {
-            write!(f, "{:?}.{}: {}", self.step, self.field, self.message)
-        }
     }
 }
 
@@ -353,13 +271,14 @@ pub async fn apply_with_surface(
         ),
     }
     write_result.map_err(|err| {
+        let err_str = err.to_string();
         vec![QuickstartError::for_surface(
             Some(&ctx),
             QuickstartStep::Agent,
             "",
             format!("failed to persist config: {err}"),
             "cli-quickstart-error-persist-config",
-            &[("err", &err.to_string())],
+            &[("err", err_str.as_str())],
         )]
     })?;
 
@@ -413,6 +332,47 @@ pub fn record_dismissed(run_id: &str, surface: Surface, last_step: Option<Quicks
             })),
         "quickstart: dismissed"
     );
+}
+
+#[derive(Default)]
+pub struct RuntimeQuickstartRunner;
+
+#[async_trait::async_trait]
+impl clawcrew_config::quickstart::QuickstartRunner for RuntimeQuickstartRunner {
+    fn snapshot_state(&self, config: &Config) -> serde_json::Value {
+        serde_json::to_value(snapshot_state(config)).unwrap_or_default()
+    }
+
+    fn field_shape(&self, section: FieldSection, type_key: &str) -> Vec<FieldDescriptor> {
+        field_shape(section, type_key)
+    }
+
+    fn validate_only(
+        &self,
+        submission: &BuilderSubmission,
+        config: &Config,
+        surface: Surface,
+    ) -> Result<(), Vec<QuickstartError>> {
+        validate_only_with_surface(submission, config, surface)
+    }
+
+    async fn apply(
+        &self,
+        submission: BuilderSubmission,
+        config: &mut Config,
+        surface: Surface,
+    ) -> Result<AppliedAgent, Vec<QuickstartError>> {
+        apply_with_surface(submission, config, surface).await
+    }
+
+    fn record_dismissed(
+        &self,
+        run_id: &str,
+        surface: Surface,
+        last_step: Option<QuickstartStep>,
+    ) {
+        record_dismissed(run_id, surface, last_step)
+    }
 }
 
 /// `onboard_state.quickstart_completed` is false **and** no
@@ -632,43 +592,9 @@ fn collect_aliased_refs<T: serde::Serialize>(value: &T) -> Vec<String> {
     out
 }
 
-/// Selector kinds that the Quickstart "field shape" descriptor
-/// covers. The TUI / web ask the runtime for the shape, then render
-/// inputs dumbly off the response.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum FieldSection {
-    ModelProvider,
-    Channel,
-    PeerGroup,
-}
+pub use clawcrew_config::quickstart::FieldSection;
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub struct FieldDescriptor {
-    /// Schema-side field key (kebab-case terminal segment). The
-    /// caller submits this back through [`BuilderSubmission`].
-    pub key: String,
-    /// Human label shown next to the input.
-    pub label: String,
-    /// One-line help blurb. Empty when the schema field has no doc.
-    pub help: String,
-    /// Wire-tag for the input control to render. Mirrors
-    /// `PropKind::wire_name`.
-    pub kind: clawcrew_config::traits::PropKind,
-    /// `true` for `#[secret]` fields — the modal masks input.
-    pub is_secret: bool,
-    /// Closed-set choices for `Enum` kind. `None` for everything else.
-    pub enum_variants: Option<Vec<String>>,
-    /// `true` when Quickstart treats this field as required. Currently
-    /// every field returned by [`field_shape`] is required, but the
-    /// flag is exposed so future additions can include optional rows.
-    pub required: bool,
-    /// Pre-filled default the modal should show as ghost text /
-    /// initial input value. `None` when the schema has no meaningful
-    /// default for this field (e.g. API keys, bot tokens).
-    pub default: Option<String>,
-}
+pub use clawcrew_config::quickstart::FieldDescriptor;
 
 /// Return the renderable field shape for a single section + type
 /// combination. Walks `prop_fields()` against a synthetic config with
@@ -1492,7 +1418,7 @@ fn apply_channels(
                             format!("channels[{idx}]"),
                             format!("channel `{reference}` is already bound to agent `{owner}`"),
                             "cli-quickstart-error-channel-bound",
-                            &[("reference", reference), ("owner", owner)],
+                            &[("reference", reference.as_str()), ("owner", owner)],
                         ));
                         continue;
                     }
@@ -2186,84 +2112,13 @@ pub async fn model_catalog_with_config(
     Option<std::collections::HashMap<String, clawcrew_api::model_provider::ModelPricing>>,
     bool,
 ) {
-    let resolved = config.and_then(|cfg| cfg.providers.models.find_by_name(model_provider));
-    let api_key = resolved
-        .as_ref()
-        .and_then(|(_family, _alias, base)| base.api_key.clone());
-    // Honor a configured custom endpoint so proxied / self-hosted OpenAI-compatible
-    // deployments list from their own `/models` rather than the family default.
-    let api_url = resolved.as_ref().and_then(|(_family, _alias, base)| {
-        base.uri
-            .as_deref()
-            .map(str::trim)
-            .filter(|u| !u.is_empty())
-            .map(ToString::to_string)
-    });
-    // `create_model_provider` and the chat-catalog ranker expect a bare family
-    // name, not a dotted ref. Prefer the family `find_by_name` resolved; when it
-    // could not (no config / unknown alias) strip any `<family>.<alias>` suffix
-    // ourselves so a dotted selector still constructs.
-    let family: &str = resolved
-        .as_ref()
-        .map(|(family, _alias, _base)| *family)
-        .unwrap_or_else(|| {
-            model_provider
-                .split_once('.')
-                .map_or(model_provider, |(f, _)| f)
-        });
-
-    let handle = clawcrew_providers::create_model_provider_with_url(
-        family,
-        api_key.as_deref(),
-        api_url.as_deref(),
-    );
-    if let Ok(handle) = handle
-        && let Ok(models) = clawcrew_providers::ProviderDispatch::from_ref(&*handle)
-            .list_models_with_pricing()
-            .await
-        && !models.is_empty()
-    {
-        let raw_pricing: std::collections::HashMap<
-            String,
-            clawcrew_api::model_provider::ModelPricing,
-        > = models
-            .iter()
-            .filter_map(|m| m.pricing.as_ref().map(|p| (m.id.clone(), p.clone())))
-            .collect();
-        let ids = models.into_iter().map(|m| m.id).collect();
-        let Some(ids) = clawcrew_providers::catalog::sort_model_catalog_for_chat(family, ids)
-        else {
-            return (Vec::new(), None, false);
-        };
-        let pricing: std::collections::HashMap<String, clawcrew_api::model_provider::ModelPricing> =
-            ids.iter()
-                .filter_map(|id| raw_pricing.get(id).map(|p| (id.clone(), p.clone())))
-                .collect();
-        let pricing = if pricing.is_empty() {
-            None
-        } else {
-            Some(pricing)
-        };
-        return (ids, pricing, true);
-    }
-    match clawcrew_providers::catalog::list_models_for_family(family).await {
-        Ok(models) if !models.is_empty() => (
-            clawcrew_providers::catalog::sort_model_catalog_for_chat(family, models)
-                .unwrap_or_default(),
-            None,
-            true,
-        ),
-        _ => (Vec::new(), None, false),
-    }
+    clawcrew_providers::catalog::model_catalog_with_config(config, model_provider).await
 }
 
 /// `true` for model_provider families that need no remote credential.
 #[must_use]
 pub fn model_provider_is_local(model_provider: &str) -> bool {
-    clawcrew_providers::list_model_providers()
-        .iter()
-        .find(|p| p.name == model_provider)
-        .is_some_and(|p| p.local)
+    clawcrew_providers::model_provider_is_local(model_provider)
 }
 
 #[cfg(test)]
