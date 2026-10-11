@@ -1959,6 +1959,7 @@ dependencies = [
  "clawcrew-api",
  "clawcrew-log",
  "clawcrew-spawn",
+ "hex",
  "libc",
  "parking_lot",
  "portable-atomic",
