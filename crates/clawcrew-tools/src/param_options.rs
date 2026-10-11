@@ -138,7 +138,32 @@ fn agent_aliases(config: &Config) -> Vec<OptionEntry> {
     entries
 }
 
+/// Built-in authoring tool names and short descriptions used for SOP/config UI autocompletion
+/// when a live execution runtime is not attached.
+pub const BUILTIN_TOOL_CATALOG: &[(&str, &str)] = &[
+    ("content_search", "Search file contents using regex or substring"),
+    ("deliver_file", "Deliver an artifact file"),
+    ("file_edit", "Edit a file by replacing a unique substring"),
+    ("file_read", "Read contents of a file"),
+    ("file_write", "Write or overwrite a file"),
+    ("glob_search", "Find files matching a glob pattern"),
+    ("shell", "Execute a command in the shell"),
+];
+
+/// Selectable option entries for builtin tools.
+pub fn builtin_tool_options() -> Vec<OptionEntry> {
+    let mut entries: Vec<OptionEntry> = BUILTIN_TOOL_CATALOG
+        .iter()
+        .map(|(name, desc)| OptionEntry::new(*name).with_hint(*desc))
+        .collect();
+    entries.sort_by(|a, b| a.value.cmp(&b.value));
+    entries
+}
+
 fn tool_names(tools: &[&dyn Tool]) -> Vec<OptionEntry> {
+    if tools.is_empty() {
+        return builtin_tool_options();
+    }
     let mut entries: Vec<OptionEntry> = tools
         .iter()
         .map(|t| OptionEntry::new(t.name()).with_hint(truncate(t.description(), 60)))
@@ -273,5 +298,25 @@ mod tests {
         );
         let values: Vec<&str> = entries.iter().map(|e| e.value.as_str()).collect();
         assert_eq!(values, vec!["alpha", "beta"]);
+    }
+
+    #[test]
+    fn tool_names_empty_returns_builtins() {
+        let config = Config::default();
+        let entries = resolve_options(
+            OptionDomain::ToolNames,
+            &config,
+            "",
+            &serde_json::json!({}),
+            &[],
+        );
+        let values: Vec<&str> = entries.iter().map(|e| e.value.as_str()).collect();
+        assert!(values.contains(&"shell"));
+        assert!(values.contains(&"file_read"));
+        assert!(values.contains(&"file_write"));
+        assert!(values.contains(&"file_edit"));
+        assert!(values.contains(&"deliver_file"));
+        assert!(values.contains(&"glob_search"));
+        assert!(values.contains(&"content_search"));
     }
 }

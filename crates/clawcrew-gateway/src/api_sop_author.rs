@@ -95,30 +95,13 @@ pub async fn handle_tools_param_options(
         .or_else(|| config.agents.keys().min().cloned())
         .unwrap_or_default();
 
-    let entries = if body.domain == clawcrew_api::tool::OptionDomain::ToolNames {
-        let security = std::sync::Arc::new(
-            clawcrew_config::policy::SecurityPolicy::for_agent(&config, &agent_alias)
-                .unwrap_or_default(),
-        );
-        let tools = clawcrew_runtime::tools::default_tools(security);
-        let refs: Vec<&dyn clawcrew_api::tool::Tool> =
-            tools.iter().map(std::convert::AsRef::as_ref).collect();
-        clawcrew_tools::param_options::resolve_options(
-            body.domain,
-            &config,
-            &agent_alias,
-            &body.args,
-            &refs,
-        )
-    } else {
-        clawcrew_tools::param_options::resolve_options(
-            body.domain,
-            &config,
-            &agent_alias,
-            &body.args,
-            &[],
-        )
-    };
+    let entries = clawcrew_tools::param_options::resolve_options(
+        body.domain,
+        &config,
+        &agent_alias,
+        &body.args,
+        &[],
+    );
     Json(serde_json::json!({ "options": entries })).into_response()
 }
 
