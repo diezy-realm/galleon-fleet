@@ -6,8 +6,7 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
-use serde::{Deserialize, Serialize};
-use clawcrew_runtime::rpc::types::{
+use clawcrew_api::skill::{
     AgentSkillEntry, AgentSkillsResult, DroppedSkillEntry, ShadowedSkillEntry, SkillBundleEntry,
     SkillListEntry, SkillsBundlesResult, SkillsListResult, SkillsReadResult,
 };
@@ -15,6 +14,7 @@ use clawcrew_runtime::skills::{
     DroppedSkill, EffectiveSkill, RemoveMode, ScaffoldOptions, ServiceError, SkillDropReason,
     SkillFrontmatter, SkillOrigin, SkillsService, SlashOptionKindDescriptor,
 };
+use serde::{Deserialize, Serialize};
 
 use super::AppState;
 use super::api::require_auth;
@@ -355,8 +355,8 @@ fn service_error_response(err: ServiceError) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
     use clawcrew_runtime::skills::{ShadowedSkill, SkillOrigin};
+    use std::path::PathBuf;
 
     // the write-guard error maps to 403, distinct from 404/400.
     #[test]

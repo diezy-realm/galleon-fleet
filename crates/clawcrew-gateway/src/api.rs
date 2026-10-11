@@ -5,14 +5,17 @@ use super::{AppState, GW_SESSION_PREFIX, gateway_cancel_key, gateway_session_key
 use axum::{
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode, header},
-    response::{IntoResponse, Json, sse::{Event, KeepAlive, Sse}},
+    response::{
+        IntoResponse, Json,
+        sse::{Event, KeepAlive, Sse},
+    },
 };
+use clawcrew_config::schema::{ChannelAliasInfo, Config};
+use clawcrew_memory::MemoryEntry;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::convert::Infallible;
 use std::time::Duration;
-use clawcrew_config::schema::{ChannelAliasInfo, Config};
-use clawcrew_memory::MemoryEntry;
 
 const MEMORY_API_CONTENT_MAX_CHARS: usize = 4096;
 
@@ -1440,12 +1443,12 @@ pub async fn handle_api_tuis(
         .tui_registry
         .as_ref()
         .map(|r| {
-            r.list()
+            r.list_connected_tuis()
                 .into_iter()
                 .map(|e| {
                     serde_json::json!({
                         "tui_id": e.tui_id,
-                        "connected_at": e.connected_at.to_rfc3339(),
+                        "connected_at": e.connected_at,
                         "peer_label": e.peer_label,
                         "transport": e.transport,
                     })
@@ -2095,9 +2098,8 @@ pub async fn handle_api_sessions_stream(
         return e.into_response();
     }
     let backend = state.session_backend.clone();
-    let stream = futures_util::stream::unfold(
-        (backend, String::new()),
-        |(backend, last)| async move {
+    let stream =
+        futures_util::stream::unfold((backend, String::new()), |(backend, last)| async move {
             tokio::time::sleep(Duration::from_secs(1)).await;
             let Some(backend) = backend else {
                 let event = Event::default().event("disabled").data("{}");
@@ -2126,8 +2128,7 @@ pub async fn handle_api_sessions_stream(
             }
             let event = Event::default().event("sessions").data(payload.clone());
             Some((Ok::<Event, Infallible>(event), (Some(backend), payload)))
-        },
-    );
+        });
     Sse::new(stream)
         .keep_alive(KeepAlive::default())
         .into_response()
@@ -2253,6 +2254,12 @@ pub(crate) mod tests {
     // others enabled the import vanished while its uses remained, so
     // `--features channel-nextcloud` alone failed to compile. `--all-features`
     // hid it, because `channel-linq` was always along for the ride.
+    use clawcrew_config::pairing::PairingGuard;
+    use clawcrew_infra::session_backend::SessionBackend;
+    use clawcrew_infra::session_sqlite::SqliteSessionBackend;
+    use clawcrew_infra::session_store::SessionStore;
+    use clawcrew_memory::{Memory, MemoryCategory, MemoryEntry};
+    use clawcrew_providers::ModelProvider;
     #[cfg(any(
         feature = "channel-linq",
         feature = "channel-nextcloud",
@@ -2261,12 +2268,6 @@ pub(crate) mod tests {
     use std::collections::HashMap;
     use std::sync::Arc;
     use std::time::{Duration, Instant};
-    use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_infra::session_sqlite::SqliteSessionBackend;
-    use clawcrew_infra::session_store::SessionStore;
-    use clawcrew_memory::{Memory, MemoryCategory, MemoryEntry};
-    use clawcrew_providers::ModelProvider;
-    use clawcrew_config::pairing::PairingGuard;
 
     #[derive(Default)]
     struct MockMemory {

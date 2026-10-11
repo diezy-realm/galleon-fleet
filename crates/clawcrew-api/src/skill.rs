@@ -1,6 +1,6 @@
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
 
 use crate::attribution::{Attributable, Role};
 
@@ -224,4 +224,125 @@ pub struct SkillSlashOption {
 pub struct SkillSlashChoice {
     pub name: String,
     pub value: String,
+}
+
+/// Canonical `SKILL.md` frontmatter.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct SkillFrontmatter {
+    pub name: String,
+    pub description: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub license: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub author: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
+    /// When `true`, keeps this skill's instructions inlined in the system
+    /// prompt even in compact skill-prompt mode. See `Skill::always`.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub always: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub slash_options: Vec<SkillSlashOption>,
+}
+
+// ── Skills RPC / API DTOs ───────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct SkillBundleEntry {
+    pub alias: String,
+    pub directory: String,
+    pub include: Vec<String>,
+    pub exclude: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct SkillsBundlesResult {
+    pub bundles: Vec<SkillBundleEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct SkillListEntry {
+    pub bundle: String,
+    pub name: String,
+    pub directory: String,
+    pub frontmatter: SkillFrontmatter,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct SkillsListResult {
+    pub skills: Vec<SkillListEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct AgentSkillEntry {
+    pub name: String,
+    pub description: String,
+    /// `"workspace"` | `"open-skills"` | `"plugin"` | `"bundle"`.
+    pub origin: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub plugin: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bundle: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub directory: Option<String>,
+    pub editable: bool,
+    /// Lower-precedence same-name skills this one shadows. Empty normally;
+    /// additive so old clients ignore it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub shadowed: Vec<ShadowedSkillEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct ShadowedSkillEntry {
+    pub name: String,
+    /// `"workspace"` | `"open-skills"` | `"plugin"` | `"bundle"`.
+    pub origin: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct DroppedSkillEntry {
+    pub name: String,
+    pub origin: String,
+    /// `"audit_findings"` | `"audit_error"` | `"manifest_parse_error"`.
+    pub reason_kind: String,
+    /// Human-readable detail (the audit summary / error text).
+    pub reason: String,
+    /// True when the secure-default script policy is the blocker, so the
+    /// dashboard can surface the `skills.allow_scripts = true` remediation
+    /// without parsing `reason`. Additive; old clients ignore it.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub scripts_blocked: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub directory: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct AgentSkillsResult {
+    pub agent: String,
+    pub skills: Vec<AgentSkillEntry>,
+    /// Audit-dropped candidates the resolver skipped. Empty normally;
+    /// additive so old clients ignore it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dropped: Vec<DroppedSkillEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct SkillsReadResult {
+    pub bundle: String,
+    pub name: String,
+    pub frontmatter: SkillFrontmatter,
+    pub body: String,
 }

@@ -8,15 +8,18 @@
 
 pub mod alias_refs;
 pub mod api_error;
+pub mod audit;
 pub mod autonomy;
 pub mod browse;
 pub mod classifier;
 pub mod comment_writer;
 pub mod cost;
 pub mod domain_matcher;
+pub mod dto;
 pub mod env_overrides;
 pub mod field_visibility;
 pub mod helpers;
+pub mod identity;
 pub mod migration;
 pub mod multi_agent;
 pub mod pairing;
@@ -34,15 +37,13 @@ pub mod schema_markdown;
 pub mod secrets;
 pub mod sections;
 pub mod skill_bundles;
+pub mod thinking;
 pub mod traits;
 pub mod typed_value;
 pub mod validation_warnings;
-pub mod audit;
-pub mod identity;
-pub mod thinking;
-pub mod write_lock;
 #[cfg(feature = "webauthn")]
 pub mod webauthn;
+pub mod write_lock;
 
 /// Shim module so `Configurable` derive macro's generated `crate::config::*` paths resolve.
 /// The macro was written assuming it runs inside the root crate where `mod config` exists.

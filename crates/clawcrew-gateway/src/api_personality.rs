@@ -8,15 +8,15 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
-use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
-use std::time::SystemTime;
-use clawcrew_runtime::agent::personality::{EDITABLE_PERSONALITY_FILES, MAX_FILE_CHARS};
-use clawcrew_runtime::agent::personality_templates::{TemplateContext, render_preset_default};
-use clawcrew_runtime::rpc::types::{
+use clawcrew_api::personality::{
     PersonalityFileEntry, PersonalityGetResult, PersonalityListResult, PersonalityPutResult,
     PersonalityTemplatesResult, TemplateFileEntry,
 };
+use clawcrew_runtime::agent::personality::{EDITABLE_PERSONALITY_FILES, MAX_FILE_CHARS};
+use clawcrew_runtime::agent::personality_templates::{TemplateContext, render_preset_default};
+use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
 use super::AppState;
 use super::api::require_auth;

@@ -116,10 +116,10 @@ fn discard_until_newline<R: std::io::BufRead>(reader: &mut R) -> std::io::Result
     }
 }
 
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
 #[cfg(feature = "agent-runtime")]
 use clawcrew_config::api_error::{ConfigApiCode, ConfigApiError};
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 /// Resolve a `cli-*` Fluent key for CLI output. Routes through the runtime
 /// i18n catalogue under `agent-runtime` (default + CI/release); without that
@@ -967,7 +967,6 @@ pub use clawcrew::{
     SopCommands, SopGraphFormat,
 };
 
-
 #[cfg(feature = "agent-runtime")]
 fn quickstart_runtime_profile_for_provider(
     provider_type: &str,
@@ -1012,7 +1011,6 @@ async fn run_quickstart_cli(
     api_key: Option<String>,
     agent: Option<String>,
 ) -> anyhow::Result<()> {
-    use dialoguer::{Confirm, Editor, FuzzySelect, Input};
     use clawcrew_config::presets::{
         AgentIdentity, BuilderSubmission, ChannelQuickStart, MemoryChoice, ModelProviderChoice,
         RISK_PRESETS, SelectorChoice,
@@ -1021,6 +1019,7 @@ async fn run_quickstart_cli(
         FieldSection, QuickstartTypeOption, Surface, apply_with_surface, field_shape,
         snapshot_state,
     };
+    use dialoguer::{Confirm, Editor, FuzzySelect, Input};
 
     if !std::io::IsTerminal::is_terminal(&std::io::stdin())
         || !std::io::IsTerminal::is_terminal(&std::io::stderr())
@@ -2406,8 +2405,8 @@ fn prompt_for_field(
     desc: &clawcrew_runtime::quickstart::FieldDescriptor,
     seed: Option<&str>,
 ) -> anyhow::Result<Option<String>> {
-    use dialoguer::{FuzzySelect, Input};
     use clawcrew_config::traits::PropKind;
+    use dialoguer::{FuzzySelect, Input};
     if !desc.help.is_empty() {
         println!("  {}", desc.help);
     }
@@ -5267,7 +5266,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 config,
                                 tx,
                                 reload_controls,
-                                tui_registry,
+                                tui_registry.map(|r| {
+                                    r as std::sync::Arc<
+                                        dyn clawcrew_api::runtime_traits::TuiConnectionRegistry,
+                                    >
+                                }),
                                 Some(canvas_store),
                                 sop_engine,
                                 sop_audit,
@@ -6629,15 +6632,15 @@ Add pricing to the active provider profile or supply a catalog entry."
                     sop_audit.as_ref(),
                     config.sop.maintenance_interval_secs,
                 );
-                let sop_dispatcher: Option<std::sync::Arc<dyn clawcrew_api::sop::SopFanInDispatcher>> =
-                    match (sop_engine, sop_audit) {
-                        (Some(engine), Some(audit)) => Some(std::sync::Arc::new(
-                            clawcrew_runtime::sop::SopRuntimeDispatcher::new(engine, audit),
-                        )),
-                        _ => None,
-                    };
-                let turn_runner =
-                    std::sync::Arc::new(clawcrew_api::channel::NoopChannelTurnRunner);
+                let sop_dispatcher: Option<
+                    std::sync::Arc<dyn clawcrew_api::sop::SopFanInDispatcher>,
+                > = match (sop_engine, sop_audit) {
+                    (Some(engine), Some(audit)) => Some(std::sync::Arc::new(
+                        clawcrew_runtime::sop::SopRuntimeDispatcher::new(engine, audit),
+                    )),
+                    _ => None,
+                };
+                let turn_runner = std::sync::Arc::new(clawcrew_api::channel::NoopChannelTurnRunner);
                 let result = Box::pin(channels::start_channels(
                     config,
                     turn_runner,
