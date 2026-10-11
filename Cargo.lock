@@ -1694,16 +1694,23 @@ dependencies = [
  "directories",
  "ecb",
  "futures-util",
+ "galleon-channel-amqp",
  "galleon-channel-bluesky",
  "galleon-channel-clawdtalk",
  "galleon-channel-dingtalk",
+ "galleon-channel-filesystem",
  "galleon-channel-imessage",
  "galleon-channel-irc",
+ "galleon-channel-linq",
  "galleon-channel-mochat",
+ "galleon-channel-nextcloud",
  "galleon-channel-nostr",
+ "galleon-channel-notion",
  "galleon-channel-reddit",
  "galleon-channel-signal",
  "galleon-channel-twitch",
+ "galleon-channel-twitter",
+ "galleon-channel-wecom",
  "galleon-i18n",
  "galleon-security-scrub",
  "glob",
@@ -1776,6 +1783,7 @@ version = "0.8.5"
 dependencies = [
  "anyhow",
  "async-trait",
+ "base64",
  "chacha20poly1305",
  "chrono",
  "clap",
@@ -1785,6 +1793,7 @@ dependencies = [
  "clawcrew-macros",
  "directories",
  "hex",
+ "hmac 0.12.1",
  "hostname",
  "libc",
  "parking_lot",
@@ -1792,10 +1801,12 @@ dependencies = [
  "rand 0.10.2",
  "regex",
  "reqwest 0.12.28",
+ "ring",
  "rusqlite",
  "rustls",
  "rustls-pki-types",
  "schemars",
+ "scopeguard",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -1951,6 +1962,7 @@ dependencies = [
  "clawcrew-api",
  "clawcrew-log",
  "clawcrew-spawn",
+ "hex",
  "libc",
  "parking_lot",
  "portable-atomic",
@@ -4266,6 +4278,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-channel-amqp"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-reactor-trait",
+ "async-trait",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-infra",
+ "clawcrew-log",
+ "futures-util",
+ "galleon-channel-core",
+ "lapin",
+ "p12-keystore",
+ "portable-atomic",
+ "rustls-pemfile",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tokio-executor-trait",
+ "tokio-reactor-trait",
+]
+
+[[package]]
 name = "galleon-channel-bluesky"
 version = "0.8.5"
 dependencies = [
@@ -4325,6 +4363,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-channel-filesystem"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-infra",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "galleon-channel-core",
+ "glob",
+ "notify",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
 name = "galleon-channel-imessage"
 version = "0.8.5"
 dependencies = [
@@ -4360,6 +4420,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-channel-linq"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "galleon-channel-core",
+ "hex",
+ "hmac 0.12.1",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "galleon-channel-mochat"
 version = "0.8.5"
 dependencies = [
@@ -4376,6 +4457,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-channel-nextcloud"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "galleon-channel-core",
+ "hex",
+ "hmac 0.12.1",
+ "parking_lot",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tokio",
+ "uuid",
+ "wiremock",
+]
+
+[[package]]
 name = "galleon-channel-nostr"
 version = "0.8.5"
 dependencies = [
@@ -4385,6 +4488,21 @@ dependencies = [
  "clawcrew-log",
  "galleon-channel-core",
  "nostr-sdk",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "galleon-channel-notion"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "reqwest 0.12.28",
+ "serde",
  "serde_json",
  "tokio",
 ]
@@ -4435,6 +4553,39 @@ dependencies = [
  "clawcrew-api",
  "clawcrew-spawn",
  "galleon-channel-irc",
+ "tokio",
+]
+
+[[package]]
+name = "galleon-channel-twitter"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "galleon-channel-core",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+ "toml 1.1.2+spec-1.1.0",
+ "uuid",
+]
+
+[[package]]
+name = "galleon-channel-wecom"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "galleon-channel-core",
+ "reqwest 0.12.28",
+ "serde_json",
  "tokio",
 ]
 

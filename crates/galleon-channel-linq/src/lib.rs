@@ -42,7 +42,7 @@ impl LinqChannel {
     /// Check if a sender phone number is allowed (E.164 format: +1234567890)
     fn is_sender_allowed(&self, phone: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed(&peers, phone, crate::allowlist::Match::Sensitive)
+        galleon_channel_core::allowlist::is_user_allowed(&peers, phone, galleon_channel_core::allowlist::Match::Sensitive)
     }
 
     /// Get the bot's phone number

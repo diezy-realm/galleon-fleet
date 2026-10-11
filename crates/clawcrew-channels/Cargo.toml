@@ -65,6 +65,34 @@ galleon-channel-clawdtalk = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_reddit as reddit`) so existing callers
 # (`crate::reddit::RedditChannel`) keep compiling. Optional, behind `channel-reddit`.
 galleon-channel-reddit = { workspace = true, optional = true }
+# RF-B1: the Twitter channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_twitter as twitter`) so existing callers
+# (`crate::twitter::TwitterChannel`) keep compiling. Optional, behind `channel-twitter`.
+galleon-channel-twitter = { workspace = true, optional = true }
+# RF-B1: the Notion channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_notion as notion`) so existing callers
+# (`crate::notion::NotionChannel`) keep compiling. Optional, behind `channel-notion`.
+galleon-channel-notion = { workspace = true, optional = true }
+# RF-B1: the Linq channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_linq as linq`) so existing callers
+# (`crate::linq::LinqChannel`) keep compiling. Optional, behind `channel-linq`.
+galleon-channel-linq = { workspace = true, optional = true }
+# RF-B1: the Nextcloud Talk channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_nextcloud as nextcloud_talk`) so existing callers
+# keep compiling. Optional, behind `channel-nextcloud`.
+galleon-channel-nextcloud = { workspace = true, optional = true }
+# RF-B1: the Filesystem channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_filesystem as filesystem`) so existing callers
+# keep compiling. Optional, behind `channel-filesystem`.
+galleon-channel-filesystem = { workspace = true, optional = true }
+# RF-B1: the AMQP channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_amqp as amqp`) so existing callers
+# keep compiling. Optional, behind `channel-amqp`.
+galleon-channel-amqp = { workspace = true, optional = true }
+# RF-B1: the WeCom channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_wecom as wecom`) so existing callers
+# keep compiling. Optional, behind `channel-wecom`.
+galleon-channel-wecom = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -298,14 +326,14 @@ channel-imessage = ["dep:galleon-channel-imessage"]
 channel-dingtalk = ["dep:galleon-channel-dingtalk"]
 channel-qq = ["ws-transport"]
 channel-bluesky = ["dep:galleon-channel-bluesky"]
-channel-twitter = []
+channel-twitter = ["dep:galleon-channel-twitter"]
 channel-reddit = ["dep:galleon-channel-reddit"]
-channel-notion = []
+channel-notion = ["dep:galleon-channel-notion"]
 channel-mqtt = ["dep:rumqttc"]
-channel-filesystem = ["dep:notify", "dep:glob"]
-channel-amqp = ["dep:lapin", "dep:tokio-executor-trait", "dep:tokio-reactor-trait", "dep:async-reactor-trait", "dep:p12-keystore", "dep:rustls-pemfile"]
-channel-linq = []
-channel-nextcloud = []
+channel-filesystem = ["dep:galleon-channel-filesystem"]
+channel-amqp = ["dep:galleon-channel-amqp"]
+channel-linq = ["dep:galleon-channel-linq"]
+channel-nextcloud = ["dep:galleon-channel-nextcloud"]
 channel-mochat = ["dep:galleon-channel-mochat"]
 channel-wechat = [
   "dep:aes",
@@ -314,7 +342,7 @@ channel-wechat = [
   "dep:mime_guess",
   "dep:qrcode",
 ]
-channel-wecom = []
+channel-wecom = ["dep:galleon-channel-wecom"]
 channel-wecom-ws = ["dep:aes", "dep:cbc", "ws-transport"]
 channel-clawdtalk = ["dep:galleon-channel-clawdtalk"]
 channel-webhook = ["dep:axum"]

@@ -10,6 +10,19 @@ const TWITTER_API_BASE: &str = "https://api.x.com/2";
 
 /// X/Twitter channel — uses the Twitter API v2 with OAuth 2.0 Bearer Token
 /// for sending tweets/DMs and filtered stream for receiving mentions.
+
+async fn ensure_success(
+    resp: reqwest::Response,
+    what: &str,
+) -> anyhow::Result<reqwest::Response> {
+    if resp.status().is_success() {
+        return Ok(resp);
+    }
+    let status = resp.status();
+    let err = resp.text().await.unwrap_or_default();
+    anyhow::bail!("{what} failed ({status}): {err}");
+}
+
 pub struct TwitterChannel {
     bearer_token: String,
     /// The alias key under `[channels.twitter.<alias>]` this handle is
@@ -62,10 +75,10 @@ impl TwitterChannel {
     /// wildcard reached through the other.
     fn is_author_allowed(&self, identities: &[&str]) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_identity_allowed(
+        galleon_channel_core::allowlist::is_identity_allowed(
             &peers,
             identities,
-            crate::allowlist::Match::Sensitive,
+            galleon_channel_core::allowlist::Match::Sensitive,
         )
     }
 
@@ -101,7 +114,7 @@ impl TwitterChannel {
             .send()
             .await?;
 
-        let resp = crate::util::ensure_success(resp, "Twitter users/me").await?;
+        let resp = ensure_success(resp, "Twitter users/me").await?;
 
         let data: serde_json::Value = resp.json().await?;
         let user_id = data
@@ -142,7 +155,7 @@ impl TwitterChannel {
             .send()
             .await?;
 
-        let resp = crate::util::ensure_success(resp, "Twitter create tweet").await?;
+        let resp = ensure_success(resp, "Twitter create tweet").await?;
 
         let data: serde_json::Value = resp.json().await?;
         let tweet_id = data
@@ -171,7 +184,7 @@ impl TwitterChannel {
             .send()
             .await?;
 
-        crate::util::ensure_success(resp, "Twitter DM send").await?;
+        ensure_success(resp, "Twitter DM send").await?;
 
         Ok(())
     }

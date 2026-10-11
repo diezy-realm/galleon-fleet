@@ -13,6 +13,17 @@ const RETRY_BASE_DELAY_MS: u64 = 2000;
 /// Maximum number of characters to include from an error response body.
 const MAX_ERROR_BODY_CHARS: usize = 500;
 
+
+fn truncate_with_ellipsis(s: &str, max_chars: usize) -> String {
+    match s.char_indices().nth(max_chars) {
+        Some((idx, _)) => {
+            let truncated = &s[..idx];
+            format!("{}...", truncated.trim_end())
+        }
+        None => s.to_string(),
+    }
+}
+
 pub struct NotionChannel {
     api_key: String,
     database_id: String,
@@ -133,7 +144,7 @@ impl NotionChannel {
                     if status_code != 429 && (400..500).contains(&status_code) {
                         let body_text = resp.text().await.unwrap_or_default();
                         let truncated =
-                            crate::util::truncate_with_ellipsis(&body_text, MAX_ERROR_BODY_CHARS);
+                            truncate_with_ellipsis(&body_text, MAX_ERROR_BODY_CHARS);
                         ::clawcrew_log::record!(
                             ERROR,
                             ::clawcrew_log::Event::new(

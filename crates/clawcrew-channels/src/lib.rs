@@ -29,9 +29,11 @@ pub mod transcription;
 pub mod tts;
 pub mod voice;
 
-// Feature-gated channels
+// RF-B1: the AMQP channel now lives in its own feature-crate. Re-export it
+// under the historical `amqp` path so `crate::amqp::AmqpChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-amqp")]
-pub mod amqp;
+pub use galleon_channel_amqp as amqp;
 // RF-B1: the Bluesky channel now lives in its own feature-crate. Re-export it
 // under the historical `bluesky` path so `crate::bluesky::BlueskyChannel` and
 // the orchestrator's `pub use crate::bluesky::BlueskyChannel` keep resolving.
@@ -53,8 +55,11 @@ pub mod discord;
 pub mod discord_slash_state;
 #[cfg(feature = "channel-email")]
 pub mod email_channel;
+// RF-B1: the Filesystem channel now lives in its own feature-crate. Re-export it
+// under the historical `filesystem` path so `crate::filesystem::FilesystemChannel`
+// and callers keep resolving.
 #[cfg(feature = "channel-filesystem")]
-pub mod filesystem;
+pub use galleon_channel_filesystem as filesystem;
 #[cfg(feature = "channel-git")]
 pub mod git;
 #[cfg(feature = "channel-email")]
@@ -70,8 +75,11 @@ pub use galleon_channel_irc as irc;
 pub mod lark;
 #[cfg(feature = "channel-line")]
 pub mod line;
+// RF-B1: the Linq channel now lives in its own feature-crate. Re-export it
+// under the historical `linq` path so `crate::linq::LinqChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-linq")]
-pub mod linq;
+pub use galleon_channel_linq as linq;
 #[cfg(feature = "channel-matrix")]
 pub mod matrix;
 #[cfg(feature = "channel-mattermost")]
@@ -81,15 +89,21 @@ pub mod mattermost;
 // keep resolving.
 #[cfg(feature = "channel-mochat")]
 pub use galleon_channel_mochat as mochat;
+// RF-B1: the Nextcloud Talk channel now lives in its own feature-crate. Re-export it
+// under the historical `nextcloud_talk` path so `crate::nextcloud_talk::NextcloudTalkChannel`
+// and callers keep resolving.
 #[cfg(feature = "channel-nextcloud")]
-pub mod nextcloud_talk;
+pub use galleon_channel_nextcloud as nextcloud_talk;
 // RF-B1: the Nostr channel now lives in its own feature-crate. Re-export it
 // under the historical `nostr` path so `crate::nostr::NostrChannel` and callers
 // keep resolving.
 #[cfg(feature = "channel-nostr")]
 pub use galleon_channel_nostr as nostr;
+// RF-B1: the Notion channel now lives in its own feature-crate. Re-export it
+// under the historical `notion` path so `crate::notion::NotionChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-notion")]
-pub mod notion;
+pub use galleon_channel_notion as notion;
 #[cfg(feature = "channel-qq")]
 pub mod qq;
 // RF-B1: the Reddit channel now lives in its own feature-crate. Re-export it
@@ -111,8 +125,11 @@ pub mod telegram;
 // keep resolving.
 #[cfg(feature = "channel-twitch")]
 pub use galleon_channel_twitch as twitch;
+// RF-B1: the Twitter channel now lives in its own feature-crate. Re-export it
+// under the historical `twitter` path so `crate::twitter::TwitterChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-twitter")]
-pub mod twitter;
+pub use galleon_channel_twitter as twitter;
 #[cfg(feature = "channel-voice-call")]
 pub mod voice_call;
 #[cfg(feature = "voice-wake")]
@@ -121,8 +138,10 @@ pub mod voice_wake;
 pub mod webhook;
 #[cfg(feature = "channel-wechat")]
 pub mod wechat;
+// RF-B1: the WeCom channel now lives in its own feature-crate. Re-export it
+// under the historical `wecom` path so callers keep resolving.
 #[cfg(feature = "channel-wecom")]
-pub mod wecom;
+pub use galleon_channel_wecom as wecom;
 #[cfg(feature = "channel-wecom-ws")]
 pub mod wecom_ws;
 #[cfg(any(feature = "channel-whatsapp-cloud", feature = "whatsapp-web"))]

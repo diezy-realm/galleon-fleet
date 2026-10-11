@@ -68,6 +68,7 @@ pub struct AppState {
     pub tui_registry: Option<Arc<clawcrew_runtime::rpc::tui_identity::TuiRegistry>>,
     pub sop_engine: Option<Arc<std::sync::Mutex<clawcrew_runtime::sop::SopEngine>>>,
     pub sop_audit: Option<Arc<clawcrew_runtime::sop::SopAuditLogger>>,
+    pub diagnostics: Option<Arc<dyn clawcrew_api::doctor::DiagnosticsRunner>>,
 }
 
 /// Daemon-owned services whose lifecycle matches one supervised gateway run.

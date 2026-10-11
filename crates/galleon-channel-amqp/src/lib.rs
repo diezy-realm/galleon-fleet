@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use portable_atomic::{AtomicU64, Ordering};
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use tokio::sync::mpsc;
 
 use futures_util::StreamExt;
@@ -568,6 +568,7 @@ fn str_of_value(value: &serde_json::Value) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
 
     fn try_channel_with(
         content_template: &str,
