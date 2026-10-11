@@ -93,6 +93,7 @@ galleon-channel-amqp = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_wecom as wecom`) so existing callers
 # keep compiling. Optional, behind `channel-wecom`.
 galleon-channel-wecom = { workspace = true, optional = true }
+galleon-channel-webhook = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -345,7 +346,7 @@ channel-wechat = [
 channel-wecom = ["dep:galleon-channel-wecom"]
 channel-wecom-ws = ["dep:aes", "dep:cbc", "ws-transport"]
 channel-clawdtalk = ["dep:galleon-channel-clawdtalk"]
-channel-webhook = ["dep:axum"]
+channel-webhook = ["dep:galleon-channel-webhook", "dep:axum"]
 channel-whatsapp-cloud = []
 channel-voice-call = ["dep:axum"]
 channel-acp-server = []

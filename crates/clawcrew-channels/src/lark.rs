@@ -2,6 +2,9 @@ use aes::Aes256;
 use async_trait::async_trait;
 use base64::Engine as _;
 use cbc::cipher::{BlockDecryptMut, KeyIvInit, block_padding::Pkcs7};
+use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use clawcrew_config::pairing::constant_time_eq;
+use clawcrew_config::schema::StreamMode;
 use futures_util::{SinkExt, StreamExt};
 use prost::Message as ProstMessage;
 use reqwest::multipart::{Form, Part};
@@ -15,9 +18,6 @@ use tokio::fs;
 use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::Message as WsMsg;
 use uuid::Uuid;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_config::pairing::constant_time_eq;
-use clawcrew_config::schema::StreamMode;
 
 const FEISHU_BASE_URL: &str = "https://open.feishu.cn/open-apis";
 const FEISHU_WS_BASE_URL: &str = "https://open.feishu.cn";
@@ -6935,12 +6935,12 @@ mod tests {
 
     #[tokio::test]
     async fn request_approval_registers_before_send_so_early_callback_resolves() {
-        use std::time::Duration;
-        use wiremock::matchers::{method, path, query_param};
-        use wiremock::{Mock, ResponseTemplate};
         use clawcrew_api::channel::{
             ApprovalSource, ChannelApprovalRequest, ChannelApprovalResponse,
         };
+        use std::time::Duration;
+        use wiremock::matchers::{method, path, query_param};
+        use wiremock::{Mock, ResponseTemplate};
 
         let mock_server = wiremock::MockServer::start().await;
         Mock::given(method("POST"))
@@ -7500,9 +7500,9 @@ mod tests {
 
     #[tokio::test]
     async fn remove_reaction_caches_id_from_add_and_deletes() {
+        use clawcrew_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
-        use clawcrew_api::channel::Channel;
 
         let server = MockServer::start().await;
         Mock::given(method("POST"))
@@ -7562,9 +7562,9 @@ mod tests {
 
     #[tokio::test]
     async fn remove_reaction_silent_on_cache_miss() {
+        use clawcrew_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
-        use clawcrew_api::channel::Channel;
 
         let server = MockServer::start().await;
         Mock::given(method("POST"))
@@ -7596,9 +7596,9 @@ mod tests {
 
     #[tokio::test]
     async fn remove_reaction_tolerates_server_stale_codes() {
+        use clawcrew_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
-        use clawcrew_api::channel::Channel;
 
         let server = MockServer::start().await;
         Mock::given(method("POST"))
@@ -7656,9 +7656,9 @@ mod tests {
 
     #[tokio::test]
     async fn add_reaction_caches_glance_under_unicode_key() {
+        use clawcrew_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
-        use clawcrew_api::channel::Channel;
 
         let server = MockServer::start().await;
         Mock::given(method("POST"))
@@ -7714,9 +7714,9 @@ mod tests {
 
     #[tokio::test]
     async fn lark_inbound_ack_lifecycle_swaps_glance_to_done_with_no_orphan() {
+        use clawcrew_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
-        use clawcrew_api::channel::Channel;
 
         let server = MockServer::start().await;
 
@@ -7830,9 +7830,9 @@ mod tests {
 
     #[tokio::test]
     async fn lark_fast_ack_and_generic_path_dedupe_on_cache_hit() {
+        use clawcrew_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
-        use clawcrew_api::channel::Channel;
 
         let server = MockServer::start().await;
 

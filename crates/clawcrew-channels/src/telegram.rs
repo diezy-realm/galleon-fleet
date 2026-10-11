@@ -1,5 +1,13 @@
 use anyhow::Context;
 use async_trait::async_trait;
+use clawcrew_api::channel::{
+    Channel, ChannelMessage, ChannelModelPickerRequest, ListenerHealth, ProgressEvent, SendMessage,
+};
+use clawcrew_config::pairing::PairingGuard;
+use clawcrew_config::schema::{
+    Config, DEFAULT_MULTI_MESSAGE_DELAY_MS, StreamMode, TELEGRAM_OFFICIAL_API_BASE_URL,
+};
+use galleon_i18n as i18n;
 use parking_lot::{Mutex, RwLock};
 use reqwest::multipart::{Form, Part};
 use std::collections::HashMap;
@@ -7,14 +15,6 @@ use std::fmt::Write as _;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use clawcrew_api::channel::{
-    Channel, ChannelMessage, ChannelModelPickerRequest, ListenerHealth, ProgressEvent, SendMessage,
-};
-use clawcrew_config::schema::{
-    Config, DEFAULT_MULTI_MESSAGE_DELAY_MS, StreamMode, TELEGRAM_OFFICIAL_API_BASE_URL,
-};
-use galleon_i18n as i18n;
-use clawcrew_config::pairing::PairingGuard;
 
 /// How long a successful `getUpdates` exchange stays evidence that the listener
 /// is working.
@@ -2737,10 +2737,7 @@ impl TelegramChannel {
     }
 
     /// Configure dynamic skills resolver for bot command registration.
-    pub fn with_skills_resolver(
-        mut self,
-        resolver: TelegramSkillsResolver,
-    ) -> Self {
+    pub fn with_skills_resolver(mut self, resolver: TelegramSkillsResolver) -> Self {
         self.skills_resolver = Some(resolver);
         self
     }

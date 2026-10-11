@@ -4,17 +4,17 @@ use aes::cipher::{BlockDecryptMut, BlockEncryptMut, KeyInit, block_padding::Pkcs
 use anyhow::Context;
 use async_trait::async_trait;
 use base64::Engine;
+use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use clawcrew_config::pairing::PairingGuard;
+use clawcrew_config::paths::{normalize_lexical, resolve_under};
+use clawcrew_config::schema::Config;
+use galleon_i18n as i18n;
 use parking_lot::Mutex;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, LazyLock, RwLock};
 use std::time::Duration;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_config::paths::{normalize_lexical, resolve_under};
-use clawcrew_config::schema::Config;
-use galleon_i18n as i18n;
-use clawcrew_config::pairing::PairingGuard;
 
 const DEFAULT_API_BASE_URL: &str = "https://ilinkai.weixin.qq.com";
 const CDN_BASE_URL: &str = "https://novac2c.cdn.weixin.qq.com/c2c";
@@ -3912,10 +3912,10 @@ mod tests {
 
     #[tokio::test]
     async fn wechat_bind_keeps_the_one_time_code_when_an_ignore_denies_the_sender() {
-        use wiremock::matchers::method;
-        use wiremock::{Mock, MockServer, ResponseTemplate};
         use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
         use clawcrew_config::providers::ChannelRef;
+        use wiremock::matchers::method;
+        use wiremock::{Mock, MockServer, ResponseTemplate};
 
         // `try_pair` consumes the code and mints a token before any deny is
         // consulted; discovering the deny afterwards leaves the operator's only
@@ -4006,10 +4006,10 @@ mod tests {
 
     #[tokio::test]
     async fn wechat_bind_rolls_back_when_the_writer_rejects_a_group_collision() {
-        use wiremock::matchers::method;
-        use wiremock::{Mock, MockServer, ResponseTemplate};
         use clawcrew_config::multi_agent::PeerGroupConfig;
         use clawcrew_config::providers::ChannelRef;
+        use wiremock::matchers::method;
+        use wiremock::{Mock, MockServer, ResponseTemplate};
 
         // Nothing is denied, so the precheck passes; the writer refuses because
         // the conventional key belongs to another instance. WeChat used to log

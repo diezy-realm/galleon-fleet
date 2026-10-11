@@ -1,12 +1,12 @@
 use async_trait::async_trait;
+use clawcrew_api::channel::{
+    Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
+};
 use regex::Regex;
 use std::collections::HashMap;
 use std::sync::{Arc, LazyLock};
 use tokio::sync::{Mutex, oneshot};
 use uuid::Uuid;
-use clawcrew_api::channel::{
-    Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
-};
 
 type PendingApprovalsMap = Mutex<HashMap<String, oneshot::Sender<ChannelApprovalResponse>>>;
 static PENDING_APPROVALS: LazyLock<Arc<PendingApprovalsMap>> =

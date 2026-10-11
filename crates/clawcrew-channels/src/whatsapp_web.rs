@@ -3,11 +3,6 @@
 use super::whatsapp_storage::RusqliteStore;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use parking_lot::Mutex;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use tokio::select;
-use waproto::whatsapp::device_props::PlatformType;
 use clawcrew_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelConversationScope,
     ChannelMessage, SendMessage,
@@ -15,6 +10,11 @@ use clawcrew_api::channel::{
 #[cfg(feature = "whatsapp-web")]
 use clawcrew_api::media::MediaAttachment;
 use galleon_i18n as i18n;
+use parking_lot::Mutex;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use tokio::select;
+use waproto::whatsapp::device_props::PlatformType;
 
 /// What a pending approval token is bound to.
 ///
@@ -4904,12 +4904,12 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "whatsapp-web")]
     async fn inbound_path_enforces_chat_policy_under_both_modes() {
+        use clawcrew_config::schema::{WhatsAppChatPolicy as Policy, WhatsAppWebMode as Mode};
         use wacore::types::message::{MessageInfo, MessageSource};
         use whatsapp_rust::TokioRuntime;
         use whatsapp_rust::bot::Bot;
         use whatsapp_rust_tokio_transport::TokioWebSocketTransportFactory;
         use whatsapp_rust_ureq_http_client::UreqHttpClient;
-        use clawcrew_config::schema::{WhatsAppChatPolicy as Policy, WhatsAppWebMode as Mode};
 
         const ALLOWED: &str = "15551234567";
         const UNKNOWN: &str = "15559999999";
@@ -5041,12 +5041,12 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "whatsapp-web")]
     async fn inbound_batch_isolates_early_returns_and_preserves_order() {
+        use clawcrew_config::schema::{WhatsAppChatPolicy as Policy, WhatsAppWebMode as Mode};
         use wacore::types::message::{MessageInfo, MessageSource};
         use whatsapp_rust::TokioRuntime;
         use whatsapp_rust::bot::Bot;
         use whatsapp_rust_tokio_transport::TokioWebSocketTransportFactory;
         use whatsapp_rust_ureq_http_client::UreqHttpClient;
-        use clawcrew_config::schema::{WhatsAppChatPolicy as Policy, WhatsAppWebMode as Mode};
 
         const ALLOWED: &str = "15551234567";
         const DENIED: &str = "15559999999";
@@ -5140,12 +5140,12 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "whatsapp-web")]
     async fn inbound_path_keeps_self_chat_bypass_personal_only() {
+        use clawcrew_config::schema::{WhatsAppChatPolicy as Policy, WhatsAppWebMode as Mode};
         use wacore::types::message::{MessageInfo, MessageSource};
         use whatsapp_rust::TokioRuntime;
         use whatsapp_rust::bot::Bot;
         use whatsapp_rust_tokio_transport::TokioWebSocketTransportFactory;
         use whatsapp_rust_ureq_http_client::UreqHttpClient;
-        use clawcrew_config::schema::{WhatsAppChatPolicy as Policy, WhatsAppWebMode as Mode};
 
         // Deliberately absent from `peer_resolver` below: the personal-mode
         // bypass has to be what admits this message, not the allowlist.
@@ -5241,12 +5241,12 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "whatsapp-web")]
     async fn inbound_path_rejects_business_from_me_before_direct_message_bypass() {
+        use clawcrew_config::schema::{WhatsAppChatPolicy as Policy, WhatsAppWebMode as Mode};
         use wacore::types::message::{MessageInfo, MessageSource};
         use whatsapp_rust::TokioRuntime;
         use whatsapp_rust::bot::Bot;
         use whatsapp_rust_tokio_transport::TokioWebSocketTransportFactory;
         use whatsapp_rust_ureq_http_client::UreqHttpClient;
-        use clawcrew_config::schema::{WhatsAppChatPolicy as Policy, WhatsAppWebMode as Mode};
 
         const OPERATOR: &str = "15557654321";
         const CUSTOMER: &str = "15551234567";
@@ -7348,12 +7348,12 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "whatsapp-web")]
     async fn inbound_path_admits_a_personal_self_chat_approval_reply() {
+        use clawcrew_config::schema::{WhatsAppChatPolicy as Policy, WhatsAppWebMode as Mode};
         use wacore::types::message::{MessageInfo, MessageSource};
         use whatsapp_rust::TokioRuntime;
         use whatsapp_rust::bot::Bot;
         use whatsapp_rust_tokio_transport::TokioWebSocketTransportFactory;
         use whatsapp_rust_ureq_http_client::UreqHttpClient;
-        use clawcrew_config::schema::{WhatsAppChatPolicy as Policy, WhatsAppWebMode as Mode};
 
         const OPERATOR: &str = "15551230001";
 

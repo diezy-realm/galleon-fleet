@@ -2,8 +2,8 @@
 //! `ChannelMessage`s.
 
 use chrono::{DateTime, Utc};
-use serde_json::json;
 use clawcrew_api::channel::{CHANNEL_SOP_SUBJECT_PREFIX, ChannelMessage};
+use serde_json::json;
 
 use super::types::{
     EVT_ISSUE_COMMENT_CREATED, EVT_ISSUES_OPENED, EVT_PR_REVIEW_COMMENT_CREATED,

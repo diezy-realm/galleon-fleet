@@ -1,5 +1,7 @@
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
+use clawcrew_api::channel::{Channel, ChannelApprovalResponse, ChannelMessage, SendMessage};
+pub(crate) use clawcrew_config::schema::MattermostListenMode;
 use futures_util::{SinkExt, StreamExt, stream::SplitSink, stream::SplitStream};
 use parking_lot::Mutex;
 use std::collections::{HashMap, HashSet};
@@ -9,8 +11,6 @@ use tokio::sync::OnceCell;
 use tokio::{io::AsyncRead, io::AsyncWrite};
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::Message as WsMessage;
-use clawcrew_api::channel::{Channel, ChannelApprovalResponse, ChannelMessage, SendMessage};
-pub(crate) use clawcrew_config::schema::MattermostListenMode;
 
 const MAX_MATTERMOST_AUDIO_BYTES: u64 = 25 * 1024 * 1024;
 /// Cadence at which auto-discovery re-runs to pick up newly-created DMs

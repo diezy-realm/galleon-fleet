@@ -1710,6 +1710,7 @@ dependencies = [
  "galleon-channel-signal",
  "galleon-channel-twitch",
  "galleon-channel-twitter",
+ "galleon-channel-webhook",
  "galleon-channel-wecom",
  "galleon-i18n",
  "galleon-security-scrub",
@@ -4572,6 +4573,31 @@ dependencies = [
  "tokio",
  "toml 1.1.2+spec-1.1.0",
  "uuid",
+]
+
+[[package]]
+name = "galleon-channel-webhook"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.8.9",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "galleon-channel-core",
+ "hex",
+ "hmac 0.12.1",
+ "portable-atomic",
+ "rand 0.10.2",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tokio",
+ "wiremock",
 ]
 
 [[package]]

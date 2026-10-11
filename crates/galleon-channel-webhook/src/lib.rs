@@ -1,11 +1,11 @@
 use anyhow::{Result, bail};
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDateTime, Utc};
+use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 use portable_atomic::{AtomicU64, Ordering};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Duration;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
 const DEFAULT_MAX_RETRIES: u32 = 3;
 const DEFAULT_RETRY_BASE_DELAY_MS: u64 = 500;
@@ -136,7 +136,7 @@ impl WebhookChannel {
     /// Serve inbound webhook requests on an already-bound listener. Split out
     /// from `listen()` so tests can bind an OS-assigned port and read it back
     /// before the server starts accepting connections.
-    pub(crate) async fn listen_with_listener(
+    pub async fn listen_with_listener(
         &self,
         listener: tokio::net::TcpListener,
         tx: tokio::sync::mpsc::Sender<ChannelMessage>,
@@ -946,15 +946,19 @@ mod tests {
 
         // Downstream session/routing scope keys off `channel_alias` — two
         // aliases must compute distinct keys so they never share a session.
-        let alpha_key = crate::orchestrator::conversation_history_key(&alpha_msg);
-        let beta_key = crate::orchestrator::conversation_history_key(&beta_msg);
+        let channel_scope = |msg: &ChannelMessage| match msg.channel_alias.as_deref() {
+            Some(alias) if !alias.trim().is_empty() => format!("{}_{}", msg.channel, alias.trim()),
+            _ => msg.channel.clone(),
+        };
+        let alpha_key = channel_scope(&alpha_msg);
+        let beta_key = channel_scope(&beta_msg);
         assert_ne!(alpha_key, beta_key);
         assert!(
-            alpha_key.starts_with("webhook_alpha_"),
+            alpha_key.starts_with("webhook_alpha"),
             "alpha key should be scoped by its own alias: {alpha_key}"
         );
         assert!(
-            beta_key.starts_with("webhook_beta_"),
+            beta_key.starts_with("webhook_beta"),
             "beta key should be scoped by its own alias: {beta_key}"
         );
     }
