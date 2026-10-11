@@ -53,3 +53,4 @@ tokio::task_local! {
 }
 
 pub mod dashboard;
+pub mod doctor;

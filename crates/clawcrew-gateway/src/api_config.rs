@@ -2748,6 +2748,7 @@ pub(crate) mod tests {
             tui_registry: None,
             sop_engine: None,
             sop_audit: None,
+            diagnostics: None,
         }
     }
 

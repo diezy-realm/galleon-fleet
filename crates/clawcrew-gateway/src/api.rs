@@ -963,20 +963,23 @@ pub async fn handle_api_doctor(
         return e.into_response();
     }
 
-    let config = state.config.read().clone();
-    let results = clawcrew_runtime::doctor::diagnose(&config);
+    let results = if let Some(diag) = &state.diagnostics {
+        diag.run_diagnostics()
+    } else {
+        Vec::new()
+    };
 
     let ok_count = results
         .iter()
-        .filter(|r| r.severity == clawcrew_runtime::doctor::Severity::Ok)
+        .filter(|r| r.severity == clawcrew_api::doctor::Severity::Ok)
         .count();
     let warn_count = results
         .iter()
-        .filter(|r| r.severity == clawcrew_runtime::doctor::Severity::Warn)
+        .filter(|r| r.severity == clawcrew_api::doctor::Severity::Warn)
         .count();
     let error_count = results
         .iter()
-        .filter(|r| r.severity == clawcrew_runtime::doctor::Severity::Error)
+        .filter(|r| r.severity == clawcrew_api::doctor::Severity::Error)
         .count();
 
     Json(serde_json::json!({
@@ -2477,6 +2480,7 @@ pub(crate) mod tests {
             reload_tx: None,
             sop_engine: None,
             sop_audit: None,
+            diagnostics: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         }
