@@ -134,8 +134,11 @@ pub use galleon_channel_twitter as twitter;
 pub mod voice_call;
 #[cfg(feature = "voice-wake")]
 pub mod voice_wake;
+// RF-B1: the Webhook channel now lives in its own feature-crate. Re-export it
+// under the historical `webhook` path so `crate::webhook::WebhookChannel` and
+// callers keep resolving.
 #[cfg(feature = "channel-webhook")]
-pub mod webhook;
+pub use galleon_channel_webhook as webhook;
 #[cfg(feature = "channel-wechat")]
 pub mod wechat;
 // RF-B1: the WeCom channel now lives in its own feature-crate. Re-export it

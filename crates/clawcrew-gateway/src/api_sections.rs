@@ -7,12 +7,12 @@ use axum::{
     http::HeaderMap,
     response::{IntoResponse, Response},
 };
-use serde::{Deserialize, Serialize};
 use clawcrew_config::api_error::{ConfigApiCode, ConfigApiError};
-use clawcrew_runtime::rpc::types::{
+use clawcrew_config::dto::{
     CatalogModelProvider, CatalogModelsResult, CatalogResponse, ConfigSectionEntry,
     ConfigSectionsResult, ConfigStatusResult, PickerItem, PickerResponse, SelectItemResponse,
 };
+use serde::{Deserialize, Serialize};
 
 use super::AppState;
 use super::api::require_auth;

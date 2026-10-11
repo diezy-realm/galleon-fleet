@@ -1,8 +1,8 @@
 //! Automatic media understanding pipeline for inbound channel messages.
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
-use std::borrow::Cow;
 use clawcrew_config::schema::MediaPipelineConfig;
+use std::borrow::Cow;
 
 use super::super::transcription::TranscriptionManager;
 

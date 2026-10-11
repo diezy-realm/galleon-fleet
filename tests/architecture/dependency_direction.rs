@@ -49,7 +49,8 @@ fn crate_dependency_direction_strictly_enforced() {
     // 2. Check clawcrew-plugins does not depend on clawcrew-runtime
     let plugins_cargo = root.join("crates/clawcrew-plugins/Cargo.toml");
     if plugins_cargo.exists() {
-        let content = fs::read_to_string(&plugins_cargo).expect("clawcrew-plugins/Cargo.toml readable");
+        let content =
+            fs::read_to_string(&plugins_cargo).expect("clawcrew-plugins/Cargo.toml readable");
         assert!(
             !has_active_dependency(&content, "clawcrew-runtime"),
             "clawcrew-plugins must not depend on clawcrew-runtime"
@@ -77,6 +78,7 @@ fn crate_dependency_direction_strictly_enforced() {
         "crates/galleon-channel-filesystem",
         "crates/galleon-channel-amqp",
         "crates/galleon-channel-wecom",
+        "crates/galleon-channel-webhook",
     ] {
         let cargo_path = root.join(channel_crate).join("Cargo.toml");
         if cargo_path.exists() {

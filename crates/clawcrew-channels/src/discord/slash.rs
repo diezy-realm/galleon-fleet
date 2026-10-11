@@ -32,9 +32,7 @@ pub(crate) fn discord_command_slug(name: &str) -> String {
     slug.trim_end_matches('-').to_string()
 }
 
-pub fn discord_slash_specs_from_skills(
-    skills: &[Skill],
-) -> Vec<DiscordSlashCommandSpec> {
+pub fn discord_slash_specs_from_skills(skills: &[Skill]) -> Vec<DiscordSlashCommandSpec> {
     let mut candidates: Vec<&Skill> = skills
         .iter()
         .filter(|s| s.tags.iter().any(|t| t == "slash"))

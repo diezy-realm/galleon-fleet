@@ -2,6 +2,7 @@
 //! Each audit entry is chained via a Merkle hash: `entry_hash = SHA-256(prev_hash || canonical_json)`.
 //! This makes the trail tamper-evident — modifying any entry invalidates all subsequent hashes.
 
+use crate::schema::AuditConfig;
 use anyhow::{Context, Result, bail};
 use chrono::{DateTime, Utc};
 use parking_lot::Mutex;
@@ -11,7 +12,6 @@ use std::fs::OpenOptions;
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
-use crate::schema::AuditConfig;
 
 /// Well-known seed for the genesis entry's `prev_hash`.
 const GENESIS_PREV_HASH: &str = "0000000000000000000000000000000000000000000000000000000000000000";
@@ -238,12 +238,10 @@ pub struct AuditLogger {
     signing_key: Option<Vec<u8>>,
     /// Remaining [`AuditLogger::log`] calls to honour before every further one
     /// fails. Test-only; see [`AuditLogger::fail_writes_after_for_test`].
-    #[cfg(test)]
     write_budget: Mutex<Option<usize>>,
     /// Remaining durable appends to honour before every further one fails at
     /// the file-write step. Test-only; see
     /// [`AuditLogger::fail_durable_write_after_for_test`].
-    #[cfg(test)]
     durable_write_budget: Mutex<Option<usize>>,
 }
 
@@ -334,9 +332,7 @@ impl AuditLogger {
             config,
             chain: Mutex::new(chain_state),
             signing_key,
-            #[cfg(test)]
             write_budget: Mutex::new(None),
-            #[cfg(test)]
             durable_write_budget: Mutex::new(None),
         })
     }
@@ -370,14 +366,14 @@ impl AuditLogger {
     /// use [`AuditLogger::fail_durable_write_after_for_test`]. Both leave the
     /// hash chain consistent with the file for the caller's retry, because
     /// [`AuditLogger::log`] commits the chain state only after `sync_all`.
-    #[cfg(test)]
-    pub(crate) fn fail_writes_after_for_test(&self, successes: usize) {
+    #[doc(hidden)]
+    pub fn fail_writes_after_for_test(&self, successes: usize) {
         *self.write_budget.lock() = Some(successes);
     }
 
     /// Undo [`AuditLogger::fail_writes_after_for_test`].
-    #[cfg(test)]
-    pub(crate) fn clear_write_failure_for_test(&self) {
+    #[doc(hidden)]
+    pub fn clear_write_failure_for_test(&self) {
         *self.write_budget.lock() = None;
     }
 
@@ -393,14 +389,14 @@ impl AuditLogger {
     /// failure there must leave the chain state exactly as it was, so the
     /// retry reuses the same sequence and `prev_hash` and the file stays
     /// verifiable. See `chain_state_survives_a_failed_durable_append`.
-    #[cfg(test)]
-    pub(crate) fn fail_durable_write_after_for_test(&self, successes: usize) {
+    #[doc(hidden)]
+    pub fn fail_durable_write_after_for_test(&self, successes: usize) {
         *self.durable_write_budget.lock() = Some(successes);
     }
 
     /// Undo [`AuditLogger::fail_durable_write_after_for_test`].
-    #[cfg(test)]
-    pub(crate) fn clear_durable_write_failure_for_test(&self) {
+    #[doc(hidden)]
+    pub fn clear_durable_write_failure_for_test(&self) {
         *self.durable_write_budget.lock() = None;
     }
 
@@ -459,7 +455,6 @@ impl AuditLogger {
         // Check log size and rotate if needed
         self.rotate_if_needed()?;
 
-        #[cfg(test)]
         {
             let mut budget = self.write_budget.lock();
             if let Some(remaining) = budget.as_mut() {
@@ -484,7 +479,6 @@ impl AuditLogger {
         let mut line = serde_json::to_string(&chained)?.into_bytes();
         line.push(b'\n');
 
-        #[cfg(test)]
         {
             let mut budget = self.durable_write_budget.lock();
             if let Some(remaining) = budget.as_mut() {

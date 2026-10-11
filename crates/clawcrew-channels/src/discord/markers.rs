@@ -1,9 +1,9 @@
 //! Outbound media markers and the egress trust boundary.
 
 use anyhow::Context as _;
+use galleon_i18n as i18n;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
-use galleon_i18n as i18n;
 
 use super::embed::{DiscordEmbed, EmbedAuthor, EmbedField, EmbedFooter, EmbedMedia};
 

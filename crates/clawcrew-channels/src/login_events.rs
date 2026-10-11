@@ -43,8 +43,8 @@
 //! never capture them at rest. Persisted events keep only the lifecycle
 //! `state`, channel identity, and attempt counters.
 
-use serde_json::Value;
 use clawcrew_log::{Action, Event, EventCategory, EventOutcome, record};
+use serde_json::Value;
 
 /// A point on the channel-login lifecycle. Construct the variant that
 /// matches the flow state and call [`LoginEvent::emit`].

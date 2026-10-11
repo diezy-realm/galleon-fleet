@@ -106,25 +106,23 @@ use std::time::{Duration, Instant, SystemTime};
 use tokio_util::sync::CancellationToken;
 use url::Url;
 
+use crate::util::truncate_with_ellipsis;
+use clawcrew_api::channel::{ChannelTurnResult, REASONING_FULL_PREFIX, thinking_status_round};
 use clawcrew_api::memory_traits::MemoryStrategy;
+use clawcrew_api::observability_traits::{Observer, ObserverEvent, ObserverMetric};
 use clawcrew_api::session_keys::sanitize_session_key;
+use clawcrew_api::tool::Tool;
+use clawcrew_config::autonomy::AutonomyLevel;
+use clawcrew_config::policy::SecurityPolicy;
 use clawcrew_config::scattered_types::{ThinkingConfig, ThinkingLevel};
 use clawcrew_config::schema::Config;
-use clawcrew_memory::{self, Memory, MEMORY_CONTEXT_CLOSE, MEMORY_CONTEXT_OPEN};
+use clawcrew_memory::{self, MEMORY_CONTEXT_CLOSE, MEMORY_CONTEXT_OPEN, Memory};
 use clawcrew_providers::reliable::ProviderFallbackInfo;
 use clawcrew_providers::{
     self, ChatMessage, ModelProvider, ProviderDispatch, SafeguardFallbackKind,
     SafeguardFallbackNotice,
 };
-use clawcrew_api::channel::{
-    ChannelTurnResult, REASONING_FULL_PREFIX, thinking_status_round,
-};
-use clawcrew_api::observability_traits::{Observer, ObserverEvent, ObserverMetric};
-use clawcrew_api::tool::Tool;
-use clawcrew_config::autonomy::AutonomyLevel;
-use clawcrew_config::policy::SecurityPolicy;
 use galleon_security_scrub::scrub as scrub_credentials;
-use crate::util::truncate_with_ellipsis;
 
 type CronChannelRegistry = Arc<HashMap<String, Arc<dyn Channel>>>;
 
@@ -730,7 +728,8 @@ impl clawcrew_api::channel::ChannelTurnRunner for StandardChannelTurnRunner {
                     });
                 }
             } else {
-                let (cleaned, parsed) = clawcrew_tool_call_parser::parse_tool_calls(&raw_response_text);
+                let (cleaned, parsed) =
+                    clawcrew_tool_call_parser::parse_tool_calls(&raw_response_text);
                 tool_calls = parsed;
                 if tool_calls.is_empty() && !cleaned.trim().is_empty() {
                     raw_response_text = cleaned;
@@ -743,9 +742,7 @@ impl clawcrew_api::channel::ChannelTurnRunner for StandardChannelTurnRunner {
                     &final_response,
                 ));
                 if let Some(ref tx) = ctx.delta_tx {
-                    let _ = tx
-                        .send(StreamDelta::Text(final_response.clone()))
-                        .await;
+                    let _ = tx.send(StreamDelta::Text(final_response.clone())).await;
                 }
                 return clawcrew_api::channel::ChannelTurnResult::Completed(final_response);
             }
@@ -753,14 +750,24 @@ impl clawcrew_api::channel::ChannelTurnRunner for StandardChannelTurnRunner {
             // Check if model_switch was requested
             for call in &tool_calls {
                 if call.name == "model_switch" {
-                    let p = call.arguments.get("model_provider").and_then(|v| v.as_str()).unwrap_or_default().to_string();
-                    let m = call.arguments.get("model").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+                    let p = call
+                        .arguments
+                        .get("model_provider")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default()
+                        .to_string();
+                    let m = call
+                        .arguments
+                        .get("model")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default()
+                        .to_string();
                     if !p.is_empty() && !m.is_empty() {
                         return clawcrew_api::channel::ChannelTurnResult::Failed(
                             anyhow::Error::new(clawcrew_api::agent::ModelSwitchRequested {
                                 model_provider: p,
                                 model: m,
-                            })
+                            }),
                         );
                     }
                 }
@@ -802,7 +809,11 @@ impl clawcrew_api::channel::ChannelTurnRunner for StandardChannelTurnRunner {
                     };
                     match ch.request_approval_attributed(recipient, &ch_request).await {
                         Ok(Some(resp)) => {
-                            approved = matches!(resp.response, clawcrew_api::channel::ChannelApprovalResponse::Approve | clawcrew_api::channel::ChannelApprovalResponse::AlwaysApprove);
+                            approved = matches!(
+                                resp.response,
+                                clawcrew_api::channel::ChannelApprovalResponse::Approve
+                                    | clawcrew_api::channel::ChannelApprovalResponse::AlwaysApprove
+                            );
                         }
                         Ok(None) => {
                             approved = true;
@@ -840,7 +851,11 @@ impl clawcrew_api::channel::ChannelTurnRunner for StandardChannelTurnRunner {
 
                 let tool_start = std::time::Instant::now();
                 let (tool_result, is_ok, err_str) = if !approved {
-                    ("Tool approval rejected".to_string(), false, Some("Tool approval rejected".to_string()))
+                    (
+                        "Tool approval rejected".to_string(),
+                        false,
+                        Some("Tool approval rejected".to_string()),
+                    )
                 } else if let Some(ref registry) = ctx.tools_registry {
                     use clawcrew_api::tool::ToolRegistry;
                     if let Some(tool) = registry.find_tool(&call.name) {
@@ -853,14 +868,26 @@ impl clawcrew_api::channel::ChannelTurnRunner for StandardChannelTurnRunner {
                             }
                             Err(e) => {
                                 let err_msg = e.to_string();
-                                (format!("Error executing tool {}: {err_msg}", call.name), false, Some(err_msg))
+                                (
+                                    format!("Error executing tool {}: {err_msg}", call.name),
+                                    false,
+                                    Some(err_msg),
+                                )
                             }
                         }
                     } else {
-                        (format!("Unknown tool: {}", call.name), false, Some(format!("Unknown tool: {}", call.name)))
+                        (
+                            format!("Unknown tool: {}", call.name),
+                            false,
+                            Some(format!("Unknown tool: {}", call.name)),
+                        )
                     }
                 } else {
-                    (format!("No tools registry available to execute {}", call.name), false, None)
+                    (
+                        format!("No tools registry available to execute {}", call.name),
+                        false,
+                        None,
+                    )
                 };
 
                 let tool_duration = tool_start.elapsed();
@@ -1056,10 +1083,8 @@ enum InboundSlot {
     Ready(InboundTurn),
     Debounced {
         turn: InboundTurn,
-        content: tokio::sync::oneshot::Receiver<(
-            String,
-            Vec<clawcrew_api::media::MediaAttachment>,
-        )>,
+        content:
+            tokio::sync::oneshot::Receiver<(String, Vec<clawcrew_api::media::MediaAttachment>)>,
     },
 }
 
@@ -1632,8 +1657,7 @@ fn send_conversation_busy(
         return;
     };
     if let Some(channel) = find_channel_for_message(&ctx.channels_by_name, msg).cloned() {
-        let reply =
-            galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
+        let reply = galleon_i18n::get_required_cli_string("channel-runtime-conversation-busy");
         let reply_target = msg.reply_target.clone();
         let thread_ts = msg.thread_ts.clone();
         let tracked_task = busy_notice_tasks.track();
@@ -1712,11 +1736,12 @@ async fn route_inbound_slot(
     if let Err(err) = enforce_attachment_limits(&turn.msg) {
         ::clawcrew_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_attrs(::serde_json::json!({
+            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject).with_attrs(
+                ::serde_json::json!({
                     "reason": format!("{err:?}"),
                     "attachments_count": turn.msg.attachments.len(),
-                })),
+                })
+            ),
             "attachment limit exceeded in inbound turn"
         );
         send_conversation_busy(
@@ -2506,15 +2531,9 @@ fn build_channel_system_prompt_for_message_with_signal(
         clawcrew_api::agent::NO_TOOLS_TASK_FRAMING
     };
     if prompt.contains(clawcrew_api::agent::NATIVE_TOOLS_TASK_FRAMING) {
-        prompt.replace(
-            clawcrew_api::agent::NATIVE_TOOLS_TASK_FRAMING,
-            want,
-        )
+        prompt.replace(clawcrew_api::agent::NATIVE_TOOLS_TASK_FRAMING, want)
     } else if prompt.contains(clawcrew_api::agent::NO_TOOLS_TASK_FRAMING) {
-        prompt.replace(
-            clawcrew_api::agent::NO_TOOLS_TASK_FRAMING,
-            want,
-        )
+        prompt.replace(clawcrew_api::agent::NO_TOOLS_TASK_FRAMING, want)
     } else {
         // Anchor absent (custom system_prompt_prefix or unusual config);
         // no-op. Preserves byte-stability for non-default startup prompts.
@@ -2890,16 +2909,12 @@ fn resolve_channel_thinking(
             Some((level, remaining)) => (Some(level), remaining),
             None => (None, content.to_string()),
         };
-    let level = clawcrew_config::thinking::resolve_thinking_level(
-        directive,
-        session_override,
-        config,
-    );
+    let level =
+        clawcrew_config::thinking::resolve_thinking_level(directive, session_override, config);
     let params = clawcrew_config::thinking::apply_thinking_level_with_config(level, config);
 
-    let effective_temperature = base_temperature.map(|bt| {
-        clawcrew_config::thinking::clamp_temperature(bt + params.temperature_adjustment)
-    });
+    let effective_temperature = base_temperature
+        .map(|bt| clawcrew_config::thinking::clamp_temperature(bt + params.temperature_adjustment));
 
     ChannelThinkingResolution {
         effective_content,
@@ -7738,9 +7753,7 @@ async fn run_inbound_message_hook(
     }
 }
 
-pub fn channel_ingress_context(
-    msg: &ChannelMessage,
-) -> clawcrew_api::ingress::IngressContext {
+pub fn channel_ingress_context(msg: &ChannelMessage) -> clawcrew_api::ingress::IngressContext {
     use clawcrew_api::ingress::{IngressContext, SourceClass, Transport, TrustClass};
 
     let mut ingress = IngressContext::channel();
@@ -7892,10 +7905,7 @@ fn single_message_pending_is_thinking_status(progress: &DraftProgress) -> bool {
 
 fn single_message_pending_is_reasoning(progress: &DraftProgress) -> bool {
     matches!(progress.kind, DraftProgressKind::Reasoning)
-        && single_message_pending_has_prefix(
-            &progress.text,
-            REASONING_FULL_PREFIX,
-        )
+        && single_message_pending_has_prefix(&progress.text, REASONING_FULL_PREFIX)
 }
 
 fn single_message_pending_visible_lines(progress: &DraftProgress) -> usize {
@@ -7935,10 +7945,7 @@ fn trim_pending_visible_lines_from_front(
     let text = if single_message_pending_is_reasoning(progress)
         && !retained.starts_with(REASONING_FULL_PREFIX)
     {
-        format!(
-            "{}{retained}",
-            REASONING_FULL_PREFIX
-        )
+        format!("{}{retained}", REASONING_FULL_PREFIX)
     } else {
         retained
     };
@@ -7988,9 +7995,7 @@ fn push_matrix_single_message_pending(
         return;
     }
 
-    if let Some(fragment) = progress
-        .text
-        .strip_prefix(REASONING_FULL_PREFIX)
+    if let Some(fragment) = progress.text.strip_prefix(REASONING_FULL_PREFIX)
         && let Some(existing) = pending.last_mut()
         && single_message_pending_is_reasoning(existing)
     {
@@ -8375,9 +8380,7 @@ fn matrix_normalize_display(value: &str) -> String {
 }
 
 fn matrix_scrub_display(value: &str) -> String {
-    matrix_normalize_display(&scrub_credentials(&galleon_security_scrub::scrub(
-        value,
-    )))
+    matrix_normalize_display(&scrub_credentials(&galleon_security_scrub::scrub(value)))
 }
 
 fn matrix_scrub_structured_display(value: &str) -> String {
@@ -8385,9 +8388,9 @@ fn matrix_scrub_structured_display(value: &str) -> String {
 }
 
 fn matrix_scrub_progress_text(value: &str) -> String {
-    scrub_credentials(&galleon_security_scrub::scrub(
-        &strip_think_tags_inline(value),
-    ))
+    scrub_credentials(&galleon_security_scrub::scrub(&strip_think_tags_inline(
+        value,
+    )))
 }
 
 fn matrix_progress_text(
@@ -8708,8 +8711,7 @@ fn resolve_cold_crumb_provenance_result(
     fn legacy_inference(history: &[ChatMessage]) -> bool {
         let leading_system = history.iter().take_while(|m| m.role == "system").count();
         if let Some(first) = history.get(leading_system) {
-            first.role == "user"
-                && crate::util::is_history_trim_breadcrumb_text(&first.content)
+            first.role == "user" && crate::util::is_history_trim_breadcrumb_text(&first.content)
         } else {
             false
         }
@@ -8797,7 +8799,9 @@ async fn process_channel_message_body(
     }
 
     // Dispatch executes steps even though its result is discarded here.
-    if !msg.passive_context && let Some(dispatcher) = &ctx.sop_dispatcher {
+    if !msg.passive_context
+        && let Some(dispatcher) = &ctx.sop_dispatcher
+    {
         let topic = match &msg.channel_alias {
             Some(alias) if !alias.is_empty() => format!("{}/{}", msg.channel, alias),
             _ => msg.channel.clone(),
@@ -8814,7 +8818,8 @@ async fn process_channel_message_body(
     }
 
     // ── Content Safety (BL-14): Screen and sanitize untrusted channel content ──
-    let content_safety = galleon_security_scrub::ContentSafety::from_sop_config(&ctx.prompt_config.sop);
+    let content_safety =
+        galleon_security_scrub::ContentSafety::from_sop_config(&ctx.prompt_config.sop);
     let (sanitized_content, safety_outcome) = content_safety.screen_content(&msg.content);
 
     match safety_outcome {
@@ -8831,7 +8836,8 @@ async fn process_channel_message_body(
                 "inbound channel message rejected by ContentSafety guard"
             );
             if let Some(channel) = target_channel.as_ref() {
-                let rejection_notice = "⚠️ Message refused: unsafe content or potential prompt injection detected.";
+                let rejection_notice =
+                    "⚠️ Message refused: unsafe content or potential prompt injection detected.";
                 let _ = channel
                     .send(&SendMessage::reply_to(&msg, rejection_notice).suppress_voice())
                     .await;
@@ -9073,7 +9079,10 @@ async fn process_channel_message_body(
         }
     };
 
-    if msg.content.contains("[IMAGE:") && !active_model_provider.supports_vision() && ctx.multimodal.vision_model_provider.is_none() {
+    if msg.content.contains("[IMAGE:")
+        && !active_model_provider.supports_vision()
+        && ctx.multimodal.vision_model_provider.is_none()
+    {
         let marker_count = msg.content.matches("[IMAGE:").count().to_string();
         let message = match active_model_provider.vision_limited_by(&route.model) {
             Some(fallback_name) => galleon_i18n::get_required_cli_string_with_args(
@@ -9271,12 +9280,11 @@ async fn process_channel_message_body(
     if send_message_to_peer_tool_available(ctx.as_ref(), &msg)
         && let Some(current_channel_ref) = peer_prompt_channel_ref(ctx.as_ref(), &msg)
     {
-        let peer_map =
-            clawcrew_config::peers::render_sender_peer_map_for_channel(
-                ctx.prompt_config.as_ref(),
-                ctx.agent_alias.as_str(),
-                &current_channel_ref,
-            );
+        let peer_map = clawcrew_config::peers::render_sender_peer_map_for_channel(
+            ctx.prompt_config.as_ref(),
+            ctx.agent_alias.as_str(),
+            &current_channel_ref,
+        );
         if !peer_map.is_empty() {
             let _ = write!(system_prompt, "\n\n{peer_map}");
         }
@@ -9327,7 +9335,11 @@ async fn process_channel_message_body(
         memory_sessions.iter().map(|s| s.as_deref()).collect()
     };
     for session_id in scopes {
-        if let Ok(entries) = ctx.memory.recall(&msg.content, 5, session_id, None, None).await {
+        if let Ok(entries) = ctx
+            .memory
+            .recall(&msg.content, 5, session_id, None, None)
+            .await
+        {
             recall_ok = true;
             for entry in entries {
                 if seen_keys.insert(entry.key.clone()) {
@@ -9913,10 +9925,18 @@ async fn process_channel_message_body(
                 .unwrap_or_else(|| route.model.clone());
             match clawcrew_providers::create_model_provider_from_ref(&ctx.prompt_config, vp) {
                 Ok(p) => (Arc::from(p), vision_model, vp.clone()),
-                Err(_) => (Arc::clone(&active_model_provider), route.model.clone(), route.model_provider.clone()),
+                Err(_) => (
+                    Arc::clone(&active_model_provider),
+                    route.model.clone(),
+                    route.model_provider.clone(),
+                ),
             }
         } else {
-            (Arc::clone(&active_model_provider), route.model.clone(), route.model_provider.clone())
+            (
+                Arc::clone(&active_model_provider),
+                route.model.clone(),
+                route.model_provider.clone(),
+            )
         };
 
         let turn_ctx = clawcrew_api::channel::ChannelTurnContext {
@@ -9929,7 +9949,8 @@ async fn process_channel_message_body(
             temperature: thinking.effective_temperature,
             max_tool_iterations: ctx.max_tool_iterations,
             tools_registry: Some(Arc::clone(&ctx.tools_registry)),
-            observer: Some(Arc::clone(&notify_observer) as Arc<dyn clawcrew_api::observability_traits::Observer>),
+            observer: Some(Arc::clone(&notify_observer)
+                as Arc<dyn clawcrew_api::observability_traits::Observer>),
             turn_id: Some(turn_id.clone()),
             agent_alias: Some(ctx.agent_alias.to_string()),
             model_provider_name: turn_provider_name,
@@ -9946,7 +9967,8 @@ async fn process_channel_message_body(
             .await;
 
         if let ChannelTurnResult::Failed(ref err) = res
-            && let Some((new_provider, new_model)) = clawcrew_api::agent::is_model_switch_requested(err)
+            && let Some((new_provider, new_model)) =
+                clawcrew_api::agent::is_model_switch_requested(err)
         {
             let mut next_route = route.clone();
             if !new_provider.is_empty() {
@@ -9964,7 +9986,12 @@ async fn process_channel_message_body(
                 next_route.model = matched.model.clone();
                 next_route.api_key = matched.api_key.clone();
             }
-            set_route_selection(ctx.as_ref(), &history_key, next_route.clone(), &runtime_defaults);
+            set_route_selection(
+                ctx.as_ref(),
+                &history_key,
+                next_route.clone(),
+                &runtime_defaults,
+            );
             route = next_route;
             turn_guard.set_model_route(route.model_provider.clone(), route.model.clone());
             if let Ok(new_p) = get_or_create_provider(
@@ -9972,7 +9999,9 @@ async fn process_channel_message_body(
                 &route.model_provider,
                 route.api_key.as_deref(),
                 &runtime_defaults,
-            ).await {
+            )
+            .await
+            {
                 active_model_provider = new_p;
                 continue;
             }
@@ -10504,8 +10533,7 @@ async fn process_channel_message_body(
             }
         }
         LlmExecutionResult::Completed(Ok(Err(e))) => {
-            if clawcrew_api::agent::is_tool_loop_cancelled(&e)
-                || cancellation_token.is_cancelled()
+            if clawcrew_api::agent::is_tool_loop_cancelled(&e) || cancellation_token.is_cancelled()
             {
                 ::clawcrew_log::record!(
                     INFO,
@@ -10697,9 +10725,8 @@ async fn process_channel_message_body(
                 // Localized error text (master) delivered with suppress_voice
                 // (RFCerror-path fix): cancel the draft, then send as
                 // text so a timeout notice is never read aloud on a voice peer.
-                let error_text = galleon_i18n::get_required_cli_string(
-                    "channel-runtime-request-timeout",
-                );
+                let error_text =
+                    galleon_i18n::get_required_cli_string("channel-runtime-request-timeout");
                 if let Some(draft_id) = draft_message_id.as_deref() {
                     let _ = channel.cancel_draft(&msg.reply_target, draft_id).await;
                 }
@@ -11326,9 +11353,7 @@ async fn run_message_dispatch_loop(
             let reply = if had_registered_turn || cancelled_bucket {
                 galleon_i18n::get_required_cli_string("channel-runtime-stop-sent")
             } else if folded_into_another_scope {
-                galleon_i18n::get_required_cli_string(
-                    "channel-runtime-stop-folded-followup",
-                )
+                galleon_i18n::get_required_cli_string("channel-runtime-stop-folded-followup")
             } else {
                 galleon_i18n::get_required_cli_string("channel-runtime-stop-no-task")
             };
@@ -11439,7 +11464,9 @@ async fn run_message_dispatch_loop(
                     // liveness would race the window expiry, and a receiver
                     // sent to a forwarder whose bucket just fired would be
                     // dropped unread — silently losing the new message.
-                    let (rx, pending_work, first_attachments) = match debounce_buckets.get(&debounce_key) {
+                    let (rx, pending_work, first_attachments) = match debounce_buckets
+                        .get(&debounce_key)
+                    {
                         Some(bucket) if extended => {
                             let attachments = std::mem::take(&mut msg.attachments);
                             match bucket.send((rx, pending_work, attachments)) {
@@ -11457,7 +11484,9 @@ async fn run_message_dispatch_loop(
                                             ::clawcrew_log::Action::Note
                                         )
                                         .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                                        .with_attrs(::serde_json::json!({"debounce": debounce_key})),
+                                        .with_attrs(
+                                            ::serde_json::json!({"debounce": debounce_key})
+                                        ),
                                         "debounce forwarder retired before its bucket was delivered"
                                     );
                                     debounce_buckets.remove(&debounce_key);
@@ -13027,9 +13056,7 @@ impl ActiveChannelAliases {
                     policy.escalation_route.as_deref(),
                 ]
             })
-            .filter_map(|route| {
-                route.and_then(parse_approval_route)
-            })
+            .filter_map(|route| route.and_then(parse_approval_route))
             .flat_map(|(channel_key, _)| {
                 if channel_key.contains('.') {
                     return vec![channel_key.to_string()];
@@ -14960,11 +14987,8 @@ pub async fn doctor_channels(config: Config) -> Result<()> {
     // Take an owned snapshot before the `.await`: the parking_lot guard is not
     // Send and must not be held across the async constructor.
     let plugin_config = Arc::new(config_arc.read().clone());
-    let plugin_channels = configured_plugin_channels(
-        plugin_config,
-        Some(Arc::clone(&config_arc)),
-    )
-    .await;
+    let plugin_channels =
+        configured_plugin_channels(plugin_config, Some(Arc::clone(&config_arc))).await;
     append_configured_plugin_channels(&mut channels, plugin_channels);
 
     #[cfg(feature = "channel-nostr")]
@@ -15175,7 +15199,6 @@ fn build_owner_by_channel_key(
     owner_by_channel_key
 }
 
-
 /// Result of hydrating one session's transcript at startup.
 struct HydratedSession {
     messages: Vec<ChatMessage>,
@@ -15266,8 +15289,7 @@ fn hydrate_session_transcript(
     // loaded transcript's leading message is physically the synthetic
     // marker the durable flag says is present.
     let marker_present_pre_drain = msgs.first().is_some_and(|first| {
-        first.role == "user"
-            && crate::util::is_history_trim_breadcrumb_text(&first.content)
+        first.role == "user" && crate::util::is_history_trim_breadcrumb_text(&first.content)
     });
     let truncated = msgs.len() > MAX_CHANNEL_HISTORY;
     if truncated {
@@ -15302,8 +15324,7 @@ fn hydrate_session_transcript(
     // no longer there.
     let marker_present_post_cap = if truncated {
         msgs.first().is_some_and(|first| {
-            first.role == "user"
-                && crate::util::is_history_trim_breadcrumb_text(&first.content)
+            first.role == "user" && crate::util::is_history_trim_breadcrumb_text(&first.content)
         })
     } else {
         marker_present_pre_drain
@@ -15616,13 +15637,12 @@ pub async fn start_channels_with_plugin_webhooks(
                      `channel-filesystem`; skipping Filesystem."
                 );
             }
-            let plugin_channels =
-                configured_plugin_channels_with_webhooks(
-                    Arc::new(config.clone()),
-                    Some(Arc::clone(&config_arc)),
-                    plugin_webhook_registry_lease.as_ref(),
-                )
-                .await;
+            let plugin_channels = configured_plugin_channels_with_webhooks(
+                Arc::new(config.clone()),
+                Some(Arc::clone(&config_arc)),
+                plugin_webhook_registry_lease.as_ref(),
+            )
+            .await;
             append_configured_plugin_channels(&mut configured_channels, plugin_channels);
             let (channels_by_name, registry_lease) =
                 publish_cron_channel_registry(&configured_channels);
@@ -15703,13 +15723,12 @@ pub async fn start_channels_with_plugin_webhooks(
             effective_channel_message_timeout_secs(config.channels.message_timeout_secs);
         let interrupt_on_new_message = interrupt_on_new_message_config(&config.channels);
 
-        let memory_strategy: Arc<dyn MemoryStrategy> = Arc::new(
-            clawcrew_memory::DefaultMemoryStrategy::with_config(
+        let memory_strategy: Arc<dyn MemoryStrategy> =
+            Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
                 Arc::clone(&mem),
                 config.memory.clone(),
                 config.data_dir.clone(),
-            ),
-        );
+            ));
 
         let runtime_ctx = Arc::new(ChannelRuntimeContext {
             channels_by_name: Arc::clone(&channels_by_name),
@@ -16232,12 +16251,12 @@ pub async fn deliver_announcement(
 #[cfg(test)]
 #[test]
 fn concurrent_persist_lock_serialization() {
+    use clawcrew_api::observability_traits::NoopObserver;
+    use clawcrew_infra::session_backend::SessionBackend;
+    use clawcrew_providers::ChatMessage;
     use std::sync::Barrier;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::time::Duration;
-    use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_providers::ChatMessage;
-    use clawcrew_api::observability_traits::NoopObserver;
 
     struct OrderBackend {
         sequence: Arc<Mutex<Vec<String>>>,
@@ -16282,16 +16301,14 @@ fn concurrent_persist_lock_serialization() {
         agent_alias: Arc::new("test".into()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(tests::NoopMemory),
-        memory_strategy: Arc::new(
-            clawcrew_memory::DefaultMemoryStrategy::with_config(
-                Arc::new(tests::NoopMemory),
-                clawcrew_config::schema::MemoryConfig::default(),
-                std::path::PathBuf::new(),
-            ),
-        ),
-        tools_registry: Arc::new(
-            clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
-        ),
+        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+            Arc::new(tests::NoopMemory),
+            clawcrew_config::schema::MemoryConfig::default(),
+            std::path::PathBuf::new(),
+        )),
+        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+            vec![],
+        )),
         observer: Arc::new(NoopObserver),
         system_prompt: Arc::new(String::new()),
         model: Arc::new("test".into()),
@@ -16448,16 +16465,14 @@ fn test_channel_ctx_with_backend(
         agent_alias: Arc::new("test".into()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(tests::NoopMemory),
-        memory_strategy: Arc::new(
-            clawcrew_memory::DefaultMemoryStrategy::with_config(
-                Arc::new(tests::NoopMemory),
-                clawcrew_config::schema::MemoryConfig::default(),
-                std::path::PathBuf::new(),
-            ),
-        ),
-        tools_registry: Arc::new(
-            clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
-        ),
+        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+            Arc::new(tests::NoopMemory),
+            clawcrew_config::schema::MemoryConfig::default(),
+            std::path::PathBuf::new(),
+        )),
+        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+            vec![],
+        )),
         observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
         system_prompt: Arc::new(String::new()),
         model: Arc::new("test".into()),
@@ -16553,16 +16568,14 @@ fn test_channel_ctx_with_backend_channel_and_provider(
         agent_alias: Arc::new("test".into()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(tests::NoopMemory),
-        memory_strategy: Arc::new(
-            clawcrew_memory::DefaultMemoryStrategy::with_config(
-                Arc::new(tests::NoopMemory),
-                clawcrew_config::schema::MemoryConfig::default(),
-                std::path::PathBuf::new(),
-            ),
-        ),
-        tools_registry: Arc::new(
-            clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(vec![]),
-        ),
+        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+            Arc::new(tests::NoopMemory),
+            clawcrew_config::schema::MemoryConfig::default(),
+            std::path::PathBuf::new(),
+        )),
+        tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
+            vec![],
+        )),
         observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
         system_prompt: Arc::new(String::new()),
         model: Arc::new("test".into()),
@@ -16621,9 +16634,9 @@ fn test_channel_ctx_with_backend_channel_and_provider(
 #[cfg(test)]
 #[test]
 fn channel_trim_resync_survives_restart() {
-    use std::sync::Mutex as StdMutex;
     use clawcrew_infra::session_backend::SessionBackend;
     use clawcrew_providers::ChatMessage;
+    use std::sync::Mutex as StdMutex;
 
     // A durable backend that supports `rewrite_messages`, mirroring the
     // JSONL/SQLite backends this fix targets (the default trait impl is a
@@ -16804,9 +16817,9 @@ fn channel_trim_resync_survives_restart() {
 #[cfg(test)]
 #[test]
 fn channel_trim_resync_does_not_record_breadcrumb_when_transcript_write_fails() {
-    use std::sync::Mutex as StdMutex;
     use clawcrew_infra::session_backend::SessionBackend;
     use clawcrew_providers::ChatMessage;
+    use std::sync::Mutex as StdMutex;
 
     #[derive(Default)]
     struct FailingRewriteBackend {
@@ -16936,9 +16949,9 @@ fn channel_trim_resync_does_not_record_breadcrumb_when_transcript_write_fails() 
 #[cfg(test)]
 #[test]
 fn channel_trim_resync_does_not_guess_breadcrumb_when_provenance_read_fails() {
-    use std::sync::Mutex as StdMutex;
     use clawcrew_infra::session_backend::SessionBackend;
     use clawcrew_providers::ChatMessage;
+    use std::sync::Mutex as StdMutex;
 
     #[derive(Default)]
     struct FailingRewriteAndProvenanceBackend {
@@ -17056,9 +17069,9 @@ fn channel_trim_resync_does_not_guess_breadcrumb_when_provenance_read_fails() {
 #[cfg(test)]
 #[test]
 fn caller_evicts_cache_and_does_not_guess_flag_when_trim_resync_fails() {
-    use std::sync::Mutex as StdMutex;
     use clawcrew_infra::session_backend::SessionBackend;
     use clawcrew_providers::ChatMessage;
+    use std::sync::Mutex as StdMutex;
 
     #[derive(Default)]
     struct FailingRewriteAndProvenanceBackend {
@@ -17266,10 +17279,10 @@ fn cold_crumb_provenance_fails_closed_on_provenance_read_error() {
 #[cfg(test)]
 #[test]
 fn stale_no_trim_completion_does_not_overwrite_a_newer_trims_flag() {
-    use tempfile::TempDir;
     use clawcrew_infra::session_backend::SessionBackend;
     use clawcrew_infra::session_store::SessionStore;
     use clawcrew_providers::ChatMessage;
+    use tempfile::TempDir;
 
     fn same(a: &ChatMessage, b: &ChatMessage) -> bool {
         a.role == b.role && a.content == b.content
@@ -17371,10 +17384,10 @@ fn stale_no_trim_completion_does_not_overwrite_a_newer_trims_flag() {
 #[cfg(test)]
 #[test]
 fn evicted_cache_reloads_durable_transcript_on_next_append() {
-    use tempfile::TempDir;
     use clawcrew_infra::session_backend::SessionBackend;
     use clawcrew_infra::session_store::SessionStore;
     use clawcrew_providers::ChatMessage;
+    use tempfile::TempDir;
 
     let tmp = TempDir::new().expect("tempdir");
     let backend: Arc<dyn SessionBackend> =
@@ -17453,10 +17466,10 @@ fn evicted_cache_reloads_durable_transcript_on_next_append() {
 #[cfg(test)]
 #[test]
 fn channel_trim_resync_preserves_a_concurrent_workers_later_turn() {
-    use tempfile::TempDir;
     use clawcrew_infra::session_backend::SessionBackend;
     use clawcrew_infra::session_store::SessionStore;
     use clawcrew_providers::ChatMessage;
+    use tempfile::TempDir;
 
     fn same(a: &ChatMessage, b: &ChatMessage) -> bool {
         a.role == b.role && a.content == b.content
@@ -17551,10 +17564,10 @@ fn channel_trim_resync_preserves_a_concurrent_workers_later_turn() {
 #[cfg(test)]
 #[test]
 fn channel_trim_resync_preserves_a_concurrent_workers_later_turn_across_eviction() {
-    use tempfile::TempDir;
     use clawcrew_infra::session_backend::SessionBackend;
     use clawcrew_infra::session_store::SessionStore;
     use clawcrew_providers::ChatMessage;
+    use tempfile::TempDir;
 
     fn same(a: &ChatMessage, b: &ChatMessage) -> bool {
         a.role == b.role && a.content == b.content
@@ -17643,7 +17656,6 @@ fn channel_trim_resync_preserves_a_concurrent_workers_later_turn_across_eviction
 #[cfg(test)]
 pub(crate) mod tests;
 
-
 #[cfg(test)]
 mod omitted_feature_tests {
     #[cfg(not(feature = "channel-telegram"))]
@@ -17671,9 +17683,9 @@ mod omitted_feature_tests {
 #[cfg(test)]
 mod debounce_resolution_tests {
     use super::resolve_effective_debounce_window;
+    use clawcrew_config::schema::TelegramConfig;
     use std::collections::HashMap;
     use std::time::Duration;
-    use clawcrew_config::schema::TelegramConfig;
 
     #[test]
     fn per_channel_debounce_zero_falls_back_to_global() {

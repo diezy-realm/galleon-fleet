@@ -186,6 +186,20 @@ impl TuiRegistry {
     }
 }
 
+impl clawcrew_api::runtime_traits::TuiConnectionRegistry for TuiRegistry {
+    fn list_connected_tuis(&self) -> Vec<clawcrew_api::runtime_traits::ConnectedTuiInfo> {
+        self.list()
+            .into_iter()
+            .map(|e| clawcrew_api::runtime_traits::ConnectedTuiInfo {
+                tui_id: e.tui_id,
+                connected_at: e.connected_at.to_rfc3339(),
+                peer_label: e.peer_label,
+                transport: e.transport,
+            })
+            .collect()
+    }
+}
+
 // ── Tests ────────────────────────────────────────────────────────
 
 #[cfg(test)]

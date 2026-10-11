@@ -1,15 +1,15 @@
 use async_trait::async_trait;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use clawcrew_config::pairing::PairingGuard;
+use clawcrew_config::schema::{Config, LineDmPolicy, LineGroupPolicy};
+use galleon_i18n as i18n;
 use hmac::{Hmac, Mac};
 use parking_lot::RwLock;
 use sha2::Sha256;
 use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_config::schema::{Config, LineDmPolicy, LineGroupPolicy};
-use galleon_i18n as i18n;
-use clawcrew_config::pairing::PairingGuard;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -2674,10 +2674,10 @@ mod tests {
 
     #[tokio::test]
     async fn webhook_bind_keeps_the_one_time_code_when_an_ignore_denies_the_sender() {
-        use wiremock::matchers::{method, path};
-        use wiremock::{Mock, MockServer, ResponseTemplate};
         use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
         use clawcrew_config::providers::ChannelRef;
+        use wiremock::matchers::{method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
 
         // `try_pair` consumes the code and mints a token before persistence
         // consults the deny; discovering it afterwards leaves the operator's
@@ -2770,10 +2770,10 @@ mod tests {
 
     #[tokio::test]
     async fn webhook_bind_rolls_back_when_the_writer_rejects_a_group_collision() {
-        use wiremock::matchers::{method, path};
-        use wiremock::{Mock, MockServer, ResponseTemplate};
         use clawcrew_config::multi_agent::PeerGroupConfig;
         use clawcrew_config::providers::ChannelRef;
+        use wiremock::matchers::{method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
 
         // Nothing is denied, so the precheck passes; the writer refuses because
         // the conventional key belongs to another instance. LINE used to log

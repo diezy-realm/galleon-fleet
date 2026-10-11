@@ -2,12 +2,12 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use clawcrew_api::memory_traits::MemoryStrategy;
+use clawcrew_config::cost::tracker::CostTracker;
+use clawcrew_config::pairing::PairingGuard;
 use clawcrew_config::schema::Config;
 use clawcrew_infra::session_backend::SessionBackend;
 use clawcrew_memory::{self, Memory, MemoryCategory};
 use clawcrew_providers::{self, ModelProvider};
-use clawcrew_config::cost::tracker::CostTracker;
-use clawcrew_config::pairing::PairingGuard;
 use clawcrew_tools::canvas::CanvasStore;
 use parking_lot::RwLock;
 
@@ -39,7 +39,8 @@ pub struct AppState {
     #[cfg(feature = "channel-linq")]
     pub linq_signing_secrets: HashMap<String, Arc<str>>,
     #[cfg(feature = "channel-nextcloud")]
-    pub nextcloud_talk: HashMap<String, Arc<clawcrew_channels::nextcloud_talk::NextcloudTalkChannel>>,
+    pub nextcloud_talk:
+        HashMap<String, Arc<clawcrew_channels::nextcloud_talk::NextcloudTalkChannel>>,
     #[cfg(feature = "channel-nextcloud")]
     pub nextcloud_talk_webhook_secret: HashMap<String, Arc<str>>,
     #[cfg(feature = "channel-email")]
@@ -63,9 +64,13 @@ pub struct AppState {
     pub canvas_store: CanvasStore,
     #[cfg(feature = "webauthn")]
     pub webauthn: Option<Arc<crate::api_webauthn::WebAuthnState>>,
-    pub cancel_tokens: Arc<std::sync::Mutex<std::collections::HashMap<String, Arc<tokio_util::sync::CancellationToken>>>>,
+    pub cancel_tokens: Arc<
+        std::sync::Mutex<
+            std::collections::HashMap<String, Arc<tokio_util::sync::CancellationToken>>,
+        >,
+    >,
     pub pending_reload: Arc<std::sync::atomic::AtomicBool>,
-    pub tui_registry: Option<Arc<clawcrew_runtime::rpc::tui_identity::TuiRegistry>>,
+    pub tui_registry: Option<Arc<dyn clawcrew_api::runtime_traits::TuiConnectionRegistry>>,
     pub sop_engine: Option<Arc<std::sync::Mutex<clawcrew_runtime::sop::SopEngine>>>,
     pub sop_audit: Option<Arc<clawcrew_runtime::sop::SopAuditLogger>>,
     pub diagnostics: Option<Arc<dyn clawcrew_api::doctor::DiagnosticsRunner>>,

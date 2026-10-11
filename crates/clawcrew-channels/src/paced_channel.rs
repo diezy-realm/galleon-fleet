@@ -6,13 +6,13 @@ use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use async_trait::async_trait;
-use tokio::sync::{Mutex, oneshot};
 use clawcrew_api::attribution::{Attributable, Role};
 use clawcrew_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage,
     ChannelModelPickerRequest, DraftProgress, ProgressEvent, RoomCreationOptions, SendMessage,
 };
 use clawcrew_config::schema::{DEFAULT_REPLY_QUEUE_DEPTH, HasReplyPacing, PACING_RECIPIENT_CAP};
+use tokio::sync::{Mutex, oneshot};
 
 enum PacedOp {
     /// An ordinary outbound message. Dispatches to `inner.send`.
@@ -577,8 +577,8 @@ impl Channel for PacedChannel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::atomic::{AtomicUsize, Ordering};
     use clawcrew_api::channel::DraftProgressKind;
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     /// Minimal `HasReplyPacing` for tests so we can construct pacing
     /// configs without dragging a full `*Config` literal into every

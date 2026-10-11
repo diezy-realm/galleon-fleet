@@ -285,6 +285,20 @@ pub trait RuntimeAdapter: Send + Sync {
     }
 }
 
+/// A connected TUI client snapshot for administrative/diagnostic listing.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ConnectedTuiInfo {
+    pub tui_id: String,
+    pub connected_at: String,
+    pub peer_label: String,
+    pub transport: String,
+}
+
+/// Registry interface decoupling the gateway from concrete TUI connection registry state.
+pub trait TuiConnectionRegistry: Send + Sync {
+    fn list_connected_tuis(&self) -> Vec<ConnectedTuiInfo>;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
