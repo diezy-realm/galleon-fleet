@@ -63,6 +63,13 @@ fn crate_dependency_direction_strictly_enforced() {
         "crates/galleon-channel-signal",
         "crates/galleon-channel-bluesky",
         "crates/galleon-channel-imessage",
+        "crates/galleon-channel-irc",
+        "crates/galleon-channel-nostr",
+        "crates/galleon-channel-twitch",
+        "crates/galleon-channel-dingtalk",
+        "crates/galleon-channel-mochat",
+        "crates/galleon-channel-clawdtalk",
+        "crates/galleon-channel-reddit",
     ] {
         let cargo_path = root.join(channel_crate).join("Cargo.toml");
         if cargo_path.exists() {

@@ -1,0 +1,35 @@
+[package]
+name = "galleon-channel-clawdtalk"
+rust-version.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ClawdTalk voice channel feature-crate (RF-B1 split; Telnyx SIP calling & TTS ported from clawcrew-channels)."
+repository.workspace = true
+homepage.workspace = true
+publish = true
+
+[dependencies]
+clawcrew-api.workspace = true
+clawcrew-config = { workspace = true, default-features = false }
+clawcrew-log.workspace = true
+async-trait = "0.1"
+anyhow = "1.0"
+reqwest = { version = "0.12", default-features = false, features = [
+  "__rustls-ring",
+  "json",
+  "rustls-tls-webpki-roots-no-provider",
+] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+tokio = { version = "1.50", default-features = false, features = ["sync", "time"] }
+
+[dev-dependencies]
+tokio = { version = "1.50", default-features = false, features = [
+  "macros",
+  "rt-multi-thread",
+  "sync",
+] }
+
+[features]
+default = []

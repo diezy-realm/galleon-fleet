@@ -117,7 +117,7 @@ impl RedditChannel {
     /// case names the same account and matching it admits no one new.
     fn is_user_allowed(&self, user_id: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed_by(&peers, user_id, |entry, user| {
+        galleon_channel_core::allowlist::is_user_allowed_by(&peers, user_id, |entry, user| {
             Self::normalize_identity(entry).eq_ignore_ascii_case(Self::normalize_identity(user))
         })
     }

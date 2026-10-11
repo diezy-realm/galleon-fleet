@@ -89,14 +89,14 @@ pub async fn handle_canvas_post(
     let content_type = body.content_type.as_deref().unwrap_or("html");
 
     // Validate content_type against allowed set (prevent injecting "eval" frames via REST).
-    if !clawcrew_runtime::tools::ALLOWED_CONTENT_TYPES.contains(&content_type) {
+    if !clawcrew_tools::canvas::ALLOWED_CONTENT_TYPES.contains(&content_type) {
         return (
             StatusCode::BAD_REQUEST,
             Json(serde_json::json!({
                 "error": format!(
                     "Invalid content_type '{}'. Allowed: {:?}",
                     content_type,
-                    clawcrew_runtime::tools::ALLOWED_CONTENT_TYPES
+                    clawcrew_tools::canvas::ALLOWED_CONTENT_TYPES
                 )
             })),
         )
@@ -104,13 +104,13 @@ pub async fn handle_canvas_post(
     }
 
     // Enforce content size limit (same as tool-side validation).
-    if body.content.len() > clawcrew_runtime::tools::MAX_CONTENT_SIZE {
+    if body.content.len() > clawcrew_tools::canvas::MAX_CONTENT_SIZE {
         return (
             StatusCode::PAYLOAD_TOO_LARGE,
             Json(serde_json::json!({
                 "error": format!(
                     "Content exceeds maximum size of {} bytes",
-                    clawcrew_runtime::tools::MAX_CONTENT_SIZE
+                    clawcrew_tools::canvas::MAX_CONTENT_SIZE
                 )
             })),
         )

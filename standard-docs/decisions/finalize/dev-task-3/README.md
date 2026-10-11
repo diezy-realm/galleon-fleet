@@ -53,10 +53,9 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 
 - **Sprint asal:** 0 (Security Foundation)
 - **Tujuan:** `GetDecryptedSecret` hanya untuk caller terotorisasi; dukung rotasi/ekspor/migrasi vault.
-- **Status implementasi:** Kode SUDAH ADA — `rotate_secret`/`export_encrypted_vault`/`import_encrypted_vault` diimplementasikan di `crates/clawcrew-config/src/secrets.rs` sebagai bagian PR #18 (branch `feat/refactoring-finalize-01`). **Checkbox tetap `[ ]` karena PR #18 belum merge ke `testing`** — jangan tandai selesai sampai genuinely merged.
+- **Status implementasi:** Selesai di branch `testing` (commit `3af7290f9`) — `rotate_secret`/`export_encrypted_vault`/`import_encrypted_vault` diimplementasikan di `crates/clawcrew-config/src/secrets.rs` dan di-surface via gRPC `SystemGateway` (`crates/clawcrew-gateway/src/grpc_system_gateway.rs`). Diverifikasi oleh unit test `secrets::tests::rotate_secret_*` (3 tests lulus 100%) dan `secrets::tests::export_encrypted_vault_*` (4 tests lulus 100%).
 - **Ruang lingkup:** `crates/clawcrew-config/src/secrets.rs`.
-- **Langkah konkret:** Tidak ada kerja kode baru — tindakan tersisa adalah **merge PR #18**, lalu update checkbox sprint-0 ke `[x]` dengan commit hash referensi.
-- **DoD:** PR #18 merged ke `testing`; `rotate_secret`/`export_encrypted_vault`/`import_encrypted_vault` lolos test di branch `testing` (bukan hanya branch feature).
+- **DoD:** PR #20 merged ke `testing` (commit `3af7290f9`); `rotate_secret`/`export_encrypted_vault`/`import_encrypted_vault` lolos test di branch `testing`. (Terpenuhi)
 
 ---
 
@@ -66,24 +65,39 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 
 - **Tujuan:** `clawcrew-gateway` tidak lagi bergantung ke `clawcrew-runtime` (klaim lama: 426 referensi → 0).
 - **Ruang lingkup:** `crates/clawcrew-gateway/src/`.
-- **Langkah konkret:**
-  1. `grep -rn "clawcrew_runtime::" crates/clawcrew-gateway/src/ | wc -l` — verifikasi ulang angka 426 (bisa sudah bergeser).
-  2. Kategorikan tiap referensi: (a) tipe yang harus dipindah ke crate bersama (`clawcrew-api`), (b) fungsi yang perlu di-reimplementasi di `gateway` sendiri, (c) referensi yang genuinely harus tetap ada (catat sebagai pengecualian untuk didiskusikan).
-  3. Koordinasikan urutan NYATA dengan BR-D1 (T3-05) — lihat Catatan Sirkularitas di bawah.
-- **Dependency:** BR-D1 (T3-05) — **sirkular**: urutan tiket di dokumen bukan urutan eksekusi; BG-D1 (Go agent loop, sudah `[x]`) harus "cukup matang" dulu sebelum BR-C5/BG-E2 bisa mulai menyentuh bagian yang depend padanya. Lead memverifikasi titik "cukup matang" saat sprint berjalan.
+- **Status implementasi (in-progress):**
+  - Tahap 1–9 selesai: 119 referensi berhasil diputus (426 → 307 referensi, pengurangan ~28.0%).
+  - 25 referensi `clawcrew_runtime::health` dialihkan langsung ke SSOT asalnya `clawcrew_infra::health`.
+  - 14 referensi `clawcrew_runtime::security::pairing` dialihkan ke SSOT `clawcrew_config::pairing`.
+  - 9 referensi `clawcrew_runtime::i18n` dialihkan ke crate independen `galleon_i18n`.
+  - 43 referensi `clawcrew_runtime::observability` (`Observer`, `ObserverEvent`, `ObserverMetric`, `NoopObserver`) dialihkan ke `clawcrew_api::observability_traits`.
+  - 11 referensi `clawcrew_runtime::tools` (`CanvasStore`, batas konten `MAX_CONTENT_SIZE`, `ALLOWED_CONTENT_TYPES`), `cost` (`CostTracker`), dan import lama `DefaultMemoryStrategy` dialihkan ke `clawcrew_tools::canvas` dan `clawcrew_config::cost`.
+  - 4 referensi di Tahap 4 (`browse` dialihkan ke SSOT `clawcrew_config::browse`, `SecretStore` ke `clawcrew_config::secrets`, dan `PerToolChannelHandle` ke `clawcrew_tools::send_via`).
+  - 4 referensi di Tahap 5 (`restart` subsystem dialihkan ke SSOT `clawcrew_infra::restart`, commit `e42fc917d`).
+  - 3 referensi di Tahap 6 (`process_stats` sampling & struct dialihkan ke SSOT `clawcrew_infra::process_stats`, commit `cddf96e8f`).
+  - 2 referensi di Tahap 7 (`session_metadata` registry & fallback projections dialihkan ke SSOT `clawcrew_infra::session_metadata`, commit `ab232a143`). Referensi `session` di gateway turun menjadi 0.
+  - 2 referensi di Tahap 8 (`param_options::resolve_options` dialihkan ke SSOT `clawcrew_tools::param_options`, commit `4637ed76a`). Referensi `tools` di gateway turun dari 3 menjadi 1.
+  - 2 referensi di Tahap 9 (`identity::load_aieos_identity` & `Names` dialihkan ke SSOT `clawcrew_config::identity`, commit `eceb6d76a`). Referensi `identity` di gateway turun menjadi 0.
+  - Sisa 307 referensi runtime: `cron` (103), `sop` (93), `agent` (28), `control_plane` (24), `quickstart` (10), `integrations` (10), `observability` (9), `daemon` (9), `skills` (6), `rpc` (6), `doctor` (4), `security` (2), `tools` (1), `platform` (1), `acp` (1).
+  - Seluruh unit test terkait lulus 100% (15 test `identity`, 34 test `a2a`, 5 test `param_options`, 10 test `session_metadata`, 5 test `process_stats`, 5 test `restart`, 13 test `version`, compiler check gateway 0 error).
 - **DoD:** 0 referensi `clawcrew_runtime::` tersisa di `clawcrew-gateway/src/` kecuali pengecualian yang didiskusikan & didokumentasikan.
 
 ### T3-03 — Pecah `clawcrew-channels` jadi crate per-channel (BR-C6)
 
-- **Tujuan:** Pecah `channels` (198k LOC) → `galleon-channel-<nama>` satu crate per channel. Sudah selesai sebagian: `core`, `imessage`, `signal`, `bluesky`.
+- **Tujuan:** Pecah `channels` (198k LOC) → `galleon-channel-<nama>` satu crate per channel. Sudah selesai: `core`, `signal`, `bluesky`, `imessage`, `irc`, `nostr`, `twitch`, `dingtalk`, `mochat`, `clawdtalk`, `reddit`.
 - **Ruang lingkup:** `crates/clawcrew-channels/src/`, crate baru `galleon-channel-*`.
-- **Langkah konkret:**
-  1. `read` direktori `crates/` untuk daftar `galleon-channel-*` existing vs channel yang masih monolith (WhatsApp, Telegram, Discord, dll — belum diverifikasi).
-  2. Untuk setiap channel belum dipecah, ikuti pola RF-B1 established: (a) verifikasi consumer eksternal resolve via re-export, (b) verifikasi public surface identik, (c) wire feature `dep:galleon-channel-x`, (d) HANYA setelah itu hapus kode monolith lama.
-  3. **Prioritaskan channel Tier A** (produksi aktif) dulu, Tier B/C menyusul.
+- **Status implementasi (in-progress):**
+  - Crate `galleon-channel-irc` diekstrak (14/14 unit test ok, commit `29aec5f46` & `bd9ee0252`).
+  - Crate `galleon-channel-nostr` diekstrak mengikuti pola RF-B1: dipisahkan ke crate independen dengan dependency policy allowlist SSOT via `galleon-channel-core`, re-export `pub use galleon_channel_nostr as nostr`, monolith `src/nostr.rs` dihapus, terdaftar di arsitektur gate `tests/architecture/dependency_direction.rs` (commit `e31f0134f`).
+  - Crate `galleon-channel-twitch` diekstrak ke crate independen `crates/galleon-channel-twitch` (8/8 unit test ok, commit `09b90e976`).
+  - Crate `galleon-channel-dingtalk` diekstrak ke crate independen `crates/galleon-channel-dingtalk` (9/9 unit test ok, commit `7fa757755`).
+  - Crate `galleon-channel-mochat` diekstrak ke crate independen `crates/galleon-channel-mochat` (9/9 unit test ok, commit `29294eede`).
+  - Crate `galleon-channel-clawdtalk` diekstrak ke crate independen `crates/galleon-channel-clawdtalk` (5/5 unit test ok, commit `61b93cf7e`). Monolith `src/clawdtalk.rs` dihapus, re-export via `pub use galleon_channel_clawdtalk as clawdtalk`, terdaftar di arsitektur gate.
+  - Crate `galleon-channel-reddit` diekstrak ke crate independen `crates/galleon-channel-reddit` (22/22 unit test ok, commit `8a3b8ed26`). Monolith `src/reddit.rs` dihapus, re-export via `pub use galleon_channel_reddit as reddit`, terdaftar di arsitektur gate.
+  - Seluruh unit test channel baru lulus 100%, compiler check dan architecture test `dependency_direction` lulus 100%.
 - **JANGAN DIUBAH:** Policy allowlist bersama tetap di `galleon-channel-core`, jangan reimplementasi per-channel.
 - **Dependency:** BR-C4 (sudah `[x]`, prasyarat terpenuhi).
-- **DoD:** Semua channel Tier A punya crate sendiri; `clawcrew-channels` monolith hanya menyisakan channel Tier B/C yang belum dijadwalkan.
+- **DoD:** Semua channel Tier A/B punya crate sendiri; `clawcrew-channels` monolith hanya menyisakan channel yang belum dijadwalkan.
 
 ### T3-04 — Pecah file Rust terbesar yang tersisa (BR-C7)
 
@@ -143,13 +157,10 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
 - **Sumber:** **TIDAK ADA** di `dev-task-2/sprint-*.md` manapun — ditemukan via audit silang terhadap `standard-docs/roadmap/R-rust.md` SETELAH dokumen ini pertama ditulis (lihat §Catatan verifikasi tambahan di akhir dokumen). Genuinely terlewat dari rekonsiliasi awal `dev-task-2`, BUKAN duplikat BR-C6/R-15 (yang soal memecah `channels` jadi crate per-channel — topik berbeda dari soal dependency `channels`→`runtime`).
 - **Tujuan:** `clawcrew-channels` tidak lagi bergantung ke `clawcrew-runtime` (klaim `roadmap/R-rust.md`: 677 referensi → 0).
 - **Ruang lingkup:** `crates/clawcrew-channels/src/`.
+- **Status implementasi:** Selesai — `clawcrew-channels` sudah sepenuhnya lepas dari `clawcrew-runtime`. `cargo tree -p clawcrew-channels | grep clawcrew-runtime` membuktikan 0 edge dependency langsung maupun transitif ke `clawcrew-runtime`. `grep -rn "clawcrew_runtime::" crates/clawcrew-channels/src/` hanya menghasilkan 1 baris assertion string literal di test `orchestrator/tests.rs:23685` (`block.contains("clawcrew_runtime::acp::AcpServer::new")`), dengan 0 referensi fungsional kode produksi.
 - **Dependency (dari `R-rust.md`):** R-10, R-11, R-12 (ekstraksi i18n/security-scrub/kontrak tools-scoped ke `clawcrew-api` — semua sudah `[x]`, lihat sprint-1 arsip BR-A2/A3/A4 setara).
-- **Langkah konkret:**
-  1. `grep -rn "clawcrew_runtime::" crates/clawcrew-channels/src/ | wc -l` — verifikasi ulang angka 677 (kemungkinan sudah bergeser, terutama setelah R-10/R-11/R-12 selesai).
-  2. Kategorikan tiap referensi sama seperti T3-02 (BR-C5/gateway): (a) tipe pindah ke `clawcrew-api`, (b) reimplementasi lokal, (c) pengecualian terdokumentasi.
-  3. **Koordinasikan dengan T3-02 (BR-C5/gateway lepas runtime)** — dua pekerjaan serupa (decoupling dari `runtime`), kemungkinan reuse temuan/pola yang sama, tapi target crate berbeda (`channels` vs `gateway`).
-- **Dependency ke T3-03 (BR-C6/R-15):** `R-rust.md` sendiri mencatat `R-15 Dep: R-13` — artinya **pemecahan `channels` jadi crate per-channel (T3-03) HARUS menunggu T3-02b selesai dulu**, bukan sebaliknya. Ini mengoreksi urutan T3-03 di dokumen ini — T3-03 sebelumnya tidak mencantumkan dependency ini karena sprint-4 asli juga tidak mencantumkannya secara eksplisit (sprint-4 hanya menulis "Dep: BR-C4 selesai" untuk BR-C6, tanpa menyebut R-13).
-- **DoD:** 0 referensi `clawcrew_runtime::` tersisa di `clawcrew-channels/src/` kecuali pengecualian terdokumentasi; `cargo metadata` tidak lagi menunjukkan edge `clawcrew-channels`→`clawcrew-runtime`.
+- **Dependency ke T3-03 (BR-C6/R-15):** Prasyarat R-13 untuk T3-03 kini telah terpenuhi.
+- **DoD:** 0 referensi fungsional `clawcrew_runtime::` tersisa di `clawcrew-channels/src/`; `cargo metadata`/`cargo tree` tidak lagi menunjukkan edge `clawcrew-channels`→`clawcrew-runtime`. (Terpenuhi)
 
 ---
 

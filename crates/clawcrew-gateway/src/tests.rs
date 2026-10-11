@@ -272,8 +272,8 @@
     async fn public_health_omits_component_error_details() {
         let component = format!("health-public-{}", uuid::Uuid::new_v4());
         let sensitive_error = "provider failed: token=not-for-public-health";
-        clawcrew_runtime::health::mark_component_ok(&component);
-        clawcrew_runtime::health::mark_component_error(&component, sensitive_error);
+        clawcrew_infra::health::mark_component_ok(&component);
+        clawcrew_infra::health::mark_component_error(&component, sensitive_error);
 
         let tmp = tempfile::TempDir::new().unwrap();
         let response = handle_health(State(admin_paircode_state(&tmp, false, false)))
@@ -292,7 +292,7 @@
         assert!(public_component.get("last_error").is_none());
         assert!(!json.to_string().contains(sensitive_error));
         assert_eq!(
-            clawcrew_runtime::health::snapshot().components[&component]
+            clawcrew_infra::health::snapshot().components[&component]
                 .last_error
                 .as_deref(),
             Some(sensitive_error)
@@ -428,7 +428,7 @@
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -1416,7 +1416,7 @@ path = "{trigger_path}"
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -1464,12 +1464,12 @@ path = "{trigger_path}"
     async fn metrics_endpoint_renders_prometheus_output() {
         let event_tx = tokio::sync::broadcast::channel(16).0;
         let prom = clawcrew_runtime::observability::PrometheusObserver::new();
-        clawcrew_runtime::observability::Observer::record_event(
+        clawcrew_api::observability_traits::Observer::record_event(
             &prom,
-            &clawcrew_runtime::observability::ObserverEvent::HeartbeatTick,
+            &clawcrew_api::observability_traits::ObserverEvent::HeartbeatTick,
         );
 
-        let observer: Arc<dyn clawcrew_runtime::observability::Observer> = Arc::new(prom);
+        let observer: Arc<dyn clawcrew_api::observability_traits::Observer> = Arc::new(prom);
         let state = AppState {
             config: Arc::new(RwLock::new(Config::default())),
             config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
@@ -1716,7 +1716,7 @@ path = "{trigger_path}"
         assert_eq!(raw_parsed.gateway.paired_tokens.len(), 1);
         let on_disk = &raw_parsed.gateway.paired_tokens[0];
         assert!(
-            clawcrew_runtime::security::SecretStore::is_encrypted(on_disk),
+            clawcrew_config::secrets::SecretStore::is_encrypted(on_disk),
             "paired_token should be encrypted on disk"
         );
     }
@@ -2015,15 +2015,15 @@ path = "{trigger_path}"
 
     #[derive(Default)]
     struct CapturingObserver {
-        events: Mutex<Vec<clawcrew_runtime::observability::ObserverEvent>>,
+        events: Mutex<Vec<clawcrew_api::observability_traits::ObserverEvent>>,
     }
 
-    impl clawcrew_runtime::observability::Observer for CapturingObserver {
-        fn record_event(&self, event: &clawcrew_runtime::observability::ObserverEvent) {
+    impl clawcrew_api::observability_traits::Observer for CapturingObserver {
+        fn record_event(&self, event: &clawcrew_api::observability_traits::ObserverEvent) {
             self.events.lock().push(event.clone());
         }
 
-        fn record_metric(&self, _metric: &clawcrew_runtime::observability::traits::ObserverMetric) {
+        fn record_metric(&self, _metric: &clawcrew_api::observability_traits::ObserverMetric) {
         }
 
         fn name(&self) -> &str {
@@ -2172,7 +2172,7 @@ path = "{trigger_path}"
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -3756,7 +3756,7 @@ data: [DONE]\n\n";
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -4675,7 +4675,7 @@ data: [DONE]\n\n";
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -4741,7 +4741,7 @@ data: [DONE]\n\n";
         let model_provider: Arc<dyn ModelProvider> = provider_impl.clone();
         let memory: Arc<dyn Memory> = Arc::new(MockMemory);
         let observer_impl = Arc::new(CapturingObserver::default());
-        let observer: Arc<dyn clawcrew_runtime::observability::Observer> = observer_impl.clone();
+        let observer: Arc<dyn clawcrew_api::observability_traits::Observer> = observer_impl.clone();
 
         let mut config = Config::default();
         config.providers.models.anthropic.insert(
@@ -4847,10 +4847,10 @@ data: [DONE]\n\n";
         assert!(
             !events.iter().any(|event| matches!(
                 event,
-                clawcrew_runtime::observability::ObserverEvent::AgentStart { .. }
-                    | clawcrew_runtime::observability::ObserverEvent::AgentEnd { .. }
-                    | clawcrew_runtime::observability::ObserverEvent::LlmRequest { .. }
-                    | clawcrew_runtime::observability::ObserverEvent::LlmResponse { .. }
+                clawcrew_api::observability_traits::ObserverEvent::AgentStart { .. }
+                    | clawcrew_api::observability_traits::ObserverEvent::AgentEnd { .. }
+                    | clawcrew_api::observability_traits::ObserverEvent::LlmRequest { .. }
+                    | clawcrew_api::observability_traits::ObserverEvent::LlmResponse { .. }
             )),
             "the HTTP handler must not create a second agent lifecycle; events were: {events:?}"
         );
@@ -4896,7 +4896,7 @@ data: [DONE]\n\n";
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -5103,7 +5103,7 @@ data: [DONE]\n\n";
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -5190,7 +5190,7 @@ data: [DONE]\n\n";
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -5282,7 +5282,7 @@ data: [DONE]\n\n";
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -5379,7 +5379,7 @@ data: [DONE]\n\n";
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -5471,7 +5471,7 @@ data: [DONE]\n\n";
             nextcloud_talk_webhook_secret: HashMap::from([(alias.to_string(), Arc::from(secret))]),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -5571,7 +5571,7 @@ data: [DONE]\n\n";
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -5722,7 +5722,7 @@ data: [DONE]\n\n";
             tui_registry: None,
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -6604,7 +6604,7 @@ data: [DONE]\n\n";
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -6689,7 +6689,7 @@ data: [DONE]\n\n";
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -7301,7 +7301,7 @@ data: [DONE]\n\n";
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,

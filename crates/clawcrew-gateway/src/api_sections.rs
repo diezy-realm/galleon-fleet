@@ -1434,7 +1434,7 @@ mod tests {
                 ),
             ),
             auto_save: false,
-            pairing: std::sync::Arc::new(clawcrew_runtime::security::pairing::PairingGuard::new(
+            pairing: std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
                 false,
                 &[],
                 clawcrew_config::pairing::PairingCodePolicy::default(),
@@ -1460,7 +1460,7 @@ mod tests {
             nextcloud_talk_webhook_secret: std::collections::HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: std::sync::Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: std::sync::Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: std::sync::Arc::new(Vec::new()),
             tools_registry_by_agent: std::sync::Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -1478,7 +1478,7 @@ mod tests {
             )),
             device_registry: None,
             pending_pairings: None,
-            canvas_store: clawcrew_runtime::tools::CanvasStore::new(),
+            canvas_store: clawcrew_tools::canvas::CanvasStore::new(),
             #[cfg(feature = "webauthn")]
             webauthn: None,
             cancel_tokens: std::sync::Arc::new(std::sync::Mutex::new(

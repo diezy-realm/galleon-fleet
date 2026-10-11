@@ -32,10 +32,39 @@ galleon-channel-signal = { workspace = true, optional = true }
 # `channel-bluesky`.
 galleon-channel-bluesky = { workspace = true, optional = true }
 # RF-C1: the iMessage channel is split into its own feature-crate. The
+# RF-C1: the iMessage channel is split into its own feature-crate. The
 # monolith re-exports it (`pub use galleon_channel_imessage as imessage`) so
 # existing callers (`crate::imessage::IMessageChannel`) keep compiling.
 # Optional, behind `channel-imessage`.
 galleon-channel-imessage = { workspace = true, optional = true }
+# RF-B1: the IRC channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_irc as irc`) so existing callers
+# (`crate::irc::IrcChannel`) keep compiling. Optional, behind `channel-irc`.
+galleon-channel-irc = { workspace = true, optional = true }
+# RF-B1: the Nostr channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_nostr as nostr`) so existing callers
+# (`crate::nostr::NostrChannel`) keep compiling. Optional, behind `channel-nostr`.
+galleon-channel-nostr = { workspace = true, optional = true }
+# RF-B1: the Twitch channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_twitch as twitch`) so existing callers
+# (`crate::twitch::TwitchChannel`) keep compiling. Optional, behind `channel-twitch`.
+galleon-channel-twitch = { workspace = true, optional = true }
+# RF-B1: the DingTalk channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_dingtalk as dingtalk`) so existing callers
+# (`crate::dingtalk::DingTalkChannel`) keep compiling. Optional, behind `channel-dingtalk`.
+galleon-channel-dingtalk = { workspace = true, optional = true }
+# RF-B1: the Mochat channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_mochat as mochat`) so existing callers
+# (`crate::mochat::MochatChannel`) keep compiling. Optional, behind `channel-mochat`.
+galleon-channel-mochat = { workspace = true, optional = true }
+# RF-B1: the ClawdTalk channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_clawdtalk as clawdtalk`) so existing callers
+# (`crate::clawdtalk::ClawdTalkChannel`) keep compiling. Optional, behind `channel-clawdtalk`.
+galleon-channel-clawdtalk = { workspace = true, optional = true }
+# RF-B1: the Reddit channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_reddit as reddit`) so existing callers
+# (`crate::reddit::RedditChannel`) keep compiling. Optional, behind `channel-reddit`.
+galleon-channel-reddit = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -90,10 +119,6 @@ matrix-sdk = { version = "0.18", optional = true, default-features = false, feat
   "sqlite",
 ] }
 mime_guess = { version = "2", optional = true }
-nostr-sdk = { version = "0.44", default-features = false, features = [
-  "nip04",
-  "nip59",
-], optional = true }
 parking_lot = "0.12"
 portable-atomic = "1"
 prost = { version = "0.14", default-features = false, features = [
@@ -249,7 +274,7 @@ channel-git = ["provider-github", "provider-gitea"]
 provider-github = ["dep:jsonwebtoken", "dep:thiserror"]
 provider-gitea = []
 channel-line = ["dep:axum"]
-channel-nostr = ["dep:nostr-sdk"]
+channel-nostr = ["dep:galleon-channel-nostr"]
 whatsapp-web = [
   "dep:bytes",
   "dep:qrcode",
@@ -267,21 +292,21 @@ channel-discord = ["ws-transport"]
 channel-slack = ["ws-transport"]
 channel-signal = ["dep:galleon-channel-signal"]
 channel-mattermost = ["ws-transport"]
-channel-irc = ["tls-client"]
-channel-twitch = ["channel-irc"]
+channel-irc = ["dep:galleon-channel-irc"]
+channel-twitch = ["dep:galleon-channel-twitch"]
 channel-imessage = ["dep:galleon-channel-imessage"]
-channel-dingtalk = ["ws-transport"]
+channel-dingtalk = ["dep:galleon-channel-dingtalk"]
 channel-qq = ["ws-transport"]
 channel-bluesky = ["dep:galleon-channel-bluesky"]
 channel-twitter = []
-channel-reddit = []
+channel-reddit = ["dep:galleon-channel-reddit"]
 channel-notion = []
 channel-mqtt = ["dep:rumqttc"]
 channel-filesystem = ["dep:notify", "dep:glob"]
 channel-amqp = ["dep:lapin", "dep:tokio-executor-trait", "dep:tokio-reactor-trait", "dep:async-reactor-trait", "dep:p12-keystore", "dep:rustls-pemfile"]
 channel-linq = []
 channel-nextcloud = []
-channel-mochat = []
+channel-mochat = ["dep:galleon-channel-mochat"]
 channel-wechat = [
   "dep:aes",
   "dep:ecb",
@@ -291,7 +316,7 @@ channel-wechat = [
 ]
 channel-wecom = []
 channel-wecom-ws = ["dep:aes", "dep:cbc", "ws-transport"]
-channel-clawdtalk = []
+channel-clawdtalk = ["dep:galleon-channel-clawdtalk"]
 channel-webhook = ["dep:axum"]
 channel-whatsapp-cloud = []
 channel-voice-call = ["dep:axum"]

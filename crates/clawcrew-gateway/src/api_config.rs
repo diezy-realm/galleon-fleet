@@ -2630,7 +2630,7 @@ pub(crate) mod tests {
     use parking_lot::RwLock;
     use std::time::Duration;
     use clawcrew_providers::ModelProvider;
-    use clawcrew_runtime::security::pairing::PairingGuard;
+    use clawcrew_config::pairing::PairingGuard;
 
     #[test]
     fn invalid_etag_value_is_omitted_instead_of_panicking() {
@@ -2724,7 +2724,7 @@ pub(crate) mod tests {
             nextcloud_talk_webhook_secret: std::collections::HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -2740,7 +2740,7 @@ pub(crate) mod tests {
             session_queue: Arc::new(crate::session_queue::SessionActorQueue::new(8, 30, 600)),
             device_registry: None,
             pending_pairings: None,
-            canvas_store: clawcrew_runtime::tools::CanvasStore::new(),
+            canvas_store: clawcrew_tools::canvas::CanvasStore::new(),
             #[cfg(feature = "webauthn")]
             webauthn: None,
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),

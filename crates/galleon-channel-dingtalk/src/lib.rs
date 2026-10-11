@@ -1,3 +1,8 @@
+//! `galleon-channel-dingtalk` — DingTalk channel feature-crate (RF-B1 split).
+//!
+//! Connects via DingTalk Stream Mode WebSocket for incoming real-time events,
+//! and dispatches outgoing messages through per-message session webhooks.
+
 use async_trait::async_trait;
 use futures_util::{SinkExt, StreamExt};
 use std::collections::HashMap;
@@ -8,6 +13,18 @@ use uuid::Uuid;
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
 const DINGTALK_BOT_CALLBACK_TOPIC: &str = "/v1.0/im/bot/messages/get";
+
+async fn ensure_success(
+    resp: reqwest::Response,
+    what: &str,
+) -> anyhow::Result<reqwest::Response> {
+    if resp.status().is_success() {
+        return Ok(resp);
+    }
+    let status = resp.status();
+    let err = resp.text().await.unwrap_or_default();
+    anyhow::bail!("{what} failed ({status}): {err}");
+}
 
 /// DingTalk channel — connects via Stream Mode WebSocket for real-time messages.
 /// Replies are sent through per-message session webhook URLs.
@@ -72,7 +89,11 @@ impl DingTalkChannel {
 
     fn is_user_allowed(&self, user_id: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed(&peers, user_id, crate::allowlist::Match::Sensitive)
+        galleon_channel_core::allowlist::is_user_allowed(
+            &peers,
+            user_id,
+            galleon_channel_core::allowlist::Match::Sensitive,
+        )
     }
 
     fn parse_stream_data(frame: &serde_json::Value) -> Option<serde_json::Value> {
@@ -124,7 +145,7 @@ impl DingTalkChannel {
             .send()
             .await?;
 
-        let resp = crate::util::ensure_success(resp, "gateway registration").await?;
+        let resp = ensure_success(resp, "gateway registration").await?;
 
         let gw: GatewayResponse = resp.json().await?;
         Ok(gw)
@@ -184,7 +205,7 @@ impl Channel for DingTalkChannel {
             .send()
             .await?;
 
-        crate::util::ensure_success(resp, "webhook reply").await?;
+        ensure_success(resp, "webhook reply").await?;
 
         Ok(())
     }

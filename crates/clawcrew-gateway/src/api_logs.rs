@@ -100,7 +100,7 @@ pub async fn handle_api_logs(
             next_segment_cursor: None,
             at_end: true,
             incomplete: false,
-            daemon_started_at: clawcrew_runtime::health::daemon_started_at(),
+            daemon_started_at: clawcrew_infra::health::daemon_started_at(),
             attribution_keys: attribution_keys_for_response(),
         })
         .into_response();
@@ -216,7 +216,7 @@ pub async fn handle_api_logs(
         next_segment_cursor,
         at_end,
         incomplete,
-        daemon_started_at: clawcrew_runtime::health::daemon_started_at(),
+        daemon_started_at: clawcrew_infra::health::daemon_started_at(),
         attribution_keys: attribution_keys_for_response(),
     })
     .into_response()

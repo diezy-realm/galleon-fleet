@@ -4,6 +4,7 @@ pub mod attribution;
 pub mod helpers;
 pub(crate) mod i18n;
 pub mod microsoft365;
+pub mod param_options;
 pub mod util_helpers;
 
 pub mod a2a_client;

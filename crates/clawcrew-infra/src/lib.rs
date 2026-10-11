@@ -5,9 +5,12 @@ pub mod acp_session_store;
 pub mod debounce;
 pub mod health;
 pub mod net_guard;
+pub mod process_stats;
+pub mod restart;
 pub mod session_backend;
 pub mod session_queue;
 pub mod session_sqlite;
+pub mod session_metadata;
 pub mod session_store;
 pub mod stall_watchdog;
 

@@ -263,11 +263,11 @@ pub struct StatusResponse {
     pub paired: bool,
     pub channels: BTreeMap<String, bool>,
     pub nodes: StatusNodes,
-    pub health: clawcrew_runtime::health::HealthSnapshot,
+    pub health: clawcrew_infra::health::HealthSnapshot,
     /// Configured agent alias used for per-agent resolution, or `null` for the install-wide view.
     pub agent_alias: Option<String>,
     /// Self-process resource snapshot; unsupported hosts report zero memory and a null CPU value.
-    pub process: clawcrew_runtime::process_stats::ProcessStats,
+    pub process: clawcrew_infra::process_stats::ProcessStats,
     /// Whether the gateway polls for newer releases and shows an update indicator.
     pub check_updates: bool,
     /// Whether browser-triggered self-upgrade is enabled.
@@ -300,7 +300,7 @@ pub async fn handle_api_status(
     }
 
     let config = state.config.read().clone();
-    let health = clawcrew_runtime::health::snapshot();
+    let health = clawcrew_infra::health::snapshot();
 
     // Per-alias map keyed by composite `<type>.<alias>`. Every
     // populated `[channels.<type>.<alias>]` is a separate dashboard row.
@@ -315,7 +315,7 @@ pub async fn handle_api_status(
         .as_deref()
         .filter(|s| !s.is_empty())
         .map(String::from)
-        .unwrap_or_else(clawcrew_runtime::i18n::detect_locale);
+        .unwrap_or_else(galleon_i18n::detect_locale);
 
     // Per-agent resolution when `?agent=<alias>` is supplied. Falls back
     // to the install-wide first-of-each view when the alias is unknown
@@ -357,7 +357,7 @@ pub async fn handle_api_status(
             ),
         };
 
-    let process = clawcrew_runtime::process_stats::sample();
+    let process = clawcrew_infra::process_stats::sample();
 
     // Upgrade affordance: whether the dashboard should poll for updates / offer
     // the upgrade button, and which restart command to show afterwards.
@@ -369,7 +369,7 @@ pub async fn handle_api_status(
         model,
         temperature,
         uptime_seconds: health.uptime_seconds,
-        daemon_started_at: clawcrew_runtime::health::daemon_started_at(),
+        daemon_started_at: clawcrew_infra::health::daemon_started_at(),
         gateway_port: config.gateway.port,
         locale,
         memory_backend,
@@ -1284,7 +1284,7 @@ pub async fn handle_api_channels(
     }
 
     let config = state.config.read().clone();
-    let health = clawcrew_runtime::health::snapshot();
+    let health = clawcrew_infra::health::snapshot();
     // One entry per `[channels.<type>.<alias>]` block. Owning
     // agent comes from the agents.<alias>.channels reverse lookup.
     let channels: Vec<serde_json::Value> = config
@@ -1491,7 +1491,7 @@ struct ChannelReadiness {
 fn channel_readiness(
     config: &clawcrew_config::schema::Config,
     info: &clawcrew_config::schema::ChannelAliasInfo,
-    health: &clawcrew_runtime::health::HealthSnapshot,
+    health: &clawcrew_infra::health::HealthSnapshot,
     state: &AppState,
 ) -> ChannelReadiness {
     let mut readiness = ChannelReadiness {
@@ -1604,7 +1604,7 @@ fn channel_readiness_summary(readiness: &ChannelReadiness) -> (&'static str, &'s
 fn apply_webhook_readiness(
     config: &clawcrew_config::schema::Config,
     alias: &str,
-    health: &clawcrew_runtime::health::HealthSnapshot,
+    health: &clawcrew_infra::health::HealthSnapshot,
     state: &AppState,
     readiness: &mut ChannelReadiness,
 ) {
@@ -1648,7 +1648,7 @@ fn apply_webhook_readiness(
     }
 }
 
-fn component_health_ok_and_fresh(component: &clawcrew_runtime::health::ComponentHealth) -> bool {
+fn component_health_ok_and_fresh(component: &clawcrew_infra::health::ComponentHealth) -> bool {
     if component.status != "ok" {
         return false;
     }
@@ -1681,7 +1681,7 @@ pub async fn handle_api_health(
         return e.into_response();
     }
 
-    let snapshot = clawcrew_runtime::health::snapshot();
+    let snapshot = clawcrew_infra::health::snapshot();
     Json(serde_json::json!({"health": snapshot})).into_response()
 }
 
@@ -2063,7 +2063,7 @@ pub async fn handle_api_sessions_running(
         .filter_map(|meta| {
             let session_id = meta.key.strip_prefix("gw_")?;
             // Session metadata projection (P1.5): observable provider fallbacks.
-            let session_meta = clawcrew_runtime::session::metadata::session_metadata(&meta.key);
+            let session_meta = clawcrew_infra::session_metadata::session_metadata(&meta.key);
             Some(serde_json::json!({
                 "session_id": session_id,
                 "created_at": meta.created_at.to_rfc3339(),
@@ -2106,7 +2106,7 @@ pub async fn handle_api_sessions_stream(
                 .filter_map(|meta| {
                     let session_id = meta.key.strip_prefix(GW_SESSION_PREFIX)?;
                     let session_meta =
-                        clawcrew_runtime::session::metadata::session_metadata(&meta.key);
+                        clawcrew_infra::session_metadata::session_metadata(&meta.key);
                     Some(serde_json::json!({
                         "session_id": session_id,
                         "last_activity": meta.last_activity.to_rfc3339(),
@@ -2263,7 +2263,7 @@ pub(crate) mod tests {
     use clawcrew_infra::session_store::SessionStore;
     use clawcrew_memory::{Memory, MemoryCategory, MemoryEntry};
     use clawcrew_providers::ModelProvider;
-    use clawcrew_runtime::security::pairing::PairingGuard;
+    use clawcrew_config::pairing::PairingGuard;
 
     #[derive(Default)]
     struct MockMemory {
@@ -2455,7 +2455,7 @@ pub(crate) mod tests {
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -2470,7 +2470,7 @@ pub(crate) mod tests {
             pending_pairings: None,
             path_prefix: String::new(),
             web_dist_dir: None,
-            canvas_store: clawcrew_runtime::tools::CanvasStore::new(),
+            canvas_store: clawcrew_tools::canvas::CanvasStore::new(),
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
@@ -3290,7 +3290,7 @@ pub(crate) mod tests {
     fn channel_readiness_webhook_does_not_call_gateway_route_healthy_without_listener() {
         let config = config_with_webhook("default", true, true, 42617, Some("/webhook"));
         let state = test_state(config.clone());
-        let health = clawcrew_runtime::health::snapshot();
+        let health = clawcrew_infra::health::snapshot();
         let info = first_channel_info(&config);
         let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -3309,7 +3309,7 @@ pub(crate) mod tests {
     fn channel_readiness_webhook_does_not_call_custom_path_healthy_without_listener() {
         let config = config_with_webhook("custom_path", true, true, 42632, Some("/eyrie"));
         let state = test_state(config.clone());
-        let health = clawcrew_runtime::health::snapshot();
+        let health = clawcrew_infra::health::snapshot();
         let info = first_channel_info(&config);
         let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -3327,9 +3327,9 @@ pub(crate) mod tests {
     #[test]
     fn channel_readiness_webhook_uses_supervised_listener_health_for_custom_path() {
         let config = config_with_webhook("supervised", true, true, 42632, Some("/eyrie"));
-        clawcrew_runtime::health::mark_component_ok("channel:webhook.supervised");
+        clawcrew_infra::health::mark_component_ok("channel:webhook.supervised");
         let state = test_state(config.clone());
-        let health = clawcrew_runtime::health::snapshot();
+        let health = clawcrew_infra::health::snapshot();
         let info = first_channel_info(&config);
         let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -3344,13 +3344,13 @@ pub(crate) mod tests {
         let old = (chrono::Utc::now()
             - chrono::Duration::seconds(CHANNEL_LISTENER_HEALTH_MAX_AGE_SECS + 5))
         .to_rfc3339();
-        let health = clawcrew_runtime::health::HealthSnapshot {
+        let health = clawcrew_infra::health::HealthSnapshot {
             pid: std::process::id(),
             updated_at: chrono::Utc::now().to_rfc3339(),
             uptime_seconds: 1,
             components: std::collections::BTreeMap::from([(
                 component,
-                clawcrew_runtime::health::ComponentHealth {
+                clawcrew_infra::health::ComponentHealth {
                     status: "ok".to_string(),
                     updated_at: old,
                     last_ok: None,
@@ -3370,14 +3370,14 @@ pub(crate) mod tests {
     #[test]
     fn channel_readiness_webhook_uses_live_pairing_guard_for_auth() {
         let config = config_with_webhook("paired", true, true, 42632, Some("/eyrie"));
-        clawcrew_runtime::health::mark_component_ok("channel:webhook.paired");
+        clawcrew_infra::health::mark_component_ok("channel:webhook.paired");
         let mut state = test_state(config.clone());
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[],
             clawcrew_config::pairing::PairingCodePolicy::default(),
         ));
-        let health = clawcrew_runtime::health::snapshot();
+        let health = clawcrew_infra::health::snapshot();
         let info = first_channel_info(&config);
         let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -3390,7 +3390,7 @@ pub(crate) mod tests {
     fn channel_readiness_unchecked_channel_types_are_unknown_not_down() {
         let config = config_with_telegram("ops");
         let state = test_state(config.clone());
-        let health = clawcrew_runtime::health::snapshot();
+        let health = clawcrew_infra::health::snapshot();
         let info = first_channel_info(&config);
         let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -3415,7 +3415,7 @@ pub(crate) mod tests {
     fn channel_readiness_orphan_channel_reports_missing_agent_binding_without_broken_health() {
         let config = config_with_webhook("orphan", true, false, 42617, Some("/webhook"));
         let state = test_state(config.clone());
-        let health = clawcrew_runtime::health::snapshot();
+        let health = clawcrew_infra::health::snapshot();
         let info = first_channel_info(&config);
         let readiness = channel_readiness(&config, &info, &health, &state);
 

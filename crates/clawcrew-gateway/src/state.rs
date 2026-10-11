@@ -6,10 +6,9 @@ use clawcrew_config::schema::Config;
 use clawcrew_infra::session_backend::SessionBackend;
 use clawcrew_memory::{self, Memory, MemoryCategory};
 use clawcrew_providers::{self, ModelProvider};
-use clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy;
-use clawcrew_runtime::cost::CostTracker;
-use clawcrew_runtime::security::pairing::PairingGuard;
-use clawcrew_runtime::tools::CanvasStore;
+use clawcrew_config::cost::tracker::CostTracker;
+use clawcrew_config::pairing::PairingGuard;
+use clawcrew_tools::canvas::CanvasStore;
 use parking_lot::RwLock;
 
 /// Shared state for all axum handlers
@@ -45,7 +44,7 @@ pub struct AppState {
     pub nextcloud_talk_webhook_secret: HashMap<String, Arc<str>>,
     #[cfg(feature = "channel-email")]
     pub gmail_push: Option<Arc<clawcrew_channels::gmail_push::GmailPushChannel>>,
-    pub observer: Arc<dyn clawcrew_runtime::observability::Observer>,
+    pub observer: Arc<dyn clawcrew_api::observability_traits::Observer>,
     pub tools_registry: Arc<Vec<clawcrew_api::tool::ToolSpec>>,
     pub tools_registry_by_agent: Arc<HashMap<String, Arc<Vec<clawcrew_api::tool::ToolSpec>>>>,
     pub cost_tracker: Option<Arc<CostTracker>>,

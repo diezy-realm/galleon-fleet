@@ -1155,7 +1155,7 @@ impl SystemGateway for SystemGatewayService {
             );
         }
 
-        let stats = clawcrew_runtime::process_stats::sample();
+        let stats = clawcrew_infra::process_stats::sample();
         let cpu_usage_percent = stats.cpu_percent.map(|v| v as f64).unwrap_or(0.0);
         let memory_used_mb = stats.rss_bytes / (1024 * 1024);
         let memory_total_mb = stats.system_ram_total_bytes / (1024 * 1024);

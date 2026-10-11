@@ -1,0 +1,37 @@
+[package]
+name = "galleon-channel-reddit"
+rust-version.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Reddit channel feature-crate (RF-B1 split; OAuth2 polling for mentions/DMs/replies ported from clawcrew-channels)."
+repository.workspace = true
+homepage.workspace = true
+publish = true
+
+[dependencies]
+galleon-channel-core.workspace = true
+clawcrew-api.workspace = true
+clawcrew-config = { workspace = true, default-features = false }
+clawcrew-log.workspace = true
+async-trait = "0.1"
+anyhow = "1.0"
+parking_lot = "0.12"
+reqwest = { version = "0.12", default-features = false, features = [
+  "__rustls-ring",
+  "json",
+  "rustls-tls-webpki-roots-no-provider",
+] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+tokio = { version = "1.50", default-features = false, features = ["sync", "time"] }
+
+[dev-dependencies]
+tokio = { version = "1.50", default-features = false, features = [
+  "macros",
+  "rt-multi-thread",
+] }
+toml = "1.0"
+
+[features]
+default = []

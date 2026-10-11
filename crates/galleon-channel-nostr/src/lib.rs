@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use async_trait::async_trait;
+use galleon_channel_core::allowlist;
 use nostr_sdk::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -79,7 +80,7 @@ impl NostrChannel {
                 // A deny entry carries its marker through normalization;
                 // stripping it here would turn the deny into a grant, and
                 // leaving the npub unparsed would make it match nothing.
-                let (prefix, key) = match p.strip_prefix(crate::allowlist::DENY_PREFIX) {
+                let (prefix, key) = match p.strip_prefix(allowlist::DENY_PREFIX) {
                     Some(key) => ("!", key.to_string()),
                     None => ("", p.clone()),
                 };
@@ -89,10 +90,10 @@ impl NostrChannel {
                 format!("{prefix}{key}")
             })
             .collect();
-        crate::allowlist::is_user_allowed(
+        allowlist::is_user_allowed(
             &peers,
             &pubkey.to_hex(),
-            crate::allowlist::Match::Sensitive,
+            allowlist::Match::Sensitive,
         )
     }
 }
