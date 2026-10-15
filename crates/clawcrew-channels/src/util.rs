@@ -47,7 +47,7 @@ pub fn floor_char_boundary(s: &str, max_bytes: usize) -> usize {
     s.floor_char_boundary(max_bytes)
 }
 
-#[cfg(any(feature = "channel-mattermost", feature = "channel-qq"))]
+#[cfg(feature = "channel-mattermost")]
 pub(crate) async fn read_response_body_limited(
     mut response: reqwest::Response,
     max_bytes: u64,
@@ -820,7 +820,7 @@ mod tests {
         assert_eq!(floor_char_boundary(text, usize::MAX), text.len());
     }
 
-    #[cfg(any(feature = "channel-mattermost", feature = "channel-qq"))]
+    #[cfg(feature = "channel-mattermost")]
     async fn response_from_raw_http(
         raw_response: Vec<u8>,
         hold_open: bool,
@@ -830,7 +830,7 @@ mod tests {
         (response, server)
     }
 
-    #[cfg(any(feature = "channel-mattermost", feature = "channel-qq"))]
+    #[cfg(feature = "channel-mattermost")]
     #[tokio::test]
     async fn bounded_response_body_rejects_declared_oversize() {
         let (response, server) = response_from_raw_http(

@@ -22,10 +22,13 @@ pub mod frontmatter;
 pub mod improver;
 pub mod reference;
 pub mod review;
+pub mod runner;
 pub mod scaffold;
 pub mod service;
 mod suggestions;
 pub mod testing;
+
+pub use runner::RuntimeSkillsRunner;
 
 pub use bundle::{BundleError, BundleSummary};
 pub use document::{DocumentParseError, SkillDocument};

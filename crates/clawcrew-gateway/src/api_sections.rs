@@ -985,14 +985,19 @@ pub async fn handle_section_select(
                         .with_path(section_key),
                     );
                 }
-                if let Err(err) = clawcrew_runtime::agent::personality::seed_default_personality(
-                    &working,
-                    &key,
-                    &workspace_dir,
-                )
-                .await
-                {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"agent": key, "workspace": workspace_dir.display().to_string(), "err": err.to_string()})), "agent workspace scaffolded but personality seed failed (continuing)");
+                if let Some(runner) = &state.personality_runner {
+                    use clawcrew_config::multi_agent::MemoryBackendKind;
+                    let include_memory = working
+                        .agents
+                        .get(&key)
+                        .map(|agent| agent.memory.backend != MemoryBackendKind::None)
+                        .unwrap_or(true);
+                    if let Err(err) = runner
+                        .seed_default_personality(&key, &workspace_dir, include_memory)
+                        .await
+                    {
+                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"agent": key, "workspace": workspace_dir.display().to_string(), "err": err.to_string()})), "agent workspace scaffolded but personality seed failed (continuing)");
+                    }
                 }
             }
             (format!("{section_key}.{key}"), created)
@@ -1427,7 +1432,7 @@ mod tests {
             temperature: None,
             mem: memory.clone(),
             memory_strategy: std::sync::Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::strategy::DefaultMemoryStrategy::with_config(
                     memory,
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
@@ -1491,6 +1496,9 @@ mod tests {
             diagnostics: None,
             quickstart: None,
             integration_catalog: None,
+            personality_runner: None,
+            skills_runner: None,
+            acp_runner: None,
         }
     }
 

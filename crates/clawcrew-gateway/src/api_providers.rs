@@ -13,7 +13,7 @@ use axum::{
 use serde::Serialize;
 use std::collections::HashMap;
 
-use clawcrew_runtime::agent::reliability::{ProviderHealthRecord, provider_snapshot};
+use clawcrew_providers::reliability::{ProviderHealthRecord, provider_snapshot};
 
 #[derive(Debug, Serialize)]
 struct ProviderHealthRow {

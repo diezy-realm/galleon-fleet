@@ -299,6 +299,17 @@ pub trait TuiConnectionRegistry: Send + Sync {
     fn list_connected_tuis(&self) -> Vec<ConnectedTuiInfo>;
 }
 
+/// Session runner interface decoupling the gateway ACP websocket handler from the concrete AcpServer.
+#[async_trait::async_trait]
+pub trait AcpSessionRunner: Send + Sync {
+    async fn run_session(
+        &self,
+        input_rx: tokio::sync::mpsc::Receiver<String>,
+        output_tx: tokio::sync::mpsc::Sender<String>,
+        default_agent: Option<String>,
+    );
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

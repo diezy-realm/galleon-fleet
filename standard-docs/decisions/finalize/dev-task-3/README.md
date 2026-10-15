@@ -92,14 +92,20 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
     - Gateway `AppState` diperluas dengan `Option<Arc<dyn QuickstartRunner>>` dan `Option<Arc<dyn IntegrationCatalogProvider>>`.
     - `api_quickstart.rs`, `api_sections.rs`, dan `api.rs` di gateway dialihkan ke `clawcrew_config` dan `clawcrew_providers`.
     - Referensi `quickstart` dan `integrations` di gateway turun tuntas 100% menjadi 0.
-  - Sisa 264 referensi runtime: `cron` (103), `sop` (93), `agent` (28), `control_plane` (24), `observability` (9), `skills` (6), `acp` (1). Kategori `security`, `tools`, `platform`, `doctor`, `rpc`, `daemon`, `quickstart`, dan `integrations` tuntas 100% menjadi 0.
-  - Seluruh unit test terkait lulus 100% (57 test `quickstart` runtime, 27 test `integrations` runtime, 423 test `clawcrew-gateway`, 1709 test `clawcrew-providers`, 115 test `clawcrew-config`, 53 test `architecture`).
-  - Seluruh unit test terkait lulus 100% (31 test `audit`, 3 test `api_audit`, 15 test `identity`, 34 test `a2a`, 6 test `param_options`, 12 test `api_sop_author`, 9 test `backup`, 10 test `session_metadata`, 5 test `process_stats`, 5 test `restart`, 13 test `version`, 274 test `clawcrew-api`, compiler check gateway 0 error).
+  - Tahap 18 selesai (commit `187b6397c`):
+    - `api_skills.rs`, `acp.rs`, `api_personality.rs`, `api_providers.rs`, `api_sections.rs`, dan `a2a.rs` didekoplasi 100% dari runtime.
+    - Didefinisikan trait runner di leaf crate: `SkillsRunner` (`clawcrew_api::skill`), `PersonalityRunner` (`clawcrew_api::personality`), dan `AcpSessionRunner` (`clawcrew_api::runtime_traits`).
+    - Dibuat runtime implementations: `RuntimeSkillsRunner` di `clawcrew-runtime/src/skills/runner.rs`, `RuntimePersonalityRunner` di `clawcrew-runtime/src/agent/personality_templates/mod.rs`.
+    - Dibuat SSOT provider reliability `ProviderHealthRecord` di `clawcrew-providers::reliability`.
+    - Gateway `AppState` diperluas dengan `personality_runner`, `skills_runner`, dan `acp_runner`.
+    - Sisa referensi runtime di gateway turun dari 264 menjadi 251: `cron` (103), `sop` (93), `agent` (28), `control_plane` (24), `observability` (3 - test only).
+    - 6 file gateway (`api_sections.rs`, `api_personality.rs`, `api_providers.rs`, `a2a.rs`, `api_skills.rs`, `acp.rs`) kini 100% bebas dari `clawcrew_runtime::`.
+  - Seluruh unit test terkait lulus 100% (34 test `a2a`, 3 test `api_skills`, 5 test `personality`, compiler check gateway 0 error).
 - **DoD:** 0 referensi `clawcrew_runtime::` tersisa di `clawcrew-gateway/src/` kecuali pengecualian yang didiskusikan & didokumentasikan.
 
 ### T3-03 — Pecah `clawcrew-channels` jadi crate per-channel (BR-C6)
 
-- **Tujuan:** Pecah `channels` (198k LOC) → `galleon-channel-<nama>` satu crate per channel. Sudah selesai: `core`, `signal`, `bluesky`, `imessage`, `irc`, `nostr`, `twitch`, `dingtalk`, `mochat`, `clawdtalk`, `reddit`, `twitter`, `notion`, `linq`, `nextcloud`, `filesystem`, `amqp`, `wecom`, `webhook`, `email`.
+- **Tujuan:** Pecah `channels` (198k LOC) → `galleon-channel-<nama>` satu crate per channel. Sudah selesai: `core`, `signal`, `bluesky`, `imessage`, `irc`, `nostr`, `twitch`, `dingtalk`, `mochat`, `clawdtalk`, `reddit`, `twitter`, `notion`, `linq`, `nextcloud`, `filesystem`, `amqp`, `wecom`, `webhook`, `email`, `qq`.
 - **Ruang lingkup:** `crates/clawcrew-channels/src/`, crate baru `galleon-channel-*`.
 - **Status implementasi (in-progress):**
   - Crate `galleon-channel-irc` diekstrak (14/14 unit test ok, commit `29aec5f46` & `bd9ee0252`).
@@ -118,6 +124,7 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
   - Crate `galleon-channel-wecom` diekstrak ke crate independen `crates/galleon-channel-wecom` (7/7 unit test ok, commit `c609f7d1c`). Monolith `src/wecom.rs` dihapus, re-export via `pub use galleon_channel_wecom as wecom`, terdaftar di arsitektur gate.
   - Crate `galleon-channel-webhook` diekstrak ke crate independen `crates/galleon-channel-webhook` (36/36 unit test ok, commit `35f56e1e8`). Monolith `src/webhook.rs` dihapus, re-export via `pub use galleon_channel_webhook as webhook`, terdaftar di arsitektur gate.
   - Crate `galleon-channel-email` diekstrak ke crate independen `crates/galleon-channel-email` (71/71 unit test ok). Monolith `src/email_channel.rs` dihapus, re-export via `pub use galleon_channel_email as email_channel`, terdaftar di arsitektur gate `tests/architecture/dependency_direction.rs` (lulus 100%).
+  - Crate `galleon-channel-qq` diekstrak ke crate independen `crates/galleon-channel-qq` (57/57 unit test ok, commit `e041a8783`). Monolith `src/qq.rs` (2.993 baris) dihapus, re-export via `pub use galleon_channel_qq as qq`, trait `AudioTranscriber` didefinisikan secara decoupled tanpa ketergantungan runtime, terdaftar di arsitektur gate `tests/architecture/dependency_direction.rs` (lulus 100%).
   - Seluruh unit test channel baru lulus 100%, compiler check dan architecture test `dependency_direction` lulus 100%.
 - **JANGAN DIUBAH:** Policy allowlist bersama tetap di `galleon-channel-core`, jangan reimplementasi per-channel.
 - **Dependency:** BR-C4 (sudah `[x]`, prasyarat terpenuhi).

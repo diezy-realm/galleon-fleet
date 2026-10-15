@@ -1,4 +1,4 @@
-//! HTTP adapter over `clawcrew_runtime::skills::SkillsService`.
+//! HTTP adapter over `clawcrew_api::skill::SkillsRunner`.
 
 use axum::{
     Json,
@@ -7,12 +7,9 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use clawcrew_api::skill::{
-    AgentSkillEntry, AgentSkillsResult, DroppedSkillEntry, ShadowedSkillEntry, SkillBundleEntry,
-    SkillListEntry, SkillsBundlesResult, SkillsListResult, SkillsReadResult,
-};
-use clawcrew_runtime::skills::{
-    DroppedSkill, EffectiveSkill, RemoveMode, ScaffoldOptions, ServiceError, SkillDropReason,
-    SkillFrontmatter, SkillOrigin, SkillsService, SlashOptionKindDescriptor,
+    AgentSkillEntry, DroppedSkill, DroppedSkillEntry, EffectiveSkill, RemoveMode, ScaffoldOptions,
+    ServiceError, ShadowedSkillEntry, SkillDocument, SkillDropReason, SkillFrontmatter,
+    SkillOrigin, SkillsBundlesResult, SkillsListResult, SlashOptionKindDescriptor,
 };
 use serde::{Deserialize, Serialize};
 
@@ -71,7 +68,7 @@ pub async fn handle_slash_option_kinds(
         return e.into_response();
     }
     Json(SlashOptionKindsResult {
-        kinds: clawcrew_runtime::skills::slash_option_kinds(),
+        kinds: clawcrew_api::skill::slash_option_kinds(),
     })
     .into_response()
 }
@@ -81,23 +78,12 @@ pub async fn handle_list_bundles(State(state): State<AppState>, headers: HeaderM
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    let config = state.config.read().clone();
-    let install_root = config.install_root_dir();
-    let service = SkillsService::new(&config, install_root);
+    let Some(service) = &state.skills_runner else {
+        return (StatusCode::SERVICE_UNAVAILABLE, "skills service unavailable").into_response();
+    };
 
     match service.list_bundles() {
-        Ok(bundles) => Json(SkillsBundlesResult {
-            bundles: bundles
-                .into_iter()
-                .map(|b| SkillBundleEntry {
-                    alias: b.alias,
-                    directory: b.directory.display().to_string(),
-                    include: b.include,
-                    exclude: b.exclude,
-                })
-                .collect(),
-        })
-        .into_response(),
+        Ok(bundles) => Json(SkillsBundlesResult { bundles }).into_response(),
         Err(e) => service_error_response(e),
     }
 }
@@ -111,23 +97,12 @@ pub async fn handle_list_skills(
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    let config = state.config.read().clone();
-    let install_root = config.install_root_dir();
-    let service = SkillsService::new(&config, install_root);
+    let Some(service) = &state.skills_runner else {
+        return (StatusCode::SERVICE_UNAVAILABLE, "skills service unavailable").into_response();
+    };
 
     match service.list_skills(Some(&alias)) {
-        Ok(skills) => Json(SkillsListResult {
-            skills: skills
-                .into_iter()
-                .map(|s| SkillListEntry {
-                    bundle: s.r#ref.bundle().to_string(),
-                    name: s.r#ref.name().to_string(),
-                    directory: s.directory.display().to_string(),
-                    frontmatter: s.frontmatter,
-                })
-                .collect(),
-        })
-        .into_response(),
+        Ok(skills) => Json(SkillsListResult { skills }).into_response(),
         Err(e) => service_error_response(e),
     }
 }
@@ -140,25 +115,20 @@ pub async fn handle_agent_skills(
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    let config = state.config.read().clone();
-    let install_root = config.install_root_dir();
-    let service = SkillsService::new(&config, install_root);
+    let Some(service) = &state.skills_runner else {
+        return (StatusCode::SERVICE_UNAVAILABLE, "skills service unavailable").into_response();
+    };
 
     match service.resolve_effective_skills(&alias) {
-        Ok(set) => Json(AgentSkillsResult {
-            agent: alias,
-            skills: set.skills.into_iter().map(agent_skill_entry).collect(),
-            dropped: set.dropped.into_iter().map(dropped_skill_entry).collect(),
-        })
-        .into_response(),
+        Ok(result) => Json(result).into_response(),
         Err(e) => service_error_response(e),
     }
 }
 
-/// Map a runtime [`EffectiveSkill`] to its flat wire shape (`origin` string +
+/// Map an [`EffectiveSkill`] to its flat wire shape (`origin` string +
 /// optional `plugin`/`bundle` detail). `editable`/`directory`/`shadowed` pass
 /// through.
-fn agent_skill_entry(s: EffectiveSkill) -> AgentSkillEntry {
+pub fn agent_skill_entry(s: EffectiveSkill) -> AgentSkillEntry {
     let (origin, plugin, bundle) = match s.origin {
         SkillOrigin::Workspace => ("workspace", None, None),
         SkillOrigin::OpenSkills => ("open-skills", None, None),
@@ -184,10 +154,10 @@ fn agent_skill_entry(s: EffectiveSkill) -> AgentSkillEntry {
     }
 }
 
-/// Map a runtime [`DroppedSkill`] to its flat wire shape, splitting the
+/// Map a [`DroppedSkill`] to its flat wire shape, splitting the
 /// [`SkillDropReason`] enum into a `(reason_kind, reason)` string pair the
 /// dashboard can group on without knowing the Rust enum.
-fn dropped_skill_entry(d: DroppedSkill) -> DroppedSkillEntry {
+pub fn dropped_skill_entry(d: DroppedSkill) -> DroppedSkillEntry {
     let (reason_kind, reason, scripts_blocked) = match d.reason {
         SkillDropReason::AuditFindings {
             summary,
@@ -216,16 +186,14 @@ pub async fn handle_create_skill(
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    let config = state.config.read().clone();
-    let install_root = config.install_root_dir();
-    let service = SkillsService::new(&config, install_root);
-
-    let target = match service.resolve_ref(&body.name, Some(&alias)) {
-        Ok(r) => r,
-        Err(e) => return service_error_response(e),
+    let Some(service) = &state.skills_runner else {
+        return (StatusCode::SERVICE_UNAVAILABLE, "skills service unavailable").into_response();
     };
+
+    let name = body.name.clone();
     match service.scaffold_skill(
-        &target,
+        &alias,
+        &body.name,
         body.frontmatter,
         ScaffoldOptions {
             create_optional_subdirs: !body.no_scaffold,
@@ -235,8 +203,8 @@ pub async fn handle_create_skill(
         Ok(path) => (
             StatusCode::CREATED,
             Json(serde_json::json!({
-                "bundle": target.bundle(),
-                "name": target.name(),
+                "bundle": alias,
+                "name": name,
                 "directory": path.display().to_string(),
             })),
         )
@@ -254,22 +222,12 @@ pub async fn handle_read_skill(
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    let config = state.config.read().clone();
-    let install_root = config.install_root_dir();
-    let service = SkillsService::new(&config, install_root);
-
-    let target = match service.resolve_ref(&name, Some(&alias)) {
-        Ok(r) => r,
-        Err(e) => return service_error_response(e),
+    let Some(service) = &state.skills_runner else {
+        return (StatusCode::SERVICE_UNAVAILABLE, "skills service unavailable").into_response();
     };
-    match service.read_skill(&target) {
-        Ok(doc) => Json(SkillsReadResult {
-            bundle: target.bundle().to_string(),
-            name: target.name().to_string(),
-            frontmatter: doc.frontmatter,
-            body: doc.body,
-        })
-        .into_response(),
+
+    match service.read_skill(&alias, &name) {
+        Ok(doc) => Json(doc).into_response(),
         Err(e) => service_error_response(e),
     }
 }
@@ -284,19 +242,15 @@ pub async fn handle_write_skill(
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    let config = state.config.read().clone();
-    let install_root = config.install_root_dir();
-    let service = SkillsService::new(&config, install_root);
-
-    let target = match service.resolve_ref(&name, Some(&alias)) {
-        Ok(r) => r,
-        Err(e) => return service_error_response(e),
+    let Some(service) = &state.skills_runner else {
+        return (StatusCode::SERVICE_UNAVAILABLE, "skills service unavailable").into_response();
     };
-    let doc = clawcrew_runtime::skills::SkillDocument {
+
+    let doc = SkillDocument {
         frontmatter: body.frontmatter,
         body: body.body,
     };
-    match service.write_skill(&target, &doc) {
+    match service.write_skill(&alias, &name, &doc) {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(e) => service_error_response(e),
     }
@@ -312,20 +266,16 @@ pub async fn handle_delete_skill(
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    let config = state.config.read().clone();
-    let install_root = config.install_root_dir();
-    let service = SkillsService::new(&config, install_root);
-
-    let target = match service.resolve_ref(&name, Some(&alias)) {
-        Ok(r) => r,
-        Err(e) => return service_error_response(e),
+    let Some(service) = &state.skills_runner else {
+        return (StatusCode::SERVICE_UNAVAILABLE, "skills service unavailable").into_response();
     };
+
     let mode = if q.purge {
         RemoveMode::Purge
     } else {
         RemoveMode::Archive
     };
-    match service.remove_skill(&target, mode) {
+    match service.remove_skill(&alias, &name, mode) {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(e) => service_error_response(e),
     }
@@ -355,7 +305,7 @@ fn service_error_response(err: ServiceError) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_runtime::skills::{ShadowedSkill, SkillOrigin};
+    use clawcrew_api::skill::{ShadowedSkill, SkillOrigin};
     use std::path::PathBuf;
 
     // the write-guard error maps to 403, distinct from 404/400.
