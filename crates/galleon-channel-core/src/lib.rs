@@ -49,7 +49,10 @@ pub mod allowlist {
 
     /// `!`-prefix that marks a resolved peer entry as a deny rule.
     pub use clawcrew_config::schema::PEER_DENY_PREFIX as DENY_PREFIX;
-    use clawcrew_config::schema::{peer_policy_admits, peer_policy_denies};
+    use clawcrew_config::schema::{
+        peer_deny_identity, peer_deny_names, peer_grant_identity, peer_is_wildcard,
+        peer_policy_admits, peer_policy_denies,
+    };
 
     fn matcher_for(mode: Match) -> impl Fn(&str, &str) -> bool {
         move |entry: &str, user: &str| match mode {
@@ -102,6 +105,46 @@ pub mod allowlist {
         match_fn: impl Fn(&str, &str) -> bool,
     ) -> bool {
         peer_policy_denies(allowed, identities, match_fn)
+    }
+
+    /// The conflict message when a matching `ignore` already denies `identity`,
+    /// or `None` when a pairing write would take effect.
+    pub fn pairing_deny_conflict(
+        allowed: &[String],
+        channel_type: &str,
+        alias: &str,
+        identities: &[&str],
+        match_fn: impl Fn(&str, &str) -> bool,
+    ) -> Option<String> {
+        is_identity_denied_by(allowed, identities, &match_fn).then(|| {
+            format!(
+                "paired {channel_type}.{alias} identity is denied by an `ignore` entry in a \
+                 matching [peer_groups.*] block — remove that entry from config.toml, then \
+                 pair again"
+            )
+        })
+    }
+
+    /// Whether a resolved peer list can admit anybody at all.
+    #[must_use]
+    pub fn grants_anyone(allowed: &[String]) -> bool {
+        let denies: Vec<&str> = allowed
+            .iter()
+            .filter_map(|entry| peer_deny_identity(entry))
+            .collect();
+        if denies.iter().any(|entry| peer_is_wildcard(entry)) {
+            return false;
+        }
+        allowed
+            .iter()
+            .filter_map(|entry| peer_grant_identity(entry))
+            .filter(|grant| !grant.trim().is_empty())
+            .any(|grant| {
+                peer_is_wildcard(grant)
+                    || !denies.iter().any(|deny| {
+                        peer_deny_names(deny, grant, &|entry: &str, user: &str| entry == user)
+                    })
+            })
     }
 
     #[cfg(test)]
@@ -233,3 +276,5 @@ pub mod approval {
         }
     }
 }
+
+pub mod identity_persist;

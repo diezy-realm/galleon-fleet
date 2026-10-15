@@ -13,6 +13,25 @@ use uuid::Uuid;
 
 type HmacSha256 = Hmac<Sha256>;
 
+/// Trait for audio transcription providers that can transcribe LINE voice messages.
+#[async_trait]
+pub trait AudioTranscriber: Send + Sync {
+    /// Transcribe raw audio bytes. `file_name` includes extension for format detection.
+    async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String>;
+}
+
+async fn ensure_success(
+    resp: reqwest::Response,
+    what: &str,
+) -> anyhow::Result<reqwest::Response> {
+    if resp.status().is_success() {
+        return Ok(resp);
+    }
+    let status = resp.status();
+    let err = resp.text().await.unwrap_or_default();
+    anyhow::bail!("{what} failed ({status}): {err}");
+}
+
 const LINE_BIND_COMMAND: &str = "/bind";
 /// Maximum audio file size accepted for transcription (25 MB).
 const MAX_LINE_AUDIO_BYTES: u64 = 25 * 1024 * 1024;
@@ -54,7 +73,7 @@ pub struct LineChannel {
     /// Base URL for the LINE Content API (audio/file downloads). Overrideable in tests.
     content_api_base_url: String,
     /// Optional transcription manager for voice/audio messages.
-    transcription_manager: Option<Arc<super::transcription::TranscriptionManager>>,
+    transcription_manager: Option<Arc<dyn AudioTranscriber>>,
 }
 
 /// Response from `GET /v2/bot/info`.
@@ -97,7 +116,7 @@ struct LineState {
     /// Fetched icon URL from `/v2/bot/info`, shared with the channel handle.
     sender_icon: Arc<parking_lot::RwLock<Option<String>>>,
     /// Optional transcription manager — `None` when transcription is disabled.
-    transcription_manager: Option<Arc<super::transcription::TranscriptionManager>>,
+    transcription_manager: Option<Arc<dyn AudioTranscriber>>,
 }
 
 async fn send_loading_indicator(
@@ -225,7 +244,11 @@ fn build_webhook_router(state: Arc<LineState>) -> axum::Router {
 /// canonical config state at call-time. LINE user IDs are case-sensitive.
 fn is_line_user_allowed(state: &LineState, user_id: &str) -> bool {
     let peers = (state.peer_resolver)();
-    crate::allowlist::is_user_allowed(&peers, user_id, crate::allowlist::Match::Sensitive)
+    galleon_channel_core::allowlist::is_user_allowed(
+        &peers,
+        user_id,
+        galleon_channel_core::allowlist::Match::Sensitive,
+    )
 }
 
 /// Persist a newly-paired LINE userId into `peer_groups.line_<alias>.external_peers`
@@ -237,7 +260,7 @@ fn is_line_user_allowed(state: &LineState, user_id: &str) -> bool {
 fn line_pairing_deny_conflict(state: &LineState, user_id: &str) -> Option<String> {
     let config = state.persist.as_ref()?;
     let cfg = config.read();
-    crate::identity_persist::external_peer_deny_conflict(
+    galleon_channel_core::identity_persist::external_peer_deny_conflict(
         &cfg,
         "line",
         &state.alias,
@@ -264,7 +287,7 @@ async fn persist_line_paired_identity(state: &LineState, user_id: &str) -> anyho
     // Through the shared writer, which selects its target group by the
     // `channel` field the runtime reader authorizes by rather than by the
     // `peer_groups` map key.
-    crate::identity_persist::persist_external_peer(
+    galleon_channel_core::identity_persist::persist_external_peer(
         Some(config),
         "line",
         &state.alias,
@@ -772,7 +795,7 @@ impl LineChannel {
         let alias = alias.into();
         let configured_peers = peer_resolver();
         let pairing = if dm_policy == LineDmPolicy::Pairing
-            && !crate::allowlist::grants_anyone(&configured_peers)
+            && !galleon_channel_core::allowlist::grants_anyone(&configured_peers)
         {
             // Chat-channel bind codes are retyped by hand into a Telegram/
             // LINE/WeChat message, so they deliberately keep the six-digit
@@ -875,30 +898,29 @@ impl LineChannel {
         self
     }
 
-    /// Configure voice transcription from a `[transcription]` snapshot.
-    ///
-    /// Compatibility and test path. The daemon routes every channel through
-    /// `with_transcription_manager` with a manager built from live
-    /// config and the owning agent's resolved provider; this path can only see
-    /// the legacy section, so it binds a lone registered provider and
-    /// otherwise leaves the choice unbound (see
-    /// `transcription::manager_from_snapshot`).
-    pub fn with_transcription(self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
-        let manager = super::transcription::manager_from_snapshot(&config);
-        self.with_transcription_manager(config, manager)
+    /// Configure voice transcription from a `[transcription]` snapshot (no-op stub without provider manager).
+    pub fn with_transcription(self, _config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+        self
     }
 
-    /// Store an already-built transcription manager, or nothing. The config is
-    /// recorded only alongside a manager, so a channel never advertises
-    /// transcription it cannot perform.
-    pub(crate) fn with_transcription_manager(
+    /// Store an already-built transcription manager, or nothing.
+    pub fn with_transcription_manager(
         mut self,
         _config: clawcrew_config::schema::TranscriptionConfig,
-        manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
+        manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
             self.transcription_manager = Some(manager);
         }
+        self
+    }
+
+    /// Store an audio transcriber provider.
+    pub fn with_audio_transcriber(
+        mut self,
+        transcriber: Option<std::sync::Arc<dyn AudioTranscriber>>,
+    ) -> Self {
+        self.transcription_manager = transcriber;
         self
     }
 
@@ -1084,7 +1106,7 @@ impl LineChannel {
                 .send()
                 .await?;
 
-            crate::util::ensure_success(resp, "Reply API").await?;
+            ensure_success(resp, "Reply API").await?;
         }
         Ok(())
     }
@@ -1120,7 +1142,7 @@ impl LineChannel {
                 .send()
                 .await?;
 
-            crate::util::ensure_success(resp, "Push API").await?;
+            ensure_success(resp, "Push API").await?;
         }
         Ok(())
     }
@@ -1261,6 +1283,14 @@ impl Channel for LineChannel {
 mod tests {
     use super::*;
     use tokio::sync::mpsc;
+
+    struct MockAudioTranscriber(&'static str);
+    #[async_trait]
+    impl AudioTranscriber for MockAudioTranscriber {
+        async fn transcribe(&self, _audio_data: &[u8], _file_name: &str) -> anyhow::Result<String> {
+            Ok(self.0.to_string())
+        }
+    }
 
     // ---- Helpers -----------------------------------------------------------
 
@@ -2225,28 +2255,6 @@ mod tests {
             .mount(&api_server)
             .await;
 
-        let transcription_config = clawcrew_config::schema::TranscriptionConfig {
-            enabled: true,
-            api_key: None,
-            api_url: String::new(),
-            model: "whisper-1".to_string(),
-            language: None,
-            initial_prompt: None,
-            max_audio_bytes: None,
-            max_duration_secs: 120,
-            openai: None,
-            deepgram: None,
-            assemblyai: None,
-            google: None,
-            local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
-                url: format!("{}/v1/transcribe", api_server.uri()),
-                bearer_token: Some("test-token".to_string()),
-                max_audio_bytes: 25 * 1024 * 1024,
-                timeout_secs: 300,
-            }),
-            transcribe_non_ptt_audio: true,
-        };
-
         let ch = LineChannel::new(
             "tok".into(),
             "mysecret".into(),
@@ -2257,7 +2265,7 @@ mod tests {
             0,
         )
         .with_api_base_url(&api_server.uri())
-        .with_transcription(transcription_config);
+        .with_audio_transcriber(Some(Arc::new(MockAudioTranscriber(transcript))));
 
         let (port, mut rx, abort) = spawn_webhook(ch, "Ubot").await;
 

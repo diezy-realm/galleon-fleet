@@ -1697,11 +1697,13 @@ dependencies = [
  "galleon-channel-amqp",
  "galleon-channel-bluesky",
  "galleon-channel-clawdtalk",
+ "galleon-channel-core",
  "galleon-channel-dingtalk",
  "galleon-channel-email",
  "galleon-channel-filesystem",
  "galleon-channel-imessage",
  "galleon-channel-irc",
+ "galleon-channel-line",
  "galleon-channel-linq",
  "galleon-channel-mochat",
  "galleon-channel-nextcloud",
@@ -4341,9 +4343,13 @@ dependencies = [
 name = "galleon-channel-core"
 version = "0.8.5"
 dependencies = [
+ "anyhow",
  "clawcrew-api",
  "clawcrew-config",
+ "clawcrew-log",
+ "parking_lot",
  "rand 0.10.2",
+ "serde_json",
 ]
 
 [[package]]
@@ -4449,6 +4455,32 @@ dependencies = [
  "tokio-rustls",
  "toml 1.1.2+spec-1.1.0",
  "webpki-roots 1.0.9",
+]
+
+[[package]]
+name = "galleon-channel-line"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.8.9",
+ "base64",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "galleon-channel-core",
+ "galleon-i18n",
+ "hmac 0.12.1",
+ "parking_lot",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "tokio",
+ "uuid",
+ "wiremock",
 ]
 
 [[package]]
