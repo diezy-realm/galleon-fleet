@@ -53,8 +53,11 @@ pub use galleon_channel_dingtalk as dingtalk;
 pub mod discord;
 #[cfg(feature = "channel-discord")]
 pub mod discord_slash_state;
+// RF-B1: the Email channel now lives in its own feature-crate. Re-export it
+// under the historical `email_channel` path so `crate::email_channel::EmailChannel`
+// and callers keep resolving.
 #[cfg(feature = "channel-email")]
-pub mod email_channel;
+pub use galleon_channel_email as email_channel;
 // RF-B1: the Filesystem channel now lives in its own feature-crate. Re-export it
 // under the historical `filesystem` path so `crate::filesystem::FilesystemChannel`
 // and callers keep resolving.

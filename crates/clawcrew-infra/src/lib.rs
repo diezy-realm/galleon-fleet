@@ -4,6 +4,7 @@
 pub mod acp_session_store;
 pub mod backup;
 pub mod debounce;
+pub mod gateway_controls;
 pub mod health;
 pub mod net_guard;
 pub mod process_stats;
@@ -14,6 +15,8 @@ pub mod session_sqlite;
 pub mod session_metadata;
 pub mod session_store;
 pub mod stall_watchdog;
+
+pub use gateway_controls::{GatewayReadinessReporter, GatewayReloadControls};
 
 use std::net::SocketAddr;
 use std::path::Path;

@@ -3,6 +3,9 @@
 /bin/
 /engine/bin/
 apps/tauri/target/
+# Retired legacy migration paths (ODR-01, PR-01, CO-08)
+web-2/
+apps/tauri-2/
 
 # Desktop installer build artifacts
 *.dmg

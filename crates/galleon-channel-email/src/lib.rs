@@ -83,7 +83,7 @@ impl EmailChannel {
     }
 
     fn is_email_sender_allowed(peers: &[String], email: &str) -> bool {
-        crate::allowlist::is_user_allowed_by(peers, email, |allowed, email| {
+        galleon_channel_core::allowlist::is_user_allowed_by(peers, email, |allowed, email| {
             let email_lower = email.to_lowercase();
             if allowed.starts_with('@') {
                 // Domain match with @ prefix: "@example.com"

@@ -87,18 +87,7 @@ fn fatal_socket_startup_kind(error: &anyhow::Error) -> Option<std::io::ErrorKind
         })
 }
 
-#[derive(Clone)]
-pub struct GatewayReadinessReporter(std::sync::Arc<dyn Fn(std::net::SocketAddr) + Send + Sync>);
-
-impl GatewayReadinessReporter {
-    pub fn new(report: impl Fn(std::net::SocketAddr) + Send + Sync + 'static) -> Self {
-        Self(std::sync::Arc::new(report))
-    }
-
-    pub fn report_ready(&self, addr: std::net::SocketAddr) {
-        (self.0)(addr);
-    }
-}
+pub use clawcrew_infra::gateway_controls::GatewayReadinessReporter;
 
 #[derive(Clone)]
 pub struct SocketReadinessReporter(std::sync::Arc<dyn Fn() + Send + Sync>);
