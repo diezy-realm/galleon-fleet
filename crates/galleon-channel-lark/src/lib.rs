@@ -19,6 +19,74 @@ use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::Message as WsMsg;
 use uuid::Uuid;
 
+/// Decoupled audio transcription trait for Lark channel.
+pub trait AudioTranscriber: Send + Sync {
+    fn transcribe<'a>(
+        &'a self,
+        audio_data: &'a [u8],
+        file_name: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>>;
+}
+
+pub fn approval_position_line(position: Option<(u32, u32)>) -> String {
+    match position {
+        Some((_, total)) if total <= 1 => String::new(),
+        Some((index, total)) => format!("Tool call {index} of {total}\n"),
+        None => String::new(),
+    }
+}
+
+pub const ATTACHMENT_KINDS: &[&str] = &["IMAGE", "VIDEO", "AUDIO", "DOCUMENT", "FILE"];
+
+pub fn parse_attachment_markers(message: &str) -> (String, Vec<(String, String)>) {
+    parse_attachment_markers_of_kinds(message, ATTACHMENT_KINDS)
+}
+
+pub fn parse_attachment_markers_of_kinds(
+    message: &str,
+    kinds: &[&str],
+) -> (String, Vec<(String, String)>) {
+    let mut cleaned = String::with_capacity(message.len());
+    let mut attachments = Vec::new();
+    let mut cursor = 0usize;
+
+    while let Some(rel_start) = message[cursor..].find('[') {
+        let start = cursor + rel_start;
+        cleaned.push_str(&message[cursor..start]);
+
+        let Some(rel_end) = message[start..].find(']') else {
+            cleaned.push_str(&message[start..]);
+            cursor = message.len();
+            break;
+        };
+        let end = start + rel_end;
+        let marker_text = &message[start + 1..end];
+
+        let parsed = marker_text.split_once(':').and_then(|(kind, target)| {
+            let kind_upper = kind.trim().to_ascii_uppercase();
+            let target = target.trim();
+            if target.is_empty() || !kinds.contains(&kind_upper.as_str()) {
+                return None;
+            }
+            Some((kind_upper, target.to_string()))
+        });
+
+        if let Some(attachment) = parsed {
+            attachments.push(attachment);
+        } else {
+            cleaned.push_str(&message[start..=end]);
+        }
+
+        cursor = end + 1;
+    }
+
+    if cursor < message.len() {
+        cleaned.push_str(&message[cursor..]);
+    }
+
+    (cleaned, attachments)
+}
+
 const FEISHU_BASE_URL: &str = "https://open.feishu.cn/open-apis";
 const FEISHU_WS_BASE_URL: &str = "https://open.feishu.cn";
 const LARK_BASE_URL: &str = "https://open.larksuite.com/open-apis";
@@ -256,7 +324,7 @@ fn build_approval_card(
     // Two pending cards from one turn are otherwise identical until tapped.
     // The shared line is newline-terminated; Lark's markdown needs the blank
     // line to render it as its own paragraph, and an empty line stays empty.
-    let position_line = match crate::util::approval_position_line(position).as_str() {
+    let position_line = match approval_position_line(position).as_str() {
         "" => String::new(),
         line => format!("{line}\n"),
     };
@@ -752,7 +820,7 @@ pub struct LarkChannel {
     /// the orchestrator from `Config::channel_workspace_dir("lark.<alias>")`.
     workspace_dir: Option<PathBuf>,
     transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
-    transcription_manager: Option<Arc<super::transcription::TranscriptionManager>>,
+    transcription_manager: Option<Arc<dyn AudioTranscriber>>,
     /// In-flight approval requests keyed by `approval_id` (UUID v4).
     /// Populated by `request_approval`, drained by `handle_card_action_event`.
     pending_approvals: Arc<tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>>,
@@ -1252,23 +1320,32 @@ impl LarkChannel {
     /// the legacy section, so it binds a lone registered provider and
     /// otherwise leaves the choice unbound (see
     /// `transcription::manager_from_snapshot`).
-    pub fn with_transcription(self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
-        let manager = super::transcription::manager_from_snapshot(&config);
-        self.with_transcription_manager(config, manager)
+    /// Configure voice transcription from a `[transcription]` snapshot (no-op stub without provider manager).
+    pub fn with_transcription(self, _config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+        self
     }
 
     /// Store an already-built transcription manager, or nothing. The config is
     /// recorded only alongside a manager, so a channel never advertises
     /// transcription it cannot perform.
-    pub(crate) fn with_transcription_manager(
+    pub fn with_transcription_manager(
         mut self,
         config: clawcrew_config::schema::TranscriptionConfig,
-        manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
+        manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
             self.transcription_manager = Some(manager);
             self.transcription = Some(config);
         }
+        self
+    }
+
+    /// Store an audio transcriber provider.
+    pub fn with_audio_transcriber(
+        mut self,
+        transcriber: Option<std::sync::Arc<dyn AudioTranscriber>>,
+    ) -> Self {
+        self.transcription_manager = transcriber;
         self
     }
 
@@ -1778,7 +1855,11 @@ impl LarkChannel {
     /// Check if a user open_id is allowed
     fn is_user_allowed(&self, open_id: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed(&peers, open_id, crate::allowlist::Match::Sensitive)
+        galleon_channel_core::allowlist::is_user_allowed(
+            &peers,
+            open_id,
+            galleon_channel_core::allowlist::Match::Sensitive,
+        )
     }
 
     /// Get or refresh tenant access token
@@ -2278,7 +2359,7 @@ impl LarkChannel {
         &self,
         message_id: &str,
         content: &str,
-        manager: &super::transcription::TranscriptionManager,
+        manager: &dyn AudioTranscriber,
     ) -> Option<String> {
         let file_key = serde_json::from_str::<serde_json::Value>(content)
             .ok()
@@ -2886,7 +2967,7 @@ impl Channel for LarkChannel {
     async fn send(&self, message: &SendMessage) -> anyhow::Result<()> {
         let mut token = self.get_tenant_access_token().await?;
         let url = self.send_message_url(&message.recipient);
-        let (text_content, raw_markers) = super::util::parse_attachment_markers(&message.content);
+        let (text_content, raw_markers) = parse_attachment_markers(&message.content);
         let markers = raw_markers
             .into_iter()
             .filter_map(|(kind, target)| lark_outgoing_media_from_marker(kind, target))
@@ -3369,7 +3450,7 @@ impl Channel for LarkChannel {
         self.last_draft_edit.lock().await.remove(message_id);
 
         let mut token = self.get_tenant_access_token().await?;
-        let (text_content, raw_markers) = super::util::parse_attachment_markers(text);
+        let (text_content, raw_markers) = parse_attachment_markers(text);
         let markers = raw_markers
             .into_iter()
             .filter_map(|(kind, target)| lark_outgoing_media_from_marker(kind, target))
@@ -4280,6 +4361,17 @@ fn should_respond_in_group(
 mod tests {
     use super::*;
     use axum::{body::to_bytes, extract::State, http::StatusCode};
+
+    struct MockAudioTranscriber(&'static str);
+    impl AudioTranscriber for MockAudioTranscriber {
+        fn transcribe<'a>(
+            &'a self,
+            _audio_data: &'a [u8],
+            _file_name: &'a str,
+        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>> {
+            Box::pin(async move { Ok(self.0.to_string()) })
+        }
+    }
 
     fn with_bot_open_id(ch: LarkChannel, bot_open_id: &str) -> LarkChannel {
         ch.set_resolved_bot_open_id(Some(bot_open_id.to_string()));
@@ -5954,7 +6046,9 @@ mod tests {
             }),
             ..Default::default()
         };
-        let ch = ch.with_transcription(tc);
+        let ch = ch
+            .with_transcription(tc)
+            .with_audio_transcriber(Some(Arc::new(MockAudioTranscriber("test"))));
         let manager = ch.transcription_manager.as_deref().unwrap();
 
         let result = ch
@@ -6041,7 +6135,9 @@ mod tests {
 
         let mut ch = make_channel();
         ch.api_base_override = Some(mock_server.uri());
-        let ch = ch.with_transcription(config);
+        let ch = ch
+            .with_transcription(config)
+            .with_audio_transcriber(Some(Arc::new(MockAudioTranscriber("test transcript"))));
 
         let payload = serde_json::json!({
             "header": {
@@ -6170,7 +6266,7 @@ mod tests {
         let content = card["body"]["elements"][0]["content"]
             .as_str()
             .expect("markdown content");
-        let expected = crate::util::approval_position_line(Some((2, 3)));
+        let expected = approval_position_line(Some((2, 3)));
         assert!(!expected.is_empty(), "helper should render a 2-of-3 line");
         assert!(
             content.starts_with(expected.trim_end()),

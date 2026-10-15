@@ -74,8 +74,11 @@ pub use galleon_channel_imessage as imessage;
 // orchestrator's `pub use crate::irc::IrcChannel` keep resolving.
 #[cfg(feature = "channel-irc")]
 pub use galleon_channel_irc as irc;
+// RF-B1: the Lark channel now lives in its own feature-crate. Re-export it
+// under the historical `lark` path so `crate::lark::LarkChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-lark")]
-pub mod lark;
+pub use galleon_channel_lark as lark;
 // RF-B1: the LINE channel now lives in its own feature-crate. Re-export it
 // under the historical `line` path so `crate::line::LineChannel` and callers
 // keep resolving.

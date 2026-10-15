@@ -110,6 +110,10 @@ galleon-channel-line = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_mattermost as mattermost`) so existing callers
 # (`crate::mattermost::MattermostChannel`) keep compiling. Optional, behind `channel-mattermost`.
 galleon-channel-mattermost = { workspace = true, optional = true }
+# RF-B1: the Lark channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_lark as lark`) so existing callers
+# (`crate::lark::LarkChannel`) keep compiling. Optional, behind `channel-lark`.
+galleon-channel-lark = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -306,7 +310,7 @@ tls-client = ["dep:tokio-rustls", "dep:webpki-roots"]
 ws-transport = ["clawcrew-config/ws-transport", "dep:tokio-tungstenite"]
 image-normalization = ["dep:image"]
 channel-telegram = ["image-normalization"]
-channel-lark = ["dep:aes", "dep:axum", "dep:cbc", "dep:prost", "ws-transport"]
+channel-lark = ["dep:galleon-channel-lark"]
 channel-git = ["provider-github", "provider-gitea"]
 # Forge providers for the git channel. `provider-github` (GitHub Apps) and
 # `provider-gitea` (Gitea/Forgejo PAT) are default-on under `channel-git`;

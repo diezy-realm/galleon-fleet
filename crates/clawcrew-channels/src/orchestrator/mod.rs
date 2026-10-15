@@ -14253,7 +14253,8 @@ fn collect_configured_channels(
                     .with_streaming(lk.stream_mode, lk.draft_update_interval_ms)
                     .with_transcription_manager(
                         config.transcription.clone(),
-                        resolved_transcription_manager(&config, &format!("lark.{alias}")),
+                        resolved_transcription_manager(&config, &format!("lark.{alias}"))
+                            .map(|m| m as Arc<dyn galleon_channel_lark::AudioTranscriber>),
                     ),
             ),
         });
