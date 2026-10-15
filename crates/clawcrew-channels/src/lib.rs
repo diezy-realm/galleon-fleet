@@ -13,7 +13,7 @@ pub mod allowlist;
 // Telegram and LINE pairing paths, none of which are wechat/whatsapp-web.
 pub(crate) mod identity_persist;
 pub mod listing;
-pub mod login_events;
+pub use galleon_channel_core::login_events;
 pub mod login_probe;
 pub mod login_relink;
 #[cfg(feature = "channel-telegram")]
@@ -154,8 +154,11 @@ pub mod voice_wake;
 // callers keep resolving.
 #[cfg(feature = "channel-webhook")]
 pub use galleon_channel_webhook as webhook;
+// RF-B1: the WeChat channel now lives in its own feature-crate. Re-export it
+// under the historical `wechat` path so `crate::wechat::WeChatChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-wechat")]
-pub mod wechat;
+pub use galleon_channel_wechat as wechat;
 // RF-B1: the WeCom channel now lives in its own feature-crate. Re-export it
 // under the historical `wecom` path so callers keep resolving.
 #[cfg(feature = "channel-wecom")]

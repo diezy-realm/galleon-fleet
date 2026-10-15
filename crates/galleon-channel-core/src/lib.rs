@@ -278,3 +278,4 @@ pub mod approval {
 }
 
 pub mod identity_persist;
+pub mod login_events;

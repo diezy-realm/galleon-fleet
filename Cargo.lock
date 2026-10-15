@@ -1717,6 +1717,7 @@ dependencies = [
  "galleon-channel-twitch",
  "galleon-channel-twitter",
  "galleon-channel-webhook",
+ "galleon-channel-wechat",
  "galleon-channel-wecom",
  "galleon-i18n",
  "galleon-security-scrub",
@@ -4742,6 +4743,42 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "tokio",
+ "wiremock",
+]
+
+[[package]]
+name = "galleon-channel-wechat"
+version = "0.8.5"
+dependencies = [
+ "aes 0.8.4",
+ "anyhow",
+ "async-trait",
+ "base64",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "directories",
+ "ecb",
+ "galleon-channel-core",
+ "galleon-i18n",
+ "hex",
+ "md5",
+ "mime_guess",
+ "parking_lot",
+ "qrcode",
+ "rand 0.10.2",
+ "regex",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "shellexpand",
+ "tempfile",
+ "tokio",
+ "urlencoding",
+ "uuid",
  "wiremock",
 ]
 
