@@ -284,7 +284,7 @@ mod tests {
 
         let (shutdown_tx, _shutdown_rx) = tokio::sync::watch::channel(false);
         let (reload_tx, _reload_rx) = tokio::sync::watch::channel(false);
-        let reload_controls = clawcrew_runtime::daemon::GatewayReloadControls {
+        let reload_controls = clawcrew_infra::gateway_controls::GatewayReloadControls {
             shutdown_tx: shutdown_tx.clone(),
             reload_tx,
         };

@@ -78,14 +78,14 @@ pub struct AppState {
 
 /// Daemon-owned services whose lifecycle matches one supervised gateway run.
 pub struct GatewaySupervision {
-    readiness: Option<clawcrew_runtime::daemon::GatewayReadinessReporter>,
+    readiness: Option<clawcrew_infra::gateway_controls::GatewayReadinessReporter>,
     plugin_webhooks: Arc<clawcrew_api::webhook::PluginWebhookRegistry>,
 }
 
 impl GatewaySupervision {
     #[must_use]
     pub fn new(
-        readiness: Option<clawcrew_runtime::daemon::GatewayReadinessReporter>,
+        readiness: Option<clawcrew_infra::gateway_controls::GatewayReadinessReporter>,
         plugin_webhooks: Arc<clawcrew_api::webhook::PluginWebhookRegistry>,
     ) -> Self {
         Self {

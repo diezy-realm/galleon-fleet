@@ -34,12 +34,12 @@ pub async fn run_gateway(
     port: u16,
     config: crate::Config,
     external_event_tx: Option<tokio::sync::broadcast::Sender<serde_json::Value>>,
-    reload_controls: Option<clawcrew_runtime::daemon::GatewayReloadControls>,
+    reload_controls: Option<clawcrew_infra::gateway_controls::GatewayReloadControls>,
     tui_registry: Option<std::sync::Arc<dyn clawcrew_api::runtime_traits::TuiConnectionRegistry>>,
     canvas_store: Option<crate::CanvasStore>,
     sop_engine: Option<std::sync::Arc<std::sync::Mutex<clawcrew_runtime::sop::SopEngine>>>,
     sop_audit: Option<std::sync::Arc<clawcrew_runtime::sop::SopAuditLogger>>,
-    readiness: Option<clawcrew_runtime::daemon::GatewayReadinessReporter>,
+    readiness: Option<clawcrew_infra::gateway_controls::GatewayReadinessReporter>,
 ) -> Result<()> {
     Box::pin(run_gateway_with_plugin_webhooks(
         host,
@@ -67,7 +67,7 @@ pub async fn run_gateway_with_plugin_webhooks(
     port: u16,
     config: crate::Config,
     external_event_tx: Option<tokio::sync::broadcast::Sender<serde_json::Value>>,
-    reload_controls: Option<clawcrew_runtime::daemon::GatewayReloadControls>,
+    reload_controls: Option<clawcrew_infra::gateway_controls::GatewayReloadControls>,
     tui_registry: Option<std::sync::Arc<dyn clawcrew_api::runtime_traits::TuiConnectionRegistry>>,
     canvas_store: Option<crate::CanvasStore>,
     sop_engine: Option<std::sync::Arc<std::sync::Mutex<clawcrew_runtime::sop::SopEngine>>>,
