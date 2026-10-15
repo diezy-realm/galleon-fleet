@@ -94,6 +94,10 @@ galleon-channel-amqp = { workspace = true, optional = true }
 # keep compiling. Optional, behind `channel-wecom`.
 galleon-channel-wecom = { workspace = true, optional = true }
 galleon-channel-webhook = { workspace = true, optional = true }
+# RF-B1: the Email channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_email as email_channel`) so existing callers
+# keep compiling. Optional, behind `channel-email`.
+galleon-channel-email = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -284,12 +288,7 @@ channels-full = [
 ]
 # Channels with optional deps
 channel-email = [
-  "dep:async-imap",
-  "dep:lettre",
-  "dep:mail-parser",
-  "dep:rustls",
-  "dep:rustls-pki-types",
-  "tls-client",
+  "dep:galleon-channel-email",
 ]
 tls-client = ["dep:tokio-rustls", "dep:webpki-roots"]
 ws-transport = ["clawcrew-config/ws-transport", "dep:tokio-tungstenite"]

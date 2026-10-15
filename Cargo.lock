@@ -1698,6 +1698,7 @@ dependencies = [
  "galleon-channel-bluesky",
  "galleon-channel-clawdtalk",
  "galleon-channel-dingtalk",
+ "galleon-channel-email",
  "galleon-channel-filesystem",
  "galleon-channel-imessage",
  "galleon-channel-irc",
@@ -4361,6 +4362,35 @@ dependencies = [
  "tokio",
  "tokio-tungstenite 0.29.0",
  "uuid",
+]
+
+[[package]]
+name = "galleon-channel-email"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-imap",
+ "async-trait",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-providers",
+ "clawcrew-tools",
+ "futures-util",
+ "galleon-channel-core",
+ "hex",
+ "lettre",
+ "mail-parser",
+ "pulldown-cmark",
+ "rustls",
+ "rustls-pki-types",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "tokio",
+ "tokio-rustls",
+ "webpki-roots 1.0.9",
 ]
 
 [[package]]

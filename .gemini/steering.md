@@ -60,6 +60,7 @@ Galleon beroperasi dalam **4 tier ketat** dengan batas tanggung jawab tegas ([`0
 3. **Eksekusi Terminal Terproteksi (ODR-07):** Alur terminal wajib: `Tauri/Web` $\rightarrow$ `Go Engine (Policy & Approval)` $\rightarrow$ `Rust SystemGateway (Sandbox)`.
 4. **Secrets SSOT = Rust Vault:** API key dan kredensial tersimpan di `~/.config/galleon/vault/` (AES-256-GCM terenkripsi). Wajib credential scrubbing di log.
 5. **No Shared Database:** Tiap tier mengisolasi storage-nya sendiri. Komunikasi lintas tier hanya via API.
+6. **Migrasi Legacy Path Tuntas (ODR-01, PR-01, CO-08):** Path kanonikal resmi adalah `web/` dan `apps/tauri/`. Direktori legacy `web-2/` dan `apps/tauri-2/` telah selesai dimigrasi dan dilarang dibuat, direferensikan, atau dimasukkan ke git tracking. Setiap residu lokal `web-2` atau `apps/tauri-2` wajib dihapus.
 
 ---
 

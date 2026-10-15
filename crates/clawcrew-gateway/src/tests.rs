@@ -1279,12 +1279,12 @@ path = "{trigger_path}"
 
         let (shutdown_tx, _) = tokio::sync::watch::channel(false);
         let (reload_tx, _) = tokio::sync::watch::channel(false);
-        let reload_controls = clawcrew_runtime::daemon::GatewayReloadControls {
+        let reload_controls = clawcrew_infra::gateway_controls::GatewayReloadControls {
             shutdown_tx: shutdown_tx.clone(),
             reload_tx,
         };
         let (ready_tx, mut ready_rx) = tokio::sync::watch::channel(None);
-        let readiness = clawcrew_runtime::daemon::GatewayReadinessReporter::new(move |addr| {
+        let readiness = clawcrew_infra::gateway_controls::GatewayReadinessReporter::new(move |addr| {
             let _ = ready_tx.send(Some(addr));
         });
 
@@ -1355,7 +1355,7 @@ path = "{trigger_path}"
         std::fs::create_dir_all(&config.data_dir).unwrap();
 
         let (ready_tx, ready_rx) = tokio::sync::watch::channel(None);
-        let readiness = clawcrew_runtime::daemon::GatewayReadinessReporter::new(move |addr| {
+        let readiness = clawcrew_infra::gateway_controls::GatewayReadinessReporter::new(move |addr| {
             let _ = ready_tx.send(Some(addr));
         });
         let result = run_gateway(
