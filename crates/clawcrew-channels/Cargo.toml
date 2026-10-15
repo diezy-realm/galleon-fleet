@@ -96,8 +96,11 @@ galleon-channel-wecom = { workspace = true, optional = true }
 galleon-channel-webhook = { workspace = true, optional = true }
 # RF-B1: the Email channel is split into its own feature-crate. The monolith
 # re-exports it (`pub use galleon_channel_email as email_channel`) so existing callers
-# keep compiling. Optional, behind `channel-email`.
 galleon-channel-email = { workspace = true, optional = true }
+# RF-B1: the QQ channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_qq as qq`) so existing callers
+# (`crate::qq::QQChannel`) keep compiling. Optional, behind `channel-qq`.
+galleon-channel-qq = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -324,7 +327,7 @@ channel-irc = ["dep:galleon-channel-irc"]
 channel-twitch = ["dep:galleon-channel-twitch"]
 channel-imessage = ["dep:galleon-channel-imessage"]
 channel-dingtalk = ["dep:galleon-channel-dingtalk"]
-channel-qq = ["ws-transport"]
+channel-qq = ["dep:galleon-channel-qq", "ws-transport"]
 channel-bluesky = ["dep:galleon-channel-bluesky"]
 channel-twitter = ["dep:galleon-channel-twitter"]
 channel-reddit = ["dep:galleon-channel-reddit"]

@@ -12,6 +12,53 @@ use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::Message;
 use uuid::Uuid;
 
+/// Trait for audio transcription providers that can transcribe QQ voice messages.
+#[async_trait]
+pub trait AudioTranscriber: Send + Sync {
+    /// Transcribe raw audio bytes. `file_name` includes extension for format detection.
+    async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String>;
+}
+
+async fn ensure_success(
+    resp: reqwest::Response,
+    what: &str,
+) -> anyhow::Result<reqwest::Response> {
+    if resp.status().is_success() {
+        return Ok(resp);
+    }
+    let status = resp.status();
+    let err = resp.text().await.unwrap_or_default();
+    anyhow::bail!("{what} failed ({status}): {err}");
+}
+
+async fn read_response_body_limited(
+    mut response: reqwest::Response,
+    max_bytes: u64,
+) -> anyhow::Result<Vec<u8>> {
+    if let Some(content_length) = response.content_length()
+        && content_length > max_bytes
+    {
+        anyhow::bail!(
+            "response body content length {content_length} exceeds {max_bytes}-byte limit"
+        );
+    }
+
+    let mut body = Vec::new();
+
+    while let Some(chunk) = response.chunk().await? {
+        let chunk_len = u64::try_from(chunk.len()).unwrap_or(u64::MAX);
+        let next_len = u64::try_from(body.len())
+            .unwrap_or(u64::MAX)
+            .saturating_add(chunk_len);
+        if next_len > max_bytes {
+            anyhow::bail!("response body exceeds {max_bytes}-byte limit");
+        }
+        body.extend_from_slice(&chunk);
+    }
+
+    Ok(body)
+}
+
 const QQ_API_BASE: &str = "https://api.sgroup.qq.com";
 const QQ_AUTH_URL: &str = "https://bots.qq.com/app/getAppAccessToken";
 
@@ -313,7 +360,7 @@ pub struct QQChannel {
     proxy_url: Option<String>,
     /// Optional voice transcription manager for QQ audio attachments that do
     /// not already carry QQ platform ASR text.
-    transcription_manager: Option<Arc<super::transcription::TranscriptionManager>>,
+    transcription_manager: Option<Arc<dyn AudioTranscriber>>,
     /// Session ID from the last READY event, used for gateway resume (opcode 6).
     session_id: Arc<RwLock<Option<String>>>,
     /// Last sequence number received, used for gateway resume (opcode 6).
@@ -361,29 +408,28 @@ impl QQChannel {
         self
     }
 
-    /// Configure voice transcription from a `[transcription]` snapshot.
-    ///
-    /// Compatibility and test path. The daemon routes every channel through
-    /// `with_transcription_manager` with a manager built from live
-    /// config and the owning agent's resolved provider; this path can only see
-    /// the legacy section, so it binds a lone registered provider and
-    /// otherwise leaves the choice unbound (see
-    /// `transcription::manager_from_snapshot`).
-    pub fn with_transcription(self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
-        let manager = super::transcription::manager_from_snapshot(&config);
-        self.with_transcription_manager(config, manager)
+    /// Configure voice transcription manager.
+    pub fn with_audio_transcriber(
+        mut self,
+        manager: Option<Arc<dyn AudioTranscriber>>,
+    ) -> Self {
+        self.transcription_manager = manager;
+        self
     }
 
     /// Store an already-built transcription manager, or nothing. The config is
     /// recorded only alongside a manager, so a channel never advertises
     /// transcription it cannot perform.
-    pub(crate) fn with_transcription_manager(
+    pub fn with_transcription_manager<T>(
         mut self,
         _config: clawcrew_config::schema::TranscriptionConfig,
-        manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
-    ) -> Self {
+        manager: Option<Arc<T>>,
+    ) -> Self
+    where
+        T: AudioTranscriber + 'static,
+    {
         if let Some(manager) = manager {
-            self.transcription_manager = Some(manager);
+            self.transcription_manager = Some(manager as Arc<dyn AudioTranscriber>);
         }
         self
     }
@@ -394,7 +440,11 @@ impl QQChannel {
 
     fn is_user_allowed(&self, user_id: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed(&peers, user_id, crate::allowlist::Match::Sensitive)
+        galleon_channel_core::allowlist::is_user_allowed(
+            &peers,
+            user_id,
+            galleon_channel_core::allowlist::Match::Sensitive,
+        )
     }
 
     /// Fetch an access token from QQ's OAuth2 endpoint.
@@ -411,7 +461,7 @@ impl QQChannel {
             .send()
             .await?;
 
-        let resp = crate::util::ensure_success(resp, "QQ token request").await?;
+        let resp = ensure_success(resp, "QQ token request").await?;
 
         let data: serde_json::Value = resp.json().await?;
         let token = data
@@ -523,7 +573,7 @@ impl QQChannel {
             .send()
             .await?;
 
-        let resp = crate::util::ensure_success(resp, "QQ gateway request").await?;
+        let resp = ensure_success(resp, "QQ gateway request").await?;
 
         let data: serde_json::Value = resp.json().await?;
         let url = data
@@ -588,7 +638,7 @@ impl QQChannel {
             .await
         {
             Err(e) => Err(anyhow::Error::from(e)),
-            Ok(resp) => crate::util::ensure_success(resp, "QQ health probe (/users/@me)")
+            Ok(resp) => ensure_success(resp, "QQ health probe (/users/@me)")
                 .await
                 .map(|_| ()),
         };
@@ -894,7 +944,7 @@ impl QQChannel {
             .send()
             .await?;
 
-        let resp = crate::util::ensure_success(resp, "QQ upload media").await?;
+        let resp = ensure_success(resp, "QQ upload media").await?;
 
         let upload_resp: QQUploadResponse = resp.json().await?;
         Ok((upload_resp.file_info, upload_resp.ttl))
@@ -969,7 +1019,7 @@ impl QQChannel {
             .send()
             .await?;
 
-        crate::util::ensure_success(resp, "QQ send media message").await?;
+        ensure_success(resp, "QQ send media message").await?;
 
         Ok(())
     }
@@ -1250,7 +1300,7 @@ impl QQChannel {
             anyhow::bail!("Download failed ({}): {url}", resp.status());
         }
 
-        let bytes = crate::util::read_response_body_limited(resp, QQ_MAX_UPLOAD_BYTES).await?;
+        let bytes = read_response_body_limited(resp, QQ_MAX_UPLOAD_BYTES).await?;
         tokio::fs::write(&dest, &bytes).await?;
 
         Ok((dest, bytes))
@@ -1318,7 +1368,7 @@ impl QQChannel {
             .send()
             .await?;
 
-        crate::util::ensure_success(resp, "QQ send message").await?;
+        ensure_success(resp, "QQ send message").await?;
 
         Ok(())
     }
@@ -1884,6 +1934,36 @@ mod tests {
     use super::*;
     use serde_json::json;
 
+    struct MockAudioTranscriber(&'static str);
+    #[async_trait]
+    impl AudioTranscriber for MockAudioTranscriber {
+        async fn transcribe(&self, _audio_data: &[u8], _file_name: &str) -> anyhow::Result<String> {
+            Ok(self.0.to_string())
+        }
+    }
+
+    async fn spawn_raw_http_response(
+        raw_response: Vec<u8>,
+        hold_open: bool,
+    ) -> (String, tokio::task::JoinHandle<()>) {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = clawcrew_spawn::spawn!(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut request = [0_u8; 1024];
+            let _ = socket.read(&mut request).await.unwrap();
+            socket.write_all(&raw_response).await.unwrap();
+            if hold_open {
+                std::future::pending::<()>().await;
+            }
+            socket.shutdown().await.unwrap();
+        });
+
+        (format!("http://{address}"), server)
+    }
+
     #[test]
     fn test_name() {
         let ch = QQChannel::new(
@@ -2330,31 +2410,7 @@ allowed_users = ["user1"]
 
     // --- compose_message_content tests (now async) ---
 
-    fn local_whisper_transcription_config(
-        url: String,
-    ) -> clawcrew_config::schema::TranscriptionConfig {
-        clawcrew_config::schema::TranscriptionConfig {
-            enabled: true,
-            api_key: None,
-            api_url: "https://api.groq.com/openai/v1/audio/transcriptions".to_string(),
-            model: "whisper-large-v3".to_string(),
-            language: None,
-            initial_prompt: None,
-            max_audio_bytes: None,
-            max_duration_secs: 600,
-            openai: None,
-            deepgram: None,
-            assemblyai: None,
-            google: None,
-            local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
-                url,
-                bearer_token: Some("test_token".to_string()),
-                max_audio_bytes: 25_000_000,
-                timeout_secs: 300,
-            }),
-            transcribe_non_ptt_audio: false,
-        }
-    }
+
 
     async fn composed_content(ch: &QQChannel, payload: &serde_json::Value) -> Option<String> {
         ch.compose_qq_message(payload)
@@ -2459,15 +2515,6 @@ allowed_users = ["user1"]
             .mount(&mock_server)
             .await;
 
-        Mock::given(method("POST"))
-            .and(path("/v1/audio/transcriptions"))
-            .respond_with(
-                ResponseTemplate::new(200)
-                    .set_body_json(json!({"text": " configured transcript "})),
-            )
-            .mount(&mock_server)
-            .await;
-
         let workspace = tempfile::tempdir().expect("workspace tempdir");
         let ch = QQChannel::new(
             "id".into(),
@@ -2476,10 +2523,7 @@ allowed_users = ["user1"]
             Arc::new(Vec::new),
         )
         .with_workspace_dir(workspace.path().to_path_buf())
-        .with_transcription(local_whisper_transcription_config(format!(
-            "{}/v1/audio/transcriptions",
-            mock_server.uri()
-        )));
+        .with_audio_transcriber(Some(Arc::new(MockAudioTranscriber("configured transcript"))));
 
         let payload = json!({
             "content": "",
@@ -2496,7 +2540,7 @@ allowed_users = ["user1"]
             result.contains("<VOICE_TRANSCRIPTION>configured transcript</VOICE_TRANSCRIPTION>")
         );
         assert!(result.contains("[VOICE:"));
-        assert!(result.contains("qq_files/download_"));
+        assert!(result.contains("qq_files/download_") || result.contains("qq_files\\download_"));
         assert!(result.contains(".wav]"));
     }
 
@@ -2507,7 +2551,7 @@ allowed_users = ["user1"]
             QQ_MAX_UPLOAD_BYTES + 1
         )
         .into_bytes();
-        let (server_url, server) = crate::util::spawn_raw_http_response(response, true).await;
+        let (server_url, server) = spawn_raw_http_response(response, true).await;
 
         let workspace = tempfile::tempdir().expect("workspace tempdir");
         let ch = QQChannel::new(
@@ -2573,10 +2617,7 @@ allowed_users = ["user1"]
             Arc::new(Vec::new),
         )
         .with_workspace_dir(workspace.path().to_path_buf())
-        .with_transcription(local_whisper_transcription_config(format!(
-            "{}/v1/audio/transcriptions",
-            mock_server.uri()
-        )));
+        .with_audio_transcriber(Some(Arc::new(MockAudioTranscriber("fallback transcript"))));
 
         let payload = json!({
             "content": "",

@@ -107,8 +107,11 @@ pub use galleon_channel_nostr as nostr;
 // keep resolving.
 #[cfg(feature = "channel-notion")]
 pub use galleon_channel_notion as notion;
+// RF-B1: the QQ channel now lives in its own feature-crate. Re-export it
+// under the historical `qq` path so `crate::qq::QQChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-qq")]
-pub mod qq;
+pub use galleon_channel_qq as qq;
 // RF-B1: the Reddit channel now lives in its own feature-crate. Re-export it
 // under the historical `reddit` path so `crate::reddit::RedditChannel` and callers
 // keep resolving.

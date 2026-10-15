@@ -1707,6 +1707,7 @@ dependencies = [
  "galleon-channel-nextcloud",
  "galleon-channel-nostr",
  "galleon-channel-notion",
+ "galleon-channel-qq",
  "galleon-channel-reddit",
  "galleon-channel-signal",
  "galleon-channel-twitch",
@@ -4536,6 +4537,31 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+]
+
+[[package]]
+name = "galleon-channel-qq"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "futures-util",
+ "galleon-channel-core",
+ "rand 0.10.2",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "tokio",
+ "tokio-tungstenite 0.29.0",
+ "uuid",
+ "wiremock",
 ]
 
 [[package]]
