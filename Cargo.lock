@@ -1705,6 +1705,7 @@ dependencies = [
  "galleon-channel-irc",
  "galleon-channel-line",
  "galleon-channel-linq",
+ "galleon-channel-mattermost",
  "galleon-channel-mochat",
  "galleon-channel-nextcloud",
  "galleon-channel-nostr",
@@ -4502,6 +4503,30 @@ dependencies = [
  "sha2 0.10.9",
  "tokio",
  "uuid",
+]
+
+[[package]]
+name = "galleon-channel-mattermost"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "futures-util",
+ "galleon-channel-core",
+ "galleon-i18n",
+ "parking_lot",
+ "rand 0.10.2",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-tungstenite 0.29.0",
+ "url",
+ "wiremock",
 ]
 
 [[package]]

@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
 use clawcrew_api::channel::{Channel, ChannelApprovalResponse, ChannelMessage, SendMessage};
-pub(crate) use clawcrew_config::schema::MattermostListenMode;
+pub use clawcrew_config::schema::MattermostListenMode;
 use futures_util::{SinkExt, StreamExt, stream::SplitSink, stream::SplitStream};
 use parking_lot::Mutex;
 use std::collections::{HashMap, HashSet};
@@ -11,6 +11,96 @@ use tokio::sync::OnceCell;
 use tokio::{io::AsyncRead, io::AsyncWrite};
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::Message as WsMessage;
+
+/// Decoupled audio transcription trait for Mattermost channel.
+pub trait AudioTranscriber: Send + Sync {
+    fn transcribe<'a>(
+        &'a self,
+        audio_data: &'a [u8],
+        file_name: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>>;
+}
+
+pub(crate) async fn read_response_body_limited(
+    mut response: reqwest::Response,
+    max_bytes: u64,
+) -> anyhow::Result<Vec<u8>> {
+    if let Some(content_length) = response.content_length()
+        && content_length > max_bytes
+    {
+        anyhow::bail!(
+            "response body content length {content_length} exceeds {max_bytes}-byte limit"
+        );
+    }
+
+    let mut body = Vec::new();
+
+    while let Some(chunk) = response.chunk().await? {
+        let chunk_len = u64::try_from(chunk.len()).unwrap_or(u64::MAX);
+        let next_len = u64::try_from(body.len())
+            .unwrap_or(u64::MAX)
+            .saturating_add(chunk_len);
+        if next_len > max_bytes {
+            anyhow::bail!("response body exceeds {max_bytes}-byte limit");
+        }
+        body.extend_from_slice(&chunk);
+    }
+
+    Ok(body)
+}
+
+#[cfg(test)]
+pub(crate) async fn spawn_raw_http_response(
+    raw_response: Vec<u8>,
+    hold_open: bool,
+) -> (String, tokio::task::JoinHandle<()>) {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = clawcrew_spawn::spawn!(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = [0_u8; 1024];
+        let _ = socket.read(&mut request).await.unwrap();
+        socket.write_all(&raw_response).await.unwrap();
+        if hold_open {
+            std::future::pending::<()>().await;
+        }
+        socket.shutdown().await.unwrap();
+    });
+
+    (format!("http://{address}"), server)
+}
+
+pub(crate) fn build_yesno_approval_prompt(
+    token: &str,
+    tool_name: &str,
+    arguments_summary: &str,
+    position: Option<(u32, u32)>,
+) -> String {
+    let position_line = match position {
+        Some((_, total)) if total <= 1 => String::new(),
+        Some((index, total)) => format!("Tool call {index} of {total}\n"),
+        None => String::new(),
+    };
+    let heading = galleon_i18n::get_required_cli_string("channel-approval-heading-shout");
+    let tool_label = galleon_i18n::get_required_cli_string("channel-approval-tool-label");
+    let args_label = galleon_i18n::get_required_cli_string("channel-approval-args-label");
+    let yes_command = format!("{token} yes");
+    let no_command = format!("{token} no");
+    let always_command = format!("{token} always");
+    let reply = galleon_i18n::get_required_cli_string_with_args(
+        "channel-approval-reply-instruction-yesno",
+        &[
+            ("yes_command", yes_command.as_str()),
+            ("no_command", no_command.as_str()),
+            ("always_command", always_command.as_str()),
+        ],
+    );
+    format!(
+        "{heading} [{token}]\n{position_line}{tool_label}: {tool_name}\n{args_label}: {arguments_summary}\n\n{reply}"
+    )
+}
 
 const MAX_MATTERMOST_AUDIO_BYTES: u64 = 25 * 1024 * 1024;
 /// Cadence at which auto-discovery re-runs to pick up newly-created DMs
@@ -116,7 +206,7 @@ impl ApprovalState {
     fn allocate_token(&self) -> Option<String> {
         const ALLOCATION_ATTEMPTS: usize = 16;
         (0..ALLOCATION_ATTEMPTS)
-            .map(|_| crate::util::new_approval_token())
+            .map(|_| galleon_channel_core::approval::new_approval_token())
             .find(|token| !self.pending.contains_key(token) && !self.was_retired(token))
     }
 
@@ -342,7 +432,7 @@ pub struct MattermostChannel {
     /// Per-channel proxy URL override.
     proxy_url: Option<String>,
     transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
-    transcription_manager: Option<Arc<super::transcription::TranscriptionManager>>,
+    transcription_manager: Option<Arc<dyn AudioTranscriber>>,
     /// How this channel receives inbound messages. Defaults to `Polling`.
     listen_mode: MattermostListenMode,
     /// In-flight approval prompts, the post bindings that resolve one-tap
@@ -667,23 +757,33 @@ impl MattermostChannel {
     /// the legacy section, so it binds a lone registered provider and
     /// otherwise leaves the choice unbound (see
     /// `transcription::manager_from_snapshot`).
-    pub fn with_transcription(self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
-        let manager = super::transcription::manager_from_snapshot(&config);
-        self.with_transcription_manager(config, manager)
+    /// Configure voice transcription from a `[transcription]` snapshot (no-op stub without provider manager).
+    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+        self.transcription = Some(config);
+        self
     }
 
     /// Store an already-built transcription manager, or nothing. The config is
     /// recorded only alongside a manager, so a channel never advertises
     /// transcription it cannot perform.
-    pub(crate) fn with_transcription_manager(
+    pub fn with_transcription_manager(
         mut self,
         config: clawcrew_config::schema::TranscriptionConfig,
-        manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
+        manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
             self.transcription_manager = Some(manager);
             self.transcription = Some(config);
         }
+        self
+    }
+
+    /// Store an audio transcriber provider.
+    pub fn with_audio_transcriber(
+        mut self,
+        transcriber: Option<std::sync::Arc<dyn AudioTranscriber>>,
+    ) -> Self {
+        self.transcription_manager = transcriber;
         self
     }
 
@@ -806,7 +906,11 @@ impl MattermostChannel {
     /// Empty list means deny everyone. "*" means allow everyone.
     fn is_user_allowed(&self, user_id: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed(&peers, user_id, crate::allowlist::Match::Sensitive)
+        galleon_channel_core::allowlist::is_user_allowed(
+            &peers,
+            user_id,
+            galleon_channel_core::allowlist::Match::Sensitive,
+        )
     }
 
     /// Get the bot's own user ID and username so we can ignore our own messages
@@ -965,7 +1069,7 @@ impl MattermostChannel {
         }
 
         let bytes =
-            match crate::util::read_response_body_limited(response, MAX_MATTERMOST_AUDIO_BYTES)
+            match read_response_body_limited(response, MAX_MATTERMOST_AUDIO_BYTES)
                 .await
             {
                 Ok(b) => b,
@@ -1252,7 +1356,7 @@ impl Channel for MattermostChannel {
     /// Mattermost's interactive buttons post to an integration URL, which a
     /// polling deployment has no endpoint for, so the prompt is the shared
     /// text form used by Signal and Discord's plaintext fallback and is parsed
-    /// by the shared [`crate::util::parse_approval_reply`].
+    /// by the shared [`galleon_channel_core::approval::parse_approval_reply`].
     ///
     /// Only a real token echo counts as an operator decision. The dropped-sender
     /// and timeout arms are the runtime denying on its own authority and are
@@ -1289,7 +1393,7 @@ impl Channel for MattermostChannel {
             (token, generation)
         };
 
-        let text = crate::util::build_yesno_approval_prompt(
+        let text = build_yesno_approval_prompt(
             &token,
             &request.tool_name,
             &request.arguments_summary,
@@ -1962,7 +2066,9 @@ impl MattermostChannel {
             .get("message")
             .and_then(|message| message.as_str())
             .unwrap_or("");
-        let Some((token, response)) = crate::util::parse_approval_reply(text) else {
+        let Some((token, response)) =
+            galleon_channel_core::approval::parse_approval_reply(text)
+        else {
             return ApprovalReplyOutcome::NotFound;
         };
 
@@ -2446,6 +2552,17 @@ fn normalize_mattermost_content(
 mod tests {
     use super::*;
     use serde_json::json;
+
+    struct MockAudioTranscriber(&'static str);
+    impl AudioTranscriber for MockAudioTranscriber {
+        fn transcribe<'a>(
+            &'a self,
+            _audio_data: &'a [u8],
+            _file_name: &'a str,
+        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>> {
+            Box::pin(async move { Ok(self.0.to_string()) })
+        }
+    }
 
     #[test]
     fn mattermost_url_trimming() {
@@ -3255,22 +3372,7 @@ mod tests {
             thread_replies,
             mention_only,
         )
-        .with_transcription(clawcrew_config::schema::TranscriptionConfig {
-            enabled: true,
-            api_key: Some("test_key".to_string()),
-            api_url: "https://api.groq.com/openai/v1/audio/transcriptions".to_string(),
-            model: "whisper-large-v3".to_string(),
-            language: None,
-            initial_prompt: None,
-            max_audio_bytes: None,
-            max_duration_secs: 600,
-            openai: None,
-            deepgram: None,
-            assemblyai: None,
-            google: None,
-            local_whisper: None,
-            transcribe_non_ptt_audio: false,
-        });
+        .with_audio_transcriber(Some(Arc::new(MockAudioTranscriber("test"))));
         assert!(ch.transcription_manager.is_some());
     }
 
@@ -3573,7 +3675,8 @@ mod tests {
                     timeout_secs: 300,
                 }),
                 transcribe_non_ptt_audio: false,
-            });
+            })
+            .with_audio_transcriber(Some(Arc::new(MockAudioTranscriber("test transcript"))));
 
             let post = json!({
                 "metadata": {
@@ -3599,7 +3702,7 @@ mod tests {
             )
             .into_bytes();
             let (mattermost_url, server) =
-                crate::util::spawn_raw_http_response(response, true).await;
+                spawn_raw_http_response(response, true).await;
             let mock_server = MockServer::start().await;
 
             Mock::given(method("POST"))

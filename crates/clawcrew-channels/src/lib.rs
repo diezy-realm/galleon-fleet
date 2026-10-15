@@ -88,8 +88,11 @@ pub use galleon_channel_line as line;
 pub use galleon_channel_linq as linq;
 #[cfg(feature = "channel-matrix")]
 pub mod matrix;
+// RF-B1: the Mattermost channel now lives in its own feature-crate. Re-export it
+// under the historical `mattermost` path so `crate::mattermost::MattermostChannel`
+// and callers keep resolving.
 #[cfg(feature = "channel-mattermost")]
-pub mod mattermost;
+pub use galleon_channel_mattermost as mattermost;
 // RF-B1: the Mochat channel now lives in its own feature-crate. Re-export it
 // under the historical `mochat` path so `crate::mochat::MochatChannel` and callers
 // keep resolving.

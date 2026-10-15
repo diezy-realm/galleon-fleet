@@ -1237,6 +1237,17 @@ impl galleon_channel_line::AudioTranscriber for TranscriptionManager {
     }
 }
 
+#[cfg(feature = "channel-mattermost")]
+impl galleon_channel_mattermost::AudioTranscriber for TranscriptionManager {
+    fn transcribe<'a>(
+        &'a self,
+        audio_data: &'a [u8],
+        file_name: &'a str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>> {
+        Box::pin(self.transcribe(audio_data, file_name))
+    }
+}
+
 /// Bind the provider a channel's manager should dispatch to.
 ///
 /// `agent_provider` is the owning agent's `transcription_provider` as the

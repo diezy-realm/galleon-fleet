@@ -106,6 +106,10 @@ galleon-channel-qq = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_line as line`) so existing callers
 # (`crate::line::LineChannel`) keep compiling. Optional, behind `channel-line`.
 galleon-channel-line = { workspace = true, optional = true }
+# RF-B1: the Mattermost channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_mattermost as mattermost`) so existing callers
+# (`crate::mattermost::MattermostChannel`) keep compiling. Optional, behind `channel-mattermost`.
+galleon-channel-mattermost = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -327,7 +331,7 @@ whatsapp-web = [
 channel-discord = ["ws-transport"]
 channel-slack = ["ws-transport"]
 channel-signal = ["dep:galleon-channel-signal"]
-channel-mattermost = ["ws-transport"]
+channel-mattermost = ["dep:galleon-channel-mattermost", "ws-transport"]
 channel-irc = ["dep:galleon-channel-irc"]
 channel-twitch = ["dep:galleon-channel-twitch"]
 channel-imessage = ["dep:galleon-channel-imessage"]

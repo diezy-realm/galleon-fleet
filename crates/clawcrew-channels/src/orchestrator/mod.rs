@@ -13616,7 +13616,8 @@ fn collect_configured_channels(
                     .with_proxy_url(mm.proxy_url.clone())
                     .with_transcription_manager(
                         config.transcription.clone(),
-                        resolved_transcription_manager(&config, &format!("mattermost.{alias}")),
+                        resolved_transcription_manager(&config, &format!("mattermost.{alias}"))
+                            .map(|m| m as Arc<dyn galleon_channel_mattermost::AudioTranscriber>),
                     )
                     .with_listen_mode(mm.listen_mode)
                     .with_approval_timeout_secs(mm.approval_timeout_secs)

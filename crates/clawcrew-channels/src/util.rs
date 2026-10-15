@@ -47,7 +47,7 @@ pub fn floor_char_boundary(s: &str, max_bytes: usize) -> usize {
     s.floor_char_boundary(max_bytes)
 }
 
-#[cfg(feature = "channel-mattermost")]
+#[cfg(test)]
 pub(crate) async fn read_response_body_limited(
     mut response: reqwest::Response,
     max_bytes: u64,
