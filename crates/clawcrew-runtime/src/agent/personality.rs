@@ -4,8 +4,7 @@
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
 
-/// Maximum characters per personality file before truncation.
-pub const MAX_FILE_CHARS: usize = 20_000;
+pub use clawcrew_api::personality::{EDITABLE_PERSONALITY_FILES, MAX_FILE_CHARS};
 
 /// Well-known personality files loaded from the workspace root.
 pub const PERSONALITY_FILES: &[&str] = &[
@@ -40,16 +39,6 @@ pub fn personality_files_without_memory() -> Vec<&'static str> {
         .filter(|name| *name != MEMORY_PERSONALITY_FILE)
         .collect()
 }
-
-pub const EDITABLE_PERSONALITY_FILES: &[&str] = &[
-    "SOUL.md",
-    "IDENTITY.md",
-    "USER.md",
-    "AGENTS.md",
-    "TOOLS.md",
-    "HEARTBEAT.md",
-    "MEMORY.md",
-];
 
 /// A single personality file loaded from the workspace.
 #[derive(Debug, Clone)]

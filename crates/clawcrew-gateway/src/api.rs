@@ -2437,7 +2437,7 @@ pub(crate) mod tests {
             temperature: None,
             mem: Arc::new(MockMemory::default()),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::strategy::DefaultMemoryStrategy::with_config(
                     Arc::new(MockMemory::default()),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
@@ -2492,6 +2492,9 @@ pub(crate) mod tests {
             diagnostics: None,
             quickstart: None,
             integration_catalog: None,
+            personality_runner: None,
+            skills_runner: None,
+            acp_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         }

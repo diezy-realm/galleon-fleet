@@ -9,11 +9,9 @@ use axum::{
     response::IntoResponse,
 };
 use clawcrew_api::personality::{
-    PersonalityFileEntry, PersonalityGetResult, PersonalityListResult, PersonalityPutResult,
-    PersonalityTemplatesResult, TemplateFileEntry,
+    EDITABLE_PERSONALITY_FILES, MAX_FILE_CHARS, PersonalityFileEntry, PersonalityGetResult,
+    PersonalityListResult, PersonalityPutResult, PersonalityTemplatesResult, TemplateContext,
 };
-use clawcrew_runtime::agent::personality::{EDITABLE_PERSONALITY_FILES, MAX_FILE_CHARS};
-use clawcrew_runtime::agent::personality_templates::{TemplateContext, render_preset_default};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
@@ -359,13 +357,11 @@ pub async fn handle_templates(
         include_memory: q.include_memory.unwrap_or(memory_default_enabled),
     };
 
-    let files = render_preset_default(&ctx)
-        .into_iter()
-        .map(|(filename, content)| TemplateFileEntry {
-            filename: filename.to_string(),
-            content,
-        })
-        .collect();
+    let files = if let Some(runner) = &state.personality_runner {
+        runner.render_templates(&ctx)
+    } else {
+        Vec::new()
+    };
 
     Json(PersonalityTemplatesResult {
         preset: "default".to_string(),

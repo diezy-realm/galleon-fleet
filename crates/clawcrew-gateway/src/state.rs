@@ -6,7 +6,7 @@ use clawcrew_config::cost::tracker::CostTracker;
 use clawcrew_config::pairing::PairingGuard;
 use clawcrew_config::schema::Config;
 use clawcrew_infra::session_backend::SessionBackend;
-use clawcrew_memory::{self, Memory, MemoryCategory};
+use clawcrew_memory::{self, Memory};
 use clawcrew_providers::{self, ModelProvider};
 use clawcrew_tools::canvas::CanvasStore;
 use parking_lot::RwLock;
@@ -76,6 +76,9 @@ pub struct AppState {
     pub diagnostics: Option<Arc<dyn clawcrew_api::doctor::DiagnosticsRunner>>,
     pub quickstart: Option<Arc<dyn clawcrew_config::quickstart::QuickstartRunner>>,
     pub integration_catalog: Option<Arc<dyn clawcrew_config::integrations::IntegrationCatalogProvider>>,
+    pub personality_runner: Option<Arc<dyn clawcrew_api::personality::PersonalityRunner>>,
+    pub skills_runner: Option<Arc<dyn clawcrew_api::skill::SkillsRunner>>,
+    pub acp_runner: Option<Arc<dyn clawcrew_api::runtime_traits::AcpSessionRunner>>,
 }
 
 /// Daemon-owned services whose lifecycle matches one supervised gateway run.

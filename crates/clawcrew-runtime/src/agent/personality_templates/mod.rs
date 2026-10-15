@@ -12,31 +12,35 @@ const MEMORY: &str = include_str!("MEMORY.md");
 const AGENTS: &str = include_str!("AGENTS.md");
 const AGENTS_NO_MEMORY: &str = include_str!("AGENTS.no-memory.md");
 
-/// Per-render context — substituted into the templates' placeholders.
-/// Values default to neutral placeholders the user can edit in-place
-/// once the template is loaded into the editor.
-#[derive(Debug, Clone)]
-pub struct TemplateContext {
-    pub agent: String,
-    pub user: String,
-    pub timezone: String,
-    pub communication_style: String,
-    /// When `false`, omits MEMORY.md from the rendered set and renders
-    /// the no-memory variant of AGENTS.md.
-    pub include_memory: bool,
-}
+pub use clawcrew_api::personality::{PersonalityRunner, TemplateContext};
 
-impl Default for TemplateContext {
-    fn default() -> Self {
-        Self {
-            agent: "ClawCrew".to_string(),
-            user: "User".to_string(),
-            timezone: "UTC".to_string(),
-            communication_style:
-                "Be warm, natural, and clear. Use occasional relevant emojis (1-2 max) and avoid robotic phrasing."
-                    .to_string(),
-            include_memory: true,
-        }
+pub struct RuntimePersonalityRunner;
+
+#[async_trait::async_trait]
+impl PersonalityRunner for RuntimePersonalityRunner {
+    fn render_templates(&self, ctx: &TemplateContext) -> Vec<clawcrew_api::personality::TemplateFileEntry> {
+        render_preset_default(ctx)
+            .into_iter()
+            .map(|(filename, content)| clawcrew_api::personality::TemplateFileEntry {
+                filename: filename.to_string(),
+                content,
+            })
+            .collect()
+    }
+
+    async fn seed_default_personality(
+        &self,
+        alias: &str,
+        workspace_dir: &std::path::Path,
+        include_memory: bool,
+    ) -> std::io::Result<Vec<String>> {
+        let ctx = TemplateContext {
+            agent: alias.to_string(),
+            include_memory,
+            ..Default::default()
+        };
+        let written = ensure_personality_preset(workspace_dir, &ctx).await?;
+        Ok(written.into_iter().map(String::from).collect())
     }
 }
 

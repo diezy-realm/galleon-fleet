@@ -11,10 +11,7 @@ use axum::{
 };
 use futures_util::{SinkExt, StreamExt};
 use serde::Deserialize;
-use std::sync::Arc;
 use tokio::sync::mpsc;
-use clawcrew_infra::acp_session_store::AcpSessionStore;
-use clawcrew_runtime::acp::{AcpServer, AcpServerConfig};
 
 const ACP_WS_PROTOCOL: &str = "clawcrew.acp.v1";
 
@@ -64,50 +61,13 @@ async fn handle_socket(socket: WebSocket, state: AppState, default_agent: Option
     let (input_tx, input_rx) = mpsc::channel::<String>(256);
     let (output_tx, mut output_rx) = mpsc::channel::<String>(256);
 
-    let config = state.config.read().clone();
-    let acp_config = AcpServerConfig {
-        max_sessions: config.acp.max_sessions,
-        session_timeout_secs: config.acp.session_timeout_secs,
-    };
-    let store = AcpSessionStore::new(&config.data_dir)
-        .map(Arc::new)
-        .inspect_err(|e| {
-            ::clawcrew_log::record!(
-                WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                    .with_attrs(::serde_json::json!({"error": e.to_string()})),
-                "Failed to open ACP session store"
-            );
-        })
-        .ok();
-    let canvas_store = state.canvas_store.clone();
-    let server = if let Some(store) = store {
-        Arc::new(
-            AcpServer::new_with_live_config_and_writer_and_store(
-                Arc::clone(&state.config),
-                acp_config,
-                output_tx,
-                store,
-            )
-            .with_canvas_store(canvas_store)
-            .with_sop_engine(state.sop_engine.clone(), state.sop_audit.clone())
-            .with_connection_default_agent(default_agent),
-        )
+    let server_task = if let Some(runner) = state.acp_runner.clone() {
+        Some(clawcrew_spawn::spawn!(async move {
+            runner.run_session(input_rx, output_tx, default_agent).await;
+        }))
     } else {
-        Arc::new(
-            AcpServer::new_with_live_config_and_writer(
-                Arc::clone(&state.config),
-                acp_config,
-                output_tx,
-            )
-            .with_canvas_store(canvas_store)
-            .with_sop_engine(state.sop_engine.clone(), state.sop_audit.clone())
-            .with_connection_default_agent(default_agent),
-        )
+        None
     };
-
-    let server_task = clawcrew_spawn::spawn!(Arc::clone(&server).run_messages(input_rx));
 
     let output_task = clawcrew_spawn::spawn!(async move {
         while let Some(line) = output_rx.recv().await {
@@ -166,14 +126,16 @@ async fn handle_socket(socket: WebSocket, state: AppState, default_agent: Option
 
     drop(input_tx);
 
-    if let Err(e) = server_task.await {
-        ::clawcrew_log::record!(
-            WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
-            "ACP WebSocket server task panicked"
-        );
+    if let Some(task) = server_task {
+        if let Err(e) = task.await {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                "ACP WebSocket server task panicked"
+            );
+        }
     }
     output_task.abort();
     ::clawcrew_log::record!(

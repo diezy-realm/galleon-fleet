@@ -346,3 +346,100 @@ pub struct SkillsReadResult {
     pub frontmatter: SkillFrontmatter,
     pub body: String,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RemoveMode {
+    Archive,
+    Purge,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ScaffoldOptions {
+    pub create_optional_subdirs: bool,
+    pub body: String,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct SkillDocument {
+    pub frontmatter: SkillFrontmatter,
+    pub body: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SkillOrigin {
+    Workspace,
+    OpenSkills,
+    Plugin(String),
+    Bundle(String),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum SkillDropReason {
+    AuditFindings {
+        summary: String,
+        scripts_blocked: bool,
+    },
+    AuditError(String),
+    ManifestParseError(String),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DroppedSkill {
+    pub name: String,
+    pub origin_hint: String,
+    pub reason: SkillDropReason,
+    pub location: Option<PathBuf>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ShadowedSkill {
+    pub name: String,
+    pub origin_hint: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EffectiveSkill {
+    pub name: String,
+    pub description: String,
+    pub origin: SkillOrigin,
+    pub directory: Option<PathBuf>,
+    pub editable: bool,
+    pub bundle: Option<String>,
+    pub shadowed: Vec<ShadowedSkill>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SkillSummary {
+    pub bundle: String,
+    pub name: String,
+    pub directory: PathBuf,
+    pub frontmatter: SkillFrontmatter,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ServiceError {
+    #[error("skill ref error: {0}")]
+    Ref(String),
+    #[error("bundle error: {0}")]
+    Bundle(String),
+    #[error("scaffold error: {0}")]
+    Scaffold(String),
+    #[error("document parse error: {0}")]
+    DocumentParse(String),
+    #[error("skill '{0}' is not present in any configured bundle")]
+    NotFound(String),
+    #[error("skill '{name}' is not editable: it is a {origin} skill, only bundle skills are writable")]
+    NotEditable { name: String, origin: String },
+    #[error("I/O error: {0}")]
+    Io(String),
+}
+
+pub trait SkillsRunner: Send + Sync {
+    fn list_bundles(&self) -> Result<Vec<SkillBundleEntry>, ServiceError>;
+    fn list_skills(&self, bundle: Option<&str>) -> Result<Vec<SkillListEntry>, ServiceError>;
+    fn resolve_effective_skills(&self, agent_alias: &str) -> Result<AgentSkillsResult, ServiceError>;
+    fn scaffold_skill(&self, bundle: &str, name: &str, frontmatter: SkillFrontmatter, options: ScaffoldOptions) -> Result<PathBuf, ServiceError>;
+    fn read_skill(&self, bundle: &str, name: &str) -> Result<SkillsReadResult, ServiceError>;
+    fn write_skill(&self, bundle: &str, name: &str, doc: &SkillDocument) -> Result<(), ServiceError>;
+    fn remove_skill(&self, bundle: &str, name: &str, mode: RemoveMode) -> Result<(), ServiceError>;
+}

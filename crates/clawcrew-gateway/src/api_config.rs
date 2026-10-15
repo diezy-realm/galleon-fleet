@@ -2751,6 +2751,9 @@ pub(crate) mod tests {
             diagnostics: None,
             quickstart: None,
             integration_catalog: None,
+            personality_runner: None,
+            skills_runner: None,
+            acp_runner: None,
         }
     }
 
