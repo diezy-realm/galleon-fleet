@@ -20,7 +20,7 @@ use std::time::Duration;
 const MEMORY_API_CONTENT_MAX_CHARS: usize = 4096;
 
 fn integration_entry_json(
-    entry: &clawcrew_runtime::integrations::IntegrationEntry,
+    entry: &clawcrew_config::integrations::IntegrationEntry,
 ) -> serde_json::Value {
     serde_json::json!({
         "name": &entry.name,
@@ -919,7 +919,11 @@ pub async fn handle_api_integrations(
     }
 
     let config = state.config.read().clone();
-    let entries = clawcrew_runtime::integrations::registry::all_integrations(&config);
+    let entries = state
+        .integration_catalog
+        .as_ref()
+        .map(|c| c.all_integrations(&config))
+        .unwrap_or_default();
 
     let integrations: Vec<serde_json::Value> = entries.iter().map(integration_entry_json).collect();
 
@@ -936,13 +940,17 @@ pub async fn handle_api_integrations_settings(
     }
 
     let config = state.config.read().clone();
-    let entries = clawcrew_runtime::integrations::registry::all_integrations(&config);
+    let entries = state
+        .integration_catalog
+        .as_ref()
+        .map(|c| c.all_integrations(&config))
+        .unwrap_or_default();
 
     let mut settings = serde_json::Map::new();
     for entry in &entries {
         let enabled = matches!(
             entry.status,
-            clawcrew_runtime::integrations::IntegrationStatus::Active
+            clawcrew_config::integrations::IntegrationStatus::Active
         );
         settings.insert(
             entry.name.clone(),
@@ -2482,6 +2490,8 @@ pub(crate) mod tests {
             sop_engine: None,
             sop_audit: None,
             diagnostics: None,
+            quickstart: None,
+            integration_catalog: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         }
@@ -2624,11 +2634,11 @@ pub(crate) mod tests {
 
     #[test]
     fn integration_entry_json_derives_category_label_from_category() {
-        let entry = clawcrew_runtime::integrations::IntegrationEntry {
+        let entry = clawcrew_config::integrations::IntegrationEntry {
             name: "Browser".into(),
             description: "Run browser automation".into(),
-            category: clawcrew_runtime::integrations::IntegrationCategory::ToolsAutomation,
-            status: clawcrew_runtime::integrations::IntegrationStatus::Active,
+            category: clawcrew_config::integrations::IntegrationCategory::ToolsAutomation,
+            status: clawcrew_config::integrations::IntegrationStatus::Active,
             key: None,
         };
 
@@ -2642,11 +2652,11 @@ pub(crate) mod tests {
 
     #[test]
     fn integration_entry_json_exposes_config_key() {
-        let entry = clawcrew_runtime::integrations::IntegrationEntry {
+        let entry = clawcrew_config::integrations::IntegrationEntry {
             name: "Z.AI".into(),
             description: String::new(),
-            category: clawcrew_runtime::integrations::IntegrationCategory::AiModel,
-            status: clawcrew_runtime::integrations::IntegrationStatus::Available,
+            category: clawcrew_config::integrations::IntegrationCategory::AiModel,
+            status: clawcrew_config::integrations::IntegrationStatus::Available,
             key: Some("zai".into()),
         };
 

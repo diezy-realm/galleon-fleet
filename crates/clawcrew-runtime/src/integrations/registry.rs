@@ -110,6 +110,14 @@ pub fn all_integrations(config: &Config) -> Vec<IntegrationEntry> {
         .collect()
 }
 
+pub struct RuntimeIntegrationCatalog;
+
+impl clawcrew_config::integrations::IntegrationCatalogProvider for RuntimeIntegrationCatalog {
+    fn all_integrations(&self, config: &Config) -> Vec<IntegrationEntry> {
+        all_integrations(config)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

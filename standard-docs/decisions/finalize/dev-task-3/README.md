@@ -85,7 +85,15 @@ source: standard-docs/decisions/finalize/dev-task-2/sprint-{0,4,5,6,8}-*.md (5 d
   - 4 referensi di Tahap 14 (`doctor` di `api.rs` didekoplasi via `clawcrew_api::doctor::DiagnosticsRunner` dan `AppState::diagnostics`, commit `451a40034`). Referensi `doctor` di gateway turun menjadi 0.
   - 6 referensi di Tahap 15 (`rpc` types & `tui_registry` didekoplasi via `clawcrew_api::runtime_traits::TuiConnectionRegistry`, DTO config/personality/skills ke `clawcrew_config::dto`, `clawcrew_api::personality`, dan `clawcrew_api::skill`, commit `89e0f154f`). Referensi kategori `rpc` di gateway turun menjadi 0.
   - 9 referensi di Tahap 16 (`daemon` lifecycle controls & readiness reporter dialihkan ke SSOT `clawcrew_infra::gateway_controls`, commit `0d391d7d3`). Referensi `daemon` di gateway turun dari 9 menjadi 0.
-  - Sisa 284 referensi runtime: `cron` (103), `sop` (93), `agent` (28), `control_plane` (24), `integrations` (10), `quickstart` (10), `observability` (9), `skills` (6), `acp` (1). Kategori `security`, `tools`, `platform`, `doctor`, `rpc`, dan `daemon` tuntas 100% menjadi 0.
+  - 20 referensi di Tahap 17 (`quickstart` [10] & `integrations` [10] didekoplasi, commit `405746df6`):
+    - `QuickstartRunner`, `FieldSection`, `FieldDescriptor`, `AppliedAgent`, `QuickstartStep`, `QuickstartError` didekoplasi ke `clawcrew_config::quickstart`.
+    - `model_catalog_with_config` & `model_provider_is_local` didekoplasi ke `clawcrew_providers::catalog`.
+    - `IntegrationCategory`, `IntegrationEntry`, `IntegrationStatus`, `IntegrationCatalogProvider` didekoplasi ke `clawcrew_config::integrations`.
+    - Gateway `AppState` diperluas dengan `Option<Arc<dyn QuickstartRunner>>` dan `Option<Arc<dyn IntegrationCatalogProvider>>`.
+    - `api_quickstart.rs`, `api_sections.rs`, dan `api.rs` di gateway dialihkan ke `clawcrew_config` dan `clawcrew_providers`.
+    - Referensi `quickstart` dan `integrations` di gateway turun tuntas 100% menjadi 0.
+  - Sisa 264 referensi runtime: `cron` (103), `sop` (93), `agent` (28), `control_plane` (24), `observability` (9), `skills` (6), `acp` (1). Kategori `security`, `tools`, `platform`, `doctor`, `rpc`, `daemon`, `quickstart`, dan `integrations` tuntas 100% menjadi 0.
+  - Seluruh unit test terkait lulus 100% (57 test `quickstart` runtime, 27 test `integrations` runtime, 423 test `clawcrew-gateway`, 1709 test `clawcrew-providers`, 115 test `clawcrew-config`, 53 test `architecture`).
   - Seluruh unit test terkait lulus 100% (31 test `audit`, 3 test `api_audit`, 15 test `identity`, 34 test `a2a`, 6 test `param_options`, 12 test `api_sop_author`, 9 test `backup`, 10 test `session_metadata`, 5 test `process_stats`, 5 test `restart`, 13 test `version`, 274 test `clawcrew-api`, compiler check gateway 0 error).
 - **DoD:** 0 referensi `clawcrew_runtime::` tersisa di `clawcrew-gateway/src/` kecuali pengecualian yang didiskusikan & didokumentasikan.
 

@@ -2444,6 +2444,14 @@ pub fn list_model_providers() -> Vec<ModelProviderInfo> {
     out
 }
 
+/// Returns whether a model provider is local (requires no external credential).
+pub fn model_provider_is_local(name: &str) -> bool {
+    list_model_providers()
+        .iter()
+        .find(|p| p.name == name)
+        .is_some_and(|p| p.local)
+}
+
 #[must_use]
 pub fn canonical_model_provider_slots() -> Vec<&'static str> {
     macro_rules! collect_slot_names {
