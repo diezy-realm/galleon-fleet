@@ -121,6 +121,10 @@ jobs:
         if: steps.paths.outputs.touches_rust == 'true'
         uses: taiki-e/install-action@nextest
 
+      - name: Install mold linker
+        if: steps.paths.outputs.touches_rust == 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y mold
+
       - name: Run Nextest on Affected Crates
         id: nextest_check
         if: steps.paths.outputs.touches_rust == 'true'
