@@ -528,7 +528,6 @@ fn nextcloud_talk_memory_key(msg: &clawcrew_api::channel::ChannelMessage) -> Str
 /// Verify `WhatsApp` webhook signature (`X-Hub-Signature-256`).
 /// Returns true if the signature is valid, false otherwise.
 /// See: <https://developers.facebook.com/docs/graph-api/webhooks/getting-started#verification-requests>
-#[cfg(any(feature = "channel-whatsapp-cloud", test))]
 pub fn verify_whatsapp_signature(app_secret: &str, body: &[u8], signature_header: &str) -> bool {
     use hmac::{Hmac, Mac};
     use sha2::Sha256;
