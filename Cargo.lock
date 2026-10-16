@@ -1714,6 +1714,7 @@ dependencies = [
  "galleon-channel-qq",
  "galleon-channel-reddit",
  "galleon-channel-signal",
+ "galleon-channel-telegram",
  "galleon-channel-twitch",
  "galleon-channel-twitter",
  "galleon-channel-webhook",
@@ -4353,6 +4354,7 @@ dependencies = [
  "parking_lot",
  "rand 0.10.2",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]
@@ -4689,6 +4691,34 @@ dependencies = [
  "serde_json",
  "tokio",
  "uuid",
+]
+
+[[package]]
+name = "galleon-channel-telegram"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-providers",
+ "clawcrew-spawn",
+ "clawcrew-tool-call-parser",
+ "galleon-channel-core",
+ "galleon-i18n",
+ "galleon-security-scrub",
+ "parking_lot",
+ "rand 0.10.2",
+ "regex",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "uuid",
+ "wiremock",
 ]
 
 [[package]]

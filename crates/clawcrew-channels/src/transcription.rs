@@ -1259,6 +1259,14 @@ impl galleon_channel_lark::AudioTranscriber for TranscriptionManager {
     }
 }
 
+#[cfg(feature = "channel-telegram")]
+#[async_trait]
+impl galleon_channel_telegram::AudioTranscriber for TranscriptionManager {
+    async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String> {
+        self.transcribe(audio_data, file_name).await
+    }
+}
+
 /// Bind the provider a channel's manager should dispatch to.
 ///
 /// `agent_provider` is the owning agent's `transcription_provider` as the

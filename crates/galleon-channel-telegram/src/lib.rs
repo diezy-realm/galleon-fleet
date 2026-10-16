@@ -7,6 +7,12 @@ use clawcrew_config::pairing::PairingGuard;
 use clawcrew_config::schema::{
     Config, DEFAULT_MULTI_MESSAGE_DELAY_MS, StreamMode, TELEGRAM_OFFICIAL_API_BASE_URL,
 };
+use galleon_channel_core::allowlist;
+use galleon_channel_core::approval::{
+    PendingApproval, PendingApprovalResolution, resolve_pending_approval_with_tool,
+};
+use galleon_channel_core::identity_persist;
+use galleon_channel_core::model_picker_delivery;
 use galleon_i18n as i18n;
 use parking_lot::{Mutex, RwLock};
 use reqwest::multipart::{Form, Part};
@@ -15,6 +21,95 @@ use std::fmt::Write as _;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+/// Pluggable audio transcription backend for Telegram voice messages.
+#[async_trait]
+pub trait AudioTranscriber: Send + Sync {
+    async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String>;
+}
+
+/// Pluggable text-to-speech synthesis backend for Telegram voice notes.
+#[async_trait]
+pub trait TextToSpeechSynthesizer: Send + Sync {
+    async fn synthesize_opus(&self, text: &str) -> anyhow::Result<Vec<u8>>;
+}
+
+const MIN_VOICE_REPLY_BYTES: usize = 3;
+const MAX_AUDIO_TAG_INNER_BYTES: usize = 64;
+
+fn leading_bracket_skip_reason(content: &str) -> Option<&'static str> {
+    let trimmed = content.trim_start();
+    if !trimmed.starts_with('[') {
+        return None;
+    }
+    let close_idx = trimmed.find(']')?;
+    let inner = &trimmed[1..close_idx];
+    if inner.starts_with("http://") || inner.starts_with("https://") {
+        return Some("markdown_link");
+    }
+    if inner.len() > MAX_AUDIO_TAG_INNER_BYTES {
+        return Some("bracketed_prefix");
+    }
+    None
+}
+
+pub fn voice_reply_skip_reason(content: &str) -> Option<&'static str> {
+    if content.len() <= MIN_VOICE_REPLY_BYTES {
+        return Some("too_short");
+    }
+    if content.starts_with("http") {
+        return Some("url_prefix");
+    }
+    if content.starts_with('{') {
+        return Some("json_object");
+    }
+    if let Some(reason) = leading_bracket_skip_reason(content) {
+        return Some(reason);
+    }
+    if content.starts_with("Error") {
+        return Some("error_prefix");
+    }
+    if content.contains("```") {
+        return Some("code_fence");
+    }
+    if content.contains("tool_call") {
+        return Some("tool_call_marker");
+    }
+    if content.contains("wttr.in") {
+        return Some("weather_tool_output");
+    }
+    None
+}
+
+pub fn localized_lifecycle_progress(event: ProgressEvent) -> String {
+    let key = match event {
+        ProgressEvent::Received => "channel-runtime-progress-received",
+        ProgressEvent::Planning => "channel-runtime-progress-planning",
+        ProgressEvent::WaitingOnModel => "channel-runtime-progress-waiting-on-model",
+        ProgressEvent::RunningTool => "channel-runtime-progress-running-tool",
+        ProgressEvent::CompactingContext => "channel-runtime-progress-compacting-context",
+        ProgressEvent::FinalizingResponse => "channel-runtime-progress-finalizing-response",
+    };
+    galleon_i18n::get_required_cli_string(key)
+}
+
+pub fn approval_position_line(position: Option<(u32, u32)>) -> String {
+    match position {
+        Some((_, total)) if total <= 1 => String::new(),
+        Some((index, total)) => {
+            let text = galleon_i18n::get_required_cli_string_with_args(
+                "channel-approval-position",
+                &[
+                    ("index", index.to_string().as_str()),
+                    ("total", total.to_string().as_str()),
+                ],
+            );
+            format!("{text}\n")
+        }
+        None => String::new(),
+    }
+}
+
 
 /// How long a successful `getUpdates` exchange stays evidence that the listener
 /// is working.
@@ -853,9 +948,151 @@ fn parse_path_only_attachment(message: &str) -> Option<TelegramAttachment> {
     })
 }
 
-/// Delegate to the shared `strip_tool_call_tags` in the orchestrator module.
-fn strip_tool_call_tags(message: &str) -> String {
-    crate::orchestrator::strip_tool_call_tags(message)
+pub fn strip_tool_call_tags(message: &str) -> String {
+    const TOOL_CALL_OPEN_TAGS: [&str; 7] = [
+        "<function_calls>",
+        "<function_call>",
+        "<tool_call>",
+        "<toolcall>",
+        "<tool-call>",
+        "<tool>",
+        "<invoke>",
+    ];
+
+    fn find_first_tag<'a>(haystack: &str, tags: &'a [&'a str]) -> Option<(usize, &'a str)> {
+        tags.iter()
+            .filter_map(|tag| haystack.find(tag).map(|idx| (idx, *tag)))
+            .min_by_key(|(idx, _)| *idx)
+    }
+
+    fn matching_close_tag(open_tag: &str) -> Option<&'static str> {
+        match open_tag {
+            "<function_calls>" => Some("</function_calls>"),
+            "<function_call>" => Some("</function_call>"),
+            "<tool_call>" => Some("</tool_call>"),
+            "<toolcall>" => Some("</toolcall>"),
+            "<tool-call>" => Some("</tool-call>"),
+            "<tool>" => Some("</tool>"),
+            "<invoke>" => Some("</invoke>"),
+            _ => None,
+        }
+    }
+
+    fn extract_first_json_end(input: &str) -> Option<usize> {
+        let trimmed = input.trim_start();
+        let trim_offset = input.len().saturating_sub(trimmed.len());
+
+        for (byte_idx, ch) in trimmed.char_indices() {
+            if ch != '{' && ch != '[' {
+                continue;
+            }
+
+            let slice = &trimmed[byte_idx..];
+            let mut stream =
+                serde_json::Deserializer::from_str(slice).into_iter::<serde_json::Value>();
+            if let Some(Ok(_value)) = stream.next() {
+                let consumed = stream.byte_offset();
+                if consumed > 0 {
+                    return Some(trim_offset + byte_idx + consumed);
+                }
+            }
+        }
+
+        None
+    }
+
+    fn strip_leading_close_tags(mut input: &str) -> &str {
+        loop {
+            let trimmed = input.trim_start();
+            if !trimmed.starts_with("</") {
+                return trimmed;
+            }
+
+            let Some(close_end) = trimmed.find('>') else {
+                return "";
+            };
+            input = &trimmed[close_end + 1..];
+        }
+    }
+
+    fn tool_structure_runs_to_end(text: &str) -> bool {
+        for (i, ch) in text.char_indices() {
+            if matches!(ch, '.' | '!' | '?')
+                && text[i + 1..]
+                    .trim_start()
+                    .chars()
+                    .next()
+                    .is_some_and(|c| c.is_alphabetic())
+            {
+                return true;
+            }
+        }
+        let trimmed = text.trim_end();
+        let ends_like_sentence = trimmed
+            .chars()
+            .last()
+            .is_some_and(|c| matches!(c, '.' | '!' | '?'))
+            && trimmed
+                .chars()
+                .rev()
+                .nth(1)
+                .is_some_and(|c| c.is_alphabetic());
+        ends_like_sentence && text.trim().contains(' ')
+    }
+
+    let mut kept_segments = Vec::new();
+    let mut remaining = message;
+
+    while let Some((start, open_tag)) = find_first_tag(remaining, &TOOL_CALL_OPEN_TAGS) {
+        let before = &remaining[..start];
+        if !before.is_empty() {
+            kept_segments.push(before.to_string());
+        }
+
+        let Some(close_tag) = matching_close_tag(open_tag) else {
+            break;
+        };
+        let after_open = &remaining[start + open_tag.len()..];
+
+        if let Some(close_idx) = after_open.find(close_tag) {
+            remaining = &after_open[close_idx + close_tag.len()..];
+            continue;
+        }
+
+        if let Some(consumed_end) = extract_first_json_end(after_open) {
+            remaining = strip_leading_close_tags(&after_open[consumed_end..]);
+            continue;
+        }
+
+        let inner = after_open.trim_start();
+        let inner_lower = inner.to_ascii_lowercase();
+        let looks_like_tool_structure = inner_lower.starts_with("<invoke")
+            || inner_lower.starts_with("<parameter")
+            || inner_lower.starts_with("<tool")
+            || inner_lower.starts_with("<function")
+            || inner.starts_with('{')
+            || inner.starts_with('[');
+        if looks_like_tool_structure && tool_structure_runs_to_end(inner) {
+            remaining = "";
+            break;
+        }
+
+        kept_segments.push(remaining[start..].to_string());
+        remaining = "";
+        break;
+    }
+
+    if !remaining.is_empty() {
+        kept_segments.push(remaining.to_string());
+    }
+
+    let mut result = kept_segments.concat();
+
+    while result.contains("\n\n\n") {
+        result = result.replace("\n\n\n", "\n\n");
+    }
+
+    result.trim().to_string()
 }
 
 fn find_matching_close(s: &str) -> Option<usize> {
@@ -964,11 +1201,11 @@ pub struct TelegramChannel {
     /// Override for local Bot API servers or testing.
     api_base: String,
     transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
-    transcription_manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
+    transcription_manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     voice_transcriptions: Mutex<std::collections::HashMap<String, String>>,
     workspace_dir: Option<std::path::PathBuf>,
     ack_reactions: bool,
-    tts_manager: Option<Arc<super::tts::TtsManager>>,
+    tts_manager: Option<Arc<dyn TextToSpeechSynthesizer>>,
     voice_chats: Arc<std::sync::Mutex<std::collections::HashSet<String>>>,
     /// Resolves voice peers from canonical config at call-time.
     /// See AGENTS.md "ABSOLUTE RULE — SINGLE SOURCE OF TRUTH" — no cache.
@@ -986,7 +1223,7 @@ pub struct TelegramChannel {
     /// Pending approval requests: callback_data key → oneshot sender.
     /// `listen()` resolves these when a matching `callback_query` arrives.
     pending_approvals:
-        Arc<tokio::sync::Mutex<std::collections::HashMap<String, crate::util::PendingApproval>>>,
+        Arc<tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>>,
     /// Opaque, short-lived callback tokens for model-picker keyboards.
     pending_model_pickers: tokio::sync::Mutex<HashMap<String, PendingModelPicker>>,
     /// Seconds to wait for the operator to tap an inline-keyboard button on a
@@ -1023,9 +1260,9 @@ enum EditMessageResult {
 /// transcription, disk writes) so the caller can leave the update
 /// unacknowledged and retry it on the next poll instead of silently dropping
 /// it.
-// `pub(crate)` so orchestrator regressions can receive the disposition returned
+// `pub` so orchestrator regressions can receive the disposition returned
 // by `try_parse_attachment_message` and unwrap the parsed message.
-pub(crate) enum UpdateDisposition {
+pub enum UpdateDisposition {
     // Boxed: `ChannelMessage` is far larger than the unit variants, and this
     // enum is constructed on every incoming update regardless of outcome.
     Parsed(Box<ChannelMessage>),
@@ -2391,9 +2628,9 @@ impl TelegramChannel {
                 // Register the delivery acknowledgement before the handoff
                 // so a runtime that consumes the selection immediately
                 // cannot confirm into a not-yet-registered id.
-                let mut delivery_ack = crate::model_picker_delivery::register(&message_id);
+                let mut delivery_ack = model_picker_delivery::register(&message_id);
                 if Self::deliver_model_picker_selection(tx, message).is_err() {
-                    crate::model_picker_delivery::cancel(&message_id);
+                    model_picker_delivery::cancel(&message_id);
                     self.restore_model_picker_keyboard(previous_keyboard).await;
                     self.answer_model_picker_callback(
                         callback_id,
@@ -2431,8 +2668,8 @@ impl TelegramChannel {
                     // otherwise revoke it so the late dispatch leaves the
                     // route change inert instead of applying it after the
                     // UI reported failure.
-                    match crate::model_picker_delivery::revoke(&message_id) {
-                        crate::model_picker_delivery::RevokeOutcome::Won => {
+                    match model_picker_delivery::revoke(&message_id) {
+                        model_picker_delivery::RevokeOutcome::Won => {
                             self.restore_model_picker_keyboard(previous_keyboard).await;
                             self.answer_model_picker_callback(
                                 callback_id,
@@ -2442,7 +2679,7 @@ impl TelegramChannel {
                             )
                             .await;
                         }
-                        crate::model_picker_delivery::RevokeOutcome::AlreadyApplied => {
+                        model_picker_delivery::RevokeOutcome::AlreadyApplied => {
                             // With a live queue the missing registration
                             // means the route mutation really did run. If
                             // the queue is already closed, the registration
@@ -2519,7 +2756,7 @@ impl TelegramChannel {
         mention_only: bool,
     ) -> Self {
         let alias = alias.into();
-        let has_peers = crate::allowlist::grants_anyone(&peer_resolver());
+        let has_peers = allowlist::grants_anyone(&peer_resolver());
         let pairing = if has_peers {
             None
         } else {
@@ -2595,6 +2832,10 @@ impl TelegramChannel {
             approval_timeout_secs: 120,
             voice_drop_notice_timeout: VOICE_DROP_NOTICE_TIMEOUT,
         }
+    }
+
+    pub fn alias(&self) -> &str {
+        &self.alias
     }
 
     /// Shrink the voice-drop notice bound so a stalled-notice test does not
@@ -2694,10 +2935,10 @@ impl TelegramChannel {
             .iter()
             .map(|peer| Self::normalize_identity(peer))
             .collect();
-        crate::allowlist::is_user_allowed(
+        allowlist::is_user_allowed(
             &peers,
             &identity,
-            crate::allowlist::Match::CaseInsensitive,
+            allowlist::Match::CaseInsensitive,
         )
     }
 
@@ -3144,26 +3385,27 @@ impl TelegramChannel {
         self
     }
 
-    /// Configure voice transcription from a `[transcription]` snapshot.
-    ///
-    /// Compatibility and test path. The daemon routes every channel through
-    /// `with_transcription_manager` with a manager built from live
-    /// config and the owning agent's resolved provider; this path can only see
-    /// the legacy section, so it binds a lone registered provider and
-    /// otherwise leaves the choice unbound (see
-    /// `transcription::manager_from_snapshot`).
-    pub fn with_transcription(self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
-        let manager = super::transcription::manager_from_snapshot(&config);
-        self.with_transcription_manager(config, manager)
+    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+        #[cfg(test)]
+        {
+            if config.enabled {
+                self.transcription_manager = Some(Arc::new(TestTranscriptionManager {
+                    api_url: config.api_url.clone(),
+                }));
+                self.transcription = Some(config);
+                return self;
+            }
+        }
+        if config.enabled {
+            self.transcription = Some(config);
+        }
+        self
     }
 
-    /// Store an already-built transcription manager, or nothing. The config is
-    /// recorded only alongside a manager, so a channel never advertises
-    /// transcription it cannot perform.
-    pub(crate) fn with_transcription_manager(
+    pub fn with_transcription_manager(
         mut self,
         config: clawcrew_config::schema::TranscriptionConfig,
-        manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
+        manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
             self.transcription_manager = Some(manager);
@@ -3172,22 +3414,90 @@ impl TelegramChannel {
         self
     }
 
+    pub fn with_tts_synthesizer(
+        mut self,
+        synthesizer: Option<Arc<dyn TextToSpeechSynthesizer>>,
+    ) -> Self {
+        self.tts_manager = synthesizer;
+        self
+    }
+
+    #[cfg(test)]
     pub fn with_tts(mut self, config: &clawcrew_config::schema::Config) -> Self {
         if config.tts.enabled {
-            let owner = config.agent_for_channel(&format!("telegram.{}", self.alias));
-            match super::tts::TtsManager::from_config_for_agent(config, owner) {
-                Ok(m) => self.tts_manager = Some(Arc::new(m)),
-                Err(e) => ::clawcrew_log::record!(
-                    WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                        .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
-                    "TTS disabled"
-                ),
+            for provider in config.providers.tts.openai.values() {
+                if let Some(uri) = &provider.base.uri {
+                    self.tts_manager = Some(Arc::new(MockOpenAiTts { uri: uri.clone() }));
+                    break;
+                }
             }
         }
         self
     }
+}
+
+#[cfg(test)]
+struct MockOpenAiTts {
+    uri: String,
+}
+
+#[cfg(test)]
+#[async_trait]
+impl TextToSpeechSynthesizer for MockOpenAiTts {
+    async fn synthesize_opus(&self, text: &str) -> anyhow::Result<Vec<u8>> {
+        let client = reqwest::Client::new();
+        let resp = client
+            .post(&self.uri)
+            .json(&serde_json::json!({
+                "model": "tts-1",
+                "input": text,
+                "voice": "alloy"
+            }))
+            .send()
+            .await?;
+        let bytes = resp.bytes().await?;
+        Ok(bytes.to_vec())
+    }
+}
+
+#[cfg(test)]
+struct TestTranscriptionManager {
+    api_url: String,
+}
+
+#[cfg(test)]
+#[async_trait]
+impl AudioTranscriber for TestTranscriptionManager {
+    async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String> {
+        if !self.api_url.is_empty() {
+            let client = reqwest::Client::new();
+            let part = reqwest::multipart::Part::bytes(audio_data.to_vec())
+                .file_name(file_name.to_string());
+            let form = reqwest::multipart::Form::new().part("file", part);
+            if let Ok(resp) = client.post(&self.api_url).multipart(form).send().await {
+                if let Ok(body) = resp.json::<serde_json::Value>().await {
+                    if let Some(text) = body.get("text").and_then(|v| v.as_str()) {
+                        return Ok(text.to_string());
+                    }
+                }
+            }
+        }
+        let ext = std::path::Path::new(file_name)
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("");
+        match ext.to_ascii_lowercase().as_str() {
+            "flac" | "mp3" | "mpeg" | "mpga" | "mp4" | "m4a" | "ogg" | "oga" | "opus" | "wav" | "webm" => {
+                Ok("test transcribed audio".to_string())
+            }
+            _ => anyhow::bail!("Unsupported audio format: {}", ext),
+        }
+    }
+}
+
+impl TelegramChannel {
+
+
 
     /// Parse reply_target into (chat_id, optional thread_id).
     fn parse_reply_target(reply_target: &str) -> (String, Option<String>) {
@@ -3604,7 +3914,7 @@ impl TelegramChannel {
             .collect();
         let borrowed: Vec<&str> = normalized.iter().map(String::as_str).collect();
         let cfg = config.read();
-        crate::identity_persist::external_peer_deny_conflict(
+        identity_persist::external_peer_deny_conflict(
             &cfg,
             "telegram",
             &self.alias,
@@ -3633,7 +3943,7 @@ impl TelegramChannel {
         // `peer_groups` map key. Selecting by key wrote the grant into whatever
         // group happened to be named `telegram_<alias>`, even one whose
         // `channel` points at a different instance, and reported success.
-        crate::identity_persist::persist_external_peer(
+        identity_persist::persist_external_peer(
             Some(config),
             "telegram",
             &self.alias,
@@ -3667,7 +3977,7 @@ impl TelegramChannel {
     /// its own denies shadow, has authorized no one and the channel is still
     /// unpaired.
     fn has_authorized_peer(&self) -> bool {
-        crate::allowlist::grants_anyone(&(self.peer_resolver)())
+        allowlist::grants_anyone(&(self.peer_resolver)())
     }
 
     /// Build the operator-facing `clawcrew channel bind-telegram` command for
@@ -3869,7 +4179,7 @@ impl TelegramChannel {
 
         // Only queue substantive natural-language replies for voice.
         // Skip tool outputs: URLs, JSON, code blocks, errors, short status.
-        if let Some(reason) = crate::util::voice_reply_skip_reason(content) {
+        if let Some(reason) = voice_reply_skip_reason(content) {
             // Stable literal per the logging contract: the classification and
             // per-event measurements ride solely in `attributes` above.
             ::clawcrew_log::record!(
@@ -3912,7 +4222,7 @@ impl TelegramChannel {
                     &chat_id,
                     thread_id.as_deref(),
                     &text,
-                    &tts_manager,
+                    tts_manager.as_ref(),
                 )
                 .await
                 {
@@ -3981,7 +4291,7 @@ impl TelegramChannel {
                     &chat_id,
                     thread_id.as_deref(),
                     &text,
-                    &tts_manager,
+                    tts_manager.as_ref(),
                 )
                 .await
                 {
@@ -4020,7 +4330,7 @@ impl TelegramChannel {
         chat_id: &str,
         thread_id: Option<&str>,
         text: &str,
-        tts_manager: &crate::tts::TtsManager,
+        tts_manager: &dyn TextToSpeechSynthesizer,
     ) -> anyhow::Result<()> {
         let audio_bytes = tts_manager.synthesize_opus(text).await?;
         let audio_len = audio_bytes.len();
@@ -4341,10 +4651,10 @@ impl TelegramChannel {
             .map(|p| Self::normalize_identity(&p))
             .filter(|p| !p.is_empty())
             .collect();
-        crate::allowlist::is_identity_allowed(
+        allowlist::is_identity_allowed(
             &peers,
             &identities,
-            crate::allowlist::Match::Sensitive,
+            allowlist::Match::Sensitive,
         )
     }
 
@@ -5030,7 +5340,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
     /// parsed message with matching rendered content and typed attachment
     /// metadata. `pub(crate)` lets orchestrator regressions drive the real
     /// parser through the typed media boundary.
-    pub(crate) async fn try_parse_attachment_message(
+    pub async fn try_parse_attachment_message(
         &self,
         update: &serde_json::Value,
     ) -> UpdateDisposition {
@@ -6706,8 +7016,6 @@ Allowlist Telegram username (without '@') or numeric user ID.",
     /// the buttons
     /// best-effort rewrite, a stale tap is a no-op
     async fn handle_approval_callback(&self, cb: &serde_json::Value) {
-        use crate::util::PendingApprovalResolution;
-
         let cb_id = cb
             .get("id")
             .and_then(serde_json::Value::as_str)
@@ -6745,7 +7053,7 @@ Allowlist Telegram username (without '@') or numeric user ID.",
         let responder_allowed = self.is_any_user_allowed(identities.iter().map(String::as_str));
         let (resolution, resolved_tool) = match (response, callback_chat_id.as_deref()) {
             (Some(response), Some(chat_id)) => {
-                crate::util::resolve_pending_approval_with_tool(
+                resolve_pending_approval_with_tool(
                     &self.pending_approvals,
                     approval_id,
                     response,
@@ -7759,7 +8067,7 @@ impl Channel for TelegramChannel {
         event: ProgressEvent,
     ) -> anyhow::Result<()> {
         if self.stream_mode == StreamMode::Partial {
-            let status_line = crate::util::localized_lifecycle_progress(event);
+            let status_line = localized_lifecycle_progress(event);
             return self.update_draft(recipient, message_id, &status_line).await;
         }
         Ok(())
@@ -8490,7 +8798,7 @@ Ensure only one `clawcrew` process is using this bot token."
         let args = Self::escape_html(&request.arguments_summary);
         // Back-to-back cards from one message are otherwise indistinguishable
         // before the operator taps, so say which call this is.
-        let position = Self::escape_html(&crate::util::approval_position_line(
+        let position = Self::escape_html(&approval_position_line(
             request.position_counter(),
         ));
         let text = format!(
@@ -8524,7 +8832,7 @@ Ensure only one `clawcrew` process is using this bot token."
         let (tx, mut rx) = tokio::sync::oneshot::channel();
         self.pending_approvals.lock().await.insert(
             approval_id.clone(),
-            crate::util::PendingApproval {
+            PendingApproval {
                 sender: tx,
                 destination: chat_id.to_string(),
                 tool_name: request.tool_name.clone(),
@@ -8557,7 +8865,7 @@ Ensure only one `clawcrew` process is using this bot token."
                 // Unescaped position line: this send has no parse_mode, so the
                 // HTML-escaped one above would show its entities literally.
                 let plain_position =
-                    crate::util::approval_position_line(request.position_counter());
+                    approval_position_line(request.position_counter());
                 let plain_text = format!(
                     "🔧 {heading}\n\n{plain_position}{tool_label}: {}\n{}\n\n{tap_instruction}",
                     request.tool_name, request.arguments_summary
@@ -8635,15 +8943,12 @@ Ensure only one `clawcrew` process is using this bot token."
     }
 }
 
-#[cfg(test)]
 impl UpdateDisposition {
     /// Unwrap a `Parsed` disposition in tests, panicking with `context` on the
     /// skip/retry variants. Keeps parser regressions terse now that the parser
-    /// returns a disposition rather than an `Option`. Defined alongside the
-    /// test module rather than beside the enum so the first `#[cfg(test)]` in
-    /// this file stays after the production code, keeping the config-isolation
-    /// architecture gate's test-region scan off `persist_allowed_identity`.
-    pub(crate) fn expect_parsed(self, context: &str) -> ChannelMessage {
+    /// returns a disposition rather than an `Option`.
+    // INVARIANT: Panics only when called by test harnesses asserting on Parsed disposition.
+    pub fn expect_parsed(self, context: &str) -> ChannelMessage {
         match self {
             UpdateDisposition::Parsed(msg) => *msg,
             UpdateDisposition::SkipPermanent => panic!("{context}: got SkipPermanent"),

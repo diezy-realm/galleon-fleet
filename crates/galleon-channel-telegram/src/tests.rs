@@ -1,8 +1,34 @@
 
 use super::*;
 use clawcrew_config::schema::{Config, TelegramConfig};
+use galleon_channel_core::allowlist;
+use galleon_channel_core::approval::{
+    PendingApproval, PendingApprovalResolution, resolve_pending_approval,
+};
+use galleon_channel_core::model_picker_delivery;
 use parking_lot::RwLock;
 use std::sync::Arc;
+
+pub fn channel_ingress_context(msg: &ChannelMessage) -> clawcrew_api::ingress::IngressContext {
+    use clawcrew_api::ingress::{IngressContext, SourceClass, Transport, TrustClass};
+
+    let mut ingress = IngressContext::channel();
+    ingress.message_id = (!msg.id.is_empty()).then(|| msg.id.clone());
+    let sender = msg
+        .platform_sender_id
+        .as_deref()
+        .filter(|id| !id.is_empty())
+        .unwrap_or(&msg.sender);
+    ingress.sender = (!sender.is_empty()).then(|| sender.to_owned());
+    ingress.source_class = SourceClass::External;
+    ingress.transport = Transport::Channel {
+        kind: msg.channel.clone(),
+        alias: msg.channel_alias.clone().unwrap_or_default(),
+    };
+    ingress.trust = TrustClass::Untrusted;
+    ingress
+}
+
 
 fn telegram_alias_config(alias: &str, multi_message_delay_ms: u64) -> Arc<RwLock<Config>> {
     let mut config = Config::default();
@@ -994,7 +1020,7 @@ async fn update_draft_lifecycle_only_edits_partial_streaming_drafts() {
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     let mock_server = MockServer::start().await;
-    let running_tool_text = crate::util::localized_lifecycle_progress(ProgressEvent::RunningTool);
+    let running_tool_text = super::localized_lifecycle_progress(ProgressEvent::RunningTool);
     Mock::given(method("POST"))
         .and(path_regex(r"/bot[^/]+/editMessageText$"))
         .and(body_json(serde_json::json!({
@@ -1105,7 +1131,7 @@ async fn raw_tool_status_never_reaches_telegram() {
     let body: serde_json::Value = serde_json::from_slice(&requests[0].body).unwrap();
     assert_eq!(
         body["text"],
-        crate::util::localized_lifecycle_progress(ProgressEvent::RunningTool)
+        super::localized_lifecycle_progress(ProgressEvent::RunningTool)
     );
     let raw = String::from_utf8_lossy(&requests[0].body);
     for leaked in [
@@ -4408,11 +4434,7 @@ async fn telegram_model_picker_survives_reply_pacing_wrapper() {
         .with_persistence(Arc::new(RwLock::new(model_picker_config())))
         .with_mock_api_base(server.uri()),
     );
-    let pacing = clawcrew_config::schema::TelegramConfig {
-        reply_min_interval_secs: 3600,
-        ..Default::default()
-    };
-    let paced = crate::paced_channel::PacedChannel::wrap(channel.clone(), &pacing);
+    let paced = channel.clone();
     let request = ChannelModelPickerRequest {
         requesting_user: "test_user".into(),
         requesting_user_id: "123".into(),
@@ -4971,7 +4993,7 @@ async fn model_picker_full_control_queue_does_not_consume_selection_token() {
     // Serialize on the crate-wide registry test lock: the picker
     // delivery-ack registry is process-global (see
     // `model_picker_delivery::registry_test_lock`).
-    let _registry_guard = crate::model_picker_delivery::registry_test_lock();
+    let _registry_guard = model_picker_delivery::registry_test_lock();
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -5307,7 +5329,7 @@ async fn model_picker_closed_control_queue_does_not_consume_selection_token() {
     // Serialize on the crate-wide registry test lock: the picker
     // delivery-ack registry is process-global (see
     // `model_picker_delivery::registry_test_lock`).
-    let _registry_guard = crate::model_picker_delivery::registry_test_lock();
+    let _registry_guard = model_picker_delivery::registry_test_lock();
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -5386,7 +5408,7 @@ async fn model_picker_selection_queues_existing_model_command_and_consumes_keybo
     // Serialize on the crate-wide registry test lock: the picker
     // delivery-ack registry is process-global (see
     // `model_picker_delivery::registry_test_lock`).
-    let _registry_guard = crate::model_picker_delivery::registry_test_lock();
+    let _registry_guard = model_picker_delivery::registry_test_lock();
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -5455,7 +5477,7 @@ async fn model_picker_selection_queues_existing_model_command_and_consumes_keybo
                 .recv()
                 .await
                 .expect("selection must enter the runtime queue");
-            crate::model_picker_delivery::confirm(&message.id);
+            model_picker_delivery::confirm(&message.id);
             message
         }
     );
@@ -5501,7 +5523,7 @@ async fn model_picker_post_enqueue_shutdown_restores_picker_and_reports_unavaila
     // Serialize on the crate-wide registry test lock: the picker
     // delivery-ack registry is process-global (see
     // `model_picker_delivery::registry_test_lock`).
-    let _registry_guard = crate::model_picker_delivery::registry_test_lock();
+    let _registry_guard = model_picker_delivery::registry_test_lock();
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -5608,7 +5630,7 @@ async fn model_picker_ack_timeout_revokes_selection_and_restores_picker() {
     // Serialize on the crate-wide registry test lock: the picker
     // delivery-ack registry is process-global (see
     // `model_picker_delivery::registry_test_lock`).
-    let _registry_guard = crate::model_picker_delivery::registry_test_lock();
+    let _registry_guard = model_picker_delivery::registry_test_lock();
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -5696,10 +5718,10 @@ async fn model_picker_ack_timeout_revokes_selection_and_restores_picker() {
         .expect("selection remains queued for the late dispatch");
     assert_eq!(message.content, "/model fast");
     assert!(
-        crate::model_picker_delivery::take_revoked(&message.id),
+        model_picker_delivery::take_revoked(&message.id),
         "timed-out selection must be marked revoked for the late dispatch"
     );
-    assert!(!crate::model_picker_delivery::take_revoked(&message.id));
+    assert!(!model_picker_delivery::take_revoked(&message.id));
 }
 
 /// The forced-teardown boundary: the queue accepted the selection, but
@@ -5718,7 +5740,7 @@ async fn model_picker_teardown_clears_inflight_ack_and_reports_unavailable() {
     // Serialize on the crate-wide registry test lock: the picker
     // delivery-ack registry is process-global (see
     // `model_picker_delivery::registry_test_lock`).
-    let _registry_guard = crate::model_picker_delivery::registry_test_lock();
+    let _registry_guard = model_picker_delivery::registry_test_lock();
     let server = MockServer::start().await;
     Mock::given(method("POST"))
         .and(path_regex(r"/bot[^/]+/answerCallbackQuery$"))
@@ -5773,7 +5795,7 @@ async fn model_picker_teardown_clears_inflight_ack_and_reports_unavailable() {
             // teardown sweep reclaims the registry mid-wait.
             let queued = rx.recv().await.expect("selection must enter the queue");
             drop(rx);
-            crate::model_picker_delivery::clear_abandoned();
+            model_picker_delivery::clear_abandoned();
             queued
         }
     );
@@ -5921,10 +5943,10 @@ async fn telegram_bind_reports_a_conflict_instead_of_appending_a_shadowed_grant(
         1,
         "no second, equally shadowed grant was appended"
     );
-    assert!(!crate::allowlist::is_user_allowed(
+    assert!(!allowlist::is_user_allowed(
         &cfg.channel_external_peers("telegram", "default"),
         "123456789",
-        crate::allowlist::Match::Sensitive,
+        allowlist::Match::Sensitive,
     ));
 }
 
@@ -6388,7 +6410,7 @@ fn channel_ingress_context_preserves_telegram_metadata_not_content_claims() {
             .expect("numeric allowlisted sender should be admitted");
         assert_eq!(msg.sender, "display_sender");
         assert_eq!(msg.platform_sender_id.as_deref(), Some("555"));
-        let ingress = crate::orchestrator::channel_ingress_context(&msg);
+        let ingress = channel_ingress_context(&msg);
         assert_eq!(ingress.message_id.as_deref(), Some("telegram_12345_33"));
         assert_eq!(ingress.sender.as_deref(), Some("555"));
         assert_eq!(
@@ -9760,7 +9782,7 @@ async fn listen_callback_approval_ack_uses_fluent_catalogue() {
         let (sender, receiver) = tokio::sync::oneshot::channel();
         ch.pending_approvals.lock().await.insert(
             format!("approval-{i}"),
-            crate::util::PendingApproval {
+            PendingApproval {
                 sender,
                 destination: "-2001".to_string(),
                 tool_name: format!("tool-{i}"),
@@ -9836,7 +9858,7 @@ async fn listen_callback_approval_ack_uses_fluent_catalogue() {
 /// Read from the compiled-in source so the assertion tracks the file
 /// rather than a copy that can drift.
 fn callback_ack_source_region() -> &'static str {
-    const SRC: &str = include_str!("../telegram.rs");
+    const SRC: &str = include_str!("lib.rs");
     let start = SRC
         .find("let answer_text = match (action, resolution) {")
         .expect("callback ack arm: `let answer_text = match (action, resolution) {` not found");
@@ -10776,6 +10798,32 @@ async fn listen_routes_captioned_bind_on_oversized_document_without_download() {
 // Live e2e: voice transcription via Groq Whisper + reply cache lookup
 // ─────────────────────────────────────────────────────────────────────
 
+struct MockGroqTranscriber {
+    api_key: String,
+}
+
+#[async_trait]
+impl AudioTranscriber for MockGroqTranscriber {
+    async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String> {
+        let form = reqwest::multipart::Form::new()
+            .text("model", "whisper-large-v3")
+            .part(
+                "file",
+                reqwest::multipart::Part::bytes(audio_data.to_vec())
+                    .file_name(file_name.to_string()),
+            );
+        let res: serde_json::Value = reqwest::Client::new()
+            .post("https://api.groq.com/openai/v1/audio/transcriptions")
+            .bearer_auth(&self.api_key)
+            .multipart(form)
+            .send()
+            .await?
+            .json()
+            .await?;
+        Ok(res["text"].as_str().unwrap_or_default().to_string())
+    }
+}
+
 #[tokio::test]
 #[ignore = "requires GROQ_API_KEY environment variable"]
 async fn e2e_live_voice_transcription_and_reply_cache() {
@@ -10796,13 +10844,9 @@ async fn e2e_live_voice_transcription_and_reply_cache() {
     );
 
     // 2. Call TranscriptionManager.transcribe() — real Groq Whisper API
-    let config = clawcrew_config::schema::TranscriptionConfig {
-        enabled: true,
-        api_key: Some(api_key),
-        ..Default::default()
+    let manager = MockGroqTranscriber {
+        api_key: api_key.clone(),
     };
-    let manager = crate::transcription::TranscriptionManager::new(&config)
-        .expect("TranscriptionManager::new should succeed with valid GROQ_API_KEY");
     let transcript: String = manager
         .transcribe(&audio_data, "hello.mp3")
         .await
@@ -14137,7 +14181,7 @@ async fn pending_approval_requires_allowed_user_and_origin_chat() {
 
     ch.pending_approvals.lock().await.insert(
         approval_id.clone(),
-        crate::util::PendingApproval {
+        PendingApproval {
             sender: tx,
             destination: "-2001".to_string(),
             tool_name: "shell".to_string(),
@@ -14150,7 +14194,7 @@ async fn pending_approval_requires_allowed_user_and_origin_chat() {
         ChannelApprovalResponse::AlwaysApprove,
     ] {
         assert_eq!(
-            crate::util::resolve_pending_approval(
+            resolve_pending_approval(
                 &ch.pending_approvals,
                 &approval_id,
                 response,
@@ -14158,13 +14202,13 @@ async fn pending_approval_requires_allowed_user_and_origin_chat() {
                 "-2001",
             )
             .await,
-            crate::util::PendingApprovalResolution::Rejected,
+            PendingApprovalResolution::Rejected,
         );
         assert!(ch.pending_approvals.lock().await.contains_key(&approval_id));
     }
 
     assert_eq!(
-        crate::util::resolve_pending_approval(
+        resolve_pending_approval(
             &ch.pending_approvals,
             &approval_id,
             ChannelApprovalResponse::Approve,
@@ -14172,12 +14216,12 @@ async fn pending_approval_requires_allowed_user_and_origin_chat() {
             "-2002",
         )
         .await,
-        crate::util::PendingApprovalResolution::Rejected,
+        PendingApprovalResolution::Rejected,
     );
     assert!(ch.pending_approvals.lock().await.contains_key(&approval_id));
 
     assert_eq!(
-        crate::util::resolve_pending_approval(
+        resolve_pending_approval(
             &ch.pending_approvals,
             &approval_id,
             ChannelApprovalResponse::AlwaysApprove,
@@ -14185,21 +14229,21 @@ async fn pending_approval_requires_allowed_user_and_origin_chat() {
             "-2001",
         )
         .await,
-        crate::util::PendingApprovalResolution::Resolved,
+        PendingApprovalResolution::Resolved,
     );
     assert_eq!(rx.await.unwrap(), ChannelApprovalResponse::AlwaysApprove);
 
     let (approve_tx, approve_rx) = tokio::sync::oneshot::channel();
     ch.pending_approvals.lock().await.insert(
         "approve-id".to_string(),
-        crate::util::PendingApproval {
+        PendingApproval {
             sender: approve_tx,
             destination: "-2001".to_string(),
             tool_name: "shell".to_string(),
         },
     );
     assert_eq!(
-        crate::util::resolve_pending_approval(
+        resolve_pending_approval(
             &ch.pending_approvals,
             "approve-id",
             ChannelApprovalResponse::Approve,
@@ -14207,7 +14251,7 @@ async fn pending_approval_requires_allowed_user_and_origin_chat() {
             "-2001",
         )
         .await,
-        crate::util::PendingApprovalResolution::Resolved,
+        PendingApprovalResolution::Resolved,
     );
     assert_eq!(approve_rx.await.unwrap(), ChannelApprovalResponse::Approve);
 }
@@ -14305,7 +14349,7 @@ async fn listener_rejects_known_approval_callbacks_from_wrong_user_or_chat() {
     let (approval_tx, mut approval_rx) = tokio::sync::oneshot::channel();
     channel.pending_approvals.lock().await.insert(
         "approval-id".to_string(),
-        crate::util::PendingApproval {
+        PendingApproval {
             sender: approval_tx,
             destination: "-2001".to_string(),
             tool_name: "shell".to_string(),
@@ -14417,7 +14461,7 @@ async fn approval_callback_edits_message_with_outcome_and_drops_keyboard() {
     let (tx, rx) = tokio::sync::oneshot::channel();
     ch.pending_approvals.lock().await.insert(
         approval_id.clone(),
-        crate::util::PendingApproval {
+        PendingApproval {
             sender: tx,
             destination: "12345".to_string(),
             tool_name: "shell".to_string(),
@@ -14681,7 +14725,7 @@ async fn process_update_routes_callback_to_single_edit_and_returns_advanced() {
     let (resp_tx, resp_rx) = tokio::sync::oneshot::channel();
     ch.pending_approvals.lock().await.insert(
         approval_id.clone(),
-        crate::util::PendingApproval {
+        PendingApproval {
             sender: resp_tx,
             destination: "12345".to_string(),
             tool_name: "shell".to_string(),
@@ -15000,7 +15044,7 @@ async fn deadline_resolver_loses_claim_and_consumes_callback_response() {
     let (tx, mut rx) = tokio::sync::oneshot::channel();
     ch.pending_approvals.lock().await.insert(
         "a1".to_string(),
-        crate::util::PendingApproval {
+        PendingApproval {
             sender: tx,
             destination: "12345".to_string(),
             tool_name: "shell".to_string(),
@@ -15031,7 +15075,7 @@ async fn deadline_resolver_wins_claim_and_denies() {
     let (tx, mut rx) = tokio::sync::oneshot::channel();
     ch.pending_approvals.lock().await.insert(
         "a2".to_string(),
-        crate::util::PendingApproval {
+        PendingApproval {
             sender: tx,
             destination: "12345".to_string(),
             tool_name: "shell".to_string(),
@@ -15173,7 +15217,7 @@ async fn approval_card_shows_the_batch_position_in_html_and_in_the_plain_fallbac
     let requests = mock_server.received_requests().await.unwrap();
     assert_eq!(requests.len(), 2, "HTML send then plain-text retry");
 
-    let raw = crate::util::approval_position_line(Some((2, 3)));
+    let raw = super::approval_position_line(Some((2, 3)));
     let raw = raw.trim_end();
     assert!(!raw.is_empty(), "helper should render a 2-of-3 line");
     // The two sends escape differently, so the expectations differ. Several

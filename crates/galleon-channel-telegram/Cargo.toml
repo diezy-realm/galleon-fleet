@@ -1,0 +1,50 @@
+[package]
+name = "galleon-channel-telegram"
+rust-version.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Telegram channel feature-crate (RF-B1 split; long-polling updates, draft updates, and multi-message streaming ported from clawcrew-channels)."
+repository.workspace = true
+homepage.workspace = true
+publish = true
+
+[dependencies]
+galleon-channel-core.workspace = true
+clawcrew-api.workspace = true
+clawcrew-config.workspace = true
+clawcrew-log.workspace = true
+clawcrew-spawn.workspace = true
+clawcrew-tool-call-parser.workspace = true
+galleon-i18n.workspace = true
+galleon-security-scrub.workspace = true
+anyhow = "1.0"
+async-trait = "0.1"
+parking_lot = "0.12"
+reqwest = { version = "0.12", default-features = false, features = [
+  "__rustls-ring",
+  "json",
+  "multipart",
+  "rustls-tls-webpki-roots-no-provider",
+  "stream",
+] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+rand = "0.10"
+regex = "1.10"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+tokio = { version = "1.50", default-features = false, features = ["sync", "fs", "io-util", "time", "net", "macros", "rt", "rt-multi-thread"] }
+uuid = { version = "1.22", default-features = false, features = ["std", "v4"] }
+
+[dev-dependencies]
+tempfile = "3.26"
+wiremock = "0.6"
+clawcrew-providers.workspace = true
+tokio = { version = "1.50", default-features = false, features = [
+  "macros",
+  "rt-multi-thread",
+  "test-util",
+  "time",
+  "sync",
+] }
+

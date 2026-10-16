@@ -1,7 +1,7 @@
-#[cfg(any(feature = "channel-slack", feature = "channel-telegram"))]
+#[cfg(any(feature = "channel-slack", test))]
 use clawcrew_api::channel::ProgressEvent;
 
-#[cfg(any(feature = "channel-slack", feature = "channel-telegram"))]
+#[cfg(any(feature = "channel-slack", test))]
 pub(crate) fn lifecycle_progress_fluent_key(event: ProgressEvent) -> &'static str {
     match event {
         ProgressEvent::Received => "channel-runtime-progress-received",
@@ -13,7 +13,8 @@ pub(crate) fn lifecycle_progress_fluent_key(event: ProgressEvent) -> &'static st
     }
 }
 
-#[cfg(any(feature = "channel-slack", feature = "channel-telegram"))]
+#[cfg(any(feature = "channel-slack", test))]
+#[allow(dead_code)]
 pub(crate) fn localized_lifecycle_progress(event: ProgressEvent) -> String {
     galleon_i18n::get_required_cli_string(lifecycle_progress_fluent_key(event))
 }
@@ -48,6 +49,7 @@ pub fn floor_char_boundary(s: &str, max_bytes: usize) -> usize {
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 pub(crate) async fn read_response_body_limited(
     mut response: reqwest::Response,
     max_bytes: u64,
@@ -333,13 +335,13 @@ pub(crate) fn parse_attachment_markers_of_kinds(
 
 /// Minimum reply size, in bytes, that earns a voice note. Byte-measured, so a
 /// non-ASCII reply clears the floor with fewer characters than an ASCII one.
-#[cfg(any(feature = "channel-telegram", feature = "whatsapp-web", test))]
+#[cfg(any(feature = "whatsapp-web", test))]
 const MIN_VOICE_REPLY_BYTES: usize = 40;
 
 /// Bytes allowed between the brackets of a leading expressive audio tag. Real
 /// tags are short (`[whispers]`, `[strong French accent]`); the bound keeps a
 /// long bracketed block from passing as one.
-#[cfg(any(feature = "channel-telegram", feature = "whatsapp-web", test))]
+#[cfg(any(feature = "whatsapp-web", test))]
 const MAX_AUDIO_TAG_INNER_BYTES: usize = 32;
 
 /// Classify a reply that opens with `[`. Returns the skip reason when the
@@ -348,7 +350,7 @@ const MAX_AUDIO_TAG_INNER_BYTES: usize = 32;
 ///
 /// Audio tags are stage directions that TTS engines interpret rather than
 /// speak, so a reply opening with one is prose and belongs in a voice note.
-#[cfg(any(feature = "channel-telegram", feature = "whatsapp-web", test))]
+#[cfg(any(feature = "whatsapp-web", test))]
 fn leading_bracket_skip_reason(content: &str) -> Option<&'static str> {
     let after_open = content.strip_prefix('[')?;
 
@@ -386,7 +388,7 @@ fn leading_bracket_skip_reason(content: &str) -> Option<&'static str> {
 /// Why a reply was not queued as a TTS voice note, or `None` when it is worth
 /// speaking. Voice chats mirror the agent's prose, not its plumbing: URLs,
 /// JSON, code blocks, raw tool output and one-line status make poor audio.
-#[cfg(any(feature = "channel-telegram", feature = "whatsapp-web", test))]
+#[cfg(any(feature = "whatsapp-web", test))]
 pub(crate) fn voice_reply_skip_reason(content: &str) -> Option<&'static str> {
     if content.len() <= MIN_VOICE_REPLY_BYTES {
         return Some("too_short");
@@ -652,89 +654,12 @@ pub(crate) fn build_approve_deny_approval_prompt(
     feature = "channel-telegram",
     test
 ))]
-pub(crate) struct PendingApproval {
-    pub(crate) sender: tokio::sync::oneshot::Sender<clawcrew_api::channel::ChannelApprovalResponse>,
-    pub(crate) destination: String,
-    pub(crate) tool_name: String,
-}
+#[allow(unused_imports)]
+pub(crate) use galleon_channel_core::approval::{
+    PendingApproval, PendingApprovalResolution, resolve_pending_approval,
+    resolve_pending_approval_with_tool,
+};
 
-#[cfg(any(
-    feature = "channel-matrix",
-    feature = "channel-slack",
-    feature = "channel-telegram",
-    test
-))]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum PendingApprovalResolution {
-    NotFound,
-    Rejected,
-    Resolved,
-    ReceiverClosed,
-}
-
-#[cfg(any(
-    feature = "channel-matrix",
-    feature = "channel-slack",
-    feature = "channel-telegram",
-    test
-))]
-impl PendingApprovalResolution {
-    #[cfg(any(feature = "channel-matrix", feature = "channel-slack", test))]
-    pub(crate) fn suppresses_message(self) -> bool {
-        !matches!(self, Self::NotFound)
-    }
-}
-
-#[cfg(any(feature = "channel-matrix", feature = "channel-slack", test))]
-pub(crate) async fn resolve_pending_approval(
-    pending_approvals: &tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>,
-    token: &str,
-    response: clawcrew_api::channel::ChannelApprovalResponse,
-    responder_allowed: bool,
-    destination: &str,
-) -> PendingApprovalResolution {
-    resolve_pending_approval_with_tool(
-        pending_approvals,
-        token,
-        response,
-        responder_allowed,
-        destination,
-    )
-    .await
-    .0
-}
-
-#[cfg(any(
-    feature = "channel-matrix",
-    feature = "channel-slack",
-    feature = "channel-telegram",
-    test
-))]
-pub(crate) async fn resolve_pending_approval_with_tool(
-    pending_approvals: &tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>,
-    token: &str,
-    response: clawcrew_api::channel::ChannelApprovalResponse,
-    responder_allowed: bool,
-    destination: &str,
-) -> (PendingApprovalResolution, Option<String>) {
-    let mut pending_approvals = pending_approvals.lock().await;
-    let Some(pending) = pending_approvals.get(token) else {
-        return (PendingApprovalResolution::NotFound, None);
-    };
-    if !responder_allowed || destination.is_empty() || pending.destination != destination {
-        return (PendingApprovalResolution::Rejected, None);
-    }
-
-    let Some(pending) = pending_approvals.remove(token) else {
-        return (PendingApprovalResolution::NotFound, None);
-    };
-    drop(pending_approvals);
-    if pending.sender.send(response).is_ok() {
-        (PendingApprovalResolution::Resolved, Some(pending.tool_name))
-    } else {
-        (PendingApprovalResolution::ReceiverClosed, None)
-    }
-}
 
 /// Generate a conversation history key from a channel message.
 pub fn conversation_history_key(msg: &clawcrew_api::channel::ChannelMessage) -> String {
@@ -1453,7 +1378,7 @@ mod tests {
         // `#[cfg(feature = ...)]`, so this always-compiled test can catch
         // literal-key typos in feature-gated sources.
         const SOURCES: &[&str] = &[
-            include_str!("telegram.rs"),
+            include_str!("../../galleon-channel-telegram/src/lib.rs"),
             include_str!("discord/mod.rs"),
             include_str!("discord/approval.rs"),
             include_str!("whatsapp.rs"),

@@ -1192,6 +1192,17 @@ impl TtsManager {
         }
         transcode_to_opus(audio).await
     }
+}
+
+#[cfg(feature = "channel-telegram")]
+#[async_trait::async_trait]
+impl galleon_channel_telegram::TextToSpeechSynthesizer for TtsManager {
+    async fn synthesize_opus(&self, text: &str) -> anyhow::Result<Vec<u8>> {
+        self.synthesize_opus(text).await
+    }
+}
+
+impl TtsManager {
 
     pub async fn synthesize(&self, text: &str) -> Result<Vec<u8>> {
         let provider_alias = self.agent_tts_provider.as_str();

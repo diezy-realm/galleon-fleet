@@ -17,7 +17,7 @@ pub use galleon_channel_core::login_events;
 pub mod login_probe;
 pub mod login_relink;
 #[cfg(feature = "channel-telegram")]
-pub(crate) mod model_picker_delivery;
+pub use galleon_channel_core::model_picker_delivery;
 pub mod orchestrator;
 pub mod paced_channel;
 pub mod util;
@@ -133,8 +133,11 @@ pub use galleon_channel_reddit as reddit;
 pub use galleon_channel_signal as signal;
 #[cfg(feature = "channel-slack")]
 pub mod slack;
+// RF-B1: the Telegram channel now lives in its own feature-crate. Re-export it
+// under the historical `telegram` path so `crate::telegram::TelegramChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-telegram")]
-pub mod telegram;
+pub use galleon_channel_telegram as telegram;
 // RF-B1: the Twitch channel now lives in its own feature-crate. Re-export it
 // under the historical `twitch` path so `crate::twitch::TwitchChannel` and callers
 // keep resolving.
