@@ -14,6 +14,8 @@ jobs:
   pr-gate:
     name: Principle Checklist & Standards Gate
     runs-on: ubuntu-latest
+    env:
+      RUSTC_WRAPPER: ""
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
