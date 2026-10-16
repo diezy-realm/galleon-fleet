@@ -21,6 +21,7 @@ clawcrew-tool-call-parser.workspace = true
 clawcrew-tools.workspace = true
 galleon-i18n.workspace = true
 galleon-security-scrub.workspace = true
+galleon-channel-core.workspace = true
 # RF-B1: the Signal channel is split into its own feature-crate. The monolith
 # re-exports it (`pub use galleon_channel_signal as signal`) so existing callers
 # (`crate::signal::SignalChannel`) keep compiling. Optional, behind
@@ -101,6 +102,10 @@ galleon-channel-email = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_qq as qq`) so existing callers
 # (`crate::qq::QQChannel`) keep compiling. Optional, behind `channel-qq`.
 galleon-channel-qq = { workspace = true, optional = true }
+# RF-B1: the LINE channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_line as line`) so existing callers
+# (`crate::line::LineChannel`) keep compiling. Optional, behind `channel-line`.
+galleon-channel-line = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -304,7 +309,7 @@ channel-git = ["provider-github", "provider-gitea"]
 # future forges (e.g. `provider-gitlab`) add their own sub-feature and deps here.
 provider-github = ["dep:jsonwebtoken", "dep:thiserror"]
 provider-gitea = []
-channel-line = ["dep:axum"]
+channel-line = ["dep:galleon-channel-line"]
 channel-nostr = ["dep:galleon-channel-nostr"]
 whatsapp-web = [
   "dep:bytes",

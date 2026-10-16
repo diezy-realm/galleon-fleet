@@ -14302,7 +14302,8 @@ fn collect_configured_channels(
                     .with_persistence(config_arc.clone())
                     .with_transcription_manager(
                         config.transcription.clone(),
-                        resolved_transcription_manager(&config, &format!("line.{alias}")),
+                        resolved_transcription_manager(&config, &format!("line.{alias}"))
+                            .map(|m| m as Arc<dyn galleon_channel_line::AudioTranscriber>),
                     ),
             ),
         });
