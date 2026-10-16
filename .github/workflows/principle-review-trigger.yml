@@ -56,8 +56,7 @@ jobs:
             fi
           fi
 
-          # 4. Check for Hardcoded Secrets or Credentials in Diff
-          SECRET_LEAKS=$(git diff -U0 $BASE_REF...HEAD | grep '^[+][^+]' | grep -iE '(api_key|secret_key|private_key|token\s*=\s*["'"'"'][a-zA-Z0-9_\-]{16,})' || true)
+          SECRET_LEAKS=$(git diff -U0 $BASE_REF...HEAD | grep '^[+][^+]' | grep -iE '((api_key|secret_key|private_key|token)\s*[:=]\s*["'"'"'][a-zA-Z0-9_\-]{16,})' || true)
           SECRET_COUNT=0
           if [ -n "$SECRET_LEAKS" ]; then
             SECRET_COUNT=$(echo "$SECRET_LEAKS" | wc -l)
