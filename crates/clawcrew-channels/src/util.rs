@@ -19,16 +19,7 @@ pub(crate) fn localized_lifecycle_progress(event: ProgressEvent) -> String {
     galleon_i18n::get_required_cli_string(lifecycle_progress_fluent_key(event))
 }
 
-/// Truncate a string to `max_chars` Unicode characters, appending "..." if truncated.
-pub fn truncate_with_ellipsis(s: &str, max_chars: usize) -> String {
-    match s.char_indices().nth(max_chars) {
-        Some((idx, _)) => {
-            let truncated = &s[..idx];
-            format!("{}...", truncated.trim_end())
-        }
-        None => s.to_string(),
-    }
-}
+pub use galleon_channel_core::truncate_with_ellipsis;
 
 /// Checks if a text matches the canonical breadcrumb or the localized breadcrumb.
 pub fn is_history_trim_breadcrumb_text(text: &str) -> bool {

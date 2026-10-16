@@ -9,7 +9,7 @@ use clawcrew_tool_call_parser::TERMINAL_MARKERS;
 use futures_util::{SinkExt, StreamExt};
 use galleon_i18n as i18n;
 use parking_lot::Mutex;
-use rand::RngExt;
+use rand::Rng;
 use serde_json::Value;
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -219,14 +219,14 @@ struct WeComRuntimeConfig {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct WeComWsRuntimePolicy {
-    direct_userids: Vec<String>,
-    allowed_groups: Vec<String>,
-    bot_name: Option<String>,
+pub struct WeComWsRuntimePolicy {
+    pub direct_userids: Vec<String>,
+    pub allowed_groups: Vec<String>,
+    pub bot_name: Option<String>,
 }
 
 impl WeComWsRuntimePolicy {
-    pub(crate) fn from_config(
+    pub fn from_config(
         config: &WeComWsConfig,
         external_peers: impl IntoIterator<Item = String>,
     ) -> Self {
@@ -311,7 +311,7 @@ impl WeComWsChannel {
         )
     }
 
-    pub(crate) fn new_with_alias(
+    pub fn new_with_alias(
         config: &WeComWsConfig,
         alias: impl Into<String>,
         policy_resolver: Arc<dyn Fn() -> WeComWsRuntimePolicy + Send + Sync>,
@@ -685,7 +685,7 @@ impl WeComWsChannel {
         let scopes = compute_scopes(&parsed);
 
         // Log inbound info
-        let preview = crate::util::truncate_with_ellipsis(&inbound_content_preview(&parsed), 80);
+        let preview = galleon_channel_core::truncate_with_ellipsis(&inbound_content_preview(&parsed), 80);
         let msg_id_str = if parsed.msg_id.trim().is_empty() {
             "-"
         } else {
@@ -1978,10 +1978,10 @@ fn allowlist_matches(allowlist: &[String], candidate: &str) -> bool {
     // Via the shared helper rather than a local wildcard test, so an `ignore`
     // carried through as a deny marker is applied ahead of the wildcard.
     !candidate.is_empty()
-        && crate::allowlist::is_user_allowed(
+        && galleon_channel_core::allowlist::is_user_allowed(
             allowlist,
             &candidate,
-            crate::allowlist::Match::Sensitive,
+            galleon_channel_core::allowlist::Match::Sensitive,
         )
 }
 
@@ -1992,8 +1992,8 @@ fn evaluate_access_decision(
 ) -> AccessDecision {
     // Grants, not entries: a policy holding only denies has authorized no one,
     // which is the missing-allowlist case the operator needs told about.
-    if !crate::allowlist::grants_anyone(allowed_users)
-        && !crate::allowlist::grants_anyone(allowed_groups)
+    if !galleon_channel_core::allowlist::grants_anyone(allowed_users)
+        && !galleon_channel_core::allowlist::grants_anyone(allowed_groups)
     {
         return AccessDecision::AllowlistMissing;
     }
@@ -2751,14 +2751,19 @@ mod tests {
             false,
         );
 
-        let first_key = crate::orchestrator::conversation_history_key(&first);
+        let conversation_history_key = |msg: &ChannelMessage| {
+            let channel_scope = msg.channel_alias.as_deref().unwrap_or(&msg.channel);
+            format!("{channel_scope}_{}", msg.reply_target)
+        };
+
+        let first_key = conversation_history_key(&first);
         assert_eq!(
             first_key,
-            crate::orchestrator::conversation_history_key(&second)
+            conversation_history_key(&second)
         );
         assert_eq!(
             first_key,
-            crate::orchestrator::conversation_history_key(&clear)
+            conversation_history_key(&clear)
         );
         assert!(!first_key.contains("req-"));
     }
@@ -3195,7 +3200,7 @@ mod tests {
         )
         .expect("peer-group config should parse");
 
-        let peers = crate::orchestrator::wecom_ws_external_peers(&config, "ops");
+        let peers = config.channel_external_peers_for(&["wecom-ws", "wecom_ws"], "ops");
         let policy = WeComWsRuntimePolicy::from_config(&test_wecom_ws_config(), peers);
 
         assert!(

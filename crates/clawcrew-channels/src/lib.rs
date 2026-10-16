@@ -166,8 +166,10 @@ pub use galleon_channel_wechat as wechat;
 // under the historical `wecom` path so callers keep resolving.
 #[cfg(feature = "channel-wecom")]
 pub use galleon_channel_wecom as wecom;
+// RF-B1: the WeCom-WS channel now lives in its own feature-crate. Re-export it
+// under the historical `wecom_ws` path so callers keep resolving.
 #[cfg(feature = "channel-wecom-ws")]
-pub mod wecom_ws;
+pub use galleon_channel_wecom_ws as wecom_ws;
 #[cfg(any(feature = "channel-whatsapp-cloud", feature = "whatsapp-web"))]
 pub mod whatsapp;
 #[cfg(feature = "whatsapp-web")]

@@ -345,3 +345,14 @@ pub mod approval {
 pub mod identity_persist;
 pub mod login_events;
 pub mod model_picker_delivery;
+
+/// Truncate a string to `max_chars` Unicode characters, appending "..." if truncated.
+pub fn truncate_with_ellipsis(s: &str, max_chars: usize) -> String {
+    match s.char_indices().nth(max_chars) {
+        Some((idx, _)) => {
+            let truncated = &s[..idx];
+            format!("{}...", truncated.trim_end())
+        }
+        None => s.to_string(),
+    }
+}

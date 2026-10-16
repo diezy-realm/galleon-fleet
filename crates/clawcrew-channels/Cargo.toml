@@ -122,6 +122,10 @@ galleon-channel-wechat = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_telegram as telegram`) so existing callers
 # (`crate::telegram::TelegramChannel`) keep compiling. Optional, behind `channel-telegram`.
 galleon-channel-telegram = { workspace = true, optional = true }
+# RF-B1: the WeCom-WS channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_wecom_ws as wecom_ws`) so existing callers
+# keep compiling. Optional, behind `channel-wecom-ws`.
+galleon-channel-wecom-ws = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -361,7 +365,7 @@ channel-nextcloud = ["dep:galleon-channel-nextcloud"]
 channel-mochat = ["dep:galleon-channel-mochat"]
 channel-wechat = ["dep:galleon-channel-wechat"]
 channel-wecom = ["dep:galleon-channel-wecom"]
-channel-wecom-ws = ["dep:aes", "dep:cbc", "ws-transport"]
+channel-wecom-ws = ["dep:galleon-channel-wecom-ws"]
 channel-clawdtalk = ["dep:galleon-channel-clawdtalk"]
 channel-webhook = ["dep:galleon-channel-webhook", "dep:axum"]
 channel-whatsapp-cloud = []
