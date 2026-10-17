@@ -47,7 +47,9 @@ pub mod service;
 pub mod session;
 pub mod skills;
 pub mod sop;
+pub use sop::{RuntimeSopRunner, build_sop_engine};
 pub mod subagent;
 pub mod tools;
 pub mod trust;
 pub mod tunnel;
+

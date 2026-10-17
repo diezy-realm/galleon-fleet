@@ -37,8 +37,7 @@ pub async fn run_gateway(
     reload_controls: Option<clawcrew_infra::gateway_controls::GatewayReloadControls>,
     tui_registry: Option<std::sync::Arc<dyn clawcrew_api::runtime_traits::TuiConnectionRegistry>>,
     canvas_store: Option<crate::CanvasStore>,
-    sop_engine: Option<std::sync::Arc<std::sync::Mutex<clawcrew_runtime::sop::SopEngine>>>,
-    sop_audit: Option<std::sync::Arc<clawcrew_runtime::sop::SopAuditLogger>>,
+    sop_runner: Option<std::sync::Arc<dyn clawcrew_api::sop::SopRunner>>,
     readiness: Option<clawcrew_infra::gateway_controls::GatewayReadinessReporter>,
 ) -> Result<()> {
     Box::pin(run_gateway_with_plugin_webhooks(
@@ -49,8 +48,7 @@ pub async fn run_gateway(
         reload_controls,
         tui_registry,
         canvas_store,
-        sop_engine,
-        sop_audit,
+        sop_runner,
         GatewaySupervision::new(
             readiness,
             std::sync::Arc::new(clawcrew_api::webhook::PluginWebhookRegistry::new()),
@@ -70,8 +68,7 @@ pub async fn run_gateway_with_plugin_webhooks(
     reload_controls: Option<clawcrew_infra::gateway_controls::GatewayReloadControls>,
     tui_registry: Option<std::sync::Arc<dyn clawcrew_api::runtime_traits::TuiConnectionRegistry>>,
     canvas_store: Option<crate::CanvasStore>,
-    sop_engine: Option<std::sync::Arc<std::sync::Mutex<clawcrew_runtime::sop::SopEngine>>>,
-    sop_audit: Option<std::sync::Arc<clawcrew_runtime::sop::SopAuditLogger>>,
+    sop_runner: Option<std::sync::Arc<dyn clawcrew_api::sop::SopRunner>>,
     supervision: GatewaySupervision,
 ) -> Result<()> {
     // Implementation is in lib.rs - gateway.rs provides the module interface

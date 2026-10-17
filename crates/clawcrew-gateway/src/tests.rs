@@ -450,8 +450,7 @@
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         }
@@ -495,15 +494,19 @@ path = "{trigger_path}"
         state.config.write().sop = sop_config.clone();
         let data_dir = state.config.read().data_dir.clone();
         let install_root = state.config.read().install_root_dir();
-        let (engine, audit) = clawcrew_runtime::sop::build_sop_engine(
+        let (engine, audit) = clawcrew_runtime::build_sop_engine(
             sop_config,
             &data_dir,
             &install_root,
             Arc::clone(&state.mem),
             Default::default(),
         );
-        state.sop_engine = Some(engine);
-        state.sop_audit = Some(audit);
+        state.sop_runner = Some(Arc::new(clawcrew_runtime::RuntimeSopRunner::new(
+            Some(engine),
+            Some(audit),
+            Arc::clone(&state.config),
+            install_root,
+        )));
         (state, provider)
     }
 
@@ -551,15 +554,19 @@ path = "{trigger_path}"
         state.config.write().sop = sop_config.clone();
         let data_dir = state.config.read().data_dir.clone();
         let install_root = state.config.read().install_root_dir();
-        let (engine, audit) = clawcrew_runtime::sop::build_sop_engine(
+        let (engine, audit) = clawcrew_runtime::build_sop_engine(
             sop_config,
             &data_dir,
             &install_root,
             Arc::clone(&state.mem),
             Default::default(),
         );
-        state.sop_engine = Some(engine);
-        state.sop_audit = Some(audit);
+        state.sop_runner = Some(Arc::new(clawcrew_runtime::RuntimeSopRunner::new(
+            Some(engine),
+            Some(audit),
+            Arc::clone(&state.config),
+            install_root,
+        )));
         (state, provider)
     }
 
@@ -1438,8 +1445,7 @@ path = "{trigger_path}"
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -1524,8 +1530,7 @@ path = "{trigger_path}"
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -2194,8 +2199,7 @@ path = "{trigger_path}"
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         }
@@ -3778,8 +3782,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -3847,15 +3850,15 @@ data: [DONE]\n\n";
         assert_eq!(provider.calls.load(Ordering::SeqCst), 0);
 
         let run_id = parsed["results"][0]["run_id"].as_str().unwrap();
-        let engine = state.sop_engine.as_ref().unwrap().lock().unwrap();
-        let run = engine.get_run(run_id).unwrap();
+        let runner = state.sop_runner.as_ref().unwrap();
+        let run = runner.get_run_detail(run_id).unwrap().expect("run detail");
         assert_eq!(
-            run.trigger_event.source,
-            clawcrew_runtime::sop::SopTriggerSource::Webhook
+            run["trigger_event"]["source"].as_str(),
+            Some("webhook")
         );
-        assert_eq!(run.trigger_event.topic.as_deref(), Some("/sop/deploy"));
+        assert_eq!(run["trigger_event"]["topic"].as_str(), Some("/sop/deploy"));
         assert_eq!(
-            run.trigger_event.payload.as_deref(),
+            run["trigger_event"]["payload"].as_str(),
             Some(r#"{"revision":"abc123"}"#)
         );
     }
@@ -4143,8 +4146,8 @@ data: [DONE]\n\n";
     /// race test can prove *no run was started*, not merely that the HTTP
     /// status was 401.
     fn started_run_count(state: &AppState) -> usize {
-        let engine = state.sop_engine.as_ref().expect("engine").lock().unwrap();
-        engine.active_runs().len() + engine.run_summaries(None).len()
+        let runner = state.sop_runner.as_ref().expect("runner");
+        runner.list_runs(None).map(|r| r.len()).unwrap_or(0)
     }
 
     /// B1 insertion race: pairing disabled and no secret configured, so a
@@ -4697,8 +4700,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -4818,8 +4820,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -4918,8 +4919,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -5125,8 +5125,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -5212,8 +5211,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -5304,8 +5302,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -5401,8 +5398,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -5493,8 +5489,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -5593,8 +5588,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -5742,8 +5736,7 @@ data: [DONE]\n\n";
             pending_pairings: None,
             canvas_store: CanvasStore::new(),
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -6626,8 +6619,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         }
@@ -6711,8 +6703,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         };
@@ -7323,8 +7314,7 @@ data: [DONE]\n\n";
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         }

@@ -1885,6 +1885,7 @@ dependencies = [
  "clawcrew-providers",
  "clawcrew-routing",
  "clawcrew-runtime",
+ "clawcrew-sop-graph",
  "clawcrew-spawn",
  "clawcrew-tls",
  "clawcrew-tools",
@@ -2257,6 +2258,7 @@ dependencies = [
 name = "clawcrew-sop-graph"
 version = "0.8.5"
 dependencies = [
+ "clawcrew-api",
  "schemars",
  "serde",
  "serde_json",

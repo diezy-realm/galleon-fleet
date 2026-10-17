@@ -11,62 +11,8 @@ use super::types::Sop;
 
 const MAX_SWITCH_PORTS: usize = 256;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum WireOp {
-    /// Create the edge, overwriting any previous target of the same role.
-    Connect,
-    /// Remove the edge only if it currently points at the given target.
-    Disconnect,
-}
+pub use clawcrew_sop_graph::{WireEdit, WireError, WireOp};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-/// One editor gesture. `role` picks which routing field is mutated; `port`
-/// is required for `Switch` (index into `routing.switch`) and ignored
-/// otherwise. Accepted over RPC (`sops/wire-draft`) and HTTP.
-pub struct WireEdit {
-    pub op: WireOp,
-    /// Source step number (the node the wire leaves).
-    pub from: u32,
-    /// Target step number (the node the wire enters).
-    pub to: u32,
-    pub role: FlowRole,
-    /// Switch port index; grows the port list on connect if needed.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub port: Option<usize>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-/// Why a wire edit was rejected. The draft SOP is left untouched on error.
-pub enum WireError {
-    /// `from` or `to` names a step number not present in the SOP.
-    UnknownStep(u32),
-    /// `Switch` edit without a `port` index.
-    MissingPort,
-    /// `port` does not exist on the step (disconnect never grows the list).
-    PortOutOfRange(usize),
-    /// `from == to`; steps cannot wire to themselves.
-    SelfLoop(u32),
-    /// Trigger edges are derived from `sop.triggers`, never hand-wired.
-    TriggerNotWirable,
-}
-
-impl std::fmt::Display for WireError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::UnknownStep(n) => write!(f, "step {n} does not exist"),
-            Self::MissingPort => write!(f, "switch edge requires a port index"),
-            Self::PortOutOfRange(i) => write!(f, "switch port {i} out of range"),
-            Self::SelfLoop(n) => write!(f, "step {n} cannot wire to itself"),
-            Self::TriggerNotWirable => write!(
-                f,
-                "trigger edges are derived from the SOP's triggers and cannot be wired by hand"
-            ),
-        }
-    }
-}
-
-impl std::error::Error for WireError {}
 
 /// Apply one wire edit to a draft SOP, mutating the routing field the edit's
 /// role maps to. Validates both endpoints first; on `Err` the SOP is
