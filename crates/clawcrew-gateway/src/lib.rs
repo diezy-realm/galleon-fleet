@@ -13,6 +13,7 @@ pub mod a2a;
 pub mod acp;
 pub mod agent_owned_state;
 pub mod api;
+pub mod cron_adapter;
 pub mod api_backup;
 pub mod api_browse;
 pub mod api_config;

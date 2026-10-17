@@ -15126,6 +15126,24 @@ pub enum CronShellOutputFormat {
     Raw,
 }
 
+impl From<CronShellOutputFormat> for clawcrew_infra::cron_types::CronShellOutputFormat {
+    fn from(f: CronShellOutputFormat) -> Self {
+        match f {
+            CronShellOutputFormat::Wrapped => clawcrew_infra::cron_types::CronShellOutputFormat::Wrapped,
+            CronShellOutputFormat::Raw => clawcrew_infra::cron_types::CronShellOutputFormat::Raw,
+        }
+    }
+}
+
+impl From<clawcrew_infra::cron_types::CronShellOutputFormat> for CronShellOutputFormat {
+    fn from(f: clawcrew_infra::cron_types::CronShellOutputFormat) -> Self {
+        match f {
+            clawcrew_infra::cron_types::CronShellOutputFormat::Wrapped => Self::Wrapped,
+            clawcrew_infra::cron_types::CronShellOutputFormat::Raw => Self::Raw,
+        }
+    }
+}
+
 /// Schedule variant for declarative cron jobs.
 #[derive(Debug, Clone, Serialize, Deserialize, clawcrew_macros::ConfigEnum)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
