@@ -1,20 +1,11 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App';
-import { basePath } from './lib/basePath';
+import {createRoot} from 'react-dom/client';
+import App from './App.tsx';
 import './index.css';
+import { initSavedTheme } from './utils/themeEngine';
+import { initSavedFonts } from './utils/fontEngine';
 
-const unsupportedBrowser =
-  document.documentElement.getAttribute('data-unsupported-browser') === '1';
+// Initialize custom or VS Code theme and typography if saved in user preferences
+initSavedTheme();
+initSavedFonts();
 
-if (!unsupportedBrowser) {
-  ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-      {/* basePath is injected by the Rust gateway at serve time for reverse-proxy prefix support. */}
-      <BrowserRouter basename={basePath || '/'}>
-        <App />
-      </BrowserRouter>
-    </React.StrictMode>
-  );
-}
+createRoot(document.getElementById('root')!).render(<App />);

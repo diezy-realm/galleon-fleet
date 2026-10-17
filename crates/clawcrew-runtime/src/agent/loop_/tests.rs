@@ -3705,6 +3705,8 @@
             admission_policy: crate::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         };
         let mut engine = crate::sop::SopEngine::new(clawcrew_config::schema::SopConfig::default());
         engine.replace_sops_for_test(vec![sop]);
@@ -3860,6 +3862,8 @@
             admission_policy: crate::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         };
         let mut engine = crate::sop::SopEngine::new(clawcrew_config::schema::SopConfig {
             step_scope_enforce: true,

@@ -27,6 +27,8 @@ pub struct LogConfig {
     /// `0` disables entry-count rotation. Ignored by every other policy.
     pub log_persistence_max_entries_per_segment: usize,
     pub log_tool_io: String,
+    pub log_technical_tool_io: String,
+    pub log_conversational_tool_io: String,
     pub log_tool_io_truncate_bytes: usize,
     pub log_tool_io_denylist: Vec<String>,
     pub log_llm_request_payload: String,
@@ -44,6 +46,8 @@ impl Default for LogConfig {
             log_persistence_retention_max_age_days: 0,
             log_persistence_max_entries_per_segment: 0,
             log_tool_io: "redacted".into(),
+            log_technical_tool_io: String::new(),
+            log_conversational_tool_io: String::new(),
             log_tool_io_truncate_bytes: 40960,
             log_tool_io_denylist: Vec::new(),
             log_llm_request_payload: "off".into(),
@@ -173,6 +177,8 @@ pub struct ResolvedPolicy {
     /// `0` disables entry-count rotation. Ignored by every other storage policy.
     pub max_entries_per_segment: usize,
     pub tool_io: ToolIoPolicy,
+    pub technical_tool_io: ToolIoPolicy,
+    pub conversational_tool_io: ToolIoPolicy,
     pub tool_io_truncate_bytes: usize,
     pub tool_io_denylist: Vec<String>,
     pub llm_request_payload: LlmRequestPayloadPolicy,
@@ -180,6 +186,17 @@ pub struct ResolvedPolicy {
 
 impl ResolvedPolicy {
     pub fn from_config(config: &LogConfig, workspace_dir: &Path) -> Self {
+        let tool_io = ToolIoPolicy::from_raw(&config.log_tool_io);
+        let technical_tool_io = if !config.log_technical_tool_io.is_empty() {
+            ToolIoPolicy::from_raw(&config.log_technical_tool_io)
+        } else {
+            tool_io
+        };
+        let conversational_tool_io = if !config.log_conversational_tool_io.is_empty() {
+            ToolIoPolicy::from_raw(&config.log_conversational_tool_io)
+        } else {
+            ToolIoPolicy::Off
+        };
         Self {
             storage: StoragePolicy::from_raw(&config.log_persistence),
             path: resolve_path(&config.log_persistence_path, workspace_dir),
@@ -189,10 +206,20 @@ impl ResolvedPolicy {
             retention_max_files: config.log_persistence_retention_max_files,
             retention_max_age_days: config.log_persistence_retention_max_age_days,
             max_entries_per_segment: config.log_persistence_max_entries_per_segment,
-            tool_io: ToolIoPolicy::from_raw(&config.log_tool_io),
+            tool_io,
+            technical_tool_io,
+            conversational_tool_io,
             tool_io_truncate_bytes: config.log_tool_io_truncate_bytes,
             tool_io_denylist: config.log_tool_io_denylist.clone(),
             llm_request_payload: LlmRequestPayloadPolicy::from_raw(&config.log_llm_request_payload),
+        }
+    }
+
+    pub fn policy_for_tool(&self, tool: &str) -> ToolIoPolicy {
+        if crate::tool_io::is_conversational_tool(tool) {
+            self.conversational_tool_io
+        } else {
+            self.technical_tool_io
         }
     }
 

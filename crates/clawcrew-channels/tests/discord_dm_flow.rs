@@ -14,12 +14,9 @@
 //! - ChannelMessage is created with correct fields
 //! - Test verifies sender, content, channel_id match
 
-use std::sync::Arc;
-use tokio::sync::mpsc;
-
 // Import Discord types from the actual module
 // Note: adjust path if tests are run from a different location
-use clawcrew_api::channel::{Channel, ChannelMessage};
+use clawcrew_api::channel::ChannelMessage;
 
 /// Mock Discord Gateway message (MESSAGE_CREATE event, DM)
 fn mock_discord_dm_event(user_id: &str, username: &str, content: &str) -> serde_json::Value {
@@ -128,15 +125,6 @@ fn mock_discord_dm_with_attachment(
     })
 }
 
-/// Helper: extract key fields from a ChannelMessage for assertions
-fn extract_message_fields(msg: &ChannelMessage) -> (String, String, String, String) {
-    (
-        msg.sender.clone(),
-        msg.content.clone(),
-        msg.channel.clone(),
-        msg.reply_target.clone(),
-    )
-}
 
 #[tokio::test]
 async fn test_discord_dm_parsing() {
@@ -287,7 +275,7 @@ async fn test_discord_dm_allowlist_filter() {
     let event = mock_discord_dm_event("unauthorized_user", "eve", "Try to access");
     let author_id = event["d"]["author"]["id"].as_str().unwrap_or("");
 
-    let allowed_peers = vec!["user_123".to_string(), "user_456".to_string()];
+    let allowed_peers = ["user_123".to_string(), "user_456".to_string()];
 
     // Act: check if user is in allowlist
     let is_allowed = allowed_peers.iter().any(|p| p == author_id);
@@ -317,7 +305,7 @@ async fn test_discord_dm_channel_filter() {
     // Arrange: test channel allowlist for thread/channel messages (should bypass for DM)
     let event = mock_discord_dm_event("user_123", "alice", "DM message");
 
-    let channel_ids = vec!["channel_abc".to_string(), "channel_def".to_string()];
+    let channel_ids = ["channel_abc".to_string(), "channel_def".to_string()];
     let message_channel_id = event["d"]["channel_id"].as_str().unwrap_or("");
     let is_dm = event["d"]["guild_id"].is_null();
 

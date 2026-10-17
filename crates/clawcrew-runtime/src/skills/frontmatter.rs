@@ -1,39 +1,22 @@
 //! Canonical `SKILL.md` frontmatter.
 
-use serde::{Deserialize, Serialize};
 use clawcrew_config::traits::{PropFieldInfo, PropKind};
-
-use super::SkillSlashOption;
 
 // `Eq` is intentionally NOT derived: `slash_options` carries `SkillSlashOption`,
 // whose `min`/`max` bounds are `f64` (no total ordering). `PartialEq` is all the
 // surfaces (tests, change detection) need.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
-pub struct SkillFrontmatter {
-    pub name: String,
-    pub description: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub license: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub author: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub version: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub category: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub tags: Vec<String>,
-    /// When `true`, keeps this skill's instructions inlined in the system
-    /// prompt even in compact skill-prompt mode. See `Skill::always`.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub always: bool,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub slash_options: Vec<SkillSlashOption>,
-}
+pub use clawcrew_api::skill::SkillFrontmatter;
 
-impl SkillFrontmatter {
+pub trait SkillFrontmatterExt {
     /// Field set in canonical order. Surfaces iterate this to build flag
     /// lists / forms / pickers. Drift-checked by `prop_fields_matches_struct`.
-    pub fn prop_fields() -> Vec<PropFieldInfo> {
+    fn prop_fields() -> Vec<PropFieldInfo>;
+}
+
+impl SkillFrontmatterExt for SkillFrontmatter {
+    /// Field set in canonical order. Surfaces iterate this to build flag
+    /// lists / forms / pickers. Drift-checked by `prop_fields_matches_struct`.
+    fn prop_fields() -> Vec<PropFieldInfo> {
         vec![
             field(
                 "name",

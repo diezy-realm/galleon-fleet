@@ -285,6 +285,37 @@ pub trait RuntimeAdapter: Send + Sync {
     }
 }
 
+/// A connected TUI client snapshot for administrative/diagnostic listing.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ConnectedTuiInfo {
+    pub tui_id: String,
+    pub connected_at: String,
+    pub peer_label: String,
+    pub transport: String,
+}
+
+/// Registry interface decoupling the gateway from concrete TUI connection registry state.
+pub trait TuiConnectionRegistry: Send + Sync {
+    fn list_connected_tuis(&self) -> Vec<ConnectedTuiInfo>;
+}
+
+/// Session runner interface decoupling the gateway ACP websocket handler from the concrete AcpServer.
+#[async_trait::async_trait]
+pub trait AcpSessionRunner: Send + Sync {
+    async fn run_session(
+        &self,
+        input_rx: tokio::sync::mpsc::Receiver<String>,
+        output_tx: tokio::sync::mpsc::Sender<String>,
+        default_agent: Option<String>,
+    );
+}
+
+/// Runner interface decoupling gateway cron execution/callbacks from concrete runtime scheduler.
+#[async_trait::async_trait]
+pub trait CronRunner: Send + Sync {
+    async fn trigger_job(&self, job_id: &str) -> anyhow::Result<()>;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

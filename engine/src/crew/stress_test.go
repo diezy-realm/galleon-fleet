@@ -8,22 +8,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/core/config"
-	"github.com/diezy-labs/claw-crew/engine/pkg/client"
-	"github.com/diezy-labs/claw-crew/engine/src/crew"
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
+	"github.com/diezy-realm/galleon-fleet/engine/src/crew"
 )
 
 func TestMultiAgentConcurrencyStress(t *testing.T) {
-	cfg := &config.AppConfig{}
-	gateway, err := client.NewSystemGatewayClient("")
-	if err != nil {
-		t.Fatalf("failed to create gateway client: %v", err)
-	}
+	gateway, cleanup := startMockGatewayServer(t)
+	defer cleanup()
 
-	provider := llm.NewProvider(cfg, gateway)
-	dispatcher := llm.NewToolDispatcher(gateway)
-	orchestrator := crew.NewService(provider, dispatcher, gateway)
+	dispatcher := crew.NewToolDispatcher(gateway)
+	orchestrator := crew.NewService(dispatcher, gateway)
 
 	const concurrentAgents = 50
 	var wg sync.WaitGroup

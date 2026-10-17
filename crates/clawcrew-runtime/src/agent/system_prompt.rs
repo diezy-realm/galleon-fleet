@@ -10,8 +10,7 @@ use clawcrew_api::runtime_traits::{POSIX_DELETION_GUIDANCE, ShellProfile};
 
 /// Maximum characters per injected workspace file (matches `OpenClaw` default).
 pub const BOOTSTRAP_MAX_CHARS: usize = 20_000;
-pub const NO_TOOLS_TASK_FRAMING: &str = "No tools are available for this turn";
-pub const NATIVE_TOOLS_TASK_FRAMING: &str = "Use tools when the request requires action";
+pub use clawcrew_api::agent::{NATIVE_TOOLS_TASK_FRAMING, NO_TOOLS_TASK_FRAMING};
 
 /// Model-facing `always_ask` exception under Full autonomy.
 fn full_autonomy_always_ask_prompt_lines(always_ask: &[String]) -> String {

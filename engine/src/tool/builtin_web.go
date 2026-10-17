@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -12,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 )
 
 // WebFetchTool implements web.fetch with robust SSRF protections
@@ -109,99 +108,25 @@ func (t *WebFetchTool) Execute(ctx context.Context, args string, workspaceRoot s
 }
 
 func (t *WebFetchTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
-	// Fallback: if gateway available, route through gRPC; else HTTP fetch
-	if execCtx != nil && execCtx.Gateway != nil {
-		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
-		if err != nil {
-			return "", nil, err
-		}
-		var res struct {
-			Success bool   `json:"success"`
-			Output  string `json:"output"`
-			Error   string `json:"error"`
-		}
-		if err := json.Unmarshal([]byte(resp), &res); err != nil {
-			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
-		}
-		if !res.Success {
-			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
-		}
-		return res.Output, nil, nil
+	if execCtx == nil || execCtx.Gateway == nil {
+		return "", nil, appErrors.New(appErrors.CodeUnavailable, fmt.Sprintf("native tool %s execution rejected: SystemGateway is required (fail-closed boundary enforced)", t.Name()), appErrors.LayerService)
 	}
-
-	var input struct {
-		URL      string `json:"url"`
-		MaxBytes int64  `json:"max_bytes"`
-	}
-	if err := json.Unmarshal([]byte(args), &input); err != nil {
-		return "", nil, appErrors.Wrap(err, appErrors.CodeInvalidArgument, "invalid web.fetch arguments", appErrors.LayerService)
-	}
-
-	targetURL, err := url.Parse(strings.TrimSpace(input.URL))
-	if err != nil {
-		return "", nil, appErrors.Wrap(err, appErrors.CodeInvalidArgument, "invalid url format", appErrors.LayerService)
-	}
-
-	if err := ValidateSSRFURL(targetURL); err != nil {
-		return "", nil, err
-	}
-
-	if input.MaxBytes <= 0 || input.MaxBytes > 500000 {
-		input.MaxBytes = 100000
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL.String(), nil)
+	resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
 	if err != nil {
 		return "", nil, err
 	}
-	req.Header.Set("User-Agent", "ClawCrew-Engine-Bot/1.0 (+https://clawcrew.dev)")
-	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml,text/plain")
-
-	resp, err := t.client.Do(req)
-	if err != nil {
-		return "", nil, appErrors.New(appErrors.CodeToolFailed, fmt.Sprintf("web fetch error: %v", err), appErrors.LayerExternal)
+	var res struct {
+		Success bool   `json:"success"`
+		Output  string `json:"output"`
+		Error   string `json:"error"`
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return "", nil, appErrors.New(appErrors.CodeToolFailed, fmt.Sprintf("http request failed with status: %d", resp.StatusCode), appErrors.LayerExternal)
+	if err := json.Unmarshal([]byte(resp), &res); err != nil {
+		return "", nil, fmt.Errorf("invalid gateway response: %w", err)
 	}
-
-	reader := io.LimitReader(resp.Body, input.MaxBytes+1)
-	bodyBytes, err := io.ReadAll(reader)
-	if err != nil {
-		return "", nil, fmt.Errorf("failed reading response body: %w", err)
+	if !res.Success {
+		return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
 	}
-
-	truncated := false
-	if int64(len(bodyBytes)) > input.MaxBytes {
-		bodyBytes = bodyBytes[:input.MaxBytes]
-		truncated = true
-	}
-
-	sanitized := sanitizeHTMLContent(string(bodyBytes))
-
-	type webResult struct {
-		URL       string `json:"url"`
-		Status    int    `json:"status"`
-		Content   string `json:"content"`
-		Truncated bool   `json:"truncated"`
-		Evidence  string `json:"evidence_classification"`
-	}
-
-	res := webResult{
-		URL:       targetURL.String(),
-		Status:    resp.StatusCode,
-		Content:   sanitized,
-		Truncated: truncated,
-		Evidence:  "untrusted_external_evidence",
-	}
-
-	resBytes, err := json.Marshal(res)
-	if err != nil {
-		return sanitized, nil, nil
-	}
-	return string(resBytes), nil, nil
+	return res.Output, nil, nil
 }
 
 // ValidateSSRFURL verifies URL scheme and host restrictions

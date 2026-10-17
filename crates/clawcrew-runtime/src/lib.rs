@@ -1,7 +1,8 @@
 #![allow(
     clippy::to_string_in_format_args,
     clippy::useless_format,
-    clippy::manual_inspect
+    clippy::manual_inspect,
+    clippy::collapsible_if
 )]
 //! Agent runtime — orchestration, security, observability, cron, SOP, skills, hardware, and more.
 
@@ -10,6 +11,7 @@ pub mod identity;
 pub mod migration;
 pub mod util;
 
+pub mod acp;
 pub mod agent;
 pub mod approval;
 pub mod browse;
@@ -45,8 +47,9 @@ pub mod service;
 pub mod session;
 pub mod skills;
 pub mod sop;
+pub use sop::{RuntimeSopRunner, build_sop_engine};
 pub mod subagent;
 pub mod tools;
 pub mod trust;
 pub mod tunnel;
-pub mod verifiable_intent;
+

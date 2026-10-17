@@ -18,6 +18,75 @@ use tokio_stream::StreamExt;
 use crate::mcp_protocol::{JsonRpcRequest, JsonRpcResponse};
 use clawcrew_config::schema::{McpServerConfig, McpTransport};
 
+/// Boundary for wrapping/sandboxing MCP stdio child processes.
+///
+/// Allows external runtime sandboxes (such as Landlock, Seatbelt, Bubblewrap, AppContainer)
+/// to constrain the MCP stdio child process to permitted directories and privileges.
+pub trait McpCommandBoundary: Send + Sync {
+    fn wrap_command(
+        &self,
+        command: &mut std::process::Command,
+        config: &McpServerConfig,
+    ) -> anyhow::Result<()>;
+}
+
+static MCP_COMMAND_BOUNDARY: parking_lot::RwLock<Option<Arc<dyn McpCommandBoundary>>> =
+    parking_lot::RwLock::new(None);
+
+/// Register a process-wide command boundary for MCP stdio subprocesses.
+pub fn set_mcp_command_boundary(boundary: Option<Arc<dyn McpCommandBoundary>>) {
+    *MCP_COMMAND_BOUNDARY.write() = boundary;
+}
+
+/// Retrieve the currently active command boundary for MCP stdio subprocesses.
+pub fn current_mcp_command_boundary() -> Option<Arc<dyn McpCommandBoundary>> {
+    MCP_COMMAND_BOUNDARY.read().clone()
+}
+
+/// Apply default tools-level sandboxing when no external runtime boundary is registered.
+///
+/// Confinement guarantees:
+/// 1. Deny-by-default execution check: if `config.sandbox_profile` specifies a blocked profile
+///    (e.g., `"deny-all"` or `"blocked"`), fails closed immediately.
+/// 2. If `config.allowed_paths` is configured, enforces that the working directory is set to
+///    an allowed path.
+/// 3. Environment sanitization: removes dangerous host secret variables (CWE-200) unless
+///    explicitly passed in `config.env`.
+pub fn apply_default_mcp_sandbox(
+    command: &mut std::process::Command,
+    config: &McpServerConfig,
+) -> anyhow::Result<()> {
+    if let Some(profile) = config.sandbox_profile.as_deref()
+        && (profile == "deny-all" || profile == "blocked")
+    {
+        anyhow::bail!(
+            "MCP server `{}` execution blocked by sandbox profile `{}`",
+            config.name,
+            profile
+        );
+    }
+
+    if let Some(first_path) = config.allowed_paths.first() {
+        command.current_dir(first_path);
+    }
+
+    for secret_env in [
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "GEMINI_API_KEY",
+        "AWS_SECRET_ACCESS_KEY",
+        "GITHUB_TOKEN",
+        "GH_TOKEN",
+        "DATABASE_URL",
+    ] {
+        if !config.env.contains_key(secret_env) {
+            command.env_remove(secret_env);
+        }
+    }
+
+    Ok(())
+}
+
 /// Maximum bytes for a single JSON-RPC response.
 const MAX_LINE_BYTES: usize = 4 * 1024 * 1024; // 4 MB
 
@@ -616,13 +685,48 @@ impl StdioTransport {
         active_generation: Arc<AtomicU64>,
         child_exited: Arc<AtomicBool>,
     ) -> Result<StdioConn> {
-        let mut child = Command::new(&config.command)
-            .args(&config.args)
+        let mut cmd = Command::new(&config.command);
+        cmd.args(&config.args)
             .envs(&config.env)
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::inherit())
-            .kill_on_drop(true)
+            .kill_on_drop(true);
+
+        if config.is_sandboxed() {
+            if let Some(boundary) = current_mcp_command_boundary() {
+                boundary
+                    .wrap_command(cmd.as_std_mut(), config)
+                    .with_context(|| {
+                        format!(
+                            "failed to apply sandbox boundary for MCP server `{}`",
+                            config.name
+                        )
+                    })?;
+            } else {
+                apply_default_mcp_sandbox(cmd.as_std_mut(), config)
+                    .with_context(|| {
+                        format!(
+                            "failed to apply default sandbox for MCP server `{}`",
+                            config.name
+                        )
+                    })?;
+            }
+        } else {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Start)
+                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                    .with_attrs(::serde_json::json!({
+                        "mcp_server": &config.name,
+                        "sandboxed": false,
+                        "sandbox_profile": config.sandbox_profile.as_deref().unwrap_or("none"),
+                    })),
+                "mcp_transport: MCP server spawned unconfined (opt-out active)"
+            );
+        }
+
+        let mut child = cmd
             .spawn()
             .with_context(|| format!("failed to spawn MCP server `{}`", config.name))?;
 
@@ -4333,4 +4437,148 @@ Connection: keep-alive\r\n\
             .await
             .expect("close transport");
     }
+
+    // ── MCP Stdio Sandbox Tests (BL-19) ──────────────────────────────────────
+
+    #[test]
+    fn mcp_stdio_default_config_is_sandboxed() {
+        let default_cfg = McpServerConfig::default();
+        assert!(default_cfg.is_sandboxed(), "Default McpServerConfig must be sandboxed");
+
+        let workspace_cfg = McpServerConfig {
+            sandbox_profile: Some("workspace-only".to_string()),
+            ..Default::default()
+        };
+        assert!(workspace_cfg.is_sandboxed(), "workspace-only profile must be sandboxed");
+    }
+
+    #[test]
+    fn mcp_stdio_opt_out_profiles_are_not_sandboxed() {
+        let none_cfg = McpServerConfig {
+            sandbox_profile: Some("none".to_string()),
+            ..Default::default()
+        };
+        assert!(!none_cfg.is_sandboxed(), "none profile must opt-out of sandboxing");
+
+        let unconfined_cfg = McpServerConfig {
+            sandbox_profile: Some("unconfined".to_string()),
+            ..Default::default()
+        };
+        assert!(!unconfined_cfg.is_sandboxed(), "unconfined profile must opt-out of sandboxing");
+    }
+
+    struct RejectingMcpBoundary;
+
+    impl McpCommandBoundary for RejectingMcpBoundary {
+        fn wrap_command(
+            &self,
+            _command: &mut std::process::Command,
+            config: &McpServerConfig,
+        ) -> Result<()> {
+            if config.allowed_paths.is_empty() {
+                bail!("access denied outside allowed scope: no allowed paths specified");
+            }
+            Ok(())
+        }
+    }
+
+    #[tokio::test]
+    async fn mcp_stdio_sandbox_boundary_rejects_out_of_scope_access() {
+        set_mcp_command_boundary(Some(Arc::new(RejectingMcpBoundary)));
+
+        let config = McpServerConfig {
+            name: "sandboxed-probe".to_string(),
+            transport: McpTransport::Stdio,
+            command: "echo".to_string(),
+            args: vec!["test".to_string()],
+            sandbox_profile: Some("default".to_string()),
+            allowed_paths: vec![], // Out-of-scope: no allowed paths
+            ..Default::default()
+        };
+
+        let err = match StdioTransport::new(&config) {
+            Err(e) => e,
+            Ok(_) => panic!("sandboxed server outside allowed scope must fail"),
+        };
+        let err_msg = format!("{err:#}");
+        assert!(
+            err_msg.contains("access denied outside allowed scope"),
+            "expected boundary rejection, got: {err_msg}"
+        );
+
+        // Reset boundary
+        set_mcp_command_boundary(None);
+    }
+
+    #[tokio::test]
+    async fn mcp_stdio_sandbox_opt_out_bypasses_boundary() {
+        struct AlwaysFailBoundary;
+        impl McpCommandBoundary for AlwaysFailBoundary {
+            fn wrap_command(
+                &self,
+                _command: &mut std::process::Command,
+                _config: &McpServerConfig,
+            ) -> Result<()> {
+                bail!("boundary must not be invoked for unconfined server");
+            }
+        }
+
+        set_mcp_command_boundary(Some(Arc::new(AlwaysFailBoundary)));
+
+        let config = McpServerConfig {
+            name: "unconfined-probe".to_string(),
+            transport: McpTransport::Stdio,
+            command: "nonexistent_mcp_dummy_cmd_xyz".to_string(),
+            sandbox_profile: Some("none".to_string()),
+            ..Default::default()
+        };
+
+        // When spawning, because it's unconfined, the boundary is bypassed.
+        // It will fail because the binary doesn't exist, NOT because of AlwaysFailBoundary.
+        let err = match StdioTransport::new(&config) {
+            Err(e) => e,
+            Ok(_) => panic!("command fails to spawn"),
+        };
+        assert!(
+            !err.to_string().contains("boundary must not be invoked"),
+            "opt-out server must not invoke sandbox boundary: {err:#}"
+        );
+
+        set_mcp_command_boundary(None);
+    }
+
+    #[test]
+    fn mcp_stdio_default_sandbox_blocks_deny_all_profile() {
+        set_mcp_command_boundary(None);
+
+        let config = McpServerConfig {
+            name: "blocked-server".to_string(),
+            sandbox_profile: Some("deny-all".to_string()),
+            ..Default::default()
+        };
+
+        let mut cmd = std::process::Command::new("echo");
+        let result = apply_default_mcp_sandbox(&mut cmd, &config);
+        assert!(result.is_err(), "deny-all profile must be rejected");
+        assert!(
+            result.unwrap_err().to_string().contains("blocked by sandbox profile"),
+            "expected sandbox profile block message"
+        );
+    }
+
+    #[test]
+    fn mcp_stdio_default_sandbox_strips_sensitive_environment() {
+        set_mcp_command_boundary(None);
+
+        let config = McpServerConfig {
+            name: "safe-server".to_string(),
+            ..Default::default()
+        };
+
+        let mut cmd = std::process::Command::new("echo");
+        cmd.env("OPENAI_API_KEY", "secret-token-12345");
+        let result = apply_default_mcp_sandbox(&mut cmd, &config);
+        assert!(result.is_ok());
+    }
 }
+

@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"os"
@@ -108,7 +109,8 @@ func Init(cfg Config) (*slog.Logger, error) {
 		}
 
 		// Use JSON handler for easy parsing by UI and dashboard
-		handler := slog.NewJSONHandler(writers, opts)
+		jsonHandler := slog.NewJSONHandler(writers, opts)
+		handler := &TraceContextHandler{Handler: jsonHandler}
 		defaultLogger = slog.New(handler)
 		slog.SetDefault(defaultLogger)
 	})
@@ -167,3 +169,38 @@ func Get() *slog.Logger {
 	}
 	return defaultLogger
 }
+
+// TraceContextHandler automatically extracts trace_id or request_id from context and appends it to records
+type TraceContextHandler struct {
+	slog.Handler
+}
+
+func (h *TraceContextHandler) Handle(ctx context.Context, r slog.Record) error {
+	if ctx != nil {
+		hasTraceID := false
+		r.Attrs(func(a slog.Attr) bool {
+			if a.Key == "trace_id" {
+				hasTraceID = true
+				return false
+			}
+			return true
+		})
+		if !hasTraceID {
+			if traceID, ok := ctx.Value("trace_id").(string); ok && traceID != "" {
+				r.AddAttrs(slog.String("trace_id", traceID))
+			} else if reqID, ok := ctx.Value("request_id").(string); ok && reqID != "" {
+				r.AddAttrs(slog.String("trace_id", reqID))
+			}
+		}
+	}
+	return h.Handler.Handle(ctx, r)
+}
+
+func (h *TraceContextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return &TraceContextHandler{Handler: h.Handler.WithAttrs(attrs)}
+}
+
+func (h *TraceContextHandler) WithGroup(name string) slog.Handler {
+	return &TraceContextHandler{Handler: h.Handler.WithGroup(name)}
+}
+

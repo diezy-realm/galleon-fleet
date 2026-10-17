@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"sync"
+
+	"github.com/diezy-realm/galleon-fleet/engine/core/id"
 )
 
 type Service interface {
@@ -30,15 +32,17 @@ func (s *shipService) CreateShip(ctx context.Context, fleetID string, charterID 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	id := "shp_" + fleetID // simplified ID generation
+	// BL-81 AC #1: ID Ship unik per instans untuk mencegah kolisi pada Fleet yang sama
+	shipID := id.Generate("shp_")
 	ship := &Ship{
-		ID:        id,
+		ID:        shipID,
 		FleetID:   fleetID,
 		CharterID: charterID,
-		SquadIDs:  []string{},
+		SquadIDs:  make([]string, 0),
+		CrewIDs:   make([]string, 0),
 	}
 
-	s.ships[id] = ship
+	s.ships[shipID] = ship
 	return ship, nil
 }
 

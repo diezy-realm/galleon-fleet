@@ -4082,6 +4082,10 @@ pub struct SopStep {
     /// preserves it verbatim on round-trip; its TUI renders from the grid layout.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pos: Option<StepPos>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dos: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub donts: Vec<String>,
     /// Editor-local raw JSON text for `calls`; never on the wire.
     #[serde(skip)]
     pub calls_buf: Option<String>,
@@ -4104,6 +4108,8 @@ impl Default for SopStep {
             mode: serde_json::Value::Null,
             agent: serde_json::Value::Null,
             pos: None,
+            dos: Vec::new(),
+            donts: Vec::new(),
             calls_buf: None,
         }
     }
@@ -4123,6 +4129,8 @@ pub struct SopDraft {
     pub deterministic: bool,
     #[serde(default, skip_serializing_if = "serde_json::Value::is_null")]
     pub agent: serde_json::Value,
+    #[serde(default, skip_serializing_if = "serde_json::Value::is_null")]
+    pub raci: serde_json::Value,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -4195,6 +4203,7 @@ impl Default for SopDraft {
             max_concurrent: 1,
             deterministic: false,
             agent: serde_json::Value::Null,
+            raci: serde_json::Value::Null,
         }
     }
 }

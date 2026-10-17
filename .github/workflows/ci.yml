@@ -2,9 +2,9 @@ name: Quality Gate
 
 on:
   pull_request:
-    branches: [master]
+    branches: [main, master, testing]
   push:
-    branches: [master]
+    branches: [main, master, testing]
   # Merge queue: GitHub builds a temporary `gh-readonly-queue/master/…` branch
   # and fires `merge_group`. The required `CI Required Gate` must report on that
   # branch or queued PRs stall, so the full gate runs here too.
@@ -23,6 +23,7 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
+  RUSTC_WRAPPER: ""
 
 # ── Runner selection: a checked-in label on each compile-heavy job ──────────
 # The Rust-compiling jobs below (lint, build, check, check-plugin-backends,

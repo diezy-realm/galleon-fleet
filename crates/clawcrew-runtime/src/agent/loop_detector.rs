@@ -34,7 +34,7 @@ impl Default for LoopDetectorConfig {
 // ── Result enum ──────────────────────────────────────────────────
 
 /// Outcome of a loop-detection check after recording a tool call.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum LoopDetectionResult {
     /// No pattern detected — continue normally.
     Ok,
@@ -46,6 +46,43 @@ pub enum LoopDetectionResult {
     /// The agent turn should be terminated immediately.
     Break(String),
 }
+
+/// Telemetry stats from a loop detector instance (BL-16).
+#[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+pub struct LoopDetectorStats {
+    pub total_calls: usize,
+    pub exact_repeat_triggers: usize,
+    pub ping_pong_triggers: usize,
+    pub no_progress_triggers: usize,
+    pub last_result: Option<LoopDetectionResult>,
+}
+
+/// Aggregator of loop detector results across multiple subagents for fan-out (BL-17).
+#[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+pub struct LoopDetectorAggregator {
+    pub total_subagents: usize,
+    pub normal_count: usize,
+    pub warning_count: usize,
+    pub block_count: usize,
+    pub break_count: usize,
+}
+
+impl LoopDetectorAggregator {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn record_subagent(&mut self, stats: &LoopDetectorStats) {
+        self.total_subagents += 1;
+        match &stats.last_result {
+            None | Some(LoopDetectionResult::Ok) => self.normal_count += 1,
+            Some(LoopDetectionResult::Warning(_)) => self.warning_count += 1,
+            Some(LoopDetectionResult::Block(_)) => self.block_count += 1,
+            Some(LoopDetectionResult::Break(_)) => self.break_count += 1,
+        }
+    }
+}
+
 
 // ── Internal types ───────────────────────────────────────────────
 
@@ -158,6 +195,7 @@ fn hash_str(s: &str) -> u64 {
 pub struct LoopDetector {
     config: LoopDetectorConfig,
     window: VecDeque<ToolCallRecord>,
+    stats: LoopDetectorStats,
 }
 
 impl LoopDetector {
@@ -165,7 +203,13 @@ impl LoopDetector {
         Self {
             window: VecDeque::with_capacity(config.window_size),
             config,
+            stats: LoopDetectorStats::default(),
         }
+    }
+
+    /// Current telemetry stats for this loop detector instance (BL-16).
+    pub fn stats(&self) -> &LoopDetectorStats {
+        &self.stats
     }
 
     pub fn record(
@@ -177,6 +221,8 @@ impl LoopDetector {
         if !self.config.enabled {
             return LoopDetectionResult::Ok;
         }
+
+        self.stats.total_calls += 1;
 
         let record = ToolCallRecord {
             name: name.to_string(),
@@ -191,17 +237,21 @@ impl LoopDetector {
         self.window.push_back(record);
 
         // Run detectors in escalation order (most severe first).
-        if let Some(result) = self.detect_exact_repeat() {
-            return result;
-        }
-        if let Some(result) = self.detect_ping_pong() {
-            return result;
-        }
-        if let Some(result) = self.detect_no_progress() {
-            return result;
-        }
+        let detection_result = if let Some(res) = self.detect_exact_repeat() {
+            self.stats.exact_repeat_triggers += 1;
+            res
+        } else if let Some(res) = self.detect_ping_pong() {
+            self.stats.ping_pong_triggers += 1;
+            res
+        } else if let Some(res) = self.detect_no_progress() {
+            self.stats.no_progress_triggers += 1;
+            res
+        } else {
+            LoopDetectionResult::Ok
+        };
 
-        LoopDetectionResult::Ok
+        self.stats.last_result = Some(detection_result.clone());
+        detection_result
     }
 
     fn detect_exact_repeat(&self) -> Option<LoopDetectionResult> {
@@ -1053,4 +1103,40 @@ mod tests {
             other => panic!("expected exact-repeat Warning, got {other:?}"),
         }
     }
+
+    #[test]
+    fn loop_detector_stats_and_aggregator() {
+        let mut det = LoopDetector::new(config_with_repeats(3));
+        let args = json!({"q": "same"});
+
+        det.record("s", &args, "r1");
+        det.record("s", &args, "r2");
+        assert_eq!(det.stats().total_calls, 2);
+        assert_eq!(det.stats().exact_repeat_triggers, 0);
+
+        let res = det.record("s", &args, "r3");
+        assert!(matches!(res, LoopDetectionResult::Warning(_)));
+        assert_eq!(det.stats().total_calls, 3);
+        assert_eq!(det.stats().exact_repeat_triggers, 1);
+
+        // Test aggregator for fan-out (BL-17)
+        let mut aggregator = LoopDetectorAggregator::new();
+        aggregator.record_subagent(det.stats());
+
+        let normal_stats = LoopDetectorStats {
+            total_calls: 1,
+            exact_repeat_triggers: 0,
+            ping_pong_triggers: 0,
+            no_progress_triggers: 0,
+            last_result: Some(LoopDetectionResult::Ok),
+        };
+        aggregator.record_subagent(&normal_stats);
+
+        assert_eq!(aggregator.total_subagents, 2);
+        assert_eq!(aggregator.normal_count, 1);
+        assert_eq!(aggregator.warning_count, 1);
+        assert_eq!(aggregator.block_count, 0);
+        assert_eq!(aggregator.break_count, 0);
+    }
 }
+

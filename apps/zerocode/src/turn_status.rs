@@ -59,6 +59,18 @@ impl TurnStatus {
         }
     }
 
+    #[cfg(test)]
+    pub fn from_engine_run_status(status: &str) -> Self {
+        match status {
+            "queued" | "planning" => Self::Working,
+            "running" => Self::Responding,
+            "cancelling" | "cancelled" => Self::Cancelling,
+            "waiting_approval" | "waiting_for_approval" => Self::WaitingForApproval,
+            "waiting_for_input" => Self::WaitingForInput,
+            _ => Self::Idle,
+        }
+    }
+
     pub fn label(&self, animation_origin: Instant) -> String {
         match self {
             TurnStatus::Idle => " > ".to_string(),

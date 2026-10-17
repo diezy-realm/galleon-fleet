@@ -4,6 +4,7 @@
 # built with `cargo +nightly fuzz build` (see scripts/dev/fuzz.sh).
 [package]
 name = "clawcrew-relay-proto-fuzz"
+rust-version.workspace = true
 version = "0.0.0"
 publish = false
 edition = "2021"

@@ -38,23 +38,23 @@ pub(crate) enum EstopLevelArg {
 #[command(about = "The fastest, smallest AI assistant.", long_about = None)]
 pub(crate) struct Cli {
     #[arg(long, global = true)]
-    config_dir: Option<String>,
+    pub(crate) config_dir: Option<String>,
 
     /// Lowest severity recorded to the runtime trace (and capture
     /// layer). Immutable for the process. Precedence: this flag >
     /// RUST_LOG env > per-command default.
     #[arg(long, global = true, value_enum)]
-    log_level: Option<LogLevel>,
+    pub(crate) log_level: Option<LogLevel>,
 
     /// Surface recorded logs on the terminal. Off by default: logs go
     /// to the trace file only and the terminal shows just command
     /// output. When on, the terminal shows events down to the recorded
     /// floor. Immutable for the process.
     #[arg(short, long, global = true)]
-    verbose: bool,
+    pub(crate) verbose: bool,
 
     #[command(subcommand)]
-    command: Commands,
+    pub(crate) command: Commands,
 }
 
 /// Recording-floor severities, mapped to `RUST_LOG`-style directive
@@ -70,7 +70,7 @@ pub(crate) enum LogLevel {
 }
 
 impl LogLevel {
-    fn as_directive(self) -> &'static str {
+    pub(crate) fn as_directive(self) -> &'static str {
         match self {
             LogLevel::Error => "error",
             LogLevel::Warn => "warn",

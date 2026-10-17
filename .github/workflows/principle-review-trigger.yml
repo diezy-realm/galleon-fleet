@@ -1,9 +1,8 @@
-name: Trigger Principle Code Review
+name: Auto Principle PR Review
 
-# Trigger ketika ada PR baru atau update ke testing branch
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [opened, synchronize, reopened]
     branches:
       - testing
 
@@ -12,71 +11,141 @@ permissions:
   pull-requests: write
 
 jobs:
-  trigger-principle-review:
+  principle-auto-review:
+    name: Principle Gate Reviewer
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
-        
-      - name: Get PR details
-        id: pr-info
+        with:
+          fetch-depth: 0
+
+      - name: Analyze PR Diff & Invariants
+        id: review_analysis
         run: |
-          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-          echo "pr_title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
-          echo "pr_head=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
-          echo "pr_url=${{ github.event.pull_request.html_url }}" >> $GITHUB_OUTPUT
-      
-      - name: Webhook notification to Kiro
-        if: ${{ secrets.KIRO_WEBHOOK_URL != '' }}
-        run: |
-          # Send webhook POST to Kiro crew session
-          # This will trigger Principle crew auto-spawn via registered webhook hook:github:principle-review:testing-pr
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.KIRO_WEBHOOK_TOKEN }}" \
-            -d '{
-              "sessionKey": "hook:github:principle-review:testing-pr",
-              "name": "github:principle-review:testing-pr",
-              "message": "New PR to testing branch:\n**PR #${{ steps.pr-info.outputs.pr_number }}**: ${{ steps.pr-info.outputs.pr_title }}\nBranch: ${{ steps.pr-info.outputs.pr_head }}\nURL: ${{ steps.pr-info.outputs.pr_url }}\n\nReview against 7 security gates + quality checklist."
-            }' \
-            "${{ secrets.KIRO_WEBHOOK_URL }}"
-        env:
-          KIRO_WEBHOOK_URL: ${{ secrets.KIRO_WEBHOOK_URL }}
-          KIRO_WEBHOOK_TOKEN: ${{ secrets.KIRO_WEBHOOK_TOKEN }}
-      
-      - name: Add comment to PR
+          echo "### Running Principle Automated Code Inspection..."
+          BASE_REF="origin/${{ github.base_ref }}"
+          
+          # 1. Zero unwrap() / expect() in Rust production code
+          UNWRAP_COUNT=0
+          if [ -f "scripts/ci/check_production_unwrap.py" ]; then
+            UNWRAP_COUNT=$(python3 scripts/ci/check_production_unwrap.py --base $BASE_REF --summary-only || echo 0)
+          else
+            UNWRAP_DIFF=$(git diff -U0 $BASE_REF...HEAD -- 'crates/**/*.rs' ':!crates/**/tests/**' ':!crates/**/benches/**' ':!crates/**/tests.rs' ':!crates/**/*/tests.rs' | grep '^[+][^+]' | grep -E '\.(unwrap|expect)\(' || true)
+            if [ -n "$UNWRAP_DIFF" ]; then
+              UNWRAP_COUNT=$(echo "$UNWRAP_DIFF" | wc -l)
+            fi
+          fi
+          
+          # 2. Gate D-1 Check (No new Cargo.toml in orchestrator)
+          D1_VIOLATION=false
+          NEW_CARGOS=$(git diff --name-only --diff-filter=A $BASE_REF...HEAD | grep 'crates/.*Cargo\.toml' || true)
+          if [ -n "$NEW_CARGOS" ]; then
+            D1_VIOLATION=true
+          fi
+
+          # 3. Gate D-2 Check (Governance coupling in util.rs)
+          D2_VIOLATION=false
+          if [ -f "scripts/ci/check_gate_d2.py" ]; then
+            if ! python3 scripts/ci/check_gate_d2.py; then
+              D2_VIOLATION=true
+            fi
+          elif [ -f "crates/clawcrew-channels/src/util.rs" ]; then
+            if grep -nE '(RiskTier|should_auto_approve|playbook::|clawcrew_runtime::)' crates/clawcrew-channels/src/util.rs; then
+              D2_VIOLATION=true
+            fi
+          fi
+
+          SECRET_LEAKS=$(git diff -U0 $BASE_REF...HEAD | grep '^[+][^+]' | grep -iE '((api_key|secret_key|private_key|token)\s*[:=]\s*["'"'"'][a-zA-Z0-9_\-]{16,})' || true)
+          SECRET_COUNT=0
+          if [ -n "$SECRET_LEAKS" ]; then
+            SECRET_COUNT=$(echo "$SECRET_LEAKS" | wc -l)
+          fi
+
+          # 5. Check Brand / Crate Naming Standard (new crates must use galleon-)
+          BRAND_VIOLATION=false
+          NEW_CLAW_CRATES=$(git diff --name-only --diff-filter=A $BASE_REF...HEAD | grep 'crates/clawcrew-' | grep 'Cargo\.toml' || true)
+          if [ -n "$NEW_CLAW_CRATES" ]; then
+            BRAND_VIOLATION=true
+          fi
+
+          # Export outputs
+          echo "unwrap_count=$UNWRAP_COUNT" >> $GITHUB_OUTPUT
+          echo "d1_violation=$D1_VIOLATION" >> $GITHUB_OUTPUT
+          echo "d2_violation=$D2_VIOLATION" >> $GITHUB_OUTPUT
+          echo "secret_count=$SECRET_COUNT" >> $GITHUB_OUTPUT
+          echo "brand_violation=$BRAND_VIOLATION" >> $GITHUB_OUTPUT
+
+      - name: Generate & Post Principle Verdict
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.issues.createComment({
+            const unwrapCount = parseInt('${{ steps.review_analysis.outputs.unwrap_count }}' || '0');
+            const d1Violation = '${{ steps.review_analysis.outputs.d1_violation }}' === 'true';
+            const d2Violation = '${{ steps.review_analysis.outputs.d2_violation }}' === 'true';
+            const secretCount = parseInt('${{ steps.review_analysis.outputs.secret_count }}' || '0');
+            const brandViolation = '${{ steps.review_analysis.outputs.brand_violation }}' === 'true';
+
+            const criticalIssues = [];
+            if (unwrapCount > 0) {
+              criticalIssues.push(`🔴 **${unwrapCount} unwrap() or expect()** detected in production code paths (Strict Invariant Violation).`);
+            }
+            if (secretCount > 0) {
+              criticalIssues.push(`🔴 **Possible Hardcoded Secret/Token** detected in added lines.`);
+            }
+            if (d2Violation) {
+              criticalIssues.push(`🔴 **Gate D-2 Failed:** Governance primitives coupled with channel feature flags in \`crates/clawcrew-channels/src/util.rs\`.`);
+            }
+
+            const warnings = [];
+            if (d1Violation) {
+              warnings.push(`🟡 **Gate D-1 Review Notice:** New \`Cargo.toml\` detected. Ensure this is an intentional crate-split (RF-D2) rather than an unauthorized orchestrator split (RF-D1).`);
+            }
+            if (brandViolation) {
+              warnings.push(`🟡 **Branding Standard:** New crate added with legacy \`clawcrew-\` prefix instead of mandatory \`galleon-\`.`);
+            }
+
+            const isApproved = criticalIssues.length === 0;
+            const verdict = isApproved ? '✅ APPROVE (Auto Quality Gate Passed)' : '❌ REQUEST CHANGES (Quality Gate Blocked)';
+
+            let commentBody = `## 🛡️ Principle Automated Review Verdict\n\n`;
+            commentBody += `**Decision:** ${verdict}\n`;
+            commentBody += `**Target Branch:** \`${context.payload.pull_request.base.ref}\`\n\n`;
+
+            commentBody += `### 📋 Invariant & Standards Compliance Table\n\n`;
+            commentBody += `| Invariant / Standard | Scope | Status |\n`;
+            commentBody += `|---|---|---|\n`;
+            commentBody += `| **Zero \`unwrap()\` / \`expect()\`** | Rust Production | ${unwrapCount === 0 ? '✅ Passed (0 violations)' : '❌ Failed (' + unwrapCount + ' found)'} |\n`;
+            commentBody += `| **Credential & Secret Scrubbing** | Diff Boundary | ${secretCount === 0 ? '✅ Passed' : '❌ Failed (' + secretCount + ' potential leaks)'} |\n`;
+            commentBody += `| **Gate D-2 (Governance Coupling)** | Gateway Channels | ${!d2Violation ? '✅ Passed' : '❌ Failed'} |\n`;
+            commentBody += `| **Gate D-1 (Orchestrator Split)** | Crate Structure | ${!d1Violation ? '✅ Passed' : '⚠️ Flagged'} |\n`;
+            commentBody += `| **Branding Standard (\`galleon-\`)** | New Crates | ${!brandViolation ? '✅ Passed' : '⚠️ Flagged'} |\n\n`;
+
+            if (criticalIssues.length > 0) {
+              commentBody += `### 🚨 Critical Blockers Must Fix Before Merge\n`;
+              criticalIssues.forEach(issue => {
+                commentBody += `- ${issue}\n`;
+              });
+              commentBody += `\n`;
+            }
+
+            if (warnings.length > 0) {
+              commentBody += `### ⚠️ Advisory & Code Health Warnings\n`;
+              warnings.forEach(warn => {
+                commentBody += `- ${warn}\n`;
+              });
+              commentBody += `\n`;
+            }
+
+            commentBody += `> *Automated by \`@principle\` persona via GitHub Actions. Standards enforced: \`standard-docs/tech-standart\` & \`RF-D-principle-gateway-checklist.md\`.*`;
+
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🔍 **Principle Code Review Triggered**\n\nThis PR has been sent to the Principle crew for security gate review (7-gate framework: path validation, workspace containment, timeout enforcement, spawn safety, proto alignment, no secrets, RCE closure).\n\nExpected review time: 1-2 hours.\n\nStatus: ⏳ Awaiting Principle review...'
-            })
-      
-      - name: Discord notification — PR submitted for review
-        run: |
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -d '{
-              "content": "📋 **New PR Submitted for Review**",
-              "embeds": [{
-                "title": "PR #${{ steps.pr-info.outputs.pr_number }} → Principle Crew",
-                "url": "${{ steps.pr-info.outputs.pr_url }}",
-                "color": 3447003,
-                "fields": [
-                  {"name": "Title", "value": "${{ steps.pr-info.outputs.pr_title }}", "inline": false},
-                  {"name": "Branch", "value": "${{ steps.pr-info.outputs.pr_head }}", "inline": true},
-                  {"name": "Target", "value": "testing", "inline": true},
-                  {"name": "Review Gates", "value": "7-gate security framework (path/workspace/timeout/spawn/proto/secrets/RCE)", "inline": false},
-                  {"name": "Timeline", "value": "1-2 hours for Principle analysis", "inline": false}
-                ],
-                "footer": {"text": "galleon-fleet Phase 3 Automation"}
-              }]
-            }' \
-            "${{ secrets.DISCORD_WEBHOOK_URL }}"
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        continue-on-error: true
+              body: commentBody
+            });
+
+            if (!isApproved) {
+              core.setFailed('PR failed Principle Quality Gate checks.');
+            }

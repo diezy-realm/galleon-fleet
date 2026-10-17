@@ -1,0 +1,46 @@
+name: SOP Evaluation Advisory Gate
+
+on:
+  pull_request:
+    branches: [main, master, testing]
+    paths:
+      - 'crates/clawcrew-eval/**'
+      - 'crates/clawcrew-runtime/**'
+      - 'evals/**'
+      - '.github/workflows/sop-eval-advisory.yml'
+  push:
+    branches: [main, master, testing]
+    paths:
+      - 'crates/clawcrew-eval/**'
+      - 'crates/clawcrew-runtime/**'
+      - 'evals/**'
+      - '.github/workflows/sop-eval-advisory.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  sop-eval-advisory:
+    name: SOP Eval Replay (Advisory Non-Blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.8
+
+      - name: Configure sccache
+        shell: bash
+        run: |
+          echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Run clawcrew-eval regression suite
+        run: cargo nextest run -p clawcrew-eval

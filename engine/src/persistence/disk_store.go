@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/src/run"
-	"github.com/diezy-labs/claw-crew/engine/src/task"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/src/run"
+	"github.com/diezy-realm/galleon-fleet/engine/src/task"
 )
 
 // DiskStore provides persistent JSON and JSONL storage on disk for runs, tasks, and event replay
@@ -243,6 +243,16 @@ func (s *DiskStore) Save(ctx context.Context, r *run.Run) error {
 // Get reads a run (run.Store). Delegates to GetRun.
 func (s *DiskStore) Get(ctx context.Context, id string) (*run.Run, error) {
 	return s.GetRun(ctx, id)
+}
+
+// UpdateLoopDetectorStats updates the loop detector circuit breaker telemetry on disk.
+func (s *DiskStore) UpdateLoopDetectorStats(ctx context.Context, id string, stats *run.LoopDetectorStats) error {
+	r, err := s.GetRun(ctx, id)
+	if err != nil {
+		return err
+	}
+	r.LoopDetectorStats = stats
+	return s.SaveRun(ctx, r)
 }
 
 // UpdateStatus applies a validated monotonic state transition and persists it.

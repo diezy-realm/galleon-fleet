@@ -14,11 +14,7 @@ use crate::rpc::tui_identity::TuiRegistry;
 
 pub type StarterFuture = Pin<Box<dyn Future<Output = Result<()>> + Send>>;
 
-#[derive(Clone)]
-pub struct GatewayReloadControls {
-    pub shutdown_tx: watch::Sender<bool>,
-    pub reload_tx: watch::Sender<bool>,
-}
+pub use clawcrew_infra::gateway_controls::GatewayReloadControls;
 
 pub type GatewayStarter = Box<
     dyn Fn(

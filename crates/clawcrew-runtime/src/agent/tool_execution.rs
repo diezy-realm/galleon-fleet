@@ -92,7 +92,7 @@ fn unavailable_tool_outcome(
         tool_call_id: tool_call_id_owned,
         duration,
         success: false,
-        arguments: Some(full_args.to_string()),
+        arguments: Some(scrub_credentials(full_args)),
         result: Some(scrub_credentials(&reason)),
         channel: Some(meta.channel_name.to_string()),
         agent_alias: meta.agent_alias.map(|s| s.to_string()),
@@ -106,6 +106,33 @@ fn unavailable_tool_outcome(
         duration,
         receipt: None,
         output_data: None,
+    }
+}
+
+/// Helper to evaluate payment lock gate before tool execution (BL-41).
+pub(crate) fn check_payment_lock_gate(
+    tool_name: &str,
+    manager: Option<&crate::security::payment_lock::PaymentLockManager>,
+    scope: Option<&str>,
+) -> Result<(), String> {
+    let lower = tool_name.to_lowercase();
+    let is_financial = lower.contains("pay")
+        || lower.contains("transfer")
+        || lower.contains("wallet")
+        || lower.contains("crypto")
+        || lower.contains("checkout")
+        || lower.contains("stripe");
+
+    if is_financial {
+        let default_mgr = crate::security::payment_lock::PaymentLockManager::default_locked();
+        let mgr = manager.unwrap_or(&default_mgr);
+        mgr.check_allowed(
+            clawcrew_config::schema::PaymentActionCategory::CardPayment,
+            scope,
+        )
+        .map_err(|e| format!("Payment lockout gate rejected execution of '{tool_name}': {e}"))
+    } else {
+        Ok(())
     }
 }
 
@@ -148,11 +175,12 @@ pub(crate) async fn execute_one_tool(
     event_tx: Option<&Sender<TurnEvent>>,
 ) -> Result<ToolExecutionOutcome> {
     let full_args = call_arguments.to_string();
+    let scrubbed_full_args = scrub_credentials(&full_args);
     let tool_call_id_owned = tool_call_id.map(str::to_string);
     observer.record_event(&ObserverEvent::ToolCallStart {
         tool: call_name.to_string(),
         tool_call_id: tool_call_id_owned.clone(),
-        arguments: Some(full_args.clone()),
+        arguments: Some(scrubbed_full_args.clone()),
         channel: Some(meta.channel_name.to_string()),
         agent_alias: meta.agent_alias.map(|s| s.to_string()),
         parent_agent_alias: meta.parent_agent_alias.map(|s| s.to_string()),
@@ -210,7 +238,7 @@ pub(crate) async fn execute_one_tool(
             tool_call_id: tool_call_id_owned.clone(),
             duration,
             success: false,
-            arguments: Some(full_args.clone()),
+            arguments: Some(scrubbed_full_args.clone()),
             result: Some(scrub_credentials(&reason)),
             channel: Some(meta.channel_name.to_string()),
             agent_alias: meta.agent_alias.map(|s| s.to_string()),
@@ -238,6 +266,38 @@ pub(crate) async fn execute_one_tool(
         ));
     }
 
+    // BL-41: Payment-Lockout Gate check — fail-closed before any external request
+    if let Err(denial) = check_payment_lock_gate(tool.name(), None, meta.agent_alias) {
+        let duration = start.elapsed();
+        observer.record_event(&ObserverEvent::ToolCall {
+            tool: call_name.to_string(),
+            tool_call_id: tool_call_id_owned.clone(),
+            duration,
+            success: false,
+            arguments: Some(scrubbed_full_args.clone()),
+            result: Some(scrub_credentials(&denial)),
+            channel: Some(meta.channel_name.to_string()),
+            agent_alias: meta.agent_alias.map(|s| s.to_string()),
+            parent_agent_alias: meta.parent_agent_alias.map(|s| s.to_string()),
+            turn_id: Some(meta.turn_id.to_string()),
+        });
+        return Ok(ToolExecutionOutcome {
+            output: denial.clone(),
+            success: false,
+            error_reason: Some(denial),
+            duration,
+            receipt: None,
+            output_data: None,
+        });
+    }
+
+    let resolved_policy = ::clawcrew_log::active_resolved_policy();
+    let captured_input = ::clawcrew_log::capture_tool_input(
+        &resolved_policy,
+        call_name,
+        &scrubbed_full_args,
+    );
+
     use ::clawcrew_log::Instrument;
     let tool_span = ::clawcrew_log::info_span!(
         target: "clawcrew_log_internal_scope",
@@ -245,19 +305,26 @@ pub(crate) async fn execute_one_tool(
         tool = %call_name,
     );
 
-    // Auto tool I/O propagation: emit Start with full input, run the
-    // tool, then emit Complete or Fail with full output. Per-tool
+    // Auto tool I/O propagation: emit Start with captured input, run the
+    // tool, then emit Complete or Fail with captured output. Per-tool
     // execute() impls add zero logging.
     let _start_guard = tool_span.clone().entered();
+    let mut invoke_attrs = ::serde_json::json!({
+        "tool": call_name,
+        "tool_call_id": tool_call_id,
+    });
+    if let Some(ref cap) = captured_input {
+        invoke_attrs["input"] = ::serde_json::Value::String(cap.text.clone());
+        if cap.truncated {
+            invoke_attrs["input_truncated"] = ::serde_json::Value::Bool(true);
+            invoke_attrs["input_original_bytes"] = ::serde_json::Value::from(cap.original_bytes);
+        }
+    }
     ::clawcrew_log::record!(
         DEBUG,
         ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Invoke)
             .with_category(::clawcrew_log::EventCategory::Tool)
-            .with_attrs(::serde_json::json!({
-                "tool": call_name,
-                "tool_call_id": tool_call_id,
-                "input": call_arguments,
-            })),
+            .with_attrs(invoke_attrs),
         format!("tool call: {call_name}")
     );
     drop(_start_guard);
@@ -304,7 +371,31 @@ pub(crate) async fn execute_one_tool(
         match tool_result {
             Ok(r) => {
                 let duration = start.elapsed();
+                let scrubbed_output = scrub_credentials(r.output.as_str());
+                let captured_output = ::clawcrew_log::capture_tool_output(
+                    &resolved_policy,
+                    call_name,
+                    &scrubbed_output,
+                );
                 if r.success {
+                    let mut success_attrs = ::serde_json::json!({
+                        "tool": call_name,
+                        "tool_call_id": tool_call_id,
+                    });
+                    if let Some(ref cap) = captured_input {
+                        success_attrs["input"] = ::serde_json::Value::String(cap.text.clone());
+                        if cap.truncated {
+                            success_attrs["input_truncated"] = ::serde_json::Value::Bool(true);
+                            success_attrs["input_original_bytes"] = ::serde_json::Value::from(cap.original_bytes);
+                        }
+                    }
+                    if let Some(ref cap) = captured_output {
+                        success_attrs["output"] = ::serde_json::Value::String(cap.text.clone());
+                        if cap.truncated {
+                            success_attrs["output_truncated"] = ::serde_json::Value::Bool(true);
+                            success_attrs["output_original_bytes"] = ::serde_json::Value::from(cap.original_bytes);
+                        }
+                    }
                     ::clawcrew_log::record!(
                         DEBUG,
                         ::clawcrew_log::Event::new(
@@ -314,28 +405,37 @@ pub(crate) async fn execute_one_tool(
                         .with_category(::clawcrew_log::EventCategory::Tool)
                         .with_outcome(::clawcrew_log::EventOutcome::Success)
                         .with_duration(duration.as_millis() as u64)
-                        .with_attrs(::serde_json::json!({
-                            "tool": call_name,
-                            "tool_call_id": tool_call_id,
-                            "input": call_arguments,
-                            "output": r.output,
-                        })),
+                        .with_attrs(success_attrs),
                         format!("tool result: {call_name}")
                     );
                 } else {
+                    let scrubbed_err = r.error.as_deref().map(scrub_credentials).unwrap_or_default();
+                    let mut fail_attrs = ::serde_json::json!({
+                        "tool": call_name,
+                        "tool_call_id": tool_call_id,
+                        "error": scrubbed_err,
+                    });
+                    if let Some(ref cap) = captured_input {
+                        fail_attrs["input"] = ::serde_json::Value::String(cap.text.clone());
+                        if cap.truncated {
+                            fail_attrs["input_truncated"] = ::serde_json::Value::Bool(true);
+                            fail_attrs["input_original_bytes"] = ::serde_json::Value::from(cap.original_bytes);
+                        }
+                    }
+                    if let Some(ref cap) = captured_output {
+                        fail_attrs["output"] = ::serde_json::Value::String(cap.text.clone());
+                        if cap.truncated {
+                            fail_attrs["output_truncated"] = ::serde_json::Value::Bool(true);
+                            fail_attrs["output_original_bytes"] = ::serde_json::Value::from(cap.original_bytes);
+                        }
+                    }
                     ::clawcrew_log::record!(
                         WARN,
                         ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
                             .with_category(::clawcrew_log::EventCategory::Tool)
                             .with_outcome(::clawcrew_log::EventOutcome::Failure)
                             .with_duration(duration.as_millis() as u64)
-                            .with_attrs(::serde_json::json!({
-                                "tool": call_name,
-                                "tool_call_id": tool_call_id,
-                                "input": call_arguments,
-                                "error": r.error.clone().unwrap_or_default(),
-                                "output": r.output,
-                            })),
+                            .with_attrs(fail_attrs),
                         format!("tool failed: {call_name}")
                     );
                 }
@@ -353,7 +453,7 @@ pub(crate) async fn execute_one_tool(
                         tool_call_id: tool_call_id_owned.clone(),
                         duration,
                         success: true,
-                        arguments: Some(full_args.clone()),
+                        arguments: Some(scrubbed_full_args.clone()),
                         result: Some(scrub_credentials(normalized_output)),
                         channel: Some(meta.channel_name.to_string()),
                         agent_alias: meta.agent_alias.map(|s| s.to_string()),
@@ -402,7 +502,7 @@ pub(crate) async fn execute_one_tool(
                         tool_call_id: tool_call_id_owned.clone(),
                         duration,
                         success: false,
-                        arguments: Some(full_args.clone()),
+                        arguments: Some(scrubbed_full_args.clone()),
                         result: Some(model_visible.clone()),
                         channel: Some(meta.channel_name.to_string()),
                         agent_alias: meta.agent_alias.map(|s| s.to_string()),
@@ -421,18 +521,27 @@ pub(crate) async fn execute_one_tool(
             }
             Err(e) => {
                 let duration = start.elapsed();
+                let error_text = format!("{e:?}");
+                let scrubbed_err = scrub_credentials(&error_text);
+                let mut err_attrs = ::serde_json::json!({
+                    "tool": call_name,
+                    "tool_call_id": tool_call_id,
+                    "error": scrubbed_err,
+                });
+                if let Some(ref cap) = captured_input {
+                    err_attrs["input"] = ::serde_json::Value::String(cap.text.clone());
+                    if cap.truncated {
+                        err_attrs["input_truncated"] = ::serde_json::Value::Bool(true);
+                        err_attrs["input_original_bytes"] = ::serde_json::Value::from(cap.original_bytes);
+                    }
+                }
                 ::clawcrew_log::record!(
                     ERROR,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
                         .with_category(::clawcrew_log::EventCategory::Tool)
                         .with_outcome(::clawcrew_log::EventOutcome::Failure)
                         .with_duration(duration.as_millis() as u64)
-                        .with_attrs(::serde_json::json!({
-                            "tool": call_name,
-                            "tool_call_id": tool_call_id,
-                            "input": call_arguments,
-                            "error": format!("{e:?}"),
-                        })),
+                        .with_attrs(err_attrs),
                     format!("tool error: {call_name}")
                 );
                 let reason = format!("Error executing {call_name}: {e}");
@@ -447,7 +556,7 @@ pub(crate) async fn execute_one_tool(
                     tool_call_id: tool_call_id_owned.clone(),
                     duration,
                     success: false,
-                    arguments: Some(full_args.clone()),
+                    arguments: Some(scrubbed_full_args.clone()),
                     result: Some(model_visible.clone()),
                     channel: Some(meta.channel_name.to_string()),
                     agent_alias: meta.agent_alias.map(|s| s.to_string()),
@@ -1364,24 +1473,37 @@ mod tests {
     /// distinct from what `ToolExecutionOutcome.output` sends to the model.
     struct RecordingObserver {
         last_result: Mutex<Option<String>>,
+        last_args: Mutex<Option<String>>,
     }
 
     impl RecordingObserver {
         fn new() -> Self {
             Self {
                 last_result: Mutex::new(None),
+                last_args: Mutex::new(None),
             }
         }
 
         fn last_result(&self) -> Option<String> {
             self.last_result.lock().unwrap().clone()
         }
+
+        fn last_args(&self) -> Option<String> {
+            self.last_args.lock().unwrap().clone()
+        }
     }
 
     impl Observer for RecordingObserver {
         fn record_event(&self, event: &ObserverEvent) {
-            if let ObserverEvent::ToolCall { result, .. } = event {
-                *self.last_result.lock().unwrap() = result.clone();
+            match event {
+                ObserverEvent::ToolCall { result, arguments, .. } => {
+                    *self.last_result.lock().unwrap() = result.clone();
+                    *self.last_args.lock().unwrap() = arguments.clone();
+                }
+                ObserverEvent::ToolCallStart { arguments, .. } => {
+                    *self.last_args.lock().unwrap() = arguments.clone();
+                }
+                _ => {}
             }
         }
 
@@ -1501,6 +1623,118 @@ mod tests {
                 && observer_result.contains("[REDACTED]"),
             "the observer/telemetry event stays scrubbed too: {observer_result}"
         );
+    }
+
+    #[tokio::test]
+    async fn tool_io_capture_redacts_and_truncates_in_debug_log() {
+        let _writer_guard = clawcrew_log::__private_test_writer_lock();
+        let _hook_guard = clawcrew_log::__private_test_hook_lock();
+
+        clawcrew_log::try_install_capture_subscriber();
+        let mut rx = clawcrew_log::subscribe_or_install();
+
+        let cfg = clawcrew_log::LogConfig {
+            log_tool_io: "redacted".into(),
+            log_tool_io_truncate_bytes: 40,
+            log_persistence: "none".into(),
+            ..clawcrew_log::LogConfig::default()
+        };
+        clawcrew_log::init_from_config(&cfg, std::path::Path::new("/"));
+        while rx.try_recv().is_ok() {}
+
+        struct EchoTestTool;
+        #[async_trait]
+        impl clawcrew_api::attribution::Attributable for EchoTestTool {
+            fn role(&self) -> clawcrew_api::attribution::Role {
+                clawcrew_api::attribution::Role::System
+            }
+            fn alias(&self) -> &str {
+                "echo-test-tool"
+            }
+        }
+        #[async_trait]
+        impl Tool for EchoTestTool {
+            fn name(&self) -> &str {
+                "echo_test_tool"
+            }
+            fn description(&self) -> &str {
+                "echo tool for testing"
+            }
+            fn parameters_schema(&self) -> serde_json::Value {
+                serde_json::json!({"type": "object"})
+            }
+            async fn execute(&self, args: serde_json::Value) -> anyhow::Result<crate::tools::ToolResult> {
+                let text = args.get("val").and_then(|v| v.as_str()).unwrap_or("");
+                Ok(crate::tools::ToolResult {
+                    success: true,
+                    output: format!("result val: {text}").into(),
+                    error: None,
+                })
+            }
+        }
+
+        let tools: Vec<Box<dyn Tool>> = vec![Box::new(EchoTestTool)];
+        let meta = test_turn_meta();
+        let observer = RecordingObserver::new();
+
+        let secret_arg = "api_key: sk-1234567890abcdef-super-secret-key-that-is-very-long";
+        let outcome = execute_one_tool(
+            "echo_test_tool",
+            serde_json::json!({ "val": secret_arg }),
+            Some("call_id_1"),
+            ToolDispatchContext {
+                tools_registry: &tools,
+                activated_tools: None,
+                app_registry: None,
+                excluded_tools: &[],
+                model_switch_callback: None,
+            },
+            &meta,
+            &observer,
+            None,
+            None,
+            None,
+        )
+        .await
+        .expect("execute_one_tool success");
+
+        assert!(outcome.success);
+
+        // Verify observer had credentials scrubbed
+        let obs_args = observer.last_args().expect("observer received arguments");
+        assert!(!obs_args.contains("sk-1234567890abcdef-super-secret-key"));
+        assert!(obs_args.contains("[REDACTED]"));
+
+        // Receive broadcast log events from record!
+        let mut invoke_found = false;
+        let mut complete_found = false;
+        let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(2);
+        while tokio::time::Instant::now() < deadline {
+            if let Ok(event) = rx.try_recv() {
+                if let Some(attrs) = event.get("attributes") {
+                    if attrs.get("tool").and_then(|v| v.as_str()) == Some("echo_test_tool") {
+                        if let Some(input_val) = attrs.get("input").and_then(|v| v.as_str()) {
+                            assert!(!input_val.contains("sk-1234567890abcdef-super-secret-key"));
+                            assert!(input_val.contains("[REDACTED]"));
+                            assert!(input_val.len() <= 40, "input must be truncated to <= 40 bytes");
+                            invoke_found = true;
+                        }
+                        if let Some(output_val) = attrs.get("output").and_then(|v| v.as_str()) {
+                            assert!(!output_val.contains("sk-1234567890abcdef-super-secret-key"));
+                            assert!(output_val.contains("[REDACTED]"));
+                            assert!(output_val.len() <= 40, "output must be truncated to <= 40 bytes");
+                            complete_found = true;
+                        }
+                    }
+                }
+            }
+            if invoke_found && complete_found {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+        assert!(invoke_found, "Invoke log event must carry redacted and truncated input");
+        assert!(complete_found, "Complete log event must carry redacted and truncated output");
     }
 
     /// Fake failing tool with a caller-supplied `ToolOutput` and `error`, so a

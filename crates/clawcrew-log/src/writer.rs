@@ -443,10 +443,148 @@ fn sync_active_file(state: &Arc<WorkerState>) -> Result<()> {
     Ok(())
 }
 
+#[cfg(windows)]
+#[link(name = "advapi32")]
+#[allow(non_snake_case)]
+unsafe extern "system" {
+    #[cfg(test)]
+    fn GetNamedSecurityInfoW(
+        pObjectName: *const u16,
+        ObjectType: u32,
+        SecurityInfo: u32,
+        ppsidOwner: *mut *mut std::ffi::c_void,
+        ppsidGroup: *mut *mut std::ffi::c_void,
+        ppDacl: *mut *mut std::ffi::c_void,
+        ppSacl: *mut *mut std::ffi::c_void,
+        ppSecurityDescriptor: *mut *mut std::ffi::c_void,
+    ) -> u32;
+    fn SetNamedSecurityInfoW(
+        pObjectName: *const u16,
+        ObjectType: u32,
+        SecurityInfo: u32,
+        psidOwner: *mut std::ffi::c_void,
+        psidGroup: *mut std::ffi::c_void,
+        pDacl: *const std::ffi::c_void,
+        pSacl: *const std::ffi::c_void,
+    ) -> u32;
+}
+
+#[cfg(all(windows, test))]
+#[link(name = "kernel32")]
+#[allow(non_snake_case)]
+unsafe extern "system" {
+    fn LocalFree(memory: *mut std::ffi::c_void) -> *mut std::ffi::c_void;
+}
+
+#[cfg(windows)]
+pub(crate) fn restrict_log_file_acl(_file: &File, path: &Path) -> Result<()> {
+    restrict_log_file_acl_by_path(path)
+}
+
+#[cfg(windows)]
+pub(crate) fn restrict_log_file_acl_by_path(path: &Path) -> Result<()> {
+    use std::mem::size_of;
+    use std::os::windows::ffi::OsStrExt;
+    use windows::Win32::Foundation::{CloseHandle, HANDLE};
+    use windows::Win32::Security::{
+        ACE_FLAGS, ACL, ACL_REVISION, AddAccessAllowedAceEx, GetLengthSid, GetTokenInformation,
+        InitializeAcl, TOKEN_QUERY, TOKEN_USER, TokenUser,
+    };
+    use windows::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
+
+    let mut token = HANDLE::default();
+    unsafe {
+        OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token).map_err(|e| {
+            anyhow::anyhow!(
+                "Failed to open current user token for {}: {e}",
+                path.display()
+            )
+        })?;
+    }
+
+    let result = (|| -> Result<()> {
+        let mut token_bytes = 0u32;
+        let _ = unsafe { GetTokenInformation(token, TokenUser, None, 0, &mut token_bytes) };
+        if token_bytes == 0 {
+            anyhow::bail!(
+                "Failed to determine current user SID for {}",
+                path.display()
+            );
+        }
+        let words = (token_bytes as usize).div_ceil(size_of::<u64>());
+        let mut token_storage = vec![0u64; words];
+        unsafe {
+            GetTokenInformation(
+                token,
+                TokenUser,
+                Some(token_storage.as_mut_ptr().cast()),
+                token_bytes,
+                &mut token_bytes,
+            )
+            .map_err(|e| anyhow::anyhow!("Failed to read user SID for {}: {e}", path.display()))?;
+        }
+        let token_user = unsafe { &*token_storage.as_ptr().cast::<TOKEN_USER>() };
+        let current_sid_handle = token_user.User.Sid;
+        let current_sid_len = unsafe { GetLengthSid(current_sid_handle) } as usize;
+        if current_sid_len == 0 {
+            anyhow::bail!("Current user SID is invalid for {}", path.display());
+        }
+
+        let acl_size = (size_of::<ACL>() + 8 + current_sid_len).next_multiple_of(4);
+        let acl_words = acl_size.div_ceil(size_of::<u32>());
+        let mut acl_storage = vec![0u32; acl_words];
+        let acl = acl_storage.as_mut_ptr().cast::<ACL>();
+        unsafe {
+            InitializeAcl(acl, acl_size as u32, ACL_REVISION).map_err(|e| {
+                anyhow::anyhow!("Failed to initialize ACL for {}: {e}", path.display())
+            })?;
+            // 0x001F_01FF is FILE_ALL_ACCESS
+            AddAccessAllowedAceEx(
+                acl,
+                ACL_REVISION,
+                ACE_FLAGS(0),
+                0x001F_01FF,
+                current_sid_handle,
+            )
+            .map_err(|e| {
+                anyhow::anyhow!("Failed to add current-user ACE for {}: {e}", path.display())
+            })?;
+        }
+        let wide_path: Vec<u16> = path
+            .as_os_str()
+            .encode_wide()
+            .chain(std::iter::once(0))
+            .collect();
+        // 0x0000_0004 is DACL_SECURITY_INFORMATION, 0x8000_0000 is PROTECTED_DACL_SECURITY_INFORMATION
+        let status = unsafe {
+            SetNamedSecurityInfoW(
+                wide_path.as_ptr(),
+                1, // SE_FILE_OBJECT
+                0x0000_0004 | 0x8000_0000,
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                acl.cast(),
+                std::ptr::null(),
+            )
+        };
+        if status != 0 {
+            anyhow::bail!(
+                "Failed to apply private ACL to {} (error {status})",
+                path.display()
+            );
+        }
+        Ok(())
+    })();
+    unsafe {
+        let _ = CloseHandle(token);
+    }
+    result
+}
+
 /// Open (or create) the active log file in append mode with the
-/// 0o600 Unix permission bit. Called once at worker startup and again
-/// after any operation that may have renamed the file out from under
-/// us (rotation, rolling trim).
+/// 0o600 Unix permission bit / Windows private ACL. Called once at worker
+/// startup and again after any operation that may have renamed the file out
+/// from under us (rotation, rolling trim).
 fn open_active_file(state: &Arc<WorkerState>) -> Result<File> {
     if let Some(parent) = state.policy.path.parent() {
         fs::create_dir_all(parent)
@@ -466,6 +604,10 @@ fn open_active_file(state: &Arc<WorkerState>) -> Result<File> {
     {
         use std::os::unix::fs::PermissionsExt;
         let _ = fs::set_permissions(&state.policy.path, fs::Permissions::from_mode(0o600));
+    }
+    #[cfg(windows)]
+    {
+        let _ = restrict_log_file_acl(&file, &state.policy.path);
     }
     Ok(file)
 }
@@ -534,6 +676,15 @@ pub fn llm_request_payload_policy() -> Option<(LlmRequestPayloadPolicy, usize)> 
             s.policy.tool_io_truncate_bytes,
         )
     })
+}
+
+/// Active resolved log policy for tool I/O capture and persistence.
+/// Falls back to default policy if no writer is installed.
+#[must_use]
+pub fn active_resolved_policy() -> ResolvedPolicy {
+    current_state()
+        .map(|s| s.policy.clone())
+        .unwrap_or_else(|| ResolvedPolicy::from_config(&LogConfig::default(), Path::new(".")))
 }
 
 /// Emit one event. Always fans out to the broadcast hook + tracing event.
@@ -726,6 +877,10 @@ fn trim_to_last_entries(state: &Arc<WorkerState>) -> Result<()> {
         let out_file = opts
             .open(&tmp)
             .with_context(|| format!("creating trim temp file {}", tmp.display()))?;
+        #[cfg(windows)]
+        {
+            let _ = restrict_log_file_acl(&out_file, &tmp);
+        }
         let mut out = BufWriter::new(out_file);
 
         let in_file = fs::File::open(&state.policy.path)
@@ -756,6 +911,10 @@ fn trim_to_last_entries(state: &Arc<WorkerState>) -> Result<()> {
     {
         use std::os::unix::fs::PermissionsExt;
         let _ = fs::set_permissions(&tmp, fs::Permissions::from_mode(0o600));
+    }
+    #[cfg(windows)]
+    {
+        let _ = restrict_log_file_acl_by_path(&tmp);
     }
     fs::rename(&tmp, &state.policy.path).with_context(|| {
         format!(
@@ -910,6 +1069,10 @@ fn rotate_active(state: &Arc<WorkerState>, when: DateTime<Utc>) -> Result<()> {
     {
         use std::os::unix::fs::PermissionsExt;
         let _ = fs::set_permissions(&archive, fs::Permissions::from_mode(0o600));
+    }
+    #[cfg(windows)]
+    {
+        let _ = restrict_log_file_acl_by_path(&archive);
     }
 
     run_retention(&state.policy);
@@ -2342,5 +2505,54 @@ mod tests {
 
         // Nothing is lost across the transition.
         assert_eq!(total_events(&path), SEEDED + 1 + CAP);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_log_file_has_restricted_acl() {
+        use std::os::windows::ffi::OsStrExt;
+        use windows::Win32::Security::ACL;
+
+        let tmp = tempfile::tempdir().unwrap();
+        let log_path = tmp.path().join("test-acl.jsonl");
+        let file = fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&log_path)
+            .unwrap();
+
+        restrict_log_file_acl(&file, &log_path).expect("restrict ACL must succeed");
+
+        let wide_path: Vec<u16> = log_path
+            .as_os_str()
+            .encode_wide()
+            .chain(std::iter::once(0))
+            .collect();
+        let mut dacl: *mut std::ffi::c_void = std::ptr::null_mut();
+        let mut sec_desc: *mut std::ffi::c_void = std::ptr::null_mut();
+        let status = unsafe {
+            GetNamedSecurityInfoW(
+                wide_path.as_ptr(),
+                1,           // SE_FILE_OBJECT
+                0x0000_0004, // DACL_SECURITY_INFORMATION
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                &mut dacl as *mut _,
+                std::ptr::null_mut(),
+                &mut sec_desc as *mut _,
+            )
+        };
+        assert_eq!(status, 0, "GetNamedSecurityInfoW should succeed");
+        assert!(!dacl.is_null(), "DACL must not be null");
+        let acl = unsafe { &*(dacl as *const ACL) };
+        assert!(
+            acl.AceCount >= 1,
+            "DACL must contain at least 1 ACE for current user"
+        );
+        if !sec_desc.is_null() {
+            unsafe {
+                let _ = LocalFree(sec_desc);
+            }
+        }
     }
 }

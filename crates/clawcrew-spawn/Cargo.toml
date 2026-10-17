@@ -1,5 +1,6 @@
 [package]
 name = "clawcrew-spawn"
+rust-version.workspace = true
 version.workspace = true
 edition = "2024"
 license = "MIT OR Apache-2.0"

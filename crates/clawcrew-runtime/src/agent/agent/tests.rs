@@ -1152,7 +1152,7 @@
             crate::i18n::get_english_cli_string_with_args("turn-model-fallback-notice", &args);
         let french = crate::i18n::get_disk_override_cli_string_for_test(
             "fr",
-            include_str!("../../locales/fr/cli.ftl"),
+            include_str!("../../../../galleon-i18n/locales/fr/cli.ftl"),
             "turn-model-fallback-notice",
             &args,
         );
@@ -11801,7 +11801,6 @@ model_provider = "custom.only"
             "streamed and non-streamed enrichment must be byte-identical for the same clock and message"
         );
     }
-}
 
 #[cfg(test)]
 mod approval_route_tests {
@@ -12054,3 +12053,5 @@ mod approval_route_tests {
             "no originator to inherit; gate applies the non-interactive auto-deny"
         );
     }
+}
+

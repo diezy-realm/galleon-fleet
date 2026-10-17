@@ -28,6 +28,9 @@ pub enum MediaKind {
     Audio,
     Image,
     Video,
+    Document,
+    Archive,
+    Link,
     Unknown,
 }
 
@@ -192,6 +195,11 @@ impl MediaAttachment {
             .is_some_and(|m| m.kind.defers_enrichment() && !is_remote_reference(&m.target))
     }
 
+    /// Total byte size of the raw attachment payload.
+    pub fn byte_size(&self) -> u64 {
+        self.data.len() as u64
+    }
+
     /// Classify this attachment into a [`MediaKind`].
     pub fn kind(&self) -> MediaKind {
         // Try MIME type first.
@@ -206,6 +214,34 @@ impl MediaAttachment {
             if lower.starts_with("video/") {
                 return MediaKind::Video;
             }
+            if lower.starts_with("text/")
+                || lower == "application/pdf"
+                || lower == "application/msword"
+                || lower.starts_with("application/vnd.openxmlformats-officedocument")
+                || lower.starts_with("application/vnd.ms-")
+                || lower == "application/json"
+                || lower == "application/xml"
+                || lower == "application/rtf"
+            {
+                return MediaKind::Document;
+            }
+            if lower == "application/zip"
+                || lower == "application/x-tar"
+                || lower == "application/gzip"
+                || lower == "application/x-7z-compressed"
+                || lower == "application/x-rar-compressed"
+                || lower == "application/x-bzip2"
+            {
+                return MediaKind::Archive;
+            }
+            if lower == "text/uri-list" || lower == "text/x-uri" {
+                return MediaKind::Link;
+            }
+        }
+
+        // Link check via URL structure
+        if is_remote_reference(&self.file_name) {
+            return MediaKind::Link;
         }
 
         // Fall back to file extension.
@@ -221,6 +257,8 @@ impl MediaAttachment {
             }
             ext if is_image_extension(ext) => MediaKind::Image,
             "mp4" | "mkv" | "avi" | "mov" | "wmv" | "flv" => MediaKind::Video,
+            ext if is_document_extension(ext) => MediaKind::Document,
+            ext if is_archive_extension(ext) => MediaKind::Archive,
             _ => MediaKind::Unknown,
         }
     }
@@ -357,6 +395,38 @@ fn is_image_extension(ext: &str) -> bool {
     image_mime_from_extension(ext).is_some() || matches!(ext, "heic" | "tiff" | "svg")
 }
 
+fn is_document_extension(ext: &str) -> bool {
+    matches!(
+        ext,
+        "pdf"
+            | "doc"
+            | "docx"
+            | "xls"
+            | "xlsx"
+            | "ppt"
+            | "pptx"
+            | "txt"
+            | "csv"
+            | "tsv"
+            | "md"
+            | "rtf"
+            | "odt"
+            | "ods"
+            | "odp"
+            | "json"
+            | "xml"
+            | "html"
+            | "htm"
+    )
+}
+
+fn is_archive_extension(ext: &str) -> bool {
+    matches!(
+        ext,
+        "zip" | "tar" | "gz" | "7z" | "rar" | "bz2" | "xz" | "tgz"
+    )
+}
+
 /// Detect common image formats from leading magic bytes. Extends the
 /// loader-recognized set the same way [`is_image_extension`] does.
 fn sniff_image_magic(data: &[u8]) -> bool {
@@ -422,7 +492,12 @@ mod tests {
             ("pic.HEIC", MediaKind::Image),
             ("clip.mp4", MediaKind::Video),
             ("movie.mkv", MediaKind::Video),
-            ("doc.pdf", MediaKind::Unknown),
+            ("doc.pdf", MediaKind::Document),
+            ("notes.txt", MediaKind::Document),
+            ("sheet.xlsx", MediaKind::Document),
+            ("archive.zip", MediaKind::Archive),
+            ("backup.tar", MediaKind::Archive),
+            ("https://example.com/item", MediaKind::Link),
             ("data.bin", MediaKind::Unknown),
             ("noextension", MediaKind::Unknown),
         ];

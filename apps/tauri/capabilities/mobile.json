@@ -1,6 +1,6 @@
 {
   "identifier": "mobile",
-  "description": "Mobile-specific permissions for ClawCrew",
+  "description": "Mobile-specific permissions for Galleon Fleet",
   "windows": ["main"],
   "permissions": [
     "core:default"

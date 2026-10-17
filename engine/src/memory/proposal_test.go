@@ -96,3 +96,72 @@ func TestProposalStore_VersionBumpsOnSupersede(t *testing.T) {
 		t.Fatalf("expected version bump, got v%d then v%d", first.Version, second.Version)
 	}
 }
+
+// BG-F4: Feedback on proposals.
+func TestProposalStore_Feedback(t *testing.T) {
+	ctx := context.Background()
+	ps := NewProposalStore(NewVectorStore())
+
+	prop, err := ps.Propose(ctx, "Check cargo fmt first", nil)
+	if err != nil {
+		t.Fatalf("Propose: %v", err)
+	}
+
+	updated, err := ps.AddFeedback(ctx, prop.ID, "PirateKing", "Please also check clippy")
+	if err != nil {
+		t.Fatalf("AddFeedback: %v", err)
+	}
+	if len(updated.Feedbacks) != 1 {
+		t.Fatalf("expected 1 feedback, got %d", len(updated.Feedbacks))
+	}
+	if updated.Feedbacks[0].Author != "PirateKing" || updated.Feedbacks[0].Comment != "Please also check clippy" {
+		t.Fatalf("unexpected feedback data: %+v", updated.Feedbacks[0])
+	}
+}
+
+// BG-F4: Rollback to previous version.
+func TestProposalStore_RollbackToVersion(t *testing.T) {
+	ctx := context.Background()
+	vs := NewVectorStore()
+	ps := NewProposalStore(vs)
+	scope := map[string]string{"project": "galleon"}
+
+	// v1
+	v1, err := ps.Propose(ctx, "Rule V1: do x", scope)
+	if err != nil {
+		t.Fatalf("Propose v1: %v", err)
+	}
+	_, err = ps.Approve(ctx, v1.ID)
+	if err != nil {
+		t.Fatalf("Approve v1: %v", err)
+	}
+
+	// v2 (supersedes v1)
+	v2, err := ps.Propose(ctx, "Rule V2: do y", scope)
+	if err != nil {
+		t.Fatalf("Propose v2: %v", err)
+	}
+	approvedV2, err := ps.Approve(ctx, v2.ID)
+	if err != nil {
+		t.Fatalf("Approve v2: %v", err)
+	}
+	if approvedV2.Version != 2 {
+		t.Fatalf("expected version 2, got %d", approvedV2.Version)
+	}
+
+	// Rollback v2 to v1
+	rolledBack, err := ps.RollbackToVersion(ctx, v2.ID, 1)
+	if err != nil {
+		t.Fatalf("RollbackToVersion: %v", err)
+	}
+	if rolledBack.Version != 1 || rolledBack.Rule != "Rule V1: do x" {
+		t.Fatalf("expected rollback to v1 with 'Rule V1: do x', got v%d rule %q", rolledBack.Version, rolledBack.Rule)
+	}
+
+	// Verify vector store contains the rolled back rule
+	docs, err := vs.SearchByText(ctx, "Rule V1", 5)
+	if err != nil || len(docs) == 0 {
+		t.Fatalf("expected to find rolled back rule in vector store, err: %v, docs: %d", err, len(docs))
+	}
+}
+

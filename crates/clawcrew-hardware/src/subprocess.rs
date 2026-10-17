@@ -656,6 +656,7 @@ mod tests {
             },
             transport: None,
             parameters: params,
+            payment_category: None,
         }
     }
 

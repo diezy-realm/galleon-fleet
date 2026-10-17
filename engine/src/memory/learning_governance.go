@@ -3,7 +3,7 @@ package memory
 import (
 	"context"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 )
 
 // LearningGovernanceService manages the consent-based learning lifecycle.

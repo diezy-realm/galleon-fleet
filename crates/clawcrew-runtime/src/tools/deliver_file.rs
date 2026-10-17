@@ -6,17 +6,10 @@ use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use clawcrew_tools::embedded_resource::{content_hash_name, materialize_bytes};
 
-pub const MAX_DELIVER_FILE_BYTES: u64 = 10 * 1024 * 1024;
-
-/// ACP / model citation URI for an outbound delivered file.
-///
-/// Source of truth for the `attachment://deliver/<id>` string, where `<id>` is
-/// the opaque content hash from [`content_hash_name`] — never a caller-supplied
-/// filename. ACP must reuse this helper (or the `uri` carried on the tool's
-/// [`clawcrew_api::agent::ToolArtifact`]), not a second formatter.
-pub fn attachment_deliver_uri(id: &str) -> String {
-    format!("attachment://deliver/{id}")
-}
+pub use clawcrew_tools::deliver_file::{
+    MAX_DELIVER_FILE_BYTES, attachment_deliver_uri, read_delivered_artifact_bounded,
+    read_from_dir,
+};
 
 /// Sanitize a caller-supplied `deliver_file` display title. Strips control
 /// characters (newlines included) so the label renders cleanly as chat text;
@@ -115,61 +108,6 @@ fn read_source_bounded(security: &SecurityPolicy, resolved: &Path) -> Result<Vec
 /// any component that escapes `dir` via `..` or an escaping symlink), verify it is
 /// a regular file within the delivery size cap, and return its bytes. Every check
 /// and the read use that one opened handle, so nothing swapped in at the pathname
-/// between check and read can redirect the bytes.
-fn read_from_dir(dir: &cap_std::fs::Dir, rel: &Path) -> Result<Vec<u8>, String> {
-    use std::io::Read;
-
-    let file = dir
-        .open(rel)
-        .map_err(|e| format!("Failed to open file: {e}"))?;
-    let meta = file
-        .metadata()
-        .map_err(|e| format!("Failed to read file metadata: {e}"))?;
-    if !meta.is_file() {
-        return Err("Not a file".to_string());
-    }
-    if meta.len() > MAX_DELIVER_FILE_BYTES {
-        return Err(format!(
-            "File too large: {} bytes (limit: {MAX_DELIVER_FILE_BYTES} bytes)",
-            meta.len()
-        ));
-    }
-    // One extra byte over the cap catches a grow-after-stat race.
-    let mut content = Vec::with_capacity(meta.len() as usize);
-    file.take(MAX_DELIVER_FILE_BYTES + 1)
-        .read_to_end(&mut content)
-        .map_err(|e| format!("Failed to read file: {e}"))?;
-    if content.len() as u64 > MAX_DELIVER_FILE_BYTES {
-        return Err(format!(
-            "File too large: {}+ bytes (limit: {MAX_DELIVER_FILE_BYTES} bytes)",
-            content.len()
-        ));
-    }
-    Ok(content)
-}
-
-/// Bounded, no-follow read of an already-delivered artifact under the workspace
-/// `uploads/` directory, for the ACP consumer that embeds the blob. The artifact
-/// is opened once beneath its parent directory handle (cap-std, no-follow), its
-/// size is taken from that handle, and at most `MAX_DELIVER_FILE_BYTES + 1` bytes
-/// are read from the same handle. A workspace writer that grows or replaces the
-/// content-addressed file between the tool's write and this read therefore cannot
-/// cause an unbounded read, and a replacement symlink is refused, not followed.
-pub fn read_delivered_artifact_bounded(path: &Path) -> Result<Vec<u8>, String> {
-    use cap_std::ambient_authority;
-    use cap_std::fs::Dir;
-
-    let parent = path
-        .parent()
-        .ok_or_else(|| "artifact path has no parent directory".to_string())?;
-    let name = path
-        .file_name()
-        .ok_or_else(|| "artifact path has no file name".to_string())?;
-    let dir = Dir::open_ambient_dir(parent, ambient_authority())
-        .map_err(|e| format!("Failed to open artifact directory: {e}"))?;
-    read_from_dir(&dir, Path::new(name))
-}
-
 #[async_trait]
 impl Tool for DeliverFileTool {
     fn name(&self) -> &str {

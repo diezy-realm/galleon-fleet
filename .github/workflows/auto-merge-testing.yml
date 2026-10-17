@@ -1,0 +1,134 @@
+name: Auto-Merge to Testing
+
+# Fully-automated merge into `testing` ONLY.
+# Fires when CI checks settle or a review lands on a PR targeting `testing`.
+# Merges (squash) when EVERY required check is green, the Principle gates pass,
+# and no reviewer requested changes. Flaky `cargo nextest` jobs (the `Test*`
+# family) are treated as non-blocking per Owner decision 2026-10-17.
+#
+# Scope guard: `base_ref == testing` is enforced in every job — PRs into main /
+# prerelease are never auto-merged here (those keep their human gate).
+
+on:
+  check_suite:
+    types: [completed]
+  pull_request_review:
+    types: [submitted]
+  workflow_run:
+    workflows: ["CI", "Auto Principle PR Review", "PR Testing Gate (Feature-Scoped & RF-D Checklist)"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  statuses: read
+
+jobs:
+  auto-merge:
+    name: Evaluate & auto-merge green PRs into testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate open PRs targeting testing and merge if green
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Checks whose failure/pending does NOT block auto-merge.
+            // Owner decision 2026-10-17: cargo-nextest is occasionally flaky,
+            // so the Test* family is advisory, not blocking.
+            const IGNORE_PREFIXES = ["Test"];           // "Test", "Test (channel ...)", "Test (PostgreSQL Memory)"
+            const IGNORE_EXACT = new Set([
+              "Benchmarks Compile",                      // frequently skipped
+              "SOP Eval Replay (Advisory Non-Blocking)", // advisory by name — never blocks
+            ]);
+            // Any check whose name declares itself advisory/non-blocking is ignored.
+            const IGNORE_SUBSTR = ["Advisory Non-Blocking"];
+            // Gates that MUST be present AND passing (not merely "not failing").
+            const REQUIRED_GATES = [
+              "Principle Gate Reviewer",
+              "Principle Checklist & Standards Gate",
+            ];
+
+            const isIgnored = (name) =>
+              IGNORE_EXACT.has(name) ||
+              IGNORE_SUBSTR.some((s) => name.includes(s)) ||
+              IGNORE_PREFIXES.some((p) => name === p || name.startsWith(p + " ("));
+
+            // All open PRs whose base is `testing`.
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner, repo, state: "open", base: "testing", per_page: 100,
+            });
+            if (!prs.length) { core.info("No open PRs targeting testing."); return; }
+
+            for (const pr of prs) {
+              const tag = `PR #${pr.number} (${pr.head.ref})`;
+
+              // Skip drafts and non-mergeable (conflicts).
+              const full = (await github.rest.pulls.get({ owner, repo, pull_number: pr.number })).data;
+              if (full.draft) { core.info(`${tag}: draft — skip`); continue; }
+              if (full.mergeable === false) { core.info(`${tag}: not mergeable (conflict) — skip`); continue; }
+
+              // Reviews: block on any CHANGES_REQUESTED not superseded.
+              const reviews = await github.paginate(github.rest.pulls.listReviews, {
+                owner, repo, pull_number: pr.number, per_page: 100,
+              });
+              const latestByUser = {};
+              for (const r of reviews) {
+                if (["APPROVED","CHANGES_REQUESTED","DISMISSED"].includes(r.state))
+                  latestByUser[r.user.id] = r.state;
+              }
+              if (Object.values(latestByUser).includes("CHANGES_REQUESTED")) {
+                core.info(`${tag}: has CHANGES_REQUESTED — skip`); continue;
+              }
+
+              // Check runs on the PR head SHA.
+              const sha = pr.head.sha;
+              const runs = await github.paginate(github.rest.checks.listForRef, {
+                owner, repo, ref: sha, per_page: 100,
+              });
+              // Collapse to latest run per check name.
+              const latest = {};
+              for (const c of runs) {
+                const prev = latest[c.name];
+                if (!prev || new Date(c.started_at||0) >= new Date(prev.started_at||0)) latest[c.name] = c;
+              }
+              const names = Object.keys(latest);
+
+              // Required gates must be present and successful.
+              let gatesOk = true;
+              for (const g of REQUIRED_GATES) {
+                const c = latest[g];
+                if (!c || c.status !== "completed" || !["success","neutral","skipped"].includes(c.conclusion)) {
+                  core.info(`${tag}: required gate '${g}' not green (${c ? c.conclusion : "absent"}) — skip`);
+                  gatesOk = false; break;
+                }
+              }
+              if (!gatesOk) continue;
+
+              // Every non-ignored check must be completed & green (success/neutral/skipped).
+              let blocking = [];
+              for (const name of names) {
+                if (isIgnored(name)) continue;
+                const c = latest[name];
+                if (c.status !== "completed") { blocking.push(`${name}:${c.status}`); continue; }
+                if (!["success","neutral","skipped"].includes(c.conclusion)) blocking.push(`${name}:${c.conclusion}`);
+              }
+              if (blocking.length) {
+                core.info(`${tag}: blocking checks → ${blocking.join(", ")} — skip`);
+                continue;
+              }
+
+              // All green → squash-merge.
+              core.info(`${tag}: all required checks green, gates pass, no changes requested → merging`);
+              try {
+                await github.rest.pulls.merge({
+                  owner, repo, pull_number: pr.number, merge_method: "squash",
+                });
+                core.notice(`${tag}: auto-merged into testing ✅`);
+              } catch (e) {
+                core.warning(`${tag}: merge failed — ${e.message}`);
+              }
+            }

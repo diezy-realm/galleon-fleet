@@ -55,7 +55,7 @@ jobs:
 
   publish:
     name: Build & push ${{ matrix.stem }}
-    if: github.repository == 'clawcrew-labs/clawcrew'
+    if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [matrix]
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -106,7 +106,7 @@ jobs:
         # Signs by digest so the signature is immutable regardless of tag mutations.
         # Consumers verify with:
         #   cosign verify --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-        #     --certificate-identity-regexp "^https://github.com/clawcrew-labs/clawcrew/" \
+        #     --certificate-identity-regexp "^https://github.com/diezy-realm/galleon-fleet/" \
         #     ${{ env.REGISTRY }}/${{ env.IMAGE }}@${{ steps.build-push.outputs.digest }}
         env:
           DIGEST: ${{ steps.build-push.outputs.digest }}
@@ -120,7 +120,7 @@ jobs:
   # dedicated job: a version-pinned tag on a release and a floating `latest`.
   publish-relay:
     name: Build & push zerorelay
-    if: github.repository == 'clawcrew-labs/clawcrew'
+    if: github.repository == 'diezy-realm/galleon-fleet'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -187,7 +187,7 @@ jobs:
 
   scan:
     name: Scan ${{ matrix.stem }}
-    if: github.repository == 'clawcrew-labs/clawcrew'
+    if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [matrix, publish]
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -227,7 +227,7 @@ jobs:
 
   scan-relay:
     name: Scan zerorelay
-    if: github.repository == 'clawcrew-labs/clawcrew'
+    if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [publish-relay]
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -259,7 +259,7 @@ jobs:
 
   upload-sarif:
     name: Upload SARIF ${{ matrix.stem }}
-    if: github.repository == 'clawcrew-labs/clawcrew'
+    if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [matrix, scan]
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -283,7 +283,7 @@ jobs:
 
   upload-relay-sarif:
     name: Upload SARIF zerorelay
-    if: github.repository == 'clawcrew-labs/clawcrew'
+    if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [scan-relay]
     runs-on: ubuntu-latest
     timeout-minutes: 10

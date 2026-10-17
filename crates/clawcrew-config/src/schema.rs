@@ -648,15 +648,6 @@ pub struct Config {
     #[serde(default)]
     pub locale: Option<String>,
 
-    /// Verifiable Intent (VI) credential issuance and constraint checking
-    /// (`[verifiable_intent]`). No credential chain verifier exists yet, so the
-    /// `vi_verify` tool is not registered for the model and this section does not
-    /// currently enable verification of anything.
-    #[serde(default)]
-    #[nested]
-    #[group = "Agent"]
-    pub verifiable_intent: VerifiableIntentConfig,
-
     /// Claude Code tool configuration (`[claude_code]`).
     #[serde(default)]
     #[nested]
@@ -5709,6 +5700,26 @@ pub struct McpServerConfig {
     /// plaintext URLs and downgrade redirects are rejected. Ignored by stdio.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tls_ca_cert_path: Option<String>,
+    /// Sandbox profile for stdio transport:
+    /// - `None` / `Some("default")` / `Some("workspace-only")`: sandbox child process to workspace + allowed paths.
+    /// - `Some("none")` / `Some("unconfined")`: explicit opt-out from sandboxing.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sandbox_profile: Option<String>,
+    /// Explicit allowed filesystem paths for stdio child process beyond the workspace.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub allowed_paths: Vec<String>,
+}
+
+impl McpServerConfig {
+    /// Whether this MCP server is sandboxed at the OS level (deny-by-default).
+    /// Returns false only if explicitly configured with an opt-out profile ("none" or "unconfined").
+    #[must_use]
+    pub fn is_sandboxed(&self) -> bool {
+        !matches!(
+            self.sandbox_profile.as_deref(),
+            Some("none") | Some("unconfined")
+        )
+    }
 }
 
 /// External MCP client configuration (`[mcp]` section).
@@ -5763,53 +5774,6 @@ impl Default for McpConfig {
             enabled: default_mcp_enabled(),
             deferred_loading: default_deferred_loading(),
             servers: Vec::new(),
-        }
-    }
-}
-
-/// Verifiable Intent (VI) credential issuance and constraint checking
-/// (`[verifiable_intent]` section).
-///
-/// ClawCrew implements issuance, crypto, types and constraint checking, but not
-/// a credential chain verifier. Until one exists the `vi_verify` tool is
-/// withheld from the model-visible registry, so neither key below enables
-/// verification of a credential. The library paths are unaffected.
-///
-/// Enabling the section reports that gap two ways. The runtime traces it at
-/// each config application, which needs log persistence to be on to reach a
-/// sink. `clawcrew doctor` and the config API also report it as the
-/// `verifiable_intent_tool_withheld` validation warning, which stays available
-/// when persistence is off.
-#[derive(Debug, Clone, Serialize, Deserialize, Configurable)]
-#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
-#[prefix = "verifiable_intent"]
-pub struct VerifiableIntentConfig {
-    /// Opt in to the VI section (default: false).
-    ///
-    /// While the tool is withheld this does not enable credential verification
-    /// on commerce tool calls. It currently causes a warning naming that gap,
-    /// emitted once per config application: at process startup, and again when
-    /// a daemon reload re-reads config from disk.
-    #[serde(default)]
-    pub enabled: bool,
-
-    /// Intended strictness mode for constraint evaluation.
-    ///
-    /// Accepts `"strict"` or `"permissive"`, and defaults to `"strict"`. No
-    /// production code reads it while the tool is withheld.
-    #[serde(default = "default_vi_strictness")]
-    pub strictness: String,
-}
-
-fn default_vi_strictness() -> String {
-    "strict".to_owned()
-}
-
-impl Default for VerifiableIntentConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            strictness: default_vi_strictness(),
         }
     }
 }
@@ -10736,6 +10700,7 @@ pub enum ProxyScope {
     Environment,
     /// Apply proxy to all ClawCrew-managed HTTP traffic (default).
     #[default]
+    #[serde(alias = "clawcrew")]
     Zeroclaw,
     /// Apply proxy only to explicitly listed service selectors.
     Services,
@@ -13273,6 +13238,22 @@ pub struct ObservabilityConfig {
     )]
     pub log_tool_io: LogToolIo,
 
+    /// Technical tool I/O capture policy (shell, file ops, etc.): "off" | "redacted" | "full".
+    /// Defaults to `redacted`.
+    #[serde(
+        default = "default_log_technical_tool_io",
+        deserialize_with = "deserialize_enum_lenient"
+    )]
+    pub log_technical_tool_io: LogToolIo,
+
+    /// Conversational tool I/O capture policy (messaging, user chat): "off" | "redacted" | "full".
+    /// Defaults to `off` to protect user privacy.
+    #[serde(
+        default = "default_log_conversational_tool_io",
+        deserialize_with = "deserialize_enum_lenient"
+    )]
+    pub log_conversational_tool_io: LogToolIo,
+
     /// Truncate the captured tool input and output at this many bytes when
     /// `log_tool_io = "redacted"`. Truncated events carry an explicit
     /// `tool_output_truncated: true` flag plus `tool_output_original_bytes`.
@@ -13351,6 +13332,8 @@ impl Default for ObservabilityConfig {
             log_persistence_max_entries_per_segment:
                 default_log_persistence_max_entries_per_segment(),
             log_tool_io: default_log_tool_io(),
+            log_technical_tool_io: default_log_technical_tool_io(),
+            log_conversational_tool_io: default_log_conversational_tool_io(),
             log_tool_io_truncate_bytes: default_log_tool_io_truncate_bytes(),
             log_tool_io_denylist: Vec::new(),
             log_llm_request_payload: default_log_llm_request_payload(),
@@ -13402,6 +13385,14 @@ fn default_log_persistence_retention_max_age_days() -> u64 {
 
 fn default_log_tool_io() -> LogToolIo {
     LogToolIo::Redacted
+}
+
+fn default_log_technical_tool_io() -> LogToolIo {
+    LogToolIo::Redacted
+}
+
+fn default_log_conversational_tool_io() -> LogToolIo {
+    LogToolIo::Off
 }
 
 fn default_log_llm_request_payload() -> LogLlmRequestPayload {
@@ -15133,6 +15124,24 @@ pub enum CronShellOutputFormat {
     /// non-zero exit; a plain error string for failures that never reach a
     /// process exit (security denial, spawn/setup failure, timeout).
     Raw,
+}
+
+impl From<CronShellOutputFormat> for clawcrew_infra::cron_types::CronShellOutputFormat {
+    fn from(f: CronShellOutputFormat) -> Self {
+        match f {
+            CronShellOutputFormat::Wrapped => clawcrew_infra::cron_types::CronShellOutputFormat::Wrapped,
+            CronShellOutputFormat::Raw => clawcrew_infra::cron_types::CronShellOutputFormat::Raw,
+        }
+    }
+}
+
+impl From<clawcrew_infra::cron_types::CronShellOutputFormat> for CronShellOutputFormat {
+    fn from(f: clawcrew_infra::cron_types::CronShellOutputFormat) -> Self {
+        match f {
+            clawcrew_infra::cron_types::CronShellOutputFormat::Wrapped => Self::Wrapped,
+            clawcrew_infra::cron_types::CronShellOutputFormat::Raw => Self::Raw,
+        }
+    }
 }
 
 /// Schedule variant for declarative cron jobs.
@@ -19045,6 +19054,13 @@ pub struct SecurityConfig {
     #[nested]
     pub estop: EstopConfig,
 
+    /// Payment-lockout gate configuration (BL-40).
+    /// Default state: locked. Agents cannot invoke payment-category tools
+    /// unless explicitly unlocked by the user.
+    #[serde(default)]
+    #[nested]
+    pub payment_lock: PaymentLockConfig,
+
     /// Nevis IAM integration for SSO/MFA authentication and role-based access.
     #[serde(default)]
     #[nested]
@@ -19274,6 +19290,91 @@ impl Default for EstopConfig {
     }
 }
 
+/// Operational mode of the payment lockout gate (BL-40).
+#[derive(
+    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default, clawcrew_macros::ConfigEnum,
+)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+#[serde(rename_all = "snake_case")]
+pub enum PaymentLockMode {
+    /// Agent cannot invoke financial or payment capabilities under any circumstance.
+    #[default]
+    Locked,
+    /// Financial tools may execute if explicit conditions (scope, expiry) match.
+    Unlocked,
+}
+
+/// Classification of financial or payment operations covered by the lockout gate (BL-40).
+#[derive(
+    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, clawcrew_macros::ConfigEnum,
+)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+#[serde(rename_all = "snake_case")]
+pub enum PaymentActionCategory {
+    CardPayment,
+    BankTransfer,
+    CryptoTransaction,
+    WalletTopup,
+    SubscriptionCommit,
+}
+
+impl crate::traits::HasPropKind for Vec<PaymentActionCategory> {
+    const PROP_KIND: crate::traits::PropKind = crate::traits::PropKind::StringArray;
+}
+
+impl PaymentActionCategory {
+    pub fn all() -> Vec<Self> {
+        vec![
+            Self::CardPayment,
+            Self::BankTransfer,
+            Self::CryptoTransaction,
+            Self::WalletTopup,
+            Self::SubscriptionCommit,
+        ]
+    }
+}
+
+/// Preventive payment lockout configuration (BL-40).
+/// Enforces fail-closed: defaults to Locked, requiring conscious operator action to unlock.
+#[derive(Debug, Clone, Serialize, Deserialize, Configurable, PartialEq, Eq)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+#[prefix = "security.payment_lock"]
+pub struct PaymentLockConfig {
+    /// Master switch for the payment lock gate. Default: Locked.
+    #[serde(default)]
+    pub mode: PaymentLockMode,
+
+    /// Explicit scopes allowed when mode = Unlocked. An empty list keeps all scopes locked.
+    #[serde(default)]
+    pub unlocked_scopes: Vec<String>,
+
+    /// Require an authenticated operator action/OTP to unlock.
+    #[serde(default = "default_true")]
+    pub require_otp_to_unlock: bool,
+
+    /// UNIX timestamp when the unlock automatically expires.
+    /// When expired or null while locked, gate fails closed immediately.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub unlock_expires_at: Option<u64>,
+
+    /// Financial categories covered by this lock gate.
+    #[serde(default = "PaymentActionCategory::all")]
+    pub covered_categories: Vec<PaymentActionCategory>,
+}
+
+impl Default for PaymentLockConfig {
+    fn default() -> Self {
+        Self {
+            mode: PaymentLockMode::Locked,
+            unlocked_scopes: Vec::new(),
+            require_otp_to_unlock: true,
+            unlock_expires_at: None,
+            covered_categories: PaymentActionCategory::all(),
+        }
+    }
+}
+
+
 /// Nevis IAM integration configuration.
 ///
 /// When `enabled` is true, ClawCrew validates incoming requests against a Nevis
@@ -19502,6 +19603,9 @@ pub enum SandboxBackend {
     /// macOS sandbox-exec (Seatbelt)
     #[serde(alias = "sandbox-exec")]
     SandboxExec,
+    /// Windows AppContainer / process isolation
+    #[serde(alias = "appcontainer")]
+    AppContainer,
     /// No sandboxing (application-layer only)
     None,
 }
@@ -20830,7 +20934,6 @@ impl Default for Config {
             file_download: FileDownloadConfig::default(),
             plugins: PluginsConfig::default(),
             locale: None,
-            verifiable_intent: VerifiableIntentConfig::default(),
             claude_code: ClaudeCodeConfig::default(),
             claude_code_runner: ClaudeCodeRunnerConfig::default(),
             codex_cli: CodexCliConfig::default(),
@@ -22486,40 +22589,6 @@ impl Config {
         }
     }
 
-    /// Report that opting into `[verifiable_intent]` does not currently enable
-    /// credential verification, because `vi_verify` is withheld from the
-    /// model-visible registry until a chain verifier exists.
-    ///
-    /// The runtime already traces this at config load. That trace reaches a
-    /// sink only when log persistence is on, so under
-    /// `observability.log_persistence = "none"` it is delivered nowhere. This
-    /// warning is the channel that survives: `clawcrew doctor` prints the
-    /// structured list to stdout and the config API returns it in its
-    /// response, neither of which depends on the log writer.
-    ///
-    /// Same class as `memory_config_knob_inert` — a knob that is set, accepted,
-    /// and currently has no runtime consumer.
-    ///
-    /// The change that re-registers `vi_verify` must delete this check and the
-    /// runtime trace together, or an operator is told the capability is
-    /// unavailable while the model is calling it.
-    fn collect_verifiable_intent_warnings(
-        &self,
-        warnings: &mut Vec<crate::validation_warnings::ValidationWarning>,
-    ) {
-        if !self.verifiable_intent.enabled {
-            return;
-        }
-        warnings.push(crate::validation_warnings::ValidationWarning::new(
-            crate::validation_warnings::VERIFIABLE_INTENT_TOOL_WITHHELD,
-            "verifiable_intent.enabled is set, but the vi_verify tool is withheld from the \
-             model-visible registry until a credential chain verifier exists. Enabling the \
-             section does not enable credential verification on commerce tool calls. The \
-             issuance and verification library paths are unaffected.",
-            "verifiable_intent.enabled",
-        ));
-    }
-
     /// Collect non-fatal validation warnings — config that loads and
     /// validates successfully (`validate()` returns `Ok(())`) but will fail
     /// at runtime because of a logical inconsistency the schema cannot
@@ -22547,7 +22616,6 @@ impl Config {
         // warning when the more specific cross-provider diagnostic already
         // covers the same path.
         self.collect_context_compression_ignored_warnings(&mut warnings);
-        self.collect_verifiable_intent_warnings(&mut warnings);
         warnings.extend(validate_memory_semantics(&self.memory));
         for (alias, wa) in &self.channels.whatsapp {
             warnings.extend(validate_whatsapp_semantics(alias, wa));
@@ -24157,22 +24225,6 @@ impl Config {
         // collect_warnings; emit them to tracing here so the existing log
         // behavior is preserved, with the single documented exception below.
         for w in self.collect_warnings() {
-            // One code is held back from this loop on purpose. The runtime
-            // already records the withheld-capability notice itself, with an
-            // explicit `System` category and the same code and path, once at
-            // every config application. Records emitted here carry no category
-            // and are stored as `internal`, which the dashboard Logs view hides
-            // by default, so tracing it here as well leaves a hidden second copy
-            // of a notice an operator is supposed to read. Every command that
-            // loads config a second time inside a live process writes that pair.
-            //
-            // `collect_warnings` still returns it, so `clawcrew doctor` and the
-            // config API report it exactly as before; only this tracing copy is
-            // dropped. The change that re-registers the tool retires this skip
-            // together with the runtime record it defers to.
-            if w.code == crate::validation_warnings::VERIFIABLE_INTENT_TOOL_WITHHELD {
-                continue;
-            }
             ::clawcrew_log::record!(
                 WARN,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)

@@ -27,7 +27,9 @@ pub mod opencode_session;
 pub mod openrouter;
 pub mod openrouter_catalog;
 pub mod pricing;
+pub mod rate_limit;
 pub mod reliable;
+pub mod reliability;
 pub mod router;
 pub mod safeguard_notice;
 pub(crate) mod stream_guard;
@@ -37,6 +39,10 @@ pub mod vision_override;
 
 pub use anthropic::AnthropicRefusalError;
 pub use dispatch::{AccountedChatResponse, ProviderDispatch, ProviderDispatchRef};
+pub use rate_limit::{
+    ProviderRateLimitError, ProviderRateLimitGate, ProviderRateLimitPermit,
+    ProviderRateLimitPolicy,
+};
 pub use reliable::{
     ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
     ReliableRejectedCompletionUsage, ReliableSemanticEmptyCompletion,
@@ -2004,8 +2010,10 @@ fn create_resilient_model_provider_from_ref_with_model_override(
     options: &ModelProviderRuntimeOptions,
     primary_model_override: Option<&str>,
 ) -> anyhow::Result<Box<dyn ModelProvider>> {
-    match name.split_once('.') {
-        Some((family, alias)) => create_resilient_model_provider_for_alias_with_model_override(
+    if let Some((family, alias)) = name.split_once('.')
+        && !family.contains(':')
+    {
+        create_resilient_model_provider_for_alias_with_model_override(
             config,
             family,
             alias,
@@ -2014,14 +2022,15 @@ fn create_resilient_model_provider_from_ref_with_model_override(
             reliability,
             options,
             primary_model_override,
-        ),
-        None => create_resilient_model_provider_with_options(
+        )
+    } else {
+        create_resilient_model_provider_with_options(
             name,
             api_key,
             api_url,
             reliability,
             options,
-        ),
+        )
     }
 }
 
@@ -2434,6 +2443,14 @@ pub fn list_model_providers() -> Vec<ModelProviderInfo> {
          every canonical slot needs exactly one display entry and vice versa"
     );
     out
+}
+
+/// Returns whether a model provider is local (requires no external credential).
+pub fn model_provider_is_local(name: &str) -> bool {
+    list_model_providers()
+        .iter()
+        .find(|p| p.name == name)
+        .is_some_and(|p| p.local)
 }
 
 #[must_use]

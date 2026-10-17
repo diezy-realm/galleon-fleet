@@ -5,19 +5,22 @@ use super::{AppState, GW_SESSION_PREFIX, gateway_cancel_key, gateway_session_key
 use axum::{
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode, header},
-    response::{IntoResponse, Json, sse::{Event, KeepAlive, Sse}},
+    response::{
+        IntoResponse, Json,
+        sse::{Event, KeepAlive, Sse},
+    },
 };
+use clawcrew_config::schema::{ChannelAliasInfo, Config};
+use clawcrew_memory::MemoryEntry;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::convert::Infallible;
 use std::time::Duration;
-use clawcrew_config::schema::{ChannelAliasInfo, Config};
-use clawcrew_memory::MemoryEntry;
 
 const MEMORY_API_CONTENT_MAX_CHARS: usize = 4096;
 
 fn integration_entry_json(
-    entry: &clawcrew_runtime::integrations::IntegrationEntry,
+    entry: &clawcrew_config::integrations::IntegrationEntry,
 ) -> serde_json::Value {
     serde_json::json!({
         "name": &entry.name,
@@ -126,7 +129,7 @@ pub struct CronAddBody {
     pub command: Option<String>,
     pub job_type: Option<String>,
     pub prompt: Option<String>,
-    pub delivery: Option<clawcrew_runtime::cron::DeliveryConfig>,
+    pub delivery: Option<clawcrew_infra::cron_types::DeliveryConfig>,
     /// Agent session context: `"isolated"` (default) or `"main"`. For agent jobs,
     /// a present value that is not one of those two names is rejected; omitted
     /// keeps the isolated default. Same contract as the `cron_add` tool. Shell
@@ -223,9 +226,9 @@ fn parse_timezone_patch(
 fn cron_schedule_from_api(
     expr: String,
     tz: Option<String>,
-) -> Result<clawcrew_runtime::cron::Schedule, (StatusCode, Json<serde_json::Value>)> {
-    let schedule = clawcrew_runtime::cron::Schedule::Cron { expr, tz };
-    clawcrew_runtime::cron::validate_schedule(&schedule, chrono::Utc::now())
+) -> Result<clawcrew_infra::cron_types::Schedule, (StatusCode, Json<serde_json::Value>)> {
+    let schedule = clawcrew_infra::cron_types::Schedule::Cron { expr, tz };
+    clawcrew_infra::cron_schedule::validate_schedule(&schedule, chrono::Utc::now())
         .map_err(|e| bad_request(format!("Invalid cron schedule: {e}")))?;
     Ok(schedule)
 }
@@ -263,11 +266,11 @@ pub struct StatusResponse {
     pub paired: bool,
     pub channels: BTreeMap<String, bool>,
     pub nodes: StatusNodes,
-    pub health: clawcrew_runtime::health::HealthSnapshot,
+    pub health: clawcrew_infra::health::HealthSnapshot,
     /// Configured agent alias used for per-agent resolution, or `null` for the install-wide view.
     pub agent_alias: Option<String>,
     /// Self-process resource snapshot; unsupported hosts report zero memory and a null CPU value.
-    pub process: clawcrew_runtime::process_stats::ProcessStats,
+    pub process: clawcrew_infra::process_stats::ProcessStats,
     /// Whether the gateway polls for newer releases and shows an update indicator.
     pub check_updates: bool,
     /// Whether browser-triggered self-upgrade is enabled.
@@ -300,7 +303,7 @@ pub async fn handle_api_status(
     }
 
     let config = state.config.read().clone();
-    let health = clawcrew_runtime::health::snapshot();
+    let health = clawcrew_infra::health::snapshot();
 
     // Per-alias map keyed by composite `<type>.<alias>`. Every
     // populated `[channels.<type>.<alias>]` is a separate dashboard row.
@@ -315,7 +318,7 @@ pub async fn handle_api_status(
         .as_deref()
         .filter(|s| !s.is_empty())
         .map(String::from)
-        .unwrap_or_else(clawcrew_runtime::i18n::detect_locale);
+        .unwrap_or_else(galleon_i18n::detect_locale);
 
     // Per-agent resolution when `?agent=<alias>` is supplied. Falls back
     // to the install-wide first-of-each view when the alias is unknown
@@ -357,7 +360,7 @@ pub async fn handle_api_status(
             ),
         };
 
-    let process = clawcrew_runtime::process_stats::sample();
+    let process = clawcrew_infra::process_stats::sample();
 
     // Upgrade affordance: whether the dashboard should poll for updates / offer
     // the upgrade button, and which restart command to show afterwards.
@@ -369,7 +372,7 @@ pub async fn handle_api_status(
         model,
         temperature,
         uptime_seconds: health.uptime_seconds,
-        daemon_started_at: clawcrew_runtime::health::daemon_started_at(),
+        daemon_started_at: clawcrew_infra::health::daemon_started_at(),
         gateway_port: config.gateway.port,
         locale,
         memory_backend,
@@ -446,7 +449,7 @@ pub async fn handle_api_cron_list(
     }
 
     let config = state.config.read().clone();
-    match clawcrew_runtime::cron::list_jobs(&config) {
+    match crate::cron_adapter::list_jobs(&config) {
         Ok(jobs) => Json(serde_json::json!({"jobs": jobs})).into_response(),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -501,7 +504,7 @@ pub async fn handle_api_cron_add(
         Ok(schedule) => schedule,
         Err(e) => return e.into_response(),
     };
-    if let Err(e) = clawcrew_runtime::cron::validate_delivery_config(delivery.as_ref()) {
+    if let Err(e) = clawcrew_infra::cron_types::validate_delivery_config(delivery.as_ref()) {
         return (
             StatusCode::BAD_REQUEST,
             Json(serde_json::json!({"error": format!("Failed to add cron job: {e}")})),
@@ -532,17 +535,17 @@ pub async fn handle_api_cron_add(
         };
 
         let session_target = match session_target {
-            Some(raw) => match clawcrew_runtime::cron::SessionTarget::try_parse(&raw) {
+            Some(raw) => match clawcrew_infra::cron_types::SessionTarget::try_parse(&raw) {
                 Ok(target) => target,
                 Err(e) => return bad_request(e).into_response(),
             },
-            None => clawcrew_runtime::cron::SessionTarget::Isolated,
+            None => clawcrew_infra::cron_types::SessionTarget::Isolated,
         };
 
-        let default_delete = matches!(schedule, clawcrew_runtime::cron::Schedule::At { .. });
+        let default_delete = matches!(schedule, clawcrew_infra::cron_types::Schedule::At { .. });
         let delete_after_run = delete_after_run.unwrap_or(default_delete);
 
-        clawcrew_runtime::cron::add_agent_job(
+        crate::cron_adapter::add_agent_job(
             &config,
             &agent_alias,
             name,
@@ -568,7 +571,7 @@ pub async fn handle_api_cron_add(
         };
 
         let fmt = shell_output_format.unwrap_or_default();
-        clawcrew_runtime::cron::add_shell_job_with_approval_and_format(
+        crate::cron_adapter::add_shell_job_with_approval_and_format(
             &config,
             &agent_alias,
             name,
@@ -605,7 +608,7 @@ pub async fn handle_api_cron_runs(
     let config = state.config.read().clone();
 
     // Verify the job exists before listing runs.
-    if let Err(e) = clawcrew_runtime::cron::get_job(&config, &id) {
+    if let Err(e) = crate::cron_adapter::get_job(&config, &id) {
         return (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({"error": format!("Cron job not found: {e}")})),
@@ -613,7 +616,7 @@ pub async fn handle_api_cron_runs(
             .into_response();
     }
 
-    match clawcrew_runtime::cron::list_runs(&config, &id, limit) {
+    match crate::cron_adapter::list_runs(&config, &id, limit) {
         Ok(runs) => {
             let runs_json: Vec<serde_json::Value> = runs
                 .iter()
@@ -651,7 +654,7 @@ pub async fn handle_api_cron_run(
 
     let config = state.config.read().clone();
 
-    let job = match clawcrew_runtime::cron::get_job(&config, &id) {
+    let job = match crate::cron_adapter::get_job(&config, &id) {
         Ok(job) => job,
         Err(e) => {
             return (
@@ -663,10 +666,9 @@ pub async fn handle_api_cron_run(
     };
 
     let event_tx = Some(state.event_tx.clone());
-    let result = clawcrew_runtime::cron::scheduler::run_manual_job(
+    let result = crate::cron_adapter::run_manual_job(
         &config,
         &job,
-        clawcrew_runtime::cron::scheduler::CronDeliveryContext::GatewayManual,
         &event_tx,
     )
     .await;
@@ -713,7 +715,7 @@ pub async fn handle_api_cron_patch(
         Err(e) => return e.into_response(),
     };
 
-    let existing = match clawcrew_runtime::cron::get_job(&config, &id) {
+    let existing = match crate::cron_adapter::get_job(&config, &id) {
         Ok(j) => j,
         Err(e) => {
             return (
@@ -723,7 +725,7 @@ pub async fn handle_api_cron_patch(
                 .into_response();
         }
     };
-    let is_agent = matches!(existing.job_type, clawcrew_runtime::cron::JobType::Agent);
+    let is_agent = matches!(existing.job_type, clawcrew_infra::cron_types::JobType::Agent);
     if shell_output_format.is_some() {
         if is_agent {
             return bad_request(
@@ -761,12 +763,12 @@ pub async fn handle_api_cron_patch(
         let (expr, existing_tz) = match (&existing.schedule, new_expr) {
             (_, Some(expr)) => {
                 let existing_tz = match &existing.schedule {
-                    clawcrew_runtime::cron::Schedule::Cron { tz, .. } => tz.clone(),
+                    clawcrew_infra::cron_types::Schedule::Cron { tz, .. } => tz.clone(),
                     _ => None,
                 };
                 (expr, existing_tz)
             }
-            (clawcrew_runtime::cron::Schedule::Cron { expr, tz }, None) => {
+            (clawcrew_infra::cron_types::Schedule::Cron { expr, tz }, None) => {
                 (expr.clone(), tz.clone())
             }
             (_, None) => {
@@ -791,18 +793,18 @@ pub async fn handle_api_cron_patch(
         (command.or(prompt), None)
     };
 
-    let patch = clawcrew_runtime::cron::CronJobPatch {
+    let patch = clawcrew_infra::cron_types::CronJobPatch {
         name,
         schedule,
         command: patch_command,
         prompt: patch_prompt,
         enabled,
         uses_memory,
-        shell_output_format,
-        ..clawcrew_runtime::cron::CronJobPatch::default()
+        shell_output_format: shell_output_format.map(Into::into),
+        ..clawcrew_infra::cron_types::CronJobPatch::default()
     };
 
-    match clawcrew_runtime::cron::update_shell_job_with_approval(
+    match crate::cron_adapter::update_shell_job_with_approval(
         &config,
         &agent_alias,
         &id,
@@ -829,7 +831,7 @@ pub async fn handle_api_cron_delete(
     }
 
     let config = state.config.read().clone();
-    match clawcrew_runtime::cron::remove_job(&config, &id) {
+    match crate::cron_adapter::remove_job(&config, &id) {
         Ok(()) => Json(serde_json::json!({"status": "ok"})).into_response(),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -916,7 +918,11 @@ pub async fn handle_api_integrations(
     }
 
     let config = state.config.read().clone();
-    let entries = clawcrew_runtime::integrations::registry::all_integrations(&config);
+    let entries = state
+        .integration_catalog
+        .as_ref()
+        .map(|c| c.all_integrations(&config))
+        .unwrap_or_default();
 
     let integrations: Vec<serde_json::Value> = entries.iter().map(integration_entry_json).collect();
 
@@ -933,13 +939,17 @@ pub async fn handle_api_integrations_settings(
     }
 
     let config = state.config.read().clone();
-    let entries = clawcrew_runtime::integrations::registry::all_integrations(&config);
+    let entries = state
+        .integration_catalog
+        .as_ref()
+        .map(|c| c.all_integrations(&config))
+        .unwrap_or_default();
 
     let mut settings = serde_json::Map::new();
     for entry in &entries {
         let enabled = matches!(
             entry.status,
-            clawcrew_runtime::integrations::IntegrationStatus::Active
+            clawcrew_config::integrations::IntegrationStatus::Active
         );
         settings.insert(
             entry.name.clone(),
@@ -963,20 +973,23 @@ pub async fn handle_api_doctor(
         return e.into_response();
     }
 
-    let config = state.config.read().clone();
-    let results = clawcrew_runtime::doctor::diagnose(&config);
+    let results = if let Some(diag) = &state.diagnostics {
+        diag.run_diagnostics()
+    } else {
+        Vec::new()
+    };
 
     let ok_count = results
         .iter()
-        .filter(|r| r.severity == clawcrew_runtime::doctor::Severity::Ok)
+        .filter(|r| r.severity == clawcrew_api::doctor::Severity::Ok)
         .count();
     let warn_count = results
         .iter()
-        .filter(|r| r.severity == clawcrew_runtime::doctor::Severity::Warn)
+        .filter(|r| r.severity == clawcrew_api::doctor::Severity::Warn)
         .count();
     let error_count = results
         .iter()
-        .filter(|r| r.severity == clawcrew_runtime::doctor::Severity::Error)
+        .filter(|r| r.severity == clawcrew_api::doctor::Severity::Error)
         .count();
 
     Json(serde_json::json!({
@@ -1284,7 +1297,7 @@ pub async fn handle_api_channels(
     }
 
     let config = state.config.read().clone();
-    let health = clawcrew_runtime::health::snapshot();
+    let health = clawcrew_infra::health::snapshot();
     // One entry per `[channels.<type>.<alias>]` block. Owning
     // agent comes from the agents.<alias>.channels reverse lookup.
     let channels: Vec<serde_json::Value> = config
@@ -1437,12 +1450,12 @@ pub async fn handle_api_tuis(
         .tui_registry
         .as_ref()
         .map(|r| {
-            r.list()
+            r.list_connected_tuis()
                 .into_iter()
                 .map(|e| {
                     serde_json::json!({
                         "tui_id": e.tui_id,
-                        "connected_at": e.connected_at.to_rfc3339(),
+                        "connected_at": e.connected_at,
                         "peer_label": e.peer_label,
                         "transport": e.transport,
                     })
@@ -1491,7 +1504,7 @@ struct ChannelReadiness {
 fn channel_readiness(
     config: &clawcrew_config::schema::Config,
     info: &clawcrew_config::schema::ChannelAliasInfo,
-    health: &clawcrew_runtime::health::HealthSnapshot,
+    health: &clawcrew_infra::health::HealthSnapshot,
     state: &AppState,
 ) -> ChannelReadiness {
     let mut readiness = ChannelReadiness {
@@ -1604,7 +1617,7 @@ fn channel_readiness_summary(readiness: &ChannelReadiness) -> (&'static str, &'s
 fn apply_webhook_readiness(
     config: &clawcrew_config::schema::Config,
     alias: &str,
-    health: &clawcrew_runtime::health::HealthSnapshot,
+    health: &clawcrew_infra::health::HealthSnapshot,
     state: &AppState,
     readiness: &mut ChannelReadiness,
 ) {
@@ -1648,7 +1661,7 @@ fn apply_webhook_readiness(
     }
 }
 
-fn component_health_ok_and_fresh(component: &clawcrew_runtime::health::ComponentHealth) -> bool {
+fn component_health_ok_and_fresh(component: &clawcrew_infra::health::ComponentHealth) -> bool {
     if component.status != "ok" {
         return false;
     }
@@ -1681,7 +1694,7 @@ pub async fn handle_api_health(
         return e.into_response();
     }
 
-    let snapshot = clawcrew_runtime::health::snapshot();
+    let snapshot = clawcrew_infra::health::snapshot();
     Json(serde_json::json!({"health": snapshot})).into_response()
 }
 
@@ -1958,7 +1971,7 @@ pub async fn handle_api_session_delete(
         let mut tokens = state
             .cancel_tokens
             .lock()
-            .expect("cancel_tokens lock poisoned");
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         resolve_gateway_cancel_key(&id, |key| tokens.contains_key(key))
             .and_then(|cancel_key| tokens.remove(&cancel_key).map(|token| (cancel_key, token)))
     };
@@ -2063,7 +2076,7 @@ pub async fn handle_api_sessions_running(
         .filter_map(|meta| {
             let session_id = meta.key.strip_prefix("gw_")?;
             // Session metadata projection (P1.5): observable provider fallbacks.
-            let session_meta = clawcrew_runtime::session::metadata::session_metadata(&meta.key);
+            let session_meta = clawcrew_infra::session_metadata::session_metadata(&meta.key);
             Some(serde_json::json!({
                 "session_id": session_id,
                 "created_at": meta.created_at.to_rfc3339(),
@@ -2092,9 +2105,8 @@ pub async fn handle_api_sessions_stream(
         return e.into_response();
     }
     let backend = state.session_backend.clone();
-    let stream = futures_util::stream::unfold(
-        (backend, String::new()),
-        |(backend, last)| async move {
+    let stream =
+        futures_util::stream::unfold((backend, String::new()), |(backend, last)| async move {
             tokio::time::sleep(Duration::from_secs(1)).await;
             let Some(backend) = backend else {
                 let event = Event::default().event("disabled").data("{}");
@@ -2106,7 +2118,7 @@ pub async fn handle_api_sessions_stream(
                 .filter_map(|meta| {
                     let session_id = meta.key.strip_prefix(GW_SESSION_PREFIX)?;
                     let session_meta =
-                        clawcrew_runtime::session::metadata::session_metadata(&meta.key);
+                        clawcrew_infra::session_metadata::session_metadata(&meta.key);
                     Some(serde_json::json!({
                         "session_id": session_id,
                         "last_activity": meta.last_activity.to_rfc3339(),
@@ -2123,8 +2135,7 @@ pub async fn handle_api_sessions_stream(
             }
             let event = Event::default().event("sessions").data(payload.clone());
             Some((Ok::<Event, Infallible>(event), (Some(backend), payload)))
-        },
-    );
+        });
     Sse::new(stream)
         .keep_alive(KeepAlive::default())
         .into_response()
@@ -2193,7 +2204,7 @@ pub async fn handle_api_session_abort(
         let tokens = state
             .cancel_tokens
             .lock()
-            .expect("cancel_tokens lock poisoned");
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let cancel_key = resolve_gateway_cancel_key(&id, |key| tokens.contains_key(key));
         let token = cancel_key
             .as_deref()
@@ -2250,6 +2261,12 @@ pub(crate) mod tests {
     // others enabled the import vanished while its uses remained, so
     // `--features channel-nextcloud` alone failed to compile. `--all-features`
     // hid it, because `channel-linq` was always along for the ride.
+    use clawcrew_config::pairing::PairingGuard;
+    use clawcrew_infra::session_backend::SessionBackend;
+    use clawcrew_infra::session_sqlite::SqliteSessionBackend;
+    use clawcrew_infra::session_store::SessionStore;
+    use clawcrew_memory::{Memory, MemoryCategory, MemoryEntry};
+    use clawcrew_providers::ModelProvider;
     #[cfg(any(
         feature = "channel-linq",
         feature = "channel-nextcloud",
@@ -2258,12 +2275,6 @@ pub(crate) mod tests {
     use std::collections::HashMap;
     use std::sync::Arc;
     use std::time::{Duration, Instant};
-    use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_infra::session_sqlite::SqliteSessionBackend;
-    use clawcrew_infra::session_store::SessionStore;
-    use clawcrew_memory::{Memory, MemoryCategory, MemoryEntry};
-    use clawcrew_providers::ModelProvider;
-    use clawcrew_runtime::security::pairing::PairingGuard;
 
     #[derive(Default)]
     struct MockMemory {
@@ -2425,7 +2436,7 @@ pub(crate) mod tests {
             temperature: None,
             mem: Arc::new(MockMemory::default()),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::strategy::DefaultMemoryStrategy::with_config(
                     Arc::new(MockMemory::default()),
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
@@ -2455,7 +2466,7 @@ pub(crate) mod tests {
             nextcloud_talk_webhook_secret: HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -2470,13 +2481,18 @@ pub(crate) mod tests {
             pending_pairings: None,
             path_prefix: String::new(),
             web_dist_dir: None,
-            canvas_store: clawcrew_runtime::tools::CanvasStore::new(),
+            canvas_store: clawcrew_tools::canvas::CanvasStore::new(),
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
             reload_tx: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
+            diagnostics: None,
+            quickstart: None,
+            integration_catalog: None,
+            personality_runner: None,
+            skills_runner: None,
+            acp_runner: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         }
@@ -2619,11 +2635,11 @@ pub(crate) mod tests {
 
     #[test]
     fn integration_entry_json_derives_category_label_from_category() {
-        let entry = clawcrew_runtime::integrations::IntegrationEntry {
+        let entry = clawcrew_config::integrations::IntegrationEntry {
             name: "Browser".into(),
             description: "Run browser automation".into(),
-            category: clawcrew_runtime::integrations::IntegrationCategory::ToolsAutomation,
-            status: clawcrew_runtime::integrations::IntegrationStatus::Active,
+            category: clawcrew_config::integrations::IntegrationCategory::ToolsAutomation,
+            status: clawcrew_config::integrations::IntegrationStatus::Active,
             key: None,
         };
 
@@ -2637,11 +2653,11 @@ pub(crate) mod tests {
 
     #[test]
     fn integration_entry_json_exposes_config_key() {
-        let entry = clawcrew_runtime::integrations::IntegrationEntry {
+        let entry = clawcrew_config::integrations::IntegrationEntry {
             name: "Z.AI".into(),
             description: String::new(),
-            category: clawcrew_runtime::integrations::IntegrationCategory::AiModel,
-            status: clawcrew_runtime::integrations::IntegrationStatus::Available,
+            category: clawcrew_config::integrations::IntegrationCategory::AiModel,
+            status: clawcrew_config::integrations::IntegrationStatus::Available,
             key: Some("zai".into()),
         };
 
@@ -3290,7 +3306,7 @@ pub(crate) mod tests {
     fn channel_readiness_webhook_does_not_call_gateway_route_healthy_without_listener() {
         let config = config_with_webhook("default", true, true, 42617, Some("/webhook"));
         let state = test_state(config.clone());
-        let health = clawcrew_runtime::health::snapshot();
+        let health = clawcrew_infra::health::snapshot();
         let info = first_channel_info(&config);
         let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -3309,7 +3325,7 @@ pub(crate) mod tests {
     fn channel_readiness_webhook_does_not_call_custom_path_healthy_without_listener() {
         let config = config_with_webhook("custom_path", true, true, 42632, Some("/eyrie"));
         let state = test_state(config.clone());
-        let health = clawcrew_runtime::health::snapshot();
+        let health = clawcrew_infra::health::snapshot();
         let info = first_channel_info(&config);
         let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -3327,9 +3343,9 @@ pub(crate) mod tests {
     #[test]
     fn channel_readiness_webhook_uses_supervised_listener_health_for_custom_path() {
         let config = config_with_webhook("supervised", true, true, 42632, Some("/eyrie"));
-        clawcrew_runtime::health::mark_component_ok("channel:webhook.supervised");
+        clawcrew_infra::health::mark_component_ok("channel:webhook.supervised");
         let state = test_state(config.clone());
-        let health = clawcrew_runtime::health::snapshot();
+        let health = clawcrew_infra::health::snapshot();
         let info = first_channel_info(&config);
         let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -3344,13 +3360,13 @@ pub(crate) mod tests {
         let old = (chrono::Utc::now()
             - chrono::Duration::seconds(CHANNEL_LISTENER_HEALTH_MAX_AGE_SECS + 5))
         .to_rfc3339();
-        let health = clawcrew_runtime::health::HealthSnapshot {
+        let health = clawcrew_infra::health::HealthSnapshot {
             pid: std::process::id(),
             updated_at: chrono::Utc::now().to_rfc3339(),
             uptime_seconds: 1,
             components: std::collections::BTreeMap::from([(
                 component,
-                clawcrew_runtime::health::ComponentHealth {
+                clawcrew_infra::health::ComponentHealth {
                     status: "ok".to_string(),
                     updated_at: old,
                     last_ok: None,
@@ -3370,14 +3386,14 @@ pub(crate) mod tests {
     #[test]
     fn channel_readiness_webhook_uses_live_pairing_guard_for_auth() {
         let config = config_with_webhook("paired", true, true, 42632, Some("/eyrie"));
-        clawcrew_runtime::health::mark_component_ok("channel:webhook.paired");
+        clawcrew_infra::health::mark_component_ok("channel:webhook.paired");
         let mut state = test_state(config.clone());
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[],
             clawcrew_config::pairing::PairingCodePolicy::default(),
         ));
-        let health = clawcrew_runtime::health::snapshot();
+        let health = clawcrew_infra::health::snapshot();
         let info = first_channel_info(&config);
         let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -3390,7 +3406,7 @@ pub(crate) mod tests {
     fn channel_readiness_unchecked_channel_types_are_unknown_not_down() {
         let config = config_with_telegram("ops");
         let state = test_state(config.clone());
-        let health = clawcrew_runtime::health::snapshot();
+        let health = clawcrew_infra::health::snapshot();
         let info = first_channel_info(&config);
         let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -3415,7 +3431,7 @@ pub(crate) mod tests {
     fn channel_readiness_orphan_channel_reports_missing_agent_binding_without_broken_health() {
         let config = config_with_webhook("orphan", true, false, 42617, Some("/webhook"));
         let state = test_state(config.clone());
-        let health = clawcrew_runtime::health::snapshot();
+        let health = clawcrew_infra::health::snapshot();
         let info = first_channel_info(&config);
         let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -4339,13 +4355,13 @@ pub(crate) mod tests {
         assert_eq!(json["status"], "ok");
 
         let config = state.config.read().clone();
-        let jobs = clawcrew_runtime::cron::list_jobs(&config).unwrap();
+        let jobs = crate::cron_adapter::list_jobs(&config).unwrap();
         assert_eq!(jobs.len(), 1);
-        assert_eq!(jobs[0].job_type, clawcrew_runtime::cron::JobType::Agent);
+        assert_eq!(jobs[0].job_type, clawcrew_infra::cron_types::JobType::Agent);
         assert_eq!(jobs[0].prompt.as_deref(), Some("summarize the latest logs"));
         assert_eq!(
             jobs[0].session_target,
-            clawcrew_runtime::cron::SessionTarget::Isolated
+            clawcrew_infra::cron_types::SessionTarget::Isolated
         );
     }
 
@@ -4380,11 +4396,11 @@ pub(crate) mod tests {
 
         assert_eq!(response.status(), StatusCode::OK);
         let config = state.config.read().clone();
-        let jobs = clawcrew_runtime::cron::list_jobs(&config).unwrap();
+        let jobs = crate::cron_adapter::list_jobs(&config).unwrap();
         assert_eq!(jobs.len(), 1);
         assert_eq!(
             jobs[0].session_target,
-            clawcrew_runtime::cron::SessionTarget::Main
+            clawcrew_infra::cron_types::SessionTarget::Main
         );
     }
 
@@ -4418,10 +4434,10 @@ pub(crate) mod tests {
         .into_response();
 
         assert_eq!(response.status(), StatusCode::OK);
-        let jobs = clawcrew_runtime::cron::list_jobs(&state.config.read().clone()).unwrap();
+        let jobs = crate::cron_adapter::list_jobs(&state.config.read().clone()).unwrap();
         assert_eq!(
             jobs[0].session_target,
-            clawcrew_runtime::cron::SessionTarget::Main
+            clawcrew_infra::cron_types::SessionTarget::Main
         );
     }
 
@@ -4462,7 +4478,7 @@ pub(crate) mod tests {
             "error should name the field, got {error}"
         );
         assert!(
-            clawcrew_runtime::cron::list_jobs(&state.config.read().clone())
+            crate::cron_adapter::list_jobs(&state.config.read().clone())
                 .unwrap()
                 .is_empty(),
             "invalid session_target must not persist a job"
@@ -4507,7 +4523,7 @@ pub(crate) mod tests {
                 .contains("session_target")
         );
         assert!(
-            clawcrew_runtime::cron::list_jobs(&state.config.read().clone())
+            crate::cron_adapter::list_jobs(&state.config.read().clone())
                 .unwrap()
                 .is_empty()
         );
@@ -4543,10 +4559,10 @@ pub(crate) mod tests {
 
         assert_eq!(response.status(), StatusCode::OK);
         let config = state.config.read().clone();
-        let jobs = clawcrew_runtime::cron::list_jobs(&config).unwrap();
+        let jobs = crate::cron_adapter::list_jobs(&config).unwrap();
         assert_eq!(
             jobs[0].schedule,
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "0 9 * * *".to_string(),
                 tz: Some("America/New_York".to_string()),
             }
@@ -4601,11 +4617,11 @@ pub(crate) mod tests {
         };
         std::fs::create_dir_all(&config.data_dir).unwrap();
         let state = test_state(with_test_agent(config));
-        let job = clawcrew_runtime::cron::add_shell_job_with_approval(
+        let job = crate::cron_adapter::add_shell_job_with_approval(
             &state.config.read().clone(),
             "test-agent",
             Some("localized-job".to_string()),
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "0 9 * * *".to_string(),
                 tz: Some("Europe/Berlin".to_string()),
             },
@@ -4631,11 +4647,11 @@ pub(crate) mod tests {
         .into_response();
 
         assert_eq!(response.status(), StatusCode::OK);
-        let updated = clawcrew_runtime::cron::get_job(&state.config.read().clone(), &job.id)
+        let updated = crate::cron_adapter::get_job(&state.config.read().clone(), &job.id)
             .expect("updated job");
         assert_eq!(
             updated.schedule,
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "30 9 * * *".to_string(),
                 tz: Some("Europe/Berlin".to_string()),
             }
@@ -4652,11 +4668,11 @@ pub(crate) mod tests {
         };
         std::fs::create_dir_all(&config.data_dir).unwrap();
         let state = test_state(with_test_agent(config));
-        let job = clawcrew_runtime::cron::add_shell_job_with_approval(
+        let job = crate::cron_adapter::add_shell_job_with_approval(
             &state.config.read().clone(),
             "test-agent",
             Some("localized-job".to_string()),
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "0 9 * * *".to_string(),
                 tz: Some("America/New_York".to_string()),
             },
@@ -4683,11 +4699,11 @@ pub(crate) mod tests {
         .into_response();
 
         assert_eq!(response.status(), StatusCode::OK);
-        let updated = clawcrew_runtime::cron::get_job(&state.config.read().clone(), &job.id)
+        let updated = crate::cron_adapter::get_job(&state.config.read().clone(), &job.id)
             .expect("updated job");
         assert_eq!(
             updated.schedule,
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "30 9 * * *".to_string(),
                 tz: Some("Asia/Tokyo".to_string()),
             }
@@ -4704,11 +4720,11 @@ pub(crate) mod tests {
         };
         std::fs::create_dir_all(&config.data_dir).unwrap();
         let state = test_state(with_test_agent(config));
-        let job = clawcrew_runtime::cron::add_shell_job_with_approval(
+        let job = crate::cron_adapter::add_shell_job_with_approval(
             &state.config.read().clone(),
             "test-agent",
             Some("runtime-local-job".to_string()),
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "0 9 * * *".to_string(),
                 tz: None,
             },
@@ -4734,11 +4750,11 @@ pub(crate) mod tests {
         .into_response();
 
         assert_eq!(response.status(), StatusCode::OK);
-        let updated = clawcrew_runtime::cron::get_job(&state.config.read().clone(), &job.id)
+        let updated = crate::cron_adapter::get_job(&state.config.read().clone(), &job.id)
             .expect("updated job");
         assert_eq!(
             updated.schedule,
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "0 9 * * *".to_string(),
                 tz: Some("America/Chicago".to_string()),
             }
@@ -4755,11 +4771,11 @@ pub(crate) mod tests {
         };
         std::fs::create_dir_all(&config.data_dir).unwrap();
         let state = test_state(with_test_agent(config));
-        let job = clawcrew_runtime::cron::add_shell_job_with_approval(
+        let job = crate::cron_adapter::add_shell_job_with_approval(
             &state.config.read().clone(),
             "test-agent",
             Some("localized-job".to_string()),
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "0 9 * * *".to_string(),
                 tz: Some("America/New_York".to_string()),
             },
@@ -4804,11 +4820,11 @@ pub(crate) mod tests {
         };
         std::fs::create_dir_all(&config.data_dir).unwrap();
         let state = test_state(with_test_agent(config));
-        let job = clawcrew_runtime::cron::add_shell_job_with_approval(
+        let job = crate::cron_adapter::add_shell_job_with_approval(
             &state.config.read().clone(),
             "test-agent",
             Some("localized-job".to_string()),
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "0 9 * * *".to_string(),
                 tz: Some("America/New_York".to_string()),
             },
@@ -4834,11 +4850,11 @@ pub(crate) mod tests {
         .into_response();
 
         assert_eq!(response.status(), StatusCode::OK);
-        let updated = clawcrew_runtime::cron::get_job(&state.config.read().clone(), &job.id)
+        let updated = crate::cron_adapter::get_job(&state.config.read().clone(), &job.id)
             .expect("updated job");
         assert_eq!(
             updated.schedule,
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "0 9 * * *".to_string(),
                 tz: None,
             }
@@ -4855,11 +4871,11 @@ pub(crate) mod tests {
         };
         std::fs::create_dir_all(&config.data_dir).unwrap();
         let state = test_state(with_test_agent(config));
-        let job = clawcrew_runtime::cron::add_shell_job_with_approval(
+        let job = crate::cron_adapter::add_shell_job_with_approval(
             &state.config.read().clone(),
             "test-agent",
             Some("toggle-job".to_string()),
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "*/5 * * * *".to_string(),
                 tz: None,
             },
@@ -4887,7 +4903,7 @@ pub(crate) mod tests {
             StatusCode::OK,
             "enable/disable toggle must not require an agent"
         );
-        let updated = clawcrew_runtime::cron::get_job(&state.config.read().clone(), &job.id)
+        let updated = crate::cron_adapter::get_job(&state.config.read().clone(), &job.id)
             .expect("updated job");
         assert!(!updated.enabled, "job should be disabled after the patch");
     }
@@ -4902,11 +4918,11 @@ pub(crate) mod tests {
         };
         std::fs::create_dir_all(&config.data_dir).unwrap();
         let state = test_state(with_test_agent(config));
-        let job = clawcrew_runtime::cron::add_shell_job_with_approval(
+        let job = crate::cron_adapter::add_shell_job_with_approval(
             &state.config.read().clone(),
             "test-agent",
             Some("old-name".to_string()),
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "*/5 * * * *".to_string(),
                 tz: None,
             },
@@ -4937,12 +4953,12 @@ pub(crate) mod tests {
             StatusCode::OK,
             "name/schedule patch must not require an agent"
         );
-        let updated = clawcrew_runtime::cron::get_job(&state.config.read().clone(), &job.id)
+        let updated = crate::cron_adapter::get_job(&state.config.read().clone(), &job.id)
             .expect("updated job");
         assert_eq!(updated.name.as_deref(), Some("new-name"));
         assert_eq!(
             updated.schedule,
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "30 9 * * *".to_string(),
                 tz: None,
             }
@@ -4959,11 +4975,11 @@ pub(crate) mod tests {
         };
         std::fs::create_dir_all(&config.data_dir).unwrap();
         let state = test_state(with_test_agent(config));
-        let job = clawcrew_runtime::cron::add_shell_job_with_approval(
+        let job = crate::cron_adapter::add_shell_job_with_approval(
             &state.config.read().clone(),
             "test-agent",
             Some("shell-job".to_string()),
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "*/5 * * * *".to_string(),
                 tz: None,
             },
@@ -5014,11 +5030,11 @@ pub(crate) mod tests {
         };
         std::fs::create_dir_all(&config.data_dir).unwrap();
         let state = test_state(with_test_agent(config));
-        let job = clawcrew_runtime::cron::add_shell_job_with_approval(
+        let job = crate::cron_adapter::add_shell_job_with_approval(
             &state.config.read().clone(),
             "test-agent",
             Some("shell-job".to_string()),
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "*/5 * * * *".to_string(),
                 tz: None,
             },
@@ -5082,7 +5098,7 @@ pub(crate) mod tests {
         .await
         .into_response();
         assert_eq!(add_response.status(), StatusCode::OK);
-        let id = clawcrew_runtime::cron::list_jobs(&state.config.read().clone()).unwrap()[0]
+        let id = crate::cron_adapter::list_jobs(&state.config.read().clone()).unwrap()[0]
             .id
             .clone();
 
@@ -5107,7 +5123,7 @@ pub(crate) mod tests {
             StatusCode::OK,
             "agent-type prompt patch must not require an agent"
         );
-        let updated = clawcrew_runtime::cron::get_job(&state.config.read().clone(), &id)
+        let updated = crate::cron_adapter::get_job(&state.config.read().clone(), &id)
             .expect("updated job");
         assert_eq!(updated.prompt.as_deref(), Some("new prompt"));
     }
@@ -5122,11 +5138,11 @@ pub(crate) mod tests {
         };
         std::fs::create_dir_all(&config.data_dir).unwrap();
         let state = test_state(with_test_agent(config));
-        let job = clawcrew_runtime::cron::add_shell_job_with_approval(
+        let job = crate::cron_adapter::add_shell_job_with_approval(
             &state.config.read().clone(),
             "test-agent",
             Some("format-job".to_string()),
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "*/5 * * * *".to_string(),
                 tz: None,
             },
@@ -5137,7 +5153,7 @@ pub(crate) mod tests {
         .expect("job added");
         assert_eq!(
             job.shell_output_format,
-            clawcrew_config::schema::CronShellOutputFormat::Wrapped,
+            clawcrew_infra::cron_types::CronShellOutputFormat::Wrapped,
             "imperative jobs default to wrapped"
         );
         // Imperative jobs get UUID ids; the scheduler resolves owning agent
@@ -5164,11 +5180,11 @@ pub(crate) mod tests {
             StatusCode::OK,
             "an imperative job's shell_output_format is a real, storable mutation"
         );
-        let updated = clawcrew_runtime::cron::get_job(&state.config.read().clone(), &job.id)
+        let updated = crate::cron_adapter::get_job(&state.config.read().clone(), &job.id)
             .expect("updated job");
         assert_eq!(
             updated.shell_output_format,
-            clawcrew_config::schema::CronShellOutputFormat::Raw,
+            clawcrew_infra::cron_types::CronShellOutputFormat::Raw,
             "get_job must reflect the patched format for an imperative job"
         );
 
@@ -5228,7 +5244,7 @@ pub(crate) mod tests {
         let mut decls = std::collections::HashMap::new();
         decls.insert("decl-job".to_string(), decl.clone());
         config.cron.insert("decl-job".to_string(), decl);
-        clawcrew_runtime::cron::sync_declarative_jobs(&config, &decls).unwrap();
+        crate::cron_adapter::sync_declarative_jobs(&config, &decls).unwrap();
         let state = test_state(config);
 
         let response = handle_api_cron_patch(
@@ -5261,10 +5277,10 @@ pub(crate) mod tests {
             "error should name the exact config key to edit instead: {error}"
         );
         let unchanged =
-            clawcrew_runtime::cron::get_job(&state.config.read().clone(), "decl-job").unwrap();
+            crate::cron_adapter::get_job(&state.config.read().clone(), "decl-job").unwrap();
         assert_eq!(
             unchanged.shell_output_format,
-            clawcrew_config::schema::CronShellOutputFormat::Wrapped,
+            clawcrew_infra::cron_types::CronShellOutputFormat::Wrapped,
             "the rejected PATCH must not have changed the resolved format"
         );
     }
@@ -5297,7 +5313,7 @@ pub(crate) mod tests {
         .await
         .into_response();
         assert_eq!(add_response.status(), StatusCode::OK);
-        let id = clawcrew_runtime::cron::list_jobs(&state.config.read().clone()).unwrap()[0]
+        let id = crate::cron_adapter::list_jobs(&state.config.read().clone()).unwrap()[0]
             .id
             .clone();
 
@@ -5374,7 +5390,7 @@ pub(crate) mod tests {
             "error should explain the field does not apply to agent jobs"
         );
         assert!(
-            clawcrew_runtime::cron::list_jobs(&state.config.read().clone())
+            crate::cron_adapter::list_jobs(&state.config.read().clone())
                 .unwrap()
                 .is_empty(),
             "a rejected create must not persist a job"
@@ -5423,7 +5439,7 @@ pub(crate) mod tests {
 
         let config = state.config.read().clone();
         assert!(
-            clawcrew_runtime::cron::list_jobs(&config)
+            crate::cron_adapter::list_jobs(&config)
                 .unwrap()
                 .is_empty()
         );
@@ -5440,11 +5456,11 @@ pub(crate) mod tests {
         std::fs::create_dir_all(&config.data_dir).unwrap();
         let state = test_state(with_test_agent(config));
 
-        let job = clawcrew_runtime::cron::add_shell_job_with_approval(
+        let job = crate::cron_adapter::add_shell_job_with_approval(
             &state.config.read().clone(),
             "test-agent",
             None,
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "*/5 * * * *".to_string(),
                 tz: None,
             },
@@ -5475,7 +5491,7 @@ pub(crate) mod tests {
                 .contains("hello-from-manual-trigger")
         );
 
-        let runs = clawcrew_runtime::cron::list_runs(&state.config.read().clone(), &job.id, 10)
+        let runs = crate::cron_adapter::list_runs(&state.config.read().clone(), &job.id, 10)
             .expect("runs listed");
         assert_eq!(runs.len(), 1);
         assert_eq!(runs[0].status, "ok");
@@ -5483,7 +5499,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn cron_api_run_records_best_effort_delivery_failure_as_degraded() {
-        clawcrew_runtime::cron::scheduler::register_delivery_fn(Box::new(
+        crate::cron_adapter::register_delivery_fn(Box::new(
             |_config, channel, _target, _thread_id, _output| {
                 Box::pin(async move {
                     if channel == "fail-delivery" {
@@ -5503,16 +5519,16 @@ pub(crate) mod tests {
         std::fs::create_dir_all(&config.data_dir).unwrap();
         let state = test_state(with_test_agent(config));
 
-        let job = clawcrew_runtime::cron::add_shell_job_with_approval(
+        let job = crate::cron_adapter::add_shell_job_with_approval(
             &state.config.read().clone(),
             "test-agent",
             None,
-            clawcrew_runtime::cron::Schedule::Cron {
+            clawcrew_infra::cron_types::Schedule::Cron {
                 expr: "*/5 * * * *".to_string(),
                 tz: None,
             },
             "echo hello-from-manual-trigger",
-            Some(clawcrew_runtime::cron::DeliveryConfig {
+            Some(clawcrew_infra::cron_types::DeliveryConfig {
                 mode: "announce".into(),
                 channel: Some("fail-delivery".into()),
                 to: Some("123456".into()),
@@ -5541,7 +5557,7 @@ pub(crate) mod tests {
         );
 
         let config = state.config.read().clone();
-        let updated = clawcrew_runtime::cron::get_job(&config, &job.id).expect("updated job");
+        let updated = crate::cron_adapter::get_job(&config, &job.id).expect("updated job");
         assert_eq!(updated.last_status.as_deref(), Some("degraded"));
         assert!(
             updated
@@ -5551,7 +5567,7 @@ pub(crate) mod tests {
                 .contains("delivery failed:")
         );
 
-        let runs = clawcrew_runtime::cron::list_runs(&config, &job.id, 10).expect("runs listed");
+        let runs = crate::cron_adapter::list_runs(&config, &job.id, 10).expect("runs listed");
         assert_eq!(runs.len(), 1);
         assert_eq!(runs[0].status, "degraded");
         assert!(

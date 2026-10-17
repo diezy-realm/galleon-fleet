@@ -132,6 +132,93 @@ impl SubAgentSpawn {
     }
 }
 
+// ── BL-15: Sub-agent Resource Management & Gate ─────────────────────────
+
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+/// Global active subagent counter tracking concurrency across the process.
+static ACTIVE_SUBAGENTS: AtomicUsize = AtomicUsize::new(0);
+
+/// Resource policy for subagent spawning and concurrency limits (BL-15).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SubagentResourcePolicy {
+    /// Maximum concurrent active subagents allowed (default: 4).
+    pub max_concurrent_subagents: usize,
+    /// Estimated memory limit per subagent in megabytes (default: 512 MB).
+    pub max_memory_mb: u64,
+}
+
+impl Default for SubagentResourcePolicy {
+    fn default() -> Self {
+        Self {
+            max_concurrent_subagents: 4,
+            max_memory_mb: 512,
+        }
+    }
+}
+
+/// Denied reasons when subagent resource gate triggers.
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum ResourceGateDenied {
+    #[error("Too many concurrent subagents: currently {current}, maximum allowed is {max}")]
+    TooManyConcurrent { current: usize, max: usize },
+    #[error("Memory budget exceeded for subagent: estimated {current_mb} MB, maximum allowed is {max_mb} MB")]
+    MemoryBudgetExceeded { current_mb: u64, max_mb: u64 },
+}
+
+/// Gate checked immediately before a subagent spawn is dispatched (BL-15).
+/// Returns Err when spawning would exceed the configured ceiling.
+pub fn check_resource_gate(
+    current_active_subagents: usize,
+    current_memory_estimate_mb: u64,
+    policy: &SubagentResourcePolicy,
+) -> std::result::Result<(), ResourceGateDenied> {
+    if current_active_subagents >= policy.max_concurrent_subagents {
+        return Err(ResourceGateDenied::TooManyConcurrent {
+            current: current_active_subagents,
+            max: policy.max_concurrent_subagents,
+        });
+    }
+    if current_memory_estimate_mb >= policy.max_memory_mb {
+        return Err(ResourceGateDenied::MemoryBudgetExceeded {
+            current_mb: current_memory_estimate_mb,
+            max_mb: policy.max_memory_mb,
+        });
+    }
+    Ok(())
+}
+
+/// RAII guard holding an active subagent slot.
+#[derive(Debug)]
+pub struct SubagentActiveGuard;
+
+impl SubagentActiveGuard {
+    /// Try acquiring a subagent execution slot under the given policy.
+    pub fn try_acquire(policy: &SubagentResourcePolicy) -> std::result::Result<Self, ResourceGateDenied> {
+        let current = ACTIVE_SUBAGENTS.load(Ordering::SeqCst);
+        check_resource_gate(current, 0, policy)?;
+        ACTIVE_SUBAGENTS.fetch_add(1, Ordering::SeqCst);
+        Ok(Self)
+    }
+
+    /// Current count of active running subagents.
+    pub fn current_active() -> usize {
+        ACTIVE_SUBAGENTS.load(Ordering::SeqCst)
+    }
+
+    /// Test helper to reset the active subagents counter.
+    #[cfg(test)]
+    pub fn reset_for_test() {
+        ACTIVE_SUBAGENTS.store(0, Ordering::SeqCst);
+    }
+}
+
+impl Drop for SubagentActiveGuard {
+    fn drop(&mut self) {
+        ACTIVE_SUBAGENTS.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -335,4 +422,46 @@ mod tests {
             "for_agent (cron path) must use the per-agent install workspace"
         );
     }
+
+    #[test]
+    fn test_resource_gate_concurrency_and_guard() {
+        SubagentActiveGuard::reset_for_test();
+        let policy = SubagentResourcePolicy {
+            max_concurrent_subagents: 2,
+            max_memory_mb: 256,
+        };
+
+        // Initially 0 active
+        assert_eq!(SubagentActiveGuard::current_active(), 0);
+        let g1 = SubagentActiveGuard::try_acquire(&policy).expect("g1 acquire must succeed");
+        assert_eq!(SubagentActiveGuard::current_active(), 1);
+
+        let g2 = SubagentActiveGuard::try_acquire(&policy).expect("g2 acquire must succeed");
+        assert_eq!(SubagentActiveGuard::current_active(), 2);
+
+        // Third should fail due to concurrency limit
+        let err = SubagentActiveGuard::try_acquire(&policy).unwrap_err();
+        assert_eq!(
+            err,
+            ResourceGateDenied::TooManyConcurrent { current: 2, max: 2 }
+        );
+
+        // Drop one, then acquiring should succeed again
+        drop(g1);
+        assert_eq!(SubagentActiveGuard::current_active(), 1);
+        let g3 = SubagentActiveGuard::try_acquire(&policy).expect("g3 acquire must succeed after drop");
+        assert_eq!(SubagentActiveGuard::current_active(), 2);
+
+        drop(g2);
+        drop(g3);
+        assert_eq!(SubagentActiveGuard::current_active(), 0);
+
+        // Test memory budget check directly
+        let mem_err = check_resource_gate(0, 300, &policy).unwrap_err();
+        assert_eq!(
+            mem_err,
+            ResourceGateDenied::MemoryBudgetExceeded { current_mb: 300, max_mb: 256 }
+        );
+    }
 }
+

@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/id"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/id"
 )
 
 // MemoryStore implements thread-safe in-memory storage for runs
@@ -68,6 +68,17 @@ func (s *MemoryStore) UpdateStatus(ctx context.Context, runID string, status Run
 			r.CompletedAt = &now
 		}
 	}
+	return nil
+}
+
+func (s *MemoryStore) UpdateLoopDetectorStats(ctx context.Context, runID string, stats *LoopDetectorStats) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	r, ok := s.runs[runID]
+	if !ok {
+		return appErrors.New(appErrors.CodeNotFound, fmt.Sprintf("run not found: %s", runID), appErrors.LayerService)
+	}
+	r.LoopDetectorStats = stats
 	return nil
 }
 
@@ -234,7 +245,14 @@ func (s *runService) CreateRun(ctx context.Context, req *CreateRunRequest, reqID
 		return nil, err
 	}
 
-	runCtx, cancel := context.WithCancel(context.Background())
+	runBgCtx := context.Background()
+	if reqID, ok := ctx.Value("request_id").(string); ok && reqID != "" {
+		runBgCtx = context.WithValue(runBgCtx, "request_id", reqID)
+	}
+	if traceID, ok := ctx.Value("trace_id").(string); ok && traceID != "" {
+		runBgCtx = context.WithValue(runBgCtx, "trace_id", traceID)
+	}
+	runCtx, cancel := context.WithCancel(runBgCtx)
 	s.cancels.Store(runID, cancel)
 	s.contexts.Store(runID, runCtx)
 
@@ -254,6 +272,17 @@ func (s *runService) CreateRun(ctx context.Context, req *CreateRunRequest, reqID
 
 func (s *runService) GetRun(ctx context.Context, runID string) (*Run, error) {
 	return s.store.Get(ctx, runID)
+}
+
+func (s *runService) UpdateLoopDetectorStats(ctx context.Context, runID string, stats *LoopDetectorStats) error {
+	if err := s.store.UpdateLoopDetectorStats(ctx, runID, stats); err != nil {
+		return err
+	}
+	s.PublishEvent(runID, "run.loop_detector_stats", map[string]any{
+		"run_id":              runID,
+		"loop_detector_stats": stats,
+	}, "")
+	return nil
 }
 
 func (s *runService) CancelRun(ctx context.Context, runID string) error {

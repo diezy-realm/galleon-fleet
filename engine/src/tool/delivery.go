@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
 )
 
 // HTTPHandler manages tool HTTP endpoints

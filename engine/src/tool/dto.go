@@ -64,6 +64,8 @@ type ExecutionContext struct {
 	AllowedRoots       []string     `json:"allowed_roots,omitempty"`
 	DataClassification string       `json:"data_classification,omitempty"`
 	Capabilities       []string     `json:"capabilities,omitempty"`
+	DelegationDepth    int          `json:"delegation_depth,omitempty"`
+	MaxDelegationDepth *int         `json:"max_delegation_depth,omitempty"`
 	Gateway            SystemGateway `json:"-"` // Optional gRPC gateway for native builtin tool execution
 }
 

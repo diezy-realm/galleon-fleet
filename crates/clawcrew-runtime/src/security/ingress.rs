@@ -1,27 +1,9 @@
-//! Universal ingress policy front door (RFC phase 1).
-
-use clawcrew_api::ingress::{IngressContext, IngressDecision};
-
-#[derive(Debug, Clone, Default)]
-pub struct IngressPolicy {
-    // Phase 3: trust-class table, per-transport/per-event overrides, framing
-    // config. Intentionally empty in phase 1 — the default policy is `Loop`.
-    _private: (),
-}
-
-#[must_use]
-pub fn ingress_policy(text: &str, ctx: &IngressContext, policy: &IngressPolicy) -> IngressDecision {
-    // The default policy makes one decision for every turn: Loop. It does not
-    // branch on `text` or `ctx` yet (phase 3), but both are part of the
-    // contract and flow through the universal front door today.
-    let _ = (text, ctx, policy);
-    IngressDecision::Loop
-}
+pub use clawcrew_api::ingress::{IngressPolicy, ingress_policy};
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_api::ingress::{SourceClass, Transport, TrustClass};
+    use clawcrew_api::ingress::{IngressContext, IngressDecision, SourceClass, Transport, TrustClass};
 
     #[test]
     fn default_policy_returns_loop_for_internal() {

@@ -1,28 +1,35 @@
 {
-  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-cli/config.schema.json",
-  "productName": "ClawCrew",
-  "version": "0.8.5",
-  "identifier": "ai.clawcrewlabs.desktop",
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Galleon Fleet",
+  "version": "2.4.0",
+  "identifier": "com.galleon.sovereign",
   "build": {
-    "frontendDist": "splash"
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "../../web/dist"
   },
   "app": {
-    "withGlobalTauri": true,
     "windows": [
       {
-        "label": "splash",
-        "url": "index.html",
-        "title": "ClawCrew",
-        "width": 480,
-        "height": 380,
-        "resizable": false,
+        "title": "Galleon Fleet - Autonomous Fleet",
+        "width": 1280,
+        "height": 840,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true,
         "fullscreen": false,
-        "center": true,
-        "visible": true
+        "decorations": true,
+        "transparent": false,
+        "theme": "Dark",
+        "dragDropEnabled": true
       }
     ],
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "tooltip": "Galleon Fleet Deck",
+      "iconAsTemplate": true
+    },
     "security": {
-      "csp": "default-src 'self' 'unsafe-inline' http://127.0.0.1:* ws://127.0.0.1:*; connect-src 'self' http://127.0.0.1:* ws://127.0.0.1:* ipc: http://ipc.localhost; script-src 'self' 'unsafe-inline' http://127.0.0.1:*; style-src 'self' 'unsafe-inline' http://127.0.0.1:*; img-src 'self' http://127.0.0.1:* data:"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://127.0.0.1:9090 http://localhost:9090 ipc:;"
     }
   },
   "bundle": {
@@ -33,6 +40,9 @@
       "icons/128x128.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "Autonomous Local-First Fleet Orchestration & Multi-Agent IDE",
+    "longDescription": "Sovereign AI development environment with decentralized agent crew coordination."
   }
 }

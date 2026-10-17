@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/core/metrics"
+	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
 )
 
 func TestRunLifecycle(t *testing.T) {
@@ -110,3 +110,58 @@ func TestRunHTTPDelivery(t *testing.T) {
 		t.Fatalf("expected queued status in body: %s", w.Body.String())
 	}
 }
+
+func TestRunHTTPDelivery_TracingAndRequestIDSynchronization(t *testing.T) {
+	store := NewMemoryStore()
+	hub := NewEventHub()
+	svc := NewService(store, hub)
+	handler := NewHTTPHandler(svc)
+
+	// 1. Request with explicit X-Request-ID
+	customTraceID := "trace-custom-abc-12345"
+	body := `{"crew_id":"crew_test","input":{"prompt":"Hello with trace"}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/runs", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Request-ID", customTraceID)
+	w := httptest.NewRecorder()
+
+	handler.handleRunsRoot(w, req)
+
+	if w.Code != http.StatusAccepted {
+		t.Fatalf("expected 202 Accepted, got %d: %s", w.Code, w.Body.String())
+	}
+	respTraceID := w.Header().Get("X-Request-ID")
+	if respTraceID != customTraceID {
+		t.Fatalf("expected response X-Request-ID %q, got %q", customTraceID, respTraceID)
+	}
+
+	// 2. Request without explicit X-Request-ID generates trace ID from tracing.StartSpan
+	req2 := httptest.NewRequest(http.MethodPost, "/api/v1/runs", strings.NewReader(body))
+	req2.Header.Set("Content-Type", "application/json")
+	w2 := httptest.NewRecorder()
+
+	handler.handleRunsRoot(w2, req2)
+
+	if w2.Code != http.StatusAccepted {
+		t.Fatalf("expected 202 Accepted, got %d: %s", w2.Code, w2.Body.String())
+	}
+	generatedTraceID := w2.Header().Get("X-Request-ID")
+	if generatedTraceID == "" {
+		t.Fatalf("expected non-empty generated trace ID in X-Request-ID")
+	}
+	// Generated trace ID is 32 hex chars (128-bit)
+	if len(generatedTraceID) != 32 {
+		t.Fatalf("expected 32 hex chars for generated trace ID, got length %d (%s)", len(generatedTraceID), generatedTraceID)
+	}
+
+	// 3. GET /api/v1/runs/{id} preserves X-Request-ID
+	req3 := httptest.NewRequest(http.MethodGet, "/api/v1/runs/nonexistent", nil)
+	req3.Header.Set("X-Request-ID", "req-get-run-456")
+	w3 := httptest.NewRecorder()
+
+	handler.handleRunByID(w3, req3)
+	if w3.Header().Get("X-Request-ID") != "req-get-run-456" {
+		t.Fatalf("expected X-Request-ID preserved on GET run by ID, got %q", w3.Header().Get("X-Request-ID"))
+	}
+}
+

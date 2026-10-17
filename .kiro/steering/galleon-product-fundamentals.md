@@ -1,15 +1,15 @@
 ---
 title: Galleon — product fundamentals
 inclusion: fileMatch
-fileMatchPattern: "docs/**/*.md"
+fileMatchPattern: "standard-docs/**/*.md"
 ---
 
 # Galleon — dasar produk
 
-Ringkasan `docs/finalize/*` (SSOT phase-4) + `docs/fundamental/*` (dasar). Dipakai saat merancang fitur, menamai entitas, atau memutuskan boundary. **Jika bentrok, `docs/finalize/` menang.**
+Ringkasan `standard-docs/` (SSOT: `standard-docs/decisions/finalize/` dan `standard-docs/foundation/`). Dipakai saat merancang fitur, menamai entitas, atau memutuskan boundary. **Jika bentrok, `standard-docs/decisions/finalize/` menang.**
 
 ## Apa produknya
-Galleon = **local-first, self-hosted AI organization workspace**. Owner ("Pirate King") membangun Fleet berisi Ship (tim AI spesialis persisten); **Quartermaster** = fleet coordinator / **router dua-lapis** (jawab chat ringan langsung + rutekan quest), ber-authority terbatas — **bukan super-agent** (lihat `docs/finalize/01`). Promise: **"Your Fleet. Your Rules."** — BYOK/BYOM/BYOI (user bawa key/model/infra sendiri, bayar provider langsung).
+Galleon = **local-first, self-hosted AI organization workspace**. Owner ("Pirate King") membangun Fleet berisi Ship (tim AI spesialis persisten); **Quartermaster** = fleet coordinator / **router dua-lapis** (jawab chat ringan langsung + rutekan quest), ber-authority terbatas — **bukan super-agent** (lihat `standard-docs/decisions/finalize/01-be-go-engine.md`). Promise: **"Your Fleet. Your Rules."** — BYOK/BYOM/BYOI (user bawa key/model/infra sendiri, bayar provider langsung).
 
 Produk ini **bukan**: reseller kredit, chatbot generik, no-code workflow builder, atau sistem otonom tanpa batas Owner.
 
@@ -40,18 +40,18 @@ Produk ini **bukan**: reseller kredit, chatbot generik, no-code workflow builder
 Scaffold baru: `orchestrator, fleet, ship, squad, charter, mission, navigator, briefing, policy, approval, treasury, audit, entitlement, schedule, integration`. **Extend, jangan duplikat** yang sudah ada: `crew, run, workflow, task, tool, llm, memory, artifact, persistence`. Plumb `correlation_id` lintas Quest→Voyage→Artifact→Ship Report.
 
 ## Monetisasi (jangan reproduksi credit lock-in)
-Charge untuk ekspansi/Charter/maintenance/kolaborasi/support — **bukan** akses dasar ke intelligence milik user. Community = 1 Ship aktif, ≤5 Crew, 2 Voyage, delegation depth 1. Jangan kunci Artifact/memory user di balik paywall.
+Charge untuk ekspansi/Charter/maintenance/kolaborasi/support — **bukan** akses dasar ke intelligence milik user. Tangga tier final (2026-10-06, lihat `standard-docs/product-research/tier-pricing-and-entitlement-final.md`): Community (gratis, 1 Ship/2 Squad/8 Crew-per-Ship/2 Concurrent Voyages) / Team ($15/bln flat, 3 Ship/6 Squad/22 Crew-per-Ship/4 Voyage) / Dockyard ($28/bln flat + per seat, 6 Ship/12 Squad/100 Crew-per-Ship/8 Voyage) / Private Dockyard (custom, by request). Delegation depth adalah parameter konkurensi runtime terpisah dari kuota tier (`max_delegation_depth` preset `tight_runtime` = 1 di `clawcrew-config/src/presets.rs:238` — kedalaman RANTAI delegasi A→B→C, bukan dimensi tier produk). Jangan kunci Artifact/memory user di balik paywall.
 
 ### INVARIANT F1 — Treasury read-only cost (mengikat implementasi)
 Galleon **tidak pernah berdiri di antara user dan tagihan providernya** (BYOK/BYOM). Treasury hanya **melaporkan** biaya; ia bukan dompet, bukan saldo kredit, bukan meteran konsumsi.
 
 Aturan yang mengikat (langgar = PR ditolak):
-1. **Treasury lapor, tidak memotong.** Biaya provider ditampilkan dalam **USD apa adanya** (sum `costUSD` per entri ledger: date, quest, provider, model, tokens, costUSD). Dilarang ada saldo yang di-*debit*/di-*deduct*/di-*charge* per-inference/per-token sebagai mata uang internal. Fakta kode saat ini: `web-2/src/components/features/TreasuryView.tsx` = ledger read-only murni (`treasuryLedger.reduce(costUSD)`), budget cap USD + soft-warning/hard-cap display; `engine/src/treasury/interfaces.go` masih stub (`// TODO`) — belum ada jalur yang melanggar; invariant ini menjaga agar tetap begitu saat Treasury diimplementasi.
+1. **Treasury lapor, tidak memotong.** Biaya provider ditampilkan dalam **USD apa adanya** (sum `costUSD` per entri ledger: date, quest, provider, model, tokens, costUSD). Dilarang ada saldo yang di-*debit*/di-*deduct*/di-*charge* per-inference/per-token sebagai mata uang internal. Fakta kode saat ini: `web/src/components/features/TreasuryView.tsx` = ledger read-only murni (`treasuryLedger.reduce(costUSD)`), budget cap USD + soft-warning/hard-cap display; `engine/src/treasury/interfaces.go` masih stub (`// TODO`) — belum ada jalur yang melanggar; invariant ini menjaga agar tetap begitu saat Treasury diimplementasi.
 2. **Zero platform markup.** User bayar provider langsung; tak ada margin/markup Galleon di atas harga provider. UI sudah menegaskan ini (`TreasuryView` "zero platform credit markup", `HarborView` "Zero forced credits", `RightRail` "No credit lock-in") — kode tak boleh kontradiksi.
 3. **Budget = pembatas, bukan dompet.** Cap/threshold (soft-warning, hard "drop-anchor" cap) hanya **menghentikan** aksi berbiaya saat terlampaui (lewat Captain's Approval tier `sensitive`/budget-exceed) — bukan mengurangi saldo berbayar. Lampaui budget = butuh approval (lihat "Autonomy under command"), bukan beli kredit.
-4. **`Timber` = kapasitas, bukan konsumsi inference.** `Timber` mengukur kapasitas organisasi (jumlah Ship/Berth/Squad Charter/Voyage aktif) dan di-charge sebagai *scaling* — **tidak pernah** berkurang per inference/token. Fakta kode: `web-2/src/components/features/ShipyardView.tsx` = Timber capacity meter, "We charge for organizational scaling—never for model inference credits".
+4. **`Timber` = kapasitas, bukan konsumsi inference.** `Timber` mengukur kapasitas organisasi (jumlah Ship/Berth/Squad Charter/Voyage aktif) dan di-charge sebagai *scaling* — **tidak pernah** berkurang per inference/token. Fakta kode: `web/src/components/features/ShipyardView.tsx` = Timber capacity meter, "We charge for organizational scaling—never for model inference credits".
 
-Acceptance (observable): tidak ada field/metode di `engine/src/treasury/**` atau store/komponen `web-2/**` yang (a) menyimpan saldo kredit internal yang berkurang per pemakaian LLM, atau (b) menghitung biaya tagih = cost provider + markup. Treasury hanya membaca cost yang sudah terjadi dan membandingkannya ke cap. Pelanggaran dapat dijadikan gate di `tests/architecture/` (lihat F2).
+Acceptance (observable): tidak ada field/metode di `engine/src/treasury/**` atau store/komponen `web/**` yang (a) menyimpan saldo kredit internal yang berkurang per pemakaian LLM, atau (b) menghitung biaya tagih = cost provider + markup. Treasury hanya membaca cost yang sudah terjadi dan membandingkannya ke cap. Pelanggaran dapat dijadikan gate di `tests/architecture/` (lihat F2).
 
 North-star lihat di bawah; jangan optimalkan konsumsi token sebagai revenue — itu bertentangan dengan "Your Fleet. Your Rules."
 

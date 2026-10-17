@@ -1,0 +1,50 @@
+[package]
+name = "galleon-channel-line"
+rust-version.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "LINE Messaging API channel feature-crate (RF-B1 split; Webhook server & Push/Reply API ported from clawcrew-channels)."
+repository.workspace = true
+homepage.workspace = true
+publish = true
+
+[dependencies]
+galleon-channel-core.workspace = true
+clawcrew-api.workspace = true
+clawcrew-config.workspace = true
+clawcrew-log.workspace = true
+clawcrew-spawn.workspace = true
+galleon-i18n.workspace = true
+async-trait = "0.1"
+anyhow = "1.0"
+axum = { version = "0.8", default-features = false, features = ["http1", "json", "macros", "tokio"] }
+base64 = "0.22"
+hmac = "0.12"
+parking_lot = "0.12"
+reqwest = { version = "0.12", default-features = false, features = [
+  "__rustls-ring",
+  "json",
+  "rustls-tls-webpki-roots-no-provider",
+  "stream",
+] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+sha2 = "0.10"
+tokio = { version = "1.50", default-features = false, features = ["sync", "fs", "io-util", "time", "net"] }
+uuid = { version = "1.22", default-features = false, features = ["std", "v4"] }
+
+[dev-dependencies]
+wiremock = "0.6"
+tempfile = "3.26"
+tokio = { version = "1.50", default-features = false, features = [
+  "macros",
+  "rt-multi-thread",
+  "sync",
+  "net",
+  "io-util",
+  "time",
+] }
+
+[features]
+default = []

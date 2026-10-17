@@ -1,5 +1,13 @@
 use async_trait::async_trait;
+use clawcrew_api::channel::{
+    Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelGatePrompt, ChannelMessage,
+    GateChoiceEmphasis, SendMessage,
+};
+use clawcrew_api::media::{
+    MarkerKind, MediaAttachment, RenderedMarker, provider_loadable_image_mime_for,
+};
 use futures_util::{SinkExt, StreamExt};
+use galleon_i18n as i18n;
 use parking_lot::Mutex;
 use serde_json::json;
 use std::collections::HashMap;
@@ -9,14 +17,6 @@ use std::time::Duration;
 use tokio::sync::{Mutex as AsyncMutex, oneshot};
 use tokio_tungstenite::tungstenite::Message;
 use uuid::Uuid;
-use clawcrew_api::channel::{
-    Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelGatePrompt, ChannelMessage,
-    GateChoiceEmphasis, SendMessage,
-};
-use clawcrew_api::media::{
-    MarkerKind, MediaAttachment, RenderedMarker, provider_loadable_image_mime_for,
-};
-use clawcrew_runtime::i18n;
 
 // Contract tier: `embed` holds the embed value object that `types`'
 // `DiscordOutgoing` envelope carries; both are contract modules (no impl
@@ -4804,8 +4804,8 @@ mod tests {
         assert!(err.to_string().contains("unknown or expired"));
     }
 
-    fn skill(name: &str, description: &str, tags: &[&str]) -> clawcrew_runtime::skills::Skill {
-        clawcrew_runtime::skills::Skill {
+    fn skill(name: &str, description: &str, tags: &[&str]) -> clawcrew_api::skill::Skill {
+        clawcrew_api::skill::Skill {
             name: name.to_string(),
             description: description.to_string(),
             description_localizations: Default::default(),

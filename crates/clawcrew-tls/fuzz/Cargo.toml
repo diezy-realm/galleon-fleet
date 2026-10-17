@@ -5,6 +5,7 @@
 # `cargo +nightly fuzz build` (see scripts/dev/fuzz.sh).
 [package]
 name = "clawcrew-tls-fuzz"
+rust-version.workspace = true
 version = "0.0.0"
 publish = false
 edition = "2021"

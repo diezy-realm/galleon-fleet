@@ -5,7 +5,7 @@ inclusion: manual
 
 # Rubrik review — galleon-fleet
 
-Load **manual** (`#galleon-review-rubric`) saat mereview PR/diff. Sengaja tidak auto-load agar hemat token. Sumber: `.gemini/style-guide.md` (di-galleon-kan). Prioritaskan keamanan, memory-safety, dan boundary 3-tier. Untuk kaidah idiom Rust lihat `rust.md`; untuk boundary tier lihat `galleon-architecture.md`.
+Load **manual** (`#galleon-review-rubric`) saat mereview PR/diff. Sengaja tidak auto-load agar hemat token. Sumber: `.gemini/style-guide.md` (di-galleon-kan). Prioritaskan keamanan, memory-safety, dan boundary 3-tier. Untuk kaidah idiom Rust lihat `galleon-rust.md`; untuk boundary tier lihat `galleon-architecture.md`.
 
 ## Priority level temuan
 - **CRITICAL**: kerentanan keamanan, pelanggaran memory-safety, kebocoran data/secret, pelanggaran boundary tier (UI berisi logika bisnis, Go bypass sandbox Rust).
@@ -14,9 +14,9 @@ Load **manual** (`#galleon-review-rubric`) saat mereview PR/diff. Sengaja tidak 
 - **LOW**: gaya, dokumentasi, refactor minor.
 
 ## Fokus per surface (hanya cek yang disentuh diff)
-- `crates/**` & `apps/tauri-2/src/` (Rust Core) → crypto/secret, `unsafe` (wajib `// SAFETY:`), `unwrap()`/`expect()` di jalur produksi, Landlock boundary, external surface default-closed.
+- `crates/**` & `apps/tauri/src/` (Rust Core) → crypto/secret, `unsafe` (wajib `// SAFETY:`), `unwrap()`/`expect()` di jalur produksi, Landlock boundary, external surface default-closed.
 - `engine/**` (Go) → error propagation eksplisit (zero unhandled), `slog` terstruktur, Wire DI di `wire.go`, tidak akses hardware/kernel tanpa `SystemGateway`.
-- `web-2/**` (TS/React) → zero backend logic di `.tsx`/`server.ts`, zero data mocking/hardcoded array, semua state dari `useFleetStore` ← API nyata, tipe ketat match `src/types/index.ts` (no `any`).
+- `web/**` (TS/React) → zero backend logic di `.tsx`/`server.ts`, zero data mocking/hardcoded array, semua state dari `useFleetStore` ← API nyata, tipe ketat match `src/types/index.ts` (no `any`).
 - `wit/**` → cek breaking change terhadap marker `.frozen` (lihat `wit/VERSIONING.md`).
 - `.github/workflows/**`, config migration → risiko tinggi; migration wajib backward-compatible.
 

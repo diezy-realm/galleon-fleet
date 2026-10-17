@@ -402,6 +402,113 @@ impl<T: Observer + ?Sized> Observer for std::sync::Arc<T> {
     }
 }
 
+/// Zero-overhead observer — all methods compile to nothing
+#[derive(Debug, Clone, Copy, Default)]
+pub struct NoopObserver;
+
+impl Observer for NoopObserver {
+    #[inline(always)]
+    fn record_event(&self, _event: &ObserverEvent) {}
+
+    #[inline(always)]
+    fn record_metric(&self, _metric: &ObserverMetric) {}
+
+    fn name(&self) -> &str {
+        "noop"
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+pub struct AgentTurnGuard<'a> {
+    observer: &'a dyn Observer,
+    model_provider: String,
+    model: String,
+    channel: Option<String>,
+    agent_alias: Option<String>,
+    turn_id: Option<String>,
+    turn_started_at: std::time::Instant,
+    tokens_used: Option<TurnTokenUsage>,
+    cost_usd: Option<f64>,
+    done: bool,
+}
+
+impl<'a> AgentTurnGuard<'a> {
+    /// Open a lifecycle bracket and emit its start event.
+    pub fn start(
+        observer: &'a dyn Observer,
+        model_provider: impl Into<String>,
+        model: impl Into<String>,
+        channel: Option<String>,
+        agent_alias: Option<String>,
+        turn_id: Option<String>,
+    ) -> Self {
+        let model_provider = model_provider.into();
+        let model = model.into();
+        observer.record_event(&ObserverEvent::AgentStart {
+            model_provider: model_provider.clone(),
+            model: model.clone(),
+            channel: channel.clone(),
+            agent_alias: agent_alias.clone(),
+            turn_id: turn_id.clone(),
+        });
+        Self {
+            observer,
+            model_provider,
+            model,
+            channel,
+            agent_alias,
+            turn_id,
+            turn_started_at: std::time::Instant::now(),
+            tokens_used: None,
+            cost_usd: None,
+            done: false,
+        }
+    }
+
+    /// Attribute the closing event to the model route actually used.
+    pub fn set_model_route(&mut self, model_provider: impl Into<String>, model: impl Into<String>) {
+        self.model_provider = model_provider.into();
+        self.model = model.into();
+    }
+
+    /// Attach aggregate usage to the closing event.
+    pub fn set_usage(
+        &mut self,
+        tokens_used: Option<TurnTokenUsage>,
+        cost_usd: Option<f64>,
+    ) {
+        self.tokens_used = tokens_used;
+        self.cost_usd = cost_usd;
+    }
+
+    /// Emit the matching end event once. Later calls and `Drop` are no-ops.
+    pub fn finish(&mut self) {
+        if self.done {
+            return;
+        }
+        self.done = true;
+        self.observer.record_event(&ObserverEvent::AgentEnd {
+            model_provider: self.model_provider.clone(),
+            model: self.model.clone(),
+            duration: self.turn_started_at.elapsed(),
+            tokens_used: self.tokens_used.clone(),
+            cost_usd: self.cost_usd,
+            channel: self.channel.clone(),
+            agent_alias: self.agent_alias.clone(),
+            turn_id: self.turn_id.clone(),
+        });
+    }
+}
+
+impl Drop for AgentTurnGuard<'_> {
+    fn drop(&mut self) {
+        self.finish();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

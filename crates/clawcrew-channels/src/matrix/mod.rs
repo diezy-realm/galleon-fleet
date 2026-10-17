@@ -28,12 +28,12 @@ use matrix_sdk::{
     },
 };
 
+use clawcrew_api::channel::DRAFT_PLACEHOLDER;
 use clawcrew_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, DraftProgress,
     DraftProgressKind, RoomCreationOptions, RoomVisibility, SendMessage,
 };
 use clawcrew_config::schema::{MatrixConfig, MatrixStreamMode};
-use clawcrew_runtime::agent::loop_::DRAFT_PLACEHOLDER;
 
 // ─── markers ───────────────────────────────────────────────────────────────
 mod markers {
@@ -240,8 +240,8 @@ mod allowlist {
 
 // ─── approval ──────────────────────────────────────────────────────────────
 mod approval {
-    use rand::{Rng, RngExt};
     use clawcrew_api::channel::{ChannelApprovalResponse, SendMessage};
+    use rand::{Rng, RngExt};
 
     pub(super) const TOKEN_LEN: usize = 8;
     const TOKEN_ALPHABET: &[u8] = b"ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -410,10 +410,10 @@ mod streaming {
     };
 
     use anyhow::{Result, bail};
-    use matrix_sdk::ruma::{OwnedEventId, OwnedRoomId};
-    use clawcrew_runtime::agent::loop_::{
+    use clawcrew_api::channel::{
         DRAFT_PLACEHOLDER, REASONING_FULL_PREFIX, is_thinking_status_text, thinking_status_round,
     };
+    use matrix_sdk::ruma::{OwnedEventId, OwnedRoomId};
 
     use super::{DraftProgress, DraftProgressKind, MatrixStreamMode, markers};
 
@@ -934,9 +934,8 @@ mod streaming {
     }
 
     fn oversized_progress_alert(unit: &VisibleProgressUnit) -> String {
-        let alert = clawcrew_runtime::i18n::get_required_cli_string(
-            "channel-runtime-matrix-progress-item-too-large",
-        );
+        let alert =
+            galleon_i18n::get_required_cli_string("channel-runtime-matrix-progress-item-too-large");
         if unit.reasoning {
             return format!("{REASONING_FULL_PREFIX}{alert}");
         }

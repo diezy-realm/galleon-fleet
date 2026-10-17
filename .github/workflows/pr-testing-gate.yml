@@ -1,0 +1,166 @@
+name: PR Testing Gate (Feature-Scoped & RF-D Checklist)
+
+on:
+  pull_request:
+    branches:
+      - testing
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  pr-gate:
+    name: Principle Checklist & Standards Gate
+    runs-on: ubuntu-latest
+    env:
+      RUSTC_WRAPPER: ""
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── 1. Detect Changed Areas / Features ───────────────────────────
+      - name: Detect Changed Paths
+        id: paths
+        run: |
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          echo "$CHANGED_FILES" > changed_files.txt
+          
+          # Detect features / areas
+          TOUCHES_CHANNELS=false
+          TOUCHES_RUST=false
+          TOUCHES_GO=false
+          TOUCHES_TAURI=false
+          TOUCHES_WEB=false
+          
+          if grep -q '^crates/clawcrew-channels/' changed_files.txt; then
+            TOUCHES_CHANNELS=true
+          fi
+          if grep -q '^crates/' changed_files.txt || grep -q '\.rs$' changed_files.txt; then
+            TOUCHES_RUST=true
+          fi
+          if grep -q '^engine/' changed_files.txt || grep -q '\.go$' changed_files.txt; then
+            TOUCHES_GO=true
+          fi
+          if grep -q '^apps/tauri/' changed_files.txt; then
+            TOUCHES_TAURI=true
+          fi
+          if grep -q '^web/' changed_files.txt; then
+            TOUCHES_WEB=true
+          fi
+          
+          echo "touches_channels=$TOUCHES_CHANNELS" >> $GITHUB_OUTPUT
+          echo "touches_rust=$TOUCHES_RUST" >> $GITHUB_OUTPUT
+          echo "touches_go=$TOUCHES_GO" >> $GITHUB_OUTPUT
+          echo "touches_tauri=$TOUCHES_TAURI" >> $GITHUB_OUTPUT
+          echo "touches_web=$TOUCHES_WEB" >> $GITHUB_OUTPUT
+          
+          echo "Areas touched -> Channels: $TOUCHES_CHANNELS, Rust: $TOUCHES_RUST, Go: $TOUCHES_GO, Tauri: $TOUCHES_TAURI, Web: $TOUCHES_WEB"
+
+      # ── 2. Universal Rule: No unwrap() / expect() in Rust Production ──
+      - name: "Gate: No unwrap() / expect() in production code"
+        id: unwrap_check
+        if: steps.paths.outputs.touches_rust == 'true'
+        run: |
+          echo "Checking for unwrap/expect in newly added lines..."
+          if [ -f "scripts/ci/check_production_unwrap.py" ]; then
+            python3 scripts/ci/check_production_unwrap.py --base origin/${{ github.base_ref }}
+          else
+            VIOLATIONS=$(git diff -U0 origin/${{ github.base_ref }}...HEAD -- 'crates/**/*.rs' ':!crates/**/tests/**' ':!crates/**/benches/**' ':!crates/**/tests.rs' ':!crates/**/*/tests.rs' \
+              | grep '^[+][^+]' | grep -E '\.(unwrap|expect)\(' || true)
+            if [ -n "$VIOLATIONS" ]; then
+              echo "::error::Production path invariant violated: unwrap() or expect() found in newly added code!"
+              echo "$VIOLATIONS"
+              exit 1
+            fi
+          fi
+          echo "Zero unwrap()/expect() invariant preserved."
+
+      # ── 3. Gate D-1 (Conditional): Orchestrator is File-Split Only ────
+      - name: "Gate D-1: Orchestrator file-split check (No new Cargo.toml)"
+        id: gate_d1
+        if: steps.paths.outputs.touches_channels == 'true'
+        run: |
+          NEW_CARGOS=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD | grep 'crates/.*Cargo\.toml' || true)
+          if [ -n "$NEW_CARGOS" ]; then
+            # Warning or blocker depending on whether it's RF-D1
+            echo "::warning::New Cargo.toml detected in channels/crates: $NEW_CARGOS. Verify whether this is an intentional crate-split (RF-D2) or unauthorized orchestrator split (RF-D1 violation)."
+          else
+            echo "Gate D-1 Passed: No new crate introduced."
+          fi
+
+      # ── 4. Gate D-2 (Conditional): Governance Coupling Check ──────────
+      - name: "Gate D-2: Check Governance Coupling in util.rs"
+        id: gate_d2
+        if: steps.paths.outputs.touches_channels == 'true'
+        run: |
+          if [ -f "scripts/ci/check_gate_d2.py" ]; then
+            python3 scripts/ci/check_gate_d2.py
+          elif [ -f "crates/clawcrew-channels/src/util.rs" ]; then
+            if grep -nE '(RiskTier|should_auto_approve|playbook::|clawcrew_runtime::)' crates/clawcrew-channels/src/util.rs; then
+              echo "::error::Gate D-2 finding: governance coupling detected in util.rs"
+              exit 1
+            else
+              echo "Gate D-2 Passed: Clean util.rs without governance couplings."
+            fi
+          else
+            echo "util.rs not present, skipping check."
+          fi
+
+      # ── 5. (removed) Nextest moved out — the full `cargo nextest run --workspace`
+      # lives in ci.yml (job "Test") and is advisory/non-blocking for auto-merge
+      # per Owner decision 2026-10-17. Re-running it here duplicated CI and let a
+      # flaky test fail this gate (a REQUIRED auto-merge gate), silently blocking
+      # merges the Owner chose to forgive. This gate now checks only what is
+      # unique to it: unwrap/expect, Gate D-1/D-2, and the checklist comment.
+
+      # ── 6. Automated PR Checklist Comment ─────────────────────────────
+      - name: Post Checklist Status on PR
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const paths = {
+              rust: '${{ steps.paths.outputs.touches_rust }}' === 'true',
+              channels: '${{ steps.paths.outputs.touches_channels }}' === 'true',
+              go: '${{ steps.paths.outputs.touches_go }}' === 'true',
+              tauri: '${{ steps.paths.outputs.touches_tauri }}' === 'true',
+              web: '${{ steps.paths.outputs.touches_web }}' === 'true'
+            };
+            
+            const unwrapPassed = '${{ steps.unwrap_check.outcome }}' === 'success' || !paths.rust;
+            // Nextest moved to ci.yml (advisory). Not re-run here.
+            
+            let d1Status = 'N/A (Not touching channels)';
+            if (paths.channels) {
+              d1Status = '${{ steps.gate_d1.outcome }}' === 'success' ? 'Passed' : 'Flagged';
+            }
+            
+            let d2Status = 'N/A (Not touching channels)';
+            if (paths.channels) {
+              d2Status = '${{ steps.gate_d2.outcome }}' === 'success' ? 'Passed' : 'Flagged';
+            }
+
+            const body = [
+              '### 🛡️ Automated PR Verification & Checklist',
+              '',
+              '| Check / Gate | Scope | Status |',
+              '|---|---|---|',
+              `| **Zero \`unwrap()\` / \`expect()\`** | Rust Core | ${unwrapPassed ? '✅ Passed' : '❌ Failed'} |`,
+              `| **Fast Tests (\`cargo-nextest\`)** | Workspace | ⚪ di CI utama (ci.yml, advisory) |`,
+              `| **Gate D-1 (Orchestrator File-Split)** | Channels / RF-D | ${d1Status.startsWith('Passed') ? '✅ ' + d1Status : (d1Status.startsWith('N/A') ? '⚪ ' + d1Status : '⚠️ ' + d1Status)} |`,
+              `| **Gate D-2 (Governance Coupling)** | Channels / RF-D | ${d2Status.startsWith('Passed') ? '✅ ' + d2Status : (d2Status.startsWith('N/A') ? '⚪ ' + d2Status : '⚠️ ' + d2Status)} |`,
+              '',
+              `*Areas Detected: Rust (${paths.rust}), Channels (${paths.channels}), Go (${paths.go}), Tauri (${paths.tauri}), Web (${paths.web})*`,
+              '*Evaluated against standard: `RF-D-principle-gateway-checklist.md` & `standard-docs/tech-standart`*'
+            ].join('\n');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

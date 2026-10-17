@@ -743,8 +743,6 @@ enabled = false
 [plugins]
 enabled = false
 
-[verifiable_intent]
-
 [claude_code]
 enabled = false
 

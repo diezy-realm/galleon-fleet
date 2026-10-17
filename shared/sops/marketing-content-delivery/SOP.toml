@@ -1,0 +1,25 @@
+[sop]
+name = "marketing-content-delivery"
+description = "Department-agnostic SOP for creating, reviewing, and publishing marketing campaign content."
+version = "1.0.0"
+priority = "normal"
+execution_mode = "supervised"
+max_concurrent = 1
+
+[sop.raci]
+responsible = ["crew-content-copywriter"]
+accountable = "crew-marketing-strategist"
+consulted = ["crew-distribution-specialist"]
+informed = ["crew-growth-lead"]
+
+[[sop.constraints]]
+type = "distinct_performer"
+step_a = 1
+step_b = 2
+reason = "Content copywriter cannot self-approve campaign copy without editorial review"
+
+[[sop.constraints]]
+type = "role_restriction"
+role = "crew-marketing-strategist"
+forbidden_tools = ["shell", "file_write"]
+reason = "Marketing strategist role cannot perform direct filesystem mutations"

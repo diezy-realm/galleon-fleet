@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/src/memory"
+	"github.com/diezy-realm/galleon-fleet/engine/src/memory"
 )
 
 func TestVectorValidation(t *testing.T) {

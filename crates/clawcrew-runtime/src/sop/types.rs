@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
 
+pub use super::constraint::{ConstraintKind, SopConstraint};
 use super::scope::StepToolScope;
 use super::step_contract::{StepFailure, StepRouting};
 
@@ -389,6 +390,14 @@ pub struct SopStep {
     /// resumes (the gate prompt gains an "Edit" choice). Absent = no editing.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub edit: Option<String>,
+    /// Structured guidance for the agent executing this step: things it
+    /// SHOULD do. Rendered into the step prompt alongside `body`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dos: Vec<String>,
+    /// Structured guidance for the agent executing this step: things it
+    /// must NOT do. Rendered into the step prompt alongside `body`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub donts: Vec<String>,
 }
 
 impl Default for SopStep {
@@ -413,6 +422,8 @@ impl Default for SopStep {
             policy: None,
             gate_prompt: None,
             edit: None,
+            dos: Vec::new(),
+            donts: Vec::new(),
         }
     }
 }
@@ -448,6 +459,26 @@ impl SopStep {
     pub fn effective_agent<'a>(&'a self, parent: Option<&'a str>) -> Option<&'a str> {
         self.agent.as_deref().or(parent)
     }
+}
+
+// ── RACI Assignment ─────────────────────────────────────────────
+
+/// RACI matrix assignment for a Standard Operating Procedure.
+///
+/// Responsible: does the work.
+/// Accountable: owns the outcome (MUST be single, strictly enforced).
+/// Consulted: two-way input before/during.
+/// Informed: one-way notified after.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+pub struct RaciAssignment {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub responsible: Vec<String>,
+    pub accountable: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub consulted: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub informed: Vec<String>,
 }
 
 // ── SOP ─────────────────────────────────────────────────────────
@@ -508,6 +539,36 @@ pub struct Sop {
     /// ambient agent loop to borrow.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub agent: Option<String>,
+    /// RACI governance assignment for this procedure (`[sop.raci]` in SOP.toml).
+    /// Defines Responsible, Accountable (must be singular), Consulted, and Informed roles.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub raci: Option<RaciAssignment>,
+    /// Governance and separation-of-duties constraints (`[[sop.constraints]]`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub constraints: Vec<SopConstraint>,
+}
+
+impl Default for Sop {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            description: String::new(),
+            version: default_sop_version(),
+            priority: SopPriority::Normal,
+            execution_mode: SopExecutionMode::Supervised,
+            triggers: Vec::new(),
+            steps: Vec::new(),
+            cooldown_secs: default_cooldown_secs(),
+            max_concurrent: default_max_concurrent(),
+            location: None,
+            deterministic: false,
+            admission_policy: SopAdmissionPolicy::Parallel,
+            max_pending_approvals: default_max_pending_approvals(),
+            agent: None,
+            raci: None,
+            constraints: Vec::new(),
+        }
+    }
 }
 
 fn default_cooldown_secs() -> u64 {
@@ -630,6 +691,12 @@ pub struct SopMeta {
     /// unless a step overrides it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub agent: Option<String>,
+    /// RACI governance assignment for this procedure (`[sop.raci]` in SOP.toml).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub raci: Option<RaciAssignment>,
+    /// Governance and separation-of-duties constraints (`[[sop.constraints]]`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub constraints: Vec<SopConstraint>,
 }
 
 impl SopManifest {
@@ -647,6 +714,8 @@ impl SopManifest {
                 admission_policy: sop.admission_policy,
                 max_pending_approvals: sop.max_pending_approvals,
                 agent: sop.agent.clone(),
+                raci: sop.raci.clone(),
+                constraints: sop.constraints.clone(),
             },
             triggers: sop.triggers.clone(),
             positions: sop
@@ -688,38 +757,7 @@ pub struct SopEvent {
 // ── Run state ────────────────────────────────────────────────────
 
 /// Status of an SOP execution run.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
-#[serde(rename_all = "snake_case")]
-pub enum SopRunStatus {
-    Pending,
-    Running,
-    /// An operator requested cancellation while work was in flight. The run
-    /// remains active and keeps its admission claim until the driver reaches
-    /// the next supported step boundary.
-    CancelRequested,
-    WaitingApproval,
-    /// Paused at a checkpoint in a deterministic workflow.
-    PausedCheckpoint,
-    Completed,
-    Failed,
-    Cancelled,
-}
-
-impl fmt::Display for SopRunStatus {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Pending => write!(f, "pending"),
-            Self::Running => write!(f, "running"),
-            Self::CancelRequested => write!(f, "cancel_requested"),
-            Self::WaitingApproval => write!(f, "waiting_approval"),
-            Self::PausedCheckpoint => write!(f, "paused_checkpoint"),
-            Self::Completed => write!(f, "completed"),
-            Self::Failed => write!(f, "failed"),
-            Self::Cancelled => write!(f, "cancelled"),
-        }
-    }
-}
+pub use clawcrew_api::sop::SopRunStatus;
 
 /// Result status of a single step execution.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -1569,5 +1607,57 @@ path = "/sop/test"
         assert_eq!(parsed.status, SopRunStatus::Running);
         assert_eq!(parsed.step_results.len(), 1);
         assert_eq!(parsed.step_results[0].status, SopStepStatus::Completed);
+    }
+
+    #[test]
+    fn manifest_parse_with_raci_section_including_marketing_roles() {
+        let toml_str = r#"
+[sop]
+name = "marketing-campaign-launch"
+description = "Multi-channel marketing campaign approval and launch"
+
+[sop.raci]
+responsible = ["copywriter", "content_creator"]
+accountable = "marketing_lead"
+consulted = ["seo_specialist", "brand_manager"]
+informed = ["cmo", "sales_lead"]
+
+[[triggers]]
+type = "manual"
+"#;
+        let manifest: SopManifest = toml::from_str(toml_str).unwrap();
+        assert_eq!(manifest.sop.name, "marketing-campaign-launch");
+        let raci = manifest.sop.raci.expect("raci must be parsed");
+        assert_eq!(raci.responsible, vec!["copywriter", "content_creator"]);
+        assert_eq!(raci.accountable, "marketing_lead");
+        assert_eq!(raci.consulted, vec!["seo_specialist", "brand_manager"]);
+        assert_eq!(raci.informed, vec!["cmo", "sales_lead"]);
+    }
+
+    #[test]
+    fn manifest_parse_without_raci_is_backward_compatible() {
+        let toml_str = r#"
+[sop]
+name = "legacy-sop"
+description = "Legacy SOP without RACI"
+
+[[triggers]]
+type = "manual"
+"#;
+        let manifest: SopManifest = toml::from_str(toml_str).unwrap();
+        assert!(manifest.sop.raci.is_none());
+    }
+
+    #[test]
+    fn raci_assignment_serde_roundtrip() {
+        let raci = RaciAssignment {
+            responsible: vec!["backend_dev".into()],
+            accountable: "tech_lead".into(),
+            consulted: vec!["architect".into()],
+            informed: vec!["pm".into()],
+        };
+        let serialized = serde_json::to_string(&raci).unwrap();
+        let deserialized: RaciAssignment = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(raci, deserialized);
     }
 }

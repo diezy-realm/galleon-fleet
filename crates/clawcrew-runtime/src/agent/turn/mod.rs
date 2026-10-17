@@ -5907,6 +5907,8 @@ mod sop_step_reassembly_tests {
             admission_policy: Default::default(),
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         };
         let mut engine = crate::sop::SopEngine::new(SopConfig::default());
         engine.set_sops_for_test(vec![sop]);
@@ -6721,6 +6723,8 @@ mod sop_step_reassembly_tests {
             admission_policy: Default::default(),
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         };
         // A step is revisited every other iteration, so the per-step visit
         // bound must stay well above the drive budget for this test to prove
@@ -7119,6 +7123,7 @@ mod tool_lifecycle_abandonment_tests {
                 context_limits_resolver: None,
                 receipt_generator: None,
                 knobs: &LoopKnobs::default(),
+                app_registry: None,
             },
             history,
             history_has_trim_breadcrumb: &mut crumb_present,

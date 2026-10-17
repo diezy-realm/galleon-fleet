@@ -1746,9 +1746,11 @@ async fn rename_residue_exists(
     let cfg = state.config.read().clone();
 
     // Cron jobs still owned by `from`.
-    if clawcrew_runtime::cron::list_jobs_by_agent(&cfg, from)
-        .map(|jobs| !jobs.is_empty())
-        .unwrap_or(false)
+    if let Ok(store) = clawcrew_infra::cron_store::CronStore::new(&cfg.data_dir)
+        && store
+            .list_jobs_by_agent(from)
+            .map(|jobs| !jobs.is_empty())
+            .unwrap_or(false)
     {
         return true;
     }
@@ -2621,7 +2623,7 @@ fn build_etag_for(body: &serde_json::Value) -> String {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::{GatewayRateLimiter, IdempotencyStore, nodes};
     use async_trait::async_trait;
@@ -2630,7 +2632,7 @@ mod tests {
     use parking_lot::RwLock;
     use std::time::Duration;
     use clawcrew_providers::ModelProvider;
-    use clawcrew_runtime::security::pairing::PairingGuard;
+    use clawcrew_config::pairing::PairingGuard;
 
     #[test]
     fn invalid_etag_value_is_omitted_instead_of_panicking() {
@@ -2683,7 +2685,7 @@ mod tests {
         }
     }
 
-    fn test_state(config: clawcrew_config::schema::Config) -> AppState {
+    pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
         let memory: Arc<dyn clawcrew_memory::Memory> =
             Arc::new(clawcrew_memory::NoneMemory::new("api-config-test"));
         AppState {
@@ -2724,7 +2726,7 @@ mod tests {
             nextcloud_talk_webhook_secret: std::collections::HashMap::new(),
             #[cfg(feature = "channel-email")]
             gmail_push: None,
-            observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+            observer: Arc::new(clawcrew_api::observability_traits::NoopObserver),
             tools_registry: Arc::new(Vec::new()),
             tools_registry_by_agent: Arc::new(std::collections::HashMap::new()),
             cost_tracker: None,
@@ -2740,14 +2742,19 @@ mod tests {
             session_queue: Arc::new(crate::session_queue::SessionActorQueue::new(8, 30, 600)),
             device_registry: None,
             pending_pairings: None,
-            canvas_store: clawcrew_runtime::tools::CanvasStore::new(),
+            canvas_store: clawcrew_tools::canvas::CanvasStore::new(),
             #[cfg(feature = "webauthn")]
             webauthn: None,
             cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
             pending_reload: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             tui_registry: None,
-            sop_engine: None,
-            sop_audit: None,
+            sop_runner: None,
+            diagnostics: None,
+            quickstart: None,
+            integration_catalog: None,
+            personality_runner: None,
+            skills_runner: None,
+            acp_runner: None,
         }
     }
 
@@ -3452,10 +3459,13 @@ mod tests {
         config.runtime_profiles.entry("default".into()).or_default();
 
         // Seed an owned-state row (a cron job) under `from` - the move-probe.
-        clawcrew_runtime::cron::add_job(&config, "from", "* * * * *", "echo hi")
+        let cron_store = clawcrew_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
+        cron_store
+            .add_job("from", "* * * * *", "echo hi")
             .expect("seed cron job");
         assert_eq!(
-            clawcrew_runtime::cron::list_jobs_by_agent(&config, "from")
+            cron_store
+                .list_jobs_by_agent("from")
                 .unwrap()
                 .len(),
             1
@@ -3477,14 +3487,16 @@ mod tests {
         );
         // Owned state did NOT move: the cron job stays under `from`.
         assert_eq!(
-            clawcrew_runtime::cron::list_jobs_by_agent(&config, "from")
+            cron_store
+                .list_jobs_by_agent("from")
                 .unwrap()
                 .len(),
             1,
             "cron must stay under `from` when persist fails (no premature move)"
         );
         assert!(
-            clawcrew_runtime::cron::list_jobs_by_agent(&config, "to")
+            cron_store
+                .list_jobs_by_agent("to")
                 .unwrap()
                 .is_empty(),
             "cron must NOT have moved to `to` when persist fails"
@@ -3519,7 +3531,9 @@ mod tests {
         // Create the agent's default workspace dir so the move has something to move.
         let old_ws = config.agent_workspace_dir("from");
         std::fs::create_dir_all(&old_ws).unwrap();
-        clawcrew_runtime::cron::add_job(&config, "from", "* * * * *", "echo hi")
+        let cron_store = clawcrew_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
+        cron_store
+            .add_job("from", "* * * * *", "echo hi")
             .expect("seed cron job");
 
         let state = crate::api::test_state(config.clone());
@@ -3537,14 +3551,16 @@ mod tests {
         assert!(!state.config.read().agents.contains_key("from"));
         // Cron re-pointed to `to` - the move happened, after a successful persist.
         assert_eq!(
-            clawcrew_runtime::cron::list_jobs_by_agent(&config, "to")
+            cron_store
+                .list_jobs_by_agent("to")
                 .unwrap()
                 .len(),
             1,
             "cron moves to `to` once persist succeeds"
         );
         assert!(
-            clawcrew_runtime::cron::list_jobs_by_agent(&config, "from")
+            cron_store
+                .list_jobs_by_agent("from")
                 .unwrap()
                 .is_empty()
         );
@@ -3579,9 +3595,10 @@ mod tests {
             .allowed_commands = vec!["echo".into()];
         config.runtime_profiles.entry("default".into()).or_default();
 
-        // Seed the lagging owned state + workspace under `from` (added while
-        // `from` is still a known agent so cron::add_job validates).
-        clawcrew_runtime::cron::add_job(&config, "from", "* * * * *", "echo hi")
+        // Seed the lagging owned state + workspace under `from`.
+        let cron_store = clawcrew_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
+        cron_store
+            .add_job("from", "* * * * *", "echo hi")
             .expect("seed lagged cron job under `from`");
         let old_ws = config.agent_workspace_dir("from");
         std::fs::create_dir_all(&old_ws).unwrap();
@@ -3616,14 +3633,16 @@ mod tests {
 
         // Owned state converged onto `to`.
         assert_eq!(
-            clawcrew_runtime::cron::list_jobs_by_agent(&config, "to")
+            cron_store
+                .list_jobs_by_agent("to")
                 .unwrap()
                 .len(),
             1,
             "lagged cron re-points to `to` on resume"
         );
         assert!(
-            clawcrew_runtime::cron::list_jobs_by_agent(&config, "from")
+            cron_store
+                .list_jobs_by_agent("from")
                 .unwrap()
                 .is_empty(),
             "no cron left under `from` after convergence"
@@ -4270,10 +4289,13 @@ mod tests {
         let old_ws = config.agent_workspace_dir("victim");
         std::fs::create_dir_all(&old_ws).unwrap();
         // Seed an owned-state row (a cron job) under `victim` — the delete probe.
-        clawcrew_runtime::cron::add_job(&config, "victim", "* * * * *", "echo hi")
+        let cron_store = clawcrew_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
+        cron_store
+            .add_job("victim", "* * * * *", "echo hi")
             .expect("seed cron job");
         assert_eq!(
-            clawcrew_runtime::cron::list_jobs_by_agent(&config, "victim")
+            cron_store
+                .list_jobs_by_agent("victim")
                 .unwrap()
                 .len(),
             1
@@ -4290,7 +4312,8 @@ mod tests {
         );
         // Owned state did NOT move: the cron job stays under `victim`.
         assert_eq!(
-            clawcrew_runtime::cron::list_jobs_by_agent(&config, "victim")
+            cron_store
+                .list_jobs_by_agent("victim")
                 .unwrap()
                 .len(),
             1,
@@ -4332,7 +4355,9 @@ mod tests {
         config.runtime_profiles.entry("default".into()).or_default();
         let old_ws = config.agent_workspace_dir("victim");
         std::fs::create_dir_all(&old_ws).unwrap();
-        clawcrew_runtime::cron::add_job(&config, "victim", "* * * * *", "echo hi")
+        let cron_store = clawcrew_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
+        cron_store
+            .add_job("victim", "* * * * *", "echo hi")
             .expect("seed cron job");
 
         let state = crate::api::test_state(config.clone());
@@ -4347,7 +4372,8 @@ mod tests {
         );
         // Cron job purged: the cascade ran after a successful persist.
         assert!(
-            clawcrew_runtime::cron::list_jobs_by_agent(&config, "victim")
+            cron_store
+                .list_jobs_by_agent("victim")
                 .unwrap()
                 .is_empty(),
             "cron purged once persist succeeds"
@@ -4404,7 +4430,9 @@ mod tests {
         // Drop a real file inside the workspace so the cascade has something
         // to archive (and so we can detect a successful archive).
         std::fs::write(old_ws.join("marker.txt"), b"hi").unwrap();
-        clawcrew_runtime::cron::add_job(&config, "victim", "* * * * *", "echo hi")
+        let cron_store = clawcrew_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
+        cron_store
+            .add_job("victim", "* * * * *", "echo hi")
             .expect("seed cron job");
 
         let state = crate::api::test_state(config.clone());

@@ -5,13 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 )
 
 // SandboxedCodeRunnerTool implements disposable sandboxed code execution (Wasm/Container/Subprocess)
@@ -54,68 +51,7 @@ func (t *SandboxedCodeRunnerTool) Execute(ctx context.Context, args string, work
 }
 
 func (t *SandboxedCodeRunnerTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
-	var input struct {
-		Language       string `json:"language"`
-		Code           string `json:"code"`
-		TimeoutSeconds int    `json:"timeout_seconds"`
-	}
-	if err := json.Unmarshal([]byte(args), &input); err != nil {
-		return "", nil, appErrors.Wrap(err, appErrors.CodeInvalidArgument, "invalid sandbox.run_code arguments", appErrors.LayerService)
-	}
-
-	lang := strings.ToLower(strings.TrimSpace(input.Language))
-	if lang == "" || strings.TrimSpace(input.Code) == "" {
-		return "", nil, appErrors.New(appErrors.CodeInvalidArgument, "language and code are required", appErrors.LayerService)
-	}
-
-	timeoutSec := input.TimeoutSeconds
-	if timeoutSec <= 0 || timeoutSec > 60 {
-		timeoutSec = 10
-	}
-
-	// Create isolated disposable temporary directory
-	tempDir, err := os.MkdirTemp("", "clawcrew_sandbox_*")
-	if err != nil {
-		return "", nil, fmt.Errorf("failed to create sandbox temp dir: %w", err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	runCtx, cancel := context.WithTimeout(ctx, time.Duration(timeoutSec)*time.Second)
-	defer cancel()
-
-	var cmd *exec.Cmd
-	switch lang {
-	case "python":
-		scriptFile := filepath.Join(tempDir, "script.py")
-		if err := os.WriteFile(scriptFile, []byte(input.Code), 0600); err != nil {
-			return "", nil, err
-		}
-		cmd = exec.CommandContext(runCtx, "python", scriptFile)
-	case "javascript", "node":
-		scriptFile := filepath.Join(tempDir, "script.js")
-		if err := os.WriteFile(scriptFile, []byte(input.Code), 0600); err != nil {
-			return "", nil, err
-		}
-		cmd = exec.CommandContext(runCtx, "node", scriptFile)
-	case "bash", "sh":
-		scriptFile := filepath.Join(tempDir, "script.sh")
-		if err := os.WriteFile(scriptFile, []byte(input.Code), 0700); err != nil {
-			return "", nil, err
-		}
-		cmd = exec.CommandContext(runCtx, "bash", scriptFile)
-	default:
-		return "", nil, appErrors.New(appErrors.CodeInvalidArgument, fmt.Sprintf("unsupported sandbox language: %s", lang), appErrors.LayerService)
-	}
-
-	cmd.Dir = tempDir
-	cmd.Env = scrubbedEnvironment() // Completely scrubbed environment without network/secret vars
-
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return string(out), nil, fmt.Errorf("execution error: %w (output: %s)", err, string(out))
-	}
-
-	return string(out), nil, nil
+	return executeViaGateway(ctx, execCtx, t.Name(), args)
 }
 
 // BrowserViewPageTool implements browser read-only screenshot/DOM extraction

@@ -12,7 +12,7 @@ use axum::{
 use parking_lot::Mutex;
 use serde::Deserialize;
 use std::collections::HashMap;
-use clawcrew_runtime::security::webauthn::{
+use clawcrew_config::webauthn::{
     AuthenticateCredentialResponse, AuthenticationState, RegisterCredentialResponse,
     RegistrationState, WebAuthnManager,
 };

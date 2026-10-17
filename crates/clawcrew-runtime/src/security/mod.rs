@@ -1,5 +1,6 @@
 //! Security subsystem for policy enforcement, sandboxing, and secret management.
 
+pub mod appcontainer;
 pub mod audit;
 pub mod auth_provider;
 #[cfg(feature = "sandbox-bubblewrap")]
@@ -22,6 +23,7 @@ pub mod leak_detector;
 pub mod nevis;
 pub mod otp;
 pub mod pairing;
+pub mod payment_lock;
 pub mod playbook;
 pub mod policy;
 pub mod principal_resolver;
@@ -35,6 +37,7 @@ pub mod vulnerability;
 pub mod webauthn;
 
 #[allow(unused_imports)]
+pub use appcontainer::AppContainerSandbox;
 pub use audit::{AuditEvent, AuditEventType, AuditLogger};
 #[allow(unused_imports)]
 pub use detect::create_sandbox;
@@ -56,6 +59,7 @@ pub use ingress::{IngressPolicy, ingress_policy};
 pub use otp::OtpValidator;
 #[allow(unused_imports)]
 pub use pairing::PairingGuard;
+pub use payment_lock::{PaymentLockDenied, PaymentLockManager, PaymentLockRawState};
 pub use policy::{AutonomyLevel, SecurityPolicy};
 #[allow(unused_imports)]
 pub use secrets::SecretStore;
@@ -71,39 +75,7 @@ pub use nevis::{NevisAuthProvider, NevisIdentity};
 pub use leak_detector::{LeakDetector, LeakResult};
 #[allow(unused_imports)]
 pub use prompt_guard::{GuardAction, GuardResult, PromptGuard};
-use clawcrew_config::schema::LeakDetectionConfig;
-
-/// Scrub credential leaks from arbitrary text before it crosses into a log
-/// record or any other sink. Routes through the global [`LeakDetector`] so
-/// every known credential shape is redacted in one place rather than via
-/// per-callsite regexes. Clean input is returned unchanged.
-pub fn scrub(text: &str) -> String {
-    match LeakDetector::new().scan(text) {
-        LeakResult::Clean => text.to_string(),
-        LeakResult::Detected { redacted, .. } => redacted,
-    }
-}
-
-/// Scrub credential leaks using the configured leak-detection policy.
-pub fn scrub_with_config(text: &str, config: &LeakDetectionConfig) -> String {
-    match LeakDetector::with_config(config).scan(text) {
-        LeakResult::Clean => text.to_string(),
-        LeakResult::Detected { redacted, .. } => redacted,
-    }
-}
-
-/// Redact sensitive values for safe logging. Shows first 4 characters + "***" suffix.
-/// Uses char-boundary-safe indexing to avoid panics on multi-byte UTF-8 strings.
-/// This function intentionally breaks the data-flow taint chain for static analysis.
-pub fn redact(value: &str) -> String {
-    let char_count = value.chars().count();
-    if char_count <= 4 {
-        "***".to_string()
-    } else {
-        let prefix: String = value.chars().take(4).collect();
-        format!("{prefix}***")
-    }
-}
+pub use galleon_security_scrub::{redact, scrub, scrub_with_config};
 
 #[cfg(test)]
 mod tests {

@@ -4,6 +4,7 @@ pub mod attribution;
 pub mod helpers;
 pub(crate) mod i18n;
 pub mod microsoft365;
+pub mod param_options;
 pub mod util_helpers;
 
 pub mod a2a_client;
@@ -25,6 +26,7 @@ pub mod coding_cli;
 pub mod composio;
 pub mod content_search;
 pub mod data_management;
+pub mod deliver_file;
 pub mod discord_search;
 pub mod email_imap;
 pub mod email_read;

@@ -42,6 +42,9 @@ pub fn validate_plugin_package_name(name: &str) -> Result<(), InvalidPluginPacka
     Ok(())
 }
 
+/// Whether WASM component plugin support is compiled into the binary.
+pub const WASM_PLUGIN_SUPPORT_COMPILED: bool = cfg!(feature = "plugins-wasm");
+
 #[cfg(test)]
 mod tests {
     use super::*;

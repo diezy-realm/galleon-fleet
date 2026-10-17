@@ -2,18 +2,56 @@ package fleet
 
 import (
 	"context"
+	"net"
 	"strings"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/client"
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
+	"google.golang.org/grpc"
 )
+
+type mockFleetGatewayServer struct {
+	pb.UnimplementedSystemGatewayServer
+	response string
+}
+
+func (s *mockFleetGatewayServer) ExecuteTurn(req *pb.ExecuteTurnRequest, stream pb.SystemGateway_ExecuteTurnServer) error {
+	return stream.Send(&pb.TurnToken{
+		Event: &pb.TurnToken_Token{
+			Token: &pb.TokenChunk{
+				Delta:     s.response,
+				IsThought: false,
+			},
+		},
+	})
+}
+
+func startMockFleetGateway(t *testing.T, response string) (client.SystemGatewayClient, func()) {
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	srv := grpc.NewServer()
+	pb.RegisterSystemGatewayServer(srv, &mockFleetGatewayServer{response: response})
+	go func() { _ = srv.Serve(lis) }()
+	gwClient, err := client.NewSystemGatewayClient(lis.Addr().String())
+	if err != nil {
+		srv.Stop()
+		t.Fatalf("client: %v", err)
+	}
+	return gwClient, func() {
+		_ = gwClient.Close()
+		srv.Stop()
+	}
+}
 
 // TestChatQuartermaster_UsesLLM verifies F2-1: the chat branch streams a real
 // completion from the provider instead of string-matching.
 func TestChatQuartermaster_UsesLLM(t *testing.T) {
-	mock := llm.NewMockProvider("test-model")
-	mock.SetResponses([]string{"Aye, Pirate King — fleet nominal."})
-	svc := NewService(mock)
+	gw, cleanup := startMockFleetGateway(t, "Aye, Pirate King — fleet nominal.")
+	defer cleanup()
+	svc := NewService(gw)
 
 	resp, err := svc.ChatQuartermaster(context.Background(), "how is the fleet?")
 	if err != nil {

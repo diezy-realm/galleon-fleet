@@ -49,7 +49,10 @@ pub mod allowlist {
 
     /// `!`-prefix that marks a resolved peer entry as a deny rule.
     pub use clawcrew_config::schema::PEER_DENY_PREFIX as DENY_PREFIX;
-    use clawcrew_config::schema::{peer_policy_admits, peer_policy_denies};
+    use clawcrew_config::schema::{
+        peer_deny_identity, peer_deny_names, peer_grant_identity, peer_is_wildcard,
+        peer_policy_admits, peer_policy_denies,
+    };
 
     fn matcher_for(mode: Match) -> impl Fn(&str, &str) -> bool {
         move |entry: &str, user: &str| match mode {
@@ -102,6 +105,46 @@ pub mod allowlist {
         match_fn: impl Fn(&str, &str) -> bool,
     ) -> bool {
         peer_policy_denies(allowed, identities, match_fn)
+    }
+
+    /// The conflict message when a matching `ignore` already denies `identity`,
+    /// or `None` when a pairing write would take effect.
+    pub fn pairing_deny_conflict(
+        allowed: &[String],
+        channel_type: &str,
+        alias: &str,
+        identities: &[&str],
+        match_fn: impl Fn(&str, &str) -> bool,
+    ) -> Option<String> {
+        is_identity_denied_by(allowed, identities, &match_fn).then(|| {
+            format!(
+                "paired {channel_type}.{alias} identity is denied by an `ignore` entry in a \
+                 matching [peer_groups.*] block — remove that entry from config.toml, then \
+                 pair again"
+            )
+        })
+    }
+
+    /// Whether a resolved peer list can admit anybody at all.
+    #[must_use]
+    pub fn grants_anyone(allowed: &[String]) -> bool {
+        let denies: Vec<&str> = allowed
+            .iter()
+            .filter_map(|entry| peer_deny_identity(entry))
+            .collect();
+        if denies.iter().any(|entry| peer_is_wildcard(entry)) {
+            return false;
+        }
+        allowed
+            .iter()
+            .filter_map(|entry| peer_grant_identity(entry))
+            .filter(|grant| !grant.trim().is_empty())
+            .any(|grant| {
+                peer_is_wildcard(grant)
+                    || !denies.iter().any(|deny| {
+                        peer_deny_names(deny, grant, &|entry: &str, user: &str| entry == user)
+                    })
+            })
     }
 
     #[cfg(test)]
@@ -208,6 +251,71 @@ pub mod approval {
         )
     }
 
+    pub struct PendingApproval {
+        pub sender: tokio::sync::oneshot::Sender<clawcrew_api::channel::ChannelApprovalResponse>,
+        pub destination: String,
+        pub tool_name: String,
+    }
+
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum PendingApprovalResolution {
+        NotFound,
+        Rejected,
+        Resolved,
+        ReceiverClosed,
+    }
+
+    impl PendingApprovalResolution {
+        pub fn suppresses_message(self) -> bool {
+            !matches!(self, Self::NotFound)
+        }
+    }
+
+    pub async fn resolve_pending_approval(
+        pending_approvals: &tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>,
+        token: &str,
+        response: clawcrew_api::channel::ChannelApprovalResponse,
+        responder_allowed: bool,
+        destination: &str,
+    ) -> PendingApprovalResolution {
+        resolve_pending_approval_with_tool(
+            pending_approvals,
+            token,
+            response,
+            responder_allowed,
+            destination,
+        )
+        .await
+        .0
+    }
+
+    pub async fn resolve_pending_approval_with_tool(
+        pending_approvals: &tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>,
+        token: &str,
+        response: clawcrew_api::channel::ChannelApprovalResponse,
+        responder_allowed: bool,
+        destination: &str,
+    ) -> (PendingApprovalResolution, Option<String>) {
+        let mut pending_approvals = pending_approvals.lock().await;
+        let Some(pending) = pending_approvals.get(token) else {
+            return (PendingApprovalResolution::NotFound, None);
+        };
+        if !responder_allowed || destination.is_empty() || pending.destination != destination {
+            return (PendingApprovalResolution::Rejected, None);
+        }
+
+        let Some(pending) = pending_approvals.remove(token) else {
+            return (PendingApprovalResolution::NotFound, None);
+        };
+        drop(pending_approvals);
+        if pending.sender.send(response).is_ok() {
+            (PendingApprovalResolution::Resolved, Some(pending.tool_name))
+        } else {
+            (PendingApprovalResolution::ReceiverClosed, None)
+        }
+    }
+
+
     #[cfg(test)]
     mod tests {
         use super::*;
@@ -231,5 +339,20 @@ pub mod approval {
             assert!(!build_yesno_prompt(&token, "shell", "x", Some((1, 1))).contains("Tool call"));
             assert!(parse_approval_reply("notoken yes").is_none());
         }
+    }
+}
+
+pub mod identity_persist;
+pub mod login_events;
+pub mod model_picker_delivery;
+
+/// Truncate a string to `max_chars` Unicode characters, appending "..." if truncated.
+pub fn truncate_with_ellipsis(s: &str, max_chars: usize) -> String {
+    match s.char_indices().nth(max_chars) {
+        Some((idx, _)) => {
+            let truncated = &s[..idx];
+            format!("{}...", truncated.trim_end())
+        }
+        None => s.to_string(),
     }
 }

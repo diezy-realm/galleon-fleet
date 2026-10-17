@@ -1,0 +1,5 @@
+# WIT v0 Frozen Contract
+# Stabilized for clawcrew:plugin@0.x Component Model.
+# Any breaking changes to wit/v0/*.wit require advancing to wit/v1/.
+stabilized_at = 2026-10-04T04:00:00Z
+wit_version = "0.1.0"

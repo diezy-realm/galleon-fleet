@@ -1,12 +1,13 @@
 [package]
 name = "galleon-channel-core"
+rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 description = "Shared peer-policy (allowlist) + approval helpers reused across galleon channel feature-crates (RF-B1 split)."
 repository.workspace = true
 homepage.workspace = true
-publish = false
+publish = true
 
 [dependencies]
 # RF-B1 seam #1 — allowlist. The grant/deny/`!name`/wildcard peer-policy SSOT
@@ -20,4 +21,17 @@ clawcrew-config.workspace = true
 # RF-B1 seam #2 — approval. `ChannelApprovalResponse` and the approval wire
 # types; the i18n-free half of the approval helper reused by channels.
 clawcrew-api.workspace = true
+clawcrew-log.workspace = true
 rand = "0.10"
+anyhow = "1.0"
+parking_lot = "0.12"
+serde_json = "1.0"
+tokio = { version = "1.50", default-features = false, features = ["sync", "time"] }
+
+[dev-dependencies]
+tokio = { version = "1.50", default-features = false, features = [
+  "macros",
+  "rt-multi-thread",
+  "time",
+  "sync",
+] }

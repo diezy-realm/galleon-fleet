@@ -1,0 +1,21 @@
+[package]
+name = "galleon-security-scrub"
+rust-version.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Credential scrubbing and leak detection extracted from clawcrew-runtime (PR-32 / R-11)."
+repository.workspace = true
+homepage.workspace = true
+publish = true
+
+[dependencies]
+clawcrew-api.workspace = true
+clawcrew-config.workspace = true
+regex = "1.10"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+rand = "0.10"
+
+[features]
+schema-export = ["clawcrew-config/schema-export"]

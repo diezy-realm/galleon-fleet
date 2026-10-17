@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 )
 
 // defaultPolicyEngine evaluates policy rules on tool execution requests

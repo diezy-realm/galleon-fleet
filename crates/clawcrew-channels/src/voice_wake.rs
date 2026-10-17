@@ -884,9 +884,9 @@ mod tests {
 
     #[tokio::test]
     async fn dotted_typed_provider_dispatches_through_voice_wake_manager() {
+        use clawcrew_config::schema::{Config, LocalWhisperTranscriptionProviderConfig};
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
-        use clawcrew_config::schema::{Config, LocalWhisperTranscriptionProviderConfig};
 
         let server = MockServer::start().await;
         Mock::given(method("POST"))

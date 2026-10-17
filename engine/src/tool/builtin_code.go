@@ -1,17 +1,13 @@
 package tool
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
-	"time"
 
-	appErrors "github.com/diezy-labs/claw-crew/engine/core/errors"
+	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 )
 
 // RunLinterTool implements code.run_linter with environment scrubbing
@@ -54,102 +50,25 @@ func (t *RunLinterTool) Execute(ctx context.Context, args string, workspaceRoot 
 }
 
 func (t *RunLinterTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
-	// Fallback: if gateway available, route through gRPC; else exec.Command
-	if execCtx != nil && execCtx.Gateway != nil {
-		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
-		if err != nil {
-			return "", nil, err
-		}
-		var res struct {
-			Success bool   `json:"success"`
-			Output  string `json:"output"`
-			Error   string `json:"error"`
-		}
-		if err := json.Unmarshal([]byte(resp), &res); err != nil {
-			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
-		}
-		if !res.Success {
-			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
-		}
-		return res.Output, nil, nil
+	if execCtx == nil || execCtx.Gateway == nil {
+		return "", nil, appErrors.New(appErrors.CodeUnavailable, fmt.Sprintf("native tool %s execution rejected: SystemGateway is required (fail-closed boundary enforced)", t.Name()), appErrors.LayerService)
 	}
-
-	var input struct {
-		Linter string   `json:"linter"`
-		Args   []string `json:"args"`
-		Path   string   `json:"path"`
-	}
-	if err := json.Unmarshal([]byte(args), &input); err != nil {
-		return "", nil, appErrors.Wrap(err, appErrors.CodeInvalidArgument, "invalid run_linter arguments", appErrors.LayerService)
-	}
-
-	linterName := strings.TrimSpace(input.Linter)
-	if linterName == "" {
-		return "", nil, appErrors.New(appErrors.CodeInvalidArgument, "linter name required", appErrors.LayerService)
-	}
-
-	// Validate linter against allowed list
-	allowedLinters := map[string]bool{
-		"golangci-lint": true,
-		"gofmt":         true,
-		"go":            true,
-		"cargo":         true,
-		"clippy":        true,
-		"eslint":        true,
-		"flake8":        true,
-		"rubocop":       true,
-		"prettier":      true,
-		"rustfmt":       true,
-	}
-
-	binBase := filepath.Base(linterName)
-	binBase = strings.TrimSuffix(binBase, ".exe")
-	if !allowedLinters[binBase] {
-		return "", nil, appErrors.New(appErrors.CodePermissionDenied, fmt.Sprintf("unsupported or unauthorized linter binary: %s", linterName), appErrors.LayerService)
-	}
-
-	workspaceRoot := getWorkspaceRoot(execCtx)
-	targetDir := workspaceRoot
-	if input.Path != "" {
-		safeDir, err := ValidateSandboxPath(workspaceRoot, input.Path)
-		if err != nil {
-			return "", nil, err
-		}
-		targetDir = safeDir
-	}
-
-	cmdCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
-	defer cancel()
-
-	cmd := exec.CommandContext(cmdCtx, linterName, input.Args...)
-	cmd.Dir = targetDir
-	cmd.Env = scrubbedEnvironment()
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-	output := stdout.String()
-	if stderr.Len() > 0 {
-		if output != "" {
-			output += "\n--- STDERR ---\n"
-		}
-		output += stderr.String()
-	}
-
+	resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
 	if err != nil {
-		// Linters return non-zero exit code on lint issues, which is informative rather than fatal tool failure
-		if output != "" {
-			return fmt.Sprintf("Linter issues found:\n%s", output), nil, nil
-		}
-		return "", nil, fmt.Errorf("linter %s failed: %w", linterName, err)
+		return "", nil, err
 	}
-
-	if strings.TrimSpace(output) == "" {
-		return "No lint issues found.", nil, nil
+	var res struct {
+		Success bool   `json:"success"`
+		Output  string `json:"output"`
+		Error   string `json:"error"`
 	}
-	return output, nil, nil
+	if err := json.Unmarshal([]byte(resp), &res); err != nil {
+		return "", nil, fmt.Errorf("invalid gateway response: %w", err)
+	}
+	if !res.Success {
+		return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
+	}
+	return res.Output, nil, nil
 }
 
 // RunTestsTool implements code.run_tests with process sandboxing and artifact spillover
@@ -193,126 +112,25 @@ func (t *RunTestsTool) Execute(ctx context.Context, args string, workspaceRoot s
 }
 
 func (t *RunTestsTool) ExecuteWithContext(ctx context.Context, execCtx *ExecutionContext, args string) (string, []string, error) {
-	// Fallback: if gateway available, route through gRPC; else exec.Command
-	if execCtx != nil && execCtx.Gateway != nil {
-		resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
-		if err != nil {
-			return "", nil, err
-		}
-		var res struct {
-			Success bool   `json:"success"`
-			Output  string `json:"output"`
-			Error   string `json:"error"`
-		}
-		if err := json.Unmarshal([]byte(resp), &res); err != nil {
-			return "", nil, fmt.Errorf("invalid gateway response: %w", err)
-		}
-		if !res.Success {
-			return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
-		}
-		return res.Output, nil, nil
+	if execCtx == nil || execCtx.Gateway == nil {
+		return "", nil, appErrors.New(appErrors.CodeUnavailable, fmt.Sprintf("native tool %s execution rejected: SystemGateway is required (fail-closed boundary enforced)", t.Name()), appErrors.LayerService)
 	}
-
-	var input struct {
-		Command        string   `json:"command"`
-		Args           []string `json:"args"`
-		Path           string   `json:"path"`
-		TimeoutSeconds int      `json:"timeout_seconds"`
+	resp, err := execCtx.Gateway.ExecuteNativeTool(ctx, t.Name(), args)
+	if err != nil {
+		return "", nil, err
 	}
-	if err := json.Unmarshal([]byte(args), &input); err != nil {
-		return "", nil, appErrors.Wrap(err, appErrors.CodeInvalidArgument, "invalid run_tests arguments", appErrors.LayerService)
+	var res struct {
+		Success bool   `json:"success"`
+		Output  string `json:"output"`
+		Error   string `json:"error"`
 	}
-
-	cmdName := strings.TrimSpace(input.Command)
-	if cmdName == "" {
-		return "", nil, appErrors.New(appErrors.CodeInvalidArgument, "test command required", appErrors.LayerService)
+	if err := json.Unmarshal([]byte(resp), &res); err != nil {
+		return "", nil, fmt.Errorf("invalid gateway response: %w", err)
 	}
-
-	allowedCommands := map[string]bool{
-		"go":     true,
-		"cargo":  true,
-		"npm":    true,
-		"pytest": true,
-		"python": true,
-		"ctest":  true,
-		"dotnet": true,
+	if !res.Success {
+		return "", nil, fmt.Errorf("gateway execution failed: %s", res.Error)
 	}
-
-	binBase := filepath.Base(cmdName)
-	binBase = strings.TrimSuffix(binBase, ".exe")
-	if !allowedCommands[binBase] {
-		return "", nil, appErrors.New(appErrors.CodePermissionDenied, fmt.Sprintf("unauthorized test command: %s", cmdName), appErrors.LayerService)
-	}
-
-	workspaceRoot := getWorkspaceRoot(execCtx)
-	targetDir := workspaceRoot
-	if input.Path != "" {
-		safeDir, err := ValidateSandboxPath(workspaceRoot, input.Path)
-		if err != nil {
-			return "", nil, err
-		}
-		targetDir = safeDir
-	}
-
-	timeoutSec := input.TimeoutSeconds
-	if timeoutSec <= 0 || timeoutSec > 300 {
-		timeoutSec = 60
-	}
-
-	cmdCtx, cancel := context.WithTimeout(ctx, time.Duration(timeoutSec)*time.Second)
-	defer cancel()
-
-	cmd := exec.CommandContext(cmdCtx, cmdName, input.Args...)
-	cmd.Dir = targetDir
-	cmd.Env = scrubbedEnvironment()
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	cmdErr := cmd.Run()
-
-	combined := stdout.String()
-	if stderr.Len() > 0 {
-		if combined != "" {
-			combined += "\n--- STDERR ---\n"
-		}
-		combined += stderr.String()
-	}
-
-	maxBytes := 50000
-	var artifactIDs []string
-	summaryOutput := combined
-
-	// If output exceeds MaxOutputBytes, spillover to artifact file
-	if len(combined) > maxBytes {
-		runID := "run"
-		if execCtx != nil && execCtx.RunID != "" {
-			runID = execCtx.RunID
-		}
-
-		artDir := filepath.Join(workspaceRoot, "artifacts", "test_runs")
-		_ = os.MkdirAll(artDir, 0755)
-		artFilename := fmt.Sprintf("%s_test_log_%d.txt", runID, time.Now().Unix())
-		artPath := filepath.Join(artDir, artFilename)
-		_ = os.WriteFile(artPath, []byte(combined), 0644)
-
-		relArt, _ := filepath.Rel(workspaceRoot, artPath)
-		artID := fmt.Sprintf("art_%d", time.Now().UnixNano())
-		artifactIDs = append(artifactIDs, artID)
-
-		// Excerpt first 2000 chars and last 2000 chars
-		head := combined[:2000]
-		tail := combined[len(combined)-2000:]
-		summaryOutput = fmt.Sprintf("%s\n\n... [TRUNCATED %d BYTES - FULL LOG PERSISTED AT %s (Artifact %s)] ...\n\n%s",
-			head, len(combined)-4000, filepath.ToSlash(relArt), artID, tail)
-	}
-
-	if cmdErr != nil {
-		return fmt.Sprintf("Tests failed with exit code error: %v\nOutput:\n%s", cmdErr, summaryOutput), artifactIDs, nil
-	}
-
-	return summaryOutput, artifactIDs, nil
+	return res.Output, nil, nil
 }
 
 // scrubbedEnvironment returns host environment stripped of all sensitive secrets and tokens

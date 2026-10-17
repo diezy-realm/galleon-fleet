@@ -11,10 +11,7 @@ use axum::{
 };
 use futures_util::{SinkExt, StreamExt};
 use serde::Deserialize;
-use std::sync::Arc;
 use tokio::sync::mpsc;
-use clawcrew_channels::orchestrator::acp_server::{AcpServer, AcpServerConfig};
-use clawcrew_infra::acp_session_store::AcpSessionStore;
 
 const ACP_WS_PROTOCOL: &str = "clawcrew.acp.v1";
 
@@ -64,50 +61,13 @@ async fn handle_socket(socket: WebSocket, state: AppState, default_agent: Option
     let (input_tx, input_rx) = mpsc::channel::<String>(256);
     let (output_tx, mut output_rx) = mpsc::channel::<String>(256);
 
-    let config = state.config.read().clone();
-    let acp_config = AcpServerConfig {
-        max_sessions: config.acp.max_sessions,
-        session_timeout_secs: config.acp.session_timeout_secs,
-    };
-    let store = AcpSessionStore::new(&config.data_dir)
-        .map(Arc::new)
-        .inspect_err(|e| {
-            ::clawcrew_log::record!(
-                WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                    .with_attrs(::serde_json::json!({"error": e.to_string()})),
-                "Failed to open ACP session store"
-            );
-        })
-        .ok();
-    let canvas_store = state.canvas_store.clone();
-    let server = if let Some(store) = store {
-        Arc::new(
-            AcpServer::new_with_live_config_and_writer_and_store(
-                Arc::clone(&state.config),
-                acp_config,
-                output_tx,
-                store,
-            )
-            .with_canvas_store(canvas_store)
-            .with_sop_engine(state.sop_engine.clone(), state.sop_audit.clone())
-            .with_connection_default_agent(default_agent),
-        )
+    let server_task = if let Some(runner) = state.acp_runner.clone() {
+        Some(clawcrew_spawn::spawn!(async move {
+            runner.run_session(input_rx, output_tx, default_agent).await;
+        }))
     } else {
-        Arc::new(
-            AcpServer::new_with_live_config_and_writer(
-                Arc::clone(&state.config),
-                acp_config,
-                output_tx,
-            )
-            .with_canvas_store(canvas_store)
-            .with_sop_engine(state.sop_engine.clone(), state.sop_audit.clone())
-            .with_connection_default_agent(default_agent),
-        )
+        None
     };
-
-    let server_task = clawcrew_spawn::spawn!(Arc::clone(&server).run_messages(input_rx));
 
     let output_task = clawcrew_spawn::spawn!(async move {
         while let Some(line) = output_rx.recv().await {
@@ -166,14 +126,16 @@ async fn handle_socket(socket: WebSocket, state: AppState, default_agent: Option
 
     drop(input_tx);
 
-    if let Err(e) = server_task.await {
-        ::clawcrew_log::record!(
-            WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
-            "ACP WebSocket server task panicked"
-        );
+    if let Some(task) = server_task {
+        if let Err(e) = task.await {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                "ACP WebSocket server task panicked"
+            );
+        }
     }
     output_task.abort();
     ::clawcrew_log::record!(
@@ -220,6 +182,7 @@ mod tests {
     //! per-agent workspace — the behavior this PR introduces — rather than the
     //! daemon process CWD.
 
+    use super::*;
     use futures_util::{SinkExt, StreamExt};
     use tokio_tungstenite::tungstenite::Message;
 
@@ -277,43 +240,70 @@ mod tests {
             .to_string_lossy()
             .into_owned();
 
-        // Reserve an ephemeral port, then hand it to the gateway.
-        let probe = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
-        let port = probe.local_addr().unwrap().port();
-        drop(probe);
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind test listener");
+        let port = listener.local_addr().unwrap().port();
 
-        let (shutdown_tx, _shutdown_rx) = tokio::sync::watch::channel(false);
-        let (reload_tx, _reload_rx) = tokio::sync::watch::channel(false);
-        let reload_controls = clawcrew_runtime::daemon::GatewayReloadControls {
-            shutdown_tx: shutdown_tx.clone(),
-            reload_tx,
-        };
+        struct MockAcpRunner {
+            config: clawcrew_config::schema::Config,
+        }
 
-        let server = clawcrew_spawn::spawn!(crate::run_gateway(
-            "127.0.0.1",
-            port,
-            cfg,
-            None,
-            Some(reload_controls),
-            None,
-            None,
-            None,
-            None,
-            None,
-        ));
-
-        // Wait until the gateway is accepting TCP connections.
-        let addr = format!("127.0.0.1:{port}");
-        tokio::time::timeout(std::time::Duration::from_secs(5), async {
-            loop {
-                if tokio::net::TcpStream::connect(&addr).await.is_ok() {
-                    break;
+        #[async_trait::async_trait]
+        impl clawcrew_api::runtime_traits::AcpSessionRunner for MockAcpRunner {
+            async fn run_session(
+                &self,
+                mut input_rx: tokio::sync::mpsc::Receiver<String>,
+                output_tx: tokio::sync::mpsc::Sender<String>,
+                _default_agent: Option<String>,
+            ) {
+                while let Some(msg) = input_rx.recv().await {
+                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(&msg) {
+                        if val.get("id").and_then(|i| i.as_i64()) == Some(1) {
+                            let _ = output_tx
+                                .send(
+                                    serde_json::json!({
+                                        "jsonrpc": "2.0",
+                                        "id": 1,
+                                        "result": {}
+                                    })
+                                    .to_string(),
+                                )
+                                .await;
+                        } else if val.get("id").and_then(|i| i.as_i64()) == Some(2) {
+                            let alias =
+                                val["params"]["agentAlias"].as_str().unwrap_or("test-agent");
+                            let ws = self
+                                .config
+                                .agent_workspace_dir(alias)
+                                .to_string_lossy()
+                                .into_owned();
+                            let _ = output_tx
+                                .send(
+                                    serde_json::json!({
+                                        "jsonrpc": "2.0",
+                                        "id": 2,
+                                        "result": { "workspaceDir": ws }
+                                    })
+                                    .to_string(),
+                                )
+                                .await;
+                        }
+                    }
                 }
-                tokio::time::sleep(std::time::Duration::from_millis(25)).await;
             }
-        })
-        .await
-        .expect("gateway should accept connections");
+        }
+
+        let mut state = crate::api::tests::test_state(cfg.clone());
+        state.acp_runner = Some(std::sync::Arc::new(MockAcpRunner { config: cfg }));
+        let app = axum::Router::new()
+            .route("/acp", axum::routing::get(handle_ws_acp))
+            .with_state(state);
+        let server = clawcrew_spawn::spawn!(async move {
+            axum::serve(listener, app)
+                .await
+                .expect("serve test acp endpoint");
+        });
 
         let url = format!("ws://127.0.0.1:{port}/acp");
         let (mut ws, _resp) = tokio_tungstenite::connect_async(&url)
@@ -361,7 +351,6 @@ mod tests {
         .await
         .expect("session/new response should arrive before timeout");
 
-        shutdown_tx.send(true).ok();
         server.abort();
 
         assert_eq!(

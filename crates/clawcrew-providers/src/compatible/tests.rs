@@ -5920,7 +5920,10 @@
             .get("attributes")
             .and_then(|attributes| attributes.get("_file"))
             .and_then(|value| value.as_str())
-            .is_some_and(|file| file.ends_with("compatible.rs"))
+            .is_some_and(|file| {
+                let norm = file.replace('\\', "/");
+                norm.ends_with("compatible.rs") || norm.ends_with("compatible/mod.rs")
+            })
     }
 
     /// End to end on the tools path: a translated-gateway response carrying

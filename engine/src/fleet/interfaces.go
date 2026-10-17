@@ -3,6 +3,9 @@ package fleet
 import (
 	"context"
 	"time"
+
+	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
+	"github.com/diezy-realm/galleon-fleet/engine/src/entitlement"
 )
 
 type Fleet struct {
@@ -86,6 +89,7 @@ type Service interface {
 	CreateFleet(ctx context.Context, req CreateFleetRequest) (*Fleet, error)
 	GetFleet(ctx context.Context, id string) (*Fleet, error)
 	GetMetrics(ctx context.Context) (*FleetMetrics, error)
+	GetSystemMetrics(ctx context.Context) (*pb.SystemMetricsResponse, error)
 	RingDeckBell(ctx context.Context) (string, error)
 	GetExecutiveBriefing(ctx context.Context) (*ExecutiveBriefing, error)
 	GetHarborProviders(ctx context.Context) ([]HarborProvider, error)
@@ -98,6 +102,11 @@ type Service interface {
 	SaveCollection(ctx context.Context, name string, rawJSON []byte) error
 	ChatQuartermaster(ctx context.Context, prompt string) (*QuartermasterChatResponse, error)
 	GetSeedData(ctx context.Context) (map[string]any, error)
+	ExecuteTerminal(ctx context.Context, req TerminalExecRequest) (*TerminalExecResponse, error)
+	GetTerminalAudit(ctx context.Context, limit int) ([]TerminalAuditRecord, error)
+	GetProjectGitStatus(ctx context.Context, projectPath string) (*ProjectGitStatusResponse, error)
+	GetEntitlementUsage(ctx context.Context) (*entitlement.UsageReport, error)
+	SetEntitlementPolicy(p entitlement.QuotaPolicy)
 	// SetObjectiveProposer injects the objective-branch dependency after
 	// construction (orchestrator imports fleet, so it is wired post-hoc).
 	SetObjectiveProposer(p ObjectiveProposer)

@@ -851,21 +851,10 @@ rpc_type! {
 // ── Skills ───────────────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════════
 
-rpc_type! {
-    /// Wire representation of a skill bundle. Consolidates gateway `BundleEntry`.
-    pub struct SkillBundleEntry {
-        pub alias: String,
-        pub directory: String,
-        pub include: Vec<String>,
-        pub exclude: Vec<String>,
-    }
-}
-
-rpc_type! {
-    pub struct SkillsBundlesResult {
-        pub bundles: Vec<SkillBundleEntry>,
-    }
-}
+pub use clawcrew_api::skill::{
+    AgentSkillEntry, AgentSkillsResult, DroppedSkillEntry, ShadowedSkillEntry, SkillBundleEntry,
+    SkillListEntry, SkillsBundlesResult, SkillsListResult, SkillsReadResult,
+};
 
 rpc_type! {
     pub struct SkillsListParams {
@@ -875,95 +864,9 @@ rpc_type! {
 }
 
 rpc_type! {
-    /// Wire representation of a skill in a list. Consolidates gateway `SkillEntry`.
-    pub struct SkillListEntry {
-        pub bundle: String,
-        pub name: String,
-        pub directory: String,
-        pub frontmatter: SkillFrontmatter,
-    }
-}
-
-rpc_type! {
-    pub struct SkillsListResult {
-        pub skills: Vec<SkillListEntry>,
-    }
-}
-
-rpc_type! {
-    pub struct AgentSkillEntry {
-        pub name: String,
-        pub description: String,
-        /// `"workspace"` | `"open-skills"` | `"plugin"` | `"bundle"`.
-        pub origin: String,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub plugin: Option<String>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub bundle: Option<String>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub directory: Option<String>,
-        pub editable: bool,
-        /// Lower-precedence same-name skills this one shadows. Empty normally;
-        /// additive so old clients ignore it.
-        #[serde(default, skip_serializing_if = "Vec::is_empty")]
-        pub shadowed: Vec<ShadowedSkillEntry>,
-    }
-}
-
-rpc_type! {
-    /// A lower-precedence same-name skill shadowed by a winning skill
-    pub struct ShadowedSkillEntry {
-        pub name: String,
-        /// `"workspace"` | `"open-skills"` | `"plugin"` | `"bundle"`.
-        pub origin: String,
-    }
-}
-
-rpc_type! {
-    /// A candidate skill the audited resolver dropped (security audit failed,
-    /// unauditable, or manifest parse error)
-    pub struct DroppedSkillEntry {
-        pub name: String,
-        pub origin: String,
-        /// `"audit_findings"` | `"audit_error"` | `"manifest_parse_error"`.
-        pub reason_kind: String,
-        /// Human-readable detail (the audit summary / error text).
-        pub reason: String,
-        /// True when the secure-default script policy is the blocker, so the
-        /// dashboard can surface the `skills.allow_scripts = true` remediation
-        /// without parsing `reason`. Additive; old clients ignore it.
-        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-        pub scripts_blocked: bool,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub directory: Option<String>,
-    }
-}
-
-rpc_type! {
-    pub struct AgentSkillsResult {
-        pub agent: String,
-        pub skills: Vec<AgentSkillEntry>,
-        /// Audit-dropped candidates the resolver skipped. Empty normally;
-        /// additive so old clients ignore it.
-        #[serde(default, skip_serializing_if = "Vec::is_empty")]
-        pub dropped: Vec<DroppedSkillEntry>,
-    }
-}
-
-rpc_type! {
     pub struct SkillsReadParams {
         pub bundle: String,
         pub name: String,
-    }
-}
-
-rpc_type! {
-    /// Consolidates gateway `SkillReadResponse`.
-    pub struct SkillsReadResult {
-        pub bundle: String,
-        pub name: String,
-        pub frontmatter: SkillFrontmatter,
-        pub body: String,
     }
 }
 
@@ -1004,6 +907,11 @@ rpc_type! {
 // ── Personality ──────────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════════
 
+pub use clawcrew_api::personality::{
+    PersonalityFileEntry, PersonalityGetResult, PersonalityListResult, PersonalityPutResult,
+    PersonalityTemplatesResult, TemplateFileEntry,
+};
+
 rpc_type! {
     pub struct PersonalityListParams {
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1012,43 +920,9 @@ rpc_type! {
 }
 
 rpc_type! {
-    /// Consolidates gateway `PersonalityIndexEntry`.
-    pub struct PersonalityFileEntry {
-        pub filename: String,
-        pub exists: bool,
-        #[serde(default)]
-        pub size: u64,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub mtime_ms: Option<i64>,
-    }
-}
-
-rpc_type! {
-    /// Consolidates gateway `PersonalityIndex`.
-    pub struct PersonalityListResult {
-        pub files: Vec<PersonalityFileEntry>,
-        pub max_chars: usize,
-    }
-}
-
-rpc_type! {
     pub struct PersonalityGetParams {
         pub agent: String,
         pub filename: String,
-    }
-}
-
-rpc_type! {
-    /// Consolidates gateway `PersonalityFileResponse`.
-    pub struct PersonalityGetResult {
-        pub filename: String,
-        #[serde(default)]
-        pub content: Option<String>,
-        pub exists: bool,
-        #[serde(default)]
-        pub truncated: bool,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub mtime_ms: Option<i64>,
     }
 }
 
@@ -1061,34 +935,9 @@ rpc_type! {
 }
 
 rpc_type! {
-    /// Consolidates gateway `PersonalityPutResponse`.
-    pub struct PersonalityPutResult {
-        pub bytes_written: u64,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub mtime_ms: Option<i64>,
-    }
-}
-
-rpc_type! {
     pub struct PersonalityTemplatesParams {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pub agent: Option<String>,
-    }
-}
-
-rpc_type! {
-    /// Consolidates gateway `TemplateFile`.
-    pub struct TemplateFileEntry {
-        pub filename: String,
-        pub content: String,
-    }
-}
-
-rpc_type! {
-    /// Consolidates gateway `TemplateResponse`.
-    pub struct PersonalityTemplatesResult {
-        pub preset: String,
-        pub files: Vec<TemplateFileEntry>,
     }
 }
 
@@ -1096,21 +945,10 @@ rpc_type! {
 // ── Config introspection (sections, catalog, status) ─────────────────
 // ══════════════════════════════════════════════════════════════════════
 
-rpc_type! {
-    /// Consolidates gateway `CatalogModelProvider`.
-    pub struct CatalogModelProvider {
-        pub name: String,
-        pub display_name: String,
-        pub local: bool,
-    }
-}
-
-rpc_type! {
-    /// Consolidates gateway `CatalogResponse`.
-    pub struct CatalogResponse {
-        pub model_providers: Vec<CatalogModelProvider>,
-    }
-}
+pub use clawcrew_config::dto::{
+    CatalogModelProvider, CatalogModelsResult, CatalogResponse, ConfigSectionEntry,
+    ConfigSectionsResult, ConfigStatusResult, PickerItem, PickerResponse, SelectItemResponse,
+};
 
 rpc_type! {
     pub struct CatalogModelsParams {
@@ -1121,102 +959,11 @@ rpc_type! {
 }
 
 rpc_type! {
-    /// Consolidates gateway `ModelsResponse`.
-    pub struct CatalogModelsResult {
-        pub model_provider: String,
-        pub models: Vec<String>,
-        /// Optional pricing data keyed by model id. Populated when the
-        /// provider's `/models` endpoint returns pricing (Kilo Gateway,
-        /// OpenRouter, etc.). Absent for catalog fallbacks without pricing.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub pricing: Option<std::collections::HashMap<String, clawcrew_api::model_provider::ModelPricing>>,
-        pub local: bool,
-        pub live: bool,
-    }
-}
-
-rpc_type! {
-    /// A config section entry for the dashboard sidebar / TUI section list.
-    pub struct ConfigSectionEntry {
-        pub key: String,
-        pub label: String,
-        pub help: String,
-        pub has_picker: bool,
-        pub completed: bool,
-        /// Whether the section currently has enough usable config for the
-        /// first-run path.
-        #[serde(default)]
-        pub ready: bool,
-        /// Display group for the dashboard sidebar.
-        #[serde(default)]
-        pub group: String,
-        /// Stable locale-independent group identifier.
-        #[serde(default)]
-        pub group_key: String,
-        /// `true` when this section is part of the canonical Quickstart list.
-        #[serde(default)]
-        pub is_quickstart: bool,
-        /// Editor shape (direct form / one-tier alias map / typed-family map /
-        /// backend picker).
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub shape: Option<clawcrew_config::sections::SectionShape>,
-        #[serde(default)]
-        pub cost_category: String,
-    }
-}
-
-rpc_type! {
-    /// Response for `config/sections`.
-    pub struct ConfigSectionsResult {
-        pub sections: Vec<ConfigSectionEntry>,
-    }
-}
-
-rpc_type! {
-    /// Config readiness status for the dashboard/TUI.
-    pub struct ConfigStatusResult {
-        pub needs_quickstart: bool,
-        pub reason: String,
-        pub has_partial_state: bool,
-        pub missing: Vec<String>,
-    }
-}
-
-rpc_type! {
-    /// Consolidates gateway `PickerItem`.
-    pub struct PickerItem {
-        pub key: String,
-        pub label: String,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub description: Option<String>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        pub badge: Option<String>,
-    }
-}
-
-rpc_type! {
-    /// Consolidates gateway `PickerResponse`.
-    pub struct PickerResponse {
-        pub section: String,
-        pub items: Vec<PickerItem>,
-        pub help: String,
-    }
-}
-
-rpc_type! {
     pub struct SectionSelectParams {
         pub section: String,
         pub key: String,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pub alias: Option<String>,
-    }
-}
-
-rpc_type! {
-    /// Consolidates gateway `SelectItemResponse`.
-    pub struct SelectItemResponse {
-        pub fields_prefix: String,
-        pub created: bool,
     }
 }
 

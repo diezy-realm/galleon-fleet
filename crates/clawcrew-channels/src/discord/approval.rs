@@ -2,8 +2,8 @@
 
 use std::collections::HashMap;
 
-use tokio::sync::oneshot;
 use clawcrew_api::channel::ChannelApprovalResponse;
+use tokio::sync::oneshot;
 
 use super::components::{ButtonStyle, DiscordActionRow, action_row, button};
 use super::custom_id::CustomId;
@@ -88,7 +88,7 @@ impl ApprovalDecision {
             ApprovalDecision::AllowAlways => ButtonStyle::Secondary,
             ApprovalDecision::Deny => ButtonStyle::Danger,
         };
-        (clawcrew_runtime::i18n::get_required_cli_string(key), style)
+        (galleon_i18n::get_required_cli_string(key), style)
     }
 }
 

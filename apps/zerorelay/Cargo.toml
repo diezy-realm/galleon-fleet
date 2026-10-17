@@ -1,5 +1,6 @@
 [package]
 name = "zerorelay"
+rust-version.workspace = true
 version.workspace = true
 homepage.workspace = true
 edition.workspace = true

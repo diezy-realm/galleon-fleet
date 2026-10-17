@@ -17,6 +17,8 @@ fn to_log_config(config: &clawcrew_config::schema::ObservabilityConfig) -> clawc
         log_persistence_retention_max_age_days: config.log_persistence_retention_max_age_days,
         log_persistence_max_entries_per_segment: config.log_persistence_max_entries_per_segment,
         log_tool_io: config.log_tool_io.as_wire().to_string(),
+        log_technical_tool_io: config.log_technical_tool_io.as_wire().to_string(),
+        log_conversational_tool_io: config.log_conversational_tool_io.as_wire().to_string(),
         log_tool_io_truncate_bytes: config.log_tool_io_truncate_bytes,
         log_tool_io_denylist: config.log_tool_io_denylist.clone(),
         log_llm_request_payload: config.log_llm_request_payload.as_wire().to_string(),

@@ -31,7 +31,7 @@ env:
 
 jobs:
   build:
-    name: clawcrew-desktop (${{ matrix.os }})
+    name: desktop-check (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     strategy:
@@ -63,11 +63,20 @@ jobs:
           cache-on-failure: true
           save-if: ${{ github.ref == 'refs/heads/master' }}
 
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.8
+
+      - name: Configure sccache
+        shell: bash
+        run: |
+          echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+
       # The desktop app points its WebView at the running gateway; a placeholder
       # dist keeps the workspace `embedded-web` path happy during compile.
       - name: Ensure web/dist placeholder exists
         shell: bash
         run: mkdir -p web/dist && touch web/dist/.gitkeep
 
-      - name: Clippy (clawcrew-desktop)
-        run: cargo clippy -p clawcrew-desktop --all-targets -- -D warnings
+      - name: Clippy (desktop)
+        run: cargo clippy --manifest-path apps/tauri/Cargo.toml --all-targets -- -D warnings

@@ -17,7 +17,7 @@ use std::io::{BufRead, BufReader};
 
 const MAX_AUDIT_PAGE: usize = 200;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct AuditQuery {
     pub limit: Option<usize>,
 }
@@ -132,7 +132,7 @@ pub async fn handle_api_audit(
         .collect();
     entries.reverse();
 
-    let verified = clawcrew_runtime::security::audit::verify_chain(&log_path).is_ok();
+    let verified = clawcrew_config::audit::verify_chain(&log_path).is_ok();
 
     Json(serde_json::json!({
         "enabled": true,

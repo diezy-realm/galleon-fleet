@@ -5,8 +5,8 @@
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
-use parking_lot::RwLock;
 use clawcrew_api::observability_traits::{Observer, ObserverEvent, TurnTokenUsage};
+use parking_lot::RwLock;
 
 use crate::event::LogEvent;
 
@@ -235,9 +235,9 @@ fn project(event: &LogEvent) -> Option<ObserverEvent> {
 mod tests {
     use super::*;
     use crate::event::{EventCategory, EventOutcome, Severity};
+    use clawcrew_api::observability_traits::ObserverMetric;
     use std::any::Any;
     use std::sync::Mutex;
-    use clawcrew_api::observability_traits::ObserverMetric;
 
     #[derive(Default)]
     struct CapturingObserver {

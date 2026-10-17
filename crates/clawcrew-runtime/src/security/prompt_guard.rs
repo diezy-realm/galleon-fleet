@@ -48,6 +48,10 @@ pub struct PromptGuard {
     sensitivity: f64,
 }
 
+fn compile_regex_list(patterns: &[&str]) -> Vec<Regex> {
+    patterns.iter().filter_map(|p| Regex::new(p).ok()).collect()
+}
+
 impl Default for PromptGuard {
     fn default() -> Self {
         Self::new()
@@ -125,17 +129,14 @@ impl PromptGuard {
     fn check_system_override(&self, content: &str, patterns: &mut Vec<String>) -> f64 {
         static SYSTEM_OVERRIDE_PATTERNS: OnceLock<Vec<Regex>> = OnceLock::new();
         let regexes = SYSTEM_OVERRIDE_PATTERNS.get_or_init(|| {
-            vec![
-                Regex::new(
-                    r"(?i)ignore\s+((all\s+)?(previous|above|prior)|all)\s+(instructions?|prompts?|commands?)",
-                )
-                .unwrap(),
-                Regex::new(r"(?i)disregard\s+(previous|all|above|prior)").unwrap(),
-                Regex::new(r"(?i)forget\s+(previous|all|everything|above)").unwrap(),
-                Regex::new(r"(?i)new\s+(instructions?|rules?|system\s+prompt)").unwrap(),
-                Regex::new(r"(?i)override\s+(system|instructions?|rules?)").unwrap(),
-                Regex::new(r"(?i)reset\s+(instructions?|context|system)").unwrap(),
-            ]
+            compile_regex_list(&[
+                r"(?i)ignore\s+((all\s+)?(previous|above|prior)|all)\s+(instructions?|prompts?|commands?)",
+                r"(?i)disregard\s+(previous|all|above|prior)",
+                r"(?i)forget\s+(previous|all|everything|above)",
+                r"(?i)new\s+(instructions?|rules?|system\s+prompt)",
+                r"(?i)override\s+(system|instructions?|rules?)",
+                r"(?i)reset\s+(instructions?|context|system)",
+            ])
         });
 
         for regex in regexes {
@@ -151,16 +152,12 @@ impl PromptGuard {
     fn check_role_confusion(&self, content: &str, patterns: &mut Vec<String>) -> f64 {
         static ROLE_CONFUSION_PATTERNS: OnceLock<Vec<Regex>> = OnceLock::new();
         let regexes = ROLE_CONFUSION_PATTERNS.get_or_init(|| {
-            vec![
-                Regex::new(
-                    r"(?i)(you\s+are\s+now|act\s+as|pretend\s+(you're|to\s+be))\s+(a|an|the)?",
-                )
-                .unwrap(),
-                Regex::new(r"(?i)(your\s+new\s+role|you\s+have\s+become|you\s+must\s+be)").unwrap(),
-                Regex::new(r"(?i)from\s+now\s+on\s+(you\s+are|act\s+as|pretend)").unwrap(),
-                Regex::new(r"(?i)(assistant|AI|system|model):\s*\[?(system|override|new\s+role)")
-                    .unwrap(),
-            ]
+            compile_regex_list(&[
+                r"(?i)(you\s+are\s+now|act\s+as|pretend\s+(you're|to\s+be))\s+(a|an|the)?",
+                r"(?i)(your\s+new\s+role|you\s+have\s+become|you\s+must\s+be)",
+                r"(?i)from\s+now\s+on\s+(you\s+are|act\s+as|pretend)",
+                r"(?i)(assistant|AI|system|model):\s*\[?(system|override|new\s+role)",
+            ])
         });
 
         for regex in regexes {
@@ -196,12 +193,12 @@ impl PromptGuard {
     fn check_secret_extraction(&self, content: &str, patterns: &mut Vec<String>) -> f64 {
         static SECRET_PATTERNS: OnceLock<Vec<Regex>> = OnceLock::new();
         let regexes = SECRET_PATTERNS.get_or_init(|| {
-            vec![
-                Regex::new(r"(?i)(list|show|print|display|reveal|tell\s+me)\s+(all\s+)?(secrets?|credentials?|passwords?|tokens?|keys?)").unwrap(),
-                Regex::new(r"(?i)(what|show)\s+(are|is|me)\s+(all\s+)?(your|the)\s+(api\s+)?(keys?|secrets?|credentials?)").unwrap(),
-                Regex::new(r"(?i)contents?\s+of\s+(vault|secrets?|credentials?)").unwrap(),
-                Regex::new(r"(?i)(dump|export)\s+(vault|secrets?|credentials?)").unwrap(),
-            ]
+            compile_regex_list(&[
+                r"(?i)(list|show|print|display|reveal|tell\s+me)\s+(all\s+)?(secrets?|credentials?|passwords?|tokens?|keys?)",
+                r"(?i)(what|show)\s+(are|is|me)\s+(all\s+)?(your|the)\s+(api\s+)?(keys?|secrets?|credentials?)",
+                r"(?i)contents?\s+of\s+(vault|secrets?|credentials?)",
+                r"(?i)(dump|export)\s+(vault|secrets?|credentials?)",
+            ])
         });
 
         for regex in regexes {
@@ -254,19 +251,19 @@ impl PromptGuard {
     fn check_jailbreak_attempts(&self, content: &str, patterns: &mut Vec<String>) -> f64 {
         static JAILBREAK_PATTERNS: OnceLock<Vec<Regex>> = OnceLock::new();
         let regexes = JAILBREAK_PATTERNS.get_or_init(|| {
-            vec![
+            compile_regex_list(&[
                 // DAN (Do Anything Now) and variants
-                Regex::new(r"(?i)\bDAN\b.*mode").unwrap(),
-                Regex::new(r"(?i)do\s+anything\s+now").unwrap(),
+                r"(?i)\bDAN\b.*mode",
+                r"(?i)do\s+anything\s+now",
                 // Developer/debug mode
-                Regex::new(r"(?i)enter\s+(developer|debug|admin)\s+mode").unwrap(),
-                Regex::new(r"(?i)enable\s+(developer|debug|admin)\s+mode").unwrap(),
+                r"(?i)enter\s+(developer|debug|admin)\s+mode",
+                r"(?i)enable\s+(developer|debug|admin)\s+mode",
                 // Hypothetical/fictional framing
-                Regex::new(r"(?i)in\s+this\s+hypothetical").unwrap(),
-                Regex::new(r"(?i)imagine\s+you\s+(have\s+no|don't\s+have)\s+(restrictions?|rules?|limits?)").unwrap(),
+                r"(?i)in\s+this\s+hypothetical",
+                r"(?i)imagine\s+you\s+(have\s+no|don't\s+have)\s+(restrictions?|rules?|limits?)",
                 // Base64/encoding tricks
-                Regex::new(r"(?i)decode\s+(this|the\s+following)\s+(base64|hex|rot13)").unwrap(),
-            ]
+                r"(?i)decode\s+(this|the\s+following)\s+(base64|hex|rot13)",
+            ])
         });
 
         for regex in regexes {

@@ -2,13 +2,15 @@ package tool
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/diezy-labs/claw-crew/engine/src/run"
+	"github.com/diezy-realm/galleon-fleet/engine/src/run"
 )
 
 func TestSandboxPathValidation(t *testing.T) {
@@ -80,6 +82,41 @@ func TestApprovalGateApproveAndDeny(t *testing.T) {
 	}
 }
 
+type mockToolGateway struct {
+	files map[string]string
+}
+
+func (m *mockToolGateway) ExecuteNativeTool(ctx context.Context, toolName, argumentsJSON string, workspacePath ...string) (string, error) {
+	var input map[string]any
+	_ = json.Unmarshal([]byte(argumentsJSON), &input)
+	switch toolName {
+	case "write_file", "workspace.write_file":
+		path, _ := input["path"].(string)
+		content, _ := input["content"].(string)
+		m.files[path] = content
+		return `{"success":true,"output":"Successfully wrote 20 bytes to hello.txt"}`, nil
+	case "read_file", "workspace.read_file":
+		path, _ := input["path"].(string)
+		content, ok := m.files[path]
+		if !ok {
+			return `{"success":false,"error":"file not found"}`, nil
+		}
+		return fmt.Sprintf(`{"success":true,"output":%q}`, content), nil
+	case "edit_file", "workspace.edit_file":
+		path, _ := input["path"].(string)
+		target, _ := input["target"].(string)
+		replacement, _ := input["replacement"].(string)
+		content, ok := m.files[path]
+		if !ok {
+			return `{"success":false,"error":"file not found"}`, nil
+		}
+		m.files[path] = strings.Replace(content, target, replacement, 1)
+		return `{"success":true,"output":"Successfully updated hello.txt"}`, nil
+	default:
+		return `{"success":false,"error":"unsupported tool"}`, nil
+	}
+}
+
 func TestBuiltinWriteAndReadFile(t *testing.T) {
 	tempDir, err := os.MkdirTemp("", "tools_test_*")
 	if err != nil {
@@ -90,27 +127,39 @@ func TestBuiltinWriteAndReadFile(t *testing.T) {
 	registry := NewRegistry()
 	ctx := context.Background()
 
-	// 1. Write file
 	writer, err := registry.Get("write_file")
 	if err != nil {
 		t.Fatalf("failed to get write_file: %v", err)
 	}
 
-	writeOut, err := writer.Execute(ctx, `{"path":"hello.txt","content":"ClawCrew Phase 2"}`, tempDir)
+	// 1. Fail-closed: execution without gateway must be rejected
+	_, err = writer.Execute(ctx, `{"path":"hello.txt","content":"ClawCrew Phase 2"}`, tempDir)
+	if err == nil {
+		t.Fatalf("expected fail-closed error without gateway, got nil")
+	}
+
+	// 2. Execution with wired gateway must succeed
+	gw := &mockToolGateway{files: make(map[string]string)}
+	execCtx := &ExecutionContext{
+		ActorID: "agent_tester",
+		Gateway: gw,
+	}
+
+	writeOut, _, err := writer.ExecuteWithContext(ctx, execCtx, `{"path":"hello.txt","content":"ClawCrew Phase 2"}`)
 	if err != nil {
-		t.Fatalf("write_file error: %v", err)
+		t.Fatalf("write_file with gateway error: %v", err)
 	}
 	if !strings.Contains(writeOut, "Successfully wrote") {
 		t.Fatalf("unexpected write output: %s", writeOut)
 	}
 
-	// 2. Read file
+	// 3. Read file with gateway
 	reader, err := registry.Get("read_file")
 	if err != nil {
 		t.Fatalf("failed to get read_file: %v", err)
 	}
 
-	readOut, err := reader.Execute(ctx, `{"path":"hello.txt"}`, tempDir)
+	readOut, _, err := reader.ExecuteWithContext(ctx, execCtx, `{"path":"hello.txt"}`)
 	if err != nil {
 		t.Fatalf("read_file error: %v", err)
 	}
@@ -118,18 +167,18 @@ func TestBuiltinWriteAndReadFile(t *testing.T) {
 		t.Fatalf("expected 'ClawCrew Phase 2', got '%s'", readOut)
 	}
 
-	// 3. Edit file
+	// 4. Edit file with gateway
 	editor, err := registry.Get("edit_file")
 	if err != nil {
 		t.Fatalf("failed to get edit_file: %v", err)
 	}
 
-	_, err = editor.Execute(ctx, `{"path":"hello.txt","target":"Phase 2","replacement":"Phase 2 Rocks"}`, tempDir)
+	_, _, err = editor.ExecuteWithContext(ctx, execCtx, `{"path":"hello.txt","target":"Phase 2","replacement":"Phase 2 Rocks"}`)
 	if err != nil {
 		t.Fatalf("edit_file error: %v", err)
 	}
 
-	readOut2, _ := reader.Execute(ctx, `{"path":"hello.txt"}`, tempDir)
+	readOut2, _, _ := reader.ExecuteWithContext(ctx, execCtx, `{"path":"hello.txt"}`)
 	if readOut2 != "ClawCrew Phase 2 Rocks" {
 		t.Fatalf("expected 'ClawCrew Phase 2 Rocks', got '%s'", readOut2)
 	}

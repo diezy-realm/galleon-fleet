@@ -23,6 +23,7 @@
 use anyhow::{Context, Result};
 use chacha20poly1305::aead::{Aead, KeyInit, OsRng};
 use chacha20poly1305::{AeadCore, ChaCha20Poly1305, Key, Nonce};
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::fs;
 use std::io::Write;
@@ -392,6 +393,83 @@ impl SecretStore {
     /// Check if a value uses the secure `enc2:` format.
     pub fn is_secure_encrypted(value: &str) -> bool {
         value.starts_with("enc2:")
+    }
+
+    /// Rotate an encrypted secret from this store's key to `new_store`'s key.
+    ///
+    /// Decrypts the secret using this store (supporting `enc2:`, legacy `enc:`,
+    /// or plaintext), and re-encrypts it using `new_store`.
+    pub fn rotate_secret(&self, encrypted_value: &str, new_store: &SecretStore) -> Result<String> {
+        let plaintext = self.decrypt(encrypted_value)?;
+        new_store.encrypt(&plaintext)
+    }
+
+    /// Rotate all secrets in a map to `new_store`.
+    pub fn rotate_vault(
+        &self,
+        secrets: &HashMap<String, String>,
+        new_store: &SecretStore,
+    ) -> Result<HashMap<String, String>> {
+        let mut rotated = HashMap::with_capacity(secrets.len());
+        for (k, v) in secrets {
+            rotated.insert(k.clone(), self.rotate_secret(v, new_store)?);
+        }
+        Ok(rotated)
+    }
+
+    /// Export a map of secrets as a versioned, encrypted vault blob.
+    ///
+    /// Values in `secrets` can be plaintext or already encrypted with this store.
+    /// Each secret is resolved to plaintext temporarily in memory, serialized to JSON,
+    /// and encrypted as a ChaCha20-Poly1305 ciphertext prefixed with `VAULT_V1:`.
+    ///
+    /// Returns an empty string if `secrets` is empty.
+    /// Fails if encryption is disabled on this store.
+    pub fn export_encrypted_vault(&self, secrets: &HashMap<String, String>) -> Result<String> {
+        if !self.enabled {
+            anyhow::bail!("Cannot export encrypted vault: SecretStore encryption is disabled");
+        }
+        if secrets.is_empty() {
+            return Ok(String::new());
+        }
+
+        let mut plaintext_map = HashMap::with_capacity(secrets.len());
+        for (k, v) in secrets {
+            let plain = self.decrypt(v)?;
+            plaintext_map.insert(k.clone(), plain);
+        }
+
+        let serialized = serde_json::to_string(&plaintext_map)
+            .context("Failed to serialize vault secrets to JSON")?;
+        let encrypted = self.encrypt(&serialized)?;
+        Ok(format!("VAULT_V1:{encrypted}"))
+    }
+
+    /// Import a previously exported encrypted vault blob, decrypting and validating format.
+    ///
+    /// Returns an empty map if `blob` is empty.
+    /// Fails with an informative error if the format is invalid, header is missing,
+    /// or decryption fails (wrong key or corrupted ciphertext).
+    pub fn import_encrypted_vault(&self, blob: &str) -> Result<HashMap<String, String>> {
+        let trimmed = blob.trim();
+        if trimmed.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let payload = trimmed
+            .strip_prefix("VAULT_V1:")
+            .context("Invalid encrypted vault format: missing 'VAULT_V1:' header")?;
+
+        let decrypted_json = if payload.starts_with("enc2:") || payload.starts_with("enc:") {
+            self.decrypt(payload)?
+        } else {
+            self.decrypt_chacha20(payload)?
+        };
+
+        let secrets: HashMap<String, String> = serde_json::from_str(&decrypted_json)
+            .context("Failed to parse vault payload as JSON")?;
+
+        Ok(secrets)
     }
 }
 
@@ -2826,5 +2904,183 @@ exit 65
 
         let result = store.decrypt(tampered);
         assert!(result.is_err(), "Tampered frozen fixture must be rejected");
+    }
+
+    #[test]
+    fn rotate_secret_re_encrypts_under_new_key() {
+        let tmp1 = TempDir::new().unwrap();
+        let tmp2 = TempDir::new().unwrap();
+        let store1 = SecretStore::new(tmp1.path(), true);
+        let store2 = SecretStore::new(tmp2.path(), true);
+
+        let secret = "sensitive_api_token_12345";
+        let encrypted1 = store1.encrypt(secret).unwrap();
+        assert!(encrypted1.starts_with("enc2:"));
+
+        let rotated = store1.rotate_secret(&encrypted1, &store2).unwrap();
+        assert!(rotated.starts_with("enc2:"));
+        assert_ne!(encrypted1, rotated);
+
+        // Store 2 must decrypt successfully
+        let decrypted = store2.decrypt(&rotated).unwrap();
+        assert_eq!(decrypted, secret);
+
+        // Store 1 must fail to decrypt rotated value (different key)
+        assert!(store1.decrypt(&rotated).is_err());
+    }
+
+    #[test]
+    fn rotate_secret_legacy_xor_to_enc2() {
+        let tmp1 = TempDir::new().unwrap();
+        let tmp2 = TempDir::new().unwrap();
+        let store1 = SecretStore::new(tmp1.path(), true);
+        let store2 = SecretStore::new(tmp2.path(), true);
+
+        // Craft legacy XOR ciphertext using store1's key
+        let secret = "legacy_secret_value";
+        let legacy_cipher = store1.with_test_key(|key| {
+            let cipher_bytes = xor_cipher(secret.as_bytes(), key);
+            format!("enc:{}", hex_encode(&cipher_bytes))
+        });
+
+        let rotated = store1.rotate_secret(&legacy_cipher, &store2).unwrap();
+        assert!(rotated.starts_with("enc2:"));
+        assert_eq!(store2.decrypt(&rotated).unwrap(), secret);
+    }
+
+    #[test]
+    fn rotate_secret_tampered_fails() {
+        let tmp1 = TempDir::new().unwrap();
+        let tmp2 = TempDir::new().unwrap();
+        let store1 = SecretStore::new(tmp1.path(), true);
+        let store2 = SecretStore::new(tmp2.path(), true);
+
+        let tampered = "enc2:00112233445566778899aabbccddeeff001122334455";
+        assert!(store1.rotate_secret(tampered, &store2).is_err());
+    }
+
+    #[test]
+    fn rotate_vault_batch() {
+        let tmp1 = TempDir::new().unwrap();
+        let tmp2 = TempDir::new().unwrap();
+        let store1 = SecretStore::new(tmp1.path(), true);
+        let store2 = SecretStore::new(tmp2.path(), true);
+
+        let mut vault = HashMap::new();
+        vault.insert("key1".to_string(), store1.encrypt("val1").unwrap());
+        vault.insert("key2".to_string(), store1.encrypt("val2").unwrap());
+
+        let rotated_vault = store1.rotate_vault(&vault, &store2).unwrap();
+        assert_eq!(rotated_vault.len(), 2);
+        assert_eq!(store2.decrypt(rotated_vault.get("key1").unwrap()).unwrap(), "val1");
+        assert_eq!(store2.decrypt(rotated_vault.get("key2").unwrap()).unwrap(), "val2");
+    }
+
+    #[test]
+    fn export_encrypted_vault_empty_returns_empty() {
+        let tmp = TempDir::new().unwrap();
+        let store = SecretStore::new(tmp.path(), true);
+
+        let empty = HashMap::new();
+        let exported = store.export_encrypted_vault(&empty).unwrap();
+        assert_eq!(exported, "");
+
+        let imported = store.import_encrypted_vault(&exported).unwrap();
+        assert!(imported.is_empty());
+    }
+
+    #[test]
+    fn import_encrypted_vault_empty_returns_empty() {
+        let tmp = TempDir::new().unwrap();
+        let store = SecretStore::new(tmp.path(), true);
+
+        let imported = store.import_encrypted_vault("").unwrap();
+        assert!(imported.is_empty());
+
+        let imported_whitespace = store.import_encrypted_vault("   ").unwrap();
+        assert!(imported_whitespace.is_empty());
+    }
+
+    #[test]
+    fn export_encrypted_vault_single_secret() {
+        let tmp = TempDir::new().unwrap();
+        let store = SecretStore::new(tmp.path(), true);
+
+        let mut vault = HashMap::new();
+        vault.insert("api_key".to_string(), "sk-ant-test-123".to_string());
+
+        let blob = store.export_encrypted_vault(&vault).unwrap();
+        assert!(blob.starts_with("VAULT_V1:enc2:"));
+
+        let imported = store.import_encrypted_vault(&blob).unwrap();
+        assert_eq!(imported.len(), 1);
+        assert_eq!(imported.get("api_key").unwrap(), "sk-ant-test-123");
+    }
+
+    #[test]
+    fn export_encrypted_vault_multiple_roundtrip() {
+        let tmp = TempDir::new().unwrap();
+        let store = SecretStore::new(tmp.path(), true);
+
+        let mut vault = HashMap::new();
+        vault.insert("openai_key".to_string(), "sk-openai-xyz".to_string());
+        vault.insert("claude_key".to_string(), store.encrypt("sk-claude-abc").unwrap());
+        vault.insert("gemini_key".to_string(), "AIzaSySecretToken".to_string());
+
+        let blob = store.export_encrypted_vault(&vault).unwrap();
+        assert!(blob.starts_with("VAULT_V1:"));
+
+        let imported = store.import_encrypted_vault(&blob).unwrap();
+        assert_eq!(imported.len(), 3);
+        assert_eq!(imported.get("openai_key").unwrap(), "sk-openai-xyz");
+        assert_eq!(imported.get("claude_key").unwrap(), "sk-claude-abc");
+        assert_eq!(imported.get("gemini_key").unwrap(), "AIzaSySecretToken");
+    }
+
+    #[test]
+    fn export_encrypted_vault_rejects_unencrypted() {
+        let tmp = TempDir::new().unwrap();
+        let store = SecretStore::new(tmp.path(), false); // encryption disabled
+
+        let mut vault = HashMap::new();
+        vault.insert("key".to_string(), "value".to_string());
+
+        let result = store.export_encrypted_vault(&vault);
+        assert!(result.is_err(), "Exporting from disabled store must fail");
+    }
+
+    #[test]
+    fn import_encrypted_vault_missing_header_fails() {
+        let tmp = TempDir::new().unwrap();
+        let store = SecretStore::new(tmp.path(), true);
+
+        let invalid_blob = "INVALID_HEADER:enc2:00112233";
+        let result = store.import_encrypted_vault(invalid_blob);
+        assert!(result.is_err(), "Missing VAULT_V1: header must fail");
+    }
+
+    #[test]
+    fn import_encrypted_vault_wrong_key_fails() {
+        let tmp1 = TempDir::new().unwrap();
+        let tmp2 = TempDir::new().unwrap();
+        let store1 = SecretStore::new(tmp1.path(), true);
+        let store2 = SecretStore::new(tmp2.path(), true);
+
+        let mut vault = HashMap::new();
+        vault.insert("secret".to_string(), "pass123".to_string());
+
+        let blob = store1.export_encrypted_vault(&vault).unwrap();
+        let result = store2.import_encrypted_vault(&blob);
+        assert!(result.is_err(), "Importing with wrong key must fail");
+    }
+
+    #[test]
+    fn import_encrypted_vault_corrupted_payload_fails() {
+        let tmp = TempDir::new().unwrap();
+        let store = SecretStore::new(tmp.path(), true);
+
+        let corrupt_blob = "VAULT_V1:enc2:deadbeefcafebabe";
+        let result = store.import_encrypted_vault(corrupt_blob);
+        assert!(result.is_err(), "Corrupted ciphertext must fail");
     }
 }

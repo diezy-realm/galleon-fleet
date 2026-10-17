@@ -1,5 +1,6 @@
 [package]
 name = "clawcrew-runtime"
+rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,10 +12,11 @@ publish = true
 [dependencies]
 clawcrew-api.workspace = true
 clawcrew-spawn.workspace = true
-clawcrew-infra.workspace = true
+clawcrew-infra = { workspace = true, features = ["schema-export"] }
 clawcrew-config.workspace = true
 # RF-B: i18n body moved to galleon-i18n; runtime re-exports it as `i18n`.
 galleon-i18n.workspace = true
+galleon-security-scrub.workspace = true
 clawcrew-tls.workspace = true
 clawcrew-relay-proto.workspace = true
 clawcrew-commands.workspace = true
@@ -123,7 +125,7 @@ plugins-wasm = ["dep:clawcrew-plugins", "clawcrew-plugins/plugins-wasmtime"]
 # against a real component (`WasmTool::from_wasm` refuses to register a tool it
 # cannot load, so a runtime-only backend has no plugin tool to execute).
 plugins-wasm-cranelift = ["plugins-wasm", "clawcrew-plugins/plugins-wasm-cranelift"]
-webauthn = []
+webauthn = ["clawcrew-config/webauthn"]
 sandbox-bubblewrap = []
 # Exposes test-only helpers (including `ScopedToolRegistry::from_raw_for_test`
 # and the deterministic Agent clock seam) to OTHER crates' test builds (e.g.

@@ -41,6 +41,7 @@ pub mod scanned;
 pub mod snapshot;
 pub mod sqlite;
 mod sqlite_permissions;
+pub mod strategy;
 pub mod threat;
 pub mod traits;
 pub mod vector;
@@ -58,6 +59,7 @@ pub use embeddings::EmbeddingIdentity;
 pub use lucid::LucidMemory;
 pub use markdown::MarkdownMemory;
 pub use none::NoneMemory;
+pub use strategy::DefaultMemoryStrategy;
 #[allow(unused_imports)]
 pub use policy::PolicyEnforcer;
 #[cfg(feature = "memory-postgres")]
@@ -73,8 +75,8 @@ pub use sqlite::SqliteMemory;
 pub use traits::Memory;
 #[allow(unused_imports)]
 pub use traits::{
-    ExportFilter, MemoryCategory, MemoryEntry, ProceduralMessage, is_recent_recall_query,
-    normalize_recent_recall_query,
+    EraseIdentityReport, ExportFilter, MemoryCategory, MemoryEntry, ProceduralMessage,
+    erase_identity, is_recent_recall_query, normalize_recent_recall_query,
 };
 
 use anyhow::Context;
@@ -85,6 +87,23 @@ use clawcrew_config::schema::{
     ActiveStorage, Config, EmbeddingRouteConfig, MemoryConfig, MemoryPolicyConfig,
     PostgresStorageConfig,
 };
+
+/// Erase all memory data for a given agent across this backend (BL-30).
+pub async fn forget_all_for_agent(
+    memory: &Arc<dyn Memory>,
+    agent_id: &str,
+) -> anyhow::Result<usize> {
+    let entries = memory.list(None, None).await?;
+    let mut deleted = 0;
+    for entry in entries {
+        if entry.agent_id.as_deref() == Some(agent_id)
+            && memory.forget_for_agent(&entry.key, agent_id).await?
+        {
+            deleted += 1;
+        }
+    }
+    Ok(deleted)
+}
 
 #[cfg(feature = "memory-postgres")]
 fn build_postgres_memory(

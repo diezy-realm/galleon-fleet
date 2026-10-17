@@ -1,5 +1,6 @@
 [package]
 name = "clawcrew-api"
+rust-version.workspace = true
 version.workspace = true
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -25,6 +26,7 @@ tracing = { version = "0.1", default-features = false, features = ["std"] }
 [features]
 default = ["schema-export"]
 schema-export = ["dep:schemars"]
+plugins-wasm = []
 
 [dev-dependencies]
 parking_lot = "0.12"

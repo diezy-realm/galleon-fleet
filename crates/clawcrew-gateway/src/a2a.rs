@@ -14,7 +14,6 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use clawcrew_config::schema::Config;
-use clawcrew_runtime::skills::SkillsService;
 
 use crate::{AppState, api::require_auth, run_gateway_chat_with_tools};
 
@@ -213,7 +212,7 @@ fn agent_description(config: &Config, alias: &str) -> String {
 fn identity_description(config: &Config, alias: &str) -> Option<String> {
     let agent = config.agents.get(alias)?;
     let workspace_dir = config.agent_workspace_dir(alias);
-    let aieos = clawcrew_runtime::identity::load_aieos_identity(&agent.identity, &workspace_dir)
+    let aieos = clawcrew_config::identity::load_aieos_identity(&agent.identity, &workspace_dir)
         .ok()
         .flatten()?;
     let identity = aieos.identity?;
@@ -226,7 +225,7 @@ fn identity_description(config: &Config, alias: &str) -> Option<String> {
 }
 
 /// Build a name line from identity `names`, preferring the fullest form.
-fn identity_name_line(names: clawcrew_runtime::identity::Names) -> Option<String> {
+fn identity_name_line(names: clawcrew_config::identity::Names) -> Option<String> {
     if let Some(full) = names.full.filter(|s| !s.trim().is_empty()) {
         return Some(full);
     }
@@ -246,6 +245,35 @@ fn identity_name_line(names: clawcrew_runtime::identity::Names) -> Option<String
 /// Resolve the alias's exposed skills: the resolved bundle skill set, after the
 /// owning bundle's include/exclude filter, narrowed by `exposed_skills`. An
 /// empty filter advertises no skills. Skill ids that do not resolve to a real,
+fn parse_skill_meta(content: &str) -> Option<(String, String, Option<String>)> {
+    let normalized = content.replace("\r\n", "\n");
+    let rest = normalized.strip_prefix("---\n")?;
+    let end_idx = rest.find("\n---\n").or_else(|| rest.find("\n---"))?;
+    let fm = &rest[..end_idx];
+
+    let mut name = String::new();
+    let mut description = String::new();
+    let mut category = None;
+
+    for line in fm.lines() {
+        let trimmed = line.trim();
+        if let Some((k, v)) = trimmed.split_once(':') {
+            let key = k.trim();
+            let val = v.trim().trim_matches('"').trim_matches('\'');
+            match key {
+                "name" => name = val.to_string(),
+                "description" => description = val.to_string(),
+                "category" => category = Some(val.to_string()),
+                _ => {}
+            }
+        }
+    }
+    if name.is_empty() {
+        return None;
+    }
+    Some((name, description, category))
+}
+
 /// admitted skill are dropped (bundles are canonical).
 fn exposed_skills(config: &Config, alias: &str) -> Vec<AgentSkill> {
     let agent = match config.agents.get(alias) {
@@ -257,32 +285,54 @@ fn exposed_skills(config: &Config, alias: &str) -> Vec<AgentSkill> {
     }
 
     let install_root = config.install_root_dir();
-    let service = SkillsService::new(config, install_root);
-    let resolved = match service.list_skills(None) {
-        Ok(skills) => skills,
-        Err(_) => return Vec::new(),
-    };
+    let mut resolved = Vec::new();
+    for bundle in &agent.skill_bundles {
+        let Ok(bundle_dir) = clawcrew_config::skill_bundles::resolve_directory(config, &install_root, bundle) else {
+            continue;
+        };
+        let Ok(entries) = std::fs::read_dir(&bundle_dir) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_dir() {
+                continue;
+            }
+            let manifest_path = path.join("SKILL.md");
+            let Ok(content) = std::fs::read_to_string(&manifest_path) else {
+                continue;
+            };
+            if let Some((name, description, category)) = parse_skill_meta(&content) {
+                let dir_name = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("")
+                    .to_string();
+                resolved.push((bundle.clone(), dir_name, name, description, category));
+            }
+        }
+    }
 
     let mut out = Vec::new();
     for wanted in &agent.a2a.exposed_skills {
-        if let Some(summary) = resolved.iter().find(|s| {
-            s.r#ref.name() == wanted
-                && agent.skill_bundles.iter().any(|b| b == s.r#ref.bundle())
+        if let Some((bundle, dir_name, name, description, category)) = resolved.iter().find(|(b, dir_n, _, _, _)| {
+            dir_n == wanted
+                && agent.skill_bundles.iter().any(|ab| ab == b)
                 && config
                     .skill_bundles
-                    .get(s.r#ref.bundle())
-                    .is_some_and(|bundle| bundle.admits_skill(s.r#ref.name()))
+                    .get(b)
+                    .is_some_and(|b_cfg| b_cfg.admits_skill(dir_n))
         }) {
-            let mut tags = vec![summary.r#ref.bundle().to_string()];
-            if let Some(category) = &summary.frontmatter.category {
-                if !category.is_empty() {
-                    tags.push(category.clone());
+            let mut tags = vec![bundle.clone()];
+            if let Some(cat) = category {
+                if !cat.is_empty() {
+                    tags.push(cat.clone());
                 }
             }
             out.push(AgentSkill {
-                id: summary.r#ref.name().to_string(),
-                name: summary.frontmatter.name.clone(),
-                description: summary.frontmatter.description.clone(),
+                id: dir_name.clone(),
+                name: name.clone(),
+                description: description.clone(),
                 tags,
             });
         }

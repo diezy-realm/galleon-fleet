@@ -1,7 +1,11 @@
 /target
 /target-*/
+/bin/
 /engine/bin/
-apps/tauri-2/target/
+apps/tauri/target/
+# Retired legacy migration paths (ODR-01, PR-01, CO-08)
+web-2/
+apps/tauri-2/
 
 # Desktop installer build artifacts
 *.dmg
@@ -130,3 +134,4 @@ target/openapi.json
 .worktrees/
 .zero-to-5/
 graphify-out/
+node_modules

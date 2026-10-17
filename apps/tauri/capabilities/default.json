@@ -1,17 +1,8 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "IPC permissions for bundled content and the local gateway dashboard.",
-  "windows": [
-    "main",
-    "splash"
-  ],
-  "remote": {
-    "urls": [
-      "http://127.0.0.1:42617/*",
-      "http://localhost:42617/*"
-    ]
-  },
+  "description": "Default permissions for Galleon Fleet Desktop",
+  "windows": ["main"],
   "permissions": [
     "core:default"
   ]

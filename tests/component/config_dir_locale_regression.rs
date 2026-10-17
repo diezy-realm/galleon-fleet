@@ -12,8 +12,8 @@ use std::ffi::{OsStr, OsString};
 use std::path::Path;
 use std::process::Command;
 
-const JA_CLI_FTL: &str = include_str!("../../crates/clawcrew-runtime/locales/ja/cli.ftl");
-const ES_CLI_FTL: &str = include_str!("../../crates/clawcrew-runtime/locales/es/cli.ftl");
+const JA_CLI_FTL: &str = include_str!("../../crates/galleon-i18n/locales/ja/cli.ftl");
+const ES_CLI_FTL: &str = include_str!("../../crates/galleon-i18n/locales/es/cli.ftl");
 
 fn catalog_message<'a>(catalog: &'a str, key: &str) -> &'a str {
     catalog

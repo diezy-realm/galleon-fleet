@@ -1,0 +1,36 @@
+[package]
+name = "galleon-channel-mochat"
+rust-version.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Mochat customer service channel feature-crate (RF-B1 split; HTTP polling & message dispatch ported from clawcrew-channels)."
+repository.workspace = true
+homepage.workspace = true
+publish = true
+
+[dependencies]
+galleon-channel-core.workspace = true
+clawcrew-api.workspace = true
+clawcrew-config = { workspace = true, default-features = false }
+clawcrew-log.workspace = true
+async-trait = "0.1"
+anyhow = "1.0"
+reqwest = { version = "0.12", default-features = false, features = [
+  "__rustls-ring",
+  "json",
+  "rustls-tls-webpki-roots-no-provider",
+] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+tokio = { version = "1.50", default-features = false, features = ["sync", "time"] }
+uuid = { version = "1.22", default-features = false, features = ["std", "v4"] }
+
+[dev-dependencies]
+tokio = { version = "1.50", default-features = false, features = [
+  "macros",
+  "rt-multi-thread",
+  "sync",
+] }
+
+[features]
+default = []

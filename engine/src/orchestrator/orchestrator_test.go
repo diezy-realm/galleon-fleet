@@ -4,9 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/diezy-labs/claw-crew/engine/src/fleet"
-	"github.com/diezy-labs/claw-crew/engine/src/llm"
-	"github.com/diezy-labs/claw-crew/engine/src/orchestrator"
+	"github.com/diezy-realm/galleon-fleet/engine/src/fleet"
+	"github.com/diezy-realm/galleon-fleet/engine/src/orchestrator"
 )
 
 // A simple mock for fleet service
@@ -19,11 +18,11 @@ func (m *mockFleet) GetFleet(ctx context.Context, id string) (*fleet.Fleet, erro
 }
 
 func TestQuartermasterObjective(t *testing.T) {
-	mockLLM := llm.NewMockProvider("test-model")
-	mockLLM.SetResponses([]string{"Here is a drafted Squad for your objective."})
+	gw, cleanup := startMockGateway(t, "Here is a drafted Squad for your objective.")
+	defer cleanup()
 	fleetSvc := &mockFleet{}
-	
-	service := orchestrator.NewService(mockLLM, fleetSvc)
+
+	service := orchestrator.NewService(gw, fleetSvc)
 	
 	req := orchestrator.ObjectiveRequest{
 		FleetID:   "flt_123",

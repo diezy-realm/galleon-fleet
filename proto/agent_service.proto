@@ -26,6 +26,30 @@ service SystemGateway {
     
     // ExecuteTask route for external task execution (engine -> executor)
     rpc ExecuteTask(TaskExecutionRequest) returns (TaskExecutionResponse);
+    
+    // Executes an LLM generation turn with vendor streaming (ADR 0001: Rust LLM SSOT)
+    rpc ExecuteTurn(ExecuteTurnRequest) returns (stream TurnToken);
+    
+    // Stores a learned rule/correction in persistent memory (BL-01)
+    rpc StoreLearnedRule(StoreLearnedRuleRequest) returns (StoreLearnedRuleResponse);
+    
+    // Retrieves learned rules filtered by scope (BL-01)
+    rpc RetrieveLearnedRules(RetrieveLearnedRulesRequest) returns (RetrieveLearnedRulesResponse);
+
+    // Synchronizes a paired device to Rust persistent SQLite DeviceRegistry (BG-C2 / T-08)
+    rpc SyncPairedDevice(SyncPairedDeviceRequest) returns (SyncPairedDeviceResponse);
+
+    // Lists all paired devices from Rust persistent SQLite DeviceRegistry (BG-C2 / T-08)
+    rpc ListPairedDevices(ListPairedDevicesRequest) returns (ListPairedDevicesResponse);
+
+    // Revokes a paired device from Rust persistent SQLite DeviceRegistry (BG-C2 / T-08)
+    rpc RevokePairedDevice(RevokePairedDeviceRequest) returns (RevokePairedDeviceResponse);
+
+    // Returns the canonical SSOT catalog of native tools and their argument schemas (G-29 / T3-26)
+    rpc GetNativeToolCatalog(GetNativeToolCatalogRequest) returns (GetNativeToolCatalogResponse);
+
+    // Returns real OS-level system metrics (CPU, RAM, process info) from the host (G-22 / T3-25)
+    rpc GetSystemMetrics(SystemMetricsRequest) returns (SystemMetricsResponse);
 }
 
 // ======================================
@@ -120,3 +144,200 @@ message TaskExecutionResponse {
     string output = 2;
     string error = 3;
 }
+
+// LLM Execution turn messages (ADR 0001: Rust LLM SSOT)
+message ExecuteTurnRequest {
+    string session_id = 1;
+    string model = 2;
+    string system_prompt = 3;
+    repeated TurnChatMessage messages = 4;
+    repeated TurnToolDefinition tools = 5;
+    optional float temperature = 6;
+    optional int32 max_tokens = 7;
+}
+
+message TurnChatMessage {
+    string role = 1; // "system", "user", "assistant", "tool"
+    string content = 2;
+    optional string tool_call_id = 3;
+    optional string name = 4;
+}
+
+message TurnToolDefinition {
+    string name = 1;
+    string description = 2;
+    string parameters_json = 3;
+}
+
+message TurnToken {
+    oneof event {
+        TokenChunk token = 1;
+        TurnToolCall tool_call = 2;
+        TurnComplete complete = 3;
+        TurnError error = 4;
+    }
+}
+
+message TokenChunk {
+    string delta = 1;
+    bool is_thought = 2;
+}
+
+message TurnToolCall {
+    string id = 1;
+    string name = 2;
+    string arguments_json = 3;
+}
+
+message TurnComplete {
+    string finish_reason = 1; // "stop", "tool_calls", "length"
+    int32 prompt_tokens = 2;
+    int32 completion_tokens = 3;
+    int32 total_tokens = 4;
+    optional LoopDetectorStats loop_detector_stats = 5;
+}
+
+message LoopDetectorStats {
+    int32 total_calls = 1;
+    int32 exact_repeat_triggers = 2;
+    int32 ping_pong_triggers = 3;
+    int32 no_progress_triggers = 4;
+    int32 state = 5; // 0 = nominal, 1 = warning, 2 = block, 3 = tripped
+}
+
+message TurnError {
+    string error_code = 1;
+    string message = 2;
+}
+
+// ======================================
+// Learned Rules (BL-01)
+// ======================================
+
+message StoreLearnedRuleRequest {
+    string rule = 1;              // The learned rule/correction
+    map<string, string> scope = 2; // Scope (fleet, ship, squad, crew, run)
+    bool reversible = 3;          // Whether this can be reverted
+}
+
+message StoreLearnedRuleResponse {
+    string id = 1;                // Rule ID
+    bool success = 2;
+    string error = 3;
+}
+
+message RetrieveLearnedRulesRequest {
+    string scope_key = 1;         // Optional filter by scope key (e.g., "fleet")
+    string scope_value = 2;       // Optional filter by scope value
+}
+
+message RetrieveLearnedRulesResponse {
+    repeated LearnedRule rules = 1;
+}
+
+message LearnedRule {
+    string id = 1;
+    string rule = 2;
+    map<string, string> scope = 3;
+    bool reversible = 4;
+    string created_at = 5;
+    bool approved = 6;
+    bool reverted = 7;
+}
+
+// ======================================
+// Device Registry Sync (BG-C2 / T-08)
+// ======================================
+
+message SyncPairedDeviceRequest {
+    string device_id = 1;
+    string device_name = 2;
+    string platform = 3;
+    string token_hash = 4;
+}
+
+message SyncPairedDeviceResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+message ListPairedDevicesRequest {}
+
+message DeviceRecord {
+    string id = 1;
+    string name = 2;
+    string device_type = 3;
+    string paired_at = 4;
+    string last_seen = 5;
+    string ip_address = 6;
+}
+
+message ListPairedDevicesResponse {
+    repeated DeviceRecord devices = 1;
+}
+
+message RevokePairedDeviceRequest {
+    string device_id = 1;
+}
+
+message RevokePairedDeviceResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+// ======================================
+// Native Tool SSOT Schemas (G-29 / T3-26)
+// ======================================
+
+message GetNativeToolCatalogRequest {}
+
+message GetNativeToolCatalogResponse {
+    repeated NativeToolDefinition tools = 1;
+}
+
+message NativeToolDefinition {
+    string name = 1;
+    string description = 2;
+    string risk_tier = 3;
+    string input_schema_json = 4;
+    repeated string aliases = 5;
+}
+
+// Canonical tool argument schemas
+message BashToolArgs {
+    string command = 1;
+}
+
+message ReadFileToolArgs {
+    string path = 1;
+    optional int64 max_bytes = 2;
+    optional int64 offset = 3;
+}
+
+message WriteFileToolArgs {
+    string path = 1;
+    string content = 2; // Canonical SSOT argument name: content
+}
+
+message GitToolArgs {
+    string args = 1;
+}
+
+message EditFileToolArgs {
+    string path = 1;
+    string target = 2;
+    string replacement = 3;
+}
+
+message SystemMetricsRequest {}
+
+message SystemMetricsResponse {
+    double cpu_usage_percent = 1;
+    uint64 memory_used_mb = 2;
+    uint64 memory_total_mb = 3;
+    uint32 num_cpus = 4;
+    uint64 rss_bytes = 5;
+    uint64 system_ram_total_bytes = 6;
+}
+
+

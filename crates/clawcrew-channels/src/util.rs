@@ -1,7 +1,7 @@
-#[cfg(any(feature = "channel-slack", feature = "channel-telegram"))]
+#[cfg(any(feature = "channel-slack", test))]
 use clawcrew_api::channel::ProgressEvent;
 
-#[cfg(any(feature = "channel-slack", feature = "channel-telegram"))]
+#[cfg(any(feature = "channel-slack", test))]
 pub(crate) fn lifecycle_progress_fluent_key(event: ProgressEvent) -> &'static str {
     match event {
         ProgressEvent::Received => "channel-runtime-progress-received",
@@ -13,20 +13,20 @@ pub(crate) fn lifecycle_progress_fluent_key(event: ProgressEvent) -> &'static st
     }
 }
 
-#[cfg(any(feature = "channel-slack", feature = "channel-telegram"))]
+#[cfg(any(feature = "channel-slack", test))]
+#[allow(dead_code)]
 pub(crate) fn localized_lifecycle_progress(event: ProgressEvent) -> String {
-    clawcrew_runtime::i18n::get_required_cli_string(lifecycle_progress_fluent_key(event))
+    galleon_i18n::get_required_cli_string(lifecycle_progress_fluent_key(event))
 }
 
-/// Truncate a string to `max_chars` Unicode characters, appending "..." if truncated.
-pub fn truncate_with_ellipsis(s: &str, max_chars: usize) -> String {
-    match s.char_indices().nth(max_chars) {
-        Some((idx, _)) => {
-            let truncated = &s[..idx];
-            format!("{}...", truncated.trim_end())
-        }
-        None => s.to_string(),
+pub use galleon_channel_core::truncate_with_ellipsis;
+
+/// Checks if a text matches the canonical breadcrumb or the localized breadcrumb.
+pub fn is_history_trim_breadcrumb_text(text: &str) -> bool {
+    if text == clawcrew_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL {
+        return true;
     }
+    text == galleon_i18n::get_required_cli_string("history-trim-breadcrumb")
 }
 
 /// Returns the largest UTF-8 character boundary at or before `max_bytes`.
@@ -39,7 +39,8 @@ pub fn floor_char_boundary(s: &str, max_bytes: usize) -> usize {
     s.floor_char_boundary(max_bytes)
 }
 
-#[cfg(any(feature = "channel-mattermost", feature = "channel-qq"))]
+#[cfg(test)]
+#[allow(dead_code)]
 pub(crate) async fn read_response_body_limited(
     mut response: reqwest::Response,
     max_bytes: u64,
@@ -325,13 +326,13 @@ pub(crate) fn parse_attachment_markers_of_kinds(
 
 /// Minimum reply size, in bytes, that earns a voice note. Byte-measured, so a
 /// non-ASCII reply clears the floor with fewer characters than an ASCII one.
-#[cfg(any(feature = "channel-telegram", feature = "whatsapp-web", test))]
+#[cfg(any(feature = "whatsapp-web", test))]
 const MIN_VOICE_REPLY_BYTES: usize = 40;
 
 /// Bytes allowed between the brackets of a leading expressive audio tag. Real
 /// tags are short (`[whispers]`, `[strong French accent]`); the bound keeps a
 /// long bracketed block from passing as one.
-#[cfg(any(feature = "channel-telegram", feature = "whatsapp-web", test))]
+#[cfg(any(feature = "whatsapp-web", test))]
 const MAX_AUDIO_TAG_INNER_BYTES: usize = 32;
 
 /// Classify a reply that opens with `[`. Returns the skip reason when the
@@ -340,7 +341,7 @@ const MAX_AUDIO_TAG_INNER_BYTES: usize = 32;
 ///
 /// Audio tags are stage directions that TTS engines interpret rather than
 /// speak, so a reply opening with one is prose and belongs in a voice note.
-#[cfg(any(feature = "channel-telegram", feature = "whatsapp-web", test))]
+#[cfg(any(feature = "whatsapp-web", test))]
 fn leading_bracket_skip_reason(content: &str) -> Option<&'static str> {
     let after_open = content.strip_prefix('[')?;
 
@@ -378,7 +379,7 @@ fn leading_bracket_skip_reason(content: &str) -> Option<&'static str> {
 /// Why a reply was not queued as a TTS voice note, or `None` when it is worth
 /// speaking. Voice chats mirror the agent's prose, not its plumbing: URLs,
 /// JSON, code blocks, raw tool output and one-line status make poor audio.
-#[cfg(any(feature = "channel-telegram", feature = "whatsapp-web", test))]
+#[cfg(any(feature = "whatsapp-web", test))]
 pub(crate) fn voice_reply_skip_reason(content: &str) -> Option<&'static str> {
     if content.len() <= MIN_VOICE_REPLY_BYTES {
         return Some("too_short");
@@ -553,13 +554,13 @@ pub(crate) fn build_yesno_approval_prompt(
     position: Option<(u32, u32)>,
 ) -> String {
     let position_line = approval_position_line(position);
-    let heading = clawcrew_runtime::i18n::get_required_cli_string("channel-approval-heading-shout");
-    let tool_label = clawcrew_runtime::i18n::get_required_cli_string("channel-approval-tool-label");
-    let args_label = clawcrew_runtime::i18n::get_required_cli_string("channel-approval-args-label");
+    let heading = galleon_i18n::get_required_cli_string("channel-approval-heading-shout");
+    let tool_label = galleon_i18n::get_required_cli_string("channel-approval-tool-label");
+    let args_label = galleon_i18n::get_required_cli_string("channel-approval-args-label");
     let yes_command = format!("{token} {APPROVAL_REPLY_YES}");
     let no_command = format!("{token} {APPROVAL_REPLY_NO}");
     let always_command = format!("{token} {APPROVAL_REPLY_ALWAYS}");
-    let reply = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+    let reply = galleon_i18n::get_required_cli_string_with_args(
         "channel-approval-reply-instruction-yesno",
         &[
             ("yes_command", yes_command.as_str()),
@@ -595,7 +596,7 @@ pub(crate) fn approval_position_line(position: Option<(u32, u32)>) -> String {
         // rule lives here so no adapter has to remember it.
         Some((_, total)) if total <= 1 => String::new(),
         Some((index, total)) => {
-            let text = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+            let text = galleon_i18n::get_required_cli_string_with_args(
                 "channel-approval-position",
                 &[
                     ("index", index.to_string().as_str()),
@@ -619,13 +620,13 @@ pub(crate) fn build_approve_deny_approval_prompt(
     position: Option<(u32, u32)>,
 ) -> String {
     let position_line = approval_position_line(position);
-    let heading = clawcrew_runtime::i18n::get_required_cli_string("channel-approval-heading-shout");
-    let tool_label = clawcrew_runtime::i18n::get_required_cli_string("channel-approval-tool-label");
-    let args_label = clawcrew_runtime::i18n::get_required_cli_string("channel-approval-args-label");
+    let heading = galleon_i18n::get_required_cli_string("channel-approval-heading-shout");
+    let tool_label = galleon_i18n::get_required_cli_string("channel-approval-tool-label");
+    let args_label = galleon_i18n::get_required_cli_string("channel-approval-args-label");
     let approve_command = format!("{token} {APPROVAL_REPLY_APPROVE}");
     let deny_command = format!("{token} {APPROVAL_REPLY_DENY}");
     let always_command = format!("{token} {APPROVAL_REPLY_ALWAYS}");
-    let reply = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+    let reply = galleon_i18n::get_required_cli_string_with_args(
         "channel-approval-reply-instruction-approve-deny",
         &[
             ("approve_command", approve_command.as_str()),
@@ -644,89 +645,12 @@ pub(crate) fn build_approve_deny_approval_prompt(
     feature = "channel-telegram",
     test
 ))]
-pub(crate) struct PendingApproval {
-    pub(crate) sender: tokio::sync::oneshot::Sender<clawcrew_api::channel::ChannelApprovalResponse>,
-    pub(crate) destination: String,
-    pub(crate) tool_name: String,
-}
+#[allow(unused_imports)]
+pub(crate) use galleon_channel_core::approval::{
+    PendingApproval, PendingApprovalResolution, resolve_pending_approval,
+    resolve_pending_approval_with_tool,
+};
 
-#[cfg(any(
-    feature = "channel-matrix",
-    feature = "channel-slack",
-    feature = "channel-telegram",
-    test
-))]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum PendingApprovalResolution {
-    NotFound,
-    Rejected,
-    Resolved,
-    ReceiverClosed,
-}
-
-#[cfg(any(
-    feature = "channel-matrix",
-    feature = "channel-slack",
-    feature = "channel-telegram",
-    test
-))]
-impl PendingApprovalResolution {
-    #[cfg(any(feature = "channel-matrix", feature = "channel-slack", test))]
-    pub(crate) fn suppresses_message(self) -> bool {
-        !matches!(self, Self::NotFound)
-    }
-}
-
-#[cfg(any(feature = "channel-matrix", feature = "channel-slack", test))]
-pub(crate) async fn resolve_pending_approval(
-    pending_approvals: &tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>,
-    token: &str,
-    response: clawcrew_api::channel::ChannelApprovalResponse,
-    responder_allowed: bool,
-    destination: &str,
-) -> PendingApprovalResolution {
-    resolve_pending_approval_with_tool(
-        pending_approvals,
-        token,
-        response,
-        responder_allowed,
-        destination,
-    )
-    .await
-    .0
-}
-
-#[cfg(any(
-    feature = "channel-matrix",
-    feature = "channel-slack",
-    feature = "channel-telegram",
-    test
-))]
-pub(crate) async fn resolve_pending_approval_with_tool(
-    pending_approvals: &tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>,
-    token: &str,
-    response: clawcrew_api::channel::ChannelApprovalResponse,
-    responder_allowed: bool,
-    destination: &str,
-) -> (PendingApprovalResolution, Option<String>) {
-    let mut pending_approvals = pending_approvals.lock().await;
-    let Some(pending) = pending_approvals.get(token) else {
-        return (PendingApprovalResolution::NotFound, None);
-    };
-    if !responder_allowed || destination.is_empty() || pending.destination != destination {
-        return (PendingApprovalResolution::Rejected, None);
-    }
-
-    let Some(pending) = pending_approvals.remove(token) else {
-        return (PendingApprovalResolution::NotFound, None);
-    };
-    drop(pending_approvals);
-    if pending.sender.send(response).is_ok() {
-        (PendingApprovalResolution::Resolved, Some(pending.tool_name))
-    } else {
-        (PendingApprovalResolution::ReceiverClosed, None)
-    }
-}
 
 /// Generate a conversation history key from a channel message.
 pub fn conversation_history_key(msg: &clawcrew_api::channel::ChannelMessage) -> String {
@@ -812,7 +736,7 @@ mod tests {
         assert_eq!(floor_char_boundary(text, usize::MAX), text.len());
     }
 
-    #[cfg(any(feature = "channel-mattermost", feature = "channel-qq"))]
+    #[cfg(feature = "channel-mattermost")]
     async fn response_from_raw_http(
         raw_response: Vec<u8>,
         hold_open: bool,
@@ -822,7 +746,7 @@ mod tests {
         (response, server)
     }
 
-    #[cfg(any(feature = "channel-mattermost", feature = "channel-qq"))]
+    #[cfg(feature = "channel-mattermost")]
     #[tokio::test]
     async fn bounded_response_body_rejects_declared_oversize() {
         let (response, server) = response_from_raw_http(
@@ -1445,14 +1369,11 @@ mod tests {
         // `#[cfg(feature = ...)]`, so this always-compiled test can catch
         // literal-key typos in feature-gated sources.
         const SOURCES: &[&str] = &[
-            include_str!("telegram.rs"),
+            include_str!("../../galleon-channel-telegram/src/lib.rs"),
             include_str!("discord/mod.rs"),
             include_str!("discord/approval.rs"),
-            include_str!("slack.rs"),
-            include_str!("matrix.rs"),
             include_str!("whatsapp.rs"),
             include_str!("whatsapp_web.rs"),
-            include_str!("acp_channel.rs"),
             include_str!("util.rs"),
         ];
         let mut keys = std::collections::BTreeSet::new();
@@ -1485,7 +1406,7 @@ mod tests {
             // Fluent ignores args a message doesn't reference, so no-arg keys
             // still resolve; arg-requiring messages resolved with no args
             // would otherwise fail to format and false-positive here.
-            let resolved = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+            let resolved = galleon_i18n::get_required_cli_string_with_args(
                 key,
                 &[
                     ("tool", "TOOL"),

@@ -51,6 +51,36 @@ pub fn resolve_gate(
         return Ok(ResolveOutcome::RejectedSelfApproval);
     }
 
+    // Dynamic Separation of Duties: DistinctPerformer check for approvals
+    if matches!(decision, ApprovalDecision::Approve) {
+        if let (Ok((_, sop)), Some(run), Some(identity)) = (
+            engine.resolve_active_run_sop(run_id),
+            engine.get_run(run_id),
+            principal.identity.as_deref(),
+        ) {
+            if let Err(reason) = crate::sop::constraint::SopConstraint::check_distinct_performer(
+                &sop.constraints,
+                step,
+                Some(identity),
+                &run.step_results,
+            ) {
+                ::clawcrew_log::record!(
+                    WARN,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
+                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        .with_attrs(::serde_json::json!({
+                            "run_id": run_id,
+                            "step": step,
+                            "principal": identity,
+                            "reason": reason,
+                        })),
+                    "SOP gate approval rejected: DistinctPerformer separation of duties violation"
+                );
+                return Ok(ResolveOutcome::RejectedConstraint(reason));
+            }
+        }
+    }
+
     // Amend/Revise are deterministic-checkpoint decisions (resolve_checkpoint
     // owns them); an approval gate has no draft to edit or re-run. Refuse HERE,
     // before the claim reacquire and the ledger append, so no side effect records
@@ -336,6 +366,8 @@ mod tests {
             admission_policy: crate::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }
     }
 
@@ -656,5 +688,100 @@ mod tests {
             ),
             "the run must NOT be cancelled without its durable timeout ledger row"
         );
+    }
+
+    #[test]
+    fn distinct_performer_blocks_pr_author_from_approving_review_step() {
+        use crate::sop::constraint::{ConstraintKind, SopConstraint};
+        use crate::sop::types::{SopStepResult, SopStepStatus};
+
+        let mut sop = supervised_sop("pr_delivery");
+        sop.execution_mode = crate::sop::types::SopExecutionMode::Auto;
+        sop.steps = vec![
+            SopStep {
+                number: 1,
+                title: "Author PR".into(),
+                body: "write code and open PR".into(),
+                requires_confirmation: false,
+                kind: SopStepKind::Execute,
+                ..SopStep::default()
+            },
+            SopStep {
+                number: 2,
+                title: "Review and Approve PR".into(),
+                body: "review code and approve PR".into(),
+                requires_confirmation: true,
+                kind: SopStepKind::Execute,
+                ..SopStep::default()
+            },
+        ];
+        sop.constraints = vec![SopConstraint {
+            kind: ConstraintKind::DistinctPerformer {
+                step_a: 1,
+                step_b: 2,
+            },
+            reason: "Author cannot approve their own PR".into(),
+        }];
+
+        let mut e = engine_with(ApprovalMode::Both);
+        e.set_sops_for_test(vec![sop]);
+
+        // Start run (Step 1 is execute)
+        let action = e.start_run("pr_delivery", manual()).unwrap();
+        let run_id = match action {
+            SopRunAction::ExecuteStep { run_id, .. } => run_id,
+            other => panic!("expected ExecuteStep, got {other:?}"),
+        };
+
+        // Advance Step 1 completed by "agent-author"
+        let advance_action = e
+            .advance_step(
+                &run_id,
+                SopStepResult {
+                    step_number: 1,
+                    status: SopStepStatus::Completed,
+                    output: "PR #123 opened".into(),
+                    started_at: now_iso8601(),
+                    completed_at: Some(now_iso8601()),
+                    effective_agent: Some("agent-author".into()),
+                    tool_calls: vec![],
+                },
+            )
+            .unwrap();
+
+        // Step 2 has requires_confirmation = true, so action is WaitApproval
+        assert!(matches!(advance_action, SopRunAction::WaitApproval { .. }));
+
+        // Attempt 1: agent-author tries to approve their own PR (Step 2)
+        let rejected = resolve_gate(
+            &mut e,
+            &run_id,
+            ApprovalDecision::Approve,
+            ApprovalPrincipal::agent("agent-author"),
+        )
+        .unwrap();
+
+        match rejected {
+            ResolveOutcome::RejectedConstraint(reason) => {
+                assert!(reason.contains("Dynamic Separation of Duties violation"));
+                assert!(reason.contains("agent-author"));
+                assert!(reason.contains("Author cannot approve their own PR"));
+            }
+            other => panic!("expected RejectedConstraint, got {other:?}"),
+        }
+
+        // Gate is still waiting
+        assert!(matches!(e.gate_state(&run_id), GateState::Waiting { step: 2 }));
+
+        // Attempt 2: distinct reviewer "agent-reviewer" approves Step 2
+        let approved = resolve_gate(
+            &mut e,
+            &run_id,
+            ApprovalDecision::Approve,
+            ApprovalPrincipal::agent("agent-reviewer"),
+        )
+        .unwrap();
+
+        assert!(approved.is_resumed());
     }
 }

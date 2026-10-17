@@ -23,7 +23,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 use clawcrew_api::channel::ChannelApprovalResponse;
-use clawcrew_runtime::sop::approval::{
+use clawcrew_api::sop::{
     ApprovalDecision as SopApprovalDecision, ApprovalPrincipal as SopApprovalPrincipal,
 };
 
@@ -272,7 +272,7 @@ where
     let Some(decision) = decision.filter(|_| !run_id.is_empty()) else {
         let err = serde_json::json!({
             "type": "error",
-            "message": clawcrew_runtime::i18n::get_required_cli_string(
+            "message": galleon_i18n::get_required_cli_string(
                 "cli-sop-ws-invalid-approval"
             ),
             "code": "INVALID_APPROVAL_RESPONSE"
@@ -280,50 +280,28 @@ where
         let _ = sender.send(Message::Text(err.to_string().into())).await;
         return true;
     };
-    let frame = if let Some(engine) = state.sop_engine.as_ref() {
+    let frame = if let Some(runner) = state.sop_runner.as_ref() {
         let principal =
             SopApprovalPrincipal::ws(session_id.to_string(), auth_subject.map(str::to_string));
-        // EPIC G: route through the broker (membership + quorum); with no
-        // `[sop.approval]` policy this is exactly `resolve_gate`.
-        let resolved = match engine.lock() {
-            Ok(mut g) => Some(g.resolve_via_broker_deferred(&run_id, decision, principal)),
-            Err(_) => None,
-        };
-        match resolved {
-            Some(Ok(outcome)) => {
-                let config = state.config.read();
-                clawcrew_runtime::sop::drive_resumed_broker_action(
-                    &config,
-                    std::sync::Arc::clone(engine),
-                    state.sop_audit.clone(),
-                    &outcome,
-                );
-                serde_json::json!({
-                    "type": "sop_approval_result",
-                    "run_id": run_id,
-                    "outcome": outcome.label(),
-                })
-            }
-            Some(Err(e)) => serde_json::json!({
+        match runner.resolve_approval(&run_id, decision, principal).await {
+            Ok(outcome) => serde_json::json!({
+                "type": "sop_approval_result",
+                "run_id": run_id,
+                "outcome": outcome.label(),
+            }),
+            Err(e) => serde_json::json!({
                 "type": "error",
-                "message": clawcrew_runtime::i18n::get_required_cli_string_with_args(
+                "message": galleon_i18n::get_required_cli_string_with_args(
                     "cli-sop-ws-resolve-failed",
                     &[("error", &e.to_string())],
                 ),
                 "code": "SOP_RESOLVE_FAILED"
             }),
-            None => serde_json::json!({
-                "type": "error",
-                "message": clawcrew_runtime::i18n::get_required_cli_string(
-                    "cli-sop-ws-engine-lock-poisoned"
-                ),
-                "code": "SOP_LOCK_POISONED"
-            }),
         }
     } else {
         serde_json::json!({
             "type": "error",
-            "message": clawcrew_runtime::i18n::get_required_cli_string(
+            "message": galleon_i18n::get_required_cli_string(
                 "cli-sop-ws-subsystem-disabled"
             ),
             "code": "SOP_DISABLED"
@@ -531,8 +509,8 @@ async fn handle_socket(
             false,
             // The gateway WebSocket turn does not transport ACP file attachments.
             false,
-            state.sop_engine.clone(),
-            state.sop_audit.clone(),
+            None,
+            None,
             Some(state.canvas_store.clone()),
         )
         .await
@@ -845,8 +823,8 @@ async fn handle_socket(
                         let _ = sender.send(Message::Text(err.to_string().into())).await;
                         continue;
                     }
-                    if let Some(tx) = pending_approvals.lock().remove(request_id) {
-                        let _ = tx.send(decision.expect("checked above"));
+                    if let (Some(decision), Some(tx)) = (decision, pending_approvals.lock().remove(request_id)) {
+                        let _ = tx.send(decision);
                     } else {
                         ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"request_id": request_id})), "approval_response with no matching pending request");
                     }
@@ -1606,8 +1584,8 @@ async fn process_chat_message(
                                         if request_id.is_empty() || decision.is_none() {
                                             continue;
                                         }
-                                        if let Some(tx) = pending_approvals.lock().remove(request_id) {
-                                            let _ = tx.send(decision.expect("checked above"));
+                                        if let (Some(decision), Some(tx)) = (decision, pending_approvals.lock().remove(request_id)) {
+                                            let _ = tx.send(decision);
                                         } else {
                                             ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"request_id": request_id})), "approval_response with no matching pending request (mid-turn)");
                                         }
@@ -1774,7 +1752,7 @@ async fn process_chat_message(
             };
             let durable = if needs_marker {
                 let marker =
-                    clawcrew_runtime::i18n::get_required_cli_string("turn-interrupted-by-user");
+                    galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
                 let truncated = if accumulated_text.is_empty() {
                     marker
                 } else {
@@ -2731,7 +2709,7 @@ data: {\"type\":\"message_stop\"}\n\n",
             Duration::from_secs(WS_APPROVAL_TIMEOUT_SECS),
         ));
 
-        let handle: clawcrew_runtime::tools::PerToolChannelHandle =
+        let handle: clawcrew_tools::send_via::PerToolChannelHandle =
             Arc::new(parking_lot::RwLock::new(std::collections::HashMap::new()));
         handle.write().insert(
             WS_CHANNEL_KEY.to_string(),
@@ -2904,13 +2882,13 @@ data: {\"type\":\"message_stop\"}\n\n",
             "cli-sop-ws-engine-lock-poisoned",
             "cli-sop-ws-subsystem-disabled",
         ] {
-            let s = clawcrew_runtime::i18n::get_required_cli_string(key);
+            let s = galleon_i18n::get_required_cli_string(key);
             assert!(
                 !s.starts_with('{') || !s.ends_with('}'),
                 "fluent missing-key fallback leaked for {key}: {s:?}"
             );
         }
-        let resolved = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+        let resolved = galleon_i18n::get_required_cli_string_with_args(
             "cli-sop-ws-resolve-failed",
             &[("error", "boom")],
         );
@@ -3568,7 +3546,7 @@ data: {\"type\":\"message_stop\"}\n\n",
 
     #[tokio::test]
     async fn ws_sop_frame_enforces_policy_membership_via_auth_subject() {
-        use clawcrew_runtime::security::pairing::PairingGuard;
+        use clawcrew_config::pairing::PairingGuard;
         // Reuse the HTTP policied-gate harness: a run parked at a `prod` policy whose
         // group is granted to the paired-token subject (bare, any source).
         let (state, run_id) = crate::api_sop::tests::state_with_policied_gate("ws-tok");
@@ -3580,12 +3558,13 @@ data: {\"type\":\"message_stop\"}\n\n",
             "decision": "approve",
         });
         let run_status = |st: &AppState| {
-            st.sop_engine
+            st.sop_runner
                 .as_ref()
                 .unwrap()
-                .lock()
+                .list_runs(None)
                 .unwrap()
-                .get_run(&run_id)
+                .iter()
+                .find(|r| r.run_id == run_id)
                 .map(|r| format!("{:?}", r.status))
         };
 

@@ -68,10 +68,22 @@ struct OAuthErrorResponse {
     error_description: Option<String>,
 }
 
+pub fn resolve_openai_client_id(override_client_id: Option<&str>) -> &str {
+    override_client_id
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .unwrap_or(OPENAI_OAUTH_CLIENT_ID)
+}
+
 pub fn build_authorize_url(pkce: &PkceState) -> String {
+    build_authorize_url_with_client(pkce, None)
+}
+
+pub fn build_authorize_url_with_client(pkce: &PkceState, client_id: Option<&str>) -> String {
+    let effective_client_id = resolve_openai_client_id(client_id);
     let mut params = BTreeMap::new();
     params.insert("response_type", "code");
-    params.insert("client_id", OPENAI_OAUTH_CLIENT_ID);
+    params.insert("client_id", effective_client_id);
     params.insert("redirect_uri", OPENAI_OAUTH_REDIRECT_URI);
     params.insert("scope", "openid profile email offline_access");
     params.insert("code_challenge", pkce.code_challenge.as_str());
@@ -93,10 +105,20 @@ pub async fn exchange_code_for_tokens(
     code: &str,
     pkce: &PkceState,
 ) -> Result<TokenSet> {
+    exchange_code_for_tokens_with_client(client, code, pkce, None).await
+}
+
+pub async fn exchange_code_for_tokens_with_client(
+    client: &Client,
+    code: &str,
+    pkce: &PkceState,
+    client_id: Option<&str>,
+) -> Result<TokenSet> {
+    let effective_client_id = resolve_openai_client_id(client_id);
     let form = [
         ("grant_type", "authorization_code"),
         ("code", code),
-        ("client_id", OPENAI_OAUTH_CLIENT_ID),
+        ("client_id", effective_client_id),
         ("redirect_uri", OPENAI_OAUTH_REDIRECT_URI),
         ("code_verifier", pkce.code_verifier.as_str()),
     ];
@@ -112,10 +134,19 @@ pub async fn exchange_code_for_tokens(
 }
 
 pub async fn refresh_access_token(client: &Client, refresh_token: &str) -> Result<TokenSet> {
+    refresh_access_token_with_client(client, refresh_token, None).await
+}
+
+pub async fn refresh_access_token_with_client(
+    client: &Client,
+    refresh_token: &str,
+    client_id: Option<&str>,
+) -> Result<TokenSet> {
+    let effective_client_id = resolve_openai_client_id(client_id);
     let form = [
         ("grant_type", "refresh_token"),
         ("refresh_token", refresh_token),
-        ("client_id", OPENAI_OAUTH_CLIENT_ID),
+        ("client_id", effective_client_id),
     ];
 
     let response = client
@@ -129,8 +160,16 @@ pub async fn refresh_access_token(client: &Client, refresh_token: &str) -> Resul
 }
 
 pub async fn start_device_code_flow(client: &Client) -> Result<DeviceCodeStart> {
+    start_device_code_flow_with_client(client, None).await
+}
+
+pub async fn start_device_code_flow_with_client(
+    client: &Client,
+    client_id: Option<&str>,
+) -> Result<DeviceCodeStart> {
+    let effective_client_id = resolve_openai_client_id(client_id);
     let form = [
-        ("client_id", OPENAI_OAUTH_CLIENT_ID),
+        ("client_id", effective_client_id),
         ("scope", "openid profile email offline_access"),
     ];
 
@@ -167,6 +206,15 @@ pub async fn poll_device_code_tokens(
     client: &Client,
     device: &DeviceCodeStart,
 ) -> Result<TokenSet> {
+    poll_device_code_tokens_with_client(client, device, None).await
+}
+
+pub async fn poll_device_code_tokens_with_client(
+    client: &Client,
+    device: &DeviceCodeStart,
+    client_id: Option<&str>,
+) -> Result<TokenSet> {
+    let effective_client_id = resolve_openai_client_id(client_id);
     let started = Instant::now();
     let mut interval_secs = device.interval.max(1);
 
@@ -180,7 +228,7 @@ pub async fn poll_device_code_tokens(
         let form = [
             ("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
             ("device_code", device.device_code.as_str()),
-            ("client_id", OPENAI_OAUTH_CLIENT_ID),
+            ("client_id", effective_client_id),
         ];
 
         let response = client
@@ -418,11 +466,27 @@ pub fn extract_expiry_from_jwt(token: &str) -> Option<chrono::DateTime<Utc>> {
     chrono::DateTime::<Utc>::from_timestamp(exp, 0)
 }
 
+pub(crate) fn format_oauth_token_error(status: reqwest::StatusCode, body: &str) -> anyhow::Error {
+    if body.contains("invalid_grant")
+        || body.contains("refresh_token_revoked")
+        || body.contains("token_expired")
+        || body.contains("expired_token")
+    {
+        anyhow::Error::msg(format!(
+            "OpenAI OAuth token refresh failed: your credentials or refresh token have expired or been revoked. \
+             Please re-authenticate by running 'clawcrew auth login --model-provider openai-codex'. \
+             Server details ({status}): {body}"
+        ))
+    } else {
+        anyhow::Error::msg(format!("OpenAI OAuth token request failed ({status}): {body}"))
+    }
+}
+
 async fn parse_token_response(response: reqwest::Response) -> Result<TokenSet> {
     if !response.status().is_success() {
         let status = response.status();
         let body = response.text().await.unwrap_or_default();
-        anyhow::bail!("OpenAI OAuth token request failed ({status}): {body}");
+        return Err(format_oauth_token_error(status, &body));
     }
 
     let token: TokenResponse = response
@@ -654,5 +718,51 @@ mod tests {
 
         let account = extract_account_id_from_jwt(&token);
         assert_eq!(account.as_deref(), Some("chatgpt_acct_first"));
+    }
+
+    #[test]
+    fn resolve_openai_client_id_handles_override_and_fallback() {
+        assert_eq!(resolve_openai_client_id(None), OPENAI_OAUTH_CLIENT_ID);
+        assert_eq!(resolve_openai_client_id(Some("")), OPENAI_OAUTH_CLIENT_ID);
+        assert_eq!(resolve_openai_client_id(Some("  ")), OPENAI_OAUTH_CLIENT_ID);
+        assert_eq!(
+            resolve_openai_client_id(Some("custom-byoc-client-123")),
+            "custom-byoc-client-123"
+        );
+    }
+
+    #[test]
+    fn build_authorize_url_with_client_preserves_pkce_and_sets_custom_client_id() {
+        let pkce = generate_pkce_state();
+        let default_url = build_authorize_url(&pkce);
+        assert!(default_url.contains(&format!("client_id={OPENAI_OAUTH_CLIENT_ID}")));
+        assert!(default_url.contains("code_challenge_method=S256"));
+        assert!(default_url.contains(&format!("code_challenge={}", pkce.code_challenge)));
+        assert!(default_url.contains(&format!("state={}", pkce.state)));
+
+        let custom_url = build_authorize_url_with_client(&pkce, Some("byoc-enterprise-client-id"));
+        assert!(custom_url.contains("client_id=byoc-enterprise-client-id"));
+        assert!(custom_url.contains("code_challenge_method=S256"));
+        assert!(custom_url.contains(&format!("code_challenge={}", pkce.code_challenge)));
+        assert!(custom_url.contains(&format!("state={}", pkce.state)));
+    }
+
+    #[test]
+    fn format_oauth_token_error_yields_actionable_hint_on_revocation() {
+        let err_revoked = format_oauth_token_error(
+            reqwest::StatusCode::BAD_REQUEST,
+            r#"{"error":"invalid_grant","error_description":"refresh token revoked"}"#,
+        );
+        let msg = err_revoked.to_string();
+        assert!(msg.contains("re-authenticate by running 'clawcrew auth login --model-provider openai-codex'"));
+        assert!(msg.contains("invalid_grant"));
+
+        let err_other = format_oauth_token_error(
+            reqwest::StatusCode::INTERNAL_SERVER_ERROR,
+            "internal server error",
+        );
+        let msg_other = err_other.to_string();
+        assert!(!msg_other.contains("re-authenticate by running"));
+        assert!(msg_other.contains("internal server error"));
     }
 }

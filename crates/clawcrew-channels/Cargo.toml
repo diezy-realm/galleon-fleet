@@ -1,5 +1,6 @@
 [package]
 name = "clawcrew-channels"
+rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -16,9 +17,11 @@ clawcrew-config = { workspace = true, default-features = false }
 clawcrew-log.workspace = true
 clawcrew-memory.workspace = true
 clawcrew-providers.workspace = true
-clawcrew-runtime.workspace = true
 clawcrew-tool-call-parser.workspace = true
 clawcrew-tools.workspace = true
+galleon-i18n.workspace = true
+galleon-security-scrub.workspace = true
+galleon-channel-core.workspace = true
 # RF-B1: the Signal channel is split into its own feature-crate. The monolith
 # re-exports it (`pub use galleon_channel_signal as signal`) so existing callers
 # (`crate::signal::SignalChannel`) keep compiling. Optional, behind
@@ -29,6 +32,100 @@ galleon-channel-signal = { workspace = true, optional = true }
 # callers (`crate::bluesky::BlueskyChannel`) keep compiling. Optional, behind
 # `channel-bluesky`.
 galleon-channel-bluesky = { workspace = true, optional = true }
+# RF-C1: the iMessage channel is split into its own feature-crate. The
+# RF-C1: the iMessage channel is split into its own feature-crate. The
+# monolith re-exports it (`pub use galleon_channel_imessage as imessage`) so
+# existing callers (`crate::imessage::IMessageChannel`) keep compiling.
+# Optional, behind `channel-imessage`.
+galleon-channel-imessage = { workspace = true, optional = true }
+# RF-B1: the IRC channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_irc as irc`) so existing callers
+# (`crate::irc::IrcChannel`) keep compiling. Optional, behind `channel-irc`.
+galleon-channel-irc = { workspace = true, optional = true }
+# RF-B1: the Nostr channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_nostr as nostr`) so existing callers
+# (`crate::nostr::NostrChannel`) keep compiling. Optional, behind `channel-nostr`.
+galleon-channel-nostr = { workspace = true, optional = true }
+# RF-B1: the Twitch channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_twitch as twitch`) so existing callers
+# (`crate::twitch::TwitchChannel`) keep compiling. Optional, behind `channel-twitch`.
+galleon-channel-twitch = { workspace = true, optional = true }
+# RF-B1: the DingTalk channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_dingtalk as dingtalk`) so existing callers
+# (`crate::dingtalk::DingTalkChannel`) keep compiling. Optional, behind `channel-dingtalk`.
+galleon-channel-dingtalk = { workspace = true, optional = true }
+# RF-B1: the Mochat channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_mochat as mochat`) so existing callers
+# (`crate::mochat::MochatChannel`) keep compiling. Optional, behind `channel-mochat`.
+galleon-channel-mochat = { workspace = true, optional = true }
+# RF-B1: the ClawdTalk channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_clawdtalk as clawdtalk`) so existing callers
+# (`crate::clawdtalk::ClawdTalkChannel`) keep compiling. Optional, behind `channel-clawdtalk`.
+galleon-channel-clawdtalk = { workspace = true, optional = true }
+# RF-B1: the Reddit channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_reddit as reddit`) so existing callers
+# (`crate::reddit::RedditChannel`) keep compiling. Optional, behind `channel-reddit`.
+galleon-channel-reddit = { workspace = true, optional = true }
+# RF-B1: the Twitter channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_twitter as twitter`) so existing callers
+# (`crate::twitter::TwitterChannel`) keep compiling. Optional, behind `channel-twitter`.
+galleon-channel-twitter = { workspace = true, optional = true }
+# RF-B1: the Notion channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_notion as notion`) so existing callers
+# (`crate::notion::NotionChannel`) keep compiling. Optional, behind `channel-notion`.
+galleon-channel-notion = { workspace = true, optional = true }
+# RF-B1: the Linq channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_linq as linq`) so existing callers
+# (`crate::linq::LinqChannel`) keep compiling. Optional, behind `channel-linq`.
+galleon-channel-linq = { workspace = true, optional = true }
+# RF-B1: the Nextcloud Talk channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_nextcloud as nextcloud_talk`) so existing callers
+# keep compiling. Optional, behind `channel-nextcloud`.
+galleon-channel-nextcloud = { workspace = true, optional = true }
+# RF-B1: the Filesystem channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_filesystem as filesystem`) so existing callers
+# keep compiling. Optional, behind `channel-filesystem`.
+galleon-channel-filesystem = { workspace = true, optional = true }
+# RF-B1: the AMQP channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_amqp as amqp`) so existing callers
+# keep compiling. Optional, behind `channel-amqp`.
+galleon-channel-amqp = { workspace = true, optional = true }
+# RF-B1: the WeCom channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_wecom as wecom`) so existing callers
+# keep compiling. Optional, behind `channel-wecom`.
+galleon-channel-wecom = { workspace = true, optional = true }
+galleon-channel-webhook = { workspace = true, optional = true }
+# RF-B1: the Email channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_email as email_channel`) so existing callers
+galleon-channel-email = { workspace = true, optional = true }
+# RF-B1: the QQ channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_qq as qq`) so existing callers
+# (`crate::qq::QQChannel`) keep compiling. Optional, behind `channel-qq`.
+galleon-channel-qq = { workspace = true, optional = true }
+# RF-B1: the LINE channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_line as line`) so existing callers
+# (`crate::line::LineChannel`) keep compiling. Optional, behind `channel-line`.
+galleon-channel-line = { workspace = true, optional = true }
+# RF-B1: the Mattermost channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_mattermost as mattermost`) so existing callers
+# (`crate::mattermost::MattermostChannel`) keep compiling. Optional, behind `channel-mattermost`.
+galleon-channel-mattermost = { workspace = true, optional = true }
+# RF-B1: the Lark channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_lark as lark`) so existing callers
+# (`crate::lark::LarkChannel`) keep compiling. Optional, behind `channel-lark`.
+galleon-channel-lark = { workspace = true, optional = true }
+# RF-B1: the WeChat channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_wechat as wechat`) so existing callers
+# (`crate::wechat::WeChatChannel`) keep compiling. Optional, behind `channel-wechat`.
+galleon-channel-wechat = { workspace = true, optional = true }
+# RF-B1: the Telegram channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_telegram as telegram`) so existing callers
+# (`crate::telegram::TelegramChannel`) keep compiling. Optional, behind `channel-telegram`.
+galleon-channel-telegram = { workspace = true, optional = true }
+# RF-B1: the WeCom-WS channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_wecom_ws as wecom_ws`) so existing callers
+# keep compiling. Optional, behind `channel-wecom-ws`.
+galleon-channel-wecom-ws = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -83,10 +180,6 @@ matrix-sdk = { version = "0.18", optional = true, default-features = false, feat
   "sqlite",
 ] }
 mime_guess = { version = "2", optional = true }
-nostr-sdk = { version = "0.44", default-features = false, features = [
-  "nip04",
-  "nip59",
-], optional = true }
 parking_lot = "0.12"
 portable-atomic = "1"
 prost = { version = "0.14", default-features = false, features = [
@@ -113,6 +206,7 @@ serde_json = { version = "1.0", default-features = false, features = ["std"] }
 sha2 = "0.10"
 tokio = { version = "1.50", default-features = false, features = [
   "fs",
+  "io-std",
   "io-util",
   "macros",
   "net",
@@ -222,26 +316,21 @@ channels-full = [
 ]
 # Channels with optional deps
 channel-email = [
-  "dep:async-imap",
-  "dep:lettre",
-  "dep:mail-parser",
-  "dep:rustls",
-  "dep:rustls-pki-types",
-  "tls-client",
+  "dep:galleon-channel-email",
 ]
 tls-client = ["dep:tokio-rustls", "dep:webpki-roots"]
 ws-transport = ["clawcrew-config/ws-transport", "dep:tokio-tungstenite"]
 image-normalization = ["dep:image"]
-channel-telegram = ["image-normalization"]
-channel-lark = ["dep:aes", "dep:axum", "dep:cbc", "dep:prost", "ws-transport"]
+channel-telegram = ["dep:galleon-channel-telegram", "image-normalization"]
+channel-lark = ["dep:galleon-channel-lark"]
 channel-git = ["provider-github", "provider-gitea"]
 # Forge providers for the git channel. `provider-github` (GitHub Apps) and
 # `provider-gitea` (Gitea/Forgejo PAT) are default-on under `channel-git`;
 # future forges (e.g. `provider-gitlab`) add their own sub-feature and deps here.
 provider-github = ["dep:jsonwebtoken", "dep:thiserror"]
 provider-gitea = []
-channel-line = ["dep:axum"]
-channel-nostr = ["dep:nostr-sdk"]
+channel-line = ["dep:galleon-channel-line"]
+channel-nostr = ["dep:galleon-channel-nostr"]
 whatsapp-web = [
   "dep:bytes",
   "dep:qrcode",
@@ -258,47 +347,49 @@ whatsapp-web = [
 channel-discord = ["ws-transport"]
 channel-slack = ["ws-transport"]
 channel-signal = ["dep:galleon-channel-signal"]
-channel-mattermost = ["ws-transport"]
-channel-irc = ["tls-client"]
-channel-twitch = ["channel-irc"]
-channel-imessage = ["dep:rusqlite"]
-channel-dingtalk = ["ws-transport"]
-channel-qq = ["ws-transport"]
+channel-mattermost = ["dep:galleon-channel-mattermost", "ws-transport"]
+channel-irc = ["dep:galleon-channel-irc"]
+channel-twitch = ["dep:galleon-channel-twitch"]
+channel-imessage = ["dep:galleon-channel-imessage"]
+channel-dingtalk = ["dep:galleon-channel-dingtalk"]
+channel-qq = ["dep:galleon-channel-qq", "ws-transport"]
 channel-bluesky = ["dep:galleon-channel-bluesky"]
-channel-twitter = []
-channel-reddit = []
-channel-notion = []
+channel-twitter = ["dep:galleon-channel-twitter"]
+channel-reddit = ["dep:galleon-channel-reddit"]
+channel-notion = ["dep:galleon-channel-notion"]
 channel-mqtt = ["dep:rumqttc"]
-channel-filesystem = ["dep:notify", "dep:glob"]
-channel-amqp = ["dep:lapin", "dep:tokio-executor-trait", "dep:tokio-reactor-trait", "dep:async-reactor-trait", "dep:p12-keystore", "dep:rustls-pemfile"]
-channel-linq = []
-channel-nextcloud = []
-channel-mochat = []
-channel-wechat = [
-  "dep:aes",
-  "dep:ecb",
-  "dep:md5",
-  "dep:mime_guess",
-  "dep:qrcode",
-]
-channel-wecom = []
-channel-wecom-ws = ["dep:aes", "dep:cbc", "ws-transport"]
-channel-clawdtalk = []
-channel-webhook = ["dep:axum"]
+channel-filesystem = ["dep:galleon-channel-filesystem"]
+channel-amqp = ["dep:galleon-channel-amqp"]
+channel-linq = ["dep:galleon-channel-linq"]
+channel-nextcloud = ["dep:galleon-channel-nextcloud"]
+channel-mochat = ["dep:galleon-channel-mochat"]
+channel-wechat = ["dep:galleon-channel-wechat"]
+channel-wecom = ["dep:galleon-channel-wecom"]
+channel-wecom-ws = ["dep:galleon-channel-wecom-ws"]
+channel-clawdtalk = ["dep:galleon-channel-clawdtalk"]
+channel-webhook = ["dep:galleon-channel-webhook", "dep:axum"]
 channel-whatsapp-cloud = []
 channel-voice-call = ["dep:axum"]
 channel-acp-server = []
 channel-matrix = ["dep:matrix-sdk", "dep:mime_guess"]
 voice-wake = ["dep:cpal"]
 
+# Tier B Regional Channels feature bundle (BR-F3, BR-F4)
+channels-tier-b = [
+  "channel-dingtalk",
+  "channel-lark",
+  "channel-line",
+  "channel-mochat",
+  "channel-qq",
+  "channel-wechat",
+  "channel-wecom",
+  "channel-wecom-ws",
+]
+
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
 [dev-dependencies]
-# Enables the runtime crate's test-only `ScopedToolRegistry::from_raw_for_test`
-# so channel test fixtures can mint the now-sealed `ChannelRuntimeContext`
-# tools registry. dev-dependency only: never enabled in the shipped channels lib.
-clawcrew-runtime = { workspace = true, features = ["test-util"] }
 axum = { version = "0.8", default-features = false, features = [
   "http1",
   "json",

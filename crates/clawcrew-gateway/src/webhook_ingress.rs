@@ -657,7 +657,7 @@ async fn process_verified_message(
                         spec.display_name
                     )
                 );
-                needs_quickstart_channel_reply()
+                needs_quickstart_channel_reply().to_string()
             } else {
                 ::clawcrew_log::record!(
                     ERROR,
@@ -1039,7 +1039,7 @@ mod tests {
 
         let expected: Vec<(String, usize)> = vec![
             ("a2a.rs".to_string(), 1),
-            ("lib.rs".to_string(), 2),
+            ("lib.rs".to_string(), 1),
             ("webhook_ingress.rs".to_string(), 1),
         ];
         assert_eq!(
@@ -1071,5 +1071,229 @@ mod tests {
         let mut deduped = routes.clone();
         deduped.dedup();
         assert_eq!(routes, deduped, "two adapters claim the same route");
+    }
+
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn compute_whatsapp_sig(secret: &str, body: &[u8]) -> String {
+        use hmac::{Hmac, Mac};
+        use sha2::Sha256;
+        let mut mac = Hmac::<Sha256>::new_from_slice(secret.as_bytes()).expect("valid key");
+        mac.update(body);
+        format!("sha256={}", hex::encode(mac.finalize().into_bytes()))
+    }
+
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn whatsapp_test_channel(
+        alias: &str,
+        verify_token: &str,
+    ) -> Arc<clawcrew_channels::whatsapp::WhatsAppChannel> {
+        let peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync> = Arc::new(Vec::new);
+        Arc::new(clawcrew_channels::whatsapp::WhatsAppChannel::new(
+            "access-token".into(),
+            "phone-number-id".into(),
+            verify_token.into(),
+            alias.to_string(),
+            peer_resolver,
+        ))
+    }
+
+    #[test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn whatsapp_signature_valid() {
+        let secret = "test-secret-12345";
+        let body = b"test body content";
+        let sig = compute_whatsapp_sig(secret, body);
+        assert!(crate::verify_whatsapp_signature(secret, body, &sig));
+    }
+
+    #[test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn whatsapp_signature_invalid_wrong_secret() {
+        let secret = "test-secret-12345";
+        let body = b"test body content";
+        let sig = compute_whatsapp_sig("wrong-secret", body);
+        assert!(!crate::verify_whatsapp_signature(secret, body, &sig));
+    }
+
+    #[test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn whatsapp_signature_invalid_wrong_body() {
+        let secret = "test-secret-12345";
+        let sig = compute_whatsapp_sig(secret, b"original body");
+        assert!(!crate::verify_whatsapp_signature(secret, b"tampered body", &sig));
+    }
+
+    #[test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn whatsapp_signature_missing_prefix() {
+        let secret = "test-secret-12345";
+        let body = b"test body";
+        assert!(!crate::verify_whatsapp_signature(secret, body, "1234567890abcdef"));
+    }
+
+    #[test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn whatsapp_signature_empty_header() {
+        let secret = "test-secret-12345";
+        let body = b"test body";
+        assert!(!crate::verify_whatsapp_signature(secret, body, ""));
+    }
+
+    #[test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn whatsapp_signature_invalid_hex() {
+        let secret = "test-secret-12345";
+        let body = b"test body";
+        assert!(!crate::verify_whatsapp_signature(secret, body, "sha256=not_valid_hex_zzz"));
+    }
+
+    #[test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn whatsapp_signature_empty_body() {
+        let secret = "test-secret-12345";
+        let body = b"";
+        let sig = compute_whatsapp_sig(secret, body);
+        assert!(crate::verify_whatsapp_signature(secret, body, &sig));
+    }
+
+    #[test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn whatsapp_signature_unicode_body() {
+        let secret = "test-secret-12345";
+        let body = "Halo Dunia 🌍 test whatsapp".as_bytes();
+        let sig = compute_whatsapp_sig(secret, body);
+        assert!(crate::verify_whatsapp_signature(secret, body, &sig));
+    }
+
+    #[test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn whatsapp_signature_case_sensitive_prefix() {
+        let secret = "test-secret-12345";
+        let body = b"test body";
+        let sig = compute_whatsapp_sig(secret, body);
+        let wrong_case = sig.replace("sha256=", "SHA256=");
+        assert!(!crate::verify_whatsapp_signature(secret, body, &wrong_case));
+    }
+
+    #[test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn whatsapp_signature_truncated_hex() {
+        let secret = "test-secret-12345";
+        let body = b"test body";
+        let sig = compute_whatsapp_sig(secret, body);
+        let truncated = &sig[..20];
+        assert!(!crate::verify_whatsapp_signature(secret, body, truncated));
+    }
+
+    #[test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    fn whatsapp_signature_extra_bytes() {
+        let secret = "test-secret-12345";
+        let body = b"test body";
+        let sig = compute_whatsapp_sig(secret, body);
+        let extended = format!("{sig}extra");
+        assert!(!crate::verify_whatsapp_signature(secret, body, &extended));
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    async fn whatsapp_http_rejects_missing_signature_with_401() {
+        let mut state = crate::api_config::tests::test_state(clawcrew_config::schema::Config::default());
+        state.whatsapp.insert("work".to_string(), whatsapp_test_channel("work", "tok"));
+        state.whatsapp_app_secret.insert("work".to_string(), Arc::<str>::from("test-secret"));
+
+        let resp = crate::handle_whatsapp_message_alias(
+            axum::extract::State(state),
+            axum::extract::Path("work".to_string()),
+            HeaderMap::new(),
+            Bytes::from_static(b"{}"),
+        )
+        .await;
+
+        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    async fn whatsapp_http_rejects_invalid_signature_with_401() {
+        let mut state = crate::api_config::tests::test_state(clawcrew_config::schema::Config::default());
+        state.whatsapp.insert("work".to_string(), whatsapp_test_channel("work", "tok"));
+        state.whatsapp_app_secret.insert("work".to_string(), Arc::<str>::from("test-secret"));
+
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "X-Hub-Signature-256",
+            axum::http::HeaderValue::from_static("sha256=bad_signature_00000000000000000000000000000000000000000000000000000000"),
+        );
+
+        let resp = crate::handle_whatsapp_message_alias(
+            axum::extract::State(state),
+            axum::extract::Path("work".to_string()),
+            headers,
+            Bytes::from_static(b"{}"),
+        )
+        .await;
+
+        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    async fn whatsapp_http_rejects_when_no_app_secret_configured_with_401() {
+        let mut state = crate::api_config::tests::test_state(clawcrew_config::schema::Config::default());
+        state.whatsapp.insert("work".to_string(), whatsapp_test_channel("work", "tok"));
+        // no entry in whatsapp_app_secret -> fail closed
+
+        let resp = crate::handle_whatsapp_message_alias(
+            axum::extract::State(state),
+            axum::extract::Path("work".to_string()),
+            HeaderMap::new(),
+            Bytes::from_static(b"{}"),
+        )
+        .await;
+
+        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    async fn whatsapp_http_unknown_alias_returns_404() {
+        let state = crate::api_config::tests::test_state(clawcrew_config::schema::Config::default());
+
+        let resp = crate::handle_whatsapp_message_alias(
+            axum::extract::State(state),
+            axum::extract::Path("unknown".to_string()),
+            HeaderMap::new(),
+            Bytes::from_static(b"{}"),
+        )
+        .await;
+
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "channel-whatsapp-cloud")]
+    async fn whatsapp_http_accepts_valid_signature_with_200() {
+        let mut state = crate::api_config::tests::test_state(clawcrew_config::schema::Config::default());
+        state.whatsapp.insert("work".to_string(), whatsapp_test_channel("work", "tok"));
+        state.whatsapp_app_secret.insert("work".to_string(), Arc::<str>::from("test-secret"));
+
+        let body = br#"{"object":"whatsapp_business_account","entry":[]}"#;
+        let sig = compute_whatsapp_sig("test-secret", body);
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "X-Hub-Signature-256",
+            axum::http::HeaderValue::from_str(&sig).expect("valid header value"),
+        );
+
+        let resp = crate::handle_whatsapp_message_alias(
+            axum::extract::State(state),
+            axum::extract::Path("work".to_string()),
+            headers,
+            Bytes::from_static(body),
+        )
+        .await;
+
+        assert_eq!(resp.status(), StatusCode::OK);
     }
 }

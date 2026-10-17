@@ -22,20 +22,24 @@ fn canonicalize_provider_ref(provider_name: &str) -> String {
 
 // ── Diagnostic item ──────────────────────────────────────────────
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Severity {
-    Ok,
-    Warn,
-    Error,
+pub use clawcrew_api::doctor::{DiagResult, DiagnosticsRunner, Severity};
+
+pub struct RuntimeDiagnosticsRunner {
+    config_getter: std::sync::Arc<dyn Fn() -> Config + Send + Sync>,
 }
 
-/// Structured diagnostic result for programmatic consumption (web dashboard, API).
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct DiagResult {
-    pub severity: Severity,
-    pub category: String,
-    pub message: String,
+impl RuntimeDiagnosticsRunner {
+    #[must_use]
+    pub fn new(config_getter: std::sync::Arc<dyn Fn() -> Config + Send + Sync>) -> Self {
+        Self { config_getter }
+    }
+}
+
+impl DiagnosticsRunner for RuntimeDiagnosticsRunner {
+    fn run_diagnostics(&self) -> Vec<DiagResult> {
+        let config = (self.config_getter)();
+        diagnose(&config)
+    }
 }
 
 struct DiagItem {
@@ -1495,12 +1499,7 @@ fn check_config_semantics(config: &Config, items: &mut Vec<DiagItem>) {
 fn localized_validation_warning_message(
     warning: &clawcrew_config::validation_warnings::ValidationWarning,
 ) -> String {
-    match warning.code.as_str() {
-        clawcrew_config::validation_warnings::VERIFIABLE_INTENT_TOOL_WITHHELD => {
-            crate::i18n::get_required_cli_string("cli-doctor-verifiable-intent-tool-withheld")
-        }
-        _ => warning.message.clone(),
-    }
+    warning.message.clone()
 }
 
 fn check_web_dist_dir(config: &Config, items: &mut Vec<DiagItem>) {
@@ -3286,38 +3285,6 @@ mod tests {
                 "expected per-agent SOUL.md diagnostic for {alias}; got {messages:?}"
             );
         }
-    }
-
-    /// `doctor` renders this warning through Fluent rather than printing the
-    /// structured message verbatim. The structured message stays English on
-    /// purpose — API consumers key off a stable contract — so the two are
-    /// asserted to differ rather than to agree.
-    #[test]
-    fn verifiable_intent_withheld_warning_uses_fluent() {
-        let structured_message = "verifiable_intent.enabled is set, but the vi_verify tool is \
-                                  withheld from the model-visible registry until a credential \
-                                  chain verifier exists.";
-        let warning = clawcrew_config::validation_warnings::ValidationWarning::new(
-            clawcrew_config::validation_warnings::VERIFIABLE_INTENT_TOOL_WITHHELD,
-            structured_message,
-            "verifiable_intent.enabled",
-        );
-
-        let expected =
-            crate::i18n::get_required_cli_string("cli-doctor-verifiable-intent-tool-withheld");
-        assert_eq!(localized_validation_warning_message(&warning), expected);
-        assert_ne!(
-            expected, structured_message,
-            "the localized line must not be the structured API message"
-        );
-        assert_ne!(
-            expected, "{cli-doctor-verifiable-intent-tool-withheld}",
-            "the Fluent key must resolve; a marker means it is absent from every catalog"
-        );
-
-        // The diagnostic path is what an operator edits, so it stays the
-        // config key rather than being folded into the localized sentence.
-        assert_eq!(warning.path, "verifiable_intent.enabled");
     }
 
     #[test]

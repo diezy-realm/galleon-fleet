@@ -6431,6 +6431,9 @@ impl RpcDispatcher {
                         crate::i18n::get_required_cli_string("sop-rpc-decision-unauthorized"),
                     ));
                 }
+                BrokerOutcome::Resolved(ResolveOutcome::RejectedConstraint(reason)) => {
+                    return Err(rpc_err(AUTH_REQUIRED, reason));
+                }
                 BrokerOutcome::PolicyMissing { name } => {
                     return Err(rpc_err(
                         INTERNAL_ERROR,
