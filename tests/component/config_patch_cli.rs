@@ -129,6 +129,12 @@ fn test_state(config: Config) -> AppState {
         tui_registry: None,
         sop_engine: None,
         sop_audit: None,
+        diagnostics: None,
+        quickstart: None,
+        integration_catalog: None,
+        personality_runner: None,
+        skills_runner: None,
+        acp_runner: None,
     }
 }
 
