@@ -23,7 +23,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 use clawcrew_api::channel::ChannelApprovalResponse;
-use clawcrew_runtime::sop::approval::{
+use clawcrew_api::sop::{
     ApprovalDecision as SopApprovalDecision, ApprovalPrincipal as SopApprovalPrincipal,
 };
 
@@ -280,44 +280,22 @@ where
         let _ = sender.send(Message::Text(err.to_string().into())).await;
         return true;
     };
-    let frame = if let Some(engine) = state.sop_engine.as_ref() {
+    let frame = if let Some(runner) = state.sop_runner.as_ref() {
         let principal =
             SopApprovalPrincipal::ws(session_id.to_string(), auth_subject.map(str::to_string));
-        // EPIC G: route through the broker (membership + quorum); with no
-        // `[sop.approval]` policy this is exactly `resolve_gate`.
-        let resolved = match engine.lock() {
-            Ok(mut g) => Some(g.resolve_via_broker_deferred(&run_id, decision, principal)),
-            Err(_) => None,
-        };
-        match resolved {
-            Some(Ok(outcome)) => {
-                let config = state.config.read();
-                clawcrew_runtime::sop::drive_resumed_broker_action(
-                    &config,
-                    std::sync::Arc::clone(engine),
-                    state.sop_audit.clone(),
-                    &outcome,
-                );
-                serde_json::json!({
-                    "type": "sop_approval_result",
-                    "run_id": run_id,
-                    "outcome": outcome.label(),
-                })
-            }
-            Some(Err(e)) => serde_json::json!({
+        match runner.resolve_approval(&run_id, decision, principal).await {
+            Ok(outcome) => serde_json::json!({
+                "type": "sop_approval_result",
+                "run_id": run_id,
+                "outcome": outcome.label(),
+            }),
+            Err(e) => serde_json::json!({
                 "type": "error",
                 "message": galleon_i18n::get_required_cli_string_with_args(
                     "cli-sop-ws-resolve-failed",
                     &[("error", &e.to_string())],
                 ),
                 "code": "SOP_RESOLVE_FAILED"
-            }),
-            None => serde_json::json!({
-                "type": "error",
-                "message": galleon_i18n::get_required_cli_string(
-                    "cli-sop-ws-engine-lock-poisoned"
-                ),
-                "code": "SOP_LOCK_POISONED"
             }),
         }
     } else {
@@ -531,8 +509,8 @@ async fn handle_socket(
             false,
             // The gateway WebSocket turn does not transport ACP file attachments.
             false,
-            state.sop_engine.clone(),
-            state.sop_audit.clone(),
+            None,
+            None,
             Some(state.canvas_store.clone()),
         )
         .await
@@ -3580,12 +3558,13 @@ data: {\"type\":\"message_stop\"}\n\n",
             "decision": "approve",
         });
         let run_status = |st: &AppState| {
-            st.sop_engine
+            st.sop_runner
                 .as_ref()
                 .unwrap()
-                .lock()
+                .list_runs(None)
                 .unwrap()
-                .get_run(&run_id)
+                .iter()
+                .find(|r| r.run_id == run_id)
                 .map(|r| format!("{:?}", r.status))
         };
 

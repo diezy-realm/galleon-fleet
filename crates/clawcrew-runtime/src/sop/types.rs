@@ -757,38 +757,7 @@ pub struct SopEvent {
 // ── Run state ────────────────────────────────────────────────────
 
 /// Status of an SOP execution run.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
-#[serde(rename_all = "snake_case")]
-pub enum SopRunStatus {
-    Pending,
-    Running,
-    /// An operator requested cancellation while work was in flight. The run
-    /// remains active and keeps its admission claim until the driver reaches
-    /// the next supported step boundary.
-    CancelRequested,
-    WaitingApproval,
-    /// Paused at a checkpoint in a deterministic workflow.
-    PausedCheckpoint,
-    Completed,
-    Failed,
-    Cancelled,
-}
-
-impl fmt::Display for SopRunStatus {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Pending => write!(f, "pending"),
-            Self::Running => write!(f, "running"),
-            Self::CancelRequested => write!(f, "cancel_requested"),
-            Self::WaitingApproval => write!(f, "waiting_approval"),
-            Self::PausedCheckpoint => write!(f, "paused_checkpoint"),
-            Self::Completed => write!(f, "completed"),
-            Self::Failed => write!(f, "failed"),
-            Self::Cancelled => write!(f, "cancelled"),
-        }
-    }
-}
+pub use clawcrew_api::sop::SopRunStatus;
 
 /// Result status of a single step execution.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

@@ -11,8 +11,6 @@ use super::{
     AppState, WebhookJsonResponse, authorize_webhook_request, check_webhook_idempotency,
     require_sop_dispatch_credentials,
 };
-use clawcrew_runtime::sop::dispatch::{DispatchResult, dispatch_untrusted_fan_in};
-use clawcrew_runtime::sop::{SopEvent, SopTriggerSource};
 
 pub(super) enum SopWebhookOutcome {
     NoMatch,
@@ -32,23 +30,10 @@ pub(super) fn has_matching_webhook_sop(
     state: &AppState,
     path: &str,
 ) -> Result<bool, WebhookJsonResponse> {
-    let (Some(engine), Some(_audit)) = (&state.sop_engine, &state.sop_audit) else {
-        if state.sop_engine.is_none() && state.sop_audit.is_none() {
-            return Ok(false);
-        }
+    let Some(runner) = state.sop_runner.as_ref() else {
         return Err(unavailable());
     };
-
-    let event = SopEvent {
-        source: SopTriggerSource::Webhook,
-        topic: Some(path.to_string()),
-        payload: None,
-        timestamp: clawcrew_runtime::sop::engine::now_iso8601(),
-    };
-    engine
-        .lock()
-        .map(|engine| !engine.match_trigger(&event).is_empty())
-        .map_err(|_| unavailable())
+    runner.has_matching_webhook_sop(path).map_err(|_| unavailable())
 }
 
 pub(super) async fn dispatch_webhook_sop(
@@ -56,85 +41,29 @@ pub(super) async fn dispatch_webhook_sop(
     path: &str,
     payload: Option<&str>,
 ) -> SopWebhookOutcome {
-    let (Some(engine), Some(audit)) = (&state.sop_engine, &state.sop_audit) else {
+    let Some(runner) = state.sop_runner.as_ref() else {
         return SopWebhookOutcome::Handled(unavailable());
     };
-
-    let results = dispatch_untrusted_fan_in(
-        engine,
-        audit,
-        SopTriggerSource::Webhook,
-        Some(path),
-        payload,
-        None,
-    )
-    .await;
-    if results.is_empty() {
-        return SopWebhookOutcome::Handled(unavailable());
+    match runner.dispatch_webhook_sop(path, payload).await {
+        Ok(Some(outcome)) => {
+            let status = if outcome.blocked_only {
+                StatusCode::UNPROCESSABLE_ENTITY
+            } else {
+                StatusCode::OK
+            };
+            SopWebhookOutcome::Handled((
+                status,
+                Json(serde_json::json!({
+                    "status": if outcome.blocked_only { "blocked" } else { "accepted" },
+                    "source": "webhook",
+                    "path": path,
+                    "results": outcome.results,
+                })),
+            ))
+        }
+        Ok(None) => SopWebhookOutcome::NoMatch,
+        Err(_) => SopWebhookOutcome::Handled(unavailable()),
     }
-    if results
-        .iter()
-        .all(|result| matches!(result, DispatchResult::NoMatch))
-    {
-        return SopWebhookOutcome::NoMatch;
-    }
-
-    let blocked_only = results.iter().all(|result| {
-        matches!(
-            result,
-            DispatchResult::BlockedUnsafe { .. } | DispatchResult::NoMatch
-        )
-    });
-    let results = results
-        .into_iter()
-        .filter_map(|result| match result {
-            DispatchResult::Started {
-                run_id, sop_name, ..
-            } => Some(serde_json::json!({
-                "status": "started",
-                "sop": sop_name,
-                "run_id": run_id,
-            })),
-            DispatchResult::Skipped { sop_name, reason } => Some(serde_json::json!({
-                "status": "skipped",
-                "sop": sop_name,
-                "reason": reason,
-            })),
-            DispatchResult::Deferred { sop_name, reason } => Some(serde_json::json!({
-                "status": "deferred",
-                "sop": sop_name,
-                "reason": reason,
-            })),
-            DispatchResult::Coalesced {
-                sop_name,
-                existing_run_id,
-            } => Some(serde_json::json!({
-                "status": "coalesced",
-                "sop": sop_name,
-                "run_id": existing_run_id,
-            })),
-            DispatchResult::BlockedUnsafe { sop_name, reason } => Some(serde_json::json!({
-                "status": "blocked_unsafe",
-                "sop": sop_name,
-                "reason": reason,
-            })),
-            DispatchResult::NoMatch => None,
-        })
-        .collect::<Vec<_>>();
-    let status = if blocked_only {
-        StatusCode::UNPROCESSABLE_ENTITY
-    } else {
-        StatusCode::OK
-    };
-    SopWebhookOutcome::Handled((
-        status,
-        Json(serde_json::json!({
-            "status": if blocked_only { "blocked" } else { "accepted" },
-            "source": "webhook",
-            "path": path,
-            "results": results,
-        })),
-    ))
 }
 
 /// `POST /sop/{*rest}` — SOP-only webhook fan-in. A request that does not
@@ -177,7 +106,7 @@ pub async fn handle_sop_webhook(
 
     match has_matching_webhook_sop(&state, &path) {
         Ok(true) => {}
-        Ok(false) if state.sop_engine.is_none() && state.sop_audit.is_none() => {
+        Ok(false) if state.sop_runner.is_none() => {
             return unavailable().into_response();
         }
         Ok(false) => {
