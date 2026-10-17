@@ -1,0 +1,78 @@
+[package]
+name = "galleon-channel-matrix"
+rust-version.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Matrix channel feature-crate (RF-B1 split; Matrix SDK 0.18, end-to-end encryption, streaming, and voice support ported from clawcrew-channels)."
+repository.workspace = true
+homepage.workspace = true
+publish = true
+
+[dependencies]
+galleon-channel-core.workspace = true
+clawcrew-api.workspace = true
+clawcrew-config.workspace = true
+clawcrew-infra.workspace = true
+clawcrew-log.workspace = true
+galleon-i18n.workspace = true
+anyhow = "1.0"
+async-trait = "0.1"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+futures-util = { version = "0.3", default-features = false, features = ["sink"] }
+matrix-sdk = { version = "0.18", default-features = false, features = [
+  "e2e-encryption",
+  "markdown",
+  "sqlite",
+] }
+mime_guess = "2"
+parking_lot = "0.12"
+rand = "0.10"
+reqwest = { version = "0.12", default-features = false, features = [
+  "__rustls-ring",
+  "json",
+  "multipart",
+  "rustls-tls-webpki-roots-no-provider",
+  "stream",
+] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+tokio = { version = "1.50", default-features = false, features = [
+  "sync",
+  "fs",
+  "io-util",
+  "time",
+  "net",
+  "macros",
+  "rt",
+  "rt-multi-thread",
+] }
+uuid = { version = "1.22", default-features = false, features = ["std", "v4"] }
+
+[dev-dependencies]
+image = { version = "0.25", default-features = false, features = [
+  "jpeg",
+  "png",
+  "webp",
+] }
+matrix-sdk = { version = "0.18", default-features = false, features = [
+  "testing",
+  "e2e-encryption",
+  "markdown",
+  "sqlite",
+] }
+matrix-sdk-base = { version = "0.18", default-features = false, features = ["e2e-encryption"] }
+matrix-sdk-test = "0.18"
+rusqlite = { version = "0.37", features = ["bundled"] }
+tempfile = "3.26"
+wiremock = "0.6"
+tokio = { version = "1.50", default-features = false, features = [
+  "macros",
+  "rt-multi-thread",
+  "sync",
+  "time",
+  "test-util",
+] }
+
+[features]
+default = []

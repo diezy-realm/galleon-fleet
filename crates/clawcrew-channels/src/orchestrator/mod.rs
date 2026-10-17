@@ -12208,9 +12208,14 @@ fn build_channel_by_id(
                                 &config,
                                 &transcription_channel_key,
                             );
-                            Some(crate::matrix::build_transcription_manager(
-                                &config, &provider,
-                            ))
+                            Some(
+                                crate::transcription::build_channel_transcription_manager(
+                                    &config, &provider,
+                                )
+                                .map(|m| {
+                                    Arc::new(m) as Arc<dyn galleon_channel_matrix::AudioTranscriber>
+                                }),
+                            )
                         })
                         .with_tts_manager_factory(move || {
                             let config = tts_config_arc.read();
@@ -12218,10 +12223,16 @@ fn build_channel_by_id(
                                 return None;
                             }
                             let owner = resolve_agent_tts_owner(&config, &tts_channel_key);
-                            Some(crate::tts::TtsManager::from_config_for_agent(
-                                &config,
-                                owner.as_deref(),
-                            ))
+                            Some(
+                                crate::tts::TtsManager::from_config_for_agent(
+                                    &config,
+                                    owner.as_deref(),
+                                )
+                                .map(|m| {
+                                    Arc::new(m)
+                                        as Arc<dyn galleon_channel_matrix::TextToSpeechSynthesizer>
+                                }),
+                            )
                         })
                         .with_voice_peer_resolver(voice_peer_resolver)
                         .with_workspace_dir(workspace_dir)
@@ -13237,10 +13248,7 @@ fn configure_discord_transcription(
     let transcription_mgr: Option<Arc<dyn galleon_channel_discord::AudioTranscriber>> =
         resolved_transcription_manager(config, channel_key)
             .map(|m| m as Arc<dyn galleon_channel_discord::AudioTranscriber>);
-    channel.with_transcription_manager(
-        config.transcription.clone(),
-        transcription_mgr,
-    )
+    channel.with_transcription_manager(config.transcription.clone(), transcription_mgr)
 }
 
 #[cfg(feature = "channel-discord")]
@@ -13365,9 +13373,10 @@ pub(crate) fn build_configured_matrix_channel(
             }
             let provider =
                 resolve_agent_transcription_provider(&config, &transcription_channel_key);
-            Some(crate::matrix::build_transcription_manager(
-                &config, &provider,
-            ))
+            Some(
+                crate::transcription::build_channel_transcription_manager(&config, &provider)
+                    .map(|m| Arc::new(m) as Arc<dyn galleon_channel_matrix::AudioTranscriber>),
+            )
         })
         .with_tts_manager_factory(move || {
             let config = tts_config_arc.read();
@@ -13375,10 +13384,11 @@ pub(crate) fn build_configured_matrix_channel(
                 return None;
             }
             let owner = resolve_agent_tts_owner(&config, &tts_channel_key);
-            Some(crate::tts::TtsManager::from_config_for_agent(
-                &config,
-                owner.as_deref(),
-            ))
+            Some(
+                crate::tts::TtsManager::from_config_for_agent(&config, owner.as_deref()).map(|m| {
+                    Arc::new(m) as Arc<dyn galleon_channel_matrix::TextToSpeechSynthesizer>
+                }),
+            )
         })
         .with_voice_peer_resolver(voice_peer_resolver)
         .with_workspace_dir(config.channel_workspace_dir(&format!("matrix.{alias}")))

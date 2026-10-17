@@ -131,6 +131,11 @@ galleon-channel-wecom-ws = { workspace = true, optional = true }
 # (`crate::discord::DiscordChannel`) keep compiling. Optional, behind
 # `channel-discord`.
 galleon-channel-discord = { workspace = true, optional = true }
+# RF-B1: the Matrix channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_matrix as matrix`) so existing callers
+# (`crate::matrix::MatrixChannel`) keep compiling. Optional, behind
+# `channel-matrix`.
+galleon-channel-matrix = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -179,12 +184,6 @@ lettre = { version = "0.11.22", default-features = false, features = [
 ], optional = true }
 pulldown-cmark = "0.13"
 mail-parser = { version = "0.11.2", optional = true }
-matrix-sdk = { version = "0.18", optional = true, default-features = false, features = [
-  "e2e-encryption",
-  "markdown",
-  "sqlite",
-] }
-mime_guess = { version = "2", optional = true }
 parking_lot = "0.12"
 portable-atomic = "1"
 prost = { version = "0.14", default-features = false, features = [
@@ -376,7 +375,7 @@ channel-webhook = ["dep:galleon-channel-webhook", "dep:axum"]
 channel-whatsapp-cloud = []
 channel-voice-call = ["dep:axum"]
 channel-acp-server = []
-channel-matrix = ["dep:matrix-sdk", "dep:mime_guess"]
+channel-matrix = ["dep:galleon-channel-matrix"]
 voice-wake = ["dep:cpal"]
 
 # Tier B Regional Channels feature bundle (BR-F3, BR-F4)
@@ -405,14 +404,6 @@ image = { version = "0.25", default-features = false, features = [
   "png",
   "webp",
 ] }
-matrix-sdk = { version = "0.18", default-features = false, features = [
-  "testing",
-  "e2e-encryption",
-  "markdown",
-  "sqlite",
-] }
-matrix-sdk-base = { version = "0.18", default-features = false, features = ["e2e-encryption"] }
-matrix-sdk-test = "0.18"
 rusqlite = { version = "0.37", features = ["bundled"] }
 tempfile = "3.26"
 toml = "1.0"
