@@ -6,7 +6,7 @@ fileMatchPattern: "engine/**/*.go"
 
 # Engine (Go) — konvensi
 
-Loads saat menyentuh `.go` di `engine/`. Go 1.25+, module `github.com/diezy-labs/claw-crew/engine`. DI pakai `google/wire`. Ikuti pola yang SUDAH ada; jangan bikin gaya baru.
+Loads saat menyentuh `.go` di `engine/`. Go 1.27.1, module `github.com/diezy-realm/galleon-fleet/engine`. DI pakai `google/wire`. Ikuti pola yang SUDAH ada; jangan bikin gaya baru.
 
 ## Struktur bounded context (`engine/src/<ctx>/`)
 Satu domain = satu package dengan file berperan tetap:
@@ -32,7 +32,7 @@ Scaffold baru (orchestrator, fleet, ship, squad, charter, mission, navigator, br
 - Logging via `logger.Get()` (pola repo); field terstruktur, English, jangan `fmt.Println`.
 
 ## Single Source Of Truth (gate review)
-- Fakta yang dipakai lintas-tier resolve dari engine, bukan disalin. **Jangan** definisikan ulang risk-tier/policy/quartermaster-reply di Rust (`apps/tauri-2`) dengan nilai berbeda — engine HTTP adalah sumber; Tauri cukup proxy. (Pelanggaran nyata tercatat di `galleon-architecture.md`.)
+- Fakta yang dipakai lintas-tier resolve dari engine, bukan disalin. **Jangan** definisikan ulang risk-tier/policy/quartermaster-reply di Rust (`apps/tauri`) dengan nilai berbeda — engine HTTP adalah sumber; Tauri cukup proxy. (Pelanggaran nyata tercatat di `galleon-architecture.md`.)
 - Risk tiers kanonikal di package `policy`/`tool`: `read_only → draft → write → sensitive → destructive`. Policy memutuskan izin SEBELUM eksekusi tool.
 - Persistensi: jangan klaim DiskStore di doc kalau `wire_gen.go` masih pakai `NewMemory*`. Wire beneran atau perbaiki klaim.
 - Plumb `correlation_id` lintas Quest→Voyage→Artifact→Ship Report.
