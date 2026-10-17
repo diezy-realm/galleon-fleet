@@ -310,6 +310,12 @@ pub trait AcpSessionRunner: Send + Sync {
     );
 }
 
+/// Runner interface decoupling gateway cron execution/callbacks from concrete runtime scheduler.
+#[async_trait::async_trait]
+pub trait CronRunner: Send + Sync {
+    async fn trigger_job(&self, job_id: &str) -> anyhow::Result<()>;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
