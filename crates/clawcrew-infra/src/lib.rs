@@ -3,6 +3,7 @@
 
 pub mod acp_session_store;
 pub mod backup;
+pub mod cron_store;
 pub mod debounce;
 pub mod gateway_controls;
 pub mod health;

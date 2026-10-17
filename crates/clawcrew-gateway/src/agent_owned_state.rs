@@ -8,6 +8,7 @@ use anyhow::Context;
 use clawcrew_api::memory_traits::Memory;
 use clawcrew_config::schema::Config;
 use clawcrew_infra::acp_session_store::AcpSessionStore;
+use clawcrew_infra::cron_store::CronStore;
 use clawcrew_infra::session_backend::SessionBackend;
 
 pub fn live_acp_session_count(config: &Config, alias: &str) -> anyhow::Result<usize> {
@@ -77,20 +78,28 @@ pub async fn cascade_owned_state(
     };
 
     // ── cron: list → archive → remove (cron_runs cascade off job_id) ─────────
-    let cron_jobs = match clawcrew_runtime::cron::list_jobs_by_agent(config, alias) {
-        Ok(jobs) => jobs,
-        Err(e) => {
-            warnings.push(format!("cron list: {e}"));
-            Vec::new()
+    let cron_removed = match CronStore::new(&config.data_dir) {
+        Ok(store) => {
+            let jobs = match store.list_jobs_by_agent(alias) {
+                Ok(jobs) => jobs,
+                Err(e) => {
+                    warnings.push(format!("cron list: {e}"));
+                    Vec::new()
+                }
+            };
+            if let Ok(bytes) = serde_json::to_vec_pretty(&jobs) {
+                write_json(&cascade_dir.join("cron.json"), bytes).await;
+            }
+            match store.remove_jobs_by_agent(alias) {
+                Ok(n) => n,
+                Err(e) => {
+                    warnings.push(format!("cron remove: {e}"));
+                    0
+                }
+            }
         }
-    };
-    if let Ok(bytes) = serde_json::to_vec_pretty(&cron_jobs) {
-        write_json(&cascade_dir.join("cron.json"), bytes).await;
-    }
-    let cron_removed = match clawcrew_runtime::cron::remove_jobs_by_agent(config, alias) {
-        Ok(n) => n,
         Err(e) => {
-            warnings.push(format!("cron remove: {e}"));
+            warnings.push(format!("cron store open: {e}"));
             0
         }
     };
@@ -202,10 +211,16 @@ pub async fn cascade_rename_agent(
         }
     };
 
-    let cron_jobs = match clawcrew_runtime::cron::rename_jobs_by_agent(config, from, to) {
-        Ok(n) => n,
+    let cron_jobs = match CronStore::new(&config.data_dir) {
+        Ok(store) => match store.rename_jobs_by_agent(from, to) {
+            Ok(n) => n,
+            Err(e) => {
+                warnings.push(format!("cron rename: {e}"));
+                0
+            }
+        },
         Err(e) => {
-            warnings.push(format!("cron rename: {e}"));
+            warnings.push(format!("cron store open: {e}"));
             0
         }
     };
