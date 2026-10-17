@@ -99,6 +99,33 @@ fn to_infra_job(j: clawcrew_runtime::cron::CronJob) -> CronJob {
     }
 }
 
+fn to_runtime_job(j: &CronJob) -> clawcrew_runtime::cron::CronJob {
+    clawcrew_runtime::cron::CronJob {
+        id: j.id.clone(),
+        expression: j.expression.clone(),
+        schedule: to_runtime_schedule(j.schedule.clone()),
+        command: j.command.clone(),
+        prompt: j.prompt.clone(),
+        name: j.name.clone(),
+        job_type: to_runtime_job_type(j.job_type.clone()),
+        session_target: to_runtime_session_target(j.session_target.clone()),
+        model: j.model.clone(),
+        agent_alias: j.agent_alias.clone(),
+        enabled: j.enabled,
+        delivery: to_runtime_delivery(j.delivery.clone()),
+        delete_after_run: j.delete_after_run,
+        allowed_tools: j.allowed_tools.clone(),
+        uses_memory: j.uses_memory,
+        source: j.source.clone(),
+        shell_output_format: j.shell_output_format.into(),
+        created_at: j.created_at,
+        next_run: j.next_run,
+        last_run: j.last_run,
+        last_status: j.last_status.clone(),
+        last_output: j.last_output.clone(),
+    }
+}
+
 fn to_infra_run(r: clawcrew_runtime::cron::CronRun) -> CronRun {
     CronRun {
         id: r.id,
@@ -256,9 +283,7 @@ pub async fn run_manual_job(
     job: &CronJob,
     event_tx: &Option<tokio::sync::broadcast::Sender<serde_json::Value>>,
 ) -> ManualCronRunResult {
-    let runtime_job: clawcrew_runtime::cron::CronJob =
-        serde_json::from_value(serde_json::to_value(job).expect("serialize CronJob"))
-            .expect("deserialize to runtime CronJob");
+    let runtime_job = to_runtime_job(job);
 
     let res = clawcrew_runtime::cron::scheduler::run_manual_job(
         config,
