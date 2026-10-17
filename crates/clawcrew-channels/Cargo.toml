@@ -126,6 +126,11 @@ galleon-channel-telegram = { workspace = true, optional = true }
 # re-exports it (`pub use galleon_channel_wecom_ws as wecom_ws`) so existing callers
 # keep compiling. Optional, behind `channel-wecom-ws`.
 galleon-channel-wecom-ws = { workspace = true, optional = true }
+# RF-B1: the Discord channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_discord as discord`) so existing callers
+# (`crate::discord::DiscordChannel`) keep compiling. Optional, behind
+# `channel-discord`.
+galleon-channel-discord = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -344,7 +349,7 @@ whatsapp-web = [
   "image-normalization",
 ]
 # Channels with no optional deps (cfg gate only)
-channel-discord = ["ws-transport"]
+channel-discord = ["dep:galleon-channel-discord", "ws-transport"]
 channel-slack = ["ws-transport"]
 channel-signal = ["dep:galleon-channel-signal"]
 channel-mattermost = ["dep:galleon-channel-mattermost", "ws-transport"]

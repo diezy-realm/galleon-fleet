@@ -133,12 +133,12 @@ pub(crate) enum ReconcileOutcome {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Debug)]
-pub(crate) struct DiscordListenerFatalError {
+pub struct DiscordListenerFatalError {
     message: String,
 }
 
 impl DiscordListenerFatalError {
-    pub(crate) fn new(message: impl Into<String>) -> Self {
+    pub fn new(message: impl Into<String>) -> Self {
         Self {
             message: message.into(),
         }

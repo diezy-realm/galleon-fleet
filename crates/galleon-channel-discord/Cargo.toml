@@ -1,0 +1,65 @@
+[package]
+name = "galleon-channel-discord"
+rust-version.workspace = true
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Discord channel feature-crate (RF-B1 split; Gateway WebSocket, slash commands, components, and media integration ported from clawcrew-channels)."
+repository.workspace = true
+homepage.workspace = true
+publish = true
+
+[dependencies]
+galleon-channel-core.workspace = true
+clawcrew-api.workspace = true
+clawcrew-config = { workspace = true, default-features = false, features = ["ws-transport"] }
+clawcrew-infra.workspace = true
+clawcrew-log.workspace = true
+clawcrew-memory.workspace = true
+clawcrew-spawn.workspace = true
+galleon-i18n.workspace = true
+galleon-security-scrub.workspace = true
+anyhow = "1.0"
+async-trait = "0.1"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+futures-util = { version = "0.3", default-features = false, features = ["sink"] }
+parking_lot = "0.12"
+rand = "0.10"
+reqwest = { version = "0.12", default-features = false, features = [
+  "__rustls-ring",
+  "json",
+  "multipart",
+  "rustls-tls-webpki-roots-no-provider",
+  "stream",
+] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["std"] }
+tokio = { version = "1.50", default-features = false, features = [
+  "sync",
+  "fs",
+  "io-util",
+  "time",
+  "net",
+  "macros",
+] }
+tokio-tungstenite = { version = "0.29", default-features = false, features = [
+  "connect",
+  "rustls-tls-webpki-roots",
+] }
+uuid = { version = "1.22", default-features = false, features = ["std", "v4"] }
+
+[dev-dependencies]
+axum = { version = "0.8", default-features = false }
+tempfile = "3.26"
+wiremock = "0.6"
+clawcrew-providers.workspace = true
+tokio = { version = "1.50", default-features = false, features = [
+  "macros",
+  "rt-multi-thread",
+  "sync",
+  "time",
+  "test-util",
+] }
+
+[features]
+default = []
