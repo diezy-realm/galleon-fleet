@@ -5,7 +5,7 @@
 //! settled when the run reaches a terminal action. Non-fatal: a missing control
 //! plane never affects SOP execution.
 
-use crate::control_plane::{control_plane, producer, ControlPlaneHandle, TaskKind, TaskStatus};
+use crate::control_plane::{ControlPlaneHandle, TaskKind, TaskStatus, control_plane, producer};
 use crate::sop::types::SopRunAction;
 
 /// Stable canonical task id for a run.
@@ -80,6 +80,7 @@ pub async fn project_sop_action_with(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::control_plane::ControlPlaneHandleExt;
 
     fn action(run_id: &str, terminal: Option<TaskStatus>) -> SopRunAction {
         match terminal {
@@ -121,8 +122,12 @@ mod tests {
         assert_eq!(rec.status, TaskStatus::Queued);
 
         // Terminal action settles it.
-        project_sop_action_with(Some(&cp), &action("run-1", Some(TaskStatus::Completed)), "sop")
-            .await;
+        project_sop_action_with(
+            Some(&cp),
+            &action("run-1", Some(TaskStatus::Completed)),
+            "sop",
+        )
+        .await;
         assert_eq!(
             cp.store.get(&task_id).await.unwrap().unwrap().status,
             TaskStatus::Completed
@@ -135,7 +140,12 @@ mod tests {
         let cp = ControlPlaneHandle::open(dir.path()).unwrap();
         project_sop_action_with(Some(&cp), &action("run-2", Some(TaskStatus::Failed)), "sop").await;
         assert_eq!(
-            cp.store.get(&sop_task_id("run-2")).await.unwrap().unwrap().status,
+            cp.store
+                .get(&sop_task_id("run-2"))
+                .await
+                .unwrap()
+                .unwrap()
+                .status,
             TaskStatus::Failed
         );
     }

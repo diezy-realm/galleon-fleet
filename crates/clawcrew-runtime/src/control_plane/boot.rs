@@ -12,17 +12,16 @@ use super::task_registry::TaskRegistry;
 use super::task_store_sqlite::SqliteTaskStore;
 
 /// The live control-plane, shared (cheaply, via `Arc`/clone) across producers and
-/// the reaper.
-#[derive(Clone)]
-pub struct ControlPlaneHandle {
-    pub store: Arc<dyn TaskRegistry>,
-    pub boot_id: String,
-}
+pub use clawcrew_api::control_plane::ControlPlaneHandle;
 
-impl ControlPlaneHandle {
+pub trait ControlPlaneHandleExt {
     /// Open the durable task store for producers and observers without gaining
     /// startup-recovery or reaper authority.
-    pub fn open(data_dir: &Path) -> Result<Self> {
+    fn open(data_dir: &Path) -> Result<ControlPlaneHandle>;
+}
+
+impl ControlPlaneHandleExt for ControlPlaneHandle {
+    fn open(data_dir: &Path) -> Result<Self> {
         Ok(Self {
             store: Arc::new(SqliteTaskStore::new(data_dir)?),
             boot_id: process_identity().to_string(),

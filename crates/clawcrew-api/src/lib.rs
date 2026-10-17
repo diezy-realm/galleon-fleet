@@ -52,6 +52,7 @@ tokio::task_local! {
     pub static NATIVE_THINKING_OVERRIDE: Option<crate::model_provider::NativeThinkingParams>;
 }
 
+pub mod control_plane;
 pub mod dashboard;
 pub mod doctor;
 pub mod personality;

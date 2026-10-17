@@ -10,15 +10,15 @@ use crate::cron::{
 use crate::security::SecurityPolicy;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use clawcrew_api::runtime_traits::RuntimeAdapter;
+use clawcrew_config::schema::Config;
+use clawcrew_config::schema::{CronJobDecl, CronScheduleDecl, CronShellOutputFormat};
+use clawcrew_log::Instrument;
 use futures_util::{StreamExt, stream};
 use std::process::Stdio;
 use std::sync::Arc;
 use tokio::time::{self, Duration};
 use tokio_util::sync::CancellationToken;
-use clawcrew_api::runtime_traits::RuntimeAdapter;
-use clawcrew_config::schema::Config;
-use clawcrew_config::schema::{CronJobDecl, CronScheduleDecl, CronShellOutputFormat};
-use clawcrew_log::Instrument;
 
 const MIN_POLL_SECONDS: u64 = 5;
 const SHELL_JOB_TIMEOUT_SECS: u64 = 120;
@@ -757,12 +757,8 @@ async fn execute_and_persist_job(
     // P0.1: project this cron run's lifecycle onto the canonical control plane
     // when one is initialized. Non-fatal: a missing/failed control plane never
     // blocks the job (the trigger store remains authoritative for scheduling).
-    let producer_task = project_cron_task_start(
-        crate::control_plane::control_plane(),
-        agent_alias,
-        &job.id,
-    )
-    .await;
+    let producer_task =
+        project_cron_task_start(crate::control_plane::control_plane(), agent_alias, &job.id).await;
 
     let span = clawcrew_log::attribution_span!(job);
     let (success, output) = Box::pin(execute_job_with_retry(
@@ -1394,8 +1390,8 @@ mod tests {
     use crate::cron::{self, DeliveryConfig};
     use crate::security::SecurityPolicy;
     use chrono::{Duration as ChronoDuration, Utc};
-    use tempfile::TempDir;
     use clawcrew_config::schema::{Config, RuntimeKind};
+    use tempfile::TempDir;
 
     const TEST_AGENT: &str = "test-agent";
 
@@ -2281,8 +2277,8 @@ mod tests {
     #[tokio::test]
     async fn agent_cron_run_keeps_workspace_through_shell_on_retry_and_concurrency() {
         use axum::{Json, Router, http::StatusCode, response::IntoResponse, routing::post};
-        use tokio::net::TcpListener;
         use clawcrew_config::schema::{ModelProviderConfig, OllamaModelProviderConfig};
+        use tokio::net::TcpListener;
 
         let requests = Arc::new(std::sync::Mutex::new(Vec::<serde_json::Value>::new()));
         let fail_first_request = Arc::new(std::sync::atomic::AtomicBool::new(true));
@@ -2508,13 +2504,15 @@ mod tests {
 
     #[tokio::test]
     async fn cron_run_projects_lifecycle_onto_control_plane() {
+        use crate::control_plane::ControlPlaneHandleExt;
         let dir = tempfile::tempdir().unwrap();
-        let control_plane =
-            crate::control_plane::ControlPlaneHandle::open(dir.path()).unwrap();
+        let control_plane = crate::control_plane::ControlPlaneHandle::open(dir.path()).unwrap();
 
         // No control plane -> no-op, no panic.
         assert!(
-            project_cron_task_start(None, "main", "job-1").await.is_none()
+            project_cron_task_start(None, "main", "job-1")
+                .await
+                .is_none()
         );
         project_cron_task_settle(None, true, "ignored").await;
 

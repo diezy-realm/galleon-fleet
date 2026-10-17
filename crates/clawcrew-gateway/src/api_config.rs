@@ -6,11 +6,11 @@ use axum::{
     http::{HeaderMap, HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
 };
-use serde::{Deserialize, Serialize};
 use clawcrew_config::api_error::{ConfigApiCode, ConfigApiError};
 use clawcrew_config::field_visibility;
 use clawcrew_config::sections::section_for_path;
 use clawcrew_config::traits::MaskSecrets;
+use serde::{Deserialize, Serialize};
 
 use super::AppState;
 use super::ConfigWriteGuard;
@@ -2628,11 +2628,11 @@ pub(crate) mod tests {
     use crate::{GatewayRateLimiter, IdempotencyStore, nodes};
     use async_trait::async_trait;
     use axum::http::StatusCode;
+    use clawcrew_config::pairing::PairingGuard;
+    use clawcrew_providers::ModelProvider;
     use http_body_util::BodyExt;
     use parking_lot::RwLock;
     use std::time::Duration;
-    use clawcrew_providers::ModelProvider;
-    use clawcrew_config::pairing::PairingGuard;
 
     #[test]
     fn invalid_etag_value_is_omitted_instead_of_panicking() {
@@ -2755,6 +2755,7 @@ pub(crate) mod tests {
             personality_runner: None,
             skills_runner: None,
             acp_runner: None,
+            control_plane: None,
         }
     }
 
@@ -3463,13 +3464,7 @@ pub(crate) mod tests {
         cron_store
             .add_job("from", "* * * * *", "echo hi")
             .expect("seed cron job");
-        assert_eq!(
-            cron_store
-                .list_jobs_by_agent("from")
-                .unwrap()
-                .len(),
-            1
-        );
+        assert_eq!(cron_store.list_jobs_by_agent("from").unwrap().len(), 1);
 
         let state = crate::api::test_state(config.clone());
         let body = RenameMapKeyBody {
@@ -3487,18 +3482,12 @@ pub(crate) mod tests {
         );
         // Owned state did NOT move: the cron job stays under `from`.
         assert_eq!(
-            cron_store
-                .list_jobs_by_agent("from")
-                .unwrap()
-                .len(),
+            cron_store.list_jobs_by_agent("from").unwrap().len(),
             1,
             "cron must stay under `from` when persist fails (no premature move)"
         );
         assert!(
-            cron_store
-                .list_jobs_by_agent("to")
-                .unwrap()
-                .is_empty(),
+            cron_store.list_jobs_by_agent("to").unwrap().is_empty(),
             "cron must NOT have moved to `to` when persist fails"
         );
         // In-memory config was never swapped: still names `from`.
@@ -3551,19 +3540,11 @@ pub(crate) mod tests {
         assert!(!state.config.read().agents.contains_key("from"));
         // Cron re-pointed to `to` - the move happened, after a successful persist.
         assert_eq!(
-            cron_store
-                .list_jobs_by_agent("to")
-                .unwrap()
-                .len(),
+            cron_store.list_jobs_by_agent("to").unwrap().len(),
             1,
             "cron moves to `to` once persist succeeds"
         );
-        assert!(
-            cron_store
-                .list_jobs_by_agent("from")
-                .unwrap()
-                .is_empty()
-        );
+        assert!(cron_store.list_jobs_by_agent("from").unwrap().is_empty());
         // Workspace moved to the new alias path.
         assert!(
             state.config.read().agent_workspace_dir("to").exists(),
@@ -3633,18 +3614,12 @@ pub(crate) mod tests {
 
         // Owned state converged onto `to`.
         assert_eq!(
-            cron_store
-                .list_jobs_by_agent("to")
-                .unwrap()
-                .len(),
+            cron_store.list_jobs_by_agent("to").unwrap().len(),
             1,
             "lagged cron re-points to `to` on resume"
         );
         assert!(
-            cron_store
-                .list_jobs_by_agent("from")
-                .unwrap()
-                .is_empty(),
+            cron_store.list_jobs_by_agent("from").unwrap().is_empty(),
             "no cron left under `from` after convergence"
         );
         // Workspace converged onto `to`.
@@ -4293,13 +4268,7 @@ pub(crate) mod tests {
         cron_store
             .add_job("victim", "* * * * *", "echo hi")
             .expect("seed cron job");
-        assert_eq!(
-            cron_store
-                .list_jobs_by_agent("victim")
-                .unwrap()
-                .len(),
-            1
-        );
+        assert_eq!(cron_store.list_jobs_by_agent("victim").unwrap().len(), 1);
 
         let state = crate::api::test_state(config.clone());
         let guard = Arc::clone(&state.config_write_lock).lock_owned().await;
@@ -4312,10 +4281,7 @@ pub(crate) mod tests {
         );
         // Owned state did NOT move: the cron job stays under `victim`.
         assert_eq!(
-            cron_store
-                .list_jobs_by_agent("victim")
-                .unwrap()
-                .len(),
+            cron_store.list_jobs_by_agent("victim").unwrap().len(),
             1,
             "cron must stay under `victim` when persist fails (no premature purge)"
         );
@@ -4372,10 +4338,7 @@ pub(crate) mod tests {
         );
         // Cron job purged: the cascade ran after a successful persist.
         assert!(
-            cron_store
-                .list_jobs_by_agent("victim")
-                .unwrap()
-                .is_empty(),
+            cron_store.list_jobs_by_agent("victim").unwrap().is_empty(),
             "cron purged once persist succeeds"
         );
         // Workspace archived: source dir gone, archive dir populated.

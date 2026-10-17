@@ -89,6 +89,7 @@ pub async fn project_with(control_plane: Option<&ControlPlaneHandle>, event: &A2
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::control_plane::ControlPlaneHandleExt;
 
     fn event(peer: &str, id: &str, state: TaskState) -> A2aRunEvent {
         A2aRunEvent {

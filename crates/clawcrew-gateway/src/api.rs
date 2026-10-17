@@ -666,12 +666,7 @@ pub async fn handle_api_cron_run(
     };
 
     let event_tx = Some(state.event_tx.clone());
-    let result = crate::cron_adapter::run_manual_job(
-        &config,
-        &job,
-        &event_tx,
-    )
-    .await;
+    let result = crate::cron_adapter::run_manual_job(&config, &job, &event_tx).await;
 
     Json(serde_json::json!({
         "status": result.status,
@@ -725,7 +720,10 @@ pub async fn handle_api_cron_patch(
                 .into_response();
         }
     };
-    let is_agent = matches!(existing.job_type, clawcrew_infra::cron_types::JobType::Agent);
+    let is_agent = matches!(
+        existing.job_type,
+        clawcrew_infra::cron_types::JobType::Agent
+    );
     if shell_output_format.is_some() {
         if is_agent {
             return bad_request(
@@ -2493,6 +2491,7 @@ pub(crate) mod tests {
             personality_runner: None,
             skills_runner: None,
             acp_runner: None,
+            control_plane: None,
             #[cfg(feature = "webauthn")]
             webauthn: None,
         }
@@ -5123,8 +5122,8 @@ pub(crate) mod tests {
             StatusCode::OK,
             "agent-type prompt patch must not require an agent"
         );
-        let updated = crate::cron_adapter::get_job(&state.config.read().clone(), &id)
-            .expect("updated job");
+        let updated =
+            crate::cron_adapter::get_job(&state.config.read().clone(), &id).expect("updated job");
         assert_eq!(updated.prompt.as_deref(), Some("new prompt"));
     }
 
@@ -5438,11 +5437,7 @@ pub(crate) mod tests {
         );
 
         let config = state.config.read().clone();
-        assert!(
-            crate::cron_adapter::list_jobs(&config)
-                .unwrap()
-                .is_empty()
-        );
+        assert!(crate::cron_adapter::list_jobs(&config).unwrap().is_empty());
     }
 
     #[tokio::test]

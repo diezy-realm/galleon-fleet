@@ -62,8 +62,7 @@ pub async fn handle_catalog_models(
     // models.dev snapshot may not carry yet) instead of silently falling back.
     let cfg = state.config.read().clone();
     let (models, pricing, live) =
-        clawcrew_providers::catalog::model_catalog_with_config(Some(&cfg), &q.model_provider)
-            .await;
+        clawcrew_providers::catalog::model_catalog_with_config(Some(&cfg), &q.model_provider).await;
     axum::Json(CatalogModelsResult {
         model_provider: q.model_provider,
         models,
@@ -531,10 +530,7 @@ fn any_usable_model_provider(cfg: &clawcrew_config::schema::Config) -> bool {
         .models
         .iter_entries()
         .any(|(family, _, base)| {
-            model_provider_alias_usable(
-                base,
-                clawcrew_providers::model_provider_is_local(family),
-            )
+            model_provider_alias_usable(base, clawcrew_providers::model_provider_is_local(family))
         })
 }
 
@@ -1498,6 +1494,7 @@ mod tests {
             personality_runner: None,
             skills_runner: None,
             acp_runner: None,
+            control_plane: None,
         }
     }
 

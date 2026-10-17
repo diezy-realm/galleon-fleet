@@ -1,9 +1,9 @@
 //! The durable run/task control-plane — supervised lifecycle for delegated and
 //! subagent runs.
 
+pub mod a2a_projection;
 pub mod authority;
 pub mod boot;
-pub mod a2a_projection;
 pub mod global;
 pub mod goal_task;
 pub mod producer;
@@ -13,8 +13,8 @@ pub mod task_runner;
 pub mod task_store_sqlite;
 
 pub use authority::is_authoritative;
-pub use boot::ControlPlaneHandle;
 pub(crate) use boot::ControlPlaneRecoveryOwner;
+pub use boot::{ControlPlaneHandle, ControlPlaneHandleExt};
 pub use global::control_plane;
 pub(crate) use global::{init_control_plane, spawn_control_plane_reaper};
 pub use goal_task::{
