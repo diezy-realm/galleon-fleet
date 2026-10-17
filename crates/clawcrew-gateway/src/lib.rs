@@ -64,6 +64,27 @@ pub mod api_audit;
 pub mod api_providers;
 pub mod ws;
 
+/// Maximum request body size (64KB) — prevents memory exhaustion
+pub const MAX_BODY_SIZE: usize = 65_536;
+/// Default request timeout (30s) — prevents slow-loris attacks.
+pub const REQUEST_TIMEOUT_SECS: u64 = 30;
+pub const LONG_RUNNING_REQUEST_TIMEOUT_SECS: u64 = 600;
+
+/// Gateway request timeout (seconds) for routes other than the long-running
+/// cron-trigger endpoint. Reads from typed config.
+pub fn gateway_request_timeout_secs(cfg: &clawcrew_config::schema::GatewayConfig) -> u64 {
+    cfg.request_timeout_secs
+}
+
+/// Manual cron-trigger request timeout (seconds), exempt from the
+/// gateway-wide [`gateway_request_timeout_secs`] limit so synchronous agent
+/// jobs can run to completion. Reads from typed config.
+pub fn gateway_long_running_request_timeout_secs(
+    cfg: &clawcrew_config::schema::GatewayConfig,
+) -> u64 {
+    cfg.long_running_request_timeout_secs
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WebDashboardAvailability {
     Embedded,
