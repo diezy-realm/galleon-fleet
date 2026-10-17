@@ -544,23 +544,23 @@
         let locales: [(&str, &str); 5] = [
             (
                 "en",
-                include_str!("../crates/clawcrew-runtime/locales/en/cli.ftl"),
+                include_str!("../crates/galleon-i18n/locales/en/cli.ftl"),
             ),
             (
                 "es",
-                include_str!("../crates/clawcrew-runtime/locales/es/cli.ftl"),
+                include_str!("../crates/galleon-i18n/locales/es/cli.ftl"),
             ),
             (
                 "fr",
-                include_str!("../crates/clawcrew-runtime/locales/fr/cli.ftl"),
+                include_str!("../crates/galleon-i18n/locales/fr/cli.ftl"),
             ),
             (
                 "ja",
-                include_str!("../crates/clawcrew-runtime/locales/ja/cli.ftl"),
+                include_str!("../crates/galleon-i18n/locales/ja/cli.ftl"),
             ),
             (
                 "zh-CN",
-                include_str!("../crates/clawcrew-runtime/locales/zh-CN/cli.ftl"),
+                include_str!("../crates/galleon-i18n/locales/zh-CN/cli.ftl"),
             ),
         ];
 
@@ -610,7 +610,7 @@
         // 1 and every label fitted to ".". Both must now be rejected before
         // any interaction can start.
         let rows = quickstart_checklist_rows_for_locale(include_str!(
-            "../crates/clawcrew-runtime/locales/en/cli.ftl"
+            "../crates/galleon-i18n/locales/en/cli.ftl"
         ));
 
         for width in [0usize, 1, 2, 3, 4, 5, 10, 19] {
@@ -3242,6 +3242,8 @@
             admission_policy: clawcrew_runtime::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         }]);
         let engine = Arc::new(Mutex::new(engine));
 
