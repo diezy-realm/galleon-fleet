@@ -256,10 +256,9 @@ pub async fn run_manual_job(
     job: &CronJob,
     event_tx: &Option<tokio::sync::broadcast::Sender<serde_json::Value>>,
 ) -> ManualCronRunResult {
-    let runtime_job: clawcrew_runtime::cron::CronJob = serde_json::from_value(
-        serde_json::to_value(job).expect("serialize CronJob"),
-    )
-    .expect("deserialize to runtime CronJob");
+    let runtime_job: clawcrew_runtime::cron::CronJob =
+        serde_json::from_value(serde_json::to_value(job).expect("serialize CronJob"))
+            .expect("deserialize to runtime CronJob");
 
     let res = clawcrew_runtime::cron::scheduler::run_manual_job(
         config,
