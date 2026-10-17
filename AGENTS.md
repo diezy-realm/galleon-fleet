@@ -75,3 +75,7 @@ Use `./dev/ci.sh all` for full pre-PR validation when the scope warrants it. Doc
 ## Task References
 
 The architecture map routes task-specific documentation. Consult `standard-docs/decisions/finalize/dev-tasks/README.md` and `standard-docs/roadmap/PR-plan.md` for sprint tasks, risk and stability policy, and boundary gates. Do not skip a required contract because it is no longer embedded in this bootstrap file.
+
+## Landasan vs Pekerjaan Berjalan (SSOT dipisah)
+
+`standard-docs/` is **baseline authority only** (architecture, tech standards, product direction/ODR). Read `standard-docs/ONBOARDING.md` first when onboarding. In-flight work — research, backlog, tasks, sprints, reports, operational governance — lives on the shared cross-machine board **`~/Apps/board/`** (private local git, never pushed), used by both KiroCrew and agy. Before writing to the board, read `~/Apps/board/RULES.md` + `TEMPLATES.md` (front-matter is enforced by `validate.py`). Tasks with `assignee: agy` are executed by the KiroCrew cron `board-agy-bridge`. `roadmap/` and `decisions/finalize/dev-task-2|3` stay in `standard-docs/` (active ticket SSOT; dev-task-2/3 is owned by another team — do not touch without confirmation).

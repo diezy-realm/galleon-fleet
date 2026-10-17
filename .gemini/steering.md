@@ -198,3 +198,23 @@ Untuk eksekusi task, rujuk ke tabel master 121 tiket di [`standard-docs/roadmap/
 - **Gelombang 2 (Persistensi & Pemisahan Engine):** PR-30 s/d PR-72 (SQLite store, QR pairing, Agent loop ke Go, Channel decoupling).
 - **Gelombang 3 (Rebranding Galleon):** PR-80 s/d PR-88 (Rename crates, env vars, binaries `galleon`/`galleoncode`/`galleonrelay`).
 - **Gelombang 4 (Platform & Release):** PR-90 s/d PR-99 (Nginx TLS, Tauri sidecar, Release pipeline).
+
+---
+
+## 8. Papan Kerja Bersama (Board SSOT) — Koordinasi dengan KiroCrew
+
+Ada papan kerja lintas-mesin **`~/Apps/board/`** (git lokal privat, TIDAK di-push)
+tempat KiroCrew & agy berkoordinasi gaya Jira/Scrum. **agy WAJIB membaca
+`~/Apps/board/RULES.md` + `~/Apps/board/TEMPLATES.md` sebelum menulis ke board** —
+penulisan yang tidak sesuai front-matter **ditolak `validate.py`**.
+
+- **Alur:** `Story → Backlog → PRD/Riset │ Spec → Task → Report`
+  (`product-backlog/` → `sprints/sprint-NN/`). ID: `US- BL- PRD- SPEC- TASK- RPT-` + 3 digit.
+- **Task agy:** file JSON di `sprints/sprint-NN/tasks/` dengan `assignee: agy`,
+  `status: todo`. agy dipanggil **headless sesi bersih** (`-p`, BUKAN `-c`) oleh
+  bridge KiroCrew; kerjakan sampai selesai lalu tulis `reports/RPT-xxx.md`
+  (`source_task`, dengan **Cek Penerimaan + bukti nyata** path/commit).
+- **Jangan** merujuk ID sumber yang tidak ada; **jangan** klaim `done` tanpa bukti;
+  **jangan** melewati gate antar-tahap. Detail: `RULES.md`.
+- **Landasan vs kerja:** `standard-docs/` = aturan baku (baca `ONBOARDING.md`);
+  `~/Apps/board/` = pekerjaan berjalan. Keputusan FINAL hanya bila jadi ODR.
