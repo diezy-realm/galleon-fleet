@@ -999,7 +999,7 @@ impl WeChatChannel {
         let cdn_base_url = https_base_url("cdn_base_url", cdn_base_url, CDN_BASE_URL)?;
 
         let alias = alias.into();
-        let has_peers = crate::allowlist::grants_anyone(&peer_resolver());
+        let has_peers = galleon_channel_core::allowlist::grants_anyone(&peer_resolver());
         let pairing = if has_peers {
             None
         } else {
@@ -1304,7 +1304,7 @@ impl WeChatChannel {
 
     fn is_user_allowed(&self, user_id: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed_by(&peers, user_id, Self::identity_matches)
+        galleon_channel_core::allowlist::is_user_allowed_by(&peers, user_id, Self::identity_matches)
     }
 
     /// The conflict message when a matching `ignore` denies `identity`.
@@ -1313,7 +1313,7 @@ impl WeChatChannel {
     fn pairing_deny_conflict(&self, identity: &str) -> Option<String> {
         let config = self.persist.as_ref()?;
         let cfg = config.read();
-        crate::identity_persist::external_peer_deny_conflict(
+        galleon_channel_core::identity_persist::external_peer_deny_conflict(
             &cfg,
             "wechat",
             &self.alias,
@@ -1323,7 +1323,7 @@ impl WeChatChannel {
     }
 
     async fn persist_allowed_identity(&self, identity: &str) -> anyhow::Result<()> {
-        crate::identity_persist::persist_external_peer(
+        galleon_channel_core::identity_persist::persist_external_peer(
             self.persist.as_ref(),
             "wechat",
             &self.alias,
@@ -1529,7 +1529,7 @@ impl WeChatChannel {
 
         // Absolute paths are allowed only if they are already inside the workspace.
         let candidate = Path::new(target);
-        if candidate.is_absolute() {
+        if candidate.is_absolute() || candidate.has_root() {
             let normalized = normalize_lexical(candidate);
             if !normalized.starts_with(&workspace_normalized) {
                 ::clawcrew_log::record!(
@@ -2107,7 +2107,7 @@ impl WeChatChannel {
                     "cli-wechat-qr-expired-giving-up",
                     &[("max", &max)],
                 );
-                crate::login_events::LoginEvent::Failed { reason: &reason }.emit(
+                galleon_channel_core::login_events::LoginEvent::Failed { reason: &reason }.emit(
                     self.name(),
                     &self.alias,
                     "WeChat QR login gave up after repeated expiry",
@@ -2169,7 +2169,7 @@ impl WeChatChannel {
             } else {
                 qrcode_img_url
             };
-            crate::login_events::LoginEvent::Qr {
+            galleon_channel_core::login_events::LoginEvent::Qr {
                 payload: qr_payload,
                 image_url: (!qrcode_img_url.is_empty()).then_some(qrcode_img_url),
                 attempt: Some(qr_refresh_count),
@@ -2273,7 +2273,7 @@ impl WeChatChannel {
                     "scaned" => {
                         if !scanned_printed {
                             println!("  {}", wechat_cli_string("cli-wechat-scanned-confirm"));
-                            crate::login_events::LoginEvent::Scanned.emit(
+                            galleon_channel_core::login_events::LoginEvent::Scanned.emit(
                                 self.name(),
                                 &self.alias,
                                 "WeChat QR code scanned — waiting for in-app confirmation",
@@ -2286,7 +2286,7 @@ impl WeChatChannel {
                             "  {}",
                             wechat_cli_string("cli-wechat-qr-expired-refreshing")
                         );
-                        crate::login_events::LoginEvent::Expired {
+                        galleon_channel_core::login_events::LoginEvent::Expired {
                             attempt: qr_refresh_count,
                             max_attempts: MAX_QR_REFRESH,
                         }
@@ -2324,7 +2324,7 @@ impl WeChatChannel {
                             .map(String::from);
 
                         println!("  {}", wechat_cli_string("cli-wechat-connected"));
-                        crate::login_events::LoginEvent::Connected.emit(
+                        galleon_channel_core::login_events::LoginEvent::Connected.emit(
                             self.name(),
                             &self.alias,
                             "WeChat login confirmed — channel connected",
@@ -2755,6 +2755,170 @@ impl ::clawcrew_api::attribution::Attributable for WeChatChannel {
     }
 }
 
+pub fn strip_tool_call_tags(message: &str) -> String {
+    const TOOL_CALL_OPEN_TAGS: [&str; 7] = [
+        "<function_calls>",
+        "<function_call>",
+        "<tool_call>",
+        "<toolcall>",
+        "<tool-call>",
+        "<tool>",
+        "<invoke>",
+    ];
+
+    fn find_first_tag<'a>(haystack: &str, tags: &'a [&'a str]) -> Option<(usize, &'a str)> {
+        tags.iter()
+            .filter_map(|tag| haystack.find(tag).map(|idx| (idx, *tag)))
+            .min_by_key(|(idx, _)| *idx)
+    }
+
+    fn matching_close_tag(open_tag: &str) -> Option<&'static str> {
+        match open_tag {
+            "<function_calls>" => Some("</function_calls>"),
+            "<function_call>" => Some("</function_call>"),
+            "<tool_call>" => Some("</tool_call>"),
+            "<toolcall>" => Some("</toolcall>"),
+            "<tool-call>" => Some("</tool-call>"),
+            "<tool>" => Some("</tool>"),
+            "<invoke>" => Some("</invoke>"),
+            _ => None,
+        }
+    }
+
+    fn extract_first_json_end(input: &str) -> Option<usize> {
+        let trimmed = input.trim_start();
+        let trim_offset = input.len().saturating_sub(trimmed.len());
+
+        for (byte_idx, ch) in trimmed.char_indices() {
+            if ch != '{' && ch != '[' {
+                continue;
+            }
+
+            let slice = &trimmed[byte_idx..];
+            let mut stream =
+                serde_json::Deserializer::from_str(slice).into_iter::<serde_json::Value>();
+            if let Some(Ok(_value)) = stream.next() {
+                let consumed = stream.byte_offset();
+                if consumed > 0 {
+                    return Some(trim_offset + byte_idx + consumed);
+                }
+            }
+        }
+
+        None
+    }
+
+    fn strip_leading_close_tags(mut input: &str) -> &str {
+        loop {
+            let trimmed = input.trim_start();
+            if !trimmed.starts_with("</") {
+                return trimmed;
+            }
+
+            let Some(close_end) = trimmed.find('>') else {
+                return "";
+            };
+            input = &trimmed[close_end + 1..];
+        }
+    }
+
+    fn looks_like_prose(text: &str) -> bool {
+        let bytes = text.as_bytes();
+        for i in 0..bytes.len().saturating_sub(1) {
+            if matches!(bytes[i], b'.' | b'!' | b'?')
+                && matches!(bytes[i + 1], b' ' | b'\n' | b'\t')
+                && text[i + 1..]
+                    .trim_start()
+                    .chars()
+                    .next()
+                    .is_some_and(|c| c.is_alphabetic())
+            {
+                return true;
+            }
+        }
+        let trimmed = text.trim_end();
+        let ends_like_sentence = trimmed
+            .chars()
+            .last()
+            .is_some_and(|c| matches!(c, '.' | '!' | '?'))
+            && trimmed
+                .chars()
+                .rev()
+                .nth(1)
+                .is_some_and(|c| c.is_alphabetic());
+        ends_like_sentence && text.trim().contains(' ')
+    }
+
+    fn tool_structure_runs_to_end(inner: &str) -> bool {
+        let mut rest = inner.trim_start();
+        while rest.starts_with('<') {
+            match rest.find('>') {
+                Some(gt) => rest = rest[gt + 1..].trim_start(),
+                None => return true,
+            }
+        }
+        let tail = rest.trim();
+        if tail.is_empty() {
+            return true;
+        }
+        !looks_like_prose(tail)
+    }
+
+    let mut kept_segments = Vec::new();
+    let mut remaining = message;
+
+    while let Some((start, open_tag)) = find_first_tag(remaining, &TOOL_CALL_OPEN_TAGS) {
+        let before = &remaining[..start];
+        if !before.is_empty() {
+            kept_segments.push(before.to_string());
+        }
+
+        let Some(close_tag) = matching_close_tag(open_tag) else {
+            break;
+        };
+        let after_open = &remaining[start + open_tag.len()..];
+
+        if let Some(close_idx) = after_open.find(close_tag) {
+            remaining = &after_open[close_idx + close_tag.len()..];
+            continue;
+        }
+
+        if let Some(consumed_end) = extract_first_json_end(after_open) {
+            remaining = strip_leading_close_tags(&after_open[consumed_end..]);
+            continue;
+        }
+
+        let inner = after_open.trim_start();
+        let inner_lower = inner.to_ascii_lowercase();
+        let looks_like_tool_structure = inner_lower.starts_with("<invoke")
+            || inner_lower.starts_with("<parameter")
+            || inner_lower.starts_with("<tool")
+            || inner_lower.starts_with("<function")
+            || inner.starts_with('{')
+            || inner.starts_with('[');
+        if looks_like_tool_structure && tool_structure_runs_to_end(inner) {
+            remaining = "";
+            break;
+        }
+
+        kept_segments.push(remaining[start..].to_string());
+        remaining = "";
+        break;
+    }
+
+    if !remaining.is_empty() {
+        kept_segments.push(remaining.to_string());
+    }
+
+    let mut result = kept_segments.concat();
+
+    while result.contains("\n\n\n") {
+        result = result.replace("\n\n\n", "\n\n");
+    }
+
+    result.trim().to_string()
+}
+
 #[async_trait]
 impl Channel for WeChatChannel {
     fn name(&self) -> &str {
@@ -2767,7 +2931,7 @@ impl Channel for WeChatChannel {
 
     async fn send(&self, message: &SendMessage) -> anyhow::Result<()> {
         let recipient = &message.recipient;
-        let content = crate::util::strip_tool_call_tags(&message.content);
+        let content = strip_tool_call_tags(&message.content);
         let context_token = self.get_context_token(recipient);
 
         if context_token.is_none() {
@@ -3893,7 +4057,7 @@ mod tests {
         );
 
         assert!(
-            crate::identity_persist::merge_external_peer(
+            galleon_channel_core::identity_persist::merge_external_peer(
                 &mut config,
                 "wechat",
                 "admin",

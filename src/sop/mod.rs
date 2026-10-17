@@ -453,6 +453,8 @@ type = "manual"
             admission_policy: clawcrew_runtime::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         };
 
         let warnings = validate_sop(&sop);
@@ -488,6 +490,8 @@ type = "manual"
             admission_policy: clawcrew_runtime::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
+            raci: None,
+            constraints: Vec::new(),
         };
 
         let warnings = validate_sop(&sop);

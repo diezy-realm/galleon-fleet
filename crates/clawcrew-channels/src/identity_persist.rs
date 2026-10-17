@@ -20,6 +20,7 @@
 //! persistence with a warning: pairing still works for the process
 //! lifetime, it just isn't durable.
 
+#[allow(unused_imports)]
 pub use galleon_channel_core::identity_persist::{
     authorizing_group_key, external_peer_deny_conflict, instance_group_key,
     merge_external_peer, persist_external_peer,

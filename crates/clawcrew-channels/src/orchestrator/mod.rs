@@ -11932,6 +11932,30 @@ impl std::fmt::Display for UnknownChannelId {
 
 impl std::error::Error for UnknownChannelId {}
 
+#[cfg(feature = "channel-telegram")]
+fn resolve_telegram_tts(
+    config: &clawcrew_config::schema::Config,
+    alias: &str,
+) -> Option<Arc<dyn galleon_channel_telegram::TextToSpeechSynthesizer>> {
+    if !config.tts.enabled {
+        return None;
+    }
+    let owner = config.agent_for_channel(&format!("telegram.{alias}"));
+    match crate::tts::TtsManager::from_config_for_agent(config, owner) {
+        Ok(m) => Some(Arc::new(m)),
+        Err(e) => {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
+                "TTS disabled"
+            );
+            None
+        }
+    }
+}
+
 /// Build a single channel instance by config section name (e.g. "telegram").
 fn build_channel_by_id(
     config_arc: &Arc<RwLock<Config>>,
@@ -11960,6 +11984,10 @@ fn build_channel_by_id(
                 let alias = alias.clone();
                 Arc::new(move || cfg_arc.read().channel_voice_peers("telegram", &alias))
             };
+            let transcription_mgr: Option<Arc<dyn galleon_channel_telegram::AudioTranscriber>> =
+                resolved_transcription_manager(&config, &format!("telegram.{alias}"))
+                    .map(|m| m as Arc<dyn galleon_channel_telegram::AudioTranscriber>);
+            let tts_mgr = resolve_telegram_tts(&config, &alias);
             Ok(Arc::new(
                 TelegramChannel::new(
                     tg.bot_token.clone(),
@@ -11973,11 +12001,8 @@ fn build_channel_by_id(
                 .with_ack_reactions(ack)
                 .with_streaming(tg.stream_mode, tg.draft_update_interval_ms)
                 .with_passive_group_context(tg.passive_group_context)
-                .with_transcription_manager(
-                    config.transcription.clone(),
-                    resolved_transcription_manager(&config, &format!("telegram.{alias}")),
-                )
-                .with_tts(&config)
+                .with_transcription_manager(config.transcription.clone(), transcription_mgr)
+                .with_tts_synthesizer(tts_mgr)
                 .with_workspace_dir(workspace_dir)
                 .with_per_user_session(tg.per_user_session)
                 .with_approval_timeout_secs(tg.approval_timeout_secs),
@@ -13428,9 +13453,10 @@ fn collect_configured_channels(
                     .with_passive_group_context(tg.passive_group_context)
                     .with_transcription_manager(
                         config.transcription.clone(),
-                        resolved_transcription_manager(&config, &format!("telegram.{alias}")),
+                        resolved_transcription_manager(&config, &format!("telegram.{alias}"))
+                            .map(|m| m as Arc<dyn galleon_channel_telegram::AudioTranscriber>),
                     )
-                    .with_tts(&config)
+                    .with_tts_synthesizer(resolve_telegram_tts(&config, &alias))
                     .with_workspace_dir(config.channel_workspace_dir(&format!("telegram.{alias}")))
                     .with_proxy_url(tg.proxy_url.clone())
                     .with_tool_command_specs(tool_specs.to_vec())
@@ -13616,7 +13642,8 @@ fn collect_configured_channels(
                     .with_proxy_url(mm.proxy_url.clone())
                     .with_transcription_manager(
                         config.transcription.clone(),
-                        resolved_transcription_manager(&config, &format!("mattermost.{alias}")),
+                        resolved_transcription_manager(&config, &format!("mattermost.{alias}"))
+                            .map(|m| m as Arc<dyn galleon_channel_mattermost::AudioTranscriber>),
                     )
                     .with_listen_mode(mm.listen_mode)
                     .with_approval_timeout_secs(mm.approval_timeout_secs)
@@ -14252,7 +14279,8 @@ fn collect_configured_channels(
                     .with_streaming(lk.stream_mode, lk.draft_update_interval_ms)
                     .with_transcription_manager(
                         config.transcription.clone(),
-                        resolved_transcription_manager(&config, &format!("lark.{alias}")),
+                        resolved_transcription_manager(&config, &format!("lark.{alias}"))
+                            .map(|m| m as Arc<dyn galleon_channel_lark::AudioTranscriber>),
                     ),
             ),
         });

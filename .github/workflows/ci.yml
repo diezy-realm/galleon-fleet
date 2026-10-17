@@ -23,6 +23,7 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
+  RUSTC_WRAPPER: ""
 
 # ── Runner selection: a checked-in label on each compile-heavy job ──────────
 # The Rust-compiling jobs below (lint, build, check, check-plugin-backends,

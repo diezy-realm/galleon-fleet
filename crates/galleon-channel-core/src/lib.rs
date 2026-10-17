@@ -251,6 +251,71 @@ pub mod approval {
         )
     }
 
+    pub struct PendingApproval {
+        pub sender: tokio::sync::oneshot::Sender<clawcrew_api::channel::ChannelApprovalResponse>,
+        pub destination: String,
+        pub tool_name: String,
+    }
+
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum PendingApprovalResolution {
+        NotFound,
+        Rejected,
+        Resolved,
+        ReceiverClosed,
+    }
+
+    impl PendingApprovalResolution {
+        pub fn suppresses_message(self) -> bool {
+            !matches!(self, Self::NotFound)
+        }
+    }
+
+    pub async fn resolve_pending_approval(
+        pending_approvals: &tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>,
+        token: &str,
+        response: clawcrew_api::channel::ChannelApprovalResponse,
+        responder_allowed: bool,
+        destination: &str,
+    ) -> PendingApprovalResolution {
+        resolve_pending_approval_with_tool(
+            pending_approvals,
+            token,
+            response,
+            responder_allowed,
+            destination,
+        )
+        .await
+        .0
+    }
+
+    pub async fn resolve_pending_approval_with_tool(
+        pending_approvals: &tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>,
+        token: &str,
+        response: clawcrew_api::channel::ChannelApprovalResponse,
+        responder_allowed: bool,
+        destination: &str,
+    ) -> (PendingApprovalResolution, Option<String>) {
+        let mut pending_approvals = pending_approvals.lock().await;
+        let Some(pending) = pending_approvals.get(token) else {
+            return (PendingApprovalResolution::NotFound, None);
+        };
+        if !responder_allowed || destination.is_empty() || pending.destination != destination {
+            return (PendingApprovalResolution::Rejected, None);
+        }
+
+        let Some(pending) = pending_approvals.remove(token) else {
+            return (PendingApprovalResolution::NotFound, None);
+        };
+        drop(pending_approvals);
+        if pending.sender.send(response).is_ok() {
+            (PendingApprovalResolution::Resolved, Some(pending.tool_name))
+        } else {
+            (PendingApprovalResolution::ReceiverClosed, None)
+        }
+    }
+
+
     #[cfg(test)]
     mod tests {
         use super::*;
@@ -278,3 +343,16 @@ pub mod approval {
 }
 
 pub mod identity_persist;
+pub mod login_events;
+pub mod model_picker_delivery;
+
+/// Truncate a string to `max_chars` Unicode characters, appending "..." if truncated.
+pub fn truncate_with_ellipsis(s: &str, max_chars: usize) -> String {
+    match s.char_indices().nth(max_chars) {
+        Some((idx, _)) => {
+            let truncated = &s[..idx];
+            format!("{}...", truncated.trim_end())
+        }
+        None => s.to_string(),
+    }
+}

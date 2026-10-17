@@ -1703,8 +1703,10 @@ dependencies = [
  "galleon-channel-filesystem",
  "galleon-channel-imessage",
  "galleon-channel-irc",
+ "galleon-channel-lark",
  "galleon-channel-line",
  "galleon-channel-linq",
+ "galleon-channel-mattermost",
  "galleon-channel-mochat",
  "galleon-channel-nextcloud",
  "galleon-channel-nostr",
@@ -1712,10 +1714,13 @@ dependencies = [
  "galleon-channel-qq",
  "galleon-channel-reddit",
  "galleon-channel-signal",
+ "galleon-channel-telegram",
  "galleon-channel-twitch",
  "galleon-channel-twitter",
  "galleon-channel-webhook",
+ "galleon-channel-wechat",
  "galleon-channel-wecom",
+ "galleon-channel-wecom-ws",
  "galleon-i18n",
  "galleon-security-scrub",
  "glob",
@@ -4350,6 +4355,7 @@ dependencies = [
  "parking_lot",
  "rand 0.10.2",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]
@@ -4458,6 +4464,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-channel-lark"
+version = "0.8.5"
+dependencies = [
+ "aes 0.8.4",
+ "anyhow",
+ "async-trait",
+ "axum 0.8.9",
+ "base64",
+ "cbc 0.1.2",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "futures-util",
+ "galleon-channel-core",
+ "galleon-i18n",
+ "hex",
+ "prost 0.14.4",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "tokio",
+ "tokio-tungstenite 0.29.0",
+ "toml 1.1.2+spec-1.1.0",
+ "uuid",
+ "wiremock",
+]
+
+[[package]]
 name = "galleon-channel-line"
 version = "0.8.5"
 dependencies = [
@@ -4502,6 +4539,30 @@ dependencies = [
  "sha2 0.10.9",
  "tokio",
  "uuid",
+]
+
+[[package]]
+name = "galleon-channel-mattermost"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "futures-util",
+ "galleon-channel-core",
+ "galleon-i18n",
+ "parking_lot",
+ "rand 0.10.2",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-tungstenite 0.29.0",
+ "url",
+ "wiremock",
 ]
 
 [[package]]
@@ -4634,6 +4695,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-channel-telegram"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-providers",
+ "clawcrew-spawn",
+ "clawcrew-tool-call-parser",
+ "galleon-channel-core",
+ "galleon-i18n",
+ "galleon-security-scrub",
+ "parking_lot",
+ "rand 0.10.2",
+ "regex",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "uuid",
+ "wiremock",
+]
+
+[[package]]
 name = "galleon-channel-twitch"
 version = "0.8.5"
 dependencies = [
@@ -4689,6 +4778,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-channel-wechat"
+version = "0.8.5"
+dependencies = [
+ "aes 0.8.4",
+ "anyhow",
+ "async-trait",
+ "base64",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "directories",
+ "ecb",
+ "galleon-channel-core",
+ "galleon-i18n",
+ "hex",
+ "md5",
+ "mime_guess",
+ "parking_lot",
+ "qrcode",
+ "rand 0.10.2",
+ "regex",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "shellexpand",
+ "tempfile",
+ "tokio",
+ "urlencoding",
+ "uuid",
+ "wiremock",
+]
+
+[[package]]
 name = "galleon-channel-wecom"
 version = "0.8.5"
 dependencies = [
@@ -4701,6 +4826,35 @@ dependencies = [
  "reqwest 0.12.28",
  "serde_json",
  "tokio",
+]
+
+[[package]]
+name = "galleon-channel-wecom-ws"
+version = "0.8.5"
+dependencies = [
+ "aes 0.8.4",
+ "anyhow",
+ "async-trait",
+ "base64",
+ "cbc 0.1.2",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "clawcrew-tool-call-parser",
+ "futures-util",
+ "galleon-channel-core",
+ "galleon-i18n",
+ "galleon-security-scrub",
+ "parking_lot",
+ "rand 0.9.4",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-tungstenite 0.29.0",
+ "toml 1.1.2+spec-1.1.0",
+ "tracing",
 ]
 
 [[package]]
@@ -10522,6 +10676,7 @@ dependencies = [
  "bytes",
  "libc",
  "mio 1.2.0",
+ "parking_lot",
  "pin-project-lite",
  "signal-hook-registry",
  "socket2 0.6.5",

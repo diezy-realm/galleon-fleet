@@ -135,11 +135,9 @@ fn claim_lock(claim: &Arc<Mutex<ClaimState>>) -> MutexGuard<'_, ClaimState> {
 /// runner is parallel, and a global op such as [`clear_abandoned`] (or a
 /// purge under a paused clock) must never observe or destroy another
 /// test's in-flight registration.
-#[cfg(test)]
 static TEST_LOCK: Mutex<()> = Mutex::new(());
 
-#[cfg(test)]
-pub(crate) fn registry_test_lock() -> MutexGuard<'static, ()> {
+pub fn registry_test_lock() -> MutexGuard<'static, ()> {
     TEST_LOCK
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner())
@@ -204,7 +202,7 @@ fn remove_if_same(message_id: &str, claim: &Arc<Mutex<ClaimState>>) -> Option<Pe
 /// alone. The drop transitions the claim on its own handle and removes the
 /// entry by identity afterwards; it never holds the map lock while it
 /// touches the claim.
-pub(crate) struct DeliveryAck {
+pub struct DeliveryAck {
     message_id: String,
     receiver: tokio::sync::oneshot::Receiver<()>,
     claim: Arc<Mutex<ClaimState>>,
@@ -214,7 +212,7 @@ pub(crate) struct DeliveryAck {
 impl DeliveryAck {
     /// Wait for the dispatch-side confirmation. Resolves `Err` when the
     /// registration was dropped without confirming.
-    pub(crate) async fn wait(&mut self) -> Result<(), tokio::sync::oneshot::error::RecvError> {
+    pub async fn wait(&mut self) -> Result<(), tokio::sync::oneshot::error::RecvError> {
         (&mut self.receiver).await
     }
 
@@ -222,7 +220,7 @@ impl DeliveryAck {
     /// selection needs a surviving `Revoked` marker when the guard drops
     /// without an answer; a selection that never entered the queue is
     /// simply unregistered on drop.
-    pub(crate) fn mark_enqueued(&mut self) {
+    pub fn mark_enqueued(&mut self) {
         self.enqueued = true;
     }
 }
@@ -249,7 +247,7 @@ impl Drop for DeliveryAck {
 /// Register the acknowledgement for a selection about to be enqueued. Must
 /// run before the queue handoff so a runtime that consumes the selection
 /// immediately cannot confirm into a not-yet-registered id.
-pub(crate) fn register(message_id: &str) -> DeliveryAck {
+pub fn register(message_id: &str) -> DeliveryAck {
     let (sender, receiver) = tokio::sync::oneshot::channel();
     let claim = Arc::new(Mutex::new(ClaimState::Open));
     let mut pending = pending();
@@ -273,7 +271,7 @@ pub(crate) fn register(message_id: &str) -> DeliveryAck {
 /// Confirm that the selection reached runtime command handling. Messages
 /// that did not originate from the picker have no registration, so this is
 /// a no-op for ordinary traffic.
-pub(crate) fn confirm(message_id: &str) {
+pub fn confirm(message_id: &str) {
     let Some(claim) = claim_of(message_id) else {
         return;
     };
@@ -287,13 +285,13 @@ pub(crate) fn confirm(message_id: &str) {
 
 /// Drop a registration without confirming, e.g. when the enqueue failed and
 /// the selection never entered the queue.
-pub(crate) fn cancel(message_id: &str) {
+pub fn cancel(message_id: &str) {
     pending().remove(message_id);
 }
 
 /// Outcome of a callback-side revocation attempt.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub(crate) enum RevokeOutcome {
+pub enum RevokeOutcome {
     /// The revocation won: the selection had not been applied, so the late
     /// dispatch will observe the `Revoked` claim and stay inert.
     Won,
@@ -311,7 +309,7 @@ pub(crate) enum RevokeOutcome {
 /// claim first owns the outcome. Waits on the claim only, never while
 /// owning the map, so a mutation in progress blocks this revocation alone
 /// and no other selection.
-pub(crate) fn revoke(message_id: &str) -> RevokeOutcome {
+pub fn revoke(message_id: &str) -> RevokeOutcome {
     let Some(claim) = claim_of(message_id) else {
         // Only `confirm`/`apply_if_not_revoked` remove an entry the live
         // callback still owns, so a missing entry means the route already
@@ -347,7 +345,7 @@ pub(crate) fn revoke(message_id: &str) -> RevokeOutcome {
 /// [`confirm`], so both return `false`. A `Dropped` entry fails closed the
 /// same way: its dispatch already gave the message up, so nothing may apply
 /// it.
-pub(crate) fn take_revoked(message_id: &str) -> bool {
+pub fn take_revoked(message_id: &str) -> bool {
     let Some(claim) = claim_of(message_id) else {
         return false;
     };
@@ -367,7 +365,7 @@ pub(crate) fn take_revoked(message_id: &str) -> bool {
 /// selection that may still be queued, and clearing it while the message
 /// remains live would let the late dispatch apply a route change the
 /// picker UI already reported as unavailable.
-pub(crate) fn clear_abandoned() {
+pub fn clear_abandoned() {
     pending().clear();
 }
 
@@ -380,7 +378,7 @@ pub(crate) fn clear_abandoned() {
 /// registration (ordinary `/model` traffic) always apply. The map lock is
 /// not held at any point while the claim is: the entry is removed by
 /// identity after the claim is released.
-pub(crate) fn apply_if_not_revoked(message_id: &str, f: impl FnOnce()) -> bool {
+pub fn apply_if_not_revoked(message_id: &str, f: impl FnOnce()) -> bool {
     let Some(claim) = claim_of(message_id) else {
         f();
         return true;
@@ -467,12 +465,12 @@ fn settle_dropped(message_id: &str) {
 /// [`apply_if_not_revoked`] or [`take_revoked`] has already left the
 /// registry, and ordinary traffic never registered, so the drop is inert
 /// on every completed path.
-pub(crate) struct DispatchOwnership {
+pub struct DispatchOwnership {
     message_id: String,
 }
 
 impl DispatchOwnership {
-    pub(crate) fn hold(message_id: &str) -> Self {
+    pub fn hold(message_id: &str) -> Self {
         Self {
             message_id: message_id.to_string(),
         }
@@ -485,8 +483,7 @@ impl Drop for DispatchOwnership {
     }
 }
 
-#[cfg(test)]
-pub(crate) fn is_registered(message_id: &str) -> bool {
+pub fn is_registered(message_id: &str) -> bool {
     pending().contains_key(message_id)
 }
 

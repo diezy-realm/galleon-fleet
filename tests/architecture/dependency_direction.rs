@@ -82,6 +82,11 @@ fn crate_dependency_direction_strictly_enforced() {
         "crates/galleon-channel-email",
         "crates/galleon-channel-qq",
         "crates/galleon-channel-line",
+        "crates/galleon-channel-mattermost",
+        "crates/galleon-channel-lark",
+        "crates/galleon-channel-wechat",
+        "crates/galleon-channel-telegram",
+        "crates/galleon-channel-wecom-ws",
     ] {
         let cargo_path = root.join(channel_crate).join("Cargo.toml");
         if cargo_path.exists() {

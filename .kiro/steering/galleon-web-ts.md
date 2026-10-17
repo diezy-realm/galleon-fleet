@@ -1,15 +1,15 @@
 ---
-title: Galleon web-2 — konvensi TypeScript React
+title: Galleon web — konvensi TypeScript React
 inclusion: fileMatch
-fileMatchPattern: "web-2/**/*.{ts,tsx}"
+fileMatchPattern: "web/**/*.{ts,tsx}"
 ---
 
-# web-2 (React 19 + TS + Vite) — konvensi
+# web (React 19 + TS + Vite) — konvensi
 
-Loads saat menyentuh `.ts`/`.tsx` di `web-2/`. UI tier: **zero backend logic** — hanya render + panggil engine/IPC. Test: Vitest + React Testing Library (`src/__tests__/`).
+Loads saat menyentuh `.ts`/`.tsx` di `web/` (lokasi kanonikal UI; `web-2/` = alias historis ODR-01). UI tier: **zero backend logic** — hanya render + panggil engine/IPC. Test: Vitest + React Testing Library (`src/__tests__/`).
 
 ## Boundary (STRICT)
-- **Tidak ada logika bisnis/domain di UI.** Komponen memanggil `apiClient` (→ engine HTTP :9090 atau Tauri IPC); jangan hitung/putuskan fakta fleet di client. Logika host-only (network/Ollama/proses) ada di `web-2/server.ts`, bukan di komponen React.
+- **Tidak ada logika bisnis/domain di UI.** Komponen memanggil `apiClient` (→ engine HTTP :9090 atau Tauri IPC); jangan hitung/putuskan fakta fleet di client. Logika host-only (network/Ollama/proses) ada di `web/server.ts`, bukan di komponen React.
 - Satu klien API: `src/utils/apiClient.ts`. Komponen/stores **tidak** `fetch()` langsung ke `/api/...` — tambah method di `apiClient` (lihat `RemoteAccessModal` yang `fetch` langsung sebagai anti-pola yang harus dirapikan).
 - `apiClient` sudah punya pola Tauri-first + HTTP fallback (`isTauri()` → `invoke(...)` lalu `fetch`). Ikuti pola itu untuk endpoint baru.
 
@@ -31,5 +31,5 @@ Loads saat menyentuh `.ts`/`.tsx` di `web-2/`. UI tier: **zero backend logic** �
 - Interaktif = elemen semantik (`button`, `a`) dengan label; keyboard-reachable; `aria-*` saat perlu.
 
 ## Verifikasi
-- `tsc --noEmit` bersih (butuh `node_modules` ter-install di `web-2/`). Vitest untuk komponen/store yang diubah. ESLint bila tersedia.
+- `tsc --noEmit` bersih (butuh `node_modules` ter-install di `web/`). Vitest untuk komponen/store yang diubah. ESLint bila tersedia.
 - Hapus `fetch` langsung yang menembak endpoint tak terdaftar (lihat kontrak route di `galleon-architecture.md`).
