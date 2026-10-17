@@ -34,3 +34,8 @@ Aturan turunan:
 - Navigasi wajib **Graphify-First** (`graphify-out/` query/path/explain) sebelum grep atau baca file.
 - Branch non-`master`, PR ke `master` / `testing`. Conventional commits tanpa footer bot/AI.
 - Validasi: `cargo nextest run -p <crate>`, `cargo clippy -p <crate> -- -D warnings`, `go test -race ./...`, `npm run lint`.
+
+## Landasan vs pekerjaan berjalan (SSOT dipisah)
+- **`standard-docs/`** = landasan baku saja (arsitektur, standar teknis, arah produk/ODR). Onboarding: baca `standard-docs/ONBOARDING.md` dulu.
+- **Pekerjaan berjalan** (riset, backlog, task, sprint, report, governance) ada di papan **`~/Apps/board/`** — aturannya di steering `board-coordination.md` + `~/Apps/board/RULES.md`.
+- `roadmap/` + `decisions/finalize/dev-task-2|3` **tetap** di `standard-docs/` (SSOT tiket aktif; dev-task-2/3 dikerjakan tim lain — jangan sentuh tanpa konfirmasi).
