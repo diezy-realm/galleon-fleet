@@ -110,26 +110,12 @@ jobs:
             echo "util.rs not present, skipping check."
           fi
 
-      # ── 5. Standard Fast Check (Nextest) ─────────────────────────────
-      - name: Setup Rust & Nextest
-        if: steps.paths.outputs.touches_rust == 'true'
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-
-      - name: Install cargo-nextest
-        if: steps.paths.outputs.touches_rust == 'true'
-        uses: taiki-e/install-action@nextest
-
-      - name: Install mold linker & protobuf-compiler
-        if: steps.paths.outputs.touches_rust == 'true'
-        run: sudo apt-get update -qq && sudo apt-get install -y mold protobuf-compiler
-
-      - name: Run Nextest on Affected Crates
-        id: nextest_check
-        if: steps.paths.outputs.touches_rust == 'true'
-        run: |
-          cargo nextest run --workspace --no-fail-fast
+      # ── 5. (removed) Nextest moved out — the full `cargo nextest run --workspace`
+      # lives in ci.yml (job "Test") and is advisory/non-blocking for auto-merge
+      # per Owner decision 2026-10-17. Re-running it here duplicated CI and let a
+      # flaky test fail this gate (a REQUIRED auto-merge gate), silently blocking
+      # merges the Owner chose to forgive. This gate now checks only what is
+      # unique to it: unwrap/expect, Gate D-1/D-2, and the checklist comment.
 
       # ── 6. Automated PR Checklist Comment ─────────────────────────────
       - name: Post Checklist Status on PR
@@ -146,7 +132,7 @@ jobs:
             };
             
             const unwrapPassed = '${{ steps.unwrap_check.outcome }}' === 'success' || !paths.rust;
-            const nextestPassed = '${{ steps.nextest_check.outcome }}' === 'success' || !paths.rust;
+            // Nextest moved to ci.yml (advisory). Not re-run here.
             
             let d1Status = 'N/A (Not touching channels)';
             if (paths.channels) {
@@ -164,7 +150,7 @@ jobs:
               '| Check / Gate | Scope | Status |',
               '|---|---|---|',
               `| **Zero \`unwrap()\` / \`expect()\`** | Rust Core | ${unwrapPassed ? '✅ Passed' : '❌ Failed'} |`,
-              `| **Fast Tests (\`cargo-nextest\`)** | Workspace | ${nextestPassed ? '✅ Passed' : (paths.rust ? '❌ Failed' : '⚪ Skipped')} |`,
+              `| **Fast Tests (\`cargo-nextest\`)** | Workspace | ⚪ di CI utama (ci.yml, advisory) |`,
               `| **Gate D-1 (Orchestrator File-Split)** | Channels / RF-D | ${d1Status.startsWith('Passed') ? '✅ ' + d1Status : (d1Status.startsWith('N/A') ? '⚪ ' + d1Status : '⚠️ ' + d1Status)} |`,
               `| **Gate D-2 (Governance Coupling)** | Channels / RF-D | ${d2Status.startsWith('Passed') ? '✅ ' + d2Status : (d2Status.startsWith('N/A') ? '⚪ ' + d2Status : '⚠️ ' + d2Status)} |`,
               '',
