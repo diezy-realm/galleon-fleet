@@ -1,33 +1,9 @@
-//! The decision a principal makes on a SOP gate, and the outcome of resolving it.
-
-use serde::{Deserialize, Serialize};
-
 use crate::sop::types::SopRunAction;
 
+
 /// Approve or deny a waiting SOP gate.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
-#[serde(rename_all = "snake_case")]
-pub enum ApprovalDecision {
-    Approve,
-    Deny {
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        reason: Option<String>,
-    },
-    /// Approve a deterministic checkpoint WITH an operator amendment: `text`
-    /// replaces the step's declared editable field (`- edit:` bullet) in the
-    /// piped value before the run resumes. Checkpoint-only; an approval gate
-    /// (broker-owned `WaitingApproval`) refuses it fail-closed.
-    Amend {
-        text: String,
-    },
-    /// Ask for a re-draft: re-run the checkpoint's predecessor `llm.generate`
-    /// step with `guidance` framed as reviewer feedback, then re-present the
-    /// gate (revision + 1). Checkpoint-only, same as `Amend`.
-    Revise {
-        guidance: String,
-    },
-}
+pub use clawcrew_api::sop::ApprovalDecision;
+
 
 /// What `resolve_gate` did. Returned to the caller (tool / CLI / gateway) so it
 /// can report, and so the executor/tick can act on a resumed action.

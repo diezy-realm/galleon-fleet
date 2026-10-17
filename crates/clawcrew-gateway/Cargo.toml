@@ -21,6 +21,7 @@ clawcrew-memory.workspace = true
 clawcrew-providers.workspace = true
 clawcrew-channels = { workspace = true, default-features = false }
 clawcrew-runtime.workspace = true
+clawcrew-sop-graph = { workspace = true, features = ["schema-export"] }
 clawcrew-tools.workspace = true
 clawcrew-hardware.workspace = true
 clawcrew-plugins = { workspace = true, optional = true }

@@ -18,7 +18,7 @@ use axum::{
     response::IntoResponse,
 };
 use futures_util::{SinkExt, StreamExt};
-use clawcrew_runtime::sop::SopRunSummary;
+use clawcrew_api::sop::SopRunSummary;
 
 const WS_PROTOCOL: &str = "clawcrew.v1";
 
@@ -73,30 +73,15 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
     let (mut sender, mut receiver) = socket.split();
 
     // The SOP subsystem may be disabled; tell the client and close.
-    let Some(engine) = state.sop_engine.as_ref() else {
+    let Some(runner) = state.sop_runner.as_ref() else {
         let msg = serde_json::json!({ "type": "disabled" });
         let _ = sender.send(Message::Text(msg.to_string().into())).await;
         return;
     };
 
-    // Snapshot + subscribe under one lock so no transition is missed between
-    // reading the current set and arming the feed. The guard is dropped before
-    // any await (the WS send) so the future stays Send.
-    let locked: Result<
-        (
-            Vec<SopRunSummary>,
-            Option<tokio::sync::broadcast::Receiver<SopRunSummary>>,
-        ),
-        (),
-    > = {
-        match engine.lock() {
-            Ok(guard) => Ok((guard.run_summaries(None), guard.subscribe_run_changes())),
-            Err(_) => Err(()),
-        }
-    };
-    let (snapshot, rx) = match locked {
+    let (snapshot, rx) = match runner.subscribe_run_changes() {
         Ok(v) => v,
-        Err(()) => {
+        Err(_) => {
             let msg = serde_json::json!({ "type": "error", "error": "engine lock poisoned" });
             let _ = sender.send(Message::Text(msg.to_string().into())).await;
             return;

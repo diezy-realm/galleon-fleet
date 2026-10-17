@@ -15,6 +15,8 @@ clawcrew-api.workspace = true
 clawcrew-spawn.workspace = true
 anyhow = "1.0"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
+chrono-tz = "0.10"
+cron = "0.15"
 parking_lot = "0.12"
 portable-atomic = "1"
 rusqlite = { version = "0.37", features = ["bundled"] }
@@ -28,6 +30,7 @@ schemars = { version = "1.2", optional = true }
 sysinfo = { version = "0.36", default-features = false, features = ["system"] }
 tokio = { version = "1.50", default-features = false, features = ["sync", "time"] }
 url = "2.5"
+uuid = { version = "1.22", default-features = false, features = ["v4", "std"] }
 
 [features]
 default = []

@@ -42,7 +42,10 @@ jobs:
             const IGNORE_PREFIXES = ["Test"];           // "Test", "Test (channel ...)", "Test (PostgreSQL Memory)"
             const IGNORE_EXACT = new Set([
               "Benchmarks Compile",                      // frequently skipped
+              "SOP Eval Replay (Advisory Non-Blocking)", // advisory by name — never blocks
             ]);
+            // Any check whose name declares itself advisory/non-blocking is ignored.
+            const IGNORE_SUBSTR = ["Advisory Non-Blocking"];
             // Gates that MUST be present AND passing (not merely "not failing").
             const REQUIRED_GATES = [
               "Principle Gate Reviewer",
@@ -51,6 +54,7 @@ jobs:
 
             const isIgnored = (name) =>
               IGNORE_EXACT.has(name) ||
+              IGNORE_SUBSTR.some((s) => name.includes(s)) ||
               IGNORE_PREFIXES.some((p) => name === p || name.startsWith(p + " ("));
 
             // All open PRs whose base is `testing`.

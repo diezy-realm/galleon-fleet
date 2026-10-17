@@ -22,8 +22,11 @@ pub mod trigger_registry;
 pub mod trigger_source;
 pub mod types;
 pub mod wire;
+pub mod runner;
 
+pub use runner::RuntimeSopRunner;
 pub use approval::ApprovalDecision;
+
 pub use audit::SopAuditLogger;
 pub use constraint::{ConstraintKind, RoleRestrictionHook, SopConstraint};
 pub use dispatch::SopRuntimeDispatcher;

@@ -1886,6 +1886,7 @@ dependencies = [
  "clawcrew-providers",
  "clawcrew-routing",
  "clawcrew-runtime",
+ "clawcrew-sop-graph",
  "clawcrew-spawn",
  "clawcrew-tls",
  "clawcrew-tools",
@@ -1970,9 +1971,11 @@ version = "0.8.5"
 dependencies = [
  "anyhow",
  "chrono",
+ "chrono-tz",
  "clawcrew-api",
  "clawcrew-log",
  "clawcrew-spawn",
+ "cron",
  "hex",
  "libc",
  "parking_lot",
@@ -1986,6 +1989,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "url",
+ "uuid",
 ]
 
 [[package]]
@@ -2258,6 +2262,7 @@ dependencies = [
 name = "clawcrew-sop-graph"
 version = "0.8.5"
 dependencies = [
+ "clawcrew-api",
  "schemars",
  "serde",
  "serde_json",

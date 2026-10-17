@@ -382,6 +382,71 @@ fn run_state_key(state: NodeRunState) -> &'static str {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+pub struct NodeRunOverlay {
+    pub step: u32,
+    pub state: NodeRunState,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+pub struct RunOverlay {
+    pub run_id: String,
+    pub sop_name: String,
+    pub status: clawcrew_api::sop::SopRunStatus,
+    pub current_step: u32,
+    pub total_steps: u32,
+    pub waiting: bool,
+    pub paused: bool,
+    pub nodes: Vec<NodeRunOverlay>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+#[serde(rename_all = "snake_case")]
+pub enum WireOp {
+    Connect,
+    Disconnect,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+pub struct WireEdit {
+    pub op: WireOp,
+    pub from: u32,
+    pub to: u32,
+    pub role: FlowRole,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub port: Option<usize>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum WireError {
+    UnknownStep(u32),
+    MissingPort,
+    PortOutOfRange(usize),
+    SelfLoop(u32),
+    TriggerNotWirable,
+}
+
+impl std::fmt::Display for WireError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::UnknownStep(n) => write!(f, "step {n} does not exist"),
+            Self::MissingPort => write!(f, "switch edge requires a port index"),
+            Self::PortOutOfRange(i) => write!(f, "switch port {i} out of range"),
+            Self::SelfLoop(n) => write!(f, "step {n} cannot wire to itself"),
+            Self::TriggerNotWirable => {
+                write!(f, "trigger edges are derived from sop.triggers, never hand-wired")
+            }
+        }
+    }
+}
+
+impl std::error::Error for WireError {}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
