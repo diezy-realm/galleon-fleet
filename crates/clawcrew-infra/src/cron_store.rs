@@ -62,6 +62,64 @@ impl CronStore {
         .unwrap_or(false)
     }
 
+    pub fn ensure_table(&self) -> Result<()> {
+        if let Some(parent) = self.db_path.parent() {
+            std::fs::create_dir_all(parent)
+                .with_context(|| format!("Failed to create cron dir: {}", parent.display()))?;
+        }
+        let conn = Connection::open(&self.db_path)
+            .with_context(|| format!("Failed to open cron DB: {}", self.db_path.display()))?;
+        conn.execute_batch(
+            "PRAGMA foreign_keys = ON;
+             CREATE TABLE IF NOT EXISTS cron_jobs (
+                id               TEXT PRIMARY KEY,
+                expression       TEXT NOT NULL,
+                command          TEXT NOT NULL,
+                schedule         TEXT,
+                job_type         TEXT NOT NULL DEFAULT 'shell',
+                prompt           TEXT,
+                name             TEXT,
+                session_target   TEXT NOT NULL DEFAULT 'isolated',
+                model            TEXT,
+                enabled          INTEGER NOT NULL DEFAULT 1,
+                delivery         TEXT,
+                delete_after_run INTEGER NOT NULL DEFAULT 0,
+                allowed_tools    TEXT,
+                created_at       TEXT NOT NULL,
+                next_run         TEXT NOT NULL,
+                last_run         TEXT,
+                last_status      TEXT,
+                last_output      TEXT,
+                source           TEXT DEFAULT 'imperative',
+                uses_memory      INTEGER NOT NULL DEFAULT 1,
+                agent_alias      TEXT NOT NULL DEFAULT '',
+                shell_output_format TEXT NOT NULL DEFAULT 'wrapped'
+             );",
+        )
+        .context("Failed to ensure cron_jobs table")?;
+        Ok(())
+    }
+
+    pub fn add_job(
+        &self,
+        agent_alias: &str,
+        expression: &str,
+        command: &str,
+    ) -> Result<String> {
+        self.ensure_table()?;
+        let conn = Connection::open(&self.db_path)
+            .with_context(|| format!("Failed to open cron DB: {}", self.db_path.display()))?;
+        let id = uuid::Uuid::new_v4().to_string();
+        let now = chrono::Utc::now().to_rfc3339();
+        conn.execute(
+            "INSERT INTO cron_jobs (id, expression, command, created_at, next_run, agent_alias)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![id, expression, command, now, now, agent_alias],
+        )
+        .context("Failed to insert cron job")?;
+        Ok(id)
+    }
+
     pub fn list_jobs_by_agent(&self, agent_alias: &str) -> Result<Vec<CronJobRecord>> {
         if !self.db_path.exists() {
             return Ok(Vec::new());
