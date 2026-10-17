@@ -1156,7 +1156,7 @@ mod embed_tests {
 #[cfg(test)]
 mod component_marker_tests {
     use super::*;
-    use crate::discord::components::ButtonStyle;
+    use crate::components::ButtonStyle;
 
     #[test]
     fn merges_multiple_markers_and_strips_all() {
@@ -1404,7 +1404,7 @@ mod component_marker_tests {
 
     #[test]
     fn parses_modal_button_with_fields() {
-        use crate::discord::components::TextInputStyle;
+        use crate::components::TextInputStyle;
         let (cleaned, rows) = parse_component_markers(
             "Open: [COMPONENTS:{\"rows\":[[{\"label\":\"Report\",\"style\":\"danger\",\"prompt\":\"file it\",\"modal\":{\"title\":\"Report\",\"fields\":[{\"id\":\"reason\",\"label\":\"Reason\",\"style\":\"paragraph\",\"required\":true,\"placeholder\":\"why?\",\"min\":1,\"max\":500}]}}]]}]",
         );

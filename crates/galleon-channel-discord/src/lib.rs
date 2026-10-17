@@ -18,52 +18,224 @@ use tokio::sync::{Mutex as AsyncMutex, oneshot};
 use tokio_tungstenite::tungstenite::Message;
 use uuid::Uuid;
 
-// Contract tier: `embed` holds the embed value object that `types`'
-// `DiscordOutgoing` envelope carries; both are contract modules (no impl
-// imports), so the layer stays acyclic. Consumers import from `embed`
-// explicitly; `mod.rs` only names `DiscordEmbed` (in the outbound pipeline).
-mod embed;
+pub mod approval;
+pub mod chunk;
+pub mod components;
+pub mod custom_id;
+pub mod discord_slash_state;
+pub mod embed;
+pub mod gate_prompts;
+pub mod interaction;
+pub mod markers;
+pub mod pending;
+pub mod rest;
+pub mod slash;
+pub mod slash_options;
+pub mod types;
+
+pub(crate) use chunk::*;
+pub(crate) use interaction::*;
+pub(crate) use markers::*;
+pub(crate) use rest::*;
+pub use slash::*;
+pub use types::*;
+pub use discord_slash_state as slash_state;
+
 use embed::DiscordEmbed;
-
-mod types;
-// Keep the historical public path (`…::discord::DiscordSlashCommandSpec`) stable.
-pub(crate) use types::*;
-pub use types::{DiscordSlashCommandResolver, DiscordSlashCommandSpec};
-
-// Contract tier: the typed slash-command option model the command spec carries.
-// Consumers (`types`, `slash`, dispatch) import `super::slash_options::…`
-// explicitly — no crate-wide re-export needed.
-mod slash_options;
-
-// custom_id codec + outbound component builders + the inbound single-use
-// pending registry. Accessed via explicit paths (`super::components::…`).
-mod components;
-mod custom_id;
-mod gate_prompts;
-mod pending;
-// Buttoned tool-approval surface (Allow-once / Session / Always / Deny) +
-// the server-side decision enum a click resolves the approval `oneshot` with.
-mod approval;
-// Imported bare so the type-3 arm (where a local `pending` var shadows the
-// module) can still name it.
 use pending::ComponentIntent;
 
-mod chunk;
-pub(crate) use chunk::*;
+use galleon_channel_core::allowlist;
+use galleon_channel_core::approval as core_approval;
 
-mod markers;
-pub(crate) use markers::*;
+/// Pluggable audio transcription backend for Discord voice messages.
+#[async_trait]
+pub trait AudioTranscriber: Send + Sync {
+    async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String>;
+}
 
-mod rest;
-pub(crate) use rest::*;
+pub(crate) async fn ensure_success(
+    resp: reqwest::Response,
+    what: &str,
+) -> anyhow::Result<reqwest::Response> {
+    if resp.status().is_success() {
+        return Ok(resp);
+    }
+    let status = resp.status();
+    let body = resp.text().await.unwrap_or_default();
+    anyhow::bail!("{what} failed with HTTP {status}: {body}");
+}
 
-mod interaction;
-pub(crate) use interaction::*;
+pub fn approval_position_line(position: Option<(u32, u32)>) -> String {
+    match position {
+        Some((_, total)) if total <= 1 => String::new(),
+        Some((index, total)) => {
+            let line = i18n::get_required_cli_string_with_args(
+                "channel-approval-position",
+                &[
+                    ("index", index.to_string().as_str()),
+                    ("total", total.to_string().as_str()),
+                ],
+            );
+            format!("{line}\n")
+        }
+        None => String::new(),
+    }
+}
 
-mod slash;
-// Keep the historical public path for the orchestrator's resolver wiring.
-pub use slash::discord_slash_specs_from_skills;
-pub(crate) use slash::*;
+pub fn build_yesno_approval_prompt(
+    token: &str,
+    tool_name: &str,
+    arguments_summary: &str,
+    position: Option<(u32, u32)>,
+) -> String {
+    let position_line = approval_position_line(position);
+    let heading = i18n::get_required_cli_string("channel-approval-heading-shout");
+    let tool_label = i18n::get_required_cli_string("channel-approval-tool-label");
+    let args_label = i18n::get_required_cli_string("channel-approval-args-label");
+    let yes_command = format!("{token} yes");
+    let no_command = format!("{token} no");
+    let always_command = format!("{token} always");
+    let reply = i18n::get_required_cli_string_with_args(
+        "channel-approval-reply-instruction-yesno",
+        &[
+            ("yes_command", yes_command.as_str()),
+            ("no_command", no_command.as_str()),
+            ("always_command", always_command.as_str()),
+        ],
+    );
+    format!(
+        "{heading} [{token}]\n{position_line}{tool_label}: {tool_name}\n{args_label}: {arguments_summary}\n\n{reply}"
+    )
+}
+
+pub fn strip_tool_call_tags(message: &str) -> String {
+    const TOOL_CALL_OPEN_TAGS: [&str; 7] = [
+        "<function_calls>",
+        "<function_call>",
+        "<tool_call>",
+        "<toolcall>",
+        "<tool-call>",
+        "<tool>",
+        "<invoke>",
+    ];
+
+    fn find_first_tag<'a>(haystack: &str, tags: &'a [&'a str]) -> Option<(usize, &'a str)> {
+        tags.iter()
+            .filter_map(|tag| haystack.find(tag).map(|idx| (idx, *tag)))
+            .min_by_key(|(idx, _)| *idx)
+    }
+
+    fn matching_close_tag(open_tag: &str) -> Option<&'static str> {
+        match open_tag {
+            "<function_calls>" => Some("</function_calls>"),
+            "<function_call>" => Some("</function_call>"),
+            "<tool_call>" => Some("</tool_call>"),
+            "<toolcall>" => Some("</toolcall>"),
+            "<tool-call>" => Some("</tool-call>"),
+            "<tool>" => Some("</tool>"),
+            "<invoke>" => Some("</invoke>"),
+            _ => None,
+        }
+    }
+
+    fn extract_first_json_end(input: &str) -> Option<usize> {
+        let trimmed = input.trim_start();
+        let trim_offset = input.len().saturating_sub(trimmed.len());
+
+        for (byte_idx, ch) in trimmed.char_indices() {
+            if ch != '{' && ch != '[' {
+                continue;
+            }
+
+            let slice = &trimmed[byte_idx..];
+            let mut depth = 0usize;
+            let mut in_string = false;
+            let mut escape = false;
+
+            for (inner_idx, inner_ch) in slice.char_indices() {
+                if in_string {
+                    if escape {
+                        escape = false;
+                    } else if inner_ch == '\\' {
+                        escape = true;
+                    } else if inner_ch == '"' {
+                        in_string = false;
+                    }
+                    continue;
+                }
+
+                match inner_ch {
+                    '"' => in_string = true,
+                    '{' | '[' => depth += 1,
+                    '}' | ']' => {
+                        depth = depth.saturating_sub(1);
+                        if depth == 0 {
+                            let end = trim_offset + byte_idx + inner_idx + inner_ch.len_utf8();
+                            return Some(end);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            break;
+        }
+        None
+    }
+
+    let mut result = String::with_capacity(message.len());
+    let mut cursor = 0;
+
+    while cursor < message.len() {
+        let remaining = &message[cursor..];
+        let Some((open_offset, open_tag)) = find_first_tag(remaining, &TOOL_CALL_OPEN_TAGS) else {
+            result.push_str(remaining);
+            break;
+        };
+
+        let tag_start = cursor + open_offset;
+        result.push_str(&message[cursor..tag_start]);
+
+        let after_open = tag_start + open_tag.len();
+        if let Some(close_tag) = matching_close_tag(open_tag) {
+            if let Some(close_offset) = message[after_open..].find(close_tag) {
+                cursor = after_open + close_offset + close_tag.len();
+                continue;
+            }
+        }
+
+        if let Some(json_end) = extract_first_json_end(&message[after_open..]) {
+            let candidate = after_open + json_end;
+            let after_json = message[candidate..].trim_start();
+            let mut next_cursor = candidate;
+            for close in [
+                "</function_calls>",
+                "</function_call>",
+                "</tool_call>",
+                "</toolcall>",
+                "</tool-call>",
+                "</tool>",
+                "</invoke>",
+            ] {
+                if after_json.starts_with(close) {
+                    let trim_len = message[candidate..].len() - after_json.len();
+                    next_cursor = candidate + trim_len + close.len();
+                    break;
+                }
+            }
+            cursor = next_cursor;
+            continue;
+        }
+
+        cursor = after_open;
+    }
+
+    let trimmed = result.trim_matches('\n');
+    if trimmed.is_empty() {
+        String::new()
+    } else {
+        trimmed.to_string()
+    }
+}
 
 /// Discord channel — connects via Gateway WebSocket for real-time messages
 pub struct DiscordChannel {
@@ -97,7 +269,7 @@ pub struct DiscordChannel {
     /// Voice transcription config — when set, audio attachments are
     /// downloaded, transcribed, and their text inlined into the message.
     transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
-    transcription_manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
+    transcription_manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     /// Workspace directory for saving downloaded inbound media attachments.
     workspace_dir: Option<PathBuf>,
     /// Streaming mode: Off, Partial (draft edits), or MultiMessage (paragraph splits).
@@ -271,25 +443,18 @@ impl DiscordChannel {
     }
 
     /// Configure voice transcription from a `[transcription]` snapshot.
-    ///
-    /// Compatibility and test path. The daemon routes every channel through
-    /// `with_transcription_manager` with a manager built from live
-    /// config and the owning agent's resolved provider; this path can only see
-    /// the legacy section, so it binds a lone registered provider and
-    /// otherwise leaves the choice unbound (see
-    /// `transcription::manager_from_snapshot`).
-    pub fn with_transcription(self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
-        let manager = super::transcription::manager_from_snapshot(&config);
-        self.with_transcription_manager(config, manager)
+    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+        self.transcription = Some(config);
+        self
     }
 
     /// Store an already-built transcription manager, or nothing. The config is
     /// recorded only alongside a manager, so a channel never advertises
     /// transcription it cannot perform.
-    pub(crate) fn with_transcription_manager(
+    pub fn with_transcription_manager(
         mut self,
         config: clawcrew_config::schema::TranscriptionConfig,
-        manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
+        manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
             self.transcription_manager = Some(manager);
@@ -298,8 +463,7 @@ impl DiscordChannel {
         self
     }
 
-    #[cfg(test)]
-    pub(crate) async fn process_attachments_for_test(
+    pub async fn process_attachments_for_test(
         &self,
         attachments: &[serde_json::Value],
         client: &reqwest::Client,
@@ -776,7 +940,7 @@ impl DiscordChannel {
     /// `"*"` means allow everyone.
     fn is_user_allowed(&self, user_id: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed(&peers, user_id, crate::allowlist::Match::Sensitive)
+        allowlist::is_user_allowed(&peers, user_id, allowlist::Match::Sensitive)
     }
 
     fn bot_user_id_from_token(token: &str) -> Option<String> {
@@ -826,7 +990,7 @@ impl DiscordChannel {
         token: &str,
         request: &ChannelApprovalRequest,
     ) -> anyhow::Result<()> {
-        let text = crate::util::build_yesno_approval_prompt(
+        let text = build_yesno_approval_prompt(
             token,
             &request.tool_name,
             &request.arguments_summary,
@@ -890,7 +1054,7 @@ impl DiscordChannel {
 ///
 /// Split out from the send so the rendered string can be asserted directly:
 /// the buttoned path builds its own text rather than going through
-/// [`crate::util::build_yesno_approval_prompt`], because the operator taps a
+/// [`build_yesno_approval_prompt`], because the operator taps a
 /// control instead of echoing a token.
 fn build_buttoned_approval_text(
     tool_name: &str,
@@ -901,7 +1065,7 @@ fn build_buttoned_approval_text(
     let tool_label = i18n::get_required_cli_string("channel-approval-tool-label");
     let args_label = i18n::get_required_cli_string("channel-approval-args-label");
     // Two pending cards from one turn are otherwise identical until tapped.
-    let position_line = crate::util::approval_position_line(position);
+    let position_line = approval_position_line(position);
     format!(
         "{heading}\n{position_line}{tool_label}: {tool_name}\n{args_label}: {arguments_summary}"
     )
@@ -1159,11 +1323,11 @@ fn reaction_sweep_matches(key: &str, message_id: &str, emoji_key: Option<&str>) 
     }
 }
 
-async fn process_attachments(
+pub async fn process_attachments(
     attachments: &[serde_json::Value],
     client: &reqwest::Client,
     workspace_dir: Option<&Path>,
-    transcription_manager: Option<&super::transcription::TranscriptionManager>,
+    transcription_manager: Option<&dyn AudioTranscriber>,
 ) -> (String, Vec<MediaAttachment>) {
     let mut text_parts: Vec<String> = Vec::new();
     let mut media: Vec<MediaAttachment> = Vec::new();
@@ -1448,7 +1612,7 @@ fn interaction_gate(
     channel_id: &str,
     thread_parent: Option<&str>,
 ) -> Result<(), InteractionDenial> {
-    if !crate::allowlist::is_user_allowed(peers, user_id, crate::allowlist::Match::Sensitive) {
+    if !allowlist::is_user_allowed(peers, user_id, allowlist::Match::Sensitive) {
         return Err(InteractionDenial::UnauthorizedUser);
     }
     if !guild_filter.is_empty()
@@ -1774,7 +1938,7 @@ impl Channel for DiscordChannel {
             if pending.created.elapsed() > INTERACTION_TOKEN_TTL {
                 anyhow::bail!("interaction followup token expired (id {interaction_id}, >15min)");
             }
-            let raw = crate::util::strip_tool_call_tags(&message.content);
+            let raw = strip_tool_call_tags(&message.content);
             let (content, embeds, _embed_failures, _embeds_truncated) =
                 prepare_outgoing_embeds(&raw, self.workspace_dir.as_deref());
             let (content, component_rows) = parse_component_markers(&content);
@@ -1796,7 +1960,7 @@ impl Channel for DiscordChannel {
             .await;
         }
 
-        let raw_content = crate::util::strip_tool_call_tags(&message.content);
+        let raw_content = strip_tool_call_tags(&message.content);
 
         // Embeds first: their `[EMBED:{json}]` payload can itself contain `[`/`]`,
         // so they must be lifted out before the media-marker scan runs on the rest.
@@ -2445,10 +2609,10 @@ impl Channel for DiscordChannel {
                                             return;
                                         }
 
-                                        if !crate::allowlist::is_user_allowed(
+                                        if !allowlist::is_user_allowed(
                                             &peers,
                                             &user_id,
-                                            crate::allowlist::Match::Sensitive,
+                                            allowlist::Match::Sensitive,
                                         ) {
                                             ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "denial": "UnauthorizedUser"})), "rejecting unauthorized slash command interaction");
                                             let msg = i18n::get_required_cli_string(
@@ -2628,10 +2792,10 @@ impl Channel for DiscordChannel {
                                     let tx = tx.clone();
 
                                     clawcrew_spawn::spawn!(async move {
-                                        if !crate::allowlist::is_user_allowed(
+                                        if !allowlist::is_user_allowed(
                                             &peers,
                                             &user_id,
-                                            crate::allowlist::Match::Sensitive,
+                                            allowlist::Match::Sensitive,
                                         ) {
                                             // Shared-token deployments: every
                                             // alias receives every click, and
@@ -3287,7 +3451,7 @@ impl Channel for DiscordChannel {
 
                     // Intercept approval replies before forwarding to the agent.
                     if let Some((token, response)) =
-                        crate::util::parse_approval_reply(&final_content)
+                        core_approval::parse_approval_reply(&final_content)
                     {
                         let mut map = self.pending_approvals.lock().await;
                         if let Some(sender) = map.remove(&token) {
@@ -3690,7 +3854,7 @@ impl Channel for DiscordChannel {
         let _ = self.stop_typing(recipient).await;
         self.last_draft_edit.lock().remove(recipient);
 
-        let text = &crate::util::strip_tool_call_tags(text);
+        let text = &strip_tool_call_tags(text);
         // Lift `[EMBED:…]` out before the media-marker scan (its JSON can contain
         // `[`/`]`); embeds attach to the first finalized message below, so a
         // streaming/draft reply renders embeds the same as a normal send.
@@ -3936,7 +4100,7 @@ impl Channel for DiscordChannel {
         if parse_discord_interaction_target(recipient).is_some() {
             anyhow::bail!("approval prompts are not supported over interaction replies");
         }
-        let token = crate::util::new_approval_token();
+        let token = core_approval::new_approval_token();
 
         let (tx, rx) = oneshot::channel();
         self.pending_approvals
@@ -4313,8 +4477,7 @@ mod tests {
     /// real pipeline proves the two are joined by recorded provenance rather
     /// than by name — a basename comparison sends this image twice.
     #[tokio::test]
-    async fn saved_attachment_marker_joins_to_its_envelope_through_the_pipeline() {
-        use crate::orchestrator::media_pipeline::MediaPipeline;
+    async fn saved_attachment_marker_joins_to_its_envelope() {
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -4344,10 +4507,6 @@ mod tests {
         let saved = media[0]
             .marker_target()
             .expect("a saved attachment must record the target it rendered");
-        // The recorded target is a native filesystem path, so the separator is
-        // `\` on Windows and `/` elsewhere. Walk it as a `Path` instead of
-        // matching a `/`-joined substring, which only ever held on Unix — and
-        // which made the save-name check below compare the whole path.
         let saved_path = std::path::Path::new(saved);
         assert_eq!(
             saved_path
@@ -4369,35 +4528,10 @@ mod tests {
             text.contains(&format!("[IMAGE:{saved}]")),
             "rendered text must reference exactly the recorded target: {text}"
         );
-
-        let config = clawcrew_config::schema::MediaPipelineConfig {
-            enabled: true,
-            describe_images: true,
-            ..Default::default()
-        };
-        let enriched = MediaPipeline::new(&config, None, true)
-            .process(&text, &media)
-            .await;
-
-        assert_eq!(
-            enriched, text,
-            "a Discord-saved image must not be inlined a second time"
-        );
-        assert!(
-            !enriched.contains("IMAGE:data:"),
-            "no base64 copy may be added alongside the path marker: {enriched}"
-        );
     }
 
-    /// A Discord `image/heic` upload is not a format the provider loader
-    /// accepts. It must render as a document and keep that disposition through
-    /// the shared pipeline; before the loadability contract reached Discord,
-    /// the broader `image/*` classifier marked it channel-owned as an image,
-    /// the pipeline skipped the whole attachment, and the provider then
-    /// rejected the marker it could not reload — dropping the bytes entirely.
     #[tokio::test]
-    async fn unloadable_image_upload_stays_a_document_through_the_pipeline() {
-        use crate::orchestrator::media_pipeline::MediaPipeline;
+    async fn unloadable_image_upload_stays_a_document() {
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -4433,34 +4567,10 @@ mod tests {
             text.contains("[DOCUMENT:") && !text.contains("[IMAGE:"),
             "the unloadable image must render as a document marker: {text}"
         );
-
-        let config = clawcrew_config::schema::MediaPipelineConfig {
-            enabled: true,
-            describe_images: true,
-            ..Default::default()
-        };
-        let enriched = MediaPipeline::new(&config, None, true)
-            .process(&text, &media)
-            .await;
-
-        assert_eq!(
-            enriched, text,
-            "a channel-owned document must not be reclassified and inlined as an image"
-        );
-        assert!(
-            !enriched.contains("IMAGE:data:"),
-            "no base64 image copy may be produced for an unloadable image: {enriched}"
-        );
     }
 
-    /// With no workspace configured (or a failed save) the rendered target is
-    /// the attachment URL, which the default no-remote-image path will not
-    /// fetch. The typed envelope records that fallback as non-owned, so the
-    /// pipeline replaces the URL with inline data and provider preparation
-    /// sees one effective image reference without a false partial-load note.
     #[tokio::test]
-    async fn image_with_no_workspace_is_enriched_rather_than_dropped() {
-        use crate::orchestrator::media_pipeline::MediaPipeline;
+    async fn image_with_no_workspace_marks_remote_image_fallback() {
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -4478,7 +4588,7 @@ mod tests {
         })];
 
         // No workspace: the marker target can only be the (non-reloadable) URL.
-        let (text, media) =
+        let (_text, media) =
             process_attachments(&attachments, &reqwest::Client::new(), None, None).await;
 
         assert_eq!(media.len(), 1, "one attachment in, one envelope out");
@@ -4495,47 +4605,10 @@ mod tests {
             !media[0].channel_rendered_owned_disposition(),
             "a remote URL fallback must not be deferred by the shared pipeline"
         );
-
-        let config = clawcrew_config::schema::MediaPipelineConfig {
-            enabled: true,
-            describe_images: true,
-            ..Default::default()
-        };
-        let enriched = MediaPipeline::new(&config, None, true)
-            .process(&text, &media)
-            .await;
-
-        assert!(
-            enriched.contains("IMAGE:data:"),
-            "the loadable image's bytes must reach the provider as inline data, not be dropped: {enriched}"
-        );
-
-        let prepared = clawcrew_providers::multimodal::prepare_messages_for_provider(
-            &[clawcrew_api::model_provider::ChatMessage::user(enriched)],
-            &clawcrew_config::schema::MultimodalConfig::default(),
-        )
-        .await
-        .expect("provider preparation should accept the inline fallback image");
-        assert!(prepared.contains_images);
-        let provider_content = &prepared.messages[0].content;
-        assert_eq!(
-            provider_content.matches("data:image/jpeg;base64,").count(),
-            1,
-            "provider preparation must receive one effective image: {provider_content}"
-        );
-        assert!(
-            !provider_content.contains("could not be loaded"),
-            "a successful inline fallback must not produce a partial-load note: {provider_content}"
-        );
-        assert!(
-            !provider_content.contains(attachments[0]["url"].as_str().unwrap()),
-            "the unfetchable URL must not survive beside the inline image: {provider_content}"
-        );
     }
 
     #[tokio::test]
-    async fn image_with_failed_workspace_save_is_enriched_rather_than_dropped() {
-        use crate::orchestrator::media_pipeline::MediaPipeline;
+    async fn image_with_failed_workspace_save_marks_remote_image_fallback() {
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -4556,7 +4629,7 @@ mod tests {
         // so this exercises the same URL fallback after download succeeds.
         let blocked_workspace = tempfile::NamedTempFile::new().unwrap();
 
-        let (text, media) = process_attachments(
+        let (_text, media) = process_attachments(
             &attachments,
             &reqwest::Client::new(),
             Some(blocked_workspace.path()),
@@ -4571,18 +4644,6 @@ mod tests {
             Some(url.as_str())
         );
         assert!(!media[0].channel_rendered_owned_disposition());
-
-        let config = clawcrew_config::schema::MediaPipelineConfig {
-            enabled: true,
-            describe_images: true,
-            ..Default::default()
-        };
-        let enriched = MediaPipeline::new(&config, None, true)
-            .process(&text, &media)
-            .await;
-
-        assert!(enriched.contains("[IMAGE:data:image/jpeg;base64,"));
-        assert!(!enriched.contains(&url));
     }
 
     #[tokio::test]
@@ -4728,7 +4789,7 @@ mod tests {
             false,
             false,
         );
-        let content = crate::util::strip_tool_call_tags(
+        let content = strip_tool_call_tags(
             "Choose: [COMPONENTS:{\"rows\":[[{\"label\":\"Approve\",\"style\":\"success\",\"prompt\":\"user approved\"},{\"label\":\"Docs\",\"url\":\"https://example.com\"}]]}]",
         );
         let (stripped, marker_rows) = parse_component_markers(&content);
@@ -6970,9 +7031,28 @@ mod tests {
         assert!(media.is_empty());
     }
 
+    struct MockTranscriber {
+        api_url: String,
+    }
+
+    #[async_trait]
+    impl AudioTranscriber for MockTranscriber {
+        async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String> {
+            let client = reqwest::Client::new();
+            let part = reqwest::multipart::Part::bytes(audio_data.to_vec())
+                .file_name(file_name.to_string());
+            let form = reqwest::multipart::Form::new().part("file", part);
+            let resp = client.post(&self.api_url).multipart(form).send().await?;
+            if !resp.status().is_success() {
+                anyhow::bail!("transcription failed: {}", resp.status());
+            }
+            let body = resp.json::<serde_json::Value>().await?;
+            Ok(body.get("text").and_then(|v| v.as_str()).unwrap_or_default().to_string())
+        }
+    }
+
     #[tokio::test]
     async fn process_attachments_preserves_audio_when_transcription_fails() {
-        use crate::transcription::TranscriptionManager;
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7001,10 +7081,9 @@ mod tests {
             "filename": "voice.ogg",
             "url": audio_url,
         })];
-        let transcription =
-            TranscriptionManager::new(&local_whisper_transcription_config(&whisper_server))
-                .expect("transcription manager")
-                .with_agent_transcription_provider("local_whisper");
+        let transcription = MockTranscriber {
+            api_url: format!("{}/v1/transcribe", whisper_server.uri()),
+        };
 
         let client = reqwest::Client::new();
         let (text, media) =
@@ -7022,7 +7101,6 @@ mod tests {
 
     #[tokio::test]
     async fn process_attachments_preserves_audio_when_transcription_is_empty() {
-        use crate::transcription::TranscriptionManager;
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7048,10 +7126,9 @@ mod tests {
             "filename": "voice.ogg",
             "url": audio_url,
         })];
-        let transcription =
-            TranscriptionManager::new(&local_whisper_transcription_config(&whisper_server))
-                .expect("transcription manager")
-                .with_agent_transcription_provider("local_whisper");
+        let transcription = MockTranscriber {
+            api_url: format!("{}/v1/transcribe", whisper_server.uri()),
+        };
 
         let client = reqwest::Client::new();
         let (text, media) =
@@ -7065,21 +7142,6 @@ mod tests {
         assert_eq!(media[0].file_name, "voice.ogg");
         assert_eq!(media[0].mime_type.as_deref(), Some("audio/ogg"));
         assert_eq!(media[0].data, b"fake-audio");
-    }
-
-    fn local_whisper_transcription_config(
-        server: &wiremock::MockServer,
-    ) -> clawcrew_config::schema::TranscriptionConfig {
-        clawcrew_config::schema::TranscriptionConfig {
-            enabled: true,
-            local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
-                url: format!("{}/v1/transcribe", server.uri()),
-                bearer_token: Some("test-token".to_string()),
-                max_audio_bytes: 10 * 1024 * 1024,
-                timeout_secs: 30,
-            }),
-            ..Default::default()
-        }
     }
 
     #[test]
@@ -7989,7 +8051,7 @@ mod tests {
             format!(
                 "{}\n{}{}",
                 i18n::get_required_cli_string("channel-approval-heading-shout"),
-                crate::util::approval_position_line(Some((2, 3))),
+                approval_position_line(Some((2, 3))),
                 format_args!(
                     "{}: shell\n{}: ls -la",
                     i18n::get_required_cli_string("channel-approval-tool-label"),
@@ -8347,7 +8409,7 @@ mod tests {
 
     #[test]
     fn autocomplete_arm_resolves_cached_thread_parent_before_gate() {
-        let src = include_str!("mod.rs");
+        let src = include_str!("lib.rs");
         let arm4 = src
             .find("} else if itype == 4 {")
             .expect("type-4 arm present");
@@ -8473,7 +8535,7 @@ mod tests {
 
     #[test]
     fn interaction_arms_gate_before_take_after_the_doptions_merge() {
-        let src = include_str!("mod.rs");
+        let src = include_str!("lib.rs");
 
         let arm35 = src
             .find("} else if itype == 3 || itype == 5 {")
@@ -8495,7 +8557,7 @@ mod tests {
         );
         // The cheap peer pre-check is also before the take.
         let peer35 = region35
-            .find("crate::allowlist::is_user_allowed(")
+            .find("allowlist::is_user_allowed(")
             .expect("type-3/5 arm peer-checks");
         assert!(
             peer35 < take35 && peer35 < gate35,

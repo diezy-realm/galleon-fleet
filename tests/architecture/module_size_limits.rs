@@ -20,7 +20,7 @@ const MAX_TEST_FILE_LINES: usize = 10000;
 fn legacy_size_exceptions() -> HashMap<&'static str, usize> {
     let mut m = HashMap::new();
     m.insert("src/main.rs", 10500);
-    m.insert("crates/clawcrew-channels/src/discord/mod.rs", 9000);
+    m.insert("crates/galleon-channel-discord/src/lib.rs", 9000);
     m.insert("crates/galleon-channel-lark/src/lib.rs", 8500);
     m.insert("crates/clawcrew-channels/src/matrix/mod.rs", 6000);
     m.insert("crates/galleon-channel-mattermost/src/lib.rs", 7000);

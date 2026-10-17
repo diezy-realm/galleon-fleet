@@ -42,7 +42,7 @@ pub(crate) async fn discord_defer_interaction(
         .send()
         .await
         .map_err(reqwest::Error::without_url)?;
-    crate::util::ensure_success(resp, "interaction defer").await?;
+    crate::ensure_success(resp, "interaction defer").await?;
     Ok(())
 }
 
@@ -71,7 +71,7 @@ pub(crate) async fn discord_open_modal(
         .send()
         .await
         .map_err(reqwest::Error::without_url)?;
-    crate::util::ensure_success(resp, "modal open").await?;
+    crate::ensure_success(resp, "modal open").await?;
     Ok(())
 }
 
@@ -98,7 +98,7 @@ pub(crate) async fn discord_answer_autocomplete(
         .send()
         .await
         .map_err(reqwest::Error::without_url)?;
-    crate::util::ensure_success(resp, "interaction autocomplete answer").await?;
+    crate::ensure_success(resp, "interaction autocomplete answer").await?;
     Ok(())
 }
 
@@ -145,7 +145,7 @@ pub(crate) async fn discord_reject_interaction(
         .send()
         .await
         .map_err(reqwest::Error::without_url)?;
-    crate::util::ensure_success(resp, "interaction reject").await?;
+    crate::ensure_success(resp, "interaction reject").await?;
     Ok(())
 }
 
@@ -176,7 +176,7 @@ pub(crate) async fn discord_edit_interaction_response(
         .send()
         .await
         .map_err(reqwest::Error::without_url)?;
-    crate::util::ensure_success(resp, "interaction followup edit").await?;
+    crate::ensure_success(resp, "interaction followup edit").await?;
     Ok(())
 }
 
@@ -197,7 +197,7 @@ pub(crate) async fn discord_post_interaction_followup(
         .send()
         .await
         .map_err(reqwest::Error::without_url)?;
-    crate::util::ensure_success(resp, "interaction followup post").await?;
+    crate::ensure_success(resp, "interaction followup post").await?;
     Ok(())
 }
 

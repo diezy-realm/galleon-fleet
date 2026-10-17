@@ -1699,6 +1699,7 @@ dependencies = [
  "galleon-channel-clawdtalk",
  "galleon-channel-core",
  "galleon-channel-dingtalk",
+ "galleon-channel-discord",
  "galleon-channel-email",
  "galleon-channel-filesystem",
  "galleon-channel-imessage",
@@ -4375,6 +4376,37 @@ dependencies = [
  "tokio",
  "tokio-tungstenite 0.29.0",
  "uuid",
+]
+
+[[package]]
+name = "galleon-channel-discord"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.8.9",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-infra",
+ "clawcrew-log",
+ "clawcrew-memory",
+ "clawcrew-providers",
+ "clawcrew-spawn",
+ "futures-util",
+ "galleon-channel-core",
+ "galleon-i18n",
+ "galleon-security-scrub",
+ "parking_lot",
+ "rand 0.10.2",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tokio-tungstenite 0.29.0",
+ "uuid",
+ "wiremock",
 ]
 
 [[package]]

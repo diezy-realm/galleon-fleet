@@ -12044,7 +12044,8 @@ fn build_channel_by_id(
                 )
                 .with_transcription_manager(
                     config.transcription.clone(),
-                    resolved_transcription_manager(&config, &format!("discord.{alias}")),
+                    resolved_transcription_manager(&config, &format!("discord.{alias}"))
+                        .map(|m| m as Arc<dyn galleon_channel_discord::AudioTranscriber>),
                 )
                 .with_stall_timeout(dc.stall_timeout_secs)
                 .with_approval_timeout_secs(dc.approval_timeout_secs)
@@ -13233,9 +13234,12 @@ fn configure_discord_transcription(
     config: &Config,
     channel_key: &str,
 ) -> DiscordChannel {
+    let transcription_mgr: Option<Arc<dyn galleon_channel_discord::AudioTranscriber>> =
+        resolved_transcription_manager(config, channel_key)
+            .map(|m| m as Arc<dyn galleon_channel_discord::AudioTranscriber>);
     channel.with_transcription_manager(
         config.transcription.clone(),
-        resolved_transcription_manager(config, channel_key),
+        transcription_mgr,
     )
 }
 

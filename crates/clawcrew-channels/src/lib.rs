@@ -49,10 +49,13 @@ pub use galleon_channel_clawdtalk as clawdtalk;
 // keep resolving.
 #[cfg(feature = "channel-dingtalk")]
 pub use galleon_channel_dingtalk as dingtalk;
+// RF-B1: the Discord channel now lives in its own feature-crate. Re-export it
+// under the historical `discord` path so `crate::discord::DiscordChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-discord")]
-pub mod discord;
+pub use galleon_channel_discord as discord;
 #[cfg(feature = "channel-discord")]
-pub mod discord_slash_state;
+pub use galleon_channel_discord::discord_slash_state;
 // RF-B1: the Email channel now lives in its own feature-crate. Re-export it
 // under the historical `email_channel` path so `crate::email_channel::EmailChannel`
 // and callers keep resolving.
