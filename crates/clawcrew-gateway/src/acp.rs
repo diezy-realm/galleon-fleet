@@ -260,19 +260,34 @@ mod tests {
                 while let Some(msg) = input_rx.recv().await {
                     if let Ok(val) = serde_json::from_str::<serde_json::Value>(&msg) {
                         if val.get("id").and_then(|i| i.as_i64()) == Some(1) {
-                            let _ = output_tx.send(serde_json::json!({
-                                "jsonrpc": "2.0",
-                                "id": 1,
-                                "result": {}
-                            }).to_string()).await;
+                            let _ = output_tx
+                                .send(
+                                    serde_json::json!({
+                                        "jsonrpc": "2.0",
+                                        "id": 1,
+                                        "result": {}
+                                    })
+                                    .to_string(),
+                                )
+                                .await;
                         } else if val.get("id").and_then(|i| i.as_i64()) == Some(2) {
-                            let alias = val["params"]["agentAlias"].as_str().unwrap_or("test-agent");
-                            let ws = self.config.agent_workspace_dir(alias).to_string_lossy().into_owned();
-                            let _ = output_tx.send(serde_json::json!({
-                                "jsonrpc": "2.0",
-                                "id": 2,
-                                "result": { "workspaceDir": ws }
-                            }).to_string()).await;
+                            let alias =
+                                val["params"]["agentAlias"].as_str().unwrap_or("test-agent");
+                            let ws = self
+                                .config
+                                .agent_workspace_dir(alias)
+                                .to_string_lossy()
+                                .into_owned();
+                            let _ = output_tx
+                                .send(
+                                    serde_json::json!({
+                                        "jsonrpc": "2.0",
+                                        "id": 2,
+                                        "result": { "workspaceDir": ws }
+                                    })
+                                    .to_string(),
+                                )
+                                .await;
                         }
                     }
                 }

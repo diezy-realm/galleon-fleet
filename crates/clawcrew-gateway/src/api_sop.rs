@@ -14,13 +14,13 @@
 
 use std::net::SocketAddr;
 
+use axum::Json;
 use axum::extract::{ConnectInfo, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
-use axum::Json;
 use serde::Deserialize;
 
-use crate::{admin_reload_gate, AdminReloadGate, AppState};
+use crate::{AdminReloadGate, AppState, admin_reload_gate};
 use clawcrew_api::sop::{
     ApprovalDecision, ApprovalPrincipal, BrokerOutcome, ResolveOutcome, SopRunStatus,
 };
@@ -272,9 +272,9 @@ pub(crate) mod tests {
         );
     }
 
+    use clawcrew_config::pairing::PairingGuard;
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
-    use clawcrew_config::pairing::PairingGuard;
 
     pub struct MockPoliciedSopRunner {
         pub runs: Mutex<HashMap<String, SopRunStatus>>,
@@ -283,42 +283,67 @@ pub(crate) mod tests {
 
     #[async_trait::async_trait]
     impl clawcrew_api::sop::SopRunner for MockPoliciedSopRunner {
-        fn list_sops(&self) -> anyhow::Result<Vec<serde_json::Value>> { Ok(Vec::new()) }
-        fn get_trigger_sources(&self) -> anyhow::Result<serde_json::Value> { Ok(serde_json::json!({})) }
-        fn get_sop_graph(&self, _name: &str) -> anyhow::Result<Option<serde_json::Value>> { Ok(None) }
-        fn list_runs(&self, _sop_name: Option<&str>) -> anyhow::Result<Vec<clawcrew_api::sop::SopRunSummary>> {
+        fn list_sops(&self) -> anyhow::Result<Vec<serde_json::Value>> {
+            Ok(Vec::new())
+        }
+        fn get_trigger_sources(&self) -> anyhow::Result<serde_json::Value> {
+            Ok(serde_json::json!({}))
+        }
+        fn get_sop_graph(&self, _name: &str) -> anyhow::Result<Option<serde_json::Value>> {
+            Ok(None)
+        }
+        fn list_runs(
+            &self,
+            _sop_name: Option<&str>,
+        ) -> anyhow::Result<Vec<clawcrew_api::sop::SopRunSummary>> {
             let guard = self.runs.lock().unwrap();
-            let runs = guard.iter().map(|(id, status)| clawcrew_api::sop::SopRunSummary {
-                run_id: id.clone(),
-                sop_name: "deploy".into(),
-                status: *status,
-                current_step: 1,
-                total_steps: 1,
-                started_at: String::new(),
-                completed_at: None,
-                trigger_source: "manual".into(),
-                active: *status == SopRunStatus::WaitingApproval,
-            }).collect();
+            let runs = guard
+                .iter()
+                .map(|(id, status)| clawcrew_api::sop::SopRunSummary {
+                    run_id: id.clone(),
+                    sop_name: "deploy".into(),
+                    status: *status,
+                    current_step: 1,
+                    total_steps: 1,
+                    started_at: String::new(),
+                    completed_at: None,
+                    trigger_source: "manual".into(),
+                    active: *status == SopRunStatus::WaitingApproval,
+                })
+                .collect();
             Ok(runs)
         }
-        fn get_run_overlay(&self, _name: &str, _run_id: &str) -> anyhow::Result<Option<serde_json::Value>> { Ok(None) }
+        fn get_run_overlay(
+            &self,
+            _name: &str,
+            _run_id: &str,
+        ) -> anyhow::Result<Option<serde_json::Value>> {
+            Ok(None)
+        }
         fn get_pending_runs(&self) -> anyhow::Result<Vec<serde_json::Value>> {
             let guard = self.runs.lock().unwrap();
-            let pending = guard.iter().filter(|(_, s)| **s == SopRunStatus::WaitingApproval).map(|(id, _)| {
-                serde_json::json!({
-                    "run_id": id,
-                    "sop_name": "deploy",
-                    "step": 1,
-                    "total_steps": 1,
-                    "waiting_since": "now",
-                    "kind": "approval",
+            let pending = guard
+                .iter()
+                .filter(|(_, s)| **s == SopRunStatus::WaitingApproval)
+                .map(|(id, _)| {
+                    serde_json::json!({
+                        "run_id": id,
+                        "sop_name": "deploy",
+                        "step": 1,
+                        "total_steps": 1,
+                        "waiting_since": "now",
+                        "kind": "approval",
+                    })
                 })
-            }).collect();
+                .collect();
             Ok(pending)
         }
         fn get_metrics(&self) -> anyhow::Result<serde_json::Value> {
             let guard = self.runs.lock().unwrap();
-            let approved = guard.values().filter(|s| **s == SopRunStatus::Running).count() as u64;
+            let approved = guard
+                .values()
+                .filter(|s| **s == SopRunStatus::Running)
+                .count() as u64;
             Ok(serde_json::json!({
                 "global": { "human_approvals": approved },
                 "per_sop": {},
@@ -326,13 +351,23 @@ pub(crate) mod tests {
                 "pending_timeout_approvals": 0,
             }))
         }
-        fn subscribe_run_changes(&self) -> anyhow::Result<(Vec<clawcrew_api::sop::SopRunSummary>, Option<tokio::sync::broadcast::Receiver<clawcrew_api::sop::SopRunSummary>>)> {
+        fn subscribe_run_changes(
+            &self,
+        ) -> anyhow::Result<(
+            Vec<clawcrew_api::sop::SopRunSummary>,
+            Option<tokio::sync::broadcast::Receiver<clawcrew_api::sop::SopRunSummary>>,
+        )> {
             Ok((Vec::new(), None))
         }
         async fn start_sop(&self, _name: &str) -> anyhow::Result<(u16, serde_json::Value)> {
             Ok((200, serde_json::json!({ "run_id": "test-run" })))
         }
-        async fn resolve_approval(&self, run_id: &str, _decision: ApprovalDecision, principal: ApprovalPrincipal) -> anyhow::Result<BrokerOutcome> {
+        async fn resolve_approval(
+            &self,
+            run_id: &str,
+            _decision: ApprovalDecision,
+            principal: ApprovalPrincipal,
+        ) -> anyhow::Result<BrokerOutcome> {
             let authorized = principal.identity.as_deref() == Some(&self.member_hash);
             if authorized {
                 let mut guard = self.runs.lock().unwrap();
@@ -341,32 +376,80 @@ pub(crate) mod tests {
                 }
                 Ok(BrokerOutcome::Resolved(ResolveOutcome::Resumed))
             } else {
-                Ok(BrokerOutcome::NotAuthorized { required_group: "release".into() })
+                Ok(BrokerOutcome::NotAuthorized {
+                    required_group: "release".into(),
+                })
             }
         }
-        async fn resolve_author_approval(&self, name: &str, run_id: &str, decision: ApprovalDecision, principal: ApprovalPrincipal) -> anyhow::Result<(u16, serde_json::Value)> {
+        async fn resolve_author_approval(
+            &self,
+            name: &str,
+            run_id: &str,
+            decision: ApprovalDecision,
+            principal: ApprovalPrincipal,
+        ) -> anyhow::Result<(u16, serde_json::Value)> {
             match self.resolve_approval(run_id, decision, principal).await? {
-                BrokerOutcome::Resolved(_) => Ok((200, serde_json::json!({ "run_id": run_id, "sop_name": name }))),
-                BrokerOutcome::NotAuthorized { required_group } => Ok((403, serde_json::json!({ "error": format!("not authorized: requires group '{required_group}'") }))),
+                BrokerOutcome::Resolved(_) => Ok((
+                    200,
+                    serde_json::json!({ "run_id": run_id, "sop_name": name }),
+                )),
+                BrokerOutcome::NotAuthorized { required_group } => Ok((
+                    403,
+                    serde_json::json!({ "error": format!("not authorized: requires group '{required_group}'") }),
+                )),
                 _ => Ok((500, serde_json::json!({ "error": "unhandled" }))),
             }
         }
-        fn cancel_run(&self, name: &str, run_id: &str, _reason: Option<&str>, _principal: ApprovalPrincipal) -> anyhow::Result<(u16, serde_json::Value)> {
+        fn cancel_run(
+            &self,
+            name: &str,
+            run_id: &str,
+            _reason: Option<&str>,
+            _principal: ApprovalPrincipal,
+        ) -> anyhow::Result<(u16, serde_json::Value)> {
             let mut guard = self.runs.lock().unwrap();
             if let Some(status) = guard.get_mut(run_id) {
                 *status = SopRunStatus::Cancelled;
             }
-            Ok((200, serde_json::json!({ "run_id": run_id, "sop_name": name, "status": "cancelled", "outcome": "cancelled" })))
+            Ok((
+                200,
+                serde_json::json!({ "run_id": run_id, "sop_name": name, "status": "cancelled", "outcome": "cancelled" }),
+            ))
         }
-        fn get_sop(&self, _name: &str) -> anyhow::Result<Option<clawcrew_api::sop::Sop>> { Ok(None) }
-        fn create_sop(&self, _sop: &clawcrew_api::sop::Sop) -> anyhow::Result<()> { Ok(()) }
-        fn save_sop(&self, _name: &str, _sop: &clawcrew_api::sop::Sop) -> anyhow::Result<()> { Ok(()) }
-        fn delete_sop(&self, _name: &str) -> anyhow::Result<()> { Ok(()) }
-        fn wire_draft(&self, _sop: &clawcrew_api::sop::Sop, _edit: &serde_json::Value) -> anyhow::Result<serde_json::Value> { Ok(serde_json::json!({})) }
-        fn graph_draft(&self, _sop: &clawcrew_api::sop::Sop) -> anyhow::Result<serde_json::Value> { Ok(serde_json::json!({})) }
-        fn has_matching_webhook_sop(&self, _path: &str) -> anyhow::Result<bool> { Ok(true) }
-        async fn dispatch_webhook_sop(&self, _path: &str, _payload: Option<&str>) -> anyhow::Result<Option<clawcrew_api::sop::WebhookDispatchResult>> {
-            Ok(Some(clawcrew_api::sop::WebhookDispatchResult { blocked_only: false, results: vec![] }))
+        fn get_sop(&self, _name: &str) -> anyhow::Result<Option<clawcrew_api::sop::Sop>> {
+            Ok(None)
+        }
+        fn create_sop(&self, _sop: &clawcrew_api::sop::Sop) -> anyhow::Result<()> {
+            Ok(())
+        }
+        fn save_sop(&self, _name: &str, _sop: &clawcrew_api::sop::Sop) -> anyhow::Result<()> {
+            Ok(())
+        }
+        fn delete_sop(&self, _name: &str) -> anyhow::Result<()> {
+            Ok(())
+        }
+        fn wire_draft(
+            &self,
+            _sop: &clawcrew_api::sop::Sop,
+            _edit: &serde_json::Value,
+        ) -> anyhow::Result<serde_json::Value> {
+            Ok(serde_json::json!({}))
+        }
+        fn graph_draft(&self, _sop: &clawcrew_api::sop::Sop) -> anyhow::Result<serde_json::Value> {
+            Ok(serde_json::json!({}))
+        }
+        fn has_matching_webhook_sop(&self, _path: &str) -> anyhow::Result<bool> {
+            Ok(true)
+        }
+        async fn dispatch_webhook_sop(
+            &self,
+            _path: &str,
+            _payload: Option<&str>,
+        ) -> anyhow::Result<Option<clawcrew_api::sop::WebhookDispatchResult>> {
+            Ok(Some(clawcrew_api::sop::WebhookDispatchResult {
+                blocked_only: false,
+                results: vec![],
+            }))
         }
     }
 
@@ -427,12 +510,11 @@ pub(crate) mod tests {
         // gate is left waiting.
         let other = "some-other-paired-token";
         let mut state_other = state.clone();
-        state_other.pairing =
-            std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
-                true,
-                &[token.to_string(), other.to_string()],
-                clawcrew_config::pairing::PairingCodePolicy::default(),
-            ));
+        state_other.pairing = std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
+            true,
+            &[token.to_string(), other.to_string()],
+            clawcrew_config::pairing::PairingCodePolicy::default(),
+        ));
         let resp = handle_sop_approve(
             State(state_other),
             ConnectInfo(peer),
@@ -561,12 +643,11 @@ pub(crate) mod tests {
         // Pairing is now OFF - `is_authenticated` accepts any token, so the SAME
         // token string that legitimately satisfied membership when paired must NOT
         // grant an authenticated identity anymore.
-        state.pairing =
-            std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
-                false,
-                &[],
-                clawcrew_config::pairing::PairingCodePolicy::default(),
-            ));
+        state.pairing = std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
+            false,
+            &[],
+            clawcrew_config::pairing::PairingCodePolicy::default(),
+        ));
         let loopback: SocketAddr = "127.0.0.1:9".parse().unwrap();
 
         let resp = handle_sop_approve(

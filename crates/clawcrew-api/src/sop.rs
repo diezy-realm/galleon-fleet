@@ -3,8 +3,8 @@
 //! Provides the canonical contract for trigger sources, run status, step status,
 //! and filesystem change events shared across channels, runtime, and the Go engine.
 
-use std::fmt;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 // ── Priority ────────────────────────────────────────────────────
 
@@ -588,8 +588,12 @@ pub struct StepRouting {
 pub enum StepFailure {
     #[default]
     Fail,
-    Retry { max: u32 },
-    Goto { step: u32 },
+    Retry {
+        max: u32,
+    },
+    Goto {
+        step: u32,
+    },
 }
 
 /// Per-step allow/deny tool scope.
@@ -920,7 +924,11 @@ pub trait SopRunner: Send + Sync {
     fn list_runs(&self, sop_name: Option<&str>) -> anyhow::Result<Vec<SopRunSummary>>;
 
     /// Build live visual overlay for a specific SOP run.
-    fn get_run_overlay(&self, name: &str, run_id: &str) -> anyhow::Result<Option<serde_json::Value>>;
+    fn get_run_overlay(
+        &self,
+        name: &str,
+        run_id: &str,
+    ) -> anyhow::Result<Option<serde_json::Value>>;
 
     /// List runs currently waiting for human approval.
     fn get_pending_runs(&self) -> anyhow::Result<Vec<serde_json::Value>>;
@@ -1004,4 +1012,3 @@ pub struct WebhookDispatchResult {
     pub blocked_only: bool,
     pub results: Vec<serde_json::Value>,
 }
-

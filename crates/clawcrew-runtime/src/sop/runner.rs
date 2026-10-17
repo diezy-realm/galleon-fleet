@@ -1,8 +1,8 @@
 //! Implementation of `clawcrew_api::sop::SopRunner` for gateway decoupling.
 
+use parking_lot::RwLock;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use parking_lot::RwLock;
 
 use clawcrew_api::sop::{
     ApprovalDecision, ApprovalPrincipal, BrokerOutcome, ResolveOutcome, Sop, SopRunSummary,
@@ -129,7 +129,11 @@ impl SopRunner for RuntimeSopRunner {
         Ok(mapped)
     }
 
-    fn get_run_overlay(&self, name: &str, run_id: &str) -> anyhow::Result<Option<serde_json::Value>> {
+    fn get_run_overlay(
+        &self,
+        name: &str,
+        run_id: &str,
+    ) -> anyhow::Result<Option<serde_json::Value>> {
         let Some(engine) = &self.engine else {
             return Ok(None);
         };
@@ -151,7 +155,9 @@ impl SopRunner for RuntimeSopRunner {
         let Some(engine) = &self.engine else {
             return Err(anyhow::anyhow!("sop_disabled"));
         };
-        let guard = engine.lock().map_err(|_| anyhow::anyhow!("lock poisoned"))?;
+        let guard = engine
+            .lock()
+            .map_err(|_| anyhow::anyhow!("lock poisoned"))?;
         let pending: Vec<serde_json::Value> = guard
             .active_runs()
             .values()
@@ -184,7 +190,9 @@ impl SopRunner for RuntimeSopRunner {
         let Some(engine) = &self.engine else {
             return Err(anyhow::anyhow!("sop_disabled"));
         };
-        let guard = engine.lock().map_err(|_| anyhow::anyhow!("lock poisoned"))?;
+        let guard = engine
+            .lock()
+            .map_err(|_| anyhow::anyhow!("lock poisoned"))?;
         let snapshot = guard.metrics().snapshot();
         Ok(serde_json::to_value(snapshot)?)
     }
@@ -199,7 +207,9 @@ impl SopRunner for RuntimeSopRunner {
             return Err(anyhow::anyhow!("sop_disabled"));
         };
         let (summaries, rx) = {
-            let guard = engine.lock().map_err(|_| anyhow::anyhow!("engine lock poisoned"))?;
+            let guard = engine
+                .lock()
+                .map_err(|_| anyhow::anyhow!("engine lock poisoned"))?;
             (guard.run_summaries(None), guard.subscribe_run_changes())
         };
         let val = serde_json::to_value(summaries)?;
@@ -252,36 +262,56 @@ impl SopRunner for RuntimeSopRunner {
                             action.as_ref().clone(),
                         );
                     }
-                    return Ok((200, serde_json::json!({
-                        "run_id": run_id
-                    })));
+                    return Ok((
+                        200,
+                        serde_json::json!({
+                            "run_id": run_id
+                        }),
+                    ));
                 }
                 super::dispatch::DispatchResult::Skipped { reason, .. } => {
-                    return Ok((409, serde_json::json!({
-                        "error": reason
-                    })));
+                    return Ok((
+                        409,
+                        serde_json::json!({
+                            "error": reason
+                        }),
+                    ));
                 }
                 super::dispatch::DispatchResult::BlockedUnsafe { reason, .. } => {
-                    return Ok((422, serde_json::json!({
-                        "error": reason
-                    })));
+                    return Ok((
+                        422,
+                        serde_json::json!({
+                            "error": reason
+                        }),
+                    ));
                 }
                 super::dispatch::DispatchResult::Deferred { reason, .. } => {
-                    return Ok((503, serde_json::json!({
-                        "error": reason
-                    })));
+                    return Ok((
+                        503,
+                        serde_json::json!({
+                            "error": reason
+                        }),
+                    ));
                 }
-                super::dispatch::DispatchResult::Coalesced { existing_run_id, .. } => {
-                    return Ok((200, serde_json::json!({
-                        "run_id": existing_run_id
-                    })));
+                super::dispatch::DispatchResult::Coalesced {
+                    existing_run_id, ..
+                } => {
+                    return Ok((
+                        200,
+                        serde_json::json!({
+                            "run_id": existing_run_id
+                        }),
+                    ));
                 }
                 super::dispatch::DispatchResult::NoMatch => {}
             }
         }
-        Ok((404, serde_json::json!({
-            "error": format!("SOP '{name}' has no matching manual trigger")
-        })))
+        Ok((
+            404,
+            serde_json::json!({
+                "error": format!("SOP '{name}' has no matching manual trigger")
+            }),
+        ))
     }
 
     async fn resolve_approval(
@@ -294,7 +324,9 @@ impl SopRunner for RuntimeSopRunner {
             return Err(anyhow::anyhow!("sop_disabled"));
         };
         let outcome = {
-            let mut guard = engine.lock().map_err(|_| anyhow::anyhow!("lock poisoned"))?;
+            let mut guard = engine
+                .lock()
+                .map_err(|_| anyhow::anyhow!("lock poisoned"))?;
             guard
                 .resolve_via_broker_deferred(run_id, decision, principal)
                 .map_err(|e| anyhow::anyhow!("resolve failed: {e}"))?
@@ -317,7 +349,10 @@ impl SopRunner for RuntimeSopRunner {
         principal: ApprovalPrincipal,
     ) -> anyhow::Result<(u16, serde_json::Value)> {
         let Some(engine) = &self.engine else {
-            return Ok((503, serde_json::json!({ "error": "SOP subsystem not enabled" })));
+            return Ok((
+                503,
+                serde_json::json!({ "error": "SOP subsystem not enabled" }),
+            ));
         };
         let config = self.config.read();
         let install_root = self.install_root.clone();
@@ -326,24 +361,35 @@ impl SopRunner for RuntimeSopRunner {
         let sop = match super::load_sop_by_name(&dir, name, mode) {
             Ok(s) => s,
             Err(e) => {
-                return Ok((404, serde_json::json!({ "error": format!("SOP '{name}': {e}") })));
+                return Ok((
+                    404,
+                    serde_json::json!({ "error": format!("SOP '{name}': {e}") }),
+                ));
             }
         };
 
         let mut resolved_outcome = None;
         let mut pending_quorum = false;
         {
-            let mut guard = engine.lock().map_err(|_| anyhow::anyhow!("SOP engine lock poisoned"))?;
+            let mut guard = engine
+                .lock()
+                .map_err(|_| anyhow::anyhow!("SOP engine lock poisoned"))?;
             let run_sop_name = match guard.get_run(run_id).map(|run| run.sop_name.clone()) {
                 Some(n) => n,
                 None => {
-                    return Ok((404, serde_json::json!({ "error": format!("Run {run_id} not found") })));
+                    return Ok((
+                        404,
+                        serde_json::json!({ "error": format!("Run {run_id} not found") }),
+                    ));
                 }
             };
             if run_sop_name != name {
-                return Ok((400, serde_json::json!({
-                    "error": format!("run '{run_id}' belongs to SOP '{run_sop_name}', not '{name}'")
-                })));
+                return Ok((
+                    400,
+                    serde_json::json!({
+                        "error": format!("run '{run_id}' belongs to SOP '{run_sop_name}', not '{name}'")
+                    }),
+                ));
             }
             let status = guard.get_run(run_id).map(|r| r.status);
             match status {
@@ -365,41 +411,62 @@ impl SopRunner for RuntimeSopRunner {
                             BrokerOutcome::Resolved(ResolveOutcome::NotWaiting)
                             | BrokerOutcome::NotWaiting,
                         ) => {
-                            return Ok((409, serde_json::json!({
-                                "error": format!("Run {run_id} is not waiting for approval")
-                            })));
+                            return Ok((
+                                409,
+                                serde_json::json!({
+                                    "error": format!("Run {run_id} is not waiting for approval")
+                                }),
+                            ));
                         }
                         Ok(BrokerOutcome::Resolved(ResolveOutcome::RejectedSelfApproval)) => {
-                            return Ok((403, serde_json::json!({
-                                "error": "approval_mode forbids this principal from clearing the gate"
-                            })));
+                            return Ok((
+                                403,
+                                serde_json::json!({
+                                    "error": "approval_mode forbids this principal from clearing the gate"
+                                }),
+                            ));
                         }
                         Ok(BrokerOutcome::Resolved(ResolveOutcome::RejectedConstraint(reason))) => {
-                            return Ok((403, serde_json::json!({
-                                "error": format!("constraint violation: {reason}")
-                            })));
+                            return Ok((
+                                403,
+                                serde_json::json!({
+                                    "error": format!("constraint violation: {reason}")
+                                }),
+                            ));
                         }
                         Ok(BrokerOutcome::Resolved(ResolveOutcome::DeferredAtCapacity)) => {
-                            return Ok((503, serde_json::json!({
-                                "outcome": "deferred_at_capacity",
-                                "run_id": run_id,
-                            })));
+                            return Ok((
+                                503,
+                                serde_json::json!({
+                                    "outcome": "deferred_at_capacity",
+                                    "run_id": run_id,
+                                }),
+                            ));
                         }
                         Ok(BrokerOutcome::NotAuthorized { required_group }) => {
-                            return Ok((403, serde_json::json!({
-                                "error": format!("not authorized: requires group '{required_group}'")
-                            })));
+                            return Ok((
+                                403,
+                                serde_json::json!({
+                                    "error": format!("not authorized: requires group '{required_group}'")
+                                }),
+                            ));
                         }
                         Ok(BrokerOutcome::PolicyMissing { name }) => {
-                            return Ok((500, serde_json::json!({
-                                "error": format!("approval policy '{name}' is not configured (gate left waiting)")
-                            })));
+                            return Ok((
+                                500,
+                                serde_json::json!({
+                                    "error": format!("approval policy '{name}' is not configured (gate left waiting)")
+                                }),
+                            ));
                         }
                         Ok(BrokerOutcome::PolicyUnavailable { reason }) => {
-                            return Ok((500, serde_json::json!({
-                                "error": "policy_unavailable",
-                                "reason": reason,
-                            })));
+                            return Ok((
+                                500,
+                                serde_json::json!({
+                                    "error": "policy_unavailable",
+                                    "reason": reason,
+                                }),
+                            ));
                         }
                         Ok(BrokerOutcome::PendingQuorum { .. }) => {
                             pending_quorum = true;
@@ -410,9 +477,12 @@ impl SopRunner for RuntimeSopRunner {
                     }
                 }
                 _ => {
-                    return Ok((400, serde_json::json!({
-                        "error": format!("Run {run_id} is not waiting for approval or paused at a checkpoint")
-                    })));
+                    return Ok((
+                        400,
+                        serde_json::json!({
+                            "error": format!("Run {run_id} is not waiting for approval or paused at a checkpoint")
+                        }),
+                    ));
                 }
             }
         }
@@ -456,18 +526,33 @@ impl SopRunner for RuntimeSopRunner {
         principal: ApprovalPrincipal,
     ) -> anyhow::Result<(u16, serde_json::Value)> {
         let Some(engine) = &self.engine else {
-            return Ok((503, serde_json::json!({ "error": "SOP subsystem not enabled" })));
+            return Ok((
+                503,
+                serde_json::json!({ "error": "SOP subsystem not enabled" }),
+            ));
         };
-        let mut guard = engine.lock().map_err(|_| anyhow::anyhow!("engine lock poisoned"))?;
+        let mut guard = engine
+            .lock()
+            .map_err(|_| anyhow::anyhow!("engine lock poisoned"))?;
         let Some(run) = guard.get_run(run_id) else {
-            return Ok((404, serde_json::json!({ "error": format!("Run {run_id} not found") })));
+            return Ok((
+                404,
+                serde_json::json!({ "error": format!("Run {run_id} not found") }),
+            ));
         };
         if run.sop_name != name {
-            return Ok((400, serde_json::json!({
-                "error": format!("run '{run_id}' belongs to SOP '{}', not '{name}'", run.sop_name)
-            })));
+            return Ok((
+                400,
+                serde_json::json!({
+                    "error": format!("run '{run_id}' belongs to SOP '{}', not '{name}'", run.sop_name)
+                }),
+            ));
         }
-        let outcome = guard.cancel_run_idempotent(run_id, reason.map(str::to_string), Some(principal.voter_key()));
+        let outcome = guard.cancel_run_idempotent(
+            run_id,
+            reason.map(str::to_string),
+            Some(principal.voter_key()),
+        );
         match outcome {
             Ok(Some(outcome)) => {
                 let (status_code, already_terminal) = match outcome {
@@ -478,7 +563,10 @@ impl SopRunner for RuntimeSopRunner {
                     super::CancelOutcome::AlreadyTerminal(_) => (200, true),
                 };
                 let Some(run) = guard.get_run(run_id) else {
-                    return Ok((500, serde_json::json!({ "error": "run disappeared after cancellation transition" })));
+                    return Ok((
+                        500,
+                        serde_json::json!({ "error": "run disappeared after cancellation transition" }),
+                    ));
                 };
                 let is_active = guard.active_runs().contains_key(run_id);
                 let summary = SopRunSummary {
@@ -492,20 +580,27 @@ impl SopRunner for RuntimeSopRunner {
                     trigger_source: run.trigger_event.source.to_string(),
                     active: is_active,
                 };
-                Ok((status_code, serde_json::json!({
-                    "run_id": run_id,
-                    "sop_name": name,
-                    "status": summary.status,
-                    "already_terminal": already_terminal,
-                    "run": summary,
-                })))
+                Ok((
+                    status_code,
+                    serde_json::json!({
+                        "run_id": run_id,
+                        "sop_name": name,
+                        "status": summary.status,
+                        "already_terminal": already_terminal,
+                        "run": summary,
+                    }),
+                ))
             }
-            Ok(None) => Ok((404, serde_json::json!({ "error": format!("Run {run_id} not found") }))),
-            Err(e) if super::err_is_cancellation_persistence_retained(&e) => {
-                Ok((503, serde_json::json!({
+            Ok(None) => Ok((
+                404,
+                serde_json::json!({ "error": format!("Run {run_id} not found") }),
+            )),
+            Err(e) if super::err_is_cancellation_persistence_retained(&e) => Ok((
+                503,
+                serde_json::json!({
                     "error": "cancellation could not be durably persisted; the run remains active - retry"
-                })))
-            }
+                }),
+            )),
             Err(e) => Ok((500, serde_json::json!({ "error": e.to_string() }))),
         }
     }
@@ -613,7 +708,10 @@ impl SopRunner for RuntimeSopRunner {
         if results.is_empty() {
             return Err(anyhow::anyhow!("sop_dispatch_unavailable"));
         }
-        if results.iter().all(|result| matches!(result, super::dispatch::DispatchResult::NoMatch)) {
+        if results
+            .iter()
+            .all(|result| matches!(result, super::dispatch::DispatchResult::NoMatch))
+        {
             return Ok(None);
         }
         let blocked_only = results.iter().all(|result| {
@@ -626,13 +724,13 @@ impl SopRunner for RuntimeSopRunner {
         let mapped = results
             .into_iter()
             .filter_map(|result| match result {
-                super::dispatch::DispatchResult::Started { run_id, sop_name, .. } => {
-                    Some(serde_json::json!({
-                        "status": "started",
-                        "sop": sop_name,
-                        "run_id": run_id,
-                    }))
-                }
+                super::dispatch::DispatchResult::Started {
+                    run_id, sop_name, ..
+                } => Some(serde_json::json!({
+                    "status": "started",
+                    "sop": sop_name,
+                    "run_id": run_id,
+                })),
                 super::dispatch::DispatchResult::Skipped { sop_name, reason } => {
                     Some(serde_json::json!({
                         "status": "skipped",
@@ -647,13 +745,14 @@ impl SopRunner for RuntimeSopRunner {
                         "reason": reason,
                     }))
                 }
-                super::dispatch::DispatchResult::Coalesced { sop_name, existing_run_id } => {
-                    Some(serde_json::json!({
-                        "status": "coalesced",
-                        "sop": sop_name,
-                        "run_id": existing_run_id,
-                    }))
-                }
+                super::dispatch::DispatchResult::Coalesced {
+                    sop_name,
+                    existing_run_id,
+                } => Some(serde_json::json!({
+                    "status": "coalesced",
+                    "sop": sop_name,
+                    "run_id": existing_run_id,
+                })),
                 super::dispatch::DispatchResult::BlockedUnsafe { sop_name, reason } => {
                     Some(serde_json::json!({
                         "status": "blocked_unsafe",
@@ -681,4 +780,3 @@ impl SopRunner for RuntimeSopRunner {
         }
     }
 }
-
