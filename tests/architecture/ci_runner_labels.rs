@@ -16,7 +16,13 @@ const HEAVY_LABEL: &str = "runs-on: [self-hosted, linux, galleon-heavy]";
 const LIGHT_LABEL: &str = "runs-on: [self-hosted, linux, galleon-light]";
 
 const HEAVY_JOBS: [&str; 3] = ["lint", "check", "test"];
-const LIGHT_JOBS: [&str; 5] = ["fmt", "repo-structure", "zerocode-rpc-boundary", "security", "gate"];
+const LIGHT_JOBS: [&str; 5] = [
+    "fmt",
+    "repo-structure",
+    "zerocode-rpc-boundary",
+    "security",
+    "gate",
+];
 
 fn read(rel: &str) -> String {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -31,7 +37,12 @@ fn job_blocks(workflow: &str) -> BTreeMap<String, String> {
     let header = Regex::new(r"(?m)^  ([a-z0-9-]+):$").expect("valid job-header pattern");
     let starts: Vec<(usize, String)> = header
         .captures_iter(jobs)
-        .map(|c| (c.get(0).expect("match 0 always exists").start(), c[1].to_string()))
+        .map(|c| {
+            (
+                c.get(0).expect("match 0 always exists").start(),
+                c[1].to_string(),
+            )
+        })
         .collect();
     assert!(!starts.is_empty(), "ci.yml must define at least one job");
 
@@ -47,9 +58,14 @@ fn job_blocks(workflow: &str) -> BTreeMap<String, String> {
 #[test]
 fn quality_gate_jobs_pin_their_runner_class() {
     let blocks = job_blocks(&read(".github/workflows/ci.yml"));
-    for (jobs, label) in [(HEAVY_JOBS.as_slice(), HEAVY_LABEL), (LIGHT_JOBS.as_slice(), LIGHT_LABEL)] {
+    for (jobs, label) in [
+        (HEAVY_JOBS.as_slice(), HEAVY_LABEL),
+        (LIGHT_JOBS.as_slice(), LIGHT_LABEL),
+    ] {
         for name in jobs {
-            let block = blocks.get(*name).unwrap_or_else(|| panic!("ci.yml lost job {name}"));
+            let block = blocks
+                .get(*name)
+                .unwrap_or_else(|| panic!("ci.yml lost job {name}"));
             assert!(block.contains(label), "{name} must use `{label}`");
         }
     }
@@ -58,16 +74,27 @@ fn quality_gate_jobs_pin_their_runner_class() {
 #[test]
 fn quality_gate_has_no_undeclared_jobs() {
     let blocks = job_blocks(&read(".github/workflows/ci.yml"));
-    let declared: BTreeSet<&str> = HEAVY_JOBS.iter().chain(LIGHT_JOBS.iter()).copied().collect();
+    let declared: BTreeSet<&str> = HEAVY_JOBS
+        .iter()
+        .chain(LIGHT_JOBS.iter())
+        .copied()
+        .collect();
     let actual: BTreeSet<&str> = blocks.keys().map(String::as_str).collect();
-    assert_eq!(actual, declared, "declare new ci.yml jobs in the label lists above");
+    assert_eq!(
+        actual, declared,
+        "declare new ci.yml jobs in the label lists above"
+    );
 }
 
 #[test]
 fn the_required_gate_waits_for_every_other_job() {
     let blocks = job_blocks(&read(".github/workflows/ci.yml"));
     let gate = &blocks["gate"];
-    for name in HEAVY_JOBS.iter().chain(LIGHT_JOBS.iter()).filter(|n| **n != "gate") {
+    for name in HEAVY_JOBS
+        .iter()
+        .chain(LIGHT_JOBS.iter())
+        .filter(|n| **n != "gate")
+    {
         assert!(gate.contains(name), "gate must need {name}");
     }
 }
@@ -84,7 +111,11 @@ fn workflows_do_not_depend_on_paid_third_party_runners() {
                 stack.push(path);
             } else if path.extension().is_some_and(|e| e == "yml" || e == "yaml") {
                 let text = fs::read_to_string(&path).expect("readable workflow file");
-                assert!(!pattern.is_match(&text), "{} references a paid third-party runner", path.display());
+                assert!(
+                    !pattern.is_match(&text),
+                    "{} references a paid third-party runner",
+                    path.display()
+                );
             }
         }
     }
