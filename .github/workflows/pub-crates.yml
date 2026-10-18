@@ -52,7 +52,7 @@ permissions:
 jobs:
   preflight:
     name: Preflight (package + verify)
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     # A cold multi-package verification compiles each extracted tarball against
     # Cargo's ephemeral registry. Warm local evidence is ~13 minutes, but a
     # first runner with an empty cache needs materially more headroom.
@@ -62,7 +62,7 @@ jobs:
       sha: ${{ steps.meta.outputs.sha }}
       msrv: ${{ steps.meta.outputs.msrv }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: useblacksmith/checkout@v1 # v6.0.2
         with:
           ref: ${{ inputs.release_tag }}
           fetch-depth: 0
@@ -181,7 +181,7 @@ jobs:
     name: Publish to crates.io
     needs: [preflight]
     if: ${{ inputs.dry_run == false }}
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 350
     # v0.8.5 creates the relay protocol, shared TLS, and ZeroRelay crate names.
     # Creation is throttled much harder than updates, so keep enough room for
@@ -195,7 +195,7 @@ jobs:
       # The immutable SHA preflight verified, not the tag. Re-resolving the tag
       # here would let a tag moved between the jobs publish a commit that never
       # passed preflight, using a token this job holds and preflight does not.
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: useblacksmith/checkout@v1 # v6.0.2
         with:
           ref: ${{ needs.preflight.outputs.sha }}
 

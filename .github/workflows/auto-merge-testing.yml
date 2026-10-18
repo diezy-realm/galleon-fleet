@@ -27,7 +27,7 @@ permissions:
 jobs:
   auto-merge:
     name: Evaluate & auto-merge green PRs into testing
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Evaluate open PRs targeting testing and merge if green
         uses: actions/github-script@v7

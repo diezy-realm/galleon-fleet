@@ -13,12 +13,12 @@ permissions:
 jobs:
   pr-gate:
     name: Principle Checklist & Standards Gate
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     env:
       RUSTC_WRAPPER: ""
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: useblacksmith/checkout@v1
         with:
           fetch-depth: 0
 

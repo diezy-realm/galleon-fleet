@@ -24,10 +24,10 @@ env:
 jobs:
   fmt:
     name: Format
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: useblacksmith/checkout@v1 # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: 1.98.0
@@ -51,11 +51,11 @@ jobs:
       matrix:
         include:
           - name: macOS
-            os: macos-14
+            os: blacksmith-6vcpu-macos-15
             nextest-platform: mac
             timeout-minutes: 45
           - name: Windows
-            os: windows-latest
+            os: blacksmith-4vcpu-windows-2025
             nextest-platform: windows-tar
             timeout-minutes: 60
     runs-on: ${{ matrix.os }}
