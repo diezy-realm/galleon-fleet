@@ -9,14 +9,29 @@ name: Auto-Merge to Testing
 # Scope guard: `base_ref == testing` is enforced in every job — PRs into main /
 # prerelease are never auto-merged here (those keep their human gate).
 
-# check_suite is not a trigger here: suites created by GitHub Actions never
-# start workflows, so it only matched third-party apps. workflow_run names must
-# match each workflow's `name:` exactly or the trigger never fires.
+# workflow_run and check_suite always run this file from the default branch
+# (`main`), so trigger changes take effect once they are on `main`.
+# A PR merges only when every non-ignored check is green, so re-evaluate
+# whenever any PR workflow finishes: otherwise the last workflow to complete
+# leaves the PR waiting. Names must match each workflow's `name:` exactly.
+# check_suite covers checks reported by third-party apps.
 on:
+  check_suite:
+    types: [completed]
   pull_request_review:
     types: [submitted]
   workflow_run:
-    workflows: ["Quality Gate", "Auto Principle PR Review", "PR Testing Gate (Feature-Scoped & RF-D Checklist)"]
+    workflows:
+      - "Quality Gate"
+      - "Auto Principle PR Review"
+      - "PR Testing Gate (Feature-Scoped & RF-D Checklist)"
+      - "Validate PR title"
+      - "Web App Check"
+      - "Engine CI"
+      - "Desktop App Check"
+      - "Docker Image PR Check"
+      - "Scheduled Platform Tests"
+      - "Advisory Windows Tests"
     types: [completed]
 
 # Each run re-evaluates every open PR, so only the newest run matters.
@@ -49,6 +64,9 @@ jobs:
             const IGNORE_PREFIXES = ["Test"];           // "Test", "Test (channel ...)", "Test (PostgreSQL Memory)"
             const IGNORE_EXACT = new Set([
               "Benchmarks Compile",                      // frequently skipped
+              // This evaluator itself: a review-triggered run reports on the PR head,
+              // and a run cancelled by the concurrency group must not block merges.
+              "Evaluate & auto-merge green PRs into testing",
             ]);
             // Any check whose name declares itself advisory/non-blocking is ignored.
             const IGNORE_SUBSTR = ["Advisory Non-Blocking"];
