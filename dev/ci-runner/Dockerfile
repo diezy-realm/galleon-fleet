@@ -8,6 +8,8 @@ ARG NEXTEST_VERSION=0.9.148
 ARG NEXTEST_SHA256=223ba936714cc861a9cdedad5a8eb664dfdd69d6fbdf6cea6aa8184f523290dc
 ARG DENY_VERSION=0.19.9
 ARG DENY_SHA256=f1f8eedc2a3ac297c540873f93785d4104b102c0079506b2a6b3221b7ec956af
+ARG SCCACHE_VERSION=0.18.0
+ARG SCCACHE_SHA256=45f1447fbe231e3037bde351ef70677dd212216c8d62ae7ca409fecc4d6acc89
 ARG AUDIT_VERSION=0.22.2
 ARG AUDIT_SHA256=ab28a1bdb54db4d5d8ad5981cf1f959410370b3d28250dbd35f6a44248620e39
 
@@ -19,15 +21,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd --create-home --uid 1001 --shell /bin/bash runner \
-    && mkdir /ci-target && chown runner:runner /ci-target
+    && mkdir /ci-target /sccache && chown runner:runner /ci-target /sccache
 USER runner
 WORKDIR /home/runner
 
 ENV CARGO_HOME=/home/runner/.cargo \
     RUSTUP_HOME=/home/runner/.rustup \
     PATH=/home/runner/.cargo/bin:$PATH \
-    RUSTC_WRAPPER=
-# ^ .cargo/config.toml sets rustc-wrapper=sccache for dev machines; the runner has none.
+    SCCACHE_DIR=/sccache \
+    SCCACHE_CACHE_SIZE=20G
+# .cargo/config.toml owns `rustc-wrapper = "sccache"`; the image only provides the binary and cache dir.
 
 # rustup with no default toolchain: rust-toolchain.toml selects the pinned one.
 RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none \
@@ -39,6 +42,8 @@ RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-to
         && tar -xzf /tmp/dl -C "$CARGO_HOME/bin" --strip-components=1; \
     fetch "https://github.com/rustsec/rustsec/releases/download/cargo-audit%2Fv${AUDIT_VERSION}/cargo-audit-x86_64-unknown-linux-gnu-v${AUDIT_VERSION}.tgz" "$AUDIT_SHA256" \
         && tar -xzf /tmp/dl -C "$CARGO_HOME/bin" --strip-components=1; \
+    fetch "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl.tar.gz" "$SCCACHE_SHA256" \
+        && tar -xzf /tmp/dl -C "$CARGO_HOME/bin" --strip-components=1 "sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl/sccache"; \
     rm -f /tmp/dl
 
 # Volume mount points must pre-exist so Docker keeps them owned by `runner`.
