@@ -18,7 +18,7 @@
 | web (warisan) | `npm run typecheck`, `npm test`, `npm run build` | |
 | Docs-only | `scripts/ci/docs_quality_gate.sh`, `docs_links_gate.sh` | |
 
-Akselerasi: `sccache` + `rust-lld` (`.cargo/config.toml`), nextest (`.config/nextest.toml`).
+Akselerasi: cache Rust per job (`.github/actions/rust-cache`, Blacksmith colocated cache), nextest (`.config/nextest.toml`). `sccache`/`mold` tidak lagi diset di `.cargo/config.toml` repo (tidak terpasang di runner/Docker); aktifkan per mesin via `~/.cargo/config.toml` bila diinginkan.
 
 ## 2. Lapisan test
 
@@ -39,13 +39,13 @@ Akselerasi: `sccache` + `rust-lld` (`.cargo/config.toml`), nextest (`.config/nex
 - `panic = "abort"` di release; `release_workflow.rs` menguji workflow rilis.
 - i18n: teks CLI via Fluent (`cli_fluent_coverage`).
 
-## 4. CI (`.github/workflows/`, 39 workflow)
+## 4. CI (`.github/workflows/`)
 
 | Kelompok | Workflow |
 |---|---|
-| Inti | `ci.yml`, `ci-code-analysis.yml`, `engine-ci.yml`, `platform-tests.yml`, `windows-tests.yml`, `desktop-check.yml`, `cross-platform-clippy.yml` |
-| Keamanan | `codeql.yml`, `daily-audit.yml`, `daily-npm-audit.yml`, `trivy-scheduled.yml`, `ci-sbom.yml`, `npm-deps-review.yml`, `monthly-outdated.yml` |
-| Build/Rilis | `cross-platform-build-manual.yml`, `docker-image-pr.yml`, `docker-publish.yml`, `release-gate-approval.yml`, `release-stable-manual.yml`, `testing-to-prerelease-pr.yml`, `pub-crates.yml`, `pub-aur.yml`, `pub-scoop.yml`, `scoop-bucket-canary.yml`, `discord-release.yml`, `tweet-release.yml` |
+| Inti | `ci.yml`, `web-check.yml`, `engine-ci.yml`, `platform-tests.yml`, `windows-tests.yml`, `desktop-check.yml`, `cross-platform-clippy.yml` |
+| Keamanan | `codeql.yml`, `daily-audit.yml`, `daily-npm-audit.yml`, `trivy-scheduled.yml`, `ci-sbom.yml`, `monthly-outdated.yml` |
+| Build/Rilis | `cross-platform-build-manual.yml`, `docker-image-pr.yml`, `docker-publish.yml`, `release-stable-manual.yml`, `pub-crates.yml`, `pub-aur.yml`, `pub-scoop.yml`, `scoop-bucket-canary.yml` |
 | Proyek/Docs | `docs-deploy.yml`, validasi terjemahan, labeler PR, dashboard proyek, workflow principle, notifikasi persetujuan tier |
 
 `engine-ci.yml` = gerbang Go **[cakupan belum diverifikasi]**. `desktop-check.yml` kemungkinan menargetkan `apps/tauri` (warisan) **[belum diverifikasi]**.
@@ -53,7 +53,7 @@ Akselerasi: `sccache` + `rust-lld` (`.cargo/config.toml`), nextest (`.config/nex
 ## 5. Versioning & rilis
 
 - Versi tunggal workspace `0.8.5`; `release-plz.toml` (changelog + tag, semver-check off).
-- Alur: `CHANGELOG-next.md` → `release-gate-approval` → `release-stable-manual` → build lintas platform → Docker + crates.io + AUR + Scoop → pengumuman.
+- Alur: `CHANGELOG-next.md` → PR `testing` → `main` → `release-stable-manual` → build lintas platform → Docker + crates.io + AUR + Scoop → pengumuman.
 - Konvensi: Conventional Commits; branch non-`master`; PR ke `master`; tanpa footer atribusi bot.
 - **Rilis hari ini hanya mencakup artefak warisan.** Menjadikan `web/` + `apps/tauri` + engine + gateway sebagai artefak rilis adalah pekerjaan fondasi yang belum ada (04 P1).
 

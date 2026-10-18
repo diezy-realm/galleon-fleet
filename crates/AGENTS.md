@@ -21,5 +21,6 @@ Ringkas yang WAJIB:
   `clawcrew-`. Definisi pindah ke leaf crate SSOT (pola T3-02 di
   `reference/dev-task-3/README.md`).
 - **Verifikasi:** `cargo check -p <crate>` (bukan `--workspace` kecuali perlu) +
-  `cargo nextest run -p <crate>` (BUKAN `cargo test`). sccache aktif — jangan
-  dihapus. Batch edit dulu, build+test SEKALI di akhir.
+  `cargo nextest run -p <crate>` (BUKAN `cargo test`). sccache opsional per
+  mesin via `~/.cargo/config.toml` (tidak diset di config repo agar CI/Docker
+  tidak bergantung padanya). Batch edit dulu, build+test SEKALI di akhir.

@@ -48,3 +48,11 @@ registry rather than in source comments covered by the comment-hygiene gate.
 - `pub-aur.yml`, `aur-freshness-check.yml`: Retired (distribusi Arch AUR eksternal dinonaktifkan untuk microkernel).
 - `pub-crates.yml`: Retired (workspace internal tidak lagi dipublikasikan terpisah ke crates.io).
 - `pub-scoop.yml`, `scoop-bucket-canary.yml`: Retired (distribusi Scoop eksternal dipangkas menjadi MSI/NSIS mandiri).
+- `testing-to-prerelease-pr.yml`, `release-gate-approval.yml`: Dihapus (YAML tidak valid sehingga tidak pernah berjalan, dan memakai runner GitHub-hosted yang tidak tersedia untuk org ini).
+- `ci-code-analysis.yml` (Semgrep), `npm-deps-review.yml`: Dihapus (hanya terpicu ke `master` yang tidak ada, dan keduanya butuh GitHub Advanced Security untuk SARIF / dependency review).
+- `sop-eval-advisory.yml`: Dihapus (advisory `continue-on-error` yang selalu gagal tersembunyi; `clawcrew-eval` tetap diuji oleh job `test` di `ci.yml`).
+- `validate-translations-pin.yml`: Dihapus (submodule `docs/book/po` tidak punya gitlink di repo ini).
+- `codeql.yml`: hanya `workflow_dispatch` sampai GitHub Advanced Security aktif.
+
+### Runner & biaya
+Semua job berjalan di Blacksmith; runner GitHub-hosted tidak tersedia untuk org ini. Job macOS (`blacksmith-6vcpu-macos-15`, tarif 20x menit Linux 2-vCPU) hanya berjalan saat push ke `main`/`testing` (`build-macos`), mingguan (`platform-tests.yml`), atau manual. Audit keamanan terjadwal (`daily-audit.yml`, `daily-npm-audit.yml`, `ci-sbom.yml`) berjalan mingguan; `security` di `ci.yml` tetap menjalankan `cargo deny check` di setiap PR.
