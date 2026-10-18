@@ -16,7 +16,7 @@ jobs:
     # Only run for PRs dengan auto-approval comment
     if: github.event.issue.pull_request != null && (contains(github.event.comment.body, '✅ Approved (auto)') || contains(github.event.comment.body, 'auto-approved') || contains(github.event.comment.body, 'auto-approve'))
     
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     
     steps:
       - name: Extract PR info

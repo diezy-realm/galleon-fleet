@@ -13,7 +13,7 @@ permissions:
 jobs:
   pr-gate:
     name: Principle Checklist & Standards Gate
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     env:
       RUSTC_WRAPPER: ""
     steps:

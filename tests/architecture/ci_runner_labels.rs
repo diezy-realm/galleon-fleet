@@ -28,9 +28,9 @@ const RUNNER_LABEL: &str = "blacksmith-8vcpu-ubuntu-2404";
 /// ran untouched, so the whole required gate stalled on jobs whose combined
 /// work is minutes. Hosting them on Blacksmith removes GitHub's hosted pool
 /// from the required gate's critical path entirely.
-const HOUSEKEEPING_LABEL: &str = "blacksmith-4vcpu-ubuntu-2404";
+const HOUSEKEEPING_LABEL: &str = "blacksmith-2vcpu-ubuntu-2404";
 
-/// Every Quality Gate housekeeping job on the Blacksmith 4-vCPU class. Same contract as
+/// Every Quality Gate housekeeping job on the Blacksmith 2-vCPU class. Same contract as
 /// `COMPILE_JOBS`: this list is the reviewable inventory the workflow is
 /// checked against.
 const HOUSEKEEPING_JOBS: [&str; 15] = [
@@ -202,7 +202,7 @@ fn rust_cache_callers_pass_a_reviewed_provider_input() {
 }
 
 #[test]
-fn housekeeping_jobs_pin_the_four_vcpu_label() {
+fn housekeeping_jobs_pin_the_two_vcpu_label() {
     let workflow = ci_workflow();
     let blocks = job_blocks(&workflow);
 
@@ -231,7 +231,7 @@ fn housekeeping_jobs_pin_the_four_vcpu_label() {
 }
 
 #[test]
-fn only_the_declared_housekeeping_jobs_claim_the_four_vcpu_class() {
+fn only_the_declared_housekeeping_jobs_claim_the_two_vcpu_class() {
     let workflow = ci_workflow();
     let blocks = job_blocks(&workflow);
 
