@@ -2,20 +2,22 @@ name: Quality Gate
 
 on:
   pull_request:
-    branches: [main, master, testing]
+    branches: [main, testing]
   push:
-    branches: [main, master, testing]
-  # Merge queue: GitHub builds a temporary `gh-readonly-queue/master/…` branch
+    branches: [main, testing]
+  # Merge queue: GitHub builds a temporary `gh-readonly-queue/<base>/…` branch
   # and fires `merge_group`. The required `CI Required Gate` must report on that
   # branch or queued PRs stall, so the full gate runs here too.
   merge_group:
 
 concurrency:
   # Merge-queue runs key on the unique queue ref (github.ref →
-  # `refs/heads/gh-readonly-queue/master/pr-N-<sha>`) so speculative entries
-  # never cancel each other; PRs still key on the PR number.
+  # `refs/heads/gh-readonly-queue/<base>/pr-N-<sha>`) so speculative entries
+  # never cancel each other; PRs still key on the PR number. Only PR runs are
+  # cancelled: a burst of merges must not cancel the push run that seeds the
+  # Rust caches for main and testing.
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -57,8 +59,8 @@ env:
 # commit here rather than flipping a repo variable.
 #
 # UNCHANGED SAFETY PROPERTY: every rust-cache call still passes
-# `save-if: github.ref == 'refs/heads/master'`, so fork PRs remain cache READERS
-# only and cannot poison the cache master seeds.
+# `save-if` limited to pushes on `main` and `testing`, so PRs (fork or not)
+# remain cache READERS only and cannot poison the caches those branches seed.
 #
 # PRECONDITIONS: the Blacksmith GitHub App must stay installed on the org, or
 # these jobs queue with no runner (~24h) instead of failing fast. Blacksmith
@@ -87,7 +89,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
           components: rustfmt
       - name: Check formatting
         run: cargo fmt --all -- --check
@@ -105,7 +107,8 @@ jobs:
       - name: Reject unrelated PR history
         env:
           HISTORY_CHECK_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-        run: bash scripts/ci/common_ancestor_guard.sh origin/master "$HISTORY_CHECK_SHA"
+          HISTORY_BASE_REF: ${{ github.base_ref || github.event.repository.default_branch }}
+        run: bash scripts/ci/common_ancestor_guard.sh "origin/$HISTORY_BASE_REF" "$HISTORY_CHECK_SHA"
 
   # Guards the approved submodule layout introduced in PR #8516; see the bespoke gate registry in README.md.
   repo-structure:
@@ -244,6 +247,8 @@ jobs:
 
   lint:
     name: Lint
+    needs: [path-changes]
+    if: needs.path-changes.outputs.rust == 'true'
     runs-on: blacksmith-8vcpu-ubuntu-2404
     # Measured green run on b86b1737: rustdoc step 2m22s, total Lint 10m40s
     # (under the prior 15m ceiling). Keep 15 unless a cold-cache run proves more.
@@ -254,16 +259,16 @@ jobs:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
           components: clippy
       - uses: ./.github/actions/rust-cache
         id: rust-cache
         with:
           use-blacksmith: 'true'
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - name: Install system dependencies
-        run: bash scripts/ci/apt_install.sh libudev-dev ripgrep
+        run: bash scripts/ci/apt_install.sh libudev-dev ripgrep protobuf-compiler
       - name: Ensure web/dist placeholder exists
         run: mkdir -p web/dist && touch web/dist/.gitkeep
       - name: Clippy runner contract tests
@@ -340,14 +345,14 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
           components: clippy
           targets: x86_64-pc-windows-msvc
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         id: rust-cache
         with:
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - name: Ensure web/dist placeholder exists
         shell: bash
         run: mkdir -p web/dist && touch web/dist/.gitkeep
@@ -367,6 +372,7 @@ jobs:
   build:
     name: ${{ matrix.label }} ${{ matrix.target }}
     needs: [path-changes]
+    if: needs.path-changes.outputs.rust == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     strategy:
@@ -377,11 +383,10 @@ jobs:
             target: x86_64-unknown-linux-gnu
             cmd: build
             label: Build
-          - os: macos-14
-            target: aarch64-apple-darwin
-            cmd: check
-            label: Check
-          - os: windows-latest
+          # GitHub-hosted runners are unavailable to this org; Windows runs on
+          # Blacksmith. macOS lives in `build-macos` (push-only) because a
+          # 6-vCPU macOS minute costs 20x a 2-vCPU Linux minute.
+          - os: blacksmith-2vcpu-windows-2025
             target: x86_64-pc-windows-msvc
             cmd: check
             label: Check
@@ -389,17 +394,22 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
           targets: ${{ matrix.target }}
       - uses: ./.github/actions/rust-cache
         id: rust-cache
         with:
           use-blacksmith: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
-        run: bash scripts/ci/apt_install.sh mold libasound2-dev
+        run: bash scripts/ci/apt_install.sh mold libasound2-dev protobuf-compiler
+      - name: Install protoc
+        if: runner.os != 'Linux'
+        uses: arduino/setup-protoc@f4d5893b897028ff5739576ea0409746887fa536 # v3.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Ensure web/dist placeholder exists
         shell: bash
         run: mkdir -p web/dist && touch web/dist/.gitkeep
@@ -462,8 +472,42 @@ jobs:
             --target x86_64-pc-windows-msvc \
             control_plane::boot::tests::recovery_retains_live_foreign_process_then_reclaims_after_exit -- --exact
 
+  # macOS compile coverage on pushes to main/testing (and merge queue) only.
+  # PRs skip it: the Windows leg in `build` already exercises the non-Unix cfg
+  # paths per PR, and macOS breakage still surfaces before a testing->main
+  # release.
+  build-macos:
+    name: Check aarch64-apple-darwin
+    needs: [path-changes]
+    if: github.event_name != 'pull_request' && needs.path-changes.outputs.rust == 'true'
+    runs-on: blacksmith-6vcpu-macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: 1.96.0
+          targets: aarch64-apple-darwin
+      - uses: ./.github/actions/rust-cache
+        with:
+          use-blacksmith: 'false'
+          cache-on-failure: true
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
+      - name: Install protoc
+        uses: arduino/setup-protoc@f4d5893b897028ff5739576ea0409746887fa536 # v3.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Ensure web/dist placeholder exists
+        run: mkdir -p web/dist && touch web/dist/.gitkeep
+      - name: Check
+        run: cargo check --profile ci --locked --target aarch64-apple-darwin
+      - name: Check voice-wake
+        run: cargo check --locked -p clawcrew-channels --no-default-features --features voice-wake --target aarch64-apple-darwin
+
   check:
     name: Check (${{ matrix.name }})
+    needs: [path-changes]
+    if: needs.path-changes.outputs.rust == 'true'
     runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 20
     env:
@@ -489,16 +533,16 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
       - uses: ./.github/actions/rust-cache
         id: rust-cache
         with:
           use-blacksmith: 'true'
+          shared-key: check-${{ strategy.job-index }}
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - name: Install system dependencies
-        if: matrix.sys_deps != ''
-        run: bash scripts/ci/apt_install.sh ${{ matrix.sys_deps }}
+        run: bash scripts/ci/apt_install.sh protobuf-compiler ${{ matrix.sys_deps }}
       - name: Ensure web/dist placeholder exists
         run: mkdir -p web/dist && touch web/dist/.gitkeep
       - name: Check
@@ -506,6 +550,8 @@ jobs:
 
   check-plugin-backends:
     name: Check (${{ matrix.name }})
+    needs: [path-changes]
+    if: needs.path-changes.outputs.rust == 'true'
     runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 20
     strategy:
@@ -540,18 +586,22 @@ jobs:
       - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
         if: steps.changed.outputs.run == 'true'
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
       - name: Install plugin fixture target
         if: steps.changed.outputs.run == 'true' && matrix.features == 'plugins-wasm-cranelift'
         run: rustup target add wasm32-wasip2
+      - name: Install protoc
+        if: steps.changed.outputs.run == 'true' && matrix.features == 'plugins-wasm-cranelift'
+        run: bash scripts/ci/apt_install.sh protobuf-compiler
       - uses: ./.github/actions/rust-cache
         if: steps.changed.outputs.run == 'true'
         with:
           use-blacksmith: 'true'
-          # Keep the new runtime build separate from the existing backend caches.
-          shared-key: ${{ matrix.suite == 'runtime' && 'plugins-cranelift-runtime' || '' }}
+          # One cache per backend/suite row: the rows build different feature
+          # sets, so a shared key would let the last writer evict the others.
+          shared-key: plugins-${{ matrix.suite }}-${{ matrix.features }}
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - name: Check
         if: steps.changed.outputs.run == 'true' && matrix.suite != 'runtime'
         run: cargo check --locked -p clawcrew-plugins --no-default-features --features ${{ matrix.features }}
@@ -620,9 +670,9 @@ jobs:
         with:
           use-blacksmith: 'true'
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - name: Install system dependencies
-        run: bash scripts/ci/apt_install.sh libudev-dev
+        run: bash scripts/ci/apt_install.sh libudev-dev protobuf-compiler
       - name: Ensure web/dist placeholder exists
         run: mkdir -p web/dist && touch web/dist/.gitkeep
       # Consume the exact container kitchen-sink selection resolved by the
@@ -636,22 +686,24 @@ jobs:
 
   check-32bit:
     name: Check (32-bit)
+    needs: [path-changes]
+    if: needs.path-changes.outputs.rust == 'true'
     runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
           targets: i686-unknown-linux-gnu
       - uses: ./.github/actions/rust-cache
         id: rust-cache
         with:
           use-blacksmith: 'true'
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - name: Install 32-bit system libraries
-        run: bash scripts/ci/apt_install.sh gcc-multilib
+        run: bash scripts/ci/apt_install.sh gcc-multilib protobuf-compiler
       - name: Ensure web/dist placeholder exists
         run: mkdir -p web/dist && touch web/dist/.gitkeep
       - name: Check (32-bit, no default features)
@@ -672,13 +724,15 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
       - uses: ./.github/actions/rust-cache
         id: rust-cache
         with:
           use-blacksmith: 'true'
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
+      - name: Install protoc
+        run: bash scripts/ci/apt_install.sh protobuf-compiler
       - name: Ensure web/dist placeholder exists
         run: mkdir -p web/dist && touch web/dist/.gitkeep
       - name: Verify benchmarks compile
@@ -720,26 +774,28 @@ jobs:
 
   test:
     name: Test
+    needs: [path-changes]
+    if: needs.path-changes.outputs.rust == 'true'
     runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
           components: rustfmt, clippy
       - uses: ./.github/actions/rust-cache
         id: rust-cache
         with:
           use-blacksmith: 'true'
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
+      - name: Install test system dependencies
+        run: bash scripts/ci/apt_install.sh mold expect python3 protobuf-compiler
       - name: Check firmware protocol crate
         run: ./scripts/ci/firmware_protocol_gate.sh
       - name: Ensure web/dist placeholder exists
         run: mkdir -p web/dist && touch web/dist/.gitkeep
-      - name: Install test system dependencies
-        run: bash scripts/ci/apt_install.sh mold expect python3
       - name: Install cargo-nextest
         run: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ~/.cargo/bin
       - name: Run tests
@@ -760,6 +816,8 @@ jobs:
   # In particular, Lark runs without defaults and QQ excludes live-auth tests.
   test-channel-features:
     name: Test (channel ${{ matrix.name }})
+    needs: [path-changes]
+    if: needs.path-changes.outputs.rust == 'true'
     runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 30
     strategy:
@@ -778,14 +836,14 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
           components: rustfmt, clippy
       - uses: ./.github/actions/rust-cache
         with:
           use-blacksmith: 'true'
           shared-key: channel-feature-${{ matrix.name }}
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - name: Ensure web/dist placeholder exists
         run: mkdir -p web/dist && touch web/dist/.gitkeep
       - name: Install test system dependencies
@@ -801,6 +859,8 @@ jobs:
 
   memory-postgres-test:
     name: Test (PostgreSQL Memory)
+    needs: [path-changes]
+    if: needs.path-changes.outputs.rust == 'true'
     runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 20
     services:
@@ -821,13 +881,13 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
       - uses: ./.github/actions/rust-cache
         id: rust-cache
         with:
           use-blacksmith: 'true'
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - name: Ensure web/dist placeholder exists
         run: mkdir -p web/dist && touch web/dist/.gitkeep
       - name: Install mold linker
@@ -902,14 +962,14 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
       - uses: ./.github/actions/rust-cache
         id: rust-cache
         with:
           use-blacksmith: 'true'
           shared-key: test
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - name: Ensure web/dist placeholder exists
         run: mkdir -p web/dist && touch web/dist/.gitkeep
       - name: Install mold linker
@@ -923,18 +983,34 @@ jobs:
 
   test-landlock:
     name: Test (Landlock)
-    runs-on: ubuntu-latest
+    needs: [path-changes]
+    if: needs.path-changes.outputs.rust == 'true'
+    # GitHub-hosted runners are unavailable to this org, so this runs on the
+    # Blacksmith fleet. The first step fails loudly if the runner kernel does
+    # not enable the Landlock LSM, so the security coverage can never pass by
+    # silently skipping.
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 15
     steps:
+      - name: Require the Landlock LSM in the runner kernel
+        run: |
+          set -euo pipefail
+          lsm="$(cat /sys/kernel/security/lsm 2>/dev/null || sudo cat /sys/kernel/security/lsm 2>/dev/null || true)"
+          echo "Active LSMs: ${lsm:-<unreadable>} (kernel $(uname -r))"
+          if [[ ",${lsm}," != *",landlock,"* ]]; then
+            echo "::error::Landlock is not enabled on this runner kernel; Landlock tests would not exercise the sandbox."
+            exit 1
+          fi
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+          toolchain: 1.96.0
+      - uses: ./.github/actions/rust-cache
         id: rust-cache
         with:
+          use-blacksmith: 'true'
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - name: Ensure web/dist placeholder exists
         run: mkdir -p web/dist && touch web/dist/.gitkeep
       - name: Install mold linker
@@ -957,12 +1033,12 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         id: rust-cache
         with:
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - name: Install cargo-deny
         run: |
           curl -LsSf https://github.com/EmbarkStudios/cargo-deny/releases/download/0.19.9/cargo-deny-0.19.9-x86_64-unknown-linux-musl.tar.gz \
@@ -1001,7 +1077,7 @@ jobs:
 
   # Detect non-Rust job families and the Windows recovery probe a PR touches,
   # so unrelated PRs do not pay for them. Cheap and always-on; forces every
-  # family true on push / merge_group so master cache-warming and the required
+  # family true on push / merge_group so branch cache-warming and the required
   # gate keep exercising the full set. A path-skipped job leaves `CI Required
   # Gate` green (it only trips on failure/cancelled), and this detector is never
   # skipped, so a job that should run never is.
@@ -1014,6 +1090,7 @@ jobs:
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 5
     outputs:
+      rust: ${{ steps.filter.outputs.rust }}
       docs: ${{ steps.filter.outputs.docs }}
       nix: ${{ steps.filter.outputs.nix }}
       nix_hash: ${{ steps.filter.outputs.nix_hash }}
@@ -1033,12 +1110,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Non-PR events (push to master, merge_group) always run every gated
+          # Non-PR events (push to main/testing, merge_group) always run every gated
           # job: warms caches and keeps the required gate exercising the full set.
           case "${{ github.event_name }}" in
             pull_request) ;;
             *)
               {
+                echo "rust=true"
                 echo "docs=true"
                 echo "nix=true"
                 echo "nix_hash=true"
@@ -1071,6 +1149,18 @@ jobs:
           # config, runtime, and SOP graph crates and is rendered by the xtask generator.
           # Keep this trigger aligned with every source that can change it.
           emit web      "^web/|^crates/clawcrew-(config|gateway|runtime|sop-graph)/|^xtask/|^Cargo\.(toml|lock)$|^\.nvmrc$|${wf}"
+
+          # Fail-open: the Rust compile/test fan-out is skipped only when EVERY
+          # changed file is outside the Rust build graph (standard-docs, the Go
+          # engine with its own engine-ci.yml, agent steering files, and
+          # root-level governance Markdown). docs/ and README.md stay in the
+          # graph because xtask generators and tests read them.
+          non_rust='^(standard-docs|engine|\.gemini|\.kiro)/|^\.github/(ISSUE_TEMPLATE/|CODEOWNERS$|pull_request_template\.md$)|^(AGENTS|CLAUDE|CONTRIBUTING|CODE_OF_CONDUCT|SECURITY|TRANSLATIONS|CHANGELOG-next|CHANGELOG_FIXES|PR_PHASE2B_TEMPLATE)\.md$'
+          if grep -Evq "$non_rust" "$changed"; then
+            echo "rust=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "rust=false" >> "$GITHUB_OUTPUT"
+          fi
 
   nix-eval:
     name: Nix Module Eval
@@ -1113,7 +1203,9 @@ jobs:
           fetch-depth: 0
       - name: Resolve base SHA
         id: base
-        run: echo "sha=$(git merge-base origin/master HEAD)" >> "$GITHUB_OUTPUT"
+        env:
+          BASE_REF: ${{ github.base_ref || github.event.repository.default_branch }}
+        run: echo "sha=$(git merge-base "origin/$BASE_REF" HEAD)" >> "$GITHUB_OUTPUT"
       - name: Docs quality gate (markdown lint + em-dash prose check)
         env:
           BASE_SHA: ${{ steps.base.outputs.sha }}
@@ -1140,7 +1232,7 @@ jobs:
         id: changed
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            base="$(git merge-base origin/master HEAD)"
+            base="$(git merge-base "origin/${{ github.base_ref }}" HEAD)"
             if git diff --name-only "$base" HEAD | grep -q '^apps/zerocode/'; then
               echo "run=true" >> "$GITHUB_OUTPUT"
             else
@@ -1156,6 +1248,8 @@ jobs:
   # Guards generated installation surfaces against canonical-spec drift from PR #7558; see the bespoke gate registry in README.md.
   installer-drift:
     name: Installer Drift
+    needs: [path-changes]
+    if: needs.path-changes.outputs.rust == 'true'
     runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 15
     outputs:
@@ -1166,13 +1260,15 @@ jobs:
         run: bash scripts/ci/install_target_triple_test.sh
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
       - uses: ./.github/actions/rust-cache
         id: rust-cache
         with:
           use-blacksmith: 'true'
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
+      - name: Install protoc
+        run: bash scripts/ci/apt_install.sh protobuf-compiler
       - name: Check generated install surfaces are in sync with the spec
         run: cargo generate installers --check
       - name: Check source-backed SOP syntax reference
@@ -1198,12 +1294,12 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
       - uses: ./.github/actions/rust-cache
         with:
           use-blacksmith: 'false'
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: '.nvmrc'
@@ -1212,6 +1308,8 @@ jobs:
       - name: Install web dependencies
         working-directory: web
         run: npm ci
+      - name: Install protoc
+        run: bash scripts/ci/apt_install.sh protobuf-compiler
       - name: Typecheck generated dashboard contract
         run: cargo web check
       - name: Run permission and catalog regressions
@@ -1228,8 +1326,9 @@ jobs:
   gate:
     name: CI Required Gate
     if: always()
-    needs: [fmt, history-guard, repo-structure, relay-container-smoke-changes, relay-container-smoke, path-changes, lint, windows-clippy-tools-changes, windows-clippy-tools, build, check, check-plugin-backends, msrv, check-32bit, bench, test, test-channel-features, memory-postgres-test, parallel-runtime-test-changes, parallel-runtime-test, test-landlock, security, nix-eval, nix-hash-drift, docs-style, installer-drift, zerocode-rpc-boundary, web-permission-tests]
+    needs: [fmt, history-guard, repo-structure, relay-container-smoke-changes, relay-container-smoke, path-changes, lint, windows-clippy-tools-changes, windows-clippy-tools, build, build-macos, check, check-plugin-backends, msrv, check-32bit, bench, test, test-channel-features, memory-postgres-test, parallel-runtime-test-changes, parallel-runtime-test, test-landlock, security, nix-eval, nix-hash-drift, docs-style, installer-drift, zerocode-rpc-boundary, web-permission-tests]
     runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
     steps:
       - name: Check results
         run: |

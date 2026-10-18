@@ -1677,7 +1677,7 @@ mod tests {
         assert!(manual.contains("echo \"- Resolved features: \\`$FEATURES\\`\""));
         for target in ["x86_64-unknown-linux-musl", "aarch64-unknown-linux-musl"] {
             assert!(manual.contains(&format!(
-                "- os: ubuntu-latest\n            target: {target}\n            use_cross: true"
+                "- os: blacksmith-2vcpu-ubuntu-2404\n            target: {target}\n            use_cross: true"
             )));
         }
         assert!(manual.contains(cross_install));
@@ -1687,7 +1687,7 @@ mod tests {
         ));
         assert!(manual.contains("echo \"BUILD_CMD=cargo build\""));
         assert!(manual.contains(
-            "prefix-key: ${{ matrix.os }}-${{ matrix.target }}\n          cache-targets: false\n          save-if: ${{ github.ref == 'refs/heads/master' }}"
+            "prefix-key: ${{ matrix.os }}-${{ matrix.target }}\n          cache-targets: false\n          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}"
         ));
         assert!(manual.contains(
             "$BUILD_CMD --release --locked --no-default-features --features \"${FEATURES}\" --target ${{ matrix.target }}"

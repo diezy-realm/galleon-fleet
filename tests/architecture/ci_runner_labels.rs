@@ -52,17 +52,19 @@ const HOUSEKEEPING_JOBS: [&str; 15] = [
 ];
 
 /// Jobs that stay on GitHub-hosted `ubuntu-latest` because they depend on the
-/// hosted image itself. `test-landlock` exercises the Landlock LSM, which the
-/// GitHub kernel enables; a different runner class could silently skip that
-/// security coverage. Adding a job here requires a reason of that kind, not
-/// convenience: during a hosted outage, every entry in this list is a check
-/// that cannot run.
-const HOSTED_LINUX_JOBS: [&str; 1] = ["test-landlock"];
+/// hosted image itself. The list is empty: GitHub-hosted runners are not
+/// available to this organization, so every Quality Gate job runs on the
+/// Blacksmith fleet. `test-landlock` moved to the compile fleet and guards its
+/// own kernel requirement with a step that fails when Landlock is not active,
+/// so the security coverage cannot pass by silently skipping. Adding a job here
+/// requires a reason of that kind, not convenience: during a hosted outage,
+/// every entry in this list is a check that cannot run.
+const HOSTED_LINUX_JOBS: [&str; 0] = [];
 
 /// Every job that compiles the workspace on the Blacksmith fleet. A new compile
 /// job must be added here, which is the point: the list is the inventory this
 /// gate checks the workflow against.
-const COMPILE_JOBS: [&str; 12] = [
+const COMPILE_JOBS: [&str; 13] = [
     "lint",
     "build",
     "check",
@@ -75,12 +77,13 @@ const COMPILE_JOBS: [&str; 12] = [
     "memory-postgres-test",
     "parallel-runtime-test",
     "installer-drift",
+    "test-landlock",
 ];
 
 /// `use-blacksmith` inputs the rust-cache composite may receive. The matrix
-/// expression belongs to `build`, whose macOS and Windows legs stay on the
-/// GitHub-hosted cache; `'false'` belongs to the web job, which does not
-/// compile the workspace.
+/// expression belongs to `build`, whose Windows leg uses the standard Actions
+/// cache; `'false'` belongs to `build-macos` and to jobs that do not compile
+/// the workspace on Linux.
 const ALLOWED_CACHE_INPUTS: [&str; 3] = [
     "'true'",
     "'false'",
@@ -155,8 +158,8 @@ fn compile_jobs_pin_the_runner_label_instead_of_reading_it_from_fmt() {
              formatting error blocking merge"
         );
         let pins_label = if name == "build" {
-            // The Linux leg carries the label through the matrix; the macOS and
-            // Windows legs name their own GitHub-hosted images.
+            // The Linux leg carries the label through the matrix; the Windows
+            // leg names its own Blacksmith Windows image.
             block.contains(&format!("- os: {RUNNER_LABEL}\n"))
                 && block.contains("runs-on: ${{ matrix.os }}\n")
         } else {

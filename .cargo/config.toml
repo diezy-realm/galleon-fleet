@@ -11,10 +11,14 @@ generate = "run --release -p xtask --bin generate --"
 # fail on rustdoc warnings (Cargo replaces config flags when the env is set).
 [build]
 rustdocflags = ["-D", "warnings"]
-# sccache: cache rustc artifacts across builds/branches so cold compiles reuse
-# prior work. Installed by the user. Harmless if sccache is on PATH; remove the
-# line (or unset) to disable. Pair with `sccache --show-stats` to verify hits.
-rustc-wrapper = "sccache"
+# sccache and mold are opt-in per machine, not repository defaults: CI runners,
+# Docker builds, and fresh clones do not have them, and a missing wrapper or
+# linker fails every build. Enable them locally in `~/.cargo/config.toml`:
+#   [build]
+#   rustc-wrapper = "sccache"
+#   [target.x86_64-unknown-linux-gnu]
+#   rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+# or per shell with `export RUSTC_WRAPPER=sccache`.
 
 [target.x86_64-unknown-linux-musl]
 rustflags = ["-C", "link-arg=-static"]
@@ -54,6 +58,3 @@ linker = "armv7a-linux-androideabi21-clang"
 [target.aarch64-linux-android]
 linker = "aarch64-linux-android21-clang"
 rustflags = ["-C", "link-arg=-Wl,-z,stack-size=8388608"]
-
-[target.x86_64-unknown-linux-gnu]
-rustflags = ["-C", "link-arg=-fuse-ld=mold"]
