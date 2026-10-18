@@ -10,8 +10,6 @@ name: AUR Freshness Check
 # this check is the backstop that turns a silent miss into a visible one.
 
 on:
-  schedule:
-    - cron: "41 7 * * 1"
   workflow_dispatch:
   workflow_call:
 
@@ -25,7 +23,7 @@ permissions:
 jobs:
   check:
     name: Compare AUR Version To Release
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: [self-hosted, linux, galleon-heavy]
     env:
       AUR_PACKAGE: clawcrewlabs
     steps:

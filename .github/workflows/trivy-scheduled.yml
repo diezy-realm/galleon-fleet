@@ -12,8 +12,6 @@ name: Trivy Scheduled Image Scan
 # Update this matrix when docker-tags.toml adds a new major variant.
 
 on:
-  schedule:
-    - cron: '15 8 * * 6'   # Saturdays at 08:15 UTC
   workflow_dispatch:
 
 concurrency:
@@ -33,7 +31,7 @@ jobs:
   scan:
     name: Trivy (${{ matrix.stem }})
     if: github.repository == 'diezy-realm/galleon-fleet'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: [self-hosted, linux, galleon-heavy]
     timeout-minutes: 30
     strategy:
       fail-fast: false

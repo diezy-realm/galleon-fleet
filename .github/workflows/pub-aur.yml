@@ -42,7 +42,7 @@ permissions:
 jobs:
   publish-aur:
     name: Update AUR Package
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: [self-hosted, linux, galleon-heavy]
     timeout-minutes: 20
     env:
       RELEASE_TAG: ${{ inputs.release_tag }}

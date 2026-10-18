@@ -4,8 +4,6 @@ on:
   # Manual plus scheduled only: keep platform-gated lint regressions visible
   # without adding macOS/Windows latency to the required PR gate.
   workflow_dispatch:
-  schedule:
-    - cron: "17 10 * * 1"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,9 +25,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: blacksmith-6vcpu-macos-15
+          - os: macos-latest
             target: aarch64-apple-darwin
-          - os: blacksmith-4vcpu-windows-2025
+          - os: windows-latest
             target: x86_64-pc-windows-msvc
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
