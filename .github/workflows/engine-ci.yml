@@ -2,15 +2,19 @@ name: Engine CI
 
 on:
   push:
-    branches: [main, master, testing]
+    branches: [main, testing]
     paths:
       - 'engine/**'
       - '.github/workflows/engine-ci.yml'
   pull_request:
-    branches: [main, master, testing]
+    branches: [main, testing]
     paths:
       - 'engine/**'
       - '.github/workflows/engine-ci.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   engine-test:

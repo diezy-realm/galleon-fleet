@@ -9,14 +9,20 @@ name: Auto-Merge to Testing
 # Scope guard: `base_ref == testing` is enforced in every job — PRs into main /
 # prerelease are never auto-merged here (those keep their human gate).
 
+# check_suite is not a trigger here: suites created by GitHub Actions never
+# start workflows, so it only matched third-party apps. workflow_run names must
+# match each workflow's `name:` exactly or the trigger never fires.
 on:
-  check_suite:
-    types: [completed]
   pull_request_review:
     types: [submitted]
   workflow_run:
-    workflows: ["CI", "Auto Principle PR Review", "PR Testing Gate (Feature-Scoped & RF-D Checklist)"]
+    workflows: ["Quality Gate", "Auto Principle PR Review", "PR Testing Gate (Feature-Scoped & RF-D Checklist)"]
     types: [completed]
+
+# Each run re-evaluates every open PR, so only the newest run matters.
+concurrency:
+  group: auto-merge-testing
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -28,6 +34,7 @@ jobs:
   auto-merge:
     name: Evaluate & auto-merge green PRs into testing
     runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 10
     steps:
       - name: Evaluate open PRs targeting testing and merge if green
         uses: actions/github-script@v7
@@ -42,7 +49,6 @@ jobs:
             const IGNORE_PREFIXES = ["Test"];           // "Test", "Test (channel ...)", "Test (PostgreSQL Memory)"
             const IGNORE_EXACT = new Set([
               "Benchmarks Compile",                      // frequently skipped
-              "SOP Eval Replay (Advisory Non-Blocking)", // advisory by name — never blocks
             ]);
             // Any check whose name declares itself advisory/non-blocking is ignored.
             const IGNORE_SUBSTR = ["Advisory Non-Blocking"];
