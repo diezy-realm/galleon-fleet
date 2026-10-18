@@ -1,10 +1,9 @@
 name: Quality Gate
 
-# Runs on the self-hosted runners in ~/Apps/dev-ci (docker compose, outside this repo). Two labels:
-#   galleon-heavy  compile/test jobs; shares one persistent CARGO_TARGET_DIR (capped at 60G)
-#   galleon-light  guards and governance, so a long build never blocks auto-merge
-# Toolchain comes from rust-toolchain.toml. Windows/macOS/Nix/Docker/MSRV/32-bit/bench
-# lanes were dropped from the PR gate; run them manually when a change needs them.
+# GitHub Actions is disabled for this repo. CI runs locally: ~/Apps/dev-ci (bin/ci-poller polls PRs,
+# gates in repos/galleon-fleet/gates.sh, results posted as `local/*` commit statuses). This file stays
+# because scripts/ci/*.test.sh and tests/architecture/ci_runner_labels.rs parse it; keep the lane
+# list in step with gates.sh. Windows/macOS/Nix/Docker/MSRV/32-bit/bench lanes are not run on PRs.
 
 on:
   pull_request:
