@@ -14,7 +14,7 @@ ARG AUDIT_SHA256=ab28a1bdb54db4d5d8ad5981cf1f959410370b3d28250dbd35f6a44248620e3
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential clang mold pkg-config libssl-dev libudev-dev \
-        ca-certificates curl git jq ripgrep expect python3 python3-pip python3-yaml \
+        ca-certificates curl git jq ripgrep expect gettext python3 python3-pip python3-yaml \
         nodejs npm unzip xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
@@ -25,7 +25,9 @@ WORKDIR /home/runner
 
 ENV CARGO_HOME=/home/runner/.cargo \
     RUSTUP_HOME=/home/runner/.rustup \
-    PATH=/home/runner/.cargo/bin:$PATH
+    PATH=/home/runner/.cargo/bin:$PATH \
+    RUSTC_WRAPPER=
+# ^ .cargo/config.toml sets rustc-wrapper=sccache for dev machines; the runner has none.
 
 # rustup with no default toolchain: rust-toolchain.toml selects the pinned one.
 RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none \

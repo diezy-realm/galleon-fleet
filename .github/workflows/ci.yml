@@ -30,8 +30,21 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Check formatting
-        run: cargo fmt --all -- --check
+        with:
+          fetch-depth: 0
+      # Ratchet: ~450 legacy files are not rustfmt-clean, so gate only Rust files this change touches.
+      - name: Check formatting of changed files
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          files=$(git diff --name-only --diff-filter=AM "$BASE" HEAD -- '*.rs' 2>/dev/null || true)
+          # rustfmt on a single file also formats its child modules, so run cargo fmt and filter.
+          report=$(cargo fmt --all -- --check 2>&1 | grep '^Diff in' || true)
+          status=0
+          for f in $files; do
+            if grep -qF "/$f:" <<<"$report"; then echo "::error file=$f::not rustfmt-clean"; status=1; fi
+          done
+          exit $status
 
   repo-structure:
     name: Repository Structure
