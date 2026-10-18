@@ -18,10 +18,6 @@ name: Scoop Bucket Canary
 # publish by rotating the credential and rerunning the publisher.
 
 on:
-  schedule:
-    # Mondays, early UTC: a failure lands at the start of the week rather than
-    # in the middle of a release.
-    - cron: "23 7 * * 1"
   workflow_dispatch:
 
 concurrency:
@@ -34,7 +30,7 @@ permissions:
 jobs:
   latest-release:
     name: Resolve Current Release
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: [self-hosted, linux, galleon-heavy]
     outputs:
       tag: ${{ steps.resolve.outputs.tag }}
     steps:

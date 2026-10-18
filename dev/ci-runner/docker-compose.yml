@@ -1,0 +1,57 @@
+# Two isolated self-hosted runners: `heavy` compiles, `light` does guards and governance,
+# so a long build never starves auto-merge. Containers see no host home, ssh keys or sockets.
+#   first start:  RUNNER_TOKEN=$(gh api -X POST repos/OWNER/REPO/actions/runners/registration-token --jq .token) \
+#                 docker compose -f dev/ci-runner/docker-compose.yml up -d --build
+name: galleon-ci-runner
+
+x-runner: &runner
+  image: galleon-ci-runner:local
+  build: .
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  pids_limit: 2048
+  environment: &env
+    REPO_URL: ${REPO_URL:-https://github.com/diezy-realm/galleon-fleet}
+    RUNNER_TOKEN: ${RUNNER_TOKEN:-}
+
+services:
+  heavy:
+    <<: *runner
+    cpus: 3
+    mem_limit: 14g
+    environment:
+      <<: *env
+      RUNNER_NAME: galleon-heavy
+      RUNNER_LABELS: self-hosted,linux,x64,galleon-heavy
+      CARGO_TARGET_DIR: /ci-target
+      CI_TARGET_MAX_GB: "60"
+    volumes:
+      - heavy-state:/home/runner/runner-state
+      - heavy-work:/home/runner/actions-runner/_work
+      - cargo-home:/home/runner/.cargo/registry
+      - rustup-home:/home/runner/.rustup
+      - ci-target:/ci-target
+
+  light:
+    <<: *runner
+    cpus: 1
+    mem_limit: 4g
+    environment:
+      <<: *env
+      RUNNER_NAME: galleon-light
+      RUNNER_LABELS: self-hosted,linux,x64,galleon-light
+    volumes:
+      - light-state:/home/runner/runner-state
+      - light-work:/home/runner/actions-runner/_work
+      - cargo-home:/home/runner/.cargo/registry
+      - rustup-home:/home/runner/.rustup
+
+volumes:
+  heavy-state:
+  heavy-work:
+  light-state:
+  light-work:
+  cargo-home:
+  rustup-home:
+  ci-target:

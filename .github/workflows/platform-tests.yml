@@ -7,8 +7,6 @@ on:
       - ".github/workflows/platform-tests.yml"
       - "crates/clawcrew-tools/src/coding_cli.rs"
   workflow_dispatch:
-  schedule:
-    - cron: "17 3 * * *"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
@@ -24,7 +22,7 @@ env:
 jobs:
   fmt:
     name: Format
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: [self-hosted, linux, galleon-heavy]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -51,11 +49,11 @@ jobs:
       matrix:
         include:
           - name: macOS
-            os: blacksmith-6vcpu-macos-15
+            os: macos-latest
             nextest-platform: mac
             timeout-minutes: 45
           - name: Windows
-            os: blacksmith-4vcpu-windows-2025
+            os: windows-latest
             nextest-platform: windows-tar
             timeout-minutes: 60
     runs-on: ${{ matrix.os }}

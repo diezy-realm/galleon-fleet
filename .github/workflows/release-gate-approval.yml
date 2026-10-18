@@ -15,8 +15,7 @@ permissions:
 
 jobs:
   release-gate-approval:
-    runs-on: ubuntu-latest
-    
+    runs-on: [self-hosted, linux, galleon-light]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -121,8 +120,7 @@ jobs:
     # Only run on PR comments (not issues)
     if: github.event.issue.pull_request != null
     
-    runs-on: ubuntu-latest
-    
+    runs-on: [self-hosted, linux, galleon-light]
     steps:
       - name: Check for approval comment
         id: check-approval
