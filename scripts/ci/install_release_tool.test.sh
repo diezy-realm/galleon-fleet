@@ -178,8 +178,8 @@ if grep -Eq '^    (if|needs):' <<<"$smoke_job"; then
   exit 1
 fi
 
-assert_smoke_matrix_entry "Linux cross" "ubuntu-22.04" "cross"
-assert_smoke_matrix_entry "Windows Tauri CLI" "windows-latest" "tauri-cli"
+assert_smoke_matrix_entry "Linux cross" "blacksmith-2vcpu-ubuntu-2204" "cross"
+assert_smoke_matrix_entry "Windows Tauri CLI" "blacksmith-2vcpu-windows-2025" "tauri-cli"
 
 if [[ "$(grep -c '^          - name:' <<<"$smoke_job")" -ne 2 ]]; then
   echo "release-tool-smoke must keep exactly two native matrix legs" >&2

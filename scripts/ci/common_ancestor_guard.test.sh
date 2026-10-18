@@ -40,7 +40,7 @@ grep -Fqx "$expected_target" "$workflow" || {
   echo "history guard must select pull_request.head.sha for PRs and github.sha otherwise" >&2
   exit 1
 }
-grep -Fqx '        run: bash scripts/ci/common_ancestor_guard.sh origin/master "$HISTORY_CHECK_SHA"' "$workflow" || {
+grep -Fqx '        run: bash scripts/ci/common_ancestor_guard.sh "origin/$HISTORY_BASE_REF" "$HISTORY_CHECK_SHA"' "$workflow" || {
   echo "history guard must pass the selected commit to the guard script" >&2
   exit 1
 }
