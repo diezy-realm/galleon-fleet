@@ -2,7 +2,7 @@ name: Docker Image PR Check
 
 on:
   pull_request:
-    branches: [master]
+    branches: [main, testing]
     paths:
       - Dockerfile
       - Dockerfile.debian

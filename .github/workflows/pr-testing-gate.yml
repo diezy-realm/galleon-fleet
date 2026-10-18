@@ -6,6 +6,10 @@ on:
       - testing
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pull-requests: write
@@ -14,6 +18,7 @@ jobs:
   pr-gate:
     name: Principle Checklist & Standards Gate
     runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 10
     env:
       RUSTC_WRAPPER: ""
     steps:

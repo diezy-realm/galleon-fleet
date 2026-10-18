@@ -1,12 +1,16 @@
 version: 2
 
+# Feature work lands on `testing` and is released to `main`, so updates
+# target `testing`. Weekly and grouped: every update PR runs the full
+# Quality Gate.
+
 updates:
   - package-ecosystem: cargo
     directory: "/"
     schedule:
-      interval: daily
-    target-branch: master
-    open-pull-requests-limit: 3
+      interval: weekly
+    target-branch: testing
+    open-pull-requests-limit: 1
     labels:
       - "dependencies"
     groups:
@@ -21,6 +25,7 @@ updates:
     directory: "/web"
     schedule:
       interval: weekly
+    target-branch: testing
     open-pull-requests-limit: 2
     labels:
       - "dependencies"
@@ -36,8 +41,8 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: daily
-    target-branch: master
+      interval: weekly
+    target-branch: testing
     open-pull-requests-limit: 1
     labels:
       - "ci"
@@ -53,8 +58,8 @@ updates:
   - package-ecosystem: docker
     directory: "/"
     schedule:
-      interval: daily
-    target-branch: master
+      interval: weekly
+    target-branch: testing
     open-pull-requests-limit: 1
     labels:
       - "ci"

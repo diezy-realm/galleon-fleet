@@ -263,6 +263,9 @@ jobs:
     needs: [matrix, scan]
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 10
+    # Code scanning needs GitHub Advanced Security, which this private
+    # repository does not have; the SARIF artifact is the durable record.
+    continue-on-error: true
     permissions:
       contents: read
       security-events: write
@@ -287,6 +290,8 @@ jobs:
     needs: [scan-relay]
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 10
+    # See upload-sarif: a missing code-scanning entitlement must not fail a release.
+    continue-on-error: true
     permissions:
       contents: read
       security-events: write
