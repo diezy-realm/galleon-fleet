@@ -38,7 +38,7 @@ env:
 jobs:
   matrix:
     name: Resolve tag matrix
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
       include: ${{ steps.read.outputs.include }}
     steps:
@@ -57,7 +57,7 @@ jobs:
     name: Build & push ${{ matrix.stem }}
     if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [matrix]
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 60
     permissions:
       contents: read
@@ -121,7 +121,7 @@ jobs:
   publish-relay:
     name: Build & push zerorelay
     if: github.repository == 'diezy-realm/galleon-fleet'
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 60
     permissions:
       contents: read
@@ -189,7 +189,7 @@ jobs:
     name: Scan ${{ matrix.stem }}
     if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [matrix, publish]
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 30
     permissions:
       contents: read
@@ -229,7 +229,7 @@ jobs:
     name: Scan zerorelay
     if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [publish-relay]
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 30
     permissions:
       contents: read
@@ -261,7 +261,7 @@ jobs:
     name: Upload SARIF ${{ matrix.stem }}
     if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [matrix, scan]
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 10
     permissions:
       contents: read
@@ -285,7 +285,7 @@ jobs:
     name: Upload SARIF zerorelay
     if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [scan-relay]
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 10
     permissions:
       contents: read

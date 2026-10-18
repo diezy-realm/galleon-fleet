@@ -52,7 +52,7 @@ permissions:
 jobs:
   preflight:
     name: Preflight (package + verify)
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     # A cold multi-package verification compiles each extracted tarball against
     # Cargo's ephemeral registry. Warm local evidence is ~13 minutes, but a
     # first runner with an empty cache needs materially more headroom.
@@ -181,7 +181,7 @@ jobs:
     name: Publish to crates.io
     needs: [preflight]
     if: ${{ inputs.dry_run == false }}
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 350
     # v0.8.5 creates the relay protocol, shared TLS, and ZeroRelay crate names.
     # Creation is throttled much harder than updates, so keep enough room for
