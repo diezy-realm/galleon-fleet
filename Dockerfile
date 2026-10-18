@@ -29,6 +29,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && apt-get install -y \
         g++ \
         pkg-config \
+        protobuf-compiler \
     && ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
     && rm -rf /var/lib/apt/lists/*
@@ -64,6 +65,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && apt-get install -y \
         pkg-config \
         g++ \
+        protobuf-compiler \
     && if [ "$TARGETARCH" = "arm64" ]; then \
         dpkg --add-architecture arm64 && apt-get update && apt-get install -y \
             gcc-aarch64-linux-gnu \
@@ -156,6 +158,8 @@ RUN rm -rf src benches crates xtask tools/fill-translations
 # 2. Copy only build-relevant source paths (avoid cache-busting on docs/tests/scripts)
 COPY src/ src/
 COPY benches/ benches/
+# clawcrew-gateway's build.rs compiles the shared gRPC contract with protoc.
+COPY proto/ proto/
 COPY crates/ crates/
 COPY xtask/ xtask/
 COPY tools/fill-translations/ tools/fill-translations/
