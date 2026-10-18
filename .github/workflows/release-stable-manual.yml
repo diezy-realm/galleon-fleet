@@ -31,7 +31,7 @@ env:
 jobs:
   validate:
     name: Validate Version
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     outputs:
       tag: ${{ steps.check.outputs.tag }}
       version: ${{ steps.check.outputs.version }}
@@ -81,7 +81,7 @@ jobs:
 
   web:
     name: Build Web Dashboard
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -112,7 +112,7 @@ jobs:
 
   release-notes:
     name: Generate Release Notes
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     outputs:
       notes: ${{ steps.notes.outputs.body }}
     steps:
@@ -212,56 +212,56 @@ jobs:
         include:
           # Use ubuntu-22.04 for Linux builds to link against glibc 2.35,
           # ensuring compatibility with Ubuntu 22.04+ (#3573).
-          - os: ubuntu-22.04
+          - os: blacksmith-4vcpu-ubuntu-2204
             target: x86_64-unknown-linux-gnu
             artifact: clawcrew
             ext: tar.gz
-          - os: ubuntu-22.04
+          - os: blacksmith-4vcpu-ubuntu-2204
             target: x86_64-unknown-linux-musl
             artifact: clawcrew
             ext: tar.gz
             use_cross: true
-          - os: ubuntu-22.04
+          - os: blacksmith-4vcpu-ubuntu-2204
             target: aarch64-unknown-linux-gnu
             artifact: clawcrew
             ext: tar.gz
             cross_compiler: gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
             linker_env: CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER
             linker: aarch64-linux-gnu-gcc
-          - os: ubuntu-22.04
+          - os: blacksmith-4vcpu-ubuntu-2204
             target: aarch64-unknown-linux-musl
             artifact: clawcrew
             ext: tar.gz
             use_cross: true
-          - os: ubuntu-22.04
+          - os: blacksmith-4vcpu-ubuntu-2204
             target: armv7-unknown-linux-gnueabihf
             artifact: clawcrew
             ext: tar.gz
             cross_compiler: gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
             linker_env: CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER
             linker: arm-linux-gnueabihf-gcc
-          - os: ubuntu-22.04
+          - os: blacksmith-4vcpu-ubuntu-2204
             target: arm-unknown-linux-gnueabihf
             artifact: clawcrew
             ext: tar.gz
             cross_compiler: gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
             linker_env: CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER
             linker: arm-linux-gnueabihf-gcc
-          - os: macos-14
+          - os: blacksmith-6vcpu-macos-15
             target: aarch64-apple-darwin
             artifact: clawcrew
             ext: tar.gz
-          - os: macos-15-intel
+          - os: blacksmith-6vcpu-macos-15
             target: x86_64-apple-darwin
             artifact: clawcrew
             ext: tar.gz
-          - os: ubuntu-latest
+          - os: blacksmith-4vcpu-ubuntu-2404
             target: aarch64-linux-android
             artifact: clawcrew
             ext: tar.gz
             ndk: true
             experimental: true
-          - os: windows-latest
+          - os: blacksmith-4vcpu-windows-2025
             target: x86_64-pc-windows-msvc
             artifact: clawcrew.exe
             ext: zip
@@ -392,7 +392,7 @@ jobs:
   build-desktop:
     name: Build Desktop App (macOS Universal)
     needs: [validate, web]
-    runs-on: macos-14
+    runs-on: blacksmith-6vcpu-macos-15
     # Two kernel release builds (arm64 + x86_64) feed the universal sidecar,
     # then the universal app build on top.
     timeout-minutes: 180
@@ -592,7 +592,7 @@ jobs:
   build-desktop-linux:
     name: Build Desktop App (Linux x86_64)
     needs: [validate]
-    runs-on: ubuntu-22.04
+    runs-on: blacksmith-4vcpu-ubuntu-2204
     timeout-minutes: 120
     continue-on-error: true
     steps:
@@ -651,7 +651,7 @@ jobs:
   build-desktop-windows:
     name: Build Desktop App (Windows x86_64)
     needs: [validate]
-    runs-on: windows-latest
+    runs-on: blacksmith-4vcpu-windows-2025
     timeout-minutes: 150
     continue-on-error: true
     steps:
@@ -721,7 +721,7 @@ jobs:
   sbom:
     name: Generate Release SBOMs
     needs: [validate]
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
     steps:
@@ -756,7 +756,7 @@ jobs:
     # The Linux/Windows desktop jobs are continue-on-error: listing them in
     # needs only sequences the download; their failure cannot block publish.
     needs: [validate, release-notes, build, build-desktop, build-desktop-linux, build-desktop-windows, sbom]
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: write
       id-token: write
@@ -1085,7 +1085,7 @@ jobs:
   redeploy-website:
     name: Trigger Website Redeploy
     needs: [publish]
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Trigger website redeploy
         env:
@@ -1101,7 +1101,7 @@ jobs:
     name: Deploy Versioned Docs
     needs: [validate, publish]
     if: ${{ !cancelled() && needs.publish.result == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       actions: write   # workflow_dispatch of docs-deploy.yml
       contents: read
@@ -1152,7 +1152,7 @@ jobs:
   docker:
     name: Push Docker Image
     needs: [validate, build]
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 15
     permissions:
       contents: read
@@ -1177,7 +1177,8 @@ jobs:
       - name: Prepare Docker context with pre-built binaries
         run: bash scripts/ci/prepare_docker_context.sh from-artifacts docker-ctx artifacts
 
-      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+      - name: Setup Blacksmith Builder
+        uses: useblacksmith/setup-docker-builder@v1
 
       - uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
@@ -1190,7 +1191,7 @@ jobs:
 
       - name: Build and push
         id: build-push
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        uses: useblacksmith/build-push-action@v2 # v7.1.0
         with:
           context: docker-ctx
           push: true
@@ -1213,7 +1214,7 @@ jobs:
 
       - name: Build and push Debian compatibility image
         id: build-push-debian
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        uses: useblacksmith/build-push-action@v2 # v7.1.0
         with:
           context: docker-ctx
           file: docker-ctx/Dockerfile

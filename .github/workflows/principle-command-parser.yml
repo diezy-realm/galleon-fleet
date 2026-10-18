@@ -15,7 +15,7 @@ jobs:
     # Only run for PRs (not issues)
     if: github.event.issue.pull_request != null && contains(github.event.comment.body, '@') && (contains(github.event.comment.user.login, 'principle') || contains(github.event.comment.body, '@squad-backend') || contains(github.event.comment.body, '@squad-frontend'))
     
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     
     steps:
       - name: Checkout repository
