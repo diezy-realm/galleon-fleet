@@ -25,10 +25,7 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: true
     steps:
-      - uses: useblacksmith/checkout@v1
-
-      - name: Install Linux system dependencies
-        run: bash scripts/ci/apt_install.sh mold
+      - uses: actions/checkout@v4
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
