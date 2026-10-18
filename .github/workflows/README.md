@@ -56,3 +56,5 @@ registry rather than in source comments covered by the comment-hygiene gate.
 
 ### Runner & biaya
 Semua job berjalan di Blacksmith; runner GitHub-hosted tidak tersedia untuk org ini. Job macOS (`blacksmith-6vcpu-macos-15`, tarif 20x menit Linux 2-vCPU) hanya berjalan saat push ke `main`/`testing` (`build-macos`), mingguan (`platform-tests.yml`), atau manual. Audit keamanan terjadwal (`daily-audit.yml`, `daily-npm-audit.yml`, `ci-sbom.yml`) berjalan mingguan; `security` di `ci.yml` tetap menjalankan `cargo deny check` di setiap PR.
+
+`Test (Landlock)` tidak menjadi syarat `CI Required Gate`: kernel Blacksmith tidak mengaktifkan Landlock LSM, jadi job ini sengaja gagal terlihat (bukan skip diam-diam). Cakupan sandbox Landlock tidak teruji di CI sampai job ini berjalan lagi di kernel yang mendukung Landlock; saat itu kembalikan `test-landlock` ke `gate.needs`.
