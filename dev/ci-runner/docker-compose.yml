@@ -32,6 +32,7 @@ services:
       - cargo-home:/home/runner/.cargo/registry
       - rustup-home:/home/runner/.rustup
       - ci-target:/ci-target
+      - sccache:/sccache
 
   light:
     <<: *runner
@@ -55,3 +56,4 @@ volumes:
   cargo-home:
   rustup-home:
   ci-target:
+  sccache:
