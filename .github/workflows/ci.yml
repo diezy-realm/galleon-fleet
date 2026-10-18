@@ -923,9 +923,7 @@ jobs:
 
   test-landlock:
     name: Test (Landlock)
-    # Stays on GitHub-hosted runners: the Blacksmith VM kernel does not enforce
-    # Landlock, so the contract tests cannot observe denials there.
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 15
     steps:
       - uses: useblacksmith/checkout@v1 # v6.0.2

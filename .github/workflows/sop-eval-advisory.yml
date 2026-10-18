@@ -27,9 +27,6 @@ jobs:
     steps:
       - uses: useblacksmith/checkout@v1
 
-      - name: Install Linux system dependencies
-        run: bash scripts/ci/apt_install.sh mold
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
