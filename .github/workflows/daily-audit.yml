@@ -1,8 +1,11 @@
-name: Daily Advisory Scan
+name: Weekly Advisory Scan
 
+# The Quality Gate `security` job already runs `cargo deny check` (advisories
+# included) on every PR and push to main/testing. This scheduled scan only
+# catches advisories published between pushes, so weekly is enough.
 on:
   schedule:
-    - cron: "0 9 * * *"
+    - cron: "0 9 * * 1"
   workflow_dispatch:
 
 concurrency:
@@ -26,10 +29,14 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
 
+      # Same prebuilt release the Quality Gate uses; compiling it from source
+      # costs several runner minutes per run.
       - name: Install cargo-deny
-        run: cargo install cargo-deny --locked
+        run: |
+          curl -LsSf https://github.com/EmbarkStudios/cargo-deny/releases/download/0.19.9/cargo-deny-0.19.9-x86_64-unknown-linux-musl.tar.gz \
+            | tar zxf - -C ~/.cargo/bin --strip-components=1
 
       - name: Run advisory scan
         id: scan
@@ -76,17 +83,13 @@ jobs:
             printf '```\n%s\n```\n\n' "${advisory_output}"
             printf 'Review `deny.toml` for the current ignore list. If this advisory is a known\n'
             printf 'acceptable risk, add an entry with a `reason` field. If it requires a\n'
-            printf 'dependency update, open a tracking issue and link it here.\n\n'
-            if [[ "$GITHUB_REPOSITORY" == "diezy-realm/galleon-fleet" ]]; then
-              printf 'cc @JordanTheJet @Audacity88\n'
-            fi
+            printf 'dependency update, open a tracking issue and link it here.\n'
           } > /tmp/issue-body.md
 
           issue_url=$(gh issue create \
             --repo "$GITHUB_REPOSITORY" \
             --title "ci: Advisory scan failed — $(date -u +%Y-%m-%d)" \
             --label "security" \
-            --label "risk:high" \
             --body-file /tmp/issue-body.md)
           echo "issue_url=$issue_url" >> "$GITHUB_OUTPUT"
 

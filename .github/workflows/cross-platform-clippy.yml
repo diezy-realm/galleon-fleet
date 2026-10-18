@@ -1,8 +1,10 @@
 name: Cross-Platform Clippy
 
 on:
-  # Manual plus scheduled only: keep platform-gated lint regressions visible
-  # without adding macOS/Windows latency to the required PR gate.
+  # Manual plus scheduled only: keep Windows-gated lint regressions visible
+  # without adding Windows latency to the required PR gate. macOS is not
+  # linted here: `build-macos` in ci.yml checks it on every push to
+  # main/testing, and a macOS minute bills at 20x a 2-vCPU Linux minute.
   workflow_dispatch:
   schedule:
     - cron: "17 10 * * 1"
@@ -27,22 +29,24 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: blacksmith-6vcpu-macos-15
-            target: aarch64-apple-darwin
           - os: blacksmith-2vcpu-windows-2025
             target: x86_64-pc-windows-msvc
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5902ceb48146f7 # stable
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
           components: clippy
           targets: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         id: rust-cache
         with:
           cache-on-failure: true
-          save-if: ${{ github.ref == 'refs/heads/master' }}
+          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing' }}
+      - name: Install protoc
+        uses: arduino/setup-protoc@f4d5893b897028ff5739576ea0409746887fa536 # v3.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Ensure web/dist placeholder exists
         shell: bash
         run: mkdir -p web/dist && touch web/dist/.gitkeep

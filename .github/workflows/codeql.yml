@@ -5,31 +5,15 @@ name: CodeQL
 #                           CodeQL extracts interpreted languages directly)
 #   rust                  — workspace crates (manual cargo build)
 # Uses the shared .github/codeql/codeql-config.yml (paths-ignore tests/).
-# Semgrep's fast per-PR pattern scan lives in the sibling ci-code-analysis.yml.
 #
-# We deliberately do NOT trigger CodeQL on PRs. A 10-30 minute analysis that
-# sometimes times out on Rust is a productivity tax, not a security guarantee.
-# Semgrep covers the fast path on every PR; CodeQL catches what Semgrep
-# misses, after merge. Keeping this job out of PR-triggered workflows also
-# keeps it from rendering as a permanently skipped check on every PR.
-#
-# Triggers:
-#   push to master     — immediate feedback on merged code
-#   schedule           — daily catch for new queries (query packs update
-#                        independently of the codebase)
-#   workflow_dispatch  — manual re-run after a config change, or an
-#                        on-demand scan of a branch before merge
+# Manual dispatch only. Uploading results needs GitHub code scanning, which
+# this private repository does not have enabled, so scheduled or push runs
+# could only fail. Dispatch it after enabling GitHub Advanced Security, or
+# re-add a weekly schedule at that point.
 
 on:
-  push:
-    branches: [master]
-  schedule:
-    - cron: '37 5 * * *'   # daily at 05:37 UTC — random offset to spread load
   workflow_dispatch:
 
-# A scan of a superseded commit has no value: a newer push cancels any
-# in-flight run so the latest master analysis is never queued behind a
-# stale or scheduled one (same policy the Rust job had in its old home).
 concurrency:
   group: codeql-${{ github.ref }}
   cancel-in-progress: true
@@ -43,9 +27,8 @@ jobs:
     name: Analyze (${{ matrix.language }})
     # Results upload to this repo's Security tab; skip on forks.
     if: github.repository == 'diezy-realm/galleon-fleet'
-    # Keep the fast interpreted-language scan on GitHub; give only Rust the
-    # existing closed Blacksmith toggle used by compile-heavy CI jobs.
-    runs-on: ${{ matrix.language == 'rust' && vars.CI_USE_BLACKSMITH == 'true' && 'blacksmith-8vcpu-ubuntu-2404' || 'ubuntu-latest' }}
+    # The interpreted-language scan needs no build; only Rust compiles.
+    runs-on: ${{ matrix.language == 'rust' && 'blacksmith-8vcpu-ubuntu-2404' || 'blacksmith-2vcpu-ubuntu-2404' }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -59,11 +42,11 @@ jobs:
         if: matrix.language == 'rust'
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: 1.98.0
+          toolchain: 1.96.0
 
       - name: Install system dependencies
         if: matrix.language == 'rust'
-        run: sudo apt-get update -qq && sudo apt-get install -y libudev-dev
+        run: bash scripts/ci/apt_install.sh libudev-dev protobuf-compiler
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
