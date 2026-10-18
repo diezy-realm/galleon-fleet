@@ -986,9 +986,12 @@ jobs:
     needs: [path-changes]
     if: needs.path-changes.outputs.rust == 'true'
     # GitHub-hosted runners are unavailable to this org, so this runs on the
-    # Blacksmith fleet. The first step fails loudly if the runner kernel does
-    # not enable the Landlock LSM, so the security coverage can never pass by
-    # silently skipping.
+    # Blacksmith fleet, whose kernel does not enable the Landlock LSM. The
+    # first step fails loudly in that case, so the security coverage never
+    # passes by silently skipping. Because that failure says nothing about the
+    # change under review, `gate` does not wait on this job: it stays a
+    # visible red check until it runs on a Landlock-enabled kernel again, at
+    # which point add it back to `gate.needs`.
     runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 15
     steps:
@@ -1326,7 +1329,7 @@ jobs:
   gate:
     name: CI Required Gate
     if: always()
-    needs: [fmt, history-guard, repo-structure, relay-container-smoke-changes, relay-container-smoke, path-changes, lint, windows-clippy-tools-changes, windows-clippy-tools, build, build-macos, check, check-plugin-backends, msrv, check-32bit, bench, test, test-channel-features, memory-postgres-test, parallel-runtime-test-changes, parallel-runtime-test, test-landlock, security, nix-eval, nix-hash-drift, docs-style, installer-drift, zerocode-rpc-boundary, web-permission-tests]
+    needs: [fmt, history-guard, repo-structure, relay-container-smoke-changes, relay-container-smoke, path-changes, lint, windows-clippy-tools-changes, windows-clippy-tools, build, build-macos, check, check-plugin-backends, msrv, check-32bit, bench, test, test-channel-features, memory-postgres-test, parallel-runtime-test-changes, parallel-runtime-test, security, nix-eval, nix-hash-drift, docs-style, installer-drift, zerocode-rpc-boundary, web-permission-tests]
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 5
     steps:
