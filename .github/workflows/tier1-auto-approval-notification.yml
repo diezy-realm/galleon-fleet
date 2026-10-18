@@ -15,46 +15,40 @@ jobs:
   notify-tier1-approval:
     # Only run for PRs dengan auto-approval comment
     if: github.event.issue.pull_request != null && (contains(github.event.comment.body, '✅ Approved (auto)') || contains(github.event.comment.body, 'auto-approved') || contains(github.event.comment.body, 'auto-approve'))
-    
+
     runs-on: blacksmith-2vcpu-ubuntu-2404
-    
+    timeout-minutes: 5
+
+    # PR title and comment text are untrusted input: they reach the shell only
+    # through environment variables, and the payload is built by jq.
     steps:
-      - name: Extract PR info
-        id: extract
-        run: |
-          echo "pr_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
-          echo "pr_title=${{ github.event.issue.title }}" >> $GITHUB_OUTPUT
-          echo "pr_url=${{ github.event.issue.html_url }}" >> $GITHUB_OUTPUT
-          
-          # Try to extract severity if mentioned in comment
-          COMMENT="${{ github.event.comment.body }}"
-          if [[ "$COMMENT" =~ severity[:=\ ]*([a-z]+) ]]; then
-            echo "severity=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
-          else
-            echo "severity=normal" >> $GITHUB_OUTPUT
-          fi
-      
       - name: Discord notification — Tier 1 auto-approved
-        run: |
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -d '{
-              "content": "✅ **Tier 1 — Routine Auto-Approved & Merged**",
-              "embeds": [{
-                "title": "PR #${{ steps.extract.outputs.pr_number }} → testing branch",
-                "url": "${{ steps.extract.outputs.pr_url }}",
-                "color": 3066993,
-                "fields": [
-                  {"name": "Title", "value": "${{ steps.extract.outputs.pr_title }}", "inline": false},
-                  {"name": "Status", "value": "✅ Auto-approved (Principle gate pass)", "inline": true},
-                  {"name": "Severity", "value": "${{ steps.extract.outputs.severity }}", "inline": true},
-                  {"name": "Next", "value": "QA testing → auto-merge to testing (if tests pass)", "inline": false},
-                  {"name": "Timeline", "value": "No human review needed", "inline": false}
-                ],
-                "footer": {"text": "galleon-fleet Phase 3 Automation — Tier 1 routine"}
-              }]
-            }' \
-            "${{ secrets.DISCORD_WEBHOOK_URL }}"
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          COMMENT: ${{ github.event.comment.body }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_TITLE: ${{ github.event.issue.title }}
+          PR_URL: ${{ github.event.issue.html_url }}
         continue-on-error: true
+        run: |
+          # Try to extract severity if mentioned in comment
+          severity=normal
+          if [[ "$COMMENT" =~ severity[:=\ ]*([a-z]+) ]]; then
+            severity="${BASH_REMATCH[1]}"
+          fi
+          jq -n --arg pr "$PR_NUMBER" --arg url "$PR_URL" --arg title "$PR_TITLE" --arg severity "$severity" '{
+            content: "✅ **Tier 1 — Routine Auto-Approved & Merged**",
+            embeds: [{
+              title: "PR #\($pr) → testing branch",
+              url: $url,
+              color: 3066993,
+              fields: [
+                {name: "Title", value: $title, inline: false},
+                {name: "Status", value: "✅ Auto-approved (Principle gate pass)", inline: true},
+                {name: "Severity", value: $severity, inline: true},
+                {name: "Next", value: "QA testing → auto-merge to testing (if tests pass)", inline: false},
+                {name: "Timeline", value: "No human review needed", inline: false}
+              ],
+              footer: {text: "galleon-fleet Phase 3 Automation — Tier 1 routine"}
+            }]
+          }' | curl -X POST -H "Content-Type: application/json" --data-binary @- "$DISCORD_WEBHOOK_URL"
