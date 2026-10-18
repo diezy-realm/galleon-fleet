@@ -1,6 +1,6 @@
 //! Architecture gate for Quality Gate runner selection.
 //!
-//! CI runs on the self-hosted runners declared in `dev/ci-runner/`. Compile
+//! CI runs on the self-hosted runners declared in `~/Apps/dev-ci` (outside this repo). Compile
 //! jobs go to `galleon-heavy`; guards and governance go to `galleon-light` so a
 //! long build never starves auto-merge. This gate keeps the job inventory and
 //! the labels honest, and keeps third-party paid runners out of the workflows.

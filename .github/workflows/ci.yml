@@ -1,6 +1,6 @@
 name: Quality Gate
 
-# Runs on the self-hosted runners in dev/ci-runner (docker compose). Two labels:
+# Runs on the self-hosted runners in ~/Apps/dev-ci (docker compose, outside this repo). Two labels:
 #   galleon-heavy  compile/test jobs; shares one persistent CARGO_TARGET_DIR (capped at 60G)
 #   galleon-light  guards and governance, so a long build never blocks auto-merge
 # Toolchain comes from rust-toolchain.toml. Windows/macOS/Nix/Docker/MSRV/32-bit/bench
