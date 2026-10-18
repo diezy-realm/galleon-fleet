@@ -19,7 +19,7 @@ concurrency:
 jobs:
   web-check:
     name: galleon-web (Lint, Typecheck, Build)
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4

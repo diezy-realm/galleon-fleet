@@ -38,7 +38,7 @@ env:
 jobs:
   matrix:
     name: Resolve tag matrix
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     outputs:
       include: ${{ steps.read.outputs.include }}
     steps:
@@ -57,7 +57,7 @@ jobs:
     name: Build & push ${{ matrix.stem }}
     if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [matrix]
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 60
     permissions:
       contents: read
@@ -82,12 +82,12 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
 
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+      - name: Setup Blacksmith Builder
+        uses: useblacksmith/setup-docker-builder@v1
 
       - name: Build and push pinned + floating tags
         id: build-push
-        uses: docker/build-push-action@1dc73863535b631f98b2378be8619f83b136f4a0 # v6.18.0
+        uses: useblacksmith/build-push-action@v2 # v6.18.0
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -121,7 +121,7 @@ jobs:
   publish-relay:
     name: Build & push zerorelay
     if: github.repository == 'diezy-realm/galleon-fleet'
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 60
     permissions:
       contents: read
@@ -141,8 +141,8 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
 
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+      - name: Setup Blacksmith Builder
+        uses: useblacksmith/setup-docker-builder@v1
 
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login "${{ env.REGISTRY }}" -u "${{ github.actor }}" --password-stdin
@@ -169,7 +169,7 @@ jobs:
 
       - name: Build and push the relay image
         id: build-push
-        uses: docker/build-push-action@1dc73863535b631f98b2378be8619f83b136f4a0 # v6.18.0
+        uses: useblacksmith/build-push-action@v2 # v6.18.0
         with:
           context: .
           file: apps/zerorelay/Dockerfile
@@ -189,7 +189,7 @@ jobs:
     name: Scan ${{ matrix.stem }}
     if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [matrix, publish]
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     permissions:
       contents: read
@@ -229,7 +229,7 @@ jobs:
     name: Scan zerorelay
     if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [publish-relay]
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     permissions:
       contents: read
@@ -261,7 +261,7 @@ jobs:
     name: Upload SARIF ${{ matrix.stem }}
     if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [matrix, scan]
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 10
     permissions:
       contents: read
@@ -285,7 +285,7 @@ jobs:
     name: Upload SARIF zerorelay
     if: github.repository == 'diezy-realm/galleon-fleet'
     needs: [scan-relay]
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 10
     permissions:
       contents: read
