@@ -74,10 +74,12 @@ pub struct AppState {
     pub sop_runner: Option<Arc<dyn clawcrew_api::sop::SopRunner>>,
     pub diagnostics: Option<Arc<dyn clawcrew_api::doctor::DiagnosticsRunner>>,
     pub quickstart: Option<Arc<dyn clawcrew_config::quickstart::QuickstartRunner>>,
-    pub integration_catalog: Option<Arc<dyn clawcrew_config::integrations::IntegrationCatalogProvider>>,
+    pub integration_catalog:
+        Option<Arc<dyn clawcrew_config::integrations::IntegrationCatalogProvider>>,
     pub personality_runner: Option<Arc<dyn clawcrew_api::personality::PersonalityRunner>>,
     pub skills_runner: Option<Arc<dyn clawcrew_api::skill::SkillsRunner>>,
     pub acp_runner: Option<Arc<dyn clawcrew_api::runtime_traits::AcpSessionRunner>>,
+    pub control_plane: Option<clawcrew_api::control_plane::ControlPlaneHandle>,
 }
 
 /// Daemon-owned services whose lifecycle matches one supervised gateway run.

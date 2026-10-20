@@ -157,50 +157,24 @@ impl Default for StepStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LedgerEntry {
-    /// Task ID this ledger belongs to.
-    pub task_id: String,
-    /// Step ID this action relates to.
-    pub step_id: String,
-    /// Timestamp of the ledger event in RFC3339.
-    pub timestamp: String,
-    /// Type of action performed.
-    pub action: LedgerAction,
-    /// Result, output, or error detail.
-    pub details: String,
-    /// Correlation ID linking this evidence to its originating request/turn
-    /// (P1.3). Optional and defaulted so pre-existing ledger rows still parse.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub correlation_id: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum LedgerAction {
-    Started,
-    ExecutionFailed,
-    ValidationPassed,
-    ValidationFailed,
-    Retried,
-    Paused,
-    Resumed,
-    Completed,
-    ArtifactAdded,
-    EphemeralDiffYielded,
-    /// An approval gate was granted (P1.3 evidence).
-    ApprovalGranted,
-    /// A review-gated step is waiting on operator approval before execution.
-    AwaitingApproval,
-}
+pub use clawcrew_api::control_plane::{LedgerAction, LedgerEntry};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StepExecutionResult {
-    Completed { step_id: String, output: String },
-    Failed { step_id: String, error: String },
+    Completed {
+        step_id: String,
+        output: String,
+    },
+    Failed {
+        step_id: String,
+        error: String,
+    },
     /// A risky step (review-gated) is waiting on operator approval; it did not
     /// execute and the task stays non-terminal so it can resume (P1.3).
-    Paused { step_id: String, reason: String },
+    Paused {
+        step_id: String,
+        reason: String,
+    },
 }
 
 /// Terminal result of a full [`TaskRunner::run`] pass over every step.
@@ -452,7 +426,9 @@ impl TaskRunner {
             }
             _ => super::task_registry::TaskStatus::NeedsReview,
         };
-        store.update_status(&self.task.id, status, None, None).await?;
+        store
+            .update_status(&self.task.id, status, None, None)
+            .await?;
         Ok(decision)
     }
 
@@ -1236,7 +1212,9 @@ mod tests {
         spec.correlation_id = Some("corr-123".into());
         let mut runner = TaskRunner::new(task, spec);
 
-        runner.grant_approval(&store, "approval-1", "operator").unwrap();
+        runner
+            .grant_approval(&store, "approval-1", "operator")
+            .unwrap();
 
         let persisted = store.get_task_runner_spec("task-1").unwrap().unwrap();
         assert_eq!(persisted.approval_gates[0].granted_approvals, 1);
@@ -1247,9 +1225,17 @@ mod tests {
         assert_eq!(ledger[0].correlation_id.as_deref(), Some("corr-123"));
 
         // A gate cannot be granted past its required approval count.
-        assert!(runner.grant_approval(&store, "approval-1", "operator").is_err());
+        assert!(
+            runner
+                .grant_approval(&store, "approval-1", "operator")
+                .is_err()
+        );
         // Unknown gate is refused.
-        assert!(runner.grant_approval(&store, "missing", "operator").is_err());
+        assert!(
+            runner
+                .grant_approval(&store, "missing", "operator")
+                .is_err()
+        );
     }
 
     // ── P1.6 — boundary tests ──
@@ -1304,7 +1290,9 @@ mod tests {
         assert_eq!(attempts.get(), 2, "step must be re-executed after failure");
         let ledger = store.get_ledger_entries("task-1").unwrap();
         assert!(
-            ledger.iter().any(|e| matches!(e.action, LedgerAction::Retried)),
+            ledger
+                .iter()
+                .any(|e| matches!(e.action, LedgerAction::Retried)),
             "retry must be recorded in the ledger"
         );
     }
@@ -1387,7 +1375,9 @@ mod tests {
         );
 
         // Grant approval, resume, and re-run to completion.
-        runner.grant_approval(&store, "approval-1", "operator").unwrap();
+        runner
+            .grant_approval(&store, "approval-1", "operator")
+            .unwrap();
         runner.resume(&store).unwrap();
         let outcome = runner
             .run(&store, |_| Ok("ran".into()), |_, _| Ok(()))
@@ -1445,9 +1435,7 @@ mod tests {
         let fail = if cfg!(windows) { "exit 1" } else { "false" };
 
         let mut ok_spec = multi_step_spec(1);
-        ok_spec.steps[0].validation_gates = vec![ValidationGate::Build {
-            command: ok.into(),
-        }];
+        ok_spec.steps[0].validation_gates = vec![ValidationGate::Build { command: ok.into() }];
         assert!(
             TaskRunner::new(task.clone(), ok_spec)
                 .evaluate_validation_gates(0, None)

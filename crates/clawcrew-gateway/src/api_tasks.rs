@@ -9,10 +9,18 @@ use axum::{
         sse::{Event, KeepAlive, Sse},
     },
 };
+use clawcrew_api::control_plane::{ControlPlaneHandle, TaskRecord, TaskStatus};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::{convert::Infallible, time::Duration};
+
+fn resolve_control_plane(state: &AppState) -> Option<ControlPlaneHandle> {
+    state
+        .control_plane
+        .clone()
+        .or_else(|| clawcrew_api::control_plane::control_plane().cloned())
+}
 
 const MAX_PAGE_SIZE: u32 = 100;
 const MAX_EVENT_PAYLOAD_BYTES: usize = 16 * 1024;
@@ -68,7 +76,7 @@ struct TaskBoardResponse {
 #[derive(Debug, Serialize)]
 struct TaskDetail {
     #[serde(flatten)]
-    task: clawcrew_runtime::control_plane::TaskRecord,
+    task: TaskRecord,
     output: Option<String>,
     error: Option<String>,
 }
@@ -93,7 +101,7 @@ fn internal(error: impl std::fmt::Display) -> Response {
         .into_response()
 }
 
-fn summary(task: clawcrew_runtime::control_plane::TaskRecord) -> TaskSummary {
+fn summary(task: TaskRecord) -> TaskSummary {
     let status = serde_json::to_value(task.status).unwrap_or(Value::String("unknown".into()));
     let status = status.as_str().unwrap_or("unknown").to_string();
     let progress = (status == "completed") as u8 as f32;
@@ -121,8 +129,7 @@ fn task_duration_ms(started: &str, finished: Option<&str>) -> Option<i64> {
 }
 
 /// Aggregate durable task outcomes and average duration per owning agent.
-fn aggregate_agent_stats(tasks: &[clawcrew_runtime::control_plane::TaskRecord]) -> Vec<AgentStat> {
-    use clawcrew_runtime::control_plane::TaskStatus;
+fn aggregate_agent_stats(tasks: &[TaskRecord]) -> Vec<AgentStat> {
     let mut map: std::collections::BTreeMap<String, (usize, usize, usize, usize, i64, usize)> =
         std::collections::BTreeMap::new();
     for task in tasks {
@@ -163,7 +170,7 @@ pub async fn handle_tasks(
     if let Err(response) = require_auth(&state, &headers) {
         return response.into_response();
     }
-    let Some(control_plane) = clawcrew_runtime::control_plane::control_plane() else {
+    let Some(control_plane) = resolve_control_plane(&state) else {
         return unavailable();
     };
     let (limit, offset) = query.bounds();
@@ -182,22 +189,14 @@ pub async fn handle_tasks(
     for task in page {
         response.total += 1;
         match task.status {
-            clawcrew_runtime::control_plane::TaskStatus::Queued
-            | clawcrew_runtime::control_plane::TaskStatus::Waiting
-            | clawcrew_runtime::control_plane::TaskStatus::Validating
-            | clawcrew_runtime::control_plane::TaskStatus::Retrying
-            | clawcrew_runtime::control_plane::TaskStatus::Running => {
-                response.active_tasks.push(summary(task))
-            }
-            clawcrew_runtime::control_plane::TaskStatus::Paused => {
-                response.paused_tasks.push(summary(task))
-            }
-            clawcrew_runtime::control_plane::TaskStatus::Completed => {
-                response.completed_tasks.push(summary(task))
-            }
-            clawcrew_runtime::control_plane::TaskStatus::NeedsReview => {
-                response.paused_tasks.push(summary(task))
-            }
+            TaskStatus::Queued
+            | TaskStatus::Waiting
+            | TaskStatus::Validating
+            | TaskStatus::Retrying
+            | TaskStatus::Running => response.active_tasks.push(summary(task)),
+            TaskStatus::Paused => response.paused_tasks.push(summary(task)),
+            TaskStatus::Completed => response.completed_tasks.push(summary(task)),
+            TaskStatus::NeedsReview => response.paused_tasks.push(summary(task)),
             _ => response.failed_tasks.push(summary(task)),
         }
     }
@@ -212,7 +211,7 @@ pub async fn handle_task(
     if let Err(response) = require_auth(&state, &headers) {
         return response.into_response();
     }
-    let Some(control_plane) = clawcrew_runtime::control_plane::control_plane() else {
+    let Some(control_plane) = resolve_control_plane(&state) else {
         return unavailable();
     };
     match control_plane.store.get_snapshot(&task_id).await {
@@ -235,7 +234,7 @@ pub async fn handle_task_children(
     if let Err(response) = require_auth(&state, &headers) {
         return response.into_response();
     }
-    let Some(control_plane) = clawcrew_runtime::control_plane::control_plane() else {
+    let Some(control_plane) = resolve_control_plane(&state) else {
         return unavailable();
     };
     match control_plane.store.get_child_tasks(&task_id).await {
@@ -254,7 +253,7 @@ pub async fn handle_task_tree(
     if let Err(response) = require_auth(&state, &headers) {
         return response.into_response();
     }
-    let Some(control_plane) = clawcrew_runtime::control_plane::control_plane() else {
+    let Some(control_plane) = resolve_control_plane(&state) else {
         return unavailable();
     };
     match control_plane.store.list_descendants(&task_id).await {
@@ -273,7 +272,7 @@ pub async fn handle_task_timeline(
     if let Err(response) = require_auth(&state, &headers) {
         return response.into_response();
     }
-    let Some(control_plane) = clawcrew_runtime::control_plane::control_plane() else {
+    let Some(control_plane) = resolve_control_plane(&state) else {
         return unavailable();
     };
     match control_plane.store.list_task_ledger(&task_id).await {
@@ -292,7 +291,7 @@ pub async fn handle_task_cancel(
     if let Err(response) = require_auth(&state, &headers) {
         return response.into_response();
     }
-    let Some(control_plane) = clawcrew_runtime::control_plane::control_plane() else {
+    let Some(control_plane) = resolve_control_plane(&state) else {
         return unavailable();
     };
     let requested = match control_plane.store.request_cancellation(&task_id).await {
@@ -315,7 +314,7 @@ pub async fn handle_task_reopen(
     if let Err(response) = require_auth(&state, &headers) {
         return response.into_response();
     }
-    let Some(control_plane) = clawcrew_runtime::control_plane::control_plane() else {
+    let Some(control_plane) = resolve_control_plane(&state) else {
         return unavailable();
     };
     match control_plane.store.reopen_for_operator(&task_id).await {
@@ -325,14 +324,11 @@ pub async fn handle_task_reopen(
 }
 
 /// GET /api/dashboard/tasks/stats — per-agent task outcome + duration rollup.
-pub async fn handle_task_stats(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-) -> Response {
+pub async fn handle_task_stats(State(state): State<AppState>, headers: HeaderMap) -> Response {
     if let Err(response) = require_auth(&state, &headers) {
         return response.into_response();
     }
-    let Some(control_plane) = clawcrew_runtime::control_plane::control_plane() else {
+    let Some(control_plane) = resolve_control_plane(&state) else {
         return unavailable();
     };
     match control_plane.store.list_all().await {
@@ -352,7 +348,7 @@ pub async fn handle_task_events(
     if let Err(response) = require_auth(&state, &headers) {
         return response.into_response();
     }
-    let Some(control_plane) = clawcrew_runtime::control_plane::control_plane() else {
+    let Some(control_plane) = resolve_control_plane(&state) else {
         return unavailable();
     };
     let (limit, offset) = query.bounds();
@@ -389,7 +385,7 @@ pub async fn handle_task_events_stream(
     if let Err(response) = require_auth(&state, &headers) {
         return response.into_response();
     }
-    let Some(control_plane) = clawcrew_runtime::control_plane::control_plane() else {
+    let Some(control_plane) = resolve_control_plane(&state) else {
         return unavailable();
     };
     let store = std::sync::Arc::clone(&control_plane.store);
@@ -503,8 +499,8 @@ fn redact_value(value: Value) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_runtime::control_plane::task_registry::CancellationState;
-    use clawcrew_runtime::control_plane::{TaskKind, TaskRecord, TaskStatus};
+    use clawcrew_api::control_plane::task_registry::CancellationState;
+    use clawcrew_api::control_plane::{TaskKind, TaskRecord, TaskStatus};
 
     fn rec(id: &str, agent: &str, status: TaskStatus, finished: Option<&str>) -> TaskRecord {
         TaskRecord {
@@ -534,10 +530,25 @@ mod tests {
     #[test]
     fn aggregate_counts_outcomes_and_averages_duration_per_agent() {
         let tasks = vec![
-            rec("a", "main", TaskStatus::Completed, Some("2026-01-01T00:00:02Z")),
-            rec("b", "main", TaskStatus::Failed, Some("2026-01-01T00:00:04Z")),
+            rec(
+                "a",
+                "main",
+                TaskStatus::Completed,
+                Some("2026-01-01T00:00:02Z"),
+            ),
+            rec(
+                "b",
+                "main",
+                TaskStatus::Failed,
+                Some("2026-01-01T00:00:04Z"),
+            ),
             rec("c", "main", TaskStatus::Running, None),
-            rec("d", "other", TaskStatus::Completed, Some("2026-01-01T00:00:01Z")),
+            rec(
+                "d",
+                "other",
+                TaskStatus::Completed,
+                Some("2026-01-01T00:00:01Z"),
+            ),
         ];
         let stats = aggregate_agent_stats(&tasks);
 
