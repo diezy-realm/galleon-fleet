@@ -501,7 +501,7 @@ async fn handle_socket(
     }
 
     let mut agent =
-        match clawcrew_runtime::agent::Agent::from_pinned_live_config_with_session_cwd_and_mcp_backchannel(
+        match clawcrew_runtime::Agent::from_pinned_live_config_with_session_cwd_and_mcp_backchannel(
             Arc::clone(&state.config),
             &agent_alias,
             Some(&session_cwd),
@@ -1032,7 +1032,7 @@ fn replace_conversation_state_unless_deleted(
 fn persist_agent_conversation_state(
     backend: &dyn clawcrew_infra::session_backend::SessionBackend,
     session_key: &str,
-    agent: &clawcrew_runtime::agent::Agent,
+    agent: &clawcrew_runtime::Agent,
 ) -> bool {
     let durable = clawcrew_providers::durable_chat_messages(agent.history());
     replace_conversation_state_unless_deleted(
@@ -1404,7 +1404,7 @@ fn build_done_frame_json(
 #[allow(clippy::too_many_arguments)]
 async fn process_chat_message(
     state: &AppState,
-    agent: &mut clawcrew_runtime::agent::Agent,
+    agent: &mut clawcrew_runtime::Agent,
     sender: &mut futures_util::stream::SplitSink<WebSocket, Message>,
     receiver: &mut futures_util::stream::SplitStream<WebSocket>,
     approval_event_rx: &mut tokio::sync::mpsc::Receiver<clawcrew_api::agent::TurnEvent>,
@@ -1419,14 +1419,14 @@ async fn process_chat_message(
     auth_subject: Option<&str>,
 ) {
     use futures_util::StreamExt as _;
-    use clawcrew_runtime::agent::TurnEvent;
+    use clawcrew_api::agent::TurnEvent;
 
     let (turn_alias, turn_provider, turn_model) = agent.attribution_fields();
     let provider_label = turn_provider.clone();
     let cost_tracking_context = state.cost_tracker.as_ref().map(|tracker| {
         let config = state.config.read();
-        let pricing = clawcrew_runtime::agent::cost::build_model_provider_pricing(&config);
-        clawcrew_runtime::agent::cost::ToolLoopCostTrackingContext::new(
+        let pricing = clawcrew_config::cost::build_model_provider_pricing(&config);
+        clawcrew_config::cost::ToolLoopCostTrackingContext::new(
             tracker.clone(),
             Arc::new(pricing),
         )
@@ -1434,7 +1434,7 @@ async fn process_chat_message(
     });
     let turn_usage = state.cost_tracker.as_ref().map(|_| {
         Arc::new(parking_lot::Mutex::new(
-            clawcrew_runtime::agent::cost::TurnUsage::default(),
+            clawcrew_config::cost::TurnUsage::default(),
         ))
     });
 
@@ -1484,11 +1484,11 @@ async fn process_chat_message(
             model = %turn_model,
             channel = WS_CHANNEL_KEY,
         );
-        clawcrew_runtime::agent::loop_::scope_session_key(
+        clawcrew_api::scope_session_key(
             Some(session_key_owned.clone()),
-            clawcrew_runtime::agent::cost::TOOL_LOOP_TURN_USAGE.scope(
+            clawcrew_config::cost::TOOL_LOOP_TURN_USAGE.scope(
                 turn_usage.clone(),
-                clawcrew_runtime::agent::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
+                clawcrew_config::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
                     cost_tracking_context.clone(),
                     agent
                         .turn_streamed_with_steering_state(
@@ -1732,7 +1732,7 @@ async fn process_chat_message(
     // Check if this turn was cancelled. `turn_streamed` propagates
     // `ToolLoopCancelled` through anyhow, so we detect it here.
     let was_cancelled = match &result {
-        Err(e) => clawcrew_runtime::agent::loop_::is_tool_loop_cancelled(&e.error),
+        Err(e) => clawcrew_api::agent::is_tool_loop_cancelled(&e.error),
         Ok(_) => false,
     };
 
@@ -1985,7 +1985,11 @@ async fn process_chat_message(
                 "Agent turn failed"
             );
             let user_message =
-                clawcrew_runtime::agent::terminal_completion_error_message(&e.error, None);
+                clawcrew_providers::terminal_error::terminal_completion_error_message_with_renderer(
+                    &e.error,
+                    None,
+                    render_cli_string,
+                );
             let err = send_ws_turn_failure(sender, &e.error, user_message.as_deref()).await;
 
             // Broadcast error event
@@ -2013,6 +2017,14 @@ async fn process_chat_message(
                 "gateway_ws_turn"
             );
         }
+    }
+}
+
+fn render_cli_string(key: &str, args: &[(&str, &str)]) -> String {
+    if args.is_empty() {
+        galleon_i18n::get_required_cli_string(key)
+    } else {
+        galleon_i18n::get_required_cli_string_with_args(key, args)
     }
 }
 
@@ -2373,7 +2385,10 @@ data: {\"type\":\"message_stop\"}\n\n",
         assert_eq!(error["code"], "PROVIDER_ERROR");
         assert_eq!(
             error["message"],
-            clawcrew_runtime::agent::semantic_empty_terminal_completion_message(None),
+            clawcrew_providers::terminal_error::semantic_empty_terminal_completion_message_with_renderer(
+                None,
+                render_cli_string,
+            ),
         );
         assert_ne!(
             error["message"], "provider completed without final text or tool calls",

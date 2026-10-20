@@ -116,21 +116,15 @@ impl std::fmt::Display for StreamSemanticEmptyCompletion {
 
 impl std::error::Error for StreamSemanticEmptyCompletion {}
 
-/// Whether a turn error has the canonical semantic-empty terminal reason.
-pub fn is_semantic_empty_terminal_completion(err: &anyhow::Error) -> bool {
-    err.chain().any(|source| {
-        source.is::<clawcrew_api::model_provider::SemanticEmptyTerminalCompletion>()
-            || source.is::<StreamSemanticEmptyCompletion>()
-            || source.is::<clawcrew_providers::ReliableSemanticEmptyCompletion>()
-    })
-}
+pub use clawcrew_providers::terminal_error::is_semantic_empty_terminal_completion;
 
 /// Render the canonical user-facing failure at a delivery boundary.
 pub fn semantic_empty_terminal_completion_message(agent_name: Option<&str>) -> String {
-    semantic_empty_terminal_completion_message_with_renderer(agent_name, render_cli_string)
+    clawcrew_providers::terminal_error::semantic_empty_terminal_completion_message_with_renderer(
+        agent_name,
+        render_cli_string,
+    )
 }
-
-type CliStringRenderer = fn(&str, &[(&str, &str)]) -> String;
 
 fn render_cli_string(key: &str, args: &[(&str, &str)]) -> String {
     if args.is_empty() {
@@ -140,124 +134,18 @@ fn render_cli_string(key: &str, args: &[(&str, &str)]) -> String {
     }
 }
 
-fn semantic_empty_terminal_completion_message_with_renderer(
-    agent_name: Option<&str>,
-    render: CliStringRenderer,
-) -> String {
-    match agent_name {
-        Some(agent_name) => render(
-            "cli-delegate-error-invalid-semantic-completion",
-            &[("agent_name", agent_name)],
-        ),
-        None => render("cli-agent-error-invalid-semantic-completion", &[]),
-    }
-}
-
-fn pre_executed_tools_without_final_response_message(
-    agent_name: Option<&str>,
-    render: CliStringRenderer,
-) -> String {
-    match agent_name {
-        Some(agent_name) => render(
-            "cli-delegate-error-incomplete-after-provider-tools",
-            &[("agent_name", agent_name)],
-        ),
-        None => render("cli-agent-error-incomplete-after-provider-tools", &[]),
-    }
-}
-
-fn reliable_provider_terminal_failure_message_with_renderer(
-    failure: &clawcrew_providers::ReliableProviderTerminalFailure,
-    render: CliStringRenderer,
-) -> String {
-    use clawcrew_providers::ReliableProviderTerminalFailureKind;
-
-    match failure.kind() {
-        ReliableProviderTerminalFailureKind::ContextWindow => {
-            render("cli-agent-error-provider-context-window", &[])
-        }
-        ReliableProviderTerminalFailureKind::CredentialsMissing => match failure.provider() {
-            Some(provider) => render(
-                "cli-agent-error-provider-credentials-missing-named",
-                &[("provider", provider)],
-            ),
-            None => render("cli-agent-error-provider-credentials-missing", &[]),
-        },
-        ReliableProviderTerminalFailureKind::Authentication => match failure.provider() {
-            Some(provider) => render(
-                "cli-agent-error-provider-authentication-named",
-                &[("provider", provider)],
-            ),
-            None => render("cli-agent-error-provider-authentication", &[]),
-        },
-        ReliableProviderTerminalFailureKind::RateLimited => {
-            render("cli-agent-error-provider-rate-limited", &[])
-        }
-        ReliableProviderTerminalFailureKind::ProviderServer => {
-            render("cli-agent-error-provider-server", &[])
-        }
-        ReliableProviderTerminalFailureKind::ModelNotFound => {
-            render("cli-agent-error-provider-model-not-found", &[])
-        }
-        ReliableProviderTerminalFailureKind::ClientRequest => {
-            render("cli-agent-error-provider-client-request", &[])
-        }
-        ReliableProviderTerminalFailureKind::Connection => match failure.endpoint() {
-            Some(endpoint) if failure.endpoint_is_local() => render(
-                "cli-agent-error-provider-connection-local",
-                &[("endpoint", endpoint)],
-            ),
-            Some(endpoint) => render(
-                "cli-agent-error-provider-connection-remote",
-                &[("endpoint", endpoint)],
-            ),
-            None => render("cli-agent-error-provider-connection", &[]),
-        },
-        ReliableProviderTerminalFailureKind::Timeout => {
-            render("cli-agent-error-provider-timeout", &[])
-        }
-        ReliableProviderTerminalFailureKind::Other => {
-            render("cli-agent-error-provider-generic", &[])
-        }
-    }
-}
-
 /// Map typed terminal-delivery failures to their Fluent user-facing message.
 pub fn terminal_completion_error_message(
     err: &anyhow::Error,
     agent_name: Option<&str>,
 ) -> Option<String> {
-    terminal_completion_error_message_with_renderer(err, agent_name, render_cli_string)
+    clawcrew_providers::terminal_error::terminal_completion_error_message_with_renderer(
+        err,
+        agent_name,
+        render_cli_string,
+    )
 }
 
-fn terminal_completion_error_message_with_renderer(
-    err: &anyhow::Error,
-    agent_name: Option<&str>,
-    render: CliStringRenderer,
-) -> Option<String> {
-    // A refusal that is still the final cause sits beneath Reliable's
-    // envelopes; it needs safety-specific guidance rather than the generic
-    // provider-failure projection. A later non-refusal failure replaces it as
-    // the final cause and keeps the generic projection below.
-    if clawcrew_providers::model_refusal_from_error(err).is_some() {
-        return Some(render("cli-agent-error-provider-refusal", &[]));
-    }
-    if let Some(failure) = err.chain().find_map(|source| {
-        source.downcast_ref::<clawcrew_providers::ReliableProviderTerminalFailure>()
-    }) {
-        return Some(reliable_provider_terminal_failure_message_with_renderer(
-            failure, render,
-        ));
-    }
-    if is_semantic_empty_terminal_completion(err) {
-        return Some(semantic_empty_terminal_completion_message_with_renderer(
-            agent_name, render,
-        ));
-    }
-    err.chain()
-        .any(|source| source.is::<StreamPreExecutedToolsWithoutFinalResponse>())
-        .then(|| pre_executed_tools_without_final_response_message(agent_name, render))
-}
 
 #[cfg(test)]
 fn terminal_completion_error_message_in_english(

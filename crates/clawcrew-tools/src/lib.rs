@@ -92,6 +92,10 @@ pub mod web_fetch;
 pub mod web_search_provider_routing;
 pub mod web_search_tool;
 pub mod wrappers;
+pub use wrappers::ArcToolRef;
+
+pub type DelegateParentToolsHandle =
+    std::sync::Arc<parking_lot::RwLock<Vec<std::sync::Arc<dyn clawcrew_api::tool::Tool>>>>;
 
 #[cfg(all(test, unix))]
 mod coding_agent_budget_tests;

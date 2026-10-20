@@ -1,9 +1,11 @@
 pub mod tracker;
 pub mod types;
 pub mod pricing;
+pub mod tool_loop;
 pub use tracker::CostTracker;
 pub use types::*;
 pub use pricing::*;
+pub use tool_loop::*;
 
 /// Upper bound for any configured or discovered USD cost rate.
 ///

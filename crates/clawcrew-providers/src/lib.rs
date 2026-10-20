@@ -34,6 +34,7 @@ pub mod router;
 pub mod safeguard_notice;
 pub(crate) mod stream_guard;
 pub mod telnyx;
+pub mod terminal_error;
 pub mod traits;
 pub mod vision_override;
 

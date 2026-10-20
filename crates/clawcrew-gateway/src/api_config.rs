@@ -2696,7 +2696,7 @@ pub(crate) mod tests {
             temperature: None,
             mem: memory.clone(),
             memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+                clawcrew_memory::DefaultMemoryStrategy::with_config(
                     memory,
                     clawcrew_config::schema::MemoryConfig::default(),
                     std::path::PathBuf::new(),
@@ -3957,7 +3957,7 @@ pub(crate) mod tests {
 
     #[test]
     fn scrub_credentials_catches_credential_shaped_strings() {
-        use clawcrew_runtime::agent::loop_::scrub_credentials;
+        use galleon_security_scrub::scrub_credentials;
 
         let cases = [
             // Field=value style log line.

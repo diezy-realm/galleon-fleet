@@ -179,51 +179,7 @@ use clawcrew_memory::Memory;
 pub type PerToolChannelHandle =
     Arc<RwLock<HashMap<String, Arc<dyn clawcrew_api::channel::Channel>>>>;
 
-/// Shared handle to the delegate tool's parent-tools list.
-/// Callers can push additional tools (e.g. MCP wrappers) after construction.
-pub type DelegateParentToolsHandle = Arc<RwLock<Vec<Arc<dyn Tool>>>>;
-
-/// Thin wrapper that makes an `Arc<dyn Tool>` usable as `Box<dyn Tool>`.
-pub struct ArcToolRef(pub Arc<dyn Tool>);
-// ArcToolRef is the public constructor name for ArcToolWrapper
-
-#[async_trait]
-impl Tool for ArcToolRef {
-    fn name(&self) -> &str {
-        self.0.name()
-    }
-
-    fn description(&self) -> &str {
-        self.0.description()
-    }
-
-    fn parameters_schema(&self) -> serde_json::Value {
-        self.0.parameters_schema()
-    }
-
-    fn output_schema(&self) -> Option<serde_json::Value> {
-        self.0.output_schema()
-    }
-
-    fn param_domains(&self) -> Vec<(&'static str, ::clawcrew_api::tool::OptionDomain)> {
-        self.0.param_domains()
-    }
-
-    // Forward `spec()` so inner overrides keep their `Arc`-shared parameter
-    // schemas; the trait default would rebuild the spec from
-    // `parameters_schema()`, deep-cloning MCP schemas every loop iteration.
-    fn spec(&self) -> clawcrew_api::tool::ToolSpec {
-        self.0.spec()
-    }
-
-    fn invocation_triggers(&self) -> Vec<String> {
-        self.0.invocation_triggers()
-    }
-
-    async fn execute(&self, args: serde_json::Value) -> anyhow::Result<ToolResult> {
-        self.0.execute(args).await
-    }
-}
+pub use clawcrew_tools::{ArcToolRef, DelegateParentToolsHandle};
 
 /// Serply credential override state for `WebSearchTool`.
 ///

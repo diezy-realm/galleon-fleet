@@ -1107,8 +1107,8 @@ pub async fn run_gateway_chat_with_tools(
     let agent_alias = require_gateway_chat_agent_alias(&config, agent_override)?;
 
     let cost_tracking_context = state.cost_tracker.as_ref().map(|tracker| {
-        let pricing = clawcrew_runtime::agent::cost::build_model_provider_pricing(&config);
-        clawcrew_runtime::agent::cost::ToolLoopCostTrackingContext::new(
+        let pricing = clawcrew_config::cost::build_model_provider_pricing(&config);
+        clawcrew_config::cost::ToolLoopCostTrackingContext::new(
             tracker.clone(),
             std::sync::Arc::new(pricing),
         )
@@ -1116,14 +1116,14 @@ pub async fn run_gateway_chat_with_tools(
     });
     let turn_usage = state.cost_tracker.as_ref().map(|_| {
         std::sync::Arc::new(parking_lot::Mutex::new(
-            clawcrew_runtime::agent::cost::TurnUsage::default(),
+            clawcrew_config::cost::TurnUsage::default(),
         ))
     });
-    let response = Box::pin(clawcrew_runtime::agent::cost::TOOL_LOOP_TURN_USAGE.scope(
+    let response = Box::pin(clawcrew_config::cost::TOOL_LOOP_TURN_USAGE.scope(
         turn_usage.clone(),
-        clawcrew_runtime::agent::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
+        clawcrew_config::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
             cost_tracking_context,
-            clawcrew_runtime::agent::process_message(
+            clawcrew_runtime::process_message(
                 config,
                 &agent_alias,
                 message,

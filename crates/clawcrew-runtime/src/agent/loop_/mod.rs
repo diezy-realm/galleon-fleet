@@ -276,27 +276,9 @@ pub fn apply_policy_tool_filter(
 /// (`allowed_tools` + `excluded_tools`) and an optional caller-supplied
 /// allowlist. Shared by the runtime agent loop and the channels orchestrator
 /// so every MCP registration site gates through identical logic.
-pub fn mcp_tool_access_policy(
-    security: &clawcrew_config::policy::SecurityPolicy,
-    caller_allowed: Option<&[String]>,
-) -> Option<clawcrew_tools::tool_search::ToolAccessPolicy> {
-    clawcrew_tools::tool_search::ToolAccessPolicy::from_security(
-        security.allowed_tools.as_deref(),
-        security.excluded_tools.as_deref(),
-        caller_allowed,
-    )
-}
-
-/// Whether an MCP tool name is admitted by `policy` (a `None` policy admits
-/// everything). The risk-profile denylist always wins; the allowlist
-/// auto-admits `<server>__<tool>` names so a restrictive allowlist does not
-/// silently drop a configured server's tools.
-pub fn eager_mcp_tool_allowed(
-    name: &str,
-    policy: Option<&clawcrew_tools::tool_search::ToolAccessPolicy>,
-) -> bool {
-    policy.is_none_or(|policy| policy.is_tool_allowed(name))
-}
+pub use clawcrew_tools::tool_search::{
+    eager_mcp_tool_allowed, mcp_tool_access_policy, register_eager_mcp_tool_if_allowed,
+};
 
 pub(crate) fn mcp_allowed_tool_count<'a>(
     names: impl IntoIterator<Item = &'a str>,
@@ -324,24 +306,6 @@ pub fn append_pinned_mcp_section(deferred_section: &mut String, pinned_section: 
     deferred_section.push_str(pinned_section);
 }
 
-/// Register an eager MCP tool wrapper into `tools` (and the delegate handle,
-/// when present) only if `policy` admits it. Returns `true` when the tool was
-/// registered, `false` when the policy dropped it.
-pub fn register_eager_mcp_tool_if_allowed(
-    wrapper: std::sync::Arc<dyn Tool>,
-    tools: &mut Vec<Box<dyn Tool>>,
-    delegate_handle: Option<&tools::DelegateParentToolsHandle>,
-    policy: Option<&clawcrew_tools::tool_search::ToolAccessPolicy>,
-) -> bool {
-    if !eager_mcp_tool_allowed(wrapper.name(), policy) {
-        return false;
-    }
-    if let Some(handle) = delegate_handle {
-        handle.write().push(std::sync::Arc::clone(&wrapper));
-    }
-    tools.push(Box::new(tools::ArcToolRef(wrapper)));
-    true
-}
 
 pub(crate) fn preactivate_always_filter_groups(
     deferred: &crate::tools::DeferredMcpToolSet,
@@ -483,16 +447,7 @@ where
     TOOL_LOOP_THREAD_ID.scope(thread_id, future).await
 }
 
-/// Run a future with the session key set in task-local storage.
-/// The scope wraps the entire agent turn, so all tools invoked during
-/// the turn (including nested calls) see the same session key.
-/// SessionsCurrentTool reads this to identify the active session.
-pub async fn scope_session_key<F>(session_key: Option<String>, future: F) -> F::Output
-where
-    F: std::future::Future,
-{
-    TOOL_LOOP_SESSION_KEY.scope(session_key, future).await
-}
+pub use clawcrew_api::scope_session_key;
 
 pub(crate) fn compute_excluded_mcp_tools(
     tools_registry: &[Box<dyn Tool>],

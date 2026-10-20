@@ -52,6 +52,15 @@ tokio::task_local! {
     pub static NATIVE_THINKING_OVERRIDE: Option<crate::model_provider::NativeThinkingParams>;
 }
 
+/// Run a future with the session key set in task-local storage.
+pub async fn scope_session_key<F>(session_key: Option<String>, future: F) -> F::Output
+where
+    F: std::future::Future,
+{
+    TOOL_LOOP_SESSION_KEY.scope(session_key, future).await
+}
+
+
 pub mod control_plane;
 pub mod dashboard;
 pub mod doctor;

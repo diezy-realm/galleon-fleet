@@ -49,6 +49,7 @@ pub mod skills;
 pub mod sop;
 pub use sop::{RuntimeSopRunner, build_sop_engine};
 pub mod subagent;
+pub use agent::{Agent, process_message};
 pub mod tools;
 pub mod trust;
 pub mod tunnel;
