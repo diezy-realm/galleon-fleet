@@ -1,3 +1,4 @@
+use std::sync::{Arc, OnceLock, RwLock};
 use std::time::Duration;
 
 /// A single conversation message captured for OTel GenAI semconv export.
@@ -475,11 +476,7 @@ impl<'a> AgentTurnGuard<'a> {
     }
 
     /// Attach aggregate usage to the closing event.
-    pub fn set_usage(
-        &mut self,
-        tokens_used: Option<TurnTokenUsage>,
-        cost_usd: Option<f64>,
-    ) {
+    pub fn set_usage(&mut self, tokens_used: Option<TurnTokenUsage>, cost_usd: Option<f64>) {
         self.tokens_used = tokens_used;
         self.cost_usd = cost_usd;
     }
@@ -506,6 +503,133 @@ impl<'a> AgentTurnGuard<'a> {
 impl Drop for AgentTurnGuard<'_> {
     fn drop(&mut self) {
         self.finish();
+    }
+}
+
+struct BroadcastHookEntry {
+    scoped_id: Option<u64>,
+    observer: Arc<dyn Observer>,
+}
+
+#[derive(Default)]
+struct BroadcastHookState {
+    next_scoped_id: u64,
+    entries: Vec<BroadcastHookEntry>,
+}
+
+impl BroadcastHookState {
+    fn current(&self) -> Option<Arc<dyn Observer>> {
+        self.entries.last().map(|entry| entry.observer.clone())
+    }
+}
+
+static BROADCAST_HOOK: OnceLock<RwLock<BroadcastHookState>> = OnceLock::new();
+
+fn broadcast_hook_slot() -> &'static RwLock<BroadcastHookState> {
+    BROADCAST_HOOK.get_or_init(|| RwLock::new(BroadcastHookState::default()))
+}
+
+/// Install a process-wide observer that will receive every event recorded
+/// through observers built with [`TeeObserver`]. Calling this again replaces
+/// the previous hook.
+pub fn set_broadcast_hook(observer: Arc<dyn Observer>) {
+    let mut slot = broadcast_hook_slot()
+        .write()
+        .unwrap_or_else(|e| e.into_inner());
+    slot.entries.clear();
+    slot.entries.push(BroadcastHookEntry {
+        scoped_id: None,
+        observer,
+    });
+}
+
+#[must_use = "hold the guard for as long as the broadcast hook should remain installed"]
+pub struct BroadcastHookGuard {
+    scoped_id: u64,
+}
+
+impl Drop for BroadcastHookGuard {
+    fn drop(&mut self) {
+        let mut slot = broadcast_hook_slot()
+            .write()
+            .unwrap_or_else(|e| e.into_inner());
+        slot.entries
+            .retain(|entry| entry.scoped_id != Some(self.scoped_id));
+    }
+}
+
+/// Install a process-wide observer and return a guard that clears it on drop.
+#[must_use = "hold the guard for as long as the broadcast hook should remain installed"]
+pub fn set_scoped_broadcast_hook(observer: Arc<dyn Observer>) -> BroadcastHookGuard {
+    let mut slot = broadcast_hook_slot()
+        .write()
+        .unwrap_or_else(|e| e.into_inner());
+    let scoped_id = slot.next_scoped_id;
+    slot.next_scoped_id = slot.next_scoped_id.wrapping_add(1);
+    slot.entries.push(BroadcastHookEntry {
+        scoped_id: Some(scoped_id),
+        observer,
+    });
+    BroadcastHookGuard { scoped_id }
+}
+
+/// Remove the broadcast hook, if any. Intended for tests and orderly shutdown.
+pub fn clear_broadcast_hook() {
+    broadcast_hook_slot()
+        .write()
+        .unwrap_or_else(|e| e.into_inner())
+        .entries
+        .clear();
+}
+
+pub fn current_broadcast_hook() -> Option<Arc<dyn Observer>> {
+    broadcast_hook_slot()
+        .read()
+        .unwrap_or_else(|e| e.into_inner())
+        .current()
+}
+
+/// Wrapper that forwards every event to a primary observer plus the
+/// process-wide broadcast hook (when set). Metrics flow only to the primary.
+pub struct TeeObserver {
+    primary: Box<dyn Observer>,
+}
+
+impl TeeObserver {
+    pub fn new(primary: Box<dyn Observer>) -> Self {
+        Self { primary }
+    }
+
+    pub fn primary(&self) -> &dyn Observer {
+        &*self.primary
+    }
+}
+
+impl Observer for TeeObserver {
+    fn record_event(&self, event: &ObserverEvent) {
+        self.primary.record_event(event);
+        if let Some(hook) = current_broadcast_hook() {
+            hook.record_event(event);
+        }
+    }
+
+    fn record_metric(&self, metric: &ObserverMetric) {
+        self.primary.record_metric(metric);
+    }
+
+    fn flush(&self) {
+        self.primary.flush();
+    }
+
+    fn name(&self) -> &str {
+        // Delegate so callers (and tests) see the underlying backend name,
+        // not the internal wrapper.
+        self.primary.name()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        // Expose the primary so downcasts keep working transparently.
+        self.primary.as_any()
     }
 }
 
@@ -671,5 +795,25 @@ mod tests {
         assert!(matches!(store.clone(), ObserverEvent::MemoryStore { .. }));
         assert!(matches!(rag.clone(), ObserverEvent::RagRetrieve { .. }));
         assert!(matches!(audit.clone(), ObserverEvent::MemoryAudit { .. }));
+    }
+
+    #[test]
+    fn tee_observer_fans_out_to_broadcast_hook() {
+        clear_broadcast_hook();
+
+        let hook = Arc::new(DummyObserver::default());
+        set_broadcast_hook(hook.clone());
+
+        let primary = Box::new(DummyObserver::default());
+        let tee = TeeObserver::new(primary);
+
+        assert_eq!(tee.name(), "dummy-observer");
+        tee.record_event(&ObserverEvent::HeartbeatTick);
+
+        assert_eq!(*hook.events.lock(), 1);
+
+        clear_broadcast_hook();
+        tee.record_event(&ObserverEvent::HeartbeatTick);
+        assert_eq!(*hook.events.lock(), 1);
     }
 }
