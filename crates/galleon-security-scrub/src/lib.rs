@@ -8,14 +8,14 @@ pub mod content_safety;
 pub mod leak_detector;
 pub mod prompt_guard;
 
+pub use clawcrew_config::schema::LeakDetectionConfig;
 pub use content_safety::{
-    cap_untrusted, frame_untrusted, new_marker_id, sanitize_untrusted,
-    sanitize_untrusted_topic, scan_untrusted, scrub_outbound, ContentSafety, FramingPolicy,
-    OutboundPolicy, ScanOutcome, ScanPolicy, ScreenVerdict,
+    ContentSafety, FramingPolicy, OutboundPolicy, ScanOutcome, ScanPolicy, ScreenVerdict,
+    cap_untrusted, frame_untrusted, new_marker_id, sanitize_untrusted, sanitize_untrusted_topic,
+    scan_untrusted, scrub_outbound,
 };
 pub use leak_detector::{LeakDetector, LeakResult};
 pub use prompt_guard::{GuardAction, GuardResult, PromptGuard};
-pub use clawcrew_config::schema::LeakDetectionConfig;
 
 /// Scrub credential leaks from arbitrary text before it crosses into a log
 /// record or any other sink. Routes through the global [`LeakDetector`] so
@@ -50,10 +50,13 @@ pub fn redact(value: &str) -> String {
 }
 
 // INVARIANT: static pattern hard-coded by developer, compiler guarantees compilation failure if regex is malformed
-pub static SENSITIVE_KEY_REGEX: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
-    regex::Regex::new(r#"(?i)(authorization|token|api[_-]?key|private[_-]?key|password|secret|user[_-]?key|bearer|credential|set[_-]?cookie|cookie)"#)
+pub static SENSITIVE_KEY_REGEX: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(
+    || {
+        // INVARIANT: static pattern hard-coded by developer
+        regex::Regex::new(r#"(?i)(authorization|token|api[_-]?key|private[_-]?key|password|secret|user[_-]?key|bearer|credential|set[_-]?cookie|cookie)"#)
         .expect("static sensitive-key regex must compile")
-});
+    },
+);
 pub const REDACTED_CREDENTIAL_VALUE: &str = "[REDACTED]";
 
 pub fn looks_like_secret_key(key: &str) -> bool {
@@ -97,6 +100,61 @@ pub fn scrub_credentials_value(value: serde_json::Value) -> serde_json::Value {
         serde_json::Value::String(s) => serde_json::Value::String(scrub(&s)),
         other => other,
     }
+}
+
+pub static SENSITIVE_KV_REGEX: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
+    match regex::Regex::new(
+        r#"(?i)(authorization|token|api[_-]?key|password|secret|user[_-]?key|bearer|credential|set[_-]?cookie|cookie)["']?\s*[:=]\s*(?:"([^"]{8,})"|'([^']{8,})'|([a-zA-Z0-9_\-\./+=]{8,}))"#,
+    ) {
+        Ok(re) => re,
+        Err(_) => match regex::Regex::new("") {
+            Ok(empty) => empty,
+            Err(_) => unreachable!(),
+        },
+    }
+});
+
+pub fn scrub_credentials(input: &str) -> String {
+    SENSITIVE_KV_REGEX
+        .replace_all(input, |caps: &regex::Captures| {
+            let full_match = &caps[0];
+            let key = &caps[1];
+            let val = caps
+                .get(2)
+                .or(caps.get(3))
+                .or(caps.get(4))
+                .map(|m| m.as_str())
+                .unwrap_or("");
+
+            // Preserve first 4 chars for context, then redact.
+            // Use char_indices to find the byte offset of the 4th character
+            // so we never slice in the middle of a multi-byte UTF-8 sequence.
+            let prefix = if val.len() > 4 {
+                val.char_indices()
+                    .nth(4)
+                    .map(|(byte_idx, _)| &val[..byte_idx])
+                    .unwrap_or(val)
+            } else {
+                ""
+            };
+
+            if full_match.contains(':') {
+                if full_match.contains('"') {
+                    format!("\"{}\": \"{}*[REDACTED]\"", key, prefix)
+                } else {
+                    format!("{}: {}*[REDACTED]", key, prefix)
+                }
+            } else if full_match.contains('=') {
+                if full_match.contains('"') {
+                    format!("{}=\"{}*[REDACTED]\"", key, prefix)
+                } else {
+                    format!("{}={}*[REDACTED]", key, prefix)
+                }
+            } else {
+                format!("{}: {}*[REDACTED]", key, prefix)
+            }
+        })
+        .to_string()
 }
 
 #[cfg(test)]

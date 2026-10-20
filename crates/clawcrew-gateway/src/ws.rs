@@ -17,15 +17,15 @@ use axum::{
     http::{HeaderMap, header},
     response::IntoResponse,
 };
+use clawcrew_api::channel::ChannelApprovalResponse;
+use clawcrew_api::sop::{
+    ApprovalDecision as SopApprovalDecision, ApprovalPrincipal as SopApprovalPrincipal,
+};
 use futures_util::{SinkExt, StreamExt};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
-use clawcrew_api::channel::ChannelApprovalResponse;
-use clawcrew_api::sop::{
-    ApprovalDecision as SopApprovalDecision, ApprovalPrincipal as SopApprovalPrincipal,
-};
 
 /// Default wall-clock budget for the operator to answer an
 /// `approval_request` frame before the channel auto-denies. Mirrors the
@@ -501,7 +501,7 @@ async fn handle_socket(
     }
 
     let mut agent =
-        match clawcrew_runtime::agent::Agent::from_pinned_live_config_with_session_cwd_and_mcp_backchannel(
+        match clawcrew_runtime::Agent::from_pinned_live_config_with_session_cwd_and_mcp_backchannel(
             Arc::clone(&state.config),
             &agent_alias,
             Some(&session_cwd),
@@ -1032,7 +1032,7 @@ fn replace_conversation_state_unless_deleted(
 fn persist_agent_conversation_state(
     backend: &dyn clawcrew_infra::session_backend::SessionBackend,
     session_key: &str,
-    agent: &clawcrew_runtime::agent::Agent,
+    agent: &clawcrew_runtime::Agent,
 ) -> bool {
     let durable = clawcrew_providers::durable_chat_messages(agent.history());
     replace_conversation_state_unless_deleted(
@@ -1404,7 +1404,7 @@ fn build_done_frame_json(
 #[allow(clippy::too_many_arguments)]
 async fn process_chat_message(
     state: &AppState,
-    agent: &mut clawcrew_runtime::agent::Agent,
+    agent: &mut clawcrew_runtime::Agent,
     sender: &mut futures_util::stream::SplitSink<WebSocket, Message>,
     receiver: &mut futures_util::stream::SplitStream<WebSocket>,
     approval_event_rx: &mut tokio::sync::mpsc::Receiver<clawcrew_api::agent::TurnEvent>,
@@ -1418,23 +1418,20 @@ async fn process_chat_message(
     // mid-turn SOP approval frame carries the same identity as the top-level path.
     auth_subject: Option<&str>,
 ) {
+    use clawcrew_api::agent::TurnEvent;
     use futures_util::StreamExt as _;
-    use clawcrew_runtime::agent::TurnEvent;
 
     let (turn_alias, turn_provider, turn_model) = agent.attribution_fields();
     let provider_label = turn_provider.clone();
     let cost_tracking_context = state.cost_tracker.as_ref().map(|tracker| {
         let config = state.config.read();
-        let pricing = clawcrew_runtime::agent::cost::build_model_provider_pricing(&config);
-        clawcrew_runtime::agent::cost::ToolLoopCostTrackingContext::new(
-            tracker.clone(),
-            Arc::new(pricing),
-        )
-        .with_agent_alias(&turn_alias)
+        let pricing = clawcrew_config::cost::build_model_provider_pricing(&config);
+        clawcrew_config::cost::ToolLoopCostTrackingContext::new(tracker.clone(), Arc::new(pricing))
+            .with_agent_alias(&turn_alias)
     });
     let turn_usage = state.cost_tracker.as_ref().map(|_| {
         Arc::new(parking_lot::Mutex::new(
-            clawcrew_runtime::agent::cost::TurnUsage::default(),
+            clawcrew_config::cost::TurnUsage::default(),
         ))
     });
 
@@ -1484,11 +1481,11 @@ async fn process_chat_message(
             model = %turn_model,
             channel = WS_CHANNEL_KEY,
         );
-        clawcrew_runtime::agent::loop_::scope_session_key(
+        clawcrew_api::scope_session_key(
             Some(session_key_owned.clone()),
-            clawcrew_runtime::agent::cost::TOOL_LOOP_TURN_USAGE.scope(
+            clawcrew_config::cost::TOOL_LOOP_TURN_USAGE.scope(
                 turn_usage.clone(),
-                clawcrew_runtime::agent::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
+                clawcrew_config::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
                     cost_tracking_context.clone(),
                     agent
                         .turn_streamed_with_steering_state(
@@ -1732,7 +1729,7 @@ async fn process_chat_message(
     // Check if this turn was cancelled. `turn_streamed` propagates
     // `ToolLoopCancelled` through anyhow, so we detect it here.
     let was_cancelled = match &result {
-        Err(e) => clawcrew_runtime::agent::loop_::is_tool_loop_cancelled(&e.error),
+        Err(e) => clawcrew_api::agent::is_tool_loop_cancelled(&e.error),
         Ok(_) => false,
     };
 
@@ -1751,8 +1748,7 @@ async fn process_chat_message(
                 Ok(_) => false,
             };
             let durable = if needs_marker {
-                let marker =
-                    galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
+                let marker = galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
                 let truncated = if accumulated_text.is_empty() {
                     marker
                 } else {
@@ -1985,7 +1981,11 @@ async fn process_chat_message(
                 "Agent turn failed"
             );
             let user_message =
-                clawcrew_runtime::agent::terminal_completion_error_message(&e.error, None);
+                clawcrew_providers::terminal_error::terminal_completion_error_message_with_renderer(
+                    &e.error,
+                    None,
+                    render_cli_string,
+                );
             let err = send_ws_turn_failure(sender, &e.error, user_message.as_deref()).await;
 
             // Broadcast error event
@@ -2013,6 +2013,14 @@ async fn process_chat_message(
                 "gateway_ws_turn"
             );
         }
+    }
+}
+
+fn render_cli_string(key: &str, args: &[(&str, &str)]) -> String {
+    if args.is_empty() {
+        galleon_i18n::get_required_cli_string(key)
+    } else {
+        galleon_i18n::get_required_cli_string_with_args(key, args)
     }
 }
 
@@ -2373,7 +2381,10 @@ data: {\"type\":\"message_stop\"}\n\n",
         assert_eq!(error["code"], "PROVIDER_ERROR");
         assert_eq!(
             error["message"],
-            clawcrew_runtime::agent::semantic_empty_terminal_completion_message(None),
+            clawcrew_providers::terminal_error::semantic_empty_terminal_completion_message_with_renderer(
+                None,
+                render_cli_string,
+            ),
         );
         assert_ne!(
             error["message"], "provider completed without final text or tool calls",
@@ -2585,11 +2596,11 @@ data: {\"type\":\"message_stop\"}\n\n",
     #[tokio::test]
     async fn idle_chat_route_pings_before_and_preserves_the_first_client_message() {
         use axum::{Router, routing::get};
-        use tokio_tungstenite::{connect_async, tungstenite::Message as ClientMessage};
         use clawcrew_config::{
             multi_agent::MemoryBackendKind,
             schema::{AliasedAgentConfig, Config},
         };
+        use tokio_tungstenite::{connect_async, tungstenite::Message as ClientMessage};
 
         let tmp = tempfile::TempDir::new().expect("temporary config root");
         let mut config = Config {
@@ -3035,9 +3046,9 @@ data: {\"type\":\"message_stop\"}\n\n",
 
     #[tokio::test]
     async fn ws_memory_resolution_honors_agent_backend_none_over_install_backend() {
-        use tempfile::TempDir;
         use clawcrew_config::multi_agent::MemoryBackendKind;
         use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use tempfile::TempDir;
 
         let tmp = TempDir::new().unwrap();
         let mut config = Config {
@@ -3159,8 +3170,8 @@ data: {\"type\":\"message_stop\"}\n\n",
 
     #[test]
     fn resolve_ws_session_cwd_defaults_to_agent_workspace_without_request() {
-        use tempfile::TempDir;
         use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use tempfile::TempDir;
 
         let tmp = TempDir::new().unwrap();
         let mut config = Config {
@@ -3184,8 +3195,8 @@ data: {\"type\":\"message_stop\"}\n\n",
 
     #[test]
     fn resolve_ws_session_cwd_keeps_requested_cwd_strict() {
-        use tempfile::TempDir;
         use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use tempfile::TempDir;
 
         let tmp = TempDir::new().unwrap();
         let mut config = Config {
@@ -3604,8 +3615,8 @@ data: {\"type\":\"message_stop\"}\n\n",
     /// explicit `context_window`, absent when it does not.
     #[test]
     fn done_frame_model_context_window_presence_tracks_provider_config() {
-        use std::collections::HashMap;
         use clawcrew_config::schema::{AliasedAgentConfig, Config, RuntimeProfileConfig};
+        use std::collections::HashMap;
 
         // (provider_alias, context_window, expected_model_window,
         // expected_max_context_tokens)
@@ -3720,8 +3731,8 @@ data: {\"type\":\"message_stop\"}\n\n",
     /// not the static agent alias. Both paths use the same shared resolver.
     #[test]
     fn done_frame_model_window_follows_live_provider_switch() {
-        use std::collections::HashMap;
         use clawcrew_config::schema::{AliasedAgentConfig, Config, RuntimeProfileConfig};
+        use std::collections::HashMap;
 
         // (switched_provider_alias, scenario_label)
         let cases: &[(&str, &str)] = &[
@@ -3821,8 +3832,8 @@ data: {\"type\":\"message_stop\"}\n\n",
     /// so clients fall back to the trim budget.
     #[test]
     fn done_frame_model_window_omitted_on_same_profile_model_fallback() {
-        use std::collections::HashMap;
         use clawcrew_config::schema::{AliasedAgentConfig, Config, RuntimeProfileConfig};
+        use std::collections::HashMap;
 
         let mut runtime_profiles = HashMap::new();
         runtime_profiles.insert(

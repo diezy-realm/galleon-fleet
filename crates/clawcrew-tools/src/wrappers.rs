@@ -1,10 +1,10 @@
 //! Generic tool wrappers for crosscutting concerns.
 
 use async_trait::async_trait;
-use std::sync::Arc;
 use clawcrew_api::attribution::{Attributable, Role, ToolProvenance};
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use clawcrew_config::policy::SecurityPolicy;
+use std::sync::Arc;
 
 /// Type alias for a path-extraction closure used by [`PathGuardedTool`].
 type PathExtractor = dyn Fn(&serde_json::Value) -> Option<String> + Send + Sync;
@@ -195,10 +195,10 @@ impl<T: Tool> Tool for PathGuardedTool<T> {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    use tokio::sync::Notify;
     use clawcrew_config::autonomy::AutonomyLevel;
     use clawcrew_config::policy::SecurityPolicy;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use tokio::sync::Notify;
 
     clawcrew_api::mock_tool_attribution!(CountingTool);
 
@@ -650,5 +650,48 @@ mod tests {
             .unwrap();
         assert!(allowed.success, "budget should still have a slot");
         assert_eq!(counter.load(Ordering::SeqCst), 1);
+    }
+}
+
+/// Wrapper providing `Tool` for an `Arc<dyn Tool>`.
+pub struct ArcToolRef(pub Arc<dyn Tool>);
+
+impl Attributable for ArcToolRef {
+    fn role(&self) -> Role {
+        self.0.role()
+    }
+    fn alias(&self) -> &str {
+        self.0.alias()
+    }
+    fn tool_provenance(&self) -> ToolProvenance {
+        self.0.tool_provenance()
+    }
+}
+
+#[async_trait]
+impl Tool for ArcToolRef {
+    fn name(&self) -> &str {
+        self.0.name()
+    }
+    fn description(&self) -> &str {
+        self.0.description()
+    }
+    fn parameters_schema(&self) -> serde_json::Value {
+        self.0.parameters_schema()
+    }
+    fn output_schema(&self) -> Option<serde_json::Value> {
+        self.0.output_schema()
+    }
+    fn param_domains(&self) -> Vec<(&'static str, clawcrew_api::tool::OptionDomain)> {
+        self.0.param_domains()
+    }
+    fn spec(&self) -> clawcrew_api::tool::ToolSpec {
+        self.0.spec()
+    }
+    fn invocation_triggers(&self) -> Vec<String> {
+        self.0.invocation_triggers()
+    }
+    async fn execute(&self, args: serde_json::Value) -> anyhow::Result<ToolResult> {
+        self.0.execute(args).await
     }
 }

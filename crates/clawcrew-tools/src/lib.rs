@@ -92,6 +92,10 @@ pub mod web_fetch;
 pub mod web_search_provider_routing;
 pub mod web_search_tool;
 pub mod wrappers;
+pub use wrappers::ArcToolRef;
+
+pub type DelegateParentToolsHandle =
+    std::sync::Arc<parking_lot::RwLock<Vec<std::sync::Arc<dyn clawcrew_api::tool::Tool>>>>;
 
 #[cfg(all(test, unix))]
 mod coding_agent_budget_tests;
@@ -114,8 +118,8 @@ pub const MEMORY_TOOL_NAMES: &[&str] = &[
 /// A reset alone would still race; production proxy state is untouched.
 #[cfg(test)]
 pub(crate) mod test_support {
-    use tokio::sync::{Mutex, MutexGuard};
     use clawcrew_config::schema::{ProxyConfig, runtime_proxy_config, set_runtime_proxy_config};
+    use tokio::sync::{Mutex, MutexGuard};
 
     static RUNTIME_PROXY_STATE_LOCK: Mutex<()> = Mutex::const_new(());
 
@@ -146,11 +150,11 @@ pub(crate) mod test_support {
 #[cfg(test)]
 mod memory_tool_names_guard {
     use super::*;
-    use std::collections::BTreeSet;
-    use std::sync::Arc;
     use clawcrew_api::tool::Tool;
     use clawcrew_config::policy::SecurityPolicy;
     use clawcrew_memory::NoneMemory;
+    use std::collections::BTreeSet;
+    use std::sync::Arc;
 
     #[test]
     fn memory_tool_names_match_tools() {

@@ -72,6 +72,44 @@ impl ToolAccessPolicy {
     }
 }
 
+/// Build the MCP tool-access policy for an agent from its `SecurityPolicy`
+/// (`allowed_tools` + `excluded_tools`) and an optional caller-supplied
+/// allowlist.
+pub fn mcp_tool_access_policy(
+    security: &clawcrew_config::policy::SecurityPolicy,
+    caller_allowed: Option<&[String]>,
+) -> Option<ToolAccessPolicy> {
+    ToolAccessPolicy::from_security(
+        security.allowed_tools.as_deref(),
+        security.excluded_tools.as_deref(),
+        caller_allowed,
+    )
+}
+
+/// Whether an MCP tool name is admitted by `policy` (a `None` policy admits everything).
+pub fn eager_mcp_tool_allowed(name: &str, policy: Option<&ToolAccessPolicy>) -> bool {
+    policy.is_none_or(|policy| policy.is_tool_allowed(name))
+}
+
+/// Register an eager MCP tool wrapper into `tools` (and the delegate handle,
+/// when present) only if `policy` admits it. Returns `true` when the tool was
+/// registered, `false` when the policy dropped it.
+pub fn register_eager_mcp_tool_if_allowed(
+    wrapper: std::sync::Arc<dyn Tool>,
+    tools: &mut Vec<Box<dyn Tool>>,
+    delegate_handle: Option<&crate::DelegateParentToolsHandle>,
+    policy: Option<&ToolAccessPolicy>,
+) -> bool {
+    if !eager_mcp_tool_allowed(wrapper.name(), policy) {
+        return false;
+    }
+    if let Some(handle) = delegate_handle {
+        handle.write().push(std::sync::Arc::clone(&wrapper));
+    }
+    tools.push(Box::new(crate::wrappers::ArcToolRef(wrapper)));
+    true
+}
+
 /// Built-in tool that fetches full schemas for deferred MCP tools.
 pub struct ToolSearchTool {
     deferred: DeferredMcpToolSet,

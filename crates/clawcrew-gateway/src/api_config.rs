@@ -2695,13 +2695,11 @@ pub(crate) mod tests {
             model: "test-model".into(),
             temperature: None,
             mem: memory.clone(),
-            memory_strategy: Arc::new(
-                clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
-                    memory,
-                    clawcrew_config::schema::MemoryConfig::default(),
-                    std::path::PathBuf::new(),
-                ),
-            ),
+            memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+                memory,
+                clawcrew_config::schema::MemoryConfig::default(),
+                std::path::PathBuf::new(),
+            )),
             auto_save: false,
             pairing: Arc::new(PairingGuard::new(
                 false,
@@ -3957,7 +3955,7 @@ pub(crate) mod tests {
 
     #[test]
     fn scrub_credentials_catches_credential_shaped_strings() {
-        use clawcrew_runtime::agent::loop_::scrub_credentials;
+        use galleon_security_scrub::scrub_credentials;
 
         let cases = [
             // Field=value style log line.

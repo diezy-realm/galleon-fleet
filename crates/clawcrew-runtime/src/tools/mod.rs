@@ -84,9 +84,6 @@ pub use clawcrew_tools::linkedin::LinkedInTool;
 pub use clawcrew_tools::llm_task::LlmTaskTool;
 pub use clawcrew_tools::mcp_client::{McpRegistry, McpServer};
 pub use clawcrew_tools::mcp_context;
-pub use clawcrew_tools::mcp_transport::{
-    McpCommandBoundary, current_mcp_command_boundary, set_mcp_command_boundary,
-};
 pub use clawcrew_tools::mcp_deferred::{
     ActivatedToolSet, DeferredMcpToolSet, build_deferred_tools_section,
     build_deferred_tools_section_excluding, build_deferred_tools_section_filtered,
@@ -94,6 +91,9 @@ pub use clawcrew_tools::mcp_deferred::{
 pub use clawcrew_tools::mcp_prompts_tool::McpPromptsTool;
 pub use clawcrew_tools::mcp_resources_tool::McpResourcesTool;
 pub use clawcrew_tools::mcp_tool::McpToolWrapper;
+pub use clawcrew_tools::mcp_transport::{
+    McpCommandBoundary, current_mcp_command_boundary, set_mcp_command_boundary,
+};
 pub use clawcrew_tools::memory_export::MemoryExportTool;
 pub use clawcrew_tools::memory_forget::MemoryForgetTool;
 pub use clawcrew_tools::memory_purge::MemoryPurgeTool;
@@ -170,60 +170,16 @@ use crate::security::{Sandbox, SecurityPolicy, create_sandbox};
 use crate::sop::audit::SopAuditLogger;
 use crate::sop::engine::SopEngine;
 use async_trait::async_trait;
+use clawcrew_config::schema::{AliasedAgentConfig, Config};
+use clawcrew_memory::Memory;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use clawcrew_config::schema::{AliasedAgentConfig, Config};
-use clawcrew_memory::Memory;
 
 pub type PerToolChannelHandle =
     Arc<RwLock<HashMap<String, Arc<dyn clawcrew_api::channel::Channel>>>>;
 
-/// Shared handle to the delegate tool's parent-tools list.
-/// Callers can push additional tools (e.g. MCP wrappers) after construction.
-pub type DelegateParentToolsHandle = Arc<RwLock<Vec<Arc<dyn Tool>>>>;
-
-/// Thin wrapper that makes an `Arc<dyn Tool>` usable as `Box<dyn Tool>`.
-pub struct ArcToolRef(pub Arc<dyn Tool>);
-// ArcToolRef is the public constructor name for ArcToolWrapper
-
-#[async_trait]
-impl Tool for ArcToolRef {
-    fn name(&self) -> &str {
-        self.0.name()
-    }
-
-    fn description(&self) -> &str {
-        self.0.description()
-    }
-
-    fn parameters_schema(&self) -> serde_json::Value {
-        self.0.parameters_schema()
-    }
-
-    fn output_schema(&self) -> Option<serde_json::Value> {
-        self.0.output_schema()
-    }
-
-    fn param_domains(&self) -> Vec<(&'static str, ::clawcrew_api::tool::OptionDomain)> {
-        self.0.param_domains()
-    }
-
-    // Forward `spec()` so inner overrides keep their `Arc`-shared parameter
-    // schemas; the trait default would rebuild the spec from
-    // `parameters_schema()`, deep-cloning MCP schemas every loop iteration.
-    fn spec(&self) -> clawcrew_api::tool::ToolSpec {
-        self.0.spec()
-    }
-
-    fn invocation_triggers(&self) -> Vec<String> {
-        self.0.invocation_triggers()
-    }
-
-    async fn execute(&self, args: serde_json::Value) -> anyhow::Result<ToolResult> {
-        self.0.execute(args).await
-    }
-}
+pub use clawcrew_tools::{ArcToolRef, DelegateParentToolsHandle};
 
 /// Serply credential override state for `WebSearchTool`.
 ///
@@ -2432,11 +2388,11 @@ fn register_plugin_tools(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use clawcrew_config::schema::{
         ApprovalGroupConfig, ApprovalPolicyConfig, BrowserConfig, Config, MemoryConfig,
         SopApprovalConfig,
     };
+    use tempfile::TempDir;
 
     #[test]
     fn git_write_boundary_rejects_docker_runtime_writes() {
@@ -5187,7 +5143,6 @@ permissions = ["http_client"]
             "full runtime-profile override should omit read_skill even when global is compact"
         );
     }
-
 
     // ── Regression: alias-specific provider config ───────────────────
 

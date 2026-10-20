@@ -1,7 +1,6 @@
 use clawcrew_api::attribution::{Attributable, Role, ToolKind, ToolProvenance};
 use clawcrew_api::tool_attribution;
 
-use crate::tools::ArcToolRef;
 use crate::tools::cron_add::CronAddTool;
 use crate::tools::cron_list::CronListTool;
 use crate::tools::cron_remove::CronRemoveTool;
@@ -68,17 +67,5 @@ impl Attributable for SkillBuiltinTool {
     // when it delegates execution to a native target.
     fn tool_provenance(&self) -> ToolProvenance {
         ToolProvenance::Extension
-    }
-}
-
-impl Attributable for ArcToolRef {
-    fn role(&self) -> Role {
-        self.0.role()
-    }
-    fn alias(&self) -> &str {
-        self.0.alias()
-    }
-    fn tool_provenance(&self) -> ToolProvenance {
-        self.0.tool_provenance()
     }
 }

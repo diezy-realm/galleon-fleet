@@ -28,20 +28,20 @@ pub mod openrouter;
 pub mod openrouter_catalog;
 pub mod pricing;
 pub mod rate_limit;
-pub mod reliable;
 pub mod reliability;
+pub mod reliable;
 pub mod router;
 pub mod safeguard_notice;
 pub(crate) mod stream_guard;
 pub mod telnyx;
+pub mod terminal_error;
 pub mod traits;
 pub mod vision_override;
 
 pub use anthropic::AnthropicRefusalError;
 pub use dispatch::{AccountedChatResponse, ProviderDispatch, ProviderDispatchRef};
 pub use rate_limit::{
-    ProviderRateLimitError, ProviderRateLimitGate, ProviderRateLimitPermit,
-    ProviderRateLimitPolicy,
+    ProviderRateLimitError, ProviderRateLimitGate, ProviderRateLimitPermit, ProviderRateLimitPolicy,
 };
 pub use reliable::{
     ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
@@ -2024,13 +2024,7 @@ fn create_resilient_model_provider_from_ref_with_model_override(
             primary_model_override,
         )
     } else {
-        create_resilient_model_provider_with_options(
-            name,
-            api_key,
-            api_url,
-            reliability,
-            options,
-        )
+        create_resilient_model_provider_with_options(name, api_key, api_url, reliability, options)
     }
 }
 
@@ -3420,9 +3414,9 @@ mod tests {
     #[tokio::test]
     async fn routed_alias_uses_call_model_instead_of_configured_pin() {
         use axum::{Json, Router, extract::State, http::StatusCode, routing::post};
+        use clawcrew_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
         use serde_json::{Value, json};
         use std::sync::{Arc, Mutex};
-        use clawcrew_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
 
         type Capture = Arc<Mutex<Option<String>>>;
 
@@ -3875,10 +3869,10 @@ mod tests {
         // operator's policy, dropping allowed attachments. Drive a real request
         // and count the images that actually leave.
         use axum::{Json, Router, extract::State, http::StatusCode, routing::post};
-        use serde_json::{Value, json};
-        use std::sync::{Arc, Mutex};
         use clawcrew_api::model_provider::ChatRequest;
         use clawcrew_config::schema::Config;
+        use serde_json::{Value, json};
+        use std::sync::{Arc, Mutex};
 
         type Capture = Arc<Mutex<Option<String>>>;
 
@@ -6108,8 +6102,8 @@ async fn fetch_openai_compatible_context_window(
 mod context_window_discovery_tests {
     use super::*;
     use axum::{Router, extract::State, http::HeaderMap, routing::get};
-    use std::sync::{Arc, Mutex};
     use clawcrew_config::schema::ModelProviderConfig;
+    use std::sync::{Arc, Mutex};
 
     /// Every `GET /models` request the discovery path made, as
     /// `(path, Authorization header or "<none>")`.

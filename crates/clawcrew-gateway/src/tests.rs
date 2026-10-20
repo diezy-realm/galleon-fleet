@@ -7,7 +7,7 @@ use axum::response::IntoResponse;
 use clawcrew_api::channel::ChannelMessage;
 use clawcrew_memory::{Memory, MemoryCategory, MemoryEntry};
 use clawcrew_providers::ModelProvider;
-use clawcrew_runtime::agent::loop_::{mcp_tool_access_policy, register_eager_mcp_tool_if_allowed};
+use clawcrew_tools::tool_search::{mcp_tool_access_policy, register_eager_mcp_tool_if_allowed};
 use http_body_util::BodyExt;
 use parking_lot::{Mutex, RwLock};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};

@@ -1,115 +1,19 @@
-use crate::cost::CostTracker;
-use crate::cost::types::{BudgetCheck, TokenUsage as CostTokenUsage};
+use crate::cost::types::TokenUsage as CostTokenUsage;
+use clawcrew_providers::pricing::ModelRates;
 use parking_lot::Mutex;
 use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, OnceLock};
-use clawcrew_config::schema::Config;
-use clawcrew_providers::pricing::ModelRates;
+use std::sync::OnceLock;
 
 // ── Cost tracking via task-local ──
-
-pub type ModelProviderPricing = HashMap<String, HashMap<String, f64>>;
-
-/// Per-scope token/cost accumulator derived from the usage events emitted
-/// during a single task-local runtime invocation.
-///
-/// `input_tokens`/`output_tokens`/`cost_usd` accumulate every billable
-/// attempt (accepted + rejected) for budgets, persistence, and peer scopes.
-/// `last_input_tokens` is the accepted-only context-window fill: only the
-/// accepted attempt may set it (see `settle_provider_attempts` and the
-/// accepted-response record paths). It is a separate fact from the totals —
-/// do not derive one from the other.
-#[derive(Default, Clone, Copy, Debug)]
-pub struct TurnUsage {
-    pub input_tokens: u64,
-    pub output_tokens: u64,
-    pub cost_usd: f64,
-    pub last_input_tokens: u64,
-}
 
 pub use clawcrew_config::cost::pricing::{
     build_model_provider_pricing, build_type_level_model_provider_pricing, provider_pricing,
 };
-
-pub fn tool_loop_cost_tracking_context_for_agent(
-    config: &Config,
-    agent_alias: &str,
-) -> Option<ToolLoopCostTrackingContext> {
-    CostTracker::get_or_init_global(config.cost.clone(), &config.data_dir)
-        .map(|tracker| tool_loop_cost_tracking_context_from_tracker(config, agent_alias, tracker))
-}
-
-pub fn tool_loop_cost_tracking_context_from_tracker(
-    config: &Config,
-    agent_alias: &str,
-    tracker: Arc<CostTracker>,
-) -> ToolLoopCostTrackingContext {
-    ToolLoopCostTrackingContext::new(tracker, Arc::new(build_model_provider_pricing(config)))
-        .with_agent_alias(agent_alias)
-}
-
-/// Context for cost tracking within the tool call loop.
-/// Scoped via `tokio::task_local!` at call sites (channels, gateway).
-#[derive(Clone)]
-pub struct ToolLoopCostTrackingContext {
-    /// Shared cost tracker. `None` for usage-only contexts that accumulate
-    /// per-turn token totals without persisting cost records or enforcing
-    /// budgets (see [`Self::usage_only`]).
-    pub tracker: Option<Arc<CostTracker>>,
-    pub model_provider_pricing: Arc<ModelProviderPricing>,
-    /// Per-scope usage accumulator so wrapping code can read token/cost
-    /// totals after the scoped future exits (without racing concurrent
-    /// traffic sharing the same tracker).
-    pub turn_usage: Arc<Mutex<TurnUsage>>,
-    /// Alias of the agent driving this turn. Stamped onto persisted
-    /// `CostRecord`s so `/api/cost?agent=<alias>` can attribute spend.
-    pub agent_alias: Option<String>,
-}
-
-impl ToolLoopCostTrackingContext {
-    pub fn new(
-        tracker: Arc<CostTracker>,
-        model_provider_pricing: Arc<ModelProviderPricing>,
-    ) -> Self {
-        Self {
-            tracker: Some(tracker),
-            model_provider_pricing,
-            turn_usage: Arc::new(Mutex::new(TurnUsage::default())),
-            agent_alias: None,
-        }
-    }
-
-    pub fn usage_only() -> Self {
-        Self {
-            tracker: None,
-            model_provider_pricing: Arc::new(ModelProviderPricing::new()),
-            turn_usage: Arc::new(Mutex::new(TurnUsage::default())),
-            agent_alias: None,
-        }
-    }
-
-    /// Attach an agent alias to this context so subsequent
-    /// `record_tool_loop_cost_usage` calls stamp records with it.
-    #[must_use]
-    pub fn with_agent_alias(mut self, agent_alias: impl Into<String>) -> Self {
-        self.agent_alias = Some(agent_alias.into());
-        self
-    }
-
-    pub fn snapshot_turn_usage(&self) -> TurnUsage {
-        TOOL_LOOP_TURN_USAGE
-            .try_with(|turn_usage| turn_usage.as_ref().map(|u| *u.lock()).unwrap_or_default())
-            .unwrap_or_else(|_| *self.turn_usage.lock())
-    }
-}
-
-tokio::task_local! {
-    pub static TOOL_LOOP_COST_TRACKING_CONTEXT: Option<ToolLoopCostTrackingContext>;
-}
-
-tokio::task_local! {
-    pub static TOOL_LOOP_TURN_USAGE: Option<Arc<Mutex<TurnUsage>>>;
-}
+pub use clawcrew_config::cost::{
+    BudgetCheck, ModelProviderPricing, TOOL_LOOP_COST_TRACKING_CONTEXT, TOOL_LOOP_TURN_USAGE,
+    ToolLoopCostTrackingContext, TurnUsage, tool_loop_cost_tracking_context_for_agent,
+    tool_loop_cost_tracking_context_from_tracker,
+};
 
 fn resolve_rates_opt(pricing: &HashMap<String, f64>, model: &str) -> ModelRates {
     let try_lookup = |key: &str| -> ModelRates {
