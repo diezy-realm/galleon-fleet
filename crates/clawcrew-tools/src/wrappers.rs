@@ -1,10 +1,10 @@
 //! Generic tool wrappers for crosscutting concerns.
 
 use async_trait::async_trait;
-use std::sync::Arc;
 use clawcrew_api::attribution::{Attributable, Role, ToolProvenance};
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use clawcrew_config::policy::SecurityPolicy;
+use std::sync::Arc;
 
 /// Type alias for a path-extraction closure used by [`PathGuardedTool`].
 type PathExtractor = dyn Fn(&serde_json::Value) -> Option<String> + Send + Sync;
@@ -195,10 +195,10 @@ impl<T: Tool> Tool for PathGuardedTool<T> {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    use tokio::sync::Notify;
     use clawcrew_config::autonomy::AutonomyLevel;
     use clawcrew_config::policy::SecurityPolicy;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use tokio::sync::Notify;
 
     clawcrew_api::mock_tool_attribution!(CountingTool);
 
@@ -695,4 +695,3 @@ impl Tool for ArcToolRef {
         self.0.execute(args).await
     }
 }
-

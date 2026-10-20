@@ -110,7 +110,6 @@ pub fn register_eager_mcp_tool_if_allowed(
     true
 }
 
-
 /// Built-in tool that fetches full schemas for deferred MCP tools.
 pub struct ToolSearchTool {
     deferred: DeferredMcpToolSet,
