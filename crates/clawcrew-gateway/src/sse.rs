@@ -778,19 +778,17 @@ mod tests {
     fn factory_observer_events_reach_broadcast_hook() {
         let _guard = HOOK_TEST_LOCK.lock();
 
-        clawcrew_runtime::observability::clear_broadcast_hook();
+        clawcrew_api::observability_traits::clear_broadcast_hook();
 
         let (tx, mut rx) = tokio::sync::broadcast::channel(16);
         let buffer = Arc::new(EventBuffer::new(16));
         let bo: Arc<dyn Observer> = Arc::new(BroadcastObserver::new(tx, buffer.clone()));
-        clawcrew_runtime::observability::set_broadcast_hook(bo);
+        clawcrew_api::observability_traits::set_broadcast_hook(bo);
 
-        // Same factory call site as `process_message` in the agent loop.
-        let cfg = clawcrew_config::schema::ObservabilityConfig {
-            backend: clawcrew_config::schema::ObservabilityBackend::None,
-            ..Default::default()
-        };
-        let observer = clawcrew_runtime::observability::create_observer(&cfg);
+        // Same factory call site as `process_message` in the agent loop: TeeObserver with NoopObserver primary.
+        let observer = clawcrew_api::observability_traits::TeeObserver::new(Box::new(
+            clawcrew_api::observability_traits::NoopObserver,
+        ));
 
         observer.record_event(&ObserverEvent::ToolCall {
             parent_agent_alias: None,
@@ -819,7 +817,7 @@ mod tests {
             "broadcast events must also land in the buffer"
         );
 
-        clawcrew_runtime::observability::clear_broadcast_hook();
+        clawcrew_api::observability_traits::clear_broadcast_hook();
     }
 
     /// Pins the `/api/events/history` surface for the turn-lifecycle
@@ -832,19 +830,17 @@ mod tests {
     fn agent_lifecycle_events_reach_history_payload_via_broadcast_hook() {
         let _guard = HOOK_TEST_LOCK.lock();
 
-        clawcrew_runtime::observability::clear_broadcast_hook();
+        clawcrew_api::observability_traits::clear_broadcast_hook();
 
         let (tx, _rx) = tokio::sync::broadcast::channel(16);
         let buffer = Arc::new(EventBuffer::new(16));
         let bo: Arc<dyn Observer> = Arc::new(BroadcastObserver::new(tx, buffer.clone()));
-        clawcrew_runtime::observability::set_broadcast_hook(bo);
+        clawcrew_api::observability_traits::set_broadcast_hook(bo);
 
-        // Same factory call site as the channel orchestrator and agent loop.
-        let cfg = clawcrew_config::schema::ObservabilityConfig {
-            backend: clawcrew_config::schema::ObservabilityBackend::None,
-            ..Default::default()
-        };
-        let observer = clawcrew_runtime::observability::create_observer(&cfg);
+        // Same factory call site as the channel orchestrator and agent loop: TeeObserver with NoopObserver primary.
+        let observer = clawcrew_api::observability_traits::TeeObserver::new(Box::new(
+            clawcrew_api::observability_traits::NoopObserver,
+        ));
 
         observer.record_event(&ObserverEvent::AgentStart {
             model_provider: "p".into(),
@@ -883,7 +879,7 @@ mod tests {
             assert_eq!(event["channel"], "telegram");
         }
 
-        clawcrew_runtime::observability::clear_broadcast_hook();
+        clawcrew_api::observability_traits::clear_broadcast_hook();
     }
 
     /// Warning follow-up (non-persistent boundary): even if a credential-marked

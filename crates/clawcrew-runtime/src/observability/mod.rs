@@ -22,15 +22,12 @@ pub use noop::NoopObserver;
 pub use otel::OtelObserver;
 #[cfg(feature = "observability-prometheus")]
 pub use prometheus::PrometheusObserver;
-pub use traits::{Observer, ObserverEvent};
+pub use traits::{Observer, ObserverEvent, ObserverMetric};
 #[allow(unused_imports)]
 pub use verbose::VerboseObserver;
 
-use std::any::Any;
-use std::sync::{Arc, OnceLock};
+use std::sync::Arc;
 
-use parking_lot::RwLock;
-use traits::ObserverMetric;
 use clawcrew_config::schema::{ObservabilityBackend, ObservabilityConfig};
 
 /// Drop-safe lifecycle bracket for one logical agent turn.
@@ -38,84 +35,11 @@ use clawcrew_config::schema::{ObservabilityBackend, ObservabilityConfig};
 /// Construction emits exactly one [`ObserverEvent::AgentStart`]. Calling
 pub use clawcrew_api::observability_traits::AgentTurnGuard;
 
-/// Process-wide broadcast hook installed by long-running subsystems (today: the
-/// gateway) so that events emitted by observers built in *other* subsystems —
-/// notably the agent loop's `process_message` — also fan out to the SSE
-/// broadcast channel. Without this, observers created per call site stay
-/// isolated and `/api/events` only sees the gateway's own direct emissions.
-///
-/// Uses `parking_lot::RwLock` so the event-recording path never has to handle
-/// lock poisoning: a panic inside a hook would not silently disable the entire
-/// observability channel on subsequent calls.
-static BROADCAST_HOOK: OnceLock<RwLock<BroadcastHookState>> = OnceLock::new();
-
-struct BroadcastHookEntry {
-    scoped_id: Option<u64>,
-    observer: Arc<dyn Observer>,
-}
-
-#[derive(Default)]
-struct BroadcastHookState {
-    next_scoped_id: u64,
-    entries: Vec<BroadcastHookEntry>,
-}
-
-impl BroadcastHookState {
-    fn current(&self) -> Option<Arc<dyn Observer>> {
-        self.entries.last().map(|entry| entry.observer.clone())
-    }
-}
-
-fn broadcast_hook_slot() -> &'static RwLock<BroadcastHookState> {
-    BROADCAST_HOOK.get_or_init(|| RwLock::new(BroadcastHookState::default()))
-}
-
-/// Install a process-wide observer that will receive every event recorded
-/// through observers built by [`create_observer`]. Calling this again replaces
-/// the previous hook.
-pub fn set_broadcast_hook(observer: Arc<dyn Observer>) {
-    let mut slot = broadcast_hook_slot().write();
-    slot.entries.clear();
-    slot.entries.push(BroadcastHookEntry {
-        scoped_id: None,
-        observer,
-    });
-}
-
-#[must_use = "hold the guard for as long as the broadcast hook should remain installed"]
-pub struct BroadcastHookGuard {
-    scoped_id: u64,
-}
-
-impl Drop for BroadcastHookGuard {
-    fn drop(&mut self) {
-        let mut slot = broadcast_hook_slot().write();
-        slot.entries
-            .retain(|entry| entry.scoped_id != Some(self.scoped_id));
-    }
-}
-
-/// Install a process-wide observer and return a guard that clears it on drop.
-#[must_use = "hold the guard for as long as the broadcast hook should remain installed"]
-pub fn set_scoped_broadcast_hook(observer: Arc<dyn Observer>) -> BroadcastHookGuard {
-    let mut slot = broadcast_hook_slot().write();
-    let scoped_id = slot.next_scoped_id;
-    slot.next_scoped_id = slot.next_scoped_id.wrapping_add(1);
-    slot.entries.push(BroadcastHookEntry {
-        scoped_id: Some(scoped_id),
-        observer,
-    });
-    BroadcastHookGuard { scoped_id }
-}
-
-/// Remove the broadcast hook, if any. Intended for tests and orderly shutdown.
-pub fn clear_broadcast_hook() {
-    broadcast_hook_slot().write().entries.clear();
-}
-
-fn current_broadcast_hook() -> Option<Arc<dyn Observer>> {
-    broadcast_hook_slot().read().current()
-}
+/// Re-export process-wide broadcast hook and TeeObserver from the leaf SSOT (`clawcrew_api::observability_traits`).
+pub use clawcrew_api::observability_traits::{
+    BroadcastHookGuard, TeeObserver, clear_broadcast_hook, current_broadcast_hook,
+    set_broadcast_hook, set_scoped_broadcast_hook,
+};
 
 /// Guard that flushes its observer on drop — the telemetry analogue of
 /// [`AgentTurnGuard`]. Held for the lifetime of a short-lived agent
@@ -165,41 +89,6 @@ impl Drop for FlushGuard {
     }
 }
 
-/// Wrapper that forwards every event to a primary observer plus the
-/// process-wide broadcast hook (when set). Metrics flow only to the primary.
-struct TeeObserver {
-    primary: Box<dyn Observer>,
-}
-
-impl Observer for TeeObserver {
-    fn record_event(&self, event: &ObserverEvent) {
-        self.primary.record_event(event);
-        if let Some(hook) = current_broadcast_hook() {
-            hook.record_event(event);
-        }
-    }
-
-    fn record_metric(&self, metric: &ObserverMetric) {
-        self.primary.record_metric(metric);
-    }
-
-    fn flush(&self) {
-        self.primary.flush();
-    }
-
-    fn name(&self) -> &str {
-        // Delegate so callers (and tests) see the underlying backend name,
-        // not the internal wrapper.
-        self.primary.name()
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        // Expose the primary so downcasts (e.g. to PrometheusObserver in the
-        // gateway's /metrics handler) keep working transparently.
-        self.primary.as_any()
-    }
-}
-
 /// Emit startup warnings for any non-`Off` OTel content policy. Behavior is
 /// unchanged from the pre-isolation inline block: a non-`Off` GenAI or tool
 /// I/O policy surfaces a privacy reminder at observer construction time.
@@ -245,9 +134,7 @@ fn warn_otel_content_policy(config: OtelContentConfig) {
 
 /// Factory: create the right observer from config
 pub fn create_observer(config: &ObservabilityConfig) -> Box<dyn Observer> {
-    Box::new(TeeObserver {
-        primary: create_primary_observer(config),
-    })
+    Box::new(TeeObserver::new(create_primary_observer(config)))
 }
 
 fn create_primary_observer(config: &ObservabilityConfig) -> Box<dyn Observer> {

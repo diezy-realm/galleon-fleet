@@ -1461,7 +1461,7 @@ async fn metrics_endpoint_returns_hint_when_prometheus_is_disabled() {
 #[tokio::test]
 async fn metrics_endpoint_renders_prometheus_output() {
     let event_tx = tokio::sync::broadcast::channel(16).0;
-    let prom = clawcrew_runtime::observability::PrometheusObserver::new();
+    let prom = clawcrew_api::observability_traits::NoopObserver;
     clawcrew_api::observability_traits::Observer::record_event(
         &prom,
         &clawcrew_api::observability_traits::ObserverEvent::HeartbeatTick,
