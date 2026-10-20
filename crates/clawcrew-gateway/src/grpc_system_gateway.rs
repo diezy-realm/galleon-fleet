@@ -36,6 +36,8 @@ pub struct SystemGatewayService {
     memory: Option<std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>>,
     /// Device registry backed by SQLite for SSOT device pairing (BG-C2 / T-08)
     device_registry: Option<std::sync::Arc<crate::api_pairing::DeviceRegistry>>,
+    /// Optional ClawCrew configuration for resolving agent aliases (BL-001 / SPEC-001)
+    config: Option<std::sync::Arc<clawcrew_config::schema::Config>>,
 }
 
 impl std::fmt::Debug for SystemGatewayService {
@@ -78,7 +80,14 @@ impl SystemGatewayService {
             auth_token: None,
             memory,
             device_registry,
+            config: None,
         }
+    }
+
+    /// Configure a custom configuration for agent alias resolution (BL-001 / SPEC-001)
+    pub fn with_config(mut self, config: std::sync::Arc<clawcrew_config::schema::Config>) -> Self {
+        self.config = Some(config);
+        self
     }
 
     /// Configure a custom device registry for device pairing SSOT (BG-C2 / T-08)
@@ -670,8 +679,63 @@ impl SystemGateway for SystemGatewayService {
         let req = request.into_inner();
         let (tx, rx) = tokio::sync::mpsc::channel(32);
         let model_provider = self.model_provider.clone();
+        let config = self.config.clone();
 
         ::clawcrew_spawn::spawn!(async move {
+            let agent_alias = req
+                .agent_alias
+                .as_deref()
+                .map(str::trim)
+                .filter(|s| !s.is_empty());
+
+            let agent_config = agent_alias.and_then(|alias| {
+                if let Some(ref cfg) = config {
+                    if let Some(agent) = cfg.agents.get(alias) {
+                        ::clawcrew_log::record!(
+                            DEBUG,
+                            ::clawcrew_log::Event::new(
+                                module_path!(),
+                                ::clawcrew_log::Action::Resolve
+                            ),
+                            &format!(
+                                "Resolved agent alias `{}` to model_provider `{}`",
+                                alias, agent.model_provider
+                            )
+                        );
+                        Some(agent.clone())
+                    } else {
+                        ::clawcrew_log::record!(
+                            WARN,
+                            ::clawcrew_log::Event::new(
+                                module_path!(),
+                                ::clawcrew_log::Action::Resolve
+                            ),
+                            &format!(
+                                "Agent alias `{}` not found in config, falling back to default",
+                                alias
+                            )
+                        );
+                        None
+                    }
+                } else {
+                    None
+                }
+            });
+
+            let effective_model = if let Some(ref agent_cfg) = agent_config {
+                if !agent_cfg.model_provider.is_empty() {
+                    agent_cfg.model_provider.to_string()
+                } else if !req.model.is_empty() {
+                    req.model.clone()
+                } else {
+                    "default".to_string()
+                }
+            } else if !req.model.is_empty() {
+                req.model.clone()
+            } else {
+                "default".to_string()
+            };
+
             if let Some(provider) = model_provider {
                 use futures_util::StreamExt;
                 let chat_messages: Vec<clawcrew_api::model_provider::ChatMessage> = req
@@ -682,12 +746,6 @@ impl SystemGateway for SystemGatewayService {
                         content: m.content.clone(),
                     })
                     .collect();
-
-                let effective_model = if req.model.is_empty() {
-                    "default".to_string()
-                } else {
-                    req.model.clone()
-                };
 
                 let mut stream = provider.stream_chat_with_history(
                     &chat_messages,
@@ -757,10 +815,26 @@ impl SystemGateway for SystemGatewayService {
                     .unwrap_or("Simulation response");
                 let words = prompt.split_whitespace().collect::<Vec<_>>();
 
+                let thought_delta = if let Some(alias) = agent_alias {
+                    if agent_config.is_some() {
+                        format!(
+                            "Processing session {} [agent: {}, model: {}]: ",
+                            req.session_id, alias, effective_model
+                        )
+                    } else {
+                        format!(
+                            "Processing session {} [unresolved agent: {}, fallback model: {}]: ",
+                            req.session_id, alias, effective_model
+                        )
+                    }
+                } else {
+                    format!("Processing session {}: ", req.session_id)
+                };
+
                 let _ = tx
                     .send(Ok(TurnToken {
                         event: Some(turn_token::Event::Token(TokenChunk {
-                            delta: format!("Processing session {}: ", req.session_id),
+                            delta: thought_delta,
                             is_thought: true,
                         })),
                     }))
@@ -1135,7 +1209,10 @@ impl SystemGateway for SystemGatewayService {
             },
         ];
 
-        Ok(attach_request_id(Response::new(GetNativeToolCatalogResponse { tools }), req_id.as_deref()))
+        Ok(attach_request_id(
+            Response::new(GetNativeToolCatalogResponse { tools }),
+            req_id.as_deref(),
+        ))
     }
 
     async fn get_system_metrics(
@@ -1387,6 +1464,7 @@ mod tests {
             tools: vec![],
             temperature: Some(0.7),
             max_tokens: Some(100),
+            agent_alias: None,
         };
 
         let response = svc.execute_turn(Request::new(req)).await?;
@@ -1420,6 +1498,137 @@ mod tests {
         assert!(received_thought, "expected at least one thought chunk");
         assert!(received_delta, "expected at least one text delta chunk");
         assert!(received_complete, "expected turn complete event");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_execute_turn_with_valid_agent_alias() -> Result<(), Box<dyn std::error::Error>> {
+        use futures_util::StreamExt;
+        let mut config = clawcrew_config::schema::Config::default();
+        let mut agent = clawcrew_config::schema::AliasedAgentConfig::default();
+        agent.model_provider = "anthropic.claude-3-5-sonnet".into();
+        config.agents.insert("navigator".to_string(), agent);
+
+        let svc = SystemGatewayService::new(None).with_config(std::sync::Arc::new(config));
+        let req = ExecuteTurnRequest {
+            session_id: "session-valid-alias".to_string(),
+            model: "fallback-model".to_string(),
+            system_prompt: "You are navigator".to_string(),
+            messages: vec![TurnChatMessage {
+                role: "user".to_string(),
+                content: "Plot course".to_string(),
+                tool_call_id: None,
+                name: None,
+            }],
+            tools: vec![],
+            temperature: Some(0.5),
+            max_tokens: Some(200),
+            agent_alias: Some("navigator".to_string()),
+        };
+
+        let response = svc.execute_turn(Request::new(req)).await?;
+        let mut stream = response.into_inner();
+        let mut thought_content = String::new();
+
+        while let Some(item) = stream.next().await {
+            let token = item?;
+            if let Some(turn_token::Event::Token(chunk)) = token.event {
+                if chunk.is_thought {
+                    thought_content.push_str(&chunk.delta);
+                }
+            }
+        }
+
+        assert!(
+            thought_content.contains("[agent: navigator, model: anthropic.claude-3-5-sonnet]"),
+            "expected thought content to include resolved agent alias and model provider, got: {thought_content}"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_execute_turn_with_unknown_agent_alias_fallback(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        use futures_util::StreamExt;
+        let config = clawcrew_config::schema::Config::default();
+        let svc = SystemGatewayService::new(None).with_config(std::sync::Arc::new(config));
+
+        let req = ExecuteTurnRequest {
+            session_id: "session-unknown-alias".to_string(),
+            model: "fallback-custom-model".to_string(),
+            system_prompt: "Unknown agent test".to_string(),
+            messages: vec![TurnChatMessage {
+                role: "user".to_string(),
+                content: "Status report".to_string(),
+                tool_call_id: None,
+                name: None,
+            }],
+            tools: vec![],
+            temperature: None,
+            max_tokens: None,
+            agent_alias: Some("ghost_agent".to_string()),
+        };
+
+        let response = svc.execute_turn(Request::new(req)).await?;
+        let mut stream = response.into_inner();
+        let mut thought_content = String::new();
+
+        while let Some(item) = stream.next().await {
+            let token = item?;
+            if let Some(turn_token::Event::Token(chunk)) = token.event {
+                if chunk.is_thought {
+                    thought_content.push_str(&chunk.delta);
+                }
+            }
+        }
+
+        assert!(
+            thought_content
+                .contains("[unresolved agent: ghost_agent, fallback model: fallback-custom-model]"),
+            "expected graceful fallback for unknown agent, got: {thought_content}"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_execute_turn_with_empty_agent_alias_fallback(
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        use futures_util::StreamExt;
+        let svc = SystemGatewayService::new(None);
+
+        let req = ExecuteTurnRequest {
+            session_id: "session-empty-alias".to_string(),
+            model: "".to_string(),
+            system_prompt: "Empty alias test".to_string(),
+            messages: vec![TurnChatMessage {
+                role: "user".to_string(),
+                content: "Ping".to_string(),
+                tool_call_id: None,
+                name: None,
+            }],
+            tools: vec![],
+            temperature: None,
+            max_tokens: None,
+            agent_alias: Some("   ".to_string()),
+        };
+
+        let response = svc.execute_turn(Request::new(req)).await?;
+        let mut stream = response.into_inner();
+        let mut thought_content = String::new();
+
+        while let Some(item) = stream.next().await {
+            let token = item?;
+            if let Some(turn_token::Event::Token(chunk)) = token.event {
+                if chunk.is_thought {
+                    thought_content.push_str(&chunk.delta);
+                }
+            }
+        }
+
+        assert!(
+            thought_content.contains("Processing session session-empty-alias: "),
+            "expected clean default formatting when agent_alias is whitespace, got: {thought_content}"
+        );
         Ok(())
     }
 

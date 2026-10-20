@@ -89,8 +89,8 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 
 	// 1. Prepare protobuf ExecuteTurnRequest for Rust SystemGateway
 	protoReq := &pb.ExecuteTurnRequest{
-		SessionId: req.SessionID,
-		Model:     "gpt-4o",
+		SessionId:  req.SessionID,
+		AgentAlias: &agentID,
 		Messages: []*pb.TurnChatMessage{
 			{Role: "user", Content: req.Prompt},
 		},
@@ -273,7 +273,8 @@ func (s *service) runSubagent(ctx context.Context, subagentID, task string, even
 	defer metrics.ActiveAgents.Dec()
 
 	stream, err := s.gateway.ExecuteTurn(ctx, &pb.ExecuteTurnRequest{
-		SessionId: fmt.Sprintf("subagent-%s", subagentID),
+		SessionId:  fmt.Sprintf("subagent-%s", subagentID),
+		AgentAlias: &subagentID,
 		Messages: []*pb.TurnChatMessage{
 			{Role: "system", Content: fmt.Sprintf("You are sub-agent '%s' tasked with: %s", subagentID, task)},
 			{Role: "user", Content: task},

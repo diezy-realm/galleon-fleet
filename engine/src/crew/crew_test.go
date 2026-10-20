@@ -100,3 +100,69 @@ func TestCrewCancelTurn(t *testing.T) {
 	for range eventCh {
 	}
 }
+
+func TestCrewAgentAliasResolution(t *testing.T) {
+	tests := []struct {
+		name               string
+		inputAgentID       string
+		expectedAgentAlias string
+	}{
+		{
+			name:               "explicit agentID passed as agent_alias",
+			inputAgentID:       "specialist_researcher",
+			expectedAgentAlias: "specialist_researcher",
+		},
+		{
+			name:               "empty agentID falls back to primary_agent",
+			inputAgentID:       "",
+			expectedAgentAlias: "primary_agent",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			gwClient, mockServer, cleanup := startMockGatewayServerWithRecorder(t)
+			defer cleanup()
+
+			dispatcher := crew.NewToolDispatcher(gwClient)
+			orchestrator := crew.NewService(dispatcher, gwClient)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+
+			turnReq := &crew.TurnRequest{
+				SessionID: "session_alias_test",
+				AgentID:   tc.inputAgentID,
+				Prompt:    "Verify agent alias forwarding",
+			}
+
+			eventCh := make(chan *crew.TurnEvent, 16)
+			errCh := make(chan error, 1)
+
+			go func() {
+				defer close(eventCh)
+				errCh <- orchestrator.StartTurn(ctx, turnReq, eventCh)
+			}()
+
+			for range eventCh {
+			}
+
+			if err := <-errCh; err != nil {
+				t.Fatalf("unexpected turn error: %v", err)
+			}
+
+			lastReq := mockServer.getLastRequest()
+			if lastReq == nil {
+				t.Fatalf("expected ExecuteTurn to be called, but got nil request")
+			}
+
+			if lastReq.GetAgentAlias() != tc.expectedAgentAlias {
+				t.Errorf("expected AgentAlias %q, got %q", tc.expectedAgentAlias, lastReq.GetAgentAlias())
+			}
+
+			if lastReq.GetModel() == "gpt-4o" {
+				t.Errorf("expected hardcoded Model 'gpt-4o' to be removed, but found %q", lastReq.GetModel())
+			}
+		})
+	}
+}
