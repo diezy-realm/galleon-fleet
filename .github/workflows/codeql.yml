@@ -21,10 +21,6 @@ name: CodeQL
 #                        on-demand scan of a branch before merge
 
 on:
-  push:
-    branches: [master]
-  schedule:
-    - cron: '37 5 * * *'   # daily at 05:37 UTC — random offset to spread load
   workflow_dispatch:
 
 # A scan of a superseded commit has no value: a newer push cancels any
@@ -43,9 +39,8 @@ jobs:
     name: Analyze (${{ matrix.language }})
     # Results upload to this repo's Security tab; skip on forks.
     if: github.repository == 'diezy-realm/galleon-fleet'
-    # Keep the fast interpreted-language scan on GitHub; give only Rust the
-    # existing closed Blacksmith toggle used by compile-heavy CI jobs.
-    runs-on: ${{ matrix.language == 'rust' && vars.CI_USE_BLACKSMITH == 'true' && 'blacksmith-8vcpu-ubuntu-2404' || 'ubuntu-latest' }}
+    # Manual only: private repos on the Free plan have no code scanning.
+    runs-on: [self-hosted, linux, galleon-heavy]
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -60,10 +55,6 @@ jobs:
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: 1.98.0
-
-      - name: Install system dependencies
-        if: matrix.language == 'rust'
-        run: sudo apt-get update -qq && sudo apt-get install -y libudev-dev
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0

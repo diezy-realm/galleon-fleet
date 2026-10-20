@@ -48,7 +48,7 @@ permissions:
 jobs:
   publish-scoop:
     name: Update Scoop Manifest
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: [self-hosted, linux, galleon-heavy]
     env:
       RELEASE_TAG: ${{ inputs.release_tag }}
       DRY_RUN: ${{ inputs.dry_run }}

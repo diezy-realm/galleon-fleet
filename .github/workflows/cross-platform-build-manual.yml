@@ -34,10 +34,10 @@ jobs:
       matrix:
         include:
           - name: Linux cross
-            os: blacksmith-4vcpu-ubuntu-2204
+            os: ubuntu-latest
             tool: cross
           - name: Windows Tauri CLI
-            os: blacksmith-4vcpu-windows-2025
+            os: windows-latest
             tool: tauri-cli
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -110,7 +110,7 @@ jobs:
   web:
     name: Build Web Dashboard
     if: ${{ !inputs.release_tools_only }}
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: [self-hosted, linux, galleon-heavy]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -149,39 +149,39 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: blacksmith-4vcpu-ubuntu-2404
+          - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             # Native Linux smoke-check build intentionally uses default linker.
             # CI gate (`ci.yml`) uses clang+mold for throughput optimization.
-          - os: blacksmith-4vcpu-ubuntu-2404
+          - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             use_cross: true
-          - os: blacksmith-4vcpu-ubuntu-2404
+          - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             cross_compiler: gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
             linker_env: CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER
             linker: aarch64-linux-gnu-gcc
-          - os: blacksmith-4vcpu-ubuntu-2404
+          - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
             use_cross: true
-          - os: blacksmith-4vcpu-ubuntu-2404
+          - os: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
             cross_compiler: gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
             linker_env: CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER
             linker: arm-linux-gnueabihf-gcc
-          - os: blacksmith-4vcpu-ubuntu-2404
+          - os: ubuntu-latest
             target: arm-unknown-linux-gnueabihf
             cross_compiler: gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
             linker_env: CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER
             linker: arm-linux-gnueabihf-gcc
-          - os: blacksmith-6vcpu-macos-15
+          - os: macos-latest
             target: aarch64-apple-darwin
-          - os: blacksmith-4vcpu-ubuntu-2404
+          - os: ubuntu-latest
             target: aarch64-linux-android
             ndk: true
-          - os: blacksmith-6vcpu-macos-15
+          - os: macos-latest
             target: x86_64-apple-darwin
-          - os: blacksmith-4vcpu-windows-2025
+          - os: windows-latest
             target: x86_64-pc-windows-msvc
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

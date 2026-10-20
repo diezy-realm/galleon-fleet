@@ -20,18 +20,13 @@ concurrency:
 
 jobs:
   validate-pin:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: [self-hosted, linux, galleon-light]
     steps:
       - name: Checkout with pinned submodule
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: recursive
           fetch-depth: 1
-
-      - name: Install gettext tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends gettext
 
       - name: Verify catalogues resolved at pinned commit
         run: |
