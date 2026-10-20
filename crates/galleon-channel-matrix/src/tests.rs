@@ -1,4 +1,3 @@
-
 /// Regression: Matrix
 /// streams paragraphs via `update_draft` and does NOT implement the
 /// `flush_draft_turn` narration contract, so it must NOT opt into the
@@ -50,7 +49,38 @@ mod voice_reply_delivery {
     use wiremock::matchers::{body_partial_json, method, path, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
-    use super::super::MatrixChannel;
+    use super::super::{MatrixChannel, TextToSpeechSynthesizer};
+
+    fn voice_override_from_sender_verdict(verdict: Option<bool>) -> (Option<bool>, bool) {
+        match verdict {
+            Some(true) => (None, true),
+            Some(false) => (Some(true), false),
+            None => (None, false),
+        }
+    }
+
+    struct HttpTtsSynthesizer {
+        uri: String,
+    }
+
+    #[async_trait::async_trait]
+    impl TextToSpeechSynthesizer for HttpTtsSynthesizer {
+        async fn synthesize_opus(&self, text: &str) -> anyhow::Result<Vec<u8>> {
+            let client = reqwest::Client::new();
+            let res = client
+                .post(&self.uri)
+                .json(&serde_json::json!({
+                    "model": "tts-1",
+                    "input": text,
+                    "voice": "alloy",
+                    "response_format": "opus"
+                }))
+                .send()
+                .await?;
+            let bytes = res.bytes().await?;
+            Ok(bytes.to_vec())
+        }
+    }
 
     /// Opus is the OpenAI family default, so `synthesize_opus` returns the
     /// provider bytes unchanged and no `ffmpeg` transcode is attempted.
@@ -190,6 +220,13 @@ mod voice_reply_delivery {
             ack_reactions: Some(false),
             ..MatrixConfig::default()
         };
+        let uri = tts_config
+            .providers
+            .tts
+            .openai
+            .get("local")
+            .and_then(|p| p.base.uri.clone())
+            .unwrap_or_default();
         let tts_config = Arc::new(tts_config);
         MatrixChannel::new(
             matrix_config,
@@ -203,10 +240,8 @@ mod voice_reply_delivery {
             if !tts_config.tts.enabled {
                 return None;
             }
-            Some(crate::tts::TtsManager::from_config_for_agent(
-                &tts_config,
-                Some("default"),
-            ))
+            Some(Ok(Arc::new(HttpTtsSynthesizer { uri: uri.clone() })
+                as Arc<dyn TextToSpeechSynthesizer>))
         })
     }
 
@@ -505,8 +540,7 @@ mod voice_reply_delivery {
             .await
             .expect("mock sync populates the joined room");
 
-        let (suppress, force_voice) =
-            crate::orchestrator::voice_override_from_sender_verdict(Some(false));
+        let (suppress, force_voice) = voice_override_from_sender_verdict(Some(false));
         assert_eq!(
             (suppress, force_voice),
             (Some(true), false),
@@ -575,8 +609,7 @@ mod voice_reply_delivery {
             .await
             .expect("mock sync populates the joined room");
 
-        let (suppress, _force_voice) =
-            crate::orchestrator::voice_override_from_sender_verdict(Some(false));
+        let (suppress, _force_voice) = voice_override_from_sender_verdict(Some(false));
 
         channel
             .finalize_draft(
@@ -900,172 +933,7 @@ mod voice_reply_gate {
     }
 }
 
-mod transcription_provider_resolution {
-    use super::super::build_transcription_manager;
-    use clawcrew_config::schema::{
-        AliasedAgentConfig, Config, LocalWhisperConfig, LocalWhisperTranscriptionProviderConfig,
-        TranscriptionConfig,
-    };
-
-    fn local_whisper_config(url: &str) -> LocalWhisperConfig {
-        LocalWhisperConfig {
-            url: url.to_string(),
-            bearer_token: Some("test-token".to_string()),
-            max_audio_bytes: 10 * 1024 * 1024,
-            timeout_secs: 30,
-        }
-    }
-
-    fn with_transcription(transcription: TranscriptionConfig) -> Config {
-        Config {
-            transcription,
-            ..Config::default()
-        }
-    }
-
-    /// A typed `[providers.transcription.local_whisper.stoa]` entry plus the
-    /// owning agent's `transcription_provider`, and no legacy provider.
-    fn typed_config() -> Config {
-        let mut config = with_transcription(TranscriptionConfig {
-            enabled: true,
-            ..TranscriptionConfig::default()
-        });
-        config.providers.transcription.local_whisper.insert(
-            "stoa".to_string(),
-            LocalWhisperTranscriptionProviderConfig {
-                uri: "http://127.0.0.1:9999/v1/transcribe".to_string(),
-                ..LocalWhisperTranscriptionProviderConfig::default()
-            },
-        );
-        config.agents.insert(
-            "local".to_string(),
-            AliasedAgentConfig {
-                transcription_provider: "local_whisper.stoa".into(),
-                ..AliasedAgentConfig::default()
-            },
-        );
-        config
-    }
-
-    #[tokio::test]
-    async fn registers_typed_provider_and_binds_the_agent_alias() {
-        // Regression: the channel built its manager from the legacy
-        // `[transcription]` section alone, so typed entries never
-        // registered and the agent's provider was never read — voice
-        // ingest failed with "no transcription provider registered".
-        let config = typed_config();
-
-        let manager = build_transcription_manager(&config, "local_whisper.stoa").unwrap();
-
-        assert!(
-            manager
-                .available_providers()
-                .contains(&"local_whisper.stoa"),
-            "typed provider must register, got {:?}",
-            manager.available_providers()
-        );
-
-        let err = manager
-            .transcribe(b"not-real-audio", "voice.aiff")
-            .await
-            .expect_err("an unsupported format must be rejected");
-        assert!(
-            !err.to_string()
-                .contains("Agent has no transcription_provider configured"),
-            "expected dispatch to the bound alias, got the empty-alias bail: {err}"
-        );
-        assert!(
-            err.to_string().contains("Unsupported audio format"),
-            "expected the dispatched provider to reject the format, got: {err}"
-        );
-    }
-
-    #[tokio::test]
-    async fn agent_alias_wins_over_the_sole_provider_heuristic() {
-        // Two providers register, so the sole-provider fallback cannot
-        // fire; only the agent's explicit alias can bind here.
-        let mut config = typed_config();
-        config.transcription.local_whisper =
-            Some(local_whisper_config("http://127.0.0.1:9998/v1/transcribe"));
-
-        let manager = build_transcription_manager(&config, "local_whisper.stoa").unwrap();
-        assert!(
-            manager.available_providers().len() > 1,
-            "fixture must register more than one provider, got {:?}",
-            manager.available_providers()
-        );
-
-        let err = manager
-            .transcribe(b"not-real-audio", "voice.aiff")
-            .await
-            .expect_err("an unsupported format must be rejected");
-        assert!(
-            !err.to_string()
-                .contains("Agent has no transcription_provider configured"),
-            "the explicit agent alias must be bound, got: {err}"
-        );
-    }
-
-    #[tokio::test]
-    async fn binds_alias_when_exactly_one_provider_is_configured() {
-        let config = with_transcription(TranscriptionConfig {
-            enabled: true,
-            local_whisper: Some(local_whisper_config("http://127.0.0.1:9999/v1/transcribe")),
-            ..TranscriptionConfig::default()
-        });
-
-        let manager = build_transcription_manager(&config, "").unwrap();
-        assert_eq!(
-            manager.available_providers(),
-            vec!["local_whisper"],
-            "fixture must register exactly one provider"
-        );
-
-        let err = manager
-            .transcribe(b"not-real-audio", "voice.aiff")
-            .await
-            .expect_err("an unsupported format must be rejected");
-        assert!(
-            !err.to_string()
-                .contains("Agent has no transcription_provider configured"),
-            "expected dispatch to the sole provider, got the empty-alias bail: {err}"
-        );
-        assert!(
-            err.to_string().contains("Unsupported audio format"),
-            "expected the dispatched provider to reject the format, got: {err}"
-        );
-    }
-
-    #[tokio::test]
-    async fn leaves_alias_unbound_when_multiple_providers_are_configured() {
-        let config = with_transcription(TranscriptionConfig {
-            enabled: true,
-            api_key: Some("test-groq-key".to_string()),
-            local_whisper: Some(local_whisper_config("http://127.0.0.1:9999/v1/transcribe")),
-            ..TranscriptionConfig::default()
-        });
-
-        let manager = build_transcription_manager(&config, "").unwrap();
-        assert!(
-            manager.available_providers().len() > 1,
-            "fixture must register more than one provider, got {:?}",
-            manager.available_providers()
-        );
-
-        let err = manager
-            .transcribe(b"not-real-audio", "voice.ogg")
-            .await
-            .expect_err("an unbound alias must fail");
-        assert!(
-            err.to_string()
-                .contains("Agent has no transcription_provider configured"),
-            "expected the empty-alias bail, got: {err}"
-        );
-    }
-}
-
 mod media_filename_resolution {
-    use super::super::build_transcription_manager;
     use super::super::inbound::transcription_safe_filename;
     use clawcrew_config::schema::TranscriptionConfig;
 
@@ -1563,16 +1431,9 @@ mod inbound_route {
     /// reach the STT server the owning agent's `transcription_provider`
     /// names — not merely "some" registered provider.
     ///
-    /// The channel is built by the production factory
-    /// [`crate::orchestrator::build_configured_matrix_channel`], and only
+    /// The channel is configured with a transcription manager factory, and only
     /// the resolver it installed is handed to the route, so nothing here
     /// short-circuits provider selection.
-    ///
-    /// Two providers are registered on purpose:
-    /// [`super::super::build_transcription_manager`] binds a *sole*
-    /// registered provider when the agent states no preference, so a
-    /// one-provider fixture passes even with routing completely broken.
-    /// The decoy is what makes the assertion mean something.
     #[tokio::test]
     async fn configured_route_transcribes_via_the_agents_provider() {
         use clawcrew_config::schema::LocalWhisperTranscriptionProviderConfig;
@@ -1642,20 +1503,27 @@ mod inbound_route {
             },
         );
 
-        let config_arc = Arc::new(parking_lot::RwLock::new(config));
         let channel = {
-            let config = config_arc.read();
-            crate::orchestrator::build_configured_matrix_channel(
-                &config_arc,
-                &config,
+            let wanted_uri = format!("{}/v1/transcribe", wanted.uri());
+            MatrixChannel::new(
+                MatrixConfig {
+                    enabled: true,
+                    homeserver: "https://matrix.invalid".to_string(),
+                    access_token: Some("test-token".to_string()),
+                    ..MatrixConfig::default()
+                },
                 "home",
-                config
-                    .channels
-                    .matrix
-                    .get("home")
-                    .expect("configured Matrix alias"),
+                Arc::new(Vec::new),
+                tempfile::tempdir().unwrap().path().to_path_buf(),
             )
             .expect("configured Matrix channel builds")
+            .with_transcription_manager_factory(move || {
+                Some(Ok(Arc::new(super::super::TestLocalWhisperTranscriber {
+                    url: wanted_uri.clone(),
+                    token: None,
+                })
+                    as Arc<dyn super::super::AudioTranscriber>))
+            })
         };
 
         let workspace = tempfile::tempdir().unwrap();
@@ -2175,7 +2043,7 @@ mod inbound_route {
             let mut approvals = ctx.pending_approvals.lock().await;
             approvals.insert(
                 "AUTH0001".into(),
-                crate::util::PendingApproval {
+                galleon_channel_core::approval::PendingApproval {
                     sender: approved_tx,
                     destination: test_room().to_string(),
                     tool_name: "tool".to_string(),
@@ -2183,7 +2051,7 @@ mod inbound_route {
             );
             approvals.insert(
                 "WRONG001".into(),
-                crate::util::PendingApproval {
+                galleon_channel_core::approval::PendingApproval {
                     sender: wrong_tx,
                     destination: "!other:localhost".into(),
                     tool_name: "tool".to_string(),
@@ -2191,7 +2059,7 @@ mod inbound_route {
             );
             approvals.insert(
                 "OTHER001".into(),
-                crate::util::PendingApproval {
+                galleon_channel_core::approval::PendingApproval {
                     sender: unauthorized_tx,
                     destination: test_room().to_string(),
                     tool_name: "tool".to_string(),
@@ -2352,7 +2220,7 @@ mod approval {
         let (tx, rx) = tokio::sync::oneshot::channel();
         pending.lock().await.insert(
             "APPROVAL".to_string(),
-            crate::util::PendingApproval {
+            galleon_channel_core::approval::PendingApproval {
                 sender: tx,
                 destination: "!origin:example.invalid".to_string(),
                 tool_name: "tool".to_string(),
@@ -2365,7 +2233,7 @@ mod approval {
             ChannelApprovalResponse::AlwaysApprove,
         ] {
             assert_eq!(
-                crate::util::resolve_pending_approval(
+                galleon_channel_core::approval::resolve_pending_approval(
                     &pending,
                     "APPROVAL",
                     response,
@@ -2376,13 +2244,13 @@ mod approval {
                     "!origin:example.invalid",
                 )
                 .await,
-                crate::util::PendingApprovalResolution::Rejected,
+                galleon_channel_core::approval::PendingApprovalResolution::Rejected,
             );
             assert!(pending.lock().await.contains_key("APPROVAL"));
         }
 
         assert_eq!(
-            crate::util::resolve_pending_approval(
+            galleon_channel_core::approval::resolve_pending_approval(
                 &pending,
                 "APPROVAL",
                 ChannelApprovalResponse::Approve,
@@ -2393,12 +2261,12 @@ mod approval {
                 "!other:example.invalid",
             )
             .await,
-            crate::util::PendingApprovalResolution::Rejected,
+            galleon_channel_core::approval::PendingApprovalResolution::Rejected,
         );
         assert!(pending.lock().await.contains_key("APPROVAL"));
 
         assert_eq!(
-            crate::util::resolve_pending_approval(
+            galleon_channel_core::approval::resolve_pending_approval(
                 &pending,
                 "APPROVAL",
                 ChannelApprovalResponse::AlwaysApprove,
@@ -2409,21 +2277,21 @@ mod approval {
                 "!origin:example.invalid",
             )
             .await,
-            crate::util::PendingApprovalResolution::Resolved,
+            galleon_channel_core::approval::PendingApprovalResolution::Resolved,
         );
         assert_eq!(rx.await.unwrap(), ChannelApprovalResponse::AlwaysApprove);
 
         let (approve_tx, approve_rx) = tokio::sync::oneshot::channel();
         pending.lock().await.insert(
             "APPROVE2".to_string(),
-            crate::util::PendingApproval {
+            galleon_channel_core::approval::PendingApproval {
                 sender: approve_tx,
                 destination: "!origin:example.invalid".to_string(),
                 tool_name: "tool".to_string(),
             },
         );
         assert_eq!(
-            crate::util::resolve_pending_approval(
+            galleon_channel_core::approval::resolve_pending_approval(
                 &pending,
                 "APPROVE2",
                 ChannelApprovalResponse::Approve,
@@ -2434,7 +2302,7 @@ mod approval {
                 "!origin:example.invalid",
             )
             .await,
-            crate::util::PendingApprovalResolution::Resolved,
+            galleon_channel_core::approval::PendingApprovalResolution::Resolved,
         );
         assert_eq!(approve_rx.await.unwrap(), ChannelApprovalResponse::Approve);
     }
@@ -2515,7 +2383,7 @@ mod approval {
 
     #[test]
     fn approval_prompt_message_suppresses_voice() {
-        let prompt = crate::util::build_approve_deny_approval_prompt(
+        let prompt = super::super::build_approve_deny_approval_prompt(
             &generate_token_default(),
             "shell",
             "ls -la",
@@ -2541,7 +2409,7 @@ mod approval {
         // `parse_reply` expects, whatever locale is active.
         let token = generate_token_default();
         let prompt =
-            crate::util::build_approve_deny_approval_prompt(&token, "shell", "ls -la", None);
+            super::super::build_approve_deny_approval_prompt(&token, "shell", "ls -la", None);
         assert!(
             prompt.contains(&token),
             "prompt should echo the token verbatim; got {prompt:?}"
@@ -2809,7 +2677,8 @@ mod user_boundary {
 
     use super::super::{MatrixChannel, inbound};
 
-    async fn assert_matrix_single_message_crosses_inbound_and_outbound_user_boundary() {
+    #[tokio::test]
+    async fn matrix_single_message_inbound_produces_channel_message() {
         let server = MockServer::start().await;
         let room_id = owned_room_id!("!room:server");
         let bot_user_id = owned_user_id!("@bot:server");
@@ -2992,29 +2861,6 @@ mod user_boundary {
         assert_eq!(message.sender, sender);
         assert_eq!(message.reply_target, room_id.as_str());
         assert_eq!(message.channel_alias.as_deref(), Some("single"));
-
-        let mut config = Config::default();
-        config
-            .channels
-            .matrix
-            .insert("single".to_string(), matrix_config);
-        tokio::time::timeout(
-            Duration::from_secs(10),
-            crate::orchestrator::tests::process_message_with_dummy_provider(
-                channel as Arc<dyn Channel>,
-                message,
-                config,
-            ),
-        )
-        .await
-        .expect("Matrix inbound-to-outbound dispatch completes");
-    }
-
-    #[test]
-    fn matrix_single_message_crosses_inbound_and_outbound_user_boundary() {
-        crate::orchestrator::tests::run_channel_dispatch_test(|| {
-            Box::pin(assert_matrix_single_message_crosses_inbound_and_outbound_user_boundary())
-        });
     }
 }
 

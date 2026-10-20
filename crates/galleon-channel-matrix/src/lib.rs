@@ -1,4 +1,6 @@
-//! Matrix channel using matrix-rust-sdk 0.16.
+#![recursion_limit = "256"]
+
+//! Matrix channel using matrix-rust-sdk 0.18.
 
 use std::{
     collections::{HashMap, HashSet},
@@ -34,6 +36,97 @@ use clawcrew_api::channel::{
     DraftProgressKind, RoomCreationOptions, RoomVisibility, SendMessage,
 };
 use clawcrew_config::schema::{MatrixConfig, MatrixStreamMode};
+
+/// Pluggable audio transcription backend for Matrix voice messages.
+#[async_trait]
+pub trait AudioTranscriber: Send + Sync {
+    async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String>;
+}
+
+/// Pluggable text-to-speech synthesis backend for Matrix voice notes.
+#[async_trait]
+pub trait TextToSpeechSynthesizer: Send + Sync {
+    async fn synthesize_opus(&self, text: &str) -> anyhow::Result<Vec<u8>>;
+}
+
+pub(crate) fn mime_for_audio(extension: &str) -> Option<&'static str> {
+    match extension.to_ascii_lowercase().as_str() {
+        "flac" => Some("audio/flac"),
+        "mp3" => Some("audio/mpeg"),
+        "m4a" => Some("audio/mp4"),
+        "ogg" | "oga" => Some("audio/ogg"),
+        "opus" => Some("audio/opus"),
+        "wav" => Some("audio/wav"),
+        "webm" => Some("audio/webm"),
+        _ => None,
+    }
+}
+
+pub(crate) fn extension_for_audio_mime(mime: &str) -> Option<&'static str> {
+    let mime = mime.split(';').next().unwrap_or(mime).trim();
+    match mime.to_ascii_lowercase().as_str() {
+        "audio/flac" => Some("flac"),
+        "audio/mpeg" | "audio/mp3" => Some("mp3"),
+        "audio/mp4" | "audio/x-m4a" => Some("m4a"),
+        "audio/ogg" => Some("ogg"),
+        "audio/opus" => Some("opus"),
+        "audio/wav" => Some("wav"),
+        "audio/webm" => Some("webm"),
+        _ => None,
+    }
+}
+
+fn approval_position_line(position: Option<(u32, u32)>) -> String {
+    match position {
+        Some((_, total)) if total <= 1 => String::new(),
+        Some((index, total)) => {
+            let label = galleon_i18n::get_required_cli_string_with_args(
+                "channel-approval-position-label",
+                &[
+                    ("index", index.to_string().as_str()),
+                    ("total", total.to_string().as_str()),
+                ],
+            );
+            format!("{label}\n")
+        }
+        None => String::new(),
+    }
+}
+
+pub(crate) fn build_approve_deny_approval_prompt(
+    token: &str,
+    tool_name: &str,
+    arguments_summary: &str,
+    position: Option<(u32, u32)>,
+) -> String {
+    let position_line = approval_position_line(position);
+    let heading = galleon_i18n::get_required_cli_string("channel-approval-heading-shout");
+    let tool_label = galleon_i18n::get_required_cli_string("channel-approval-tool-label");
+    let args_label = galleon_i18n::get_required_cli_string("channel-approval-args-label");
+    let approve_command = format!(
+        "{token} {}",
+        galleon_channel_core::approval::APPROVAL_REPLY_APPROVE
+    );
+    let deny_command = format!(
+        "{token} {}",
+        galleon_channel_core::approval::APPROVAL_REPLY_DENY
+    );
+    let always_command = format!(
+        "{token} {}",
+        galleon_channel_core::approval::APPROVAL_REPLY_ALWAYS
+    );
+    let reply = galleon_i18n::get_required_cli_string_with_args(
+        "channel-approval-reply-instruction-approve-deny",
+        &[
+            ("approve_command", approve_command.as_str()),
+            ("deny_command", deny_command.as_str()),
+            ("always_command", always_command.as_str()),
+        ],
+    );
+    format!(
+        "{heading}\n{position_line}{tool_label}: {tool_name}\n{args_label}: {arguments_summary}\n\n{reply}"
+    )
+}
 
 // ─── markers ───────────────────────────────────────────────────────────────
 mod markers {
@@ -195,10 +288,10 @@ mod mention {
 // ─── allowlist ─────────────────────────────────────────────────────────────
 mod allowlist {
     pub(super) fn user_allowed(allowed_users: &[String], sender: &str) -> bool {
-        crate::allowlist::is_user_allowed(
+        galleon_channel_core::allowlist::is_user_allowed(
             allowed_users,
             sender,
-            crate::allowlist::Match::CaseInsensitive,
+            galleon_channel_core::allowlist::Match::CaseInsensitive,
         )
     }
 
@@ -282,13 +375,19 @@ mod approval {
             return None;
         }
         let response = match verb.as_str() {
-            crate::util::APPROVAL_REPLY_APPROVE
-            | crate::util::APPROVAL_REPLY_YES
-            | crate::util::APPROVAL_REPLY_YES_SHORT => ChannelApprovalResponse::Approve,
-            crate::util::APPROVAL_REPLY_DENY
-            | crate::util::APPROVAL_REPLY_NO
-            | crate::util::APPROVAL_REPLY_NO_SHORT => ChannelApprovalResponse::Deny,
-            crate::util::APPROVAL_REPLY_ALWAYS => ChannelApprovalResponse::AlwaysApprove,
+            galleon_channel_core::approval::APPROVAL_REPLY_APPROVE
+            | galleon_channel_core::approval::APPROVAL_REPLY_YES
+            | galleon_channel_core::approval::APPROVAL_REPLY_YES_SHORT => {
+                ChannelApprovalResponse::Approve
+            }
+            galleon_channel_core::approval::APPROVAL_REPLY_DENY
+            | galleon_channel_core::approval::APPROVAL_REPLY_NO
+            | galleon_channel_core::approval::APPROVAL_REPLY_NO_SHORT => {
+                ChannelApprovalResponse::Deny
+            }
+            galleon_channel_core::approval::APPROVAL_REPLY_ALWAYS => {
+                ChannelApprovalResponse::AlwaysApprove
+            }
             _ => return None,
         };
         Some((token.to_uppercase(), response))
@@ -2122,7 +2221,8 @@ mod inbound {
         pub transcription: Option<super::TranscriptionResolver>,
         pub workspace_dir: Option<Arc<std::path::PathBuf>>,
         pub tx: mpsc::Sender<ChannelMessage>,
-        pub pending_approvals: Arc<TokioMutex<HashMap<String, crate::util::PendingApproval>>>,
+        pub pending_approvals:
+            Arc<TokioMutex<HashMap<String, galleon_channel_core::approval::PendingApproval>>>,
         pub threads_seen: Arc<TokioRwLock<HashSet<OwnedEventId>>>,
         pub bot_user_id: OwnedUserId,
         pub bot_display_name: Arc<TokioRwLock<Option<String>>>,
@@ -2285,7 +2385,7 @@ mod inbound {
         let room_allowed = allowlist::room_allowed_static(&ctx.config.allowed_rooms, room_id);
 
         if let Some((token, response)) = approval::parse_reply(&body)
-            && crate::util::resolve_pending_approval(
+            && galleon_channel_core::approval::resolve_pending_approval(
                 &ctx.pending_approvals,
                 &token,
                 response,
@@ -2873,7 +2973,7 @@ mod inbound {
         if let Some(m) = mime {
             // Audio MIMEs resolve through the canonical transcription-side
             // mapping; non-audio types are display/on-disk naming only.
-            if let Some(ext) = crate::transcription::extension_for_audio_mime(m) {
+            if let Some(ext) = super::extension_for_audio_mime(m) {
                 return ext;
             }
             match m.split(';').next().unwrap_or(m).trim() {
@@ -2902,11 +3002,11 @@ mod inbound {
     pub(super) fn transcription_safe_filename(file_name: &str, mime: Option<&str>) -> String {
         let ext_accepted = file_name
             .rsplit_once('.')
-            .is_some_and(|(_, ext)| crate::transcription::mime_for_audio(ext).is_some());
+            .is_some_and(|(_, ext)| super::mime_for_audio(ext).is_some());
         if ext_accepted {
             return file_name.to_string();
         }
-        match mime.and_then(crate::transcription::extension_for_audio_mime) {
+        match mime.and_then(super::extension_for_audio_mime) {
             Some(ext) => format!("attachment.{ext}"),
             None => file_name.to_string(),
         }
@@ -2958,19 +3058,15 @@ mod inbound {
     }
 }
 
-/// Registers every configured provider — legacy `[transcription]` and typed
-/// `[providers.transcription.<type>.<alias>]` alike — and binds
-/// `agent_provider`.
+/// Resolves the TTS manager from live config at send time. `None` means TTS is
+/// disabled or the owning agent has no `tts_provider`; the inner `Result`
+/// carries provider registration failures.
 ///
-/// When the owning agent states no preference, a lone registered provider is
-/// bound so single-provider deployments keep working without an explicit
-/// `transcription_provider`.
-pub(crate) fn build_transcription_manager(
-    config: &clawcrew_config::schema::Config,
-    agent_provider: &str,
-) -> anyhow::Result<crate::transcription::TranscriptionManager> {
-    crate::transcription::build_channel_transcription_manager(config, agent_provider)
-}
+/// A closure rather than a snapshot, so reloadable provider policy is never
+/// copied into this long-lived channel handle
+/// (see AGENTS.md "Single Source Of Truth").
+pub type TtsResolver =
+    Arc<dyn Fn() -> Option<anyhow::Result<Arc<dyn TextToSpeechSynthesizer>>> + Send + Sync>;
 
 /// Resolves transcription state from live config at message time. `None` means
 /// transcription is currently disabled; the inner `Result` carries provider
@@ -2979,19 +3075,8 @@ pub(crate) fn build_transcription_manager(
 /// Held as a closure rather than a config snapshot so reloadable provider
 /// policy is never copied into this long-lived channel handle
 /// (see AGENTS.md "Single Source Of Truth").
-/// Resolves the TTS manager from live config at send time. `None` means TTS is
-/// disabled or the owning agent has no `tts_provider`; the inner `Result`
-/// carries provider registration failures.
-///
-/// A closure rather than a snapshot, so reloadable provider policy is never
-/// copied into this long-lived channel handle
-/// (see AGENTS.md "Single Source Of Truth").
-pub(crate) type TtsResolver =
-    Arc<dyn Fn() -> Option<anyhow::Result<crate::tts::TtsManager>> + Send + Sync>;
-
-pub(crate) type TranscriptionResolver = Arc<
-    dyn Fn() -> Option<anyhow::Result<crate::transcription::TranscriptionManager>> + Send + Sync,
->;
+pub type TranscriptionResolver =
+    Arc<dyn Fn() -> Option<anyhow::Result<Arc<dyn AudioTranscriber>>> + Send + Sync>;
 
 /// Resolver over a legacy `[transcription]` section alone. Typed
 /// `[providers.transcription.<type>.<alias>]` entries are unreachable this way,
@@ -3001,16 +3086,42 @@ pub(crate) type TranscriptionResolver = Arc<
 pub(crate) fn legacy_transcription_resolver(
     transcription: clawcrew_config::schema::TranscriptionConfig,
 ) -> TranscriptionResolver {
-    let config = Arc::new(clawcrew_config::schema::Config {
-        transcription,
-        ..Default::default()
-    });
+    let config = Arc::new(transcription);
     Arc::new(move || {
-        if !config.transcription.enabled {
+        if !config.enabled {
             return None;
         }
-        Some(build_transcription_manager(&config, ""))
+        let url = config.local_whisper.as_ref()?.url.clone();
+        let token = config.local_whisper.as_ref()?.bearer_token.clone();
+        Some(Ok(
+            Arc::new(TestLocalWhisperTranscriber { url, token }) as Arc<dyn AudioTranscriber>
+        ))
     })
+}
+
+#[cfg(test)]
+pub(crate) struct TestLocalWhisperTranscriber {
+    pub(crate) url: String,
+    pub(crate) token: Option<String>,
+}
+
+#[cfg(test)]
+#[async_trait]
+impl AudioTranscriber for TestLocalWhisperTranscriber {
+    async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String> {
+        let client = reqwest::Client::new();
+        let part =
+            reqwest::multipart::Part::bytes(audio_data.to_vec()).file_name(file_name.to_string());
+        let form = reqwest::multipart::Form::new().part("file", part);
+        let mut req = client.post(&self.url).multipart(form);
+        if let Some(ref t) = self.token {
+            req = req.bearer_auth(t);
+        }
+        let resp = req.send().await?;
+        let json: serde_json::Value = resp.json().await?;
+        let text = json["text"].as_str().unwrap_or("").to_string();
+        Ok(text)
+    }
 }
 
 // ─── outbound ──────────────────────────────────────────────────────────────
@@ -4298,7 +4409,8 @@ pub struct MatrixChannel {
     /// Resolved from live config on every send, never cached.
     voice_peers: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
     client: tokio::sync::OnceCell<Client>,
-    pending_approvals: Arc<TokioMutex<HashMap<String, crate::util::PendingApproval>>>,
+    pending_approvals:
+        Arc<TokioMutex<HashMap<String, galleon_channel_core::approval::PendingApproval>>>,
     streaming_state: Arc<TokioRwLock<streaming::State>>,
     threads_seen: Arc<TokioRwLock<HashSet<OwnedEventId>>>,
     alias_cache: Arc<TokioRwLock<HashMap<String, OwnedRoomId>>>,
@@ -4375,12 +4487,9 @@ impl MatrixChannel {
     /// Replace the compatibility resolver with the channel runtime's
     /// live-config resolver, so typed provider entries and the owning agent's
     /// `transcription_provider` are honoured.
-    pub(crate) fn with_transcription_manager_factory(
+    pub fn with_transcription_manager_factory(
         mut self,
-        factory: impl Fn() -> Option<anyhow::Result<crate::transcription::TranscriptionManager>>
-        + Send
-        + Sync
-        + 'static,
+        factory: impl Fn() -> Option<anyhow::Result<Arc<dyn AudioTranscriber>>> + Send + Sync + 'static,
     ) -> Self {
         self.transcription = Some(Arc::new(factory));
         self
@@ -4388,9 +4497,12 @@ impl MatrixChannel {
 
     /// Install the channel runtime's live-config TTS resolver, so the owning
     /// agent's `tts_provider` and reloaded provider policy are honoured.
-    pub(crate) fn with_tts_manager_factory(
+    pub fn with_tts_manager_factory(
         mut self,
-        factory: impl Fn() -> Option<anyhow::Result<crate::tts::TtsManager>> + Send + Sync + 'static,
+        factory: impl Fn() -> Option<anyhow::Result<Arc<dyn TextToSpeechSynthesizer>>>
+        + Send
+        + Sync
+        + 'static,
     ) -> Self {
         self.tts = Some(Arc::new(factory));
         self
@@ -4483,7 +4595,7 @@ impl MatrixChannel {
             return false;
         };
         members.iter().any(|m| {
-            crate::allowlist::is_user_allowed_by(
+            galleon_channel_core::allowlist::is_user_allowed_by(
                 &voice_peers,
                 m.user_id().as_str(),
                 allowlist::voice_peer_matches,
@@ -5426,7 +5538,7 @@ impl Channel for MatrixChannel {
             .await?
             .to_string();
         let token = approval::generate_token_default();
-        let prompt = crate::util::build_approve_deny_approval_prompt(
+        let prompt = build_approve_deny_approval_prompt(
             &token,
             &request.tool_name,
             &request.arguments_summary,
@@ -5436,7 +5548,7 @@ impl Channel for MatrixChannel {
         let (tx, rx) = oneshot::channel();
         self.pending_approvals.lock().await.insert(
             token.clone(),
-            crate::util::PendingApproval {
+            galleon_channel_core::approval::PendingApproval {
                 sender: tx,
                 destination,
                 tool_name: request.tool_name.clone(),

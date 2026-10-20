@@ -1243,7 +1243,8 @@ impl galleon_channel_mattermost::AudioTranscriber for TranscriptionManager {
         &'a self,
         audio_data: &'a [u8],
         file_name: &'a str,
-    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>> {
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>>
+    {
         Box::pin(self.transcribe(audio_data, file_name))
     }
 }
@@ -1254,7 +1255,8 @@ impl galleon_channel_lark::AudioTranscriber for TranscriptionManager {
         &'a self,
         audio_data: &'a [u8],
         file_name: &'a str,
-    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>> {
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>>
+    {
         Box::pin(self.transcribe(audio_data, file_name))
     }
 }
@@ -1270,6 +1272,14 @@ impl galleon_channel_telegram::AudioTranscriber for TranscriptionManager {
 #[cfg(feature = "channel-discord")]
 #[async_trait]
 impl galleon_channel_discord::AudioTranscriber for TranscriptionManager {
+    async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String> {
+        self.transcribe(audio_data, file_name).await
+    }
+}
+
+#[cfg(feature = "channel-matrix")]
+#[async_trait]
+impl galleon_channel_matrix::AudioTranscriber for TranscriptionManager {
     async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String> {
         self.transcribe(audio_data, file_name).await
     }

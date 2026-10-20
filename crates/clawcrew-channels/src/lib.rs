@@ -92,8 +92,11 @@ pub use galleon_channel_line as line;
 // keep resolving.
 #[cfg(feature = "channel-linq")]
 pub use galleon_channel_linq as linq;
+// RF-B1: the Matrix channel now lives in its own feature-crate. Re-export it
+// under the historical `matrix` path so `crate::matrix::MatrixChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-matrix")]
-pub mod matrix;
+pub use galleon_channel_matrix as matrix;
 // RF-B1: the Mattermost channel now lives in its own feature-crate. Re-export it
 // under the historical `mattermost` path so `crate::mattermost::MattermostChannel`
 // and callers keep resolving.
