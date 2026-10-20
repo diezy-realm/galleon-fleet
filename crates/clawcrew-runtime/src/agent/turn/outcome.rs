@@ -146,7 +146,6 @@ pub fn terminal_completion_error_message(
     )
 }
 
-
 #[cfg(test)]
 fn terminal_completion_error_message_in_english(
     err: &anyhow::Error,

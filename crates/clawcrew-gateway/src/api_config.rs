@@ -2695,13 +2695,11 @@ pub(crate) mod tests {
             model: "test-model".into(),
             temperature: None,
             mem: memory.clone(),
-            memory_strategy: Arc::new(
-                clawcrew_memory::DefaultMemoryStrategy::with_config(
-                    memory,
-                    clawcrew_config::schema::MemoryConfig::default(),
-                    std::path::PathBuf::new(),
-                ),
-            ),
+            memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+                memory,
+                clawcrew_config::schema::MemoryConfig::default(),
+                std::path::PathBuf::new(),
+            )),
             auto_save: false,
             pairing: Arc::new(PairingGuard::new(
                 false,

@@ -3,7 +3,7 @@
 use parking_lot::Mutex;
 use std::sync::Arc;
 
-use super::pricing::{build_model_provider_pricing, ModelProviderPricing};
+use super::pricing::{ModelProviderPricing, build_model_provider_pricing};
 use super::tracker::CostTracker;
 use crate::schema::Config;
 

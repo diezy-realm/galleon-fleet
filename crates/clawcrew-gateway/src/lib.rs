@@ -4,16 +4,16 @@
     clippy::collapsible_if
 )]
 
-pub mod state;
 pub mod gateway;
 pub mod rate_limit;
+pub mod state;
 
 #[cfg(feature = "a2a")]
 pub mod a2a;
 pub mod acp;
 pub mod agent_owned_state;
 pub mod api;
-pub mod cron_adapter;
+pub mod api_audit;
 pub mod api_backup;
 pub mod api_browse;
 pub mod api_config;
@@ -22,6 +22,7 @@ pub mod api_pairing;
 pub mod api_personality;
 #[cfg(feature = "plugins-wasm")]
 pub mod api_plugins;
+pub mod api_providers;
 pub mod api_quickstart;
 pub mod api_sections;
 pub mod api_skills;
@@ -40,6 +41,8 @@ pub mod api_webauthn;
 pub mod api_webhook;
 pub mod auth_rate_limit;
 pub mod canvas;
+pub mod cron_adapter;
+pub mod grpc_system_gateway;
 pub mod hardware_context;
 pub mod node_tool;
 pub mod nodes;
@@ -52,7 +55,6 @@ pub mod sse;
 pub mod static_files;
 pub mod tls;
 pub mod version;
-pub mod grpc_system_gateway;
 #[cfg(feature = "gateway-voice-duplex")]
 pub mod voice_duplex;
 #[cfg(any(
@@ -61,8 +63,6 @@ pub mod voice_duplex;
     feature = "channel-whatsapp-cloud"
 ))]
 mod webhook_ingress;
-pub mod api_audit;
-pub mod api_providers;
 pub mod ws;
 
 /// Maximum request body size (64KB) — prevents memory exhaustion
@@ -92,7 +92,9 @@ pub enum WebDashboardAvailability {
     Filesystem(std::path::PathBuf),
 }
 
-pub fn resolve_web_dashboard_availability(config: &clawcrew_config::schema::Config) -> Option<WebDashboardAvailability> {
+pub fn resolve_web_dashboard_availability(
+    config: &clawcrew_config::schema::Config,
+) -> Option<WebDashboardAvailability> {
     #[cfg(feature = "embedded-web")]
     {
         let _ = config;
@@ -100,36 +102,43 @@ pub fn resolve_web_dashboard_availability(config: &clawcrew_config::schema::Conf
     }
     #[cfg(not(feature = "embedded-web"))]
     {
-        config.gateway.web_dist_dir.as_ref().map(std::path::PathBuf::from).map(WebDashboardAvailability::Filesystem)
+        config
+            .gateway
+            .web_dist_dir
+            .as_ref()
+            .map(std::path::PathBuf::from)
+            .map(WebDashboardAvailability::Filesystem)
     }
 }
+pub mod handlers;
 pub mod ws_approval;
 pub mod ws_sop_runs;
-pub mod handlers;
 
 // Re-export key types from extracted modules
-pub use state::{AppState, GatewaySupervision};
 pub use gateway::{run_gateway, run_gateway_with_plugin_webhooks, start_grpc_server};
-pub use rate_limit::{SlidingWindowRateLimiter, GatewayRateLimiter, IdempotencyStore};
-pub use rate_limit::{RATE_LIMIT_WINDOW_SECS, RATE_LIMIT_MAX_KEYS_DEFAULT, IDEMPOTENCY_MAX_KEYS_DEFAULT};
+pub use rate_limit::{GatewayRateLimiter, IdempotencyStore, SlidingWindowRateLimiter};
+pub use rate_limit::{
+    IDEMPOTENCY_MAX_KEYS_DEFAULT, RATE_LIMIT_MAX_KEYS_DEFAULT, RATE_LIMIT_WINDOW_SECS,
+};
+pub use state::{AppState, GatewaySupervision};
 
 // Types from other modules that extracted files need
-pub use clawcrew_config::schema::Config;
 pub use clawcrew_api::memory_traits::MemoryStrategy;
-pub use clawcrew_tools::canvas::CanvasStore;
 pub use clawcrew_config::pairing::PairingCodePolicy;
+pub use clawcrew_config::schema::Config;
+pub use clawcrew_tools::canvas::CanvasStore;
 
-use std::net::{IpAddr, SocketAddr};
-use std::sync::Arc;
-use axum::http::{header, HeaderMap, StatusCode};
 use axum::Json;
-use axum::extract::{Path, Query, State};
-use axum::response::{IntoResponse, Response};
-use axum::routing::{get, post};
 use axum::Router;
 use axum::body::Bytes;
+use axum::extract::{Path, Query, State};
+use axum::http::{HeaderMap, StatusCode, header};
+use axum::response::{IntoResponse, Response};
+use axum::routing::{get, post};
 use clawcrew_api::channel::Channel;
 use clawcrew_config::pairing::constant_time_eq;
+use std::net::{IpAddr, SocketAddr};
+use std::sync::Arc;
 
 // Config write guard is an OwnedMutexGuard
 pub type ConfigWriteGuard = tokio::sync::OwnedMutexGuard<()>;
@@ -278,7 +287,8 @@ pub fn client_key_from_request(
             return ip.to_string();
         }
     }
-    peer.map(|p| p.ip().to_string()).unwrap_or_else(|| "unknown".to_string())
+    peer.map(|p| p.ip().to_string())
+        .unwrap_or_else(|| "unknown".to_string())
 }
 
 pub(crate) async fn persist_pairing_tokens(
@@ -298,7 +308,9 @@ pub(crate) async fn persist_pairing_tokens(
 
 pub fn needs_quickstart_for(model: &str) -> Option<anyhow::Error> {
     if model.trim().is_empty() {
-        Some(anyhow::Error::msg("needs_quickstart: gateway has no model configured"))
+        Some(anyhow::Error::msg(
+            "needs_quickstart: gateway has no model configured",
+        ))
     } else {
         None
     }
@@ -520,7 +532,10 @@ fn sop_webhook_routes() -> Router<AppState> {
     feature = "channel-nextcloud",
     feature = "channel-whatsapp-cloud"
 ))]
-pub(crate) fn sender_session_id(channel: &str, msg: &clawcrew_api::channel::ChannelMessage) -> String {
+pub(crate) fn sender_session_id(
+    channel: &str,
+    msg: &clawcrew_api::channel::ChannelMessage,
+) -> String {
     match &msg.thread_ts {
         Some(thread_id) => format!("{channel}_{thread_id}_{}", msg.sender),
         None => format!("{channel}_{}", msg.sender),
@@ -1060,14 +1075,14 @@ pub(crate) async fn handle_gmail_push_webhook(
             Ok(e) => e,
             Err(e) => {
                 ::clawcrew_log::record!(
-                    WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                        .with_attrs(
-                            ::serde_json::json!({"error": format!("{}", e), "channel": "gmail_push"})
-                        ),
-                    "webhook: invalid payload"
-                );
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    .with_attrs(
+                        ::serde_json::json!({"error": format!("{}", e), "channel": "gmail_push"})
+                    ),
+                "webhook: invalid payload"
+            );
                 return (
                     StatusCode::BAD_REQUEST,
                     Json(serde_json::json!({"error": "Invalid Pub/Sub envelope"})),

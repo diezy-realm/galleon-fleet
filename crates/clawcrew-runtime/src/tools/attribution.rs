@@ -69,4 +69,3 @@ impl Attributable for SkillBuiltinTool {
         ToolProvenance::Extension
     }
 }
-

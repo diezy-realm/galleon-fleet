@@ -125,6 +125,13 @@ use crate::tools::scoped;
 use crate::tools::{self, Tool};
 use crate::util::truncate_with_ellipsis;
 use anyhow::{Context, Result};
+use clawcrew_api::channel::Channel;
+use clawcrew_api::ingress::{IngressContext, TurnOrigin};
+use clawcrew_config::schema::Config;
+use clawcrew_memory::{self, Memory, MemoryCategory};
+#[cfg(test)]
+use clawcrew_providers::ChatRequest;
+use clawcrew_providers::{self, ChatMessage, ModelProvider, ToolCall};
 use regex::Regex;
 use std::collections::HashSet;
 use std::fmt::Write;
@@ -133,13 +140,6 @@ use std::path::PathBuf;
 use std::sync::{Arc, LazyLock, Mutex};
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
-use clawcrew_api::channel::Channel;
-use clawcrew_api::ingress::{IngressContext, TurnOrigin};
-use clawcrew_config::schema::Config;
-use clawcrew_memory::{self, Memory, MemoryCategory};
-#[cfg(test)]
-use clawcrew_providers::ChatRequest;
-use clawcrew_providers::{self, ChatMessage, ModelProvider, ToolCall};
 
 // Cost tracking moved to `super::cost`.
 pub use super::cost::{
@@ -305,7 +305,6 @@ pub fn append_pinned_mcp_section(deferred_section: &mut String, pinned_section: 
     deferred_section.push_str("\n\n");
     deferred_section.push_str(pinned_section);
 }
-
 
 pub(crate) fn preactivate_always_filter_groups(
     deferred: &crate::tools::DeferredMcpToolSet,
@@ -916,7 +915,7 @@ async fn agent_turn_with_sop_reassembly(
                 temperature,
             },
             ResolvedIo {
-    app_registry: None,
+                app_registry: None,
                 tools_registry,
                 observer,
                 silent,

@@ -17,15 +17,15 @@ use axum::{
     http::{HeaderMap, header},
     response::IntoResponse,
 };
+use clawcrew_api::channel::ChannelApprovalResponse;
+use clawcrew_api::sop::{
+    ApprovalDecision as SopApprovalDecision, ApprovalPrincipal as SopApprovalPrincipal,
+};
 use futures_util::{SinkExt, StreamExt};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
-use clawcrew_api::channel::ChannelApprovalResponse;
-use clawcrew_api::sop::{
-    ApprovalDecision as SopApprovalDecision, ApprovalPrincipal as SopApprovalPrincipal,
-};
 
 /// Default wall-clock budget for the operator to answer an
 /// `approval_request` frame before the channel auto-denies. Mirrors the
@@ -1418,19 +1418,16 @@ async fn process_chat_message(
     // mid-turn SOP approval frame carries the same identity as the top-level path.
     auth_subject: Option<&str>,
 ) {
-    use futures_util::StreamExt as _;
     use clawcrew_api::agent::TurnEvent;
+    use futures_util::StreamExt as _;
 
     let (turn_alias, turn_provider, turn_model) = agent.attribution_fields();
     let provider_label = turn_provider.clone();
     let cost_tracking_context = state.cost_tracker.as_ref().map(|tracker| {
         let config = state.config.read();
         let pricing = clawcrew_config::cost::build_model_provider_pricing(&config);
-        clawcrew_config::cost::ToolLoopCostTrackingContext::new(
-            tracker.clone(),
-            Arc::new(pricing),
-        )
-        .with_agent_alias(&turn_alias)
+        clawcrew_config::cost::ToolLoopCostTrackingContext::new(tracker.clone(), Arc::new(pricing))
+            .with_agent_alias(&turn_alias)
     });
     let turn_usage = state.cost_tracker.as_ref().map(|_| {
         Arc::new(parking_lot::Mutex::new(
@@ -1751,8 +1748,7 @@ async fn process_chat_message(
                 Ok(_) => false,
             };
             let durable = if needs_marker {
-                let marker =
-                    galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
+                let marker = galleon_i18n::get_required_cli_string("turn-interrupted-by-user");
                 let truncated = if accumulated_text.is_empty() {
                     marker
                 } else {
@@ -2600,11 +2596,11 @@ data: {\"type\":\"message_stop\"}\n\n",
     #[tokio::test]
     async fn idle_chat_route_pings_before_and_preserves_the_first_client_message() {
         use axum::{Router, routing::get};
-        use tokio_tungstenite::{connect_async, tungstenite::Message as ClientMessage};
         use clawcrew_config::{
             multi_agent::MemoryBackendKind,
             schema::{AliasedAgentConfig, Config},
         };
+        use tokio_tungstenite::{connect_async, tungstenite::Message as ClientMessage};
 
         let tmp = tempfile::TempDir::new().expect("temporary config root");
         let mut config = Config {
@@ -3050,9 +3046,9 @@ data: {\"type\":\"message_stop\"}\n\n",
 
     #[tokio::test]
     async fn ws_memory_resolution_honors_agent_backend_none_over_install_backend() {
-        use tempfile::TempDir;
         use clawcrew_config::multi_agent::MemoryBackendKind;
         use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use tempfile::TempDir;
 
         let tmp = TempDir::new().unwrap();
         let mut config = Config {
@@ -3174,8 +3170,8 @@ data: {\"type\":\"message_stop\"}\n\n",
 
     #[test]
     fn resolve_ws_session_cwd_defaults_to_agent_workspace_without_request() {
-        use tempfile::TempDir;
         use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use tempfile::TempDir;
 
         let tmp = TempDir::new().unwrap();
         let mut config = Config {
@@ -3199,8 +3195,8 @@ data: {\"type\":\"message_stop\"}\n\n",
 
     #[test]
     fn resolve_ws_session_cwd_keeps_requested_cwd_strict() {
-        use tempfile::TempDir;
         use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use tempfile::TempDir;
 
         let tmp = TempDir::new().unwrap();
         let mut config = Config {
@@ -3619,8 +3615,8 @@ data: {\"type\":\"message_stop\"}\n\n",
     /// explicit `context_window`, absent when it does not.
     #[test]
     fn done_frame_model_context_window_presence_tracks_provider_config() {
-        use std::collections::HashMap;
         use clawcrew_config::schema::{AliasedAgentConfig, Config, RuntimeProfileConfig};
+        use std::collections::HashMap;
 
         // (provider_alias, context_window, expected_model_window,
         // expected_max_context_tokens)
@@ -3735,8 +3731,8 @@ data: {\"type\":\"message_stop\"}\n\n",
     /// not the static agent alias. Both paths use the same shared resolver.
     #[test]
     fn done_frame_model_window_follows_live_provider_switch() {
-        use std::collections::HashMap;
         use clawcrew_config::schema::{AliasedAgentConfig, Config, RuntimeProfileConfig};
+        use std::collections::HashMap;
 
         // (switched_provider_alias, scenario_label)
         let cases: &[(&str, &str)] = &[
@@ -3836,8 +3832,8 @@ data: {\"type\":\"message_stop\"}\n\n",
     /// so clients fall back to the trim budget.
     #[test]
     fn done_frame_model_window_omitted_on_same_profile_model_fallback() {
-        use std::collections::HashMap;
         use clawcrew_config::schema::{AliasedAgentConfig, Config, RuntimeProfileConfig};
+        use std::collections::HashMap;
 
         let mut runtime_profiles = HashMap::new();
         runtime_profiles.insert(

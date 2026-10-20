@@ -7,10 +7,9 @@
 //! token in a 4xx/5xx body is not forwarded to the model provider.
 
 pub use galleon_security_scrub::{
-    is_credential_key, scrub_credentials, scrub_credentials_value, SENSITIVE_KEY_REGEX,
-    SENSITIVE_KV_REGEX,
+    SENSITIVE_KEY_REGEX, SENSITIVE_KV_REGEX, is_credential_key, scrub_credentials,
+    scrub_credentials_value,
 };
-
 
 #[cfg(test)]
 mod tests {

@@ -4,7 +4,10 @@
 //! so that gateway and other consumers can format terminal completion errors
 //! without depending on the runtime agent subsystem.
 
-use crate::{model_refusal_from_error, ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind, ReliableSemanticEmptyCompletion};
+use crate::{
+    ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
+    ReliableSemanticEmptyCompletion, model_refusal_from_error,
+};
 
 pub fn semantic_empty_terminal_completion_message_with_renderer<F>(
     agent_name: Option<&str>,
@@ -99,7 +102,9 @@ pub fn is_semantic_empty_terminal_completion(err: &anyhow::Error) -> bool {
     err.chain().any(|source| {
         source.is::<clawcrew_api::model_provider::SemanticEmptyTerminalCompletion>()
             || source.is::<ReliableSemanticEmptyCompletion>()
-            || source.to_string().contains("provider stream completed without final text or tool calls")
+            || source
+                .to_string()
+                .contains("provider stream completed without final text or tool calls")
     })
 }
 
@@ -114,9 +119,10 @@ where
     if model_refusal_from_error(err).is_some() {
         return Some(render("cli-agent-error-provider-refusal", &[]));
     }
-    if let Some(failure) = err.chain().find_map(|source| {
-        source.downcast_ref::<ReliableProviderTerminalFailure>()
-    }) {
+    if let Some(failure) = err
+        .chain()
+        .find_map(|source| source.downcast_ref::<ReliableProviderTerminalFailure>())
+    {
         return Some(reliable_provider_terminal_failure_message_with_renderer(
             failure, &render,
         ));
@@ -126,8 +132,13 @@ where
             agent_name, &render,
         ));
     }
-    if err.to_string().contains("provider stream ended after provider-executed tools without a final response") {
-        return Some(pre_executed_tools_without_final_response_message(agent_name, &render));
+    if err
+        .to_string()
+        .contains("provider stream ended after provider-executed tools without a final response")
+    {
+        return Some(pre_executed_tools_without_final_response_message(
+            agent_name, &render,
+        ));
     }
     None
 }
