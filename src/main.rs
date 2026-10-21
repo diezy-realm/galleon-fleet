@@ -5259,21 +5259,22 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         let sop_engine = sop_e.clone();
                         let sop_audit = sop_a.clone();
                         let plugin_webhooks = Arc::clone(&plugin_webhooks);
-                        let sop_runner: Option<
-                            std::sync::Arc<dyn clawcrew_api::sop::SopRunner>,
-                        > = if sop_engine.is_some() {
-                            let install_root = config.install_root_dir();
-                            Some(std::sync::Arc::new(
-                                clawcrew_runtime::RuntimeSopRunner::new(
-                                    sop_engine,
-                                    sop_audit,
-                                    std::sync::Arc::new(parking_lot::RwLock::new(config.clone())),
-                                    install_root,
-                                ),
-                            ))
-                        } else {
-                            None
-                        };
+                        let sop_runner: Option<std::sync::Arc<dyn clawcrew_api::sop::SopRunner>> =
+                            if sop_engine.is_some() {
+                                let install_root = config.install_root_dir();
+                                Some(std::sync::Arc::new(
+                                    clawcrew_runtime::RuntimeSopRunner::new(
+                                        sop_engine,
+                                        sop_audit,
+                                        std::sync::Arc::new(parking_lot::RwLock::new(
+                                            config.clone(),
+                                        )),
+                                        install_root,
+                                    ),
+                                ))
+                            } else {
+                                None
+                            };
                         Box::pin(async move {
                             Box::pin(clawcrew_gateway::run_gateway_with_plugin_webhooks(
                                 &host,
