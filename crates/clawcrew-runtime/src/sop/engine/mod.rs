@@ -23,8 +23,8 @@ use super::types::{
 };
 use crate::calendar::{CALENDAR_NO_SHOW_TOPIC, CalendarNoShowEvent};
 use crate::security::{ContentSafety, new_marker_id};
-use serde_json::Value;
 use clawcrew_config::schema::{AliasedAgentConfig, Config, SopConfig};
+use serde_json::Value;
 
 /// Central SOP orchestrator: loads SOPs, matches triggers, manages run lifecycle.
 pub struct SopEngine {
@@ -392,7 +392,12 @@ impl SopEngine {
         sop: &Sop,
     ) -> Option<String> {
         // (1) Check if step specifies an agent override
-        if let Some(step_alias) = step.agent.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        if let Some(step_alias) = step
+            .agent
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+        {
             if let Some(agents_map) = agents {
                 // Pattern: config.agents.get(alias)
                 if agents_map.get(step_alias).is_some() {
@@ -416,17 +421,25 @@ impl SopEngine {
                         )
                     );
                     // Fallback to SOP's default agent config
-                    if let Some(sop_alias) = sop.agent.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+                    if let Some(sop_alias) = sop
+                        .agent
+                        .as_deref()
+                        .map(str::trim)
+                        .filter(|s| !s.is_empty())
+                    {
                         if agents_map.get(sop_alias).is_some() {
                             return Some(sop_alias.to_string());
                         } else {
                             ::clawcrew_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                                    .with_attrs(::serde_json::json!({
-                                        "sop_name": sop.name,
-                                        "invalid_sop_agent": sop_alias,
-                                    })),
+                                ::clawcrew_log::Event::new(
+                                    module_path!(),
+                                    ::clawcrew_log::Action::Note
+                                )
+                                .with_attrs(::serde_json::json!({
+                                    "sop_name": sop.name,
+                                    "invalid_sop_agent": sop_alias,
+                                })),
                                 &format!(
                                     "SOP '{}' default agent alias '{sop_alias}' is also not valid in config.agents; \
                                      falling back to default global agent",
@@ -447,7 +460,12 @@ impl SopEngine {
         }
 
         // (2) step.agent is empty or unset: resolve through SOP default agent
-        if let Some(sop_alias) = sop.agent.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        if let Some(sop_alias) = sop
+            .agent
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+        {
             if let Some(agents_map) = agents {
                 if agents_map.get(sop_alias).is_some() {
                     return Some(sop_alias.to_string());

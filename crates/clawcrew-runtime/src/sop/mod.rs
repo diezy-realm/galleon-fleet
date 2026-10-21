@@ -14,6 +14,7 @@ pub mod procedural_memory;
 pub mod producer;
 pub mod route;
 pub mod rundata;
+pub mod runner;
 pub mod schema;
 pub mod scope;
 pub mod step_contract;
@@ -22,14 +23,11 @@ pub mod trigger_registry;
 pub mod trigger_source;
 pub mod types;
 pub mod wire;
-pub mod runner;
 
-pub use runner::RuntimeSopRunner;
 pub use approval::ApprovalDecision;
+pub use runner::RuntimeSopRunner;
 
 pub use audit::SopAuditLogger;
-pub use constraint::{ConstraintKind, RoleRestrictionHook, SopConstraint};
-pub use dispatch::SopRuntimeDispatcher;
 #[allow(unused_imports)]
 pub use binding::{
     BindingContext, BindingRef, BindingScope, ExtractedBinding, extract_bindings, remap_step_refs,
@@ -38,6 +36,8 @@ pub use binding::{
 pub use capability::{
     CapabilityContext, CapabilityInfo, CapabilityResult, SopCapability, SopCapabilityRegistry,
 };
+pub use constraint::{ConstraintKind, RoleRestrictionHook, SopConstraint};
+pub use dispatch::SopRuntimeDispatcher;
 pub use engine::{
     CancelOutcome, MaintenanceSummary, SopEngine, err_is_cancellation_persistence_retained,
     err_is_resume_at_capacity, err_is_terminal_persistence_retained,
@@ -73,9 +73,9 @@ use anyhow::Result;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use types::{SopManifest, SopMeta};
 use clawcrew_config::schema::SopConfig;
 use clawcrew_memory::traits::Memory;
+use types::{SopManifest, SopMeta};
 
 /// Build the tool-spec map an SOP graph projection uses to type step pins.
 /// Keys are tool names; values are the tool's declared `parameters` (input
@@ -1381,7 +1381,11 @@ pub fn validate_sop_strict(sop: &Sop) -> SopValidation {
         blocking.push("SOP name is empty".into());
     }
 
-    if sop.raci.as_ref().is_some_and(|r| r.accountable.trim().is_empty()) {
+    if sop
+        .raci
+        .as_ref()
+        .is_some_and(|r| r.accountable.trim().is_empty())
+    {
         blocking.push("SOP RACI accountable role must not be empty".into());
     }
 
@@ -2095,7 +2099,9 @@ mod tests {
         };
 
         // Must NOT crash or panic; must fall back to SOP's default agent "sop_parent"
-        let action = engine.start_run("test-fallback", event).expect("run starts");
+        let action = engine
+            .start_run("test-fallback", event)
+            .expect("run starts");
         let SopRunAction::ExecuteStep { step, .. } = action else {
             panic!("expected ExecuteStep, got {action:?}");
         };
@@ -2156,7 +2162,9 @@ mod tests {
         };
 
         // Must NOT crash or panic; falls back to None (global default)
-        let action = engine.start_run("test-no-parent", event).expect("run starts");
+        let action = engine
+            .start_run("test-no-parent", event)
+            .expect("run starts");
         let SopRunAction::ExecuteStep { step, .. } = action else {
             panic!("expected ExecuteStep, got {action:?}");
         };
@@ -2473,24 +2481,46 @@ mod tests {
         let sops_dir = root.join("shared").join("sops");
 
         // 1. Verify engineering feature delivery SOP
-        let eng_sop = load_sop_by_name(&sops_dir, "engineering-feature-delivery", SopExecutionMode::Supervised)
-            .expect("engineering-feature-delivery must load from shared/sops");
+        let eng_sop = load_sop_by_name(
+            &sops_dir,
+            "engineering-feature-delivery",
+            SopExecutionMode::Supervised,
+        )
+        .expect("engineering-feature-delivery must load from shared/sops");
         assert_eq!(eng_sop.name, "engineering-feature-delivery");
-        let eng_raci = eng_sop.raci.as_ref().expect("engineering SOP must define RACI");
+        let eng_raci = eng_sop
+            .raci
+            .as_ref()
+            .expect("engineering SOP must define RACI");
         assert_eq!(eng_raci.accountable, "crew-lead-engineer");
-        assert!(eng_raci.responsible.contains(&"crew-backend-engineer".to_string()));
+        assert!(
+            eng_raci
+                .responsible
+                .contains(&"crew-backend-engineer".to_string())
+        );
         assert_eq!(eng_sop.steps.len(), 3);
         assert!(!eng_sop.steps[0].dos.is_empty(), "step 1 must have dos");
         assert!(!eng_sop.steps[0].donts.is_empty(), "step 1 must have donts");
         assert_eq!(eng_sop.constraints.len(), 2, "must define 2 constraints");
 
         // 2. Verify marketing content delivery SOP (non-engineering, generic)
-        let mkt_sop = load_sop_by_name(&sops_dir, "marketing-content-delivery", SopExecutionMode::Supervised)
-            .expect("marketing-content-delivery must load from shared/sops");
+        let mkt_sop = load_sop_by_name(
+            &sops_dir,
+            "marketing-content-delivery",
+            SopExecutionMode::Supervised,
+        )
+        .expect("marketing-content-delivery must load from shared/sops");
         assert_eq!(mkt_sop.name, "marketing-content-delivery");
-        let mkt_raci = mkt_sop.raci.as_ref().expect("marketing SOP must define RACI");
+        let mkt_raci = mkt_sop
+            .raci
+            .as_ref()
+            .expect("marketing SOP must define RACI");
         assert_eq!(mkt_raci.accountable, "crew-marketing-strategist");
-        assert!(mkt_raci.responsible.contains(&"crew-content-copywriter".to_string()));
+        assert!(
+            mkt_raci
+                .responsible
+                .contains(&"crew-content-copywriter".to_string())
+        );
         assert_eq!(mkt_sop.steps.len(), 3);
         assert!(!mkt_sop.steps[0].dos.is_empty(), "step 1 must have dos");
         assert!(!mkt_sop.steps[0].donts.is_empty(), "step 1 must have donts");
