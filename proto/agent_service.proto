@@ -154,6 +154,7 @@ message ExecuteTurnRequest {
     repeated TurnToolDefinition tools = 5;
     optional float temperature = 6;
     optional int32 max_tokens = 7;
+    optional string agent_alias = 8;
 }
 
 message TurnChatMessage {

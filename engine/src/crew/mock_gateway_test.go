@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -14,9 +15,20 @@ import (
 
 type mockGatewayTurnServer struct {
 	pb.UnimplementedSystemGatewayServer
+	mu      sync.Mutex
+	lastReq *pb.ExecuteTurnRequest
+}
+
+func (s *mockGatewayTurnServer) getLastRequest() *pb.ExecuteTurnRequest {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.lastReq
 }
 
 func (s *mockGatewayTurnServer) ExecuteTurn(req *pb.ExecuteTurnRequest, stream pb.SystemGateway_ExecuteTurnServer) error {
+	s.mu.Lock()
+	s.lastReq = req
+	s.mu.Unlock()
 	prompt := ""
 	if len(req.Messages) > 0 {
 		prompt = req.Messages[len(req.Messages)-1].Content
@@ -91,12 +103,18 @@ func (s *mockGatewayTurnServer) ExecuteNativeTool(ctx context.Context, req *pb.T
 }
 
 func startMockGatewayServer(t testing.TB) (client.SystemGatewayClient, func()) {
+	client, _, cleanup := startMockGatewayServerWithRecorder(t)
+	return client, cleanup
+}
+
+func startMockGatewayServerWithRecorder(t testing.TB) (client.SystemGatewayClient, *mockGatewayTurnServer, func()) {
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatalf("failed to listen on ephemeral port: %v", err)
 	}
 	server := grpc.NewServer()
-	pb.RegisterSystemGatewayServer(server, &mockGatewayTurnServer{})
+	mockSrv := &mockGatewayTurnServer{}
+	pb.RegisterSystemGatewayServer(server, mockSrv)
 
 	go func() {
 		_ = server.Serve(lis)
@@ -113,5 +131,5 @@ func startMockGatewayServer(t testing.TB) (client.SystemGatewayClient, func()) {
 		server.Stop()
 	}
 
-	return gwClient, cleanup
+	return gwClient, mockSrv, cleanup
 }
