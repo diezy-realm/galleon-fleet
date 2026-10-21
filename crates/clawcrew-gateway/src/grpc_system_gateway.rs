@@ -1547,8 +1547,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_execute_turn_with_unknown_agent_alias_fallback(
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_execute_turn_with_unknown_agent_alias_fallback()
+    -> Result<(), Box<dyn std::error::Error>> {
         use futures_util::StreamExt;
         let config = clawcrew_config::schema::Config::default();
         let svc = SystemGatewayService::new(None).with_config(std::sync::Arc::new(config));
@@ -1591,8 +1591,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_execute_turn_with_empty_agent_alias_fallback(
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_execute_turn_with_empty_agent_alias_fallback()
+    -> Result<(), Box<dyn std::error::Error>> {
         use futures_util::StreamExt;
         let svc = SystemGatewayService::new(None);
 
@@ -1707,8 +1707,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_decrypted_secret_requires_authorization_when_configured(
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    async fn get_decrypted_secret_requires_authorization_when_configured()
+    -> Result<(), Box<dyn std::error::Error>> {
         let temp_dir = tempfile::tempdir()?;
         let svc = SystemGatewayService::new(Some(temp_dir.path().to_path_buf()))
             .with_auth_token("trusted-internal-bearer-999");
