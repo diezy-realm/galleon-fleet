@@ -269,16 +269,16 @@ mod tests {
     use crate::observability::NoopObserver;
     use crate::security::AutonomyLevel;
     use async_trait::async_trait;
-    use std::sync::Arc;
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    use tokio::sync::mpsc;
-    use tokio_util::sync::CancellationToken;
     use clawcrew_api::attribution::{Attributable, ChannelKind, Role};
     use clawcrew_api::channel::{
         Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
     };
     use clawcrew_api::jsonrpc::RpcOutbound;
     use clawcrew_config::schema::{PacingConfig, RiskProfileConfig, StreamReasoningMode};
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use tokio::sync::mpsc;
+    use tokio_util::sync::CancellationToken;
 
     fn full_always_ask_profile() -> RiskProfileConfig {
         RiskProfileConfig {
@@ -539,13 +539,19 @@ mod tests {
                 pending: Arc::clone(&self.pending),
                 id: req_id.clone(),
             };
-            let _ = self.writer_tx.send(serde_json::to_string(&serde_json::json!({
-                "jsonrpc": "2.0",
-                "method": "approval/request",
-                "params": {
-                    "request_id": req_id
-                }
-            })).unwrap()).await;
+            let _ = self
+                .writer_tx
+                .send(
+                    serde_json::to_string(&serde_json::json!({
+                        "jsonrpc": "2.0",
+                        "method": "approval/request",
+                        "params": {
+                            "request_id": req_id
+                        }
+                    }))
+                    .unwrap(),
+                )
+                .await;
             std::future::pending::<()>().await;
             unreachable!()
         }

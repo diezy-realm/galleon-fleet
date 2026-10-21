@@ -934,8 +934,8 @@ mod voice_reply_gate {
 }
 
 mod media_filename_resolution {
-    use super::super::inbound::transcription_safe_filename;
     use super::super::AudioTranscriber;
+    use super::super::inbound::transcription_safe_filename;
     use anyhow::Context;
     use clawcrew_config::schema::TranscriptionConfig;
 
@@ -1256,8 +1256,8 @@ mod inbound_route {
     use wiremock::matchers::{method, path, path_regex};
     use wiremock::{Mock, ResponseTemplate};
 
-    use super::super::inbound::{HandlerCtx, register_event_handlers};
     use super::super::MatrixChannel;
+    use super::super::inbound::{HandlerCtx, register_event_handlers};
 
     const TRANSCRIPT: &str = "route level transcript of the voice note";
 

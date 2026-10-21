@@ -546,8 +546,7 @@ pub async fn run(
 
     // Construct the TUI registry early so both the gateway (for /api/tuis)
     // and the RPC socket (for tui/list) share the same Arc.
-    let tui_registry =
-        std::sync::Arc::new(crate::tui_identity::TuiRegistry::new(&config.data_dir));
+    let tui_registry = std::sync::Arc::new(crate::tui_identity::TuiRegistry::new(&config.data_dir));
 
     if let Some(gateway_start) = registry.take_gateway_start() {
         gateway_required = true;
@@ -2755,9 +2754,7 @@ mod tests {
         assert_eq!(value["attributes"]["stop_signal"], "Ctrl+C or SIGTERM");
         assert_eq!(
             value["attributes"]["socket"],
-            socket_path(&config)
-                .display()
-                .to_string()
+            socket_path(&config).display().to_string()
         );
     }
 
@@ -2790,13 +2787,7 @@ mod tests {
         let ready = String::from_utf8(ready).unwrap();
         assert!(ready.contains("http://127.0.0.1:42617"));
         assert!(!ready.contains("http://127.0.0.1:0"));
-        assert!(
-            ready.contains(
-                &socket_path(&config)
-                    .display()
-                    .to_string()
-            )
-        );
+        assert!(ready.contains(&socket_path(&config).display().to_string()));
         assert!(ready.contains("Ctrl+C"));
         assert!(ready.contains("current status"));
         assert!(!ready.contains("code appears"));

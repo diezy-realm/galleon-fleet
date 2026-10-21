@@ -9,11 +9,11 @@ use crate::cron::scheduler::deliver_announcement;
 use crate::peers::resolve_peer_set;
 use anyhow::Result;
 use async_trait::async_trait;
+use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
+use clawcrew_config::schema::Config;
 use parking_lot::Mutex;
 use serde_json::json;
 use std::sync::Arc;
-use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::schema::Config;
 
 /// Send a message to a peer on a shared channel. Bound to a single
 /// calling agent's alias; the tool validates every send against that
@@ -543,9 +543,9 @@ mod tests {
         use crate::agent::cost::record_tool_loop_cost_usage;
         use crate::agent::turn::provider_call::enforce_tool_loop_budget;
         use crate::cost::CostTracker;
-        use std::collections::HashMap;
         use clawcrew_config::schema::CostConfig;
         use clawcrew_providers::traits::TokenUsage;
+        use std::collections::HashMap;
 
         let workspace = tempfile::TempDir::new().expect("temp dir");
         let tracker = Arc::new(
@@ -709,10 +709,10 @@ mod tests {
         use crate::agent::turn::provider_call::enforce_tool_loop_budget;
         use crate::cost::CostTracker;
         use axum::{Json, Router, extract::State, routing::post};
-        use std::collections::HashMap;
         use clawcrew_config::schema::{
             CostConfig, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
         };
+        use std::collections::HashMap;
 
         // `[providers.models.ollama.*]` dispatches through the shared
         // OpenAI-compatible client (`factory::build_ollama_compat_provider`),

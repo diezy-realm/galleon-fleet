@@ -1,4 +1,5 @@
 use anyhow::Result;
+use clawcrew_config::schema::{Config, MqttConfig};
 use serde_json::Value;
 use std::future::Future;
 use std::pin::Pin;
@@ -6,7 +7,6 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
-use clawcrew_config::schema::{Config, MqttConfig};
 
 use super::{DaemonTransportContext, GatewayReadinessReporter, SocketReadinessReporter};
 use crate::tui_identity::TuiRegistry;
@@ -46,7 +46,9 @@ pub type SocketStarter = Box<
 
 /// Starts an RPC transport using the shared daemon transport context.
 pub type RpcStarter = Box<
-    dyn Fn(Arc<DaemonTransportContext>, CancellationToken, Arc<AtomicUsize>) -> StarterFuture + Send + Sync,
+    dyn Fn(Arc<DaemonTransportContext>, CancellationToken, Arc<AtomicUsize>) -> StarterFuture
+        + Send
+        + Sync,
 >;
 
 /// Starts the MQTT SOP listener for one configured MQTT channel alias.

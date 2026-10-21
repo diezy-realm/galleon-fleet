@@ -13,13 +13,13 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use clawcrew_relay_proto::{Control, SUBPROTOCOL, decode_data, encode_data};
 use futures_util::{SinkExt, StreamExt};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::tungstenite::{ClientRequestBuilder, Message};
 use tokio_util::sync::CancellationToken;
-use clawcrew_relay_proto::{Control, SUBPROTOCOL, decode_data, encode_data};
 
 #[derive(Debug, Clone, Copy)]
 enum RelayClientRoute {

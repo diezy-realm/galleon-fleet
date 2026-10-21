@@ -651,7 +651,6 @@ pub(crate) use galleon_channel_core::approval::{
     resolve_pending_approval_with_tool,
 };
 
-
 /// Generate a conversation history key from a channel message.
 pub fn conversation_history_key(msg: &clawcrew_api::channel::ChannelMessage) -> String {
     match &msg.thread_ts {

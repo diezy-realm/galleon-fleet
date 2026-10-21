@@ -7,17 +7,6 @@
 #[cfg(feature = "gateway")]
 use axum::{Router, routing::patch};
 #[cfg(feature = "gateway")]
-use parking_lot::RwLock;
-#[cfg(feature = "gateway")]
-use std::collections::HashMap;
-use std::process::{Command, Output, Stdio};
-#[cfg(feature = "gateway")]
-use std::sync::Arc;
-#[cfg(feature = "gateway")]
-use std::time::Duration;
-#[cfg(feature = "gateway")]
-use tower::ServiceExt;
-#[cfg(feature = "gateway")]
 use clawcrew::gateway::{self, AppState};
 #[cfg(feature = "gateway")]
 use clawcrew_api::attribution::Attributable;
@@ -28,6 +17,17 @@ use clawcrew_memory::NoneMemory;
 use clawcrew_providers::ModelProvider;
 #[cfg(feature = "gateway")]
 use clawcrew_runtime::security::PairingGuard;
+#[cfg(feature = "gateway")]
+use parking_lot::RwLock;
+#[cfg(feature = "gateway")]
+use std::collections::HashMap;
+use std::process::{Command, Output, Stdio};
+#[cfg(feature = "gateway")]
+use std::sync::Arc;
+#[cfg(feature = "gateway")]
+use std::time::Duration;
+#[cfg(feature = "gateway")]
+use tower::ServiceExt;
 
 #[cfg(feature = "gateway")]
 #[derive(Default)]

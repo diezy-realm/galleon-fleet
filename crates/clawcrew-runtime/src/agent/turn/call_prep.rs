@@ -11,12 +11,12 @@ use super::redact::scrub_credentials;
 use crate::agent::tool_execution::ToolExecutionOutcome;
 use crate::util::truncate_with_ellipsis;
 use anyhow::Result;
-use std::collections::HashSet;
-use std::sync::Arc;
-use std::time::Duration;
 use clawcrew_api::attribution::ToolProvenance;
 use clawcrew_api::hook::ToolCallHookContext;
 use clawcrew_tool_call_parser::{ParsedToolCall, canonicalize_json_for_tool_signature};
+use std::collections::HashSet;
+use std::sync::Arc;
+use std::time::Duration;
 
 pub(crate) struct PreparedToolCalls {
     pub(crate) ordered_results: Vec<Option<(String, Option<String>, ToolExecutionOutcome)>>,
@@ -412,13 +412,13 @@ mod tests {
     use crate::tools::skill_tool::SkillBuiltinTool;
     use crate::tools::{Tool, ToolResult};
     use async_trait::async_trait;
+    use clawcrew_api::attribution::{Attributable, ToolProvenance};
+    use clawcrew_config::schema::{PacingConfig, StreamReasoningMode};
+    use clawcrew_tool_call_parser::ParsedToolCall;
     use std::collections::{HashMap, HashSet};
     use std::sync::Arc;
     use std::time::Duration;
     use tokio::sync::mpsc;
-    use clawcrew_api::attribution::{Attributable, ToolProvenance};
-    use clawcrew_config::schema::{PacingConfig, StreamReasoningMode};
-    use clawcrew_tool_call_parser::ParsedToolCall;
 
     struct AttributedTool {
         name: String,
@@ -807,11 +807,11 @@ mod tests {
 
     #[tokio::test]
     async fn approval_cancellation_abandons_retained_and_waiting_calls_once() {
-        use tokio_util::sync::CancellationToken;
         use clawcrew_api::attribution::{Attributable, ChannelKind, Role};
         use clawcrew_api::channel::{
             Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
         };
+        use tokio_util::sync::CancellationToken;
 
         struct TestCallPrepApprovalChannel {
             writer_tx: mpsc::Sender<String>,
@@ -842,13 +842,19 @@ mod tests {
                 _recipient: &str,
                 request: &ChannelApprovalRequest,
             ) -> anyhow::Result<Option<ChannelApprovalResponse>> {
-                let _ = self.writer_tx.send(serde_json::to_string(&serde_json::json!({
-                    "jsonrpc": "2.0",
-                    "method": "approval/request",
-                    "params": {
-                        "tool_name": &request.tool_name
-                    }
-                })).unwrap()).await;
+                let _ = self
+                    .writer_tx
+                    .send(
+                        serde_json::to_string(&serde_json::json!({
+                            "jsonrpc": "2.0",
+                            "method": "approval/request",
+                            "params": {
+                                "tool_name": &request.tool_name
+                            }
+                        }))
+                        .unwrap(),
+                    )
+                    .await;
                 std::future::pending::<()>().await;
                 unreachable!()
             }
