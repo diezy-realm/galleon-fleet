@@ -18,6 +18,112 @@ use tokio::io::AsyncWriteExt;
 use tokio::sync::{Mutex as AsyncMutex, oneshot};
 use tokio_tungstenite::tungstenite::Message as WsMessage;
 
+pub use galleon_channel_core::allowlist;
+pub use galleon_channel_core::approval::{
+    PendingApproval, PendingApprovalResolution, new_approval_token, parse_approval_reply,
+    resolve_pending_approval, resolve_pending_approval_with_tool,
+};
+
+/// Pluggable audio transcription backend for Slack voice notes / audio files.
+#[async_trait]
+pub trait AudioTranscriber: Send + Sync {
+    async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String>;
+    #[cfg(test)]
+    fn bound_provider(&self) -> &str {
+        ""
+    }
+}
+
+pub const BLOCK_KIT_PREFIX: &str = "__CLAWCREW_BLOCK_KIT__";
+
+pub fn approval_position_line(position: Option<(u32, u32)>) -> String {
+    match position {
+        Some((_, total)) if total <= 1 => String::new(),
+        Some((index, total)) => {
+            let text = i18n::get_required_cli_string_with_args(
+                "channel-approval-position",
+                &[
+                    ("index", index.to_string().as_str()),
+                    ("total", total.to_string().as_str()),
+                ],
+            );
+            format!("{text}
+")
+        }
+        None => String::new(),
+    }
+}
+
+pub fn build_yesno_approval_prompt(
+    token: &str,
+    tool_name: &str,
+    arguments_summary: &str,
+    position: Option<(u32, u32)>,
+) -> String {
+    let position_line = approval_position_line(position);
+    let heading = i18n::get_required_cli_string("channel-approval-heading-shout");
+    let tool_label = i18n::get_required_cli_string("channel-approval-tool-label");
+    let args_label = i18n::get_required_cli_string("channel-approval-args-label");
+    let yes_command = format!("{token} yes");
+    let no_command = format!("{token} no");
+    let always_command = format!("{token} always");
+    let reply = i18n::get_required_cli_string_with_args(
+        "channel-approval-reply-instruction-yesno",
+        &[
+            ("yes_command", yes_command.as_str()),
+            ("no_command", no_command.as_str()),
+            ("always_command", always_command.as_str()),
+        ],
+    );
+    format!(
+        "{heading} [{token}]
+{position_line}{tool_label}: {tool_name}
+{args_label}: {arguments_summary}
+
+{reply}"
+    )
+}
+
+pub fn lifecycle_progress_fluent_key(event: ProgressEvent) -> &'static str {
+    match event {
+        ProgressEvent::Received => "channel-runtime-progress-received",
+        ProgressEvent::Planning => "channel-runtime-progress-planning",
+        ProgressEvent::WaitingOnModel => "channel-runtime-progress-waiting-on-model",
+        ProgressEvent::RunningTool => "channel-runtime-progress-running-tool",
+        ProgressEvent::CompactingContext => "channel-runtime-progress-compacting-context",
+        ProgressEvent::FinalizingResponse => "channel-runtime-progress-finalizing-response",
+    }
+}
+
+pub fn localized_lifecycle_progress(event: ProgressEvent) -> String {
+    i18n::get_required_cli_string(lifecycle_progress_fluent_key(event))
+}
+
+#[cfg(test)]
+pub fn conversation_history_key(msg: &ChannelMessage) -> String {
+    match &msg.thread_ts {
+        Some(tid) => format!("{}_{}_{}_{}", msg.channel, msg.reply_target, tid, msg.sender),
+        None => format!("{}_{}_{}", msg.channel, msg.reply_target, msg.sender),
+    }
+}
+
+#[cfg(test)]
+struct TestTranscriptionManager {
+    bound_provider: String,
+}
+
+#[cfg(test)]
+#[async_trait]
+impl AudioTranscriber for TestTranscriptionManager {
+    async fn transcribe(&self, _audio_data: &[u8], _file_name: &str) -> anyhow::Result<String> {
+        Ok("test".to_string())
+    }
+
+    fn bound_provider(&self) -> &str {
+        &self.bound_provider
+    }
+}
+
 #[derive(Clone)]
 struct CachedSlackDisplayName {
     display_name: String,
@@ -208,7 +314,7 @@ pub struct SlackChannel {
     /// Voice transcription config — when set, audio file attachments are
     /// downloaded, transcribed, and their text inlined into the message.
     transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
-    transcription_manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
+    transcription_manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     /// Enable progressive draft message updates via `chat.update`.
     stream_drafts: bool,
     /// Minimum interval (ms) between draft edits to stay within Slack rate limits.
@@ -221,7 +327,7 @@ pub struct SlackChannel {
     lazy_draft_ts: tokio::sync::Mutex<HashMap<String, String>>,
     /// Emoji reaction name (without colons) that cancels an in-flight request.
     cancel_reaction: Option<String>,
-    pending_approvals: Arc<AsyncMutex<HashMap<String, crate::util::PendingApproval>>>,
+    pending_approvals: Arc<AsyncMutex<HashMap<String, PendingApproval>>>,
     /// Seconds to wait for an operator reply to a `request_approval` prompt
     /// before treating the silence as a deny. Default 300.
     approval_timeout_secs: u64,
@@ -594,18 +700,30 @@ impl SlackChannel {
     /// the legacy section, so it binds a lone registered provider and
     /// otherwise leaves the choice unbound (see
     /// `transcription::manager_from_snapshot`).
-    pub fn with_transcription(self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
-        let manager = super::transcription::manager_from_snapshot(&config);
-        self.with_transcription_manager(config, manager)
+    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+        #[cfg(test)]
+        {
+            if config.enabled {
+                self.transcription_manager = Some(Arc::new(TestTranscriptionManager {
+                    bound_provider: "groq".to_string(),
+                }));
+                self.transcription = Some(config);
+                return self;
+            }
+        }
+        if config.enabled {
+            self.transcription = Some(config);
+        }
+        self
     }
 
     /// Store an already-built transcription manager, or nothing. The config is
     /// recorded only alongside a manager, so a channel never advertises
     /// transcription it cannot perform.
-    pub(crate) fn with_transcription_manager(
+    pub fn with_transcription_manager(
         mut self,
         config: clawcrew_config::schema::TranscriptionConfig,
-        manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
+        manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
             self.transcription_manager = Some(manager);
@@ -1332,7 +1450,7 @@ impl SlackChannel {
     /// `"*"` means allow everyone.
     fn is_user_allowed(&self, user_id: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed(&peers, user_id, crate::allowlist::Match::Sensitive)
+        allowlist::is_user_allowed(&peers, user_id, allowlist::Match::Sensitive)
     }
 
     fn is_group_sender_trigger_enabled(&self, user_id: &str) -> bool {
@@ -3924,7 +4042,7 @@ impl SlackChannel {
         if let Some((token, response, responder, channel)) =
             Self::try_parse_approval_block_action(envelope)
         {
-            crate::util::resolve_pending_approval(
+            resolve_pending_approval(
                 &self.pending_approvals,
                 &token,
                 response,
@@ -4385,10 +4503,10 @@ impl SlackChannel {
                     continue;
                 }
                 let allowed_peers = (self.peer_resolver)();
-                if !crate::allowlist::is_user_allowed(
+                if !allowlist::is_user_allowed(
                     &allowed_peers,
                     user,
-                    crate::allowlist::Match::Sensitive,
+                    allowlist::Match::Sensitive,
                 ) {
                     ::clawcrew_log::record!(
                         WARN,
@@ -4399,7 +4517,7 @@ impl SlackChannel {
                                 "alias": self.alias,
                                 "allowed_peer_count": allowed_peers.len(),
                             })),
-                        if !crate::allowlist::grants_anyone(&allowed_peers) {
+                        if !allowlist::grants_anyone(&allowed_peers) {
                             "ignoring message: no peers resolved for this channel — add a [peer_groups.<name>] with channel = \"slack.<alias>\" and external_peers (use [\"*\"] to allow everyone)"
                         } else {
                             "ignoring message from unauthorized user"
@@ -4431,8 +4549,8 @@ impl SlackChannel {
                     continue;
                 };
 
-                if let Some((token, response)) = crate::util::parse_approval_reply(&normalized_text)
-                    && crate::util::resolve_pending_approval(
+                if let Some((token, response)) = parse_approval_reply(&normalized_text)
+                    && resolve_pending_approval(
                         &self.pending_approvals,
                         &token,
                         response,
@@ -5008,7 +5126,7 @@ impl SlackChannel {
 ///
 /// Split out from the send so the rendered card can be asserted directly.
 /// Socket Mode builds its own Block Kit card rather than going through
-/// [`crate::util::build_yesno_approval_prompt`], so the position line has to be
+/// [`build_yesno_approval_prompt`], so the position line has to be
 /// threaded into both surfaces the operator can read: the `text` notification
 /// fallback and the `mrkdwn` section.
 fn build_socket_mode_approval_body(
@@ -5025,7 +5143,7 @@ fn build_socket_mode_approval_body(
     let btn_deny = i18n::get_required_cli_string("channel-approval-btn-deny");
     let btn_always = i18n::get_required_cli_string("channel-approval-btn-always");
     // Two pending cards from one turn are otherwise identical until tapped.
-    let position_line = crate::util::approval_position_line(position);
+    let position_line = approval_position_line(position);
     serde_json::json!({
         "channel": recipient,
         "text": format!("{heading} [{token}]\n{position_line}{tool_label}: {tool_name}\n{args_label}: {arguments_summary}"),
@@ -5143,7 +5261,7 @@ impl Channel for SlackChannel {
 
         // Detect Block Kit payloads produced by the `/config` command.
         let body = if let Some(blocks_json) =
-            message.content.strip_prefix(crate::util::BLOCK_KIT_PREFIX)
+            message.content.strip_prefix(BLOCK_KIT_PREFIX)
         {
             let blocks: serde_json::Value = serde_json::from_str(blocks_json)
                 .context("invalid Block Kit JSON in runtime command response")?;
@@ -5427,7 +5545,7 @@ impl Channel for SlackChannel {
         message_id: &str,
         event: ProgressEvent,
     ) -> anyhow::Result<()> {
-        let status_line = crate::util::localized_lifecycle_progress(event);
+        let status_line = localized_lifecycle_progress(event);
 
         let assistant_target = self
             .draft_turns
@@ -5809,10 +5927,10 @@ impl Channel for SlackChannel {
 
                         // Sender validation
                         let allowed_peers = (self.peer_resolver)();
-                        if !crate::allowlist::is_user_allowed(
+                        if !allowlist::is_user_allowed(
                             &allowed_peers,
                             user,
-                            crate::allowlist::Match::Sensitive,
+                            allowlist::Match::Sensitive,
                         ) {
                             ::clawcrew_log::record!(
                                 WARN,
@@ -5826,7 +5944,7 @@ impl Channel for SlackChannel {
                                     "alias": self.alias,
                                     "allowed_peer_count": allowed_peers.len(),
                                 })),
-                                if !crate::allowlist::grants_anyone(&allowed_peers) {
+                                if !allowlist::grants_anyone(&allowed_peers) {
                                     "ignoring message: no peers resolved for this channel — add a [peer_groups.<name>] with channel = \"slack.<alias>\" and external_peers (use [\"*\"] to allow everyone)"
                                 } else {
                                     "ignoring message from unauthorized user"
@@ -5854,8 +5972,8 @@ impl Channel for SlackChannel {
                         let sender = self.resolve_sender_identity(user).await;
 
                         if let Some((token, response)) =
-                            crate::util::parse_approval_reply(&normalized_text)
-                            && crate::util::resolve_pending_approval(
+                            parse_approval_reply(&normalized_text)
+                            && resolve_pending_approval(
                                 &self.pending_approvals,
                                 &token,
                                 response,
@@ -5961,8 +6079,8 @@ impl Channel for SlackChannel {
                     let sender = self.resolve_sender_identity(user).await;
 
                     if let Some((token, response)) =
-                        crate::util::parse_approval_reply(&normalized_text)
-                        && crate::util::resolve_pending_approval(
+                        parse_approval_reply(&normalized_text)
+                        && resolve_pending_approval(
                             &self.pending_approvals,
                             &token,
                             response,
@@ -6052,12 +6170,12 @@ impl Channel for SlackChannel {
         recipient: &str,
         request: &ChannelApprovalRequest,
     ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
-        let token = crate::util::new_approval_token();
+        let token = new_approval_token();
 
         let (tx, rx) = oneshot::channel();
         self.pending_approvals.lock().await.insert(
             token.clone(),
-            crate::util::PendingApproval {
+            PendingApproval {
                 sender: tx,
                 destination: recipient.to_string(),
                 tool_name: request.tool_name.clone(),
@@ -6084,7 +6202,7 @@ impl Channel for SlackChannel {
                 .map_err(anyhow::Error::from)
         } else {
             self.send(&SendMessage::new(
-                crate::util::build_yesno_approval_prompt(
+                build_yesno_approval_prompt(
                     &token,
                     &request.tool_name,
                     &request.arguments_summary,
@@ -7662,8 +7780,8 @@ mod tests {
         let msg1 = make_msg("100.000");
         let msg2 = make_msg("200.000");
 
-        let key1 = crate::util::conversation_history_key(&msg1);
-        let key2 = crate::util::conversation_history_key(&msg2);
+        let key1 = conversation_history_key(&msg1);
+        let key2 = conversation_history_key(&msg2);
         assert_eq!(key1, key2, "session key should be stable across messages");
     }
 
@@ -7692,8 +7810,8 @@ mod tests {
         let msg1 = make_msg("100.000");
         let msg2 = make_msg("200.000");
 
-        let key1 = crate::util::conversation_history_key(&msg1);
-        let key2 = crate::util::conversation_history_key(&msg2);
+        let key1 = conversation_history_key(&msg1);
+        let key2 = conversation_history_key(&msg2);
         assert_ne!(key1, key2, "session key should differ per thread");
     }
 
@@ -8873,7 +8991,7 @@ mod tests {
         let (tx, rx) = oneshot::channel();
         ch.pending_approvals.lock().await.insert(
             "abc123".to_string(),
-            crate::util::PendingApproval {
+            PendingApproval {
                 sender: tx,
                 destination: "C_ORIGIN".to_string(),
                 tool_name: "tool".to_string(),
@@ -8886,7 +9004,7 @@ mod tests {
             ChannelApprovalResponse::AlwaysApprove,
         ] {
             assert_eq!(
-                crate::util::resolve_pending_approval(
+                resolve_pending_approval(
                     &ch.pending_approvals,
                     "abc123",
                     response,
@@ -8894,12 +9012,12 @@ mod tests {
                     "C_ORIGIN",
                 )
                 .await,
-                crate::util::PendingApprovalResolution::Rejected,
+                PendingApprovalResolution::Rejected,
             );
             assert!(ch.pending_approvals.lock().await.contains_key("abc123"));
         }
         assert_eq!(
-            crate::util::resolve_pending_approval(
+            resolve_pending_approval(
                 &ch.pending_approvals,
                 "abc123",
                 ChannelApprovalResponse::Approve,
@@ -8907,12 +9025,12 @@ mod tests {
                 "C_OTHER",
             )
             .await,
-            crate::util::PendingApprovalResolution::Rejected,
+            PendingApprovalResolution::Rejected,
         );
         assert!(ch.pending_approvals.lock().await.contains_key("abc123"));
 
         assert_eq!(
-            crate::util::resolve_pending_approval(
+            resolve_pending_approval(
                 &ch.pending_approvals,
                 "abc123",
                 ChannelApprovalResponse::AlwaysApprove,
@@ -8920,21 +9038,21 @@ mod tests {
                 "C_ORIGIN",
             )
             .await,
-            crate::util::PendingApprovalResolution::Resolved,
+            PendingApprovalResolution::Resolved,
         );
         assert_eq!(rx.await.unwrap(), ChannelApprovalResponse::AlwaysApprove);
 
         let (approve_tx, approve_rx) = oneshot::channel();
         ch.pending_approvals.lock().await.insert(
             "def456".to_string(),
-            crate::util::PendingApproval {
+            PendingApproval {
                 sender: approve_tx,
                 destination: "C_ORIGIN".to_string(),
                 tool_name: "tool".to_string(),
             },
         );
         assert_eq!(
-            crate::util::resolve_pending_approval(
+            resolve_pending_approval(
                 &ch.pending_approvals,
                 "def456",
                 ChannelApprovalResponse::Approve,
@@ -8942,7 +9060,7 @@ mod tests {
                 "C_ORIGIN",
             )
             .await,
-            crate::util::PendingApprovalResolution::Resolved,
+            PendingApprovalResolution::Resolved,
         );
         assert_eq!(approve_rx.await.unwrap(), ChannelApprovalResponse::Approve);
     }
@@ -8990,7 +9108,7 @@ mod tests {
             let mut approvals = pending.lock().await;
             approvals.insert(
                 "auth01".into(),
-                crate::util::PendingApproval {
+                PendingApproval {
                     sender: approved_tx,
                     destination: "C_ORIGIN".into(),
                     tool_name: "tool".to_string(),
@@ -8998,7 +9116,7 @@ mod tests {
             );
             approvals.insert(
                 "wrong1".into(),
-                crate::util::PendingApproval {
+                PendingApproval {
                     sender: wrong_tx,
                     destination: "C_OTHER".into(),
                     tool_name: "tool".to_string(),
@@ -9006,7 +9124,7 @@ mod tests {
             );
             approvals.insert(
                 "other1".into(),
-                crate::util::PendingApproval {
+                PendingApproval {
                     sender: unauthorized_tx,
                     destination: "C_ORIGIN".into(),
                     tool_name: "tool".to_string(),
@@ -9067,7 +9185,7 @@ mod tests {
             let mut approvals = pending.lock().await;
             approvals.insert(
                 "auth01".into(),
-                crate::util::PendingApproval {
+                PendingApproval {
                     sender: approved_tx,
                     destination: "C_ORIGIN".into(),
                     tool_name: "tool".to_string(),
@@ -9075,7 +9193,7 @@ mod tests {
             );
             approvals.insert(
                 "wrong1".into(),
-                crate::util::PendingApproval {
+                PendingApproval {
                     sender: wrong_tx,
                     destination: "C_ORIGIN".into(),
                     tool_name: "tool".to_string(),
@@ -9083,7 +9201,7 @@ mod tests {
             );
             approvals.insert(
                 "other1".into(),
-                crate::util::PendingApproval {
+                PendingApproval {
                     sender: unauthorized_tx,
                     destination: "C_ORIGIN".into(),
                     tool_name: "tool".to_string(),
@@ -9203,7 +9321,7 @@ mod tests {
             "ls -la",
             Some((2, 3)),
         );
-        let expected = crate::util::approval_position_line(Some((2, 3)));
+        let expected = approval_position_line(Some((2, 3)));
         assert!(!expected.is_empty(), "helper should render a 2-of-3 line");
 
         let notification = body["text"].as_str().expect("text is a string");

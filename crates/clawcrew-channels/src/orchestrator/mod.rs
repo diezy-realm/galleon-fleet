@@ -12093,7 +12093,8 @@ fn build_channel_by_id(
                 .with_markdown_blocks(sl.use_markdown_blocks)
                 .with_transcription_manager(
                     config.transcription.clone(),
-                    resolved_transcription_manager(&config, &format!("slack.{alias}")),
+                    resolved_transcription_manager(&config, &format!("slack.{alias}"))
+                        .map(|m| m as Arc<dyn galleon_channel_slack::AudioTranscriber>),
                 )
                 .with_streaming(sl.stream_drafts, sl.draft_update_interval_ms)
                 .with_cancel_reaction(sl.cancel_reaction.clone())
@@ -13600,7 +13601,8 @@ fn collect_configured_channels(
                     .with_proxy_url(sl.proxy_url.clone())
                     .with_transcription_manager(
                         config.transcription.clone(),
-                        resolved_transcription_manager(&config, &format!("slack.{alias}")),
+                        resolved_transcription_manager(&config, &format!("slack.{alias}"))
+                            .map(|m| m as Arc<dyn galleon_channel_slack::AudioTranscriber>),
                     )
                     .with_streaming(sl.stream_drafts, sl.draft_update_interval_ms)
                     .with_cancel_reaction(sl.cancel_reaction.clone())

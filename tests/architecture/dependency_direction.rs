@@ -89,6 +89,7 @@ fn crate_dependency_direction_strictly_enforced() {
         "crates/galleon-channel-wecom-ws",
         "crates/galleon-channel-discord",
         "crates/galleon-channel-matrix",
+        "crates/galleon-channel-slack",
     ] {
         let cargo_path = root.join(channel_crate).join("Cargo.toml");
         if cargo_path.exists() {

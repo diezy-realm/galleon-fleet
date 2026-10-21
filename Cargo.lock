@@ -1716,6 +1716,7 @@ dependencies = [
  "galleon-channel-qq",
  "galleon-channel-reddit",
  "galleon-channel-signal",
+ "galleon-channel-slack",
  "galleon-channel-telegram",
  "galleon-channel-twitch",
  "galleon-channel-twitter",
@@ -4757,6 +4758,35 @@ dependencies = [
  "serde_json",
  "tokio",
  "uuid",
+]
+
+[[package]]
+name = "galleon-channel-slack"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-providers",
+ "clawcrew-spawn",
+ "futures-util",
+ "galleon-channel-core",
+ "galleon-i18n",
+ "hex",
+ "rand 0.10.2",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "tokio",
+ "tokio-tungstenite 0.29.0",
+ "uuid",
+ "wiremock",
 ]
 
 [[package]]

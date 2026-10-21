@@ -136,6 +136,11 @@ galleon-channel-discord = { workspace = true, optional = true }
 # (`crate::matrix::MatrixChannel`) keep compiling. Optional, behind
 # `channel-matrix`.
 galleon-channel-matrix = { workspace = true, optional = true }
+# RF-B1: the Slack channel is split into its own feature-crate. The monolith
+# re-exports it (`pub use galleon_channel_slack as slack`) so existing callers
+# (`crate::slack::SlackChannel`) keep compiling. Optional, behind
+# `channel-slack`.
+galleon-channel-slack = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -349,7 +354,7 @@ whatsapp-web = [
 ]
 # Channels with no optional deps (cfg gate only)
 channel-discord = ["dep:galleon-channel-discord", "ws-transport"]
-channel-slack = ["ws-transport"]
+channel-slack = ["dep:galleon-channel-slack", "ws-transport"]
 channel-signal = ["dep:galleon-channel-signal"]
 channel-mattermost = ["dep:galleon-channel-mattermost", "ws-transport"]
 channel-irc = ["dep:galleon-channel-irc"]
