@@ -151,7 +151,7 @@ fn terminal_completion_error_message_in_english(
     err: &anyhow::Error,
     agent_name: Option<&str>,
 ) -> Option<String> {
-    terminal_completion_error_message_with_renderer(
+    clawcrew_providers::terminal_error::terminal_completion_error_message_with_renderer(
         err,
         agent_name,
         crate::i18n::get_english_cli_string_with_args,
