@@ -11,8 +11,6 @@ use crate::sop::{SopAuditLogger, SopEngine};
 use crate::tools::{self, Tool};
 use anyhow::{Context, Result};
 use chrono::{Datelike, Timelike};
-use std::path::Path;
-use std::sync::Arc;
 use clawcrew_config::schema::Config;
 use clawcrew_memory::{self, Memory, MemoryCategory};
 #[cfg(test)]
@@ -20,6 +18,8 @@ use clawcrew_providers::ChatRequest;
 use clawcrew_providers::{
     self, ChatMessage, ConversationMessage, ModelProvider, ToolResultMessage,
 };
+use std::path::Path;
+use std::sync::Arc;
 
 // Re-export TurnEvent from clawcrew-types for backwards compatibility.
 pub use clawcrew_api::agent::TurnEvent;
@@ -3701,7 +3701,7 @@ impl Agent {
                                     temperature: self.temperature,
                                 },
                                 crate::agent::loop_::ResolvedIo {
-    app_registry: None,
+                                    app_registry: None,
                                     tools_registry: &self.tools,
                                     observer: self.observer.as_ref(),
                                     silent: true,
@@ -4218,7 +4218,10 @@ impl clawcrew_api::agent::AgentSession for Agent {
         event_tx: tokio::sync::mpsc::Sender<clawcrew_api::agent::TurnEvent>,
         cancel_token: Option<tokio_util::sync::CancellationToken>,
         steering_rx: Option<&mut tokio::sync::mpsc::Receiver<String>>,
-    ) -> std::result::Result<clawcrew_api::agent::AgentTurnSuccess, clawcrew_api::agent::AgentTurnError> {
+    ) -> std::result::Result<
+        clawcrew_api::agent::AgentTurnSuccess,
+        clawcrew_api::agent::AgentTurnError,
+    > {
         let res = self
             .turn_streamed_with_steering_state(user_message, event_tx, cancel_token, steering_rx)
             .await;

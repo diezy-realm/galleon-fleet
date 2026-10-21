@@ -1259,7 +1259,12 @@ mod chat_regression_tests {
             Some("test chat message")
         );
         assert_eq!(
-            recorded_session.lock().unwrap().as_ref().unwrap().as_deref(),
+            recorded_session
+                .lock()
+                .unwrap()
+                .as_ref()
+                .unwrap()
+                .as_deref(),
             Some("session-123")
         );
         assert_eq!(
@@ -1283,14 +1288,9 @@ mod chat_regression_tests {
         let config = clawcrew_config::schema::Config::default();
         let state = crate::api_config::tests::test_state(config);
 
-        let err = run_gateway_chat_with_tools(
-            &state,
-            "failing message",
-            None,
-            Some("main"),
-        )
-        .await
-        .expect_err("chat should fail when process_message fails");
+        let err = run_gateway_chat_with_tools(&state, "failing message", None, Some("main"))
+            .await
+            .expect_err("chat should fail when process_message fails");
 
         assert!(err.to_string().contains("simulated turn error"));
     }

@@ -1,14 +1,14 @@
 //! Per-turn output routing tool (`send_via`).
 
 use async_trait::async_trait;
-use serde_json::json;
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
 use clawcrew_api::channel::{Channel, SendMessage};
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use clawcrew_config::multi_agent::OutputModality;
 use clawcrew_config::multi_agent::PeerGroupConfig;
 use clawcrew_config::policy::{SecurityPolicy, ToolOperation};
+use serde_json::json;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 /// Per-tool channel-map handle — matches `clawcrew_runtime::tools::PerToolChannelHandle`.
 pub type PerToolChannelHandle = Arc<parking_lot::RwLock<HashMap<String, Arc<dyn Channel>>>>;
@@ -38,11 +38,7 @@ impl AgentChannelHandles {
 
     /// Register a channel into every populated handle so all channel-driven
     /// tools can resolve it by name.
-    pub fn register_channel(
-        &self,
-        name: impl Into<String>,
-        channel: Arc<dyn Channel>,
-    ) {
+    pub fn register_channel(&self, name: impl Into<String>, channel: Arc<dyn Channel>) {
         let name = name.into();
         for handle in self.populated_handles().into_iter().flatten() {
             handle.write().insert(name.clone(), Arc::clone(&channel));

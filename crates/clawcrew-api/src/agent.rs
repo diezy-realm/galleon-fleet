@@ -1,5 +1,5 @@
-use std::sync::{Arc, Mutex};
 use crate::plan::PlanEntry;
+use std::sync::{Arc, Mutex};
 
 /// Callback type for checking if model has been switched during tool execution.
 /// Returns Some((model_provider, model)) if a switch was requested, None otherwise.
@@ -424,9 +424,11 @@ pub async fn process_message(
     session_id: Option<&str>,
     origin: crate::ingress::TurnOrigin,
 ) -> anyhow::Result<String> {
-    let runner = get_agent_runner()
-        .ok_or_else(|| anyhow::anyhow!("agent runner not registered"))?;
-    runner.process_message(config, agent_alias, message, session_id, origin).await
+    let runner =
+        get_agent_runner().ok_or_else(|| anyhow::anyhow!("agent runner not registered"))?;
+    runner
+        .process_message(config, agent_alias, message, session_id, origin)
+        .await
 }
 
 pub async fn create_agent_session<C, S>(
@@ -439,8 +441,8 @@ where
     C: std::any::Any + Send + Sync + 'static,
     S: std::any::Any + Send + Sync + 'static,
 {
-    let runner = get_agent_runner()
-        .ok_or_else(|| anyhow::anyhow!("agent runner not registered"))?;
+    let runner =
+        get_agent_runner().ok_or_else(|| anyhow::anyhow!("agent runner not registered"))?;
     let canvas_box = canvas_store.map(|s| Box::new(s) as Box<dyn std::any::Any + Send + Sync>);
     runner
         .create_session(Box::new(config), agent_alias, session_cwd, canvas_box)

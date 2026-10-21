@@ -510,30 +510,30 @@ async fn handle_socket(
     {
         Ok(a) => a,
         Err(e) => {
-                ::clawcrew_log::record!(
-                    ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
-                        .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
-                    "Agent initialization failed"
-                );
-                let err = serde_json::json!({
-                    "type": "error",
-                    "message": format!("Failed to initialise agent: {e}"),
-                    "code": "AGENT_INIT_FAILED"
-                });
-                let _ = sender.send(Message::Text(err.to_string().into())).await;
-                let _ = sender
-                    .send(Message::Close(Some(axum::extract::ws::CloseFrame {
-                        code: 1011,
-                        reason: axum::extract::ws::Utf8Bytes::from_static(
-                            "Agent initialization failed",
-                        ),
-                    })))
-                    .await;
-                return;
-            }
-        };
+            ::clawcrew_log::record!(
+                ERROR,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
+                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                "Agent initialization failed"
+            );
+            let err = serde_json::json!({
+                "type": "error",
+                "message": format!("Failed to initialise agent: {e}"),
+                "code": "AGENT_INIT_FAILED"
+            });
+            let _ = sender.send(Message::Text(err.to_string().into())).await;
+            let _ = sender
+                .send(Message::Close(Some(axum::extract::ws::CloseFrame {
+                    code: 1011,
+                    reason: axum::extract::ws::Utf8Bytes::from_static(
+                        "Agent initialization failed",
+                    ),
+                })))
+                .await;
+            return;
+        }
+    };
     // Keep ONE ingress identity for the WebSocket turn: the turn span records
     // `channel = "wss"`, and observer events derive from `Agent.channel_name`,
     // so this must stay `wss` or a single turn is split across two names.
@@ -624,8 +624,8 @@ async fn handle_socket(
 
     let channel_names = if let Some(ch) = agent
         .channel_handles_any()
-        .downcast_ref::<clawcrew_tools::send_via::AgentChannelHandles>()
-    {
+        .downcast_ref::<clawcrew_tools::send_via::AgentChannelHandles>(
+    ) {
         clawcrew_channels::orchestrator::register_channels_for_tools(
             &config,
             &ch.ask_user,
