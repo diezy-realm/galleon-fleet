@@ -14,6 +14,7 @@ pub mod procedural_memory;
 pub mod producer;
 pub mod route;
 pub mod rundata;
+pub mod runner;
 pub mod schema;
 pub mod scope;
 pub mod step_contract;
@@ -22,14 +23,11 @@ pub mod trigger_registry;
 pub mod trigger_source;
 pub mod types;
 pub mod wire;
-pub mod runner;
 
-pub use runner::RuntimeSopRunner;
 pub use approval::ApprovalDecision;
+pub use runner::RuntimeSopRunner;
 
 pub use audit::SopAuditLogger;
-pub use constraint::{ConstraintKind, RoleRestrictionHook, SopConstraint};
-pub use dispatch::SopRuntimeDispatcher;
 #[allow(unused_imports)]
 pub use binding::{
     BindingContext, BindingRef, BindingScope, ExtractedBinding, extract_bindings, remap_step_refs,
@@ -38,6 +36,8 @@ pub use binding::{
 pub use capability::{
     CapabilityContext, CapabilityInfo, CapabilityResult, SopCapability, SopCapabilityRegistry,
 };
+pub use constraint::{ConstraintKind, RoleRestrictionHook, SopConstraint};
+pub use dispatch::SopRuntimeDispatcher;
 pub use engine::{
     CancelOutcome, MaintenanceSummary, SopEngine, err_is_cancellation_persistence_retained,
     err_is_resume_at_capacity, err_is_terminal_persistence_retained,
@@ -73,9 +73,9 @@ use anyhow::Result;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use types::{SopManifest, SopMeta};
 use clawcrew_config::schema::SopConfig;
 use clawcrew_memory::traits::Memory;
+use types::{SopManifest, SopMeta};
 
 /// Build the tool-spec map an SOP graph projection uses to type step pins.
 /// Keys are tool names; values are the tool's declared `parameters` (input
@@ -1381,7 +1381,11 @@ pub fn validate_sop_strict(sop: &Sop) -> SopValidation {
         blocking.push("SOP name is empty".into());
     }
 
-    if sop.raci.as_ref().is_some_and(|r| r.accountable.trim().is_empty()) {
+    if sop
+        .raci
+        .as_ref()
+        .is_some_and(|r| r.accountable.trim().is_empty())
+    {
         blocking.push("SOP RACI accountable role must not be empty".into());
     }
 
@@ -1960,6 +1964,216 @@ mod tests {
         assert_eq!(step.effective_agent(Some("parent")), Some("override"));
     }
 
+    #[test]
+    fn test_sop_step_agent_resolves_valid_alias_from_config_agents() {
+        use clawcrew_config::providers::ModelProviderRef;
+        use clawcrew_config::schema::{AliasedAgentConfig, SopConfig};
+        use std::collections::HashMap;
+
+        let mut agents = HashMap::new();
+        let mut specialist_cfg = AliasedAgentConfig::default();
+        specialist_cfg.model_provider = ModelProviderRef::new("anthropic.claude-opus");
+        specialist_cfg.skill_bundles = vec!["code-review".into(), "security-audit".into()];
+        agents.insert("specialist".to_string(), specialist_cfg);
+
+        let mut default_agent_cfg = AliasedAgentConfig::default();
+        default_agent_cfg.model_provider = ModelProviderRef::new("openai.gpt-4o");
+        agents.insert("default_agent".to_string(), default_agent_cfg);
+
+        let sop = Sop {
+            name: "test-resolve".to_string(),
+            description: "test".to_string(),
+            version: "1.0.0".to_string(),
+            priority: SopPriority::Normal,
+            execution_mode: SopExecutionMode::Auto,
+            triggers: vec![SopTrigger::Manual],
+            steps: vec![
+                SopStep {
+                    number: 1,
+                    title: "step1".to_string(),
+                    body: "run step 1".to_string(),
+                    agent: Some("specialist".to_string()),
+                    ..SopStep::default()
+                },
+                SopStep {
+                    number: 2,
+                    title: "step2".to_string(),
+                    body: "run step 2".to_string(),
+                    agent: None,
+                    ..SopStep::default()
+                },
+            ],
+            cooldown_secs: 0,
+            max_concurrent: 1,
+            location: None,
+            deterministic: false,
+            admission_policy: Default::default(),
+            max_pending_approvals: 0,
+            agent: Some("default_agent".to_string()),
+            raci: None,
+            constraints: Vec::new(),
+        };
+
+        let mut engine = SopEngine::new(SopConfig::default()).with_agents(agents);
+        engine.set_sops_for_test(vec![sop.clone()]);
+
+        let event = SopEvent {
+            source: SopTriggerSource::Manual,
+            topic: None,
+            payload: None,
+            timestamp: "2026-10-21T00:00:00Z".to_string(),
+        };
+
+        // Step 1: step.agent = "specialist" (valid alias)
+        let action = engine.start_run("test-resolve", event).expect("run starts");
+        let SopRunAction::ExecuteStep { step, .. } = action else {
+            panic!("expected ExecuteStep, got {action:?}");
+        };
+        assert_eq!(step.agent.as_deref(), Some("specialist"));
+
+        // Verify resolved AliasedAgentConfig matches specialist (model_provider and skill_bundles)
+        let resolved_cfg = engine
+            .resolved_agent_config_for_step(&step, &sop)
+            .expect("must resolve specialist agent config");
+        assert_eq!(
+            resolved_cfg.model_provider.to_string(),
+            "anthropic.claude-opus"
+        );
+        assert_eq!(
+            resolved_cfg.skill_bundles,
+            vec!["code-review".to_string(), "security-audit".to_string()]
+        );
+        assert_ne!(
+            resolved_cfg.model_provider.to_string(),
+            "openai.gpt-4o",
+            "must use specialist model provider, not default"
+        );
+    }
+
+    #[test]
+    fn test_sop_step_agent_invalid_alias_falls_back_to_sop_default_without_crash() {
+        use clawcrew_config::providers::ModelProviderRef;
+        use clawcrew_config::schema::{AliasedAgentConfig, SopConfig};
+        use std::collections::HashMap;
+
+        let mut agents = HashMap::new();
+        let mut default_agent_cfg = AliasedAgentConfig::default();
+        default_agent_cfg.model_provider = ModelProviderRef::new("openai.gpt-4o");
+        default_agent_cfg.skill_bundles = vec!["general-skills".into()];
+        agents.insert("sop_parent".to_string(), default_agent_cfg);
+
+        let sop = Sop {
+            name: "test-fallback".to_string(),
+            description: "test".to_string(),
+            version: "1.0.0".to_string(),
+            priority: SopPriority::Normal,
+            execution_mode: SopExecutionMode::Auto,
+            triggers: vec![SopTrigger::Manual],
+            steps: vec![SopStep {
+                number: 1,
+                title: "step1".to_string(),
+                body: "run step 1".to_string(),
+                // Ghost alias not in config.agents
+                agent: Some("ghost_agent".to_string()),
+                ..SopStep::default()
+            }],
+            cooldown_secs: 0,
+            max_concurrent: 1,
+            location: None,
+            deterministic: false,
+            admission_policy: Default::default(),
+            max_pending_approvals: 0,
+            agent: Some("sop_parent".to_string()),
+            raci: None,
+            constraints: Vec::new(),
+        };
+
+        let mut engine = SopEngine::new(SopConfig::default()).with_agents(agents);
+        engine.set_sops_for_test(vec![sop.clone()]);
+
+        let event = SopEvent {
+            source: SopTriggerSource::Manual,
+            topic: None,
+            payload: None,
+            timestamp: "2026-10-21T00:00:00Z".to_string(),
+        };
+
+        // Must NOT crash or panic; must fall back to SOP's default agent "sop_parent"
+        let action = engine
+            .start_run("test-fallback", event)
+            .expect("run starts");
+        let SopRunAction::ExecuteStep { step, .. } = action else {
+            panic!("expected ExecuteStep, got {action:?}");
+        };
+        assert_eq!(
+            step.agent.as_deref(),
+            Some("sop_parent"),
+            "invalid step agent must fall back to SOP default agent"
+        );
+
+        let resolved_cfg = engine
+            .resolved_agent_config_for_step(&step, &sop)
+            .expect("must resolve to sop_parent config");
+        assert_eq!(resolved_cfg.model_provider.to_string(), "openai.gpt-4o");
+    }
+
+    #[test]
+    fn test_sop_step_agent_invalid_alias_with_no_sop_parent_falls_back_to_none_without_crash() {
+        use clawcrew_config::schema::{AliasedAgentConfig, SopConfig};
+        use std::collections::HashMap;
+
+        let mut agents = HashMap::new();
+        let other_cfg = AliasedAgentConfig::default();
+        agents.insert("other".to_string(), other_cfg);
+
+        let sop = Sop {
+            name: "test-no-parent".to_string(),
+            description: "test".to_string(),
+            version: "1.0.0".to_string(),
+            priority: SopPriority::Normal,
+            execution_mode: SopExecutionMode::Auto,
+            triggers: vec![SopTrigger::Manual],
+            steps: vec![SopStep {
+                number: 1,
+                title: "step1".to_string(),
+                body: "run step 1".to_string(),
+                agent: Some("nonexistent_alias".to_string()),
+                ..SopStep::default()
+            }],
+            cooldown_secs: 0,
+            max_concurrent: 1,
+            location: None,
+            deterministic: false,
+            admission_policy: Default::default(),
+            max_pending_approvals: 0,
+            agent: None,
+            raci: None,
+            constraints: Vec::new(),
+        };
+
+        let mut engine = SopEngine::new(SopConfig::default()).with_agents(agents);
+        engine.set_sops_for_test(vec![sop.clone()]);
+
+        let event = SopEvent {
+            source: SopTriggerSource::Manual,
+            topic: None,
+            payload: None,
+            timestamp: "2026-10-21T00:00:00Z".to_string(),
+        };
+
+        // Must NOT crash or panic; falls back to None (global default)
+        let action = engine
+            .start_run("test-no-parent", event)
+            .expect("run starts");
+        let SopRunAction::ExecuteStep { step, .. } = action else {
+            panic!("expected ExecuteStep, got {action:?}");
+        };
+        assert_eq!(
+            step.agent, None,
+            "invalid alias with no SOP parent must fall back to None without crashing"
+        );
+    }
+
     fn planned(tool: &str, args: serde_json::Value) -> PlannedToolCall {
         PlannedToolCall {
             tool: tool.into(),
@@ -2267,24 +2481,46 @@ mod tests {
         let sops_dir = root.join("shared").join("sops");
 
         // 1. Verify engineering feature delivery SOP
-        let eng_sop = load_sop_by_name(&sops_dir, "engineering-feature-delivery", SopExecutionMode::Supervised)
-            .expect("engineering-feature-delivery must load from shared/sops");
+        let eng_sop = load_sop_by_name(
+            &sops_dir,
+            "engineering-feature-delivery",
+            SopExecutionMode::Supervised,
+        )
+        .expect("engineering-feature-delivery must load from shared/sops");
         assert_eq!(eng_sop.name, "engineering-feature-delivery");
-        let eng_raci = eng_sop.raci.as_ref().expect("engineering SOP must define RACI");
+        let eng_raci = eng_sop
+            .raci
+            .as_ref()
+            .expect("engineering SOP must define RACI");
         assert_eq!(eng_raci.accountable, "crew-lead-engineer");
-        assert!(eng_raci.responsible.contains(&"crew-backend-engineer".to_string()));
+        assert!(
+            eng_raci
+                .responsible
+                .contains(&"crew-backend-engineer".to_string())
+        );
         assert_eq!(eng_sop.steps.len(), 3);
         assert!(!eng_sop.steps[0].dos.is_empty(), "step 1 must have dos");
         assert!(!eng_sop.steps[0].donts.is_empty(), "step 1 must have donts");
         assert_eq!(eng_sop.constraints.len(), 2, "must define 2 constraints");
 
         // 2. Verify marketing content delivery SOP (non-engineering, generic)
-        let mkt_sop = load_sop_by_name(&sops_dir, "marketing-content-delivery", SopExecutionMode::Supervised)
-            .expect("marketing-content-delivery must load from shared/sops");
+        let mkt_sop = load_sop_by_name(
+            &sops_dir,
+            "marketing-content-delivery",
+            SopExecutionMode::Supervised,
+        )
+        .expect("marketing-content-delivery must load from shared/sops");
         assert_eq!(mkt_sop.name, "marketing-content-delivery");
-        let mkt_raci = mkt_sop.raci.as_ref().expect("marketing SOP must define RACI");
+        let mkt_raci = mkt_sop
+            .raci
+            .as_ref()
+            .expect("marketing SOP must define RACI");
         assert_eq!(mkt_raci.accountable, "crew-marketing-strategist");
-        assert!(mkt_raci.responsible.contains(&"crew-content-copywriter".to_string()));
+        assert!(
+            mkt_raci
+                .responsible
+                .contains(&"crew-content-copywriter".to_string())
+        );
         assert_eq!(mkt_sop.steps.len(), 3);
         assert!(!mkt_sop.steps[0].dos.is_empty(), "step 1 must have dos");
         assert!(!mkt_sop.steps[0].donts.is_empty(), "step 1 must have donts");

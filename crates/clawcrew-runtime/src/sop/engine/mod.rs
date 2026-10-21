@@ -23,8 +23,8 @@ use super::types::{
 };
 use crate::calendar::{CALENDAR_NO_SHOW_TOPIC, CalendarNoShowEvent};
 use crate::security::{ContentSafety, new_marker_id};
+use clawcrew_config::schema::{AliasedAgentConfig, Config, SopConfig};
 use serde_json::Value;
-use clawcrew_config::schema::SopConfig;
 
 /// Central SOP orchestrator: loads SOPs, matches triggers, manages run lifecycle.
 pub struct SopEngine {
@@ -100,6 +100,8 @@ pub struct SopEngine {
     /// until maintenance can persist the terminal `Failed` transition. This set
     /// creates the safe-boundary fact; it does not duplicate durable run state.
     step_budget_finalization_ready: std::collections::HashSet<String>,
+    /// Optional map of configured agents (`config.agents`) used to resolve step agent aliases.
+    agents: Option<HashMap<String, AliasedAgentConfig>>,
 }
 
 /// Cap on the in-memory per-message dispatch-dedup window (`SopEngine::dispatch_dedup`).
@@ -337,7 +339,168 @@ impl SopEngine {
             claims_retained_after_terminal_rollback: std::collections::HashSet::new(),
             cancellation_finalization_ready: std::collections::HashSet::new(),
             step_budget_finalization_ready: std::collections::HashSet::new(),
+            agents: None,
         }
+    }
+
+    /// Inject configured agents map (`config.agents`) to resolve step agent aliases.
+    pub fn with_agents(mut self, agents: HashMap<String, AliasedAgentConfig>) -> Self {
+        self.agents = Some(agents);
+        self
+    }
+
+    /// Inject root config so `config.agents` is used to resolve step agent aliases.
+    pub fn with_root_config(mut self, config: &Config) -> Self {
+        self.agents = Some(config.agents.clone());
+        self
+    }
+
+    /// Update configured agents map on an existing engine.
+    pub fn set_agents(&mut self, agents: HashMap<String, AliasedAgentConfig>) {
+        self.agents = Some(agents);
+    }
+
+    /// Update root config on an existing engine.
+    pub fn set_root_config(&mut self, config: &Config) {
+        self.agents = Some(config.agents.clone());
+    }
+
+    /// Borrow the configured agents map, if set.
+    pub fn agents(&self) -> Option<&HashMap<String, AliasedAgentConfig>> {
+        self.agents.as_ref()
+    }
+
+    /// Resolve the effective agent alias for a SOP step against `config.agents`.
+    ///
+    /// Identity bridge resolution contract:
+    /// - Checks whether `step.agent` is an alias valid in `config.agents` using
+    ///   the `config.agents.get(alias)` pattern.
+    /// - If valid, that `AliasedAgentConfig` determines the model_provider and skill_bundles
+    ///   used by that step at execution time.
+    /// - If invalid (step.agent is empty or alias is not found in config.agents), it falls
+    ///   back to the default agent config of the SOP (`sop.agent`).
+    /// - If `sop.agent` is also an alias in `config.agents`, it is used; otherwise it falls back
+    ///   to the global default agent (`None`), never crashing or panicking.
+    pub fn resolve_step_agent(&self, step: &SopStep, sop: &Sop) -> Option<String> {
+        Self::resolve_step_agent_with_map(self.agents.as_ref(), step, sop)
+    }
+
+    /// Pure helper to resolve effective agent using an optional `agents` map.
+    pub fn resolve_step_agent_with_map(
+        agents: Option<&HashMap<String, AliasedAgentConfig>>,
+        step: &SopStep,
+        sop: &Sop,
+    ) -> Option<String> {
+        // (1) Check if step specifies an agent override
+        if let Some(step_alias) = step
+            .agent
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+        {
+            if let Some(agents_map) = agents {
+                // Pattern: config.agents.get(alias)
+                if agents_map.get(step_alias).is_some() {
+                    // Valid alias in config.agents: use it to determine model_provider/skill_bundles
+                    return Some(step_alias.to_string());
+                } else {
+                    // step.agent is not found in config.agents -> fallback to default agent config of SOP
+                    ::clawcrew_log::record!(
+                        WARN,
+                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                            .with_attrs(::serde_json::json!({
+                                "sop_name": sop.name,
+                                "step_number": step.number,
+                                "invalid_step_agent": step_alias,
+                                "fallback_sop_agent": sop.agent,
+                            })),
+                        &format!(
+                            "SOP step {} agent alias '{step_alias}' is not valid in config.agents; \
+                             falling back to SOP default agent config ({:?})",
+                            step.number, sop.agent
+                        )
+                    );
+                    // Fallback to SOP's default agent config
+                    if let Some(sop_alias) = sop
+                        .agent
+                        .as_deref()
+                        .map(str::trim)
+                        .filter(|s| !s.is_empty())
+                    {
+                        if agents_map.get(sop_alias).is_some() {
+                            return Some(sop_alias.to_string());
+                        } else {
+                            ::clawcrew_log::record!(
+                                WARN,
+                                ::clawcrew_log::Event::new(
+                                    module_path!(),
+                                    ::clawcrew_log::Action::Note
+                                )
+                                .with_attrs(::serde_json::json!({
+                                    "sop_name": sop.name,
+                                    "invalid_sop_agent": sop_alias,
+                                })),
+                                &format!(
+                                    "SOP '{}' default agent alias '{sop_alias}' is also not valid in config.agents; \
+                                     falling back to default global agent",
+                                    sop.name
+                                )
+                            );
+                            return None;
+                        }
+                    } else {
+                        return None;
+                    }
+                }
+            } else {
+                // No agents map loaded (e.g. standalone/isolated test environment):
+                // Keep the step alias so isolated unit tests preserve behavior without crashing.
+                return Some(step_alias.to_string());
+            }
+        }
+
+        // (2) step.agent is empty or unset: resolve through SOP default agent
+        if let Some(sop_alias) = sop
+            .agent
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+        {
+            if let Some(agents_map) = agents {
+                if agents_map.get(sop_alias).is_some() {
+                    return Some(sop_alias.to_string());
+                } else {
+                    ::clawcrew_log::record!(
+                        WARN,
+                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                            .with_attrs(::serde_json::json!({
+                                "sop_name": sop.name,
+                                "invalid_sop_agent": sop_alias,
+                            })),
+                        &format!(
+                            "SOP '{}' default agent alias '{sop_alias}' is not valid in config.agents; \
+                             falling back to default global agent",
+                            sop.name
+                        )
+                    );
+                    return None;
+                }
+            } else {
+                return Some(sop_alias.to_string());
+            }
+        }
+
+        None
+    }
+
+    /// Lookup the resolved `AliasedAgentConfig` for a step if valid in `config.agents`.
+    pub fn resolved_agent_config_for_step(
+        &self,
+        step: &SopStep,
+        sop: &Sop,
+    ) -> Option<&AliasedAgentConfig> {
+        let alias = self.resolve_step_agent(step, sop)?;
+        self.agents.as_ref()?.get(&alias)
     }
 
     /// Inject a durable run-state store (used by `build_sop_engine`). Default is
@@ -2446,7 +2609,8 @@ impl SopEngine {
             return Ok(action);
         }
 
-        let performer = step.effective_agent(sop.agent.as_deref());
+        let resolved_performer = self.resolve_step_agent(&step, sop);
+        let performer = resolved_performer.as_deref();
         let prior_results = &self
             .active_runs
             .get(run_id)
@@ -2519,7 +2683,13 @@ impl SopEngine {
         // Upstream's resolve_step_action now forces approval whenever the
         // SOP-level mode needs it (strictly stronger than the old
         // approval_mode-conditional escalation), so the mode param is gone.
-        let action = resolve_step_action(sop, &step, run_id.to_string(), context);
+        let action = resolve_step_action(
+            sop,
+            &step,
+            run_id.to_string(),
+            context,
+            self.agents.as_ref(),
+        );
         let parked_for_approval = matches!(action, SopRunAction::WaitApproval { .. });
         let has_prior_gate_presentation = parked_for_approval
             && self.run_events(run_id).is_ok_and(|events| {
@@ -2641,7 +2811,8 @@ impl SopEngine {
             return Ok(action);
         }
 
-        let performer = step.effective_agent(sop.agent.as_deref());
+        let resolved_performer = self.resolve_step_agent(&step, sop);
+        let performer = resolved_performer.as_deref();
         let prior_results = &self
             .active_runs
             .get(run_id)
@@ -4006,9 +4177,9 @@ impl SopEngine {
         let context = format_step_context(&sop, run, &step, &self.config);
 
         let mut step = step;
-        step.agent = step
-            .effective_agent(sop.agent.as_deref())
-            .map(str::to_string);
+        // Resolve step.agent through config.agents.get() with fallback to default agent config of SOP.
+        // Valid alias uses AliasedAgentConfig (model_provider/skill_bundles); invalid falls back cleanly without crash.
+        step.agent = self.resolve_step_agent(&step, &sop);
 
         Ok(GateClearTransition::Active {
             action: Box::new(SopRunAction::ExecuteStep {
@@ -6076,11 +6247,17 @@ fn pending_step_blocks_direct_advance(sop: &Sop, step: &SopStep) -> bool {
 }
 
 /// Determine the action for a step based on the effective execution mode.
-fn resolve_step_action(sop: &Sop, step: &SopStep, run_id: String, context: String) -> SopRunAction {
+fn resolve_step_action(
+    sop: &Sop,
+    step: &SopStep,
+    run_id: String,
+    context: String,
+    agents: Option<&HashMap<String, AliasedAgentConfig>>,
+) -> SopRunAction {
     let mut step = step.clone();
-    step.agent = step
-        .effective_agent(sop.agent.as_deref())
-        .map(str::to_string);
+    // Resolve step.agent through config.agents.get() with fallback to default agent config of SOP.
+    // Valid alias uses AliasedAgentConfig (model_provider/skill_bundles); invalid falls back cleanly without crash.
+    step.agent = SopEngine::resolve_step_agent_with_map(agents, &step, sop);
     let step = &step;
 
     if step_requires_approval_gate(sop, step) {
