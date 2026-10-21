@@ -2,12 +2,12 @@
 
 use crate::cron_schedule::{next_run_for_schedule, schedule_cron_expression, validate_schedule};
 use crate::cron_types::{
-    validate_delivery_config, CronJob, CronJobPatch, CronRun, CronShellOutputFormat,
-    DeliveryConfig, JobType, Schedule, SessionTarget,
+    CronJob, CronJobPatch, CronRun, CronShellOutputFormat, DeliveryConfig, JobType, Schedule,
+    SessionTarget, validate_delivery_config,
 };
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
-use rusqlite::{params, Connection, OpenFlags};
+use rusqlite::{Connection, OpenFlags, params};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
