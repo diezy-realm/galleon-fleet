@@ -48,6 +48,20 @@ type CrewMember struct {
 	Role         string           `json:"role"`
 	Status       CrewMemberStatus `json:"status"`
 	Capabilities []string         `json:"capabilities"`
+	AgentAlias   string           `json:"agent_alias,omitempty"`
+}
+
+// NewTurnRequestForMember creates a TurnRequest with AgentID resolved from the CrewMember's AgentAlias.
+func NewTurnRequestForMember(member *CrewMember, sessionID, prompt string) *TurnRequest {
+	agentID := ""
+	if member != nil {
+		agentID = member.AgentAlias
+	}
+	return &TurnRequest{
+		SessionID: sessionID,
+		AgentID:   agentID,
+		Prompt:    prompt,
+	}
 }
 
 // Squad represents a team of specialized agents

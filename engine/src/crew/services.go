@@ -73,27 +73,30 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 
 	start := time.Now()
 	agentID := req.AgentID
-	if agentID == "" {
-		agentID = "primary_agent"
+	metricAgent := agentID
+	if metricAgent == "" {
+		metricAgent = "primary_agent"
 	}
 
 	defer func() {
 		duration := time.Since(start).Seconds()
-		metrics.AgentTurnDuration.WithLabelValues(agentID, "completed").Observe(duration)
+		metrics.AgentTurnDuration.WithLabelValues(metricAgent, "completed").Observe(duration)
 	}()
 
 	log.InfoContext(ctx, "starting agent turn",
 		slog.String("session_id", req.SessionID),
-		slog.String("agent_id", agentID),
+		slog.String("agent_id", metricAgent),
 	)
 
 	// 1. Prepare protobuf ExecuteTurnRequest for Rust SystemGateway
 	protoReq := &pb.ExecuteTurnRequest{
-		SessionId:  req.SessionID,
-		AgentAlias: &agentID,
+		SessionId: req.SessionID,
 		Messages: []*pb.TurnChatMessage{
 			{Role: "user", Content: req.Prompt},
 		},
+	}
+	if agentID != "" {
+		protoReq.AgentAlias = &agentID
 	}
 	if s.dispatcher != nil {
 		for _, t := range s.dispatcher.GetAvailableTools() {
@@ -272,14 +275,17 @@ func (s *service) runSubagent(ctx context.Context, subagentID, task string, even
 	metrics.ActiveAgents.Inc()
 	defer metrics.ActiveAgents.Dec()
 
-	stream, err := s.gateway.ExecuteTurn(ctx, &pb.ExecuteTurnRequest{
-		SessionId:  fmt.Sprintf("subagent-%s", subagentID),
-		AgentAlias: &subagentID,
+	protoReq := &pb.ExecuteTurnRequest{
+		SessionId: fmt.Sprintf("subagent-%s", subagentID),
 		Messages: []*pb.TurnChatMessage{
 			{Role: "system", Content: fmt.Sprintf("You are sub-agent '%s' tasked with: %s", subagentID, task)},
 			{Role: "user", Content: task},
 		},
-	})
+	}
+	if subagentID != "" {
+		protoReq.AgentAlias = &subagentID
+	}
+	stream, err := s.gateway.ExecuteTurn(ctx, protoReq)
 	if err != nil {
 		return
 	}
@@ -378,6 +384,7 @@ func NewRegistry() Registry {
 				Role:         "Decompose high-level tasks into DAG task graph.",
 				Status:       CrewMemberStatusIdle,
 				Capabilities: []string{"planning", "task_breakdown"},
+				AgentAlias:   "planner",
 			},
 			{
 				ID:           "coder",
@@ -385,6 +392,7 @@ func NewRegistry() Registry {
 				Role:         "Implements code, refactors, and edits files.",
 				Status:       CrewMemberStatusIdle,
 				Capabilities: []string{"write_file", "edit_file", "read_file"},
+				AgentAlias:   "coder",
 			},
 			{
 				ID:           "reviewer",
@@ -392,6 +400,7 @@ func NewRegistry() Registry {
 				Role:         "Validates code changes, generates git diffs, runs test suites.",
 				Status:       CrewMemberStatusIdle,
 				Capabilities: []string{"run_tests", "generate_diff"},
+				AgentAlias:   "reviewer",
 			},
 		},
 	}
