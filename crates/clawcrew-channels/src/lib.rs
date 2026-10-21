@@ -137,8 +137,11 @@ pub use galleon_channel_reddit as reddit;
 // orchestrator's `pub use crate::signal::SignalChannel` keep resolving.
 #[cfg(feature = "channel-signal")]
 pub use galleon_channel_signal as signal;
+// RF-B1: the Slack channel now lives in its own feature-crate. Re-export it
+// under the historical `slack` path so `crate::slack::SlackChannel` and callers
+// keep resolving.
 #[cfg(feature = "channel-slack")]
-pub mod slack;
+pub use galleon_channel_slack as slack;
 // RF-B1: the Telegram channel now lives in its own feature-crate. Re-export it
 // under the historical `telegram` path so `crate::telegram::TelegramChannel` and callers
 // keep resolving.
