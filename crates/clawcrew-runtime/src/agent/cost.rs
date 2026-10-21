@@ -471,9 +471,11 @@ mod tests {
     use super::*;
     use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
     use clawcrew_api::model_provider::{ChatMessage, ChatRequest, ChatResponse, ModelProvider};
+    use clawcrew_config::cost::tracker::CostTracker;
     use clawcrew_config::schema::{Config, DeepseekModelProviderConfig, ModelProviderConfig};
     use clawcrew_providers::ProviderDispatch;
     use clawcrew_providers::dispatch::{AccountedChatScope, with_exact_dispatch_route};
+    use std::sync::Arc;
 
     struct ResetGlobalPricingCatalog;
 
