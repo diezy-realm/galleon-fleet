@@ -1370,8 +1370,8 @@ mod tests {
         // literal-key typos in feature-gated sources.
         const SOURCES: &[&str] = &[
             include_str!("../../galleon-channel-telegram/src/lib.rs"),
-            include_str!("discord/mod.rs"),
-            include_str!("discord/approval.rs"),
+            include_str!("../../galleon-channel-discord/src/lib.rs"),
+            include_str!("../../galleon-channel-discord/src/approval.rs"),
             include_str!("whatsapp.rs"),
             include_str!("whatsapp_web.rs"),
             include_str!("util.rs"),

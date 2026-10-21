@@ -23378,7 +23378,7 @@ fn compiled_channel_families_have_listener_registration_or_explicit_runtime_owne
                     && source_segment_between(
                         cli_owner,
                         "registry.register_mqtt(Box::new({",
-                        "registry.register_socket(Box::new(",
+                        "registry.register_relay(Box::new(",
                     )
                     .is_some_and(|block| block.contains("run_mqtt_sop_listener("))
             }

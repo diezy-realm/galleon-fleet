@@ -935,7 +935,60 @@ mod voice_reply_gate {
 
 mod media_filename_resolution {
     use super::super::inbound::transcription_safe_filename;
+    use super::super::AudioTranscriber;
+    use anyhow::Context;
     use clawcrew_config::schema::TranscriptionConfig;
+
+    struct MatrixTestTranscriptionManager {
+        url: String,
+        token: Option<String>,
+    }
+
+    #[async_trait::async_trait]
+    impl AudioTranscriber for MatrixTestTranscriptionManager {
+        async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String> {
+            let ext = std::path::Path::new(file_name)
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("");
+            let accepted = [
+                "flac", "mp3", "mpeg", "mpga", "mp4", "m4a", "ogg", "oga", "opus", "wav", "webm",
+            ];
+            if !accepted.contains(&ext.to_ascii_lowercase().as_str()) {
+                anyhow::bail!("Unsupported audio format");
+            }
+            let client = reqwest::Client::new();
+            let part = reqwest::multipart::Part::bytes(audio_data.to_vec())
+                .file_name(file_name.to_string());
+            let form = reqwest::multipart::Form::new().part("file", part);
+            let mut req = client.post(&self.url).multipart(form);
+            if let Some(ref t) = self.token {
+                req = req.bearer_auth(t);
+            }
+            let resp = req.send().await?;
+            let val: serde_json::Value = resp.json().await?;
+            Ok(val
+                .get("text")
+                .and_then(|t| t.as_str())
+                .unwrap_or("")
+                .to_string())
+        }
+    }
+
+    fn build_transcription_manager(
+        config: &clawcrew_config::schema::Config,
+        _provider: &str,
+    ) -> anyhow::Result<MatrixTestTranscriptionManager> {
+        let lw = config
+            .transcription
+            .local_whisper
+            .as_ref()
+            .context("no local whisper")?;
+        Ok(MatrixTestTranscriptionManager {
+            url: lw.url.clone(),
+            token: lw.bearer_token.clone(),
+        })
+    }
 
     fn local_whisper_config(url: &str) -> clawcrew_config::schema::LocalWhisperConfig {
         clawcrew_config::schema::LocalWhisperConfig {
@@ -1204,6 +1257,7 @@ mod inbound_route {
     use wiremock::{Mock, ResponseTemplate};
 
     use super::super::inbound::{HandlerCtx, register_event_handlers};
+    use super::super::MatrixChannel;
 
     const TRANSCRIPT: &str = "route level transcript of the voice note";
 
@@ -2159,7 +2213,7 @@ mod markers {
         // readable text, not as a marker or a stray bracket span.
         let reply = format!(
             "I can't view that, it shows as {}.",
-            clawcrew_providers::multimodal::MEDIA_PLACEHOLDER
+            "(media attachment omitted)"
         );
         let (text, ms) = parse(&reply);
         assert_eq!(text, reply);
@@ -6157,7 +6211,7 @@ mod outbound_voice_duration {
     /// against a real encoder rather than against our own idea of the
     /// format. `opusinfo` reports its playback length as `0m:01.000s`, and
     /// its `OpusTags` carry only encoder strings.
-    const VOICE_NOTE: &[u8] = include_bytes!("testdata/voice_note.ogg");
+    const VOICE_NOTE: &[u8] = include_bytes!("../../clawcrew-channels/src/testdata/voice_note.ogg");
     /// The fixture's length, on the 48 kHz granule clock.
     const VOICE_NOTE_SAMPLES: u64 = 48_000;
 

@@ -2871,7 +2871,7 @@ fn ca_key_protection_from_env() -> clawcrew_tls::CaKeyProtection {
 ///
 /// The WSS plane is always mTLS. `enabled` controls only whether the configured
 /// CA replaces the daemon-generated CA; certificate pins apply in either mode.
-#[cfg(feature = "agent-runtime")]
+#[cfg(all(test, feature = "agent-runtime"))]
 fn resolve_wss_client_auth(
     client_auth: Option<&clawcrew_config::schema::WssClientAuthConfig>,
 ) -> Result<(Option<String>, Vec<String>)> {
@@ -5366,142 +5366,6 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     }
                 }));
 
-                registry.register_socket(Box::new(|ctx, cancel, client_count, ready_tx| {
-                    Box::pin(async move {
-                        clawcrew_runtime::rpc::local::run_local_listener(
-                            ctx,
-                            cancel,
-                            client_count,
-                            ready_tx,
-                        )
-                        .await
-                    })
-                }));
-
-                registry.register_wss(Box::new(|ctx, cancel, client_count| {
-                    Box::pin(async move {
-                        let (wss_cfg, data_dir) = {
-                            let cfg = ctx.config.read();
-                            (cfg.wss.clone(), cfg.data_dir.clone())
-                        };
-                        if !wss_cfg.enabled {
-                            // WSS disabled — park until cancelled.
-                            cancel.cancelled().await;
-                            return Ok(());
-                        }
-                        // The remote WSS plane is ALWAYS mutually authenticated; there
-                        // is no server-only / plaintext fallback. In auto-CA mode the
-                        // same generated CA verifies client certificates, and any
-                        // configured pin allowlist remains enforced.
-                        let (byo_ca, pinned) =
-                            resolve_wss_client_auth(wss_cfg.client_auth.as_ref())?;
-                        // Bring-your-own mTLS when an operator CA is configured;
-                        // otherwise auto-generate a per-daemon CA + server certificate
-                        // under the data dir (secure by default, zero config).
-                        let (cert_path, key_path, ca_cert_path) = match byo_ca {
-                            Some(ca_cert_path) => {
-                                if wss_cfg.cert_path.is_empty() || wss_cfg.key_path.is_empty() {
-                                    anyhow::bail!(
-                                        "[wss.client_auth].ca_cert_path is set (bring-your-own mTLS) \
-                                         but [wss].cert_path/key_path are not. Provide the server \
-                                         certificate and key, or clear ca_cert_path to auto-generate \
-                                         the CA and server certificate."
-                                    );
-                                }
-                                (wss_cfg.cert_path.clone(), wss_cfg.key_path.clone(), ca_cert_path)
-                            }
-                            None => {
-                                // Generate (or reuse) the per-daemon CA + server
-                                // cert. The CA key is encrypted at rest when a
-                                // passphrase is configured (same source the
-                                // enrollment + CLI read paths use), else 0600.
-                                // [wss].sans adds the hostnames/IPs a remote client
-                                // uses to reach the daemon to the server cert. The
-                                // enrollment endpoint uses the same resolver so both
-                                // TLS surfaces present matching daemon identities.
-                                let server_sans = wss_server_sans(&wss_cfg);
-                                let mats = clawcrew_tls::ensure_server_materials_protected(
-                                    &data_dir.join("tls"),
-                                    &server_sans,
-                                    &ca_key_protection_from_env(),
-                                )?;
-                                (
-                                    mats.server_cert_path.to_string_lossy().into_owned(),
-                                    mats.server_key_path.to_string_lossy().into_owned(),
-                                    mats.ca_cert_path.to_string_lossy().into_owned(),
-                                )
-                            }
-                        };
-                        // Connect-time revocation refusal (A5): default to the
-                        // ledger-materialized list under <data_dir>/tls/revoked
-                        // (the daemon rewrites it on every revoke), overridable by
-                        // [wss.client_auth].crl_path.
-                        // Resolve the effective CRL path exactly once, with the
-                        // SAME normalization the ledger and operator CLI use
-                        // (trim; blank means unset), and hand that one value to
-                        // both the ledger and the TLS acceptor below. Selecting
-                        // the raw string here let a whitespace spelling install
-                        // no revocation verifier while the ledger materialized
-                        // the default file - revocation must never be split or
-                        // disabled by an accepted configuration spelling.
-                        let crl_path =
-                            clawcrew_runtime::security::cert_ledger::effective_revoked_list_path(
-                                &data_dir,
-                                wss_cfg.client_auth.as_ref().map(|c| c.crl_path.as_str()),
-                            )
-                            .to_string_lossy()
-                            .into_owned();
-                        // Materialize to the path the verifier will read,
-                        // including a configured override. Skipping this when an
-                        // override is set left `revoke-client-cert` writing to
-                        // the default file while the handshake honoured a stale
-                        // one, so a revoked cert kept authenticating.
-                        {
-                            let ledger =
-                                clawcrew_runtime::security::cert_ledger::CertLedger::open_at(
-                                    &data_dir,
-                                    None,
-                                    std::path::PathBuf::from(&crl_path),
-                                )
-                                .context(
-                                    "open cert ledger before starting WSS revocation checks",
-                                )?;
-                            ledger.materialize_revocations().context(
-                                "materialize cert revocations before starting WSS listener",
-                            )?;
-                        }
-                        let tls_acceptor = clawcrew_runtime::rpc::wss::build_tls_acceptor(
-                            &cert_path,
-                            &key_path,
-                            &ca_cert_path,
-                            &pinned,
-                            &crl_path,
-                        )?;
-                        let bind_addr: std::net::SocketAddr =
-                            format!("{}:{}", wss_cfg.bind, wss_cfg.port).parse()?;
-                        let wss_limits = clawcrew_runtime::rpc::wss::WssLimits {
-                            max_pending_handshakes: wss_cfg.max_pending_handshakes,
-                            handshake_timeout: std::time::Duration::from_secs(
-                                wss_cfg.handshake_timeout_secs,
-                            ),
-                            max_sessions: wss_cfg.max_sessions,
-                            max_sessions_per_client: wss_cfg.max_sessions_per_client,
-                            incomplete_message_timeout: std::time::Duration::from_secs(
-                                wss_cfg.incomplete_message_timeout_secs,
-                            ),
-                        };
-                        clawcrew_runtime::rpc::wss::run_wss_listener(
-                            ctx,
-                            cancel,
-                            client_count,
-                            tls_acceptor,
-                            bind_addr,
-                            wss_limits,
-                        )
-                        .await
-                    })
-                }));
-
                 // Shared between the relay bridge and the enrollment endpoint:
                 // the bridge registers its enroll-dial source ports here so the
                 // endpoint can classify those loopback connections as
@@ -5838,10 +5702,6 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         clawcrew_runtime::enroll::serve(server, cancel).await
                     })
                 }));
-
-                // Pass the shared SOP engine through the registry so
-                // RpcContext (RPC/TUI agent sessions) can share it.
-                registry.set_sop_engine(sop_engine, sop_audit);
 
                 let exit = Box::pin(daemon::run(
                     current_config.clone(),

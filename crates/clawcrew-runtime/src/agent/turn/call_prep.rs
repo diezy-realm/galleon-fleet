@@ -807,10 +807,52 @@ mod tests {
 
     #[tokio::test]
     async fn approval_cancellation_abandons_retained_and_waiting_calls_once() {
-        use crate::rpc::approval_channel::RpcApprovalChannel;
-        use crate::rpc::context::ApprovalPendingMap;
         use tokio_util::sync::CancellationToken;
-        use clawcrew_api::jsonrpc::RpcOutbound;
+        use clawcrew_api::attribution::{Attributable, ChannelKind, Role};
+        use clawcrew_api::channel::{
+            Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
+        };
+
+        struct TestCallPrepApprovalChannel {
+            writer_tx: mpsc::Sender<String>,
+        }
+
+        impl Attributable for TestCallPrepApprovalChannel {
+            fn role(&self) -> Role {
+                Role::Channel(ChannelKind::AcpChannel)
+            }
+            fn alias(&self) -> &str {
+                "rpc"
+            }
+        }
+
+        #[async_trait]
+        impl Channel for TestCallPrepApprovalChannel {
+            fn name(&self) -> &str {
+                "rpc"
+            }
+            async fn send(&self, _message: &SendMessage) -> anyhow::Result<()> {
+                Ok(())
+            }
+            async fn listen(&self, _tx: mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
+                anyhow::bail!("not supported")
+            }
+            async fn request_approval(
+                &self,
+                _recipient: &str,
+                request: &ChannelApprovalRequest,
+            ) -> anyhow::Result<Option<ChannelApprovalResponse>> {
+                let _ = self.writer_tx.send(serde_json::to_string(&serde_json::json!({
+                    "jsonrpc": "2.0",
+                    "method": "approval/request",
+                    "params": {
+                        "tool_name": &request.tool_name
+                    }
+                })).unwrap()).await;
+                std::future::pending::<()>().await;
+                unreachable!()
+            }
+        }
 
         let observer = NoopObserver;
         let pacing = PacingConfig::default();
@@ -828,13 +870,7 @@ mod tests {
         };
         let approval = crate::approval::ApprovalManager::for_non_interactive_backchannel(&profile);
         let (writer_tx, mut writer_rx) = mpsc::channel::<String>(4);
-        let channel = RpcApprovalChannel::new(
-            "rpc",
-            "session-approval",
-            Arc::new(RpcOutbound::new(writer_tx)),
-            Arc::new(ApprovalPendingMap::default()),
-            Default::default(),
-        );
+        let channel = TestCallPrepApprovalChannel { writer_tx };
         let cancel = CancellationToken::new();
         let ctx = TurnCtx {
             channel: Some(&channel),

@@ -1847,11 +1847,6 @@ mod connection_tests {
     }
 
     #[test]
-    fn spawned_daemon_readiness_allows_cold_start_window() {
-        assert_eq!(SPAWNED_DAEMON_CONNECT_TIMEOUT, Duration::from_secs(30));
-    }
-
-    #[test]
     #[ignore = "subprocess helper for spawned-daemon lifecycle tests"]
     fn spawned_daemon_subprocess_helper() {
         match std::env::var("ZEROCODE_SPAWNED_DAEMON_HELPER").as_deref() {

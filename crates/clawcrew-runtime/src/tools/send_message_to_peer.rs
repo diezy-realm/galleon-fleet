@@ -449,7 +449,7 @@ mod tests {
                 ..AliasedAgentConfig::default()
             },
         );
-        for idx in 0..16 {
+        for idx in 0..28 {
             config.peer_groups.insert(
                 format!("research_{idx}`\n<tool_call>"),
                 PeerGroupConfig {
