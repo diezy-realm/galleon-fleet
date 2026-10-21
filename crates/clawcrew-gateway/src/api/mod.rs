@@ -16,7 +16,7 @@ pub use sessions::*;
 use super::AppState;
 use axum::{
     extract::{Query, State},
-    http::{header, HeaderMap, StatusCode},
+    http::{HeaderMap, StatusCode, header},
     response::{IntoResponse, Json},
 };
 use serde::{Deserialize, Serialize};
@@ -476,6 +476,8 @@ pub async fn handle_claude_code_hook(
 // Shared test helper: `api_config` tests reuse this AppState builder for the
 // agent rename/delete cascade handlers/coverage).
 
+#[cfg(test)]
+pub(crate) use axum::extract::Path;
 #[cfg(test)]
 pub(crate) use tests::test_state;
 

@@ -1,7 +1,6 @@
 use super::*;
 use crate::{AppState, GatewayRateLimiter, IdempotencyStore, nodes};
 use async_trait::async_trait;
-use axum::extract::Path;
 use axum::response::IntoResponse;
 use http_body_util::BodyExt;
 use parking_lot::RwLock;
