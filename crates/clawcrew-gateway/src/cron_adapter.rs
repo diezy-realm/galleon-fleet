@@ -13,8 +13,8 @@ use clawcrew_config::schema::{Config, CronJobDecl, CronScheduleDecl, CronShellOu
 use clawcrew_infra::cron_schedule::{next_run_for_schedule, schedule_cron_expression};
 use clawcrew_infra::cron_store::CronStore;
 use clawcrew_infra::cron_types::{
-    CronJob, CronJobPatch, CronRun, DeliveryConfig, JobType, ManualCronRunResult, Schedule,
-    SessionTarget, validate_delivery_config,
+    validate_delivery_config, CronJob, CronJobPatch, CronRun, DeliveryConfig, JobType,
+    ManualCronRunResult, Schedule, SessionTarget,
 };
 use rusqlite::{params, Connection};
 
@@ -25,7 +25,8 @@ pub type DeliveryFn = Box<
             String,
             Option<String>,
             String,
-        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<()>> + Send>>
+        )
+            -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<()>> + Send>>
         + Send
         + Sync,
 >;
@@ -223,12 +224,18 @@ pub async fn run_manual_job(
                         (out.status.success(), combined)
                     }
                     Ok(Err(e)) => (false, format!("spawn error: {e}")),
-                    Err(_) => (false, format!("job timed out after {}s", timeout.as_secs_f64())),
+                    Err(_) => (
+                        false,
+                        format!("job timed out after {}s", timeout.as_secs_f64()),
+                    ),
                 },
                 Err(e) => (false, format!("spawn error: {e}")),
             }
         }
-        JobType::Agent => (false, "agent cron job execution requires runtime".to_string()),
+        JobType::Agent => (
+            false,
+            "agent cron job execution requires runtime".to_string(),
+        ),
     };
 
     let mut status = if success { "ok" } else { "error" }.to_string();
@@ -314,8 +321,7 @@ pub fn sync_declarative_jobs(
         return Ok(());
     }
 
-    let config_ids: std::collections::HashSet<&str> =
-        decls.keys().map(String::as_str).collect();
+    let config_ids: std::collections::HashSet<&str> = decls.keys().map(String::as_str).collect();
 
     {
         let mut stmt = conn.prepare("SELECT id FROM cron_jobs WHERE source = 'declarative'")?;

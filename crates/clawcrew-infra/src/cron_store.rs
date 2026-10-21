@@ -2,8 +2,8 @@
 
 use crate::cron_schedule::{next_run_for_schedule, schedule_cron_expression, validate_schedule};
 use crate::cron_types::{
-    CronJob, CronJobPatch, CronRun, CronShellOutputFormat, DeliveryConfig, JobType,
-    Schedule, SessionTarget, validate_delivery_config,
+    validate_delivery_config, CronJob, CronJobPatch, CronRun, CronShellOutputFormat,
+    DeliveryConfig, JobType, Schedule, SessionTarget,
 };
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
@@ -133,12 +133,7 @@ impl CronStore {
         Ok(())
     }
 
-    pub fn add_job(
-        &self,
-        agent_alias: &str,
-        expression: &str,
-        command: &str,
-    ) -> Result<String> {
+    pub fn add_job(&self, agent_alias: &str, expression: &str, command: &str) -> Result<String> {
         self.ensure_table()?;
         let conn = Connection::open(&self.db_path)
             .with_context(|| format!("Failed to open cron DB: {}", self.db_path.display()))?;
@@ -617,31 +612,38 @@ impl CronStore {
 
         let rows = stmt.query_map(params![agent_alias], |row| {
             let schedule_raw: Option<String> = row.get(3).ok();
-            let schedule = schedule_raw.map(|s| {
-                serde_json::from_str(&s).unwrap_or(serde_json::Value::String(s))
-            });
+            let schedule = schedule_raw
+                .map(|s| serde_json::from_str(&s).unwrap_or(serde_json::Value::String(s)));
             let delivery_raw: Option<String> = row.get(10).ok();
-            let delivery = delivery_raw.map(|s| {
-                serde_json::from_str(&s).unwrap_or(serde_json::Value::String(s))
-            });
+            let delivery = delivery_raw
+                .map(|s| serde_json::from_str(&s).unwrap_or(serde_json::Value::String(s)));
             let allowed_tools_raw: Option<String> = row.get(17).ok();
-            let allowed_tools = allowed_tools_raw.map(|s| {
-                serde_json::from_str(&s).unwrap_or(serde_json::Value::String(s))
-            });
+            let allowed_tools = allowed_tools_raw
+                .map(|s| serde_json::from_str(&s).unwrap_or(serde_json::Value::String(s)));
 
             Ok(CronJobRecord {
                 id: row.get(0)?,
                 expression: row.get(1)?,
                 command: row.get(2)?,
                 schedule,
-                job_type: row.get::<_, Option<String>>(4)?.unwrap_or_else(|| "shell".to_string()),
+                job_type: row
+                    .get::<_, Option<String>>(4)?
+                    .unwrap_or_else(|| "shell".to_string()),
                 prompt: row.get(5).ok(),
                 name: row.get(6).ok(),
-                session_target: row.get::<_, Option<String>>(7)?.unwrap_or_else(|| "isolated".to_string()),
+                session_target: row
+                    .get::<_, Option<String>>(7)?
+                    .unwrap_or_else(|| "isolated".to_string()),
                 model: row.get(8).ok(),
-                enabled: row.get::<_, Option<i64>>(9)?.map(|v| v != 0).unwrap_or(true),
+                enabled: row
+                    .get::<_, Option<i64>>(9)?
+                    .map(|v| v != 0)
+                    .unwrap_or(true),
                 delivery,
-                delete_after_run: row.get::<_, Option<i64>>(11)?.map(|v| v != 0).unwrap_or(false),
+                delete_after_run: row
+                    .get::<_, Option<i64>>(11)?
+                    .map(|v| v != 0)
+                    .unwrap_or(false),
                 created_at: row.get::<_, Option<String>>(12)?.unwrap_or_default(),
                 next_run: row.get::<_, Option<String>>(13)?.unwrap_or_default(),
                 last_run: row.get(14).ok(),
@@ -649,7 +651,10 @@ impl CronStore {
                 last_output: row.get(16).ok(),
                 allowed_tools,
                 source: row.get(18).ok(),
-                uses_memory: row.get::<_, Option<i64>>(19)?.map(|v| v != 0).unwrap_or(true),
+                uses_memory: row
+                    .get::<_, Option<i64>>(19)?
+                    .map(|v| v != 0)
+                    .unwrap_or(true),
                 agent_alias: row.get::<_, Option<String>>(20)?.unwrap_or_default(),
                 shell_output_format: row.get(21).ok(),
             })
@@ -679,11 +684,12 @@ impl CronStore {
             return Ok(0);
         }
 
-        let changed = conn.execute(
-            "DELETE FROM cron_jobs WHERE agent_alias = ?1",
-            params![agent_alias],
-        )
-        .context("Failed to delete cron jobs for agent")?;
+        let changed = conn
+            .execute(
+                "DELETE FROM cron_jobs WHERE agent_alias = ?1",
+                params![agent_alias],
+            )
+            .context("Failed to delete cron jobs for agent")?;
 
         Ok(changed)
     }
@@ -702,11 +708,12 @@ impl CronStore {
             return Ok(0);
         }
 
-        let changed = conn.execute(
-            "UPDATE cron_jobs SET agent_alias = ?2 WHERE agent_alias = ?1",
-            params![from, to],
-        )
-        .context("Failed to rename cron job owner")?;
+        let changed = conn
+            .execute(
+                "UPDATE cron_jobs SET agent_alias = ?2 WHERE agent_alias = ?1",
+                params![from, to],
+            )
+            .context("Failed to rename cron job owner")?;
 
         Ok(changed)
     }
@@ -736,7 +743,10 @@ fn map_cron_job_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<CronJob> {
     };
 
     let allowed_tools_raw: Option<String> = row.get(17)?;
-    let allowed_tools = if let Some(raw) = allowed_tools_raw.as_deref().filter(|s| !s.trim().is_empty()) {
+    let allowed_tools = if let Some(raw) = allowed_tools_raw
+        .as_deref()
+        .filter(|s| !s.trim().is_empty())
+    {
         serde_json::from_str(raw).map_err(|e| {
             rusqlite::Error::FromSqlConversionFailure(17, rusqlite::types::Type::Text, Box::new(e))
         })?
@@ -745,8 +755,9 @@ fn map_cron_job_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<CronJob> {
     };
 
     let jt_str: String = row.get(4)?;
-    let job_type = JobType::try_from(jt_str.as_str())
-        .map_err(|e| rusqlite::Error::FromSqlConversionFailure(4, rusqlite::types::Type::Text, e.into()))?;
+    let job_type = JobType::try_from(jt_str.as_str()).map_err(|e| {
+        rusqlite::Error::FromSqlConversionFailure(4, rusqlite::types::Type::Text, e.into())
+    })?;
 
     let st_str: Option<String> = row.get(7)?;
     let session_target = match st_str.as_deref() {
@@ -791,10 +802,18 @@ fn map_cron_job_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<CronJob> {
         name: row.get(6)?,
         session_target,
         model: row.get(8)?,
-        agent_alias: agent_alias.map(|s| s.trim().to_string()).unwrap_or_default(),
-        enabled: row.get::<_, Option<i64>>(9)?.map(|v| v != 0).unwrap_or(true),
+        agent_alias: agent_alias
+            .map(|s| s.trim().to_string())
+            .unwrap_or_default(),
+        enabled: row
+            .get::<_, Option<i64>>(9)?
+            .map(|v| v != 0)
+            .unwrap_or(true),
         delivery,
-        delete_after_run: row.get::<_, Option<i64>>(11)?.map(|v| v != 0).unwrap_or(false),
+        delete_after_run: row
+            .get::<_, Option<i64>>(11)?
+            .map(|v| v != 0)
+            .unwrap_or(false),
         allowed_tools,
         uses_memory: uses_memory != Some(0),
         source: source.unwrap_or_else(|| "imperative".to_string()),
@@ -870,7 +889,14 @@ mod tests {
         conn.execute(
             "INSERT INTO cron_jobs (id, expression, command, created_at, next_run, agent_alias)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-            params!["job-1", "* * * * *", "echo test", "2026-01-01T00:00:00Z", "2026-01-01T00:01:00Z", "test-agent"],
+            params![
+                "job-1",
+                "* * * * *",
+                "echo test",
+                "2026-01-01T00:00:00Z",
+                "2026-01-01T00:01:00Z",
+                "test-agent"
+            ],
         )
         .unwrap();
 
@@ -907,7 +933,9 @@ mod tests {
         assert_eq!(job.command, "echo test");
 
         // Rename
-        let renamed = store.rename_jobs_by_agent("test-agent", "new-agent").unwrap();
+        let renamed = store
+            .rename_jobs_by_agent("test-agent", "new-agent")
+            .unwrap();
         assert_eq!(renamed, 1);
         assert_eq!(store.list_jobs_by_agent("test-agent").unwrap().len(), 0);
         assert_eq!(store.list_jobs_by_agent("new-agent").unwrap().len(), 1);
