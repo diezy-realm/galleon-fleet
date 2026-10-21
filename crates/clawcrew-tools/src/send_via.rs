@@ -1,17 +1,67 @@
 //! Per-turn output routing tool (`send_via`).
 
 use async_trait::async_trait;
-use serde_json::json;
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
 use clawcrew_api::channel::{Channel, SendMessage};
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use clawcrew_config::multi_agent::OutputModality;
 use clawcrew_config::multi_agent::PeerGroupConfig;
 use clawcrew_config::policy::{SecurityPolicy, ToolOperation};
+use serde_json::json;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 /// Per-tool channel-map handle — matches `clawcrew_runtime::tools::PerToolChannelHandle`.
 pub type PerToolChannelHandle = Arc<parking_lot::RwLock<HashMap<String, Arc<dyn Channel>>>>;
+
+/// Bundle of late-bound channel-map handles owned by an Agent. Cloning is
+/// cheap (Arc clones); the underlying maps are shared with the live tools.
+#[derive(Clone, Default)]
+pub struct AgentChannelHandles {
+    pub ask_user: Option<PerToolChannelHandle>,
+    pub channel_room: Option<PerToolChannelHandle>,
+    pub reaction: PerToolChannelHandle,
+    pub poll: Option<PerToolChannelHandle>,
+    pub escalate: Option<PerToolChannelHandle>,
+}
+
+impl AgentChannelHandles {
+    /// Return references to all populated per-tool channel handles.
+    fn populated_handles(&self) -> Vec<Option<&PerToolChannelHandle>> {
+        vec![
+            self.ask_user.as_ref(),
+            self.channel_room.as_ref(),
+            Some(&self.reaction),
+            self.poll.as_ref(),
+            self.escalate.as_ref(),
+        ]
+    }
+
+    /// Register a channel into every populated handle so all channel-driven
+    /// tools can resolve it by name.
+    pub fn register_channel(&self, name: impl Into<String>, channel: Arc<dyn Channel>) {
+        let name = name.into();
+        for handle in self.populated_handles().into_iter().flatten() {
+            handle.write().insert(name.clone(), Arc::clone(&channel));
+        }
+    }
+
+    /// Remove a channel from every populated handle (used on session/stop).
+    pub fn unregister_channel(&self, name: &str) {
+        for handle in self.populated_handles().into_iter().flatten() {
+            handle.write().remove(name);
+        }
+    }
+
+    /// Look up a registered channel by name from any populated channel map.
+    pub fn get_channel(&self, name: &str) -> Option<Arc<dyn Channel>> {
+        for handle in self.populated_handles().into_iter().flatten() {
+            if let Some(channel) = handle.read().get(name) {
+                return Some(Arc::clone(channel));
+            }
+        }
+        None
+    }
+}
 
 /// Resolves the peer groups that include the active agent, read live from config
 /// at call time so a config reload (membership / `external_peers` / channel alias /

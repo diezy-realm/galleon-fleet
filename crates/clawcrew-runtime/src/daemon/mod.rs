@@ -1,9 +1,9 @@
 use anyhow::Result;
 use chrono::Utc;
+use clawcrew_config::schema::Config;
 use std::path::PathBuf;
 use tokio::task::JoinHandle;
 use tokio::time::Duration;
-use clawcrew_config::schema::Config;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 struct StartupReadiness {
@@ -632,6 +632,7 @@ pub async fn run(
         );
         // P0.1: project outbound A2A run events onto the canonical control plane.
         crate::control_plane::a2a_projection::install();
+        crate::agent::install_agent_runner();
         crate::health::mark_component_ok("control-plane");
     }
 
@@ -2679,8 +2680,8 @@ fn has_supervised_channels(config: &Config) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use clawcrew_config::schema::MattermostListenMode;
+    use tempfile::TempDir;
 
     const DAEMON_DEADLOCK_GUARD: Duration = Duration::from_secs(30);
 
@@ -4708,8 +4709,8 @@ mod tests {
     #[tokio::test]
     #[ignore = "spawns a real stdio MCP server via npx @modelcontextprotocol/server-filesystem; needs node/npx on PATH so it does not run in normal CI. Run: cargo test -p clawcrew-runtime --lib heartbeat_mcp_registry_reuses_one_stdio_child_across_ticks -- --ignored"]
     async fn heartbeat_mcp_registry_reuses_one_stdio_child_across_ticks() {
-        use std::sync::Arc;
         use clawcrew_config::schema::{AliasedAgentConfig, McpBundleConfig, McpServerConfig};
+        use std::sync::Arc;
 
         let _test_state_lock = lock_heartbeat_mcp_registry_test_state().await;
 

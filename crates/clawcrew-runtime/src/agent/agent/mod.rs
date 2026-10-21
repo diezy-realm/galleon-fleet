@@ -11,8 +11,6 @@ use crate::sop::{SopAuditLogger, SopEngine};
 use crate::tools::{self, Tool};
 use anyhow::{Context, Result};
 use chrono::{Datelike, Timelike};
-use std::path::Path;
-use std::sync::Arc;
 use clawcrew_config::schema::Config;
 use clawcrew_memory::{self, Memory, MemoryCategory};
 #[cfg(test)]
@@ -20,6 +18,8 @@ use clawcrew_providers::ChatRequest;
 use clawcrew_providers::{
     self, ChatMessage, ConversationMessage, ModelProvider, ToolResultMessage,
 };
+use std::path::Path;
+use std::sync::Arc;
 
 // Re-export TurnEvent from clawcrew-types for backwards compatibility.
 pub use clawcrew_api::agent::TurnEvent;
@@ -528,59 +528,8 @@ pub struct ProviderSwitchConfig {
     pub live: Option<std::sync::Arc<parking_lot::RwLock<clawcrew_config::schema::Config>>>,
 }
 
-/// Bundle of late-bound channel-map handles owned by an Agent. Cloning is
-/// cheap (Arc clones); the underlying maps are shared with the live tools.
-#[derive(Clone, Default)]
-pub struct AgentChannelHandles {
-    pub ask_user: Option<tools::PerToolChannelHandle>,
-    pub channel_room: Option<tools::PerToolChannelHandle>,
-    pub reaction: tools::PerToolChannelHandle,
-    pub poll: Option<tools::PerToolChannelHandle>,
-    pub escalate: Option<tools::PerToolChannelHandle>,
-}
-
-impl AgentChannelHandles {
-    /// Return references to all populated per-tool channel handles.
-    fn populated_handles(&self) -> Vec<Option<&tools::PerToolChannelHandle>> {
-        vec![
-            self.ask_user.as_ref(),
-            self.channel_room.as_ref(),
-            Some(&self.reaction),
-            self.poll.as_ref(),
-            self.escalate.as_ref(),
-        ]
-    }
-
-    /// Register a channel into every populated handle so all channel-driven
-    /// tools can resolve it by name.
-    pub fn register_channel(
-        &self,
-        name: impl Into<String>,
-        channel: Arc<dyn clawcrew_api::channel::Channel>,
-    ) {
-        let name = name.into();
-        for handle in self.populated_handles().into_iter().flatten() {
-            handle.write().insert(name.clone(), Arc::clone(&channel));
-        }
-    }
-
-    /// Remove a channel from every populated handle (used on session/stop).
-    pub fn unregister_channel(&self, name: &str) {
-        for handle in self.populated_handles().into_iter().flatten() {
-            handle.write().remove(name);
-        }
-    }
-
-    /// Look up a registered channel by name from any populated channel map.
-    pub fn get_channel(&self, name: &str) -> Option<Arc<dyn clawcrew_api::channel::Channel>> {
-        for handle in self.populated_handles().into_iter().flatten() {
-            if let Some(channel) = handle.read().get(name) {
-                return Some(Arc::clone(channel));
-            }
-        }
-        None
-    }
-}
+/// Bundle of late-bound channel-map handles owned by an Agent.
+pub use clawcrew_tools::send_via::AgentChannelHandles;
 
 pub struct AgentBuilder {
     model_provider: Option<Box<dyn ModelProvider>>,
@@ -3752,7 +3701,7 @@ impl Agent {
                                     temperature: self.temperature,
                                 },
                                 crate::agent::loop_::ResolvedIo {
-    app_registry: None,
+                                    app_registry: None,
                                     tools_registry: &self.tools,
                                     observer: self.observer.as_ref(),
                                     silent: true,
@@ -4204,6 +4153,181 @@ pub async fn run(
     }
 
     Ok(())
+}
+
+#[async_trait::async_trait]
+impl clawcrew_api::agent::AgentSession for Agent {
+    fn set_channel_name(&mut self, name: String) {
+        self.set_channel_name(name);
+    }
+
+    fn set_memory_session_id(&mut self, session_id: Option<String>) {
+        self.set_memory_session_id(session_id);
+    }
+
+    fn set_history_has_trim_breadcrumb(&mut self, flag: bool) {
+        self.set_history_has_trim_breadcrumb(flag);
+    }
+
+    fn history_has_trim_breadcrumb(&self) -> bool {
+        self.history_has_trim_breadcrumb()
+    }
+
+    fn seed_history_with_event(
+        &mut self,
+        messages: &[clawcrew_api::model_provider::ChatMessage],
+    ) -> Option<clawcrew_api::agent::TurnEvent> {
+        self.seed_history_with_event(messages)
+    }
+
+    fn register_channel(
+        &self,
+        name: &str,
+        channel: std::sync::Arc<dyn clawcrew_api::channel::Channel>,
+    ) {
+        self.channel_handles.register_channel(name, channel);
+    }
+
+    fn channel_handles_any(&self) -> &dyn std::any::Any {
+        &self.channel_handles
+    }
+
+    fn attribution_fields(&self) -> (String, String, String) {
+        self.attribution_fields()
+    }
+
+    fn history(&self) -> &[clawcrew_api::model_provider::ConversationMessage] {
+        self.history()
+    }
+
+    fn context_limits_for_route_raw(
+        &self,
+        provider_name: &str,
+        model: &str,
+    ) -> (Option<u64>, Option<u64>) {
+        let limits = self.context_limits_for_route(provider_name, model);
+        (
+            Some(limits.context_token_budget as u64),
+            limits.configured_model_context_window().map(|w| w as u64),
+        )
+    }
+
+    async fn turn_streamed_with_steering_state(
+        &mut self,
+        user_message: &str,
+        event_tx: tokio::sync::mpsc::Sender<clawcrew_api::agent::TurnEvent>,
+        cancel_token: Option<tokio_util::sync::CancellationToken>,
+        steering_rx: Option<&mut tokio::sync::mpsc::Receiver<String>>,
+    ) -> std::result::Result<
+        clawcrew_api::agent::AgentTurnSuccess,
+        clawcrew_api::agent::AgentTurnError,
+    > {
+        let res = self
+            .turn_streamed_with_steering_state(user_message, event_tx, cancel_token, steering_rx)
+            .await;
+        match res {
+            Ok(success) => Ok(clawcrew_api::agent::AgentTurnSuccess {
+                response: success.response,
+                new_messages: success.new_messages,
+                provider_name: success.provider_name,
+                model: success.model,
+                final_context_limits: success.final_context_limits.map(|l| {
+                    clawcrew_api::agent::AgentContextLimits {
+                        model_context_window: l.model_context_window,
+                        context_token_budget: l.context_token_budget,
+                        is_compatibility_fallback: matches!(
+                            l.model_context_window_source,
+                            clawcrew_config::schema::ModelContextWindowSource::CompatibilityFallback
+                        ),
+                    }
+                }),
+                safeguard_fallback: success.safeguard_fallback.map(|s| {
+                    clawcrew_api::agent::AgentSafeguardFallback {
+                        kind: match s.kind {
+                            clawcrew_providers::SafeguardFallbackKind::ServerSide => {
+                                clawcrew_api::agent::AgentSafeguardKind::ServerSide
+                            }
+                            clawcrew_providers::SafeguardFallbackKind::ClientSide => {
+                                clawcrew_api::agent::AgentSafeguardKind::ClientSide
+                            }
+                            clawcrew_providers::SafeguardFallbackKind::ClientAndServer => {
+                                clawcrew_api::agent::AgentSafeguardKind::ClientAndServer
+                            }
+                        },
+                        requested_model: s.requested_model,
+                        served_model: s.served_model,
+                    }
+                }),
+            }),
+            Err(err) => Err(clawcrew_api::agent::AgentTurnError {
+                error: err.error,
+                committed_response: err.committed_response,
+                new_messages: err.new_messages,
+            }),
+        }
+    }
+}
+
+pub struct RuntimeAgentRunner;
+
+#[async_trait::async_trait]
+impl clawcrew_api::agent::AgentRunner for RuntimeAgentRunner {
+    async fn create_session(
+        &self,
+        config: Box<dyn std::any::Any + Send + Sync>,
+        agent_alias: &str,
+        session_cwd: Option<&std::path::Path>,
+        canvas_store: Option<Box<dyn std::any::Any + Send + Sync>>,
+    ) -> anyhow::Result<Box<dyn clawcrew_api::agent::AgentSession>> {
+        let config_arc = config
+            .downcast::<std::sync::Arc<parking_lot::RwLock<Config>>>()
+            .map_err(|_| anyhow::anyhow!("invalid config type for create_session"))?;
+        let canvas = match canvas_store {
+            Some(cs) => {
+                if cs.is::<Option<tools::CanvasStore>>() {
+                    cs.downcast::<Option<tools::CanvasStore>>()
+                        .ok()
+                        .and_then(|b| *b)
+                } else if cs.is::<tools::CanvasStore>() {
+                    cs.downcast::<tools::CanvasStore>().ok().map(|b| *b)
+                } else {
+                    return Err(anyhow::anyhow!("invalid canvas_store type"));
+                }
+            }
+            None => None,
+        };
+        let agent = Agent::from_pinned_live_config_with_session_cwd_and_mcp_backchannel(
+            *config_arc,
+            agent_alias,
+            session_cwd,
+            true,
+            false,
+            false,
+            None,
+            None,
+            canvas,
+        )
+        .await?;
+        Ok(Box::new(agent))
+    }
+
+    async fn process_message(
+        &self,
+        config: Box<dyn std::any::Any + Send>,
+        agent_alias: &str,
+        message: &str,
+        session_id: Option<&str>,
+        origin: clawcrew_api::ingress::TurnOrigin,
+    ) -> anyhow::Result<String> {
+        let cfg = config
+            .downcast::<Config>()
+            .map_err(|_| anyhow::anyhow!("invalid config type for process_message"))?;
+        crate::agent::loop_::process_message(*cfg, agent_alias, message, session_id, origin).await
+    }
+}
+
+pub fn install_agent_runner() {
+    clawcrew_api::agent::set_agent_runner(std::sync::Arc::new(RuntimeAgentRunner));
 }
 
 // safety net (child module so fixtures can reach Agent internals the

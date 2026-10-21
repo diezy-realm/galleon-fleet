@@ -1,5 +1,5 @@
-use std::sync::{Arc, Mutex};
 use crate::plan::PlanEntry;
+use std::sync::{Arc, Mutex};
 
 /// Callback type for checking if model has been switched during tool execution.
 /// Returns Some((model_provider, model)) if a switch was requested, None otherwise.
@@ -257,6 +257,196 @@ pub enum TurnEvent {
         /// context snapshot (ACP session token count, context-meter ceiling).
         accepted: bool,
     },
+}
+
+/// Capacity and proactive-trim budget representation decoupled from concrete config types.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AgentContextLimits {
+    pub model_context_window: usize,
+    pub context_token_budget: usize,
+    pub is_compatibility_fallback: bool,
+}
+
+/// Which layer performed the safeguard-triggered model switch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AgentSafeguardKind {
+    ServerSide,
+    ClientSide,
+    ClientAndServer,
+}
+
+/// Display-only accepted safeguard attribution.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AgentSafeguardFallback {
+    pub kind: AgentSafeguardKind,
+    pub requested_model: String,
+    pub served_model: String,
+}
+
+/// Streamed turn outcome for successful turns.
+#[derive(Debug)]
+pub struct AgentTurnSuccess {
+    pub response: String,
+    pub new_messages: Vec<crate::model_provider::ConversationMessage>,
+    pub provider_name: String,
+    pub model: String,
+    pub final_context_limits: Option<AgentContextLimits>,
+    pub safeguard_fallback: Option<AgentSafeguardFallback>,
+}
+
+/// Streamed turn outcome for failed turns.
+#[derive(Debug)]
+pub struct AgentTurnError {
+    pub error: anyhow::Error,
+    pub committed_response: String,
+    pub new_messages: Vec<crate::model_provider::ConversationMessage>,
+}
+
+/// Stateful agent session trait decoupled from concrete runtime implementations.
+#[async_trait::async_trait]
+pub trait AgentSession: Send + Sync {
+    fn set_channel_name(&mut self, name: String);
+    fn set_memory_session_id(&mut self, session_id: Option<String>);
+    fn set_history_has_trim_breadcrumb(&mut self, flag: bool);
+    fn history_has_trim_breadcrumb(&self) -> bool;
+    fn seed_history_with_event(
+        &mut self,
+        messages: &[crate::model_provider::ChatMessage],
+    ) -> Option<TurnEvent>;
+    fn register_channel(&self, name: &str, channel: std::sync::Arc<dyn crate::channel::Channel>);
+    fn channel_handles_any(&self) -> &dyn std::any::Any;
+    fn attribution_fields(&self) -> (String, String, String);
+    fn history(&self) -> &[crate::model_provider::ConversationMessage];
+    fn context_limits_for_route_raw(
+        &self,
+        provider_name: &str,
+        model: &str,
+    ) -> (Option<u64>, Option<u64>);
+    async fn turn_streamed_with_steering_state(
+        &mut self,
+        user_message: &str,
+        event_tx: tokio::sync::mpsc::Sender<TurnEvent>,
+        cancel_token: Option<tokio_util::sync::CancellationToken>,
+        steering_rx: Option<&mut tokio::sync::mpsc::Receiver<String>>,
+    ) -> std::result::Result<AgentTurnSuccess, AgentTurnError>;
+}
+
+#[async_trait::async_trait]
+impl<T: ?Sized + AgentSession> AgentSession for Box<T> {
+    fn set_channel_name(&mut self, name: String) {
+        (**self).set_channel_name(name);
+    }
+    fn set_memory_session_id(&mut self, session_id: Option<String>) {
+        (**self).set_memory_session_id(session_id);
+    }
+    fn set_history_has_trim_breadcrumb(&mut self, flag: bool) {
+        (**self).set_history_has_trim_breadcrumb(flag);
+    }
+    fn history_has_trim_breadcrumb(&self) -> bool {
+        (**self).history_has_trim_breadcrumb()
+    }
+    fn seed_history_with_event(
+        &mut self,
+        messages: &[crate::model_provider::ChatMessage],
+    ) -> Option<TurnEvent> {
+        (**self).seed_history_with_event(messages)
+    }
+    fn register_channel(&self, name: &str, channel: std::sync::Arc<dyn crate::channel::Channel>) {
+        (**self).register_channel(name, channel);
+    }
+    fn channel_handles_any(&self) -> &dyn std::any::Any {
+        (**self).channel_handles_any()
+    }
+    fn attribution_fields(&self) -> (String, String, String) {
+        (**self).attribution_fields()
+    }
+    fn history(&self) -> &[crate::model_provider::ConversationMessage] {
+        (**self).history()
+    }
+    fn context_limits_for_route_raw(
+        &self,
+        provider_name: &str,
+        model: &str,
+    ) -> (Option<u64>, Option<u64>) {
+        (**self).context_limits_for_route_raw(provider_name, model)
+    }
+    async fn turn_streamed_with_steering_state(
+        &mut self,
+        user_message: &str,
+        event_tx: tokio::sync::mpsc::Sender<TurnEvent>,
+        cancel_token: Option<tokio_util::sync::CancellationToken>,
+        steering_rx: Option<&mut tokio::sync::mpsc::Receiver<String>>,
+    ) -> std::result::Result<AgentTurnSuccess, AgentTurnError> {
+        (**self)
+            .turn_streamed_with_steering_state(user_message, event_tx, cancel_token, steering_rx)
+            .await
+    }
+}
+
+/// Agent runner trait providing factory methods and one-shot message execution.
+#[async_trait::async_trait]
+pub trait AgentRunner: Send + Sync {
+    async fn create_session(
+        &self,
+        config: Box<dyn std::any::Any + Send + Sync>,
+        agent_alias: &str,
+        session_cwd: Option<&std::path::Path>,
+        canvas_store: Option<Box<dyn std::any::Any + Send + Sync>>,
+    ) -> anyhow::Result<Box<dyn AgentSession>>;
+
+    async fn process_message(
+        &self,
+        config: Box<dyn std::any::Any + Send>,
+        agent_alias: &str,
+        message: &str,
+        session_id: Option<&str>,
+        origin: crate::ingress::TurnOrigin,
+    ) -> anyhow::Result<String>;
+}
+
+static RUNNER: std::sync::RwLock<Option<std::sync::Arc<dyn AgentRunner>>> =
+    std::sync::RwLock::new(None);
+
+pub fn set_agent_runner(runner: std::sync::Arc<dyn AgentRunner>) {
+    if let Ok(mut lock) = RUNNER.write() {
+        *lock = Some(runner);
+    }
+}
+
+pub fn get_agent_runner() -> Option<std::sync::Arc<dyn AgentRunner>> {
+    RUNNER.read().ok().and_then(|lock| lock.clone())
+}
+
+pub async fn process_message(
+    config: Box<dyn std::any::Any + Send>,
+    agent_alias: &str,
+    message: &str,
+    session_id: Option<&str>,
+    origin: crate::ingress::TurnOrigin,
+) -> anyhow::Result<String> {
+    let runner =
+        get_agent_runner().ok_or_else(|| anyhow::anyhow!("agent runner not registered"))?;
+    runner
+        .process_message(config, agent_alias, message, session_id, origin)
+        .await
+}
+
+pub async fn create_agent_session<C, S>(
+    config: C,
+    agent_alias: &str,
+    session_cwd: Option<&std::path::Path>,
+    canvas_store: Option<S>,
+) -> anyhow::Result<Box<dyn AgentSession>>
+where
+    C: std::any::Any + Send + Sync + 'static,
+    S: std::any::Any + Send + Sync + 'static,
+{
+    let runner =
+        get_agent_runner().ok_or_else(|| anyhow::anyhow!("agent runner not registered"))?;
+    let canvas_box = canvas_store.map(|s| Box::new(s) as Box<dyn std::any::Any + Send + Sync>);
+    runner
+        .create_session(Box::new(config), agent_alias, session_cwd, canvas_box)
+        .await
 }
 
 #[cfg(test)]
