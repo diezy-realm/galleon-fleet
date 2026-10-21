@@ -1960,6 +1960,212 @@ mod tests {
         assert_eq!(step.effective_agent(Some("parent")), Some("override"));
     }
 
+    #[test]
+    fn test_sop_step_agent_resolves_valid_alias_from_config_agents() {
+        use clawcrew_config::providers::ModelProviderRef;
+        use clawcrew_config::schema::{AliasedAgentConfig, SopConfig};
+        use std::collections::HashMap;
+
+        let mut agents = HashMap::new();
+        let mut specialist_cfg = AliasedAgentConfig::default();
+        specialist_cfg.model_provider = ModelProviderRef::new("anthropic.claude-opus");
+        specialist_cfg.skill_bundles = vec!["code-review".into(), "security-audit".into()];
+        agents.insert("specialist".to_string(), specialist_cfg);
+
+        let mut default_agent_cfg = AliasedAgentConfig::default();
+        default_agent_cfg.model_provider = ModelProviderRef::new("openai.gpt-4o");
+        agents.insert("default_agent".to_string(), default_agent_cfg);
+
+        let sop = Sop {
+            name: "test-resolve".to_string(),
+            description: "test".to_string(),
+            version: "1.0.0".to_string(),
+            priority: SopPriority::Normal,
+            execution_mode: SopExecutionMode::Auto,
+            triggers: vec![SopTrigger::Manual],
+            steps: vec![
+                SopStep {
+                    number: 1,
+                    title: "step1".to_string(),
+                    body: "run step 1".to_string(),
+                    agent: Some("specialist".to_string()),
+                    ..SopStep::default()
+                },
+                SopStep {
+                    number: 2,
+                    title: "step2".to_string(),
+                    body: "run step 2".to_string(),
+                    agent: None,
+                    ..SopStep::default()
+                },
+            ],
+            cooldown_secs: 0,
+            max_concurrent: 1,
+            location: None,
+            deterministic: false,
+            admission_policy: Default::default(),
+            max_pending_approvals: 0,
+            agent: Some("default_agent".to_string()),
+            raci: None,
+            constraints: Vec::new(),
+        };
+
+        let mut engine = SopEngine::new(SopConfig::default()).with_agents(agents);
+        engine.set_sops_for_test(vec![sop.clone()]);
+
+        let event = SopEvent {
+            source: SopTriggerSource::Manual,
+            topic: None,
+            payload: None,
+            timestamp: "2026-10-21T00:00:00Z".to_string(),
+        };
+
+        // Step 1: step.agent = "specialist" (valid alias)
+        let action = engine.start_run("test-resolve", event).expect("run starts");
+        let SopRunAction::ExecuteStep { step, .. } = action else {
+            panic!("expected ExecuteStep, got {action:?}");
+        };
+        assert_eq!(step.agent.as_deref(), Some("specialist"));
+
+        // Verify resolved AliasedAgentConfig matches specialist (model_provider and skill_bundles)
+        let resolved_cfg = engine
+            .resolved_agent_config_for_step(&step, &sop)
+            .expect("must resolve specialist agent config");
+        assert_eq!(
+            resolved_cfg.model_provider.to_string(),
+            "anthropic.claude-opus"
+        );
+        assert_eq!(
+            resolved_cfg.skill_bundles,
+            vec!["code-review".to_string(), "security-audit".to_string()]
+        );
+        assert_ne!(
+            resolved_cfg.model_provider.to_string(),
+            "openai.gpt-4o",
+            "must use specialist model provider, not default"
+        );
+    }
+
+    #[test]
+    fn test_sop_step_agent_invalid_alias_falls_back_to_sop_default_without_crash() {
+        use clawcrew_config::providers::ModelProviderRef;
+        use clawcrew_config::schema::{AliasedAgentConfig, SopConfig};
+        use std::collections::HashMap;
+
+        let mut agents = HashMap::new();
+        let mut default_agent_cfg = AliasedAgentConfig::default();
+        default_agent_cfg.model_provider = ModelProviderRef::new("openai.gpt-4o");
+        default_agent_cfg.skill_bundles = vec!["general-skills".into()];
+        agents.insert("sop_parent".to_string(), default_agent_cfg);
+
+        let sop = Sop {
+            name: "test-fallback".to_string(),
+            description: "test".to_string(),
+            version: "1.0.0".to_string(),
+            priority: SopPriority::Normal,
+            execution_mode: SopExecutionMode::Auto,
+            triggers: vec![SopTrigger::Manual],
+            steps: vec![SopStep {
+                number: 1,
+                title: "step1".to_string(),
+                body: "run step 1".to_string(),
+                // Ghost alias not in config.agents
+                agent: Some("ghost_agent".to_string()),
+                ..SopStep::default()
+            }],
+            cooldown_secs: 0,
+            max_concurrent: 1,
+            location: None,
+            deterministic: false,
+            admission_policy: Default::default(),
+            max_pending_approvals: 0,
+            agent: Some("sop_parent".to_string()),
+            raci: None,
+            constraints: Vec::new(),
+        };
+
+        let mut engine = SopEngine::new(SopConfig::default()).with_agents(agents);
+        engine.set_sops_for_test(vec![sop.clone()]);
+
+        let event = SopEvent {
+            source: SopTriggerSource::Manual,
+            topic: None,
+            payload: None,
+            timestamp: "2026-10-21T00:00:00Z".to_string(),
+        };
+
+        // Must NOT crash or panic; must fall back to SOP's default agent "sop_parent"
+        let action = engine.start_run("test-fallback", event).expect("run starts");
+        let SopRunAction::ExecuteStep { step, .. } = action else {
+            panic!("expected ExecuteStep, got {action:?}");
+        };
+        assert_eq!(
+            step.agent.as_deref(),
+            Some("sop_parent"),
+            "invalid step agent must fall back to SOP default agent"
+        );
+
+        let resolved_cfg = engine
+            .resolved_agent_config_for_step(&step, &sop)
+            .expect("must resolve to sop_parent config");
+        assert_eq!(resolved_cfg.model_provider.to_string(), "openai.gpt-4o");
+    }
+
+    #[test]
+    fn test_sop_step_agent_invalid_alias_with_no_sop_parent_falls_back_to_none_without_crash() {
+        use clawcrew_config::schema::{AliasedAgentConfig, SopConfig};
+        use std::collections::HashMap;
+
+        let mut agents = HashMap::new();
+        let other_cfg = AliasedAgentConfig::default();
+        agents.insert("other".to_string(), other_cfg);
+
+        let sop = Sop {
+            name: "test-no-parent".to_string(),
+            description: "test".to_string(),
+            version: "1.0.0".to_string(),
+            priority: SopPriority::Normal,
+            execution_mode: SopExecutionMode::Auto,
+            triggers: vec![SopTrigger::Manual],
+            steps: vec![SopStep {
+                number: 1,
+                title: "step1".to_string(),
+                body: "run step 1".to_string(),
+                agent: Some("nonexistent_alias".to_string()),
+                ..SopStep::default()
+            }],
+            cooldown_secs: 0,
+            max_concurrent: 1,
+            location: None,
+            deterministic: false,
+            admission_policy: Default::default(),
+            max_pending_approvals: 0,
+            agent: None,
+            raci: None,
+            constraints: Vec::new(),
+        };
+
+        let mut engine = SopEngine::new(SopConfig::default()).with_agents(agents);
+        engine.set_sops_for_test(vec![sop.clone()]);
+
+        let event = SopEvent {
+            source: SopTriggerSource::Manual,
+            topic: None,
+            payload: None,
+            timestamp: "2026-10-21T00:00:00Z".to_string(),
+        };
+
+        // Must NOT crash or panic; falls back to None (global default)
+        let action = engine.start_run("test-no-parent", event).expect("run starts");
+        let SopRunAction::ExecuteStep { step, .. } = action else {
+            panic!("expected ExecuteStep, got {action:?}");
+        };
+        assert_eq!(
+            step.agent, None,
+            "invalid alias with no SOP parent must fall back to None without crashing"
+        );
+    }
+
     fn planned(tool: &str, args: serde_json::Value) -> PlannedToolCall {
         PlannedToolCall {
             tool: tool.into(),
