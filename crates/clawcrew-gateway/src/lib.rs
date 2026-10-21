@@ -1225,8 +1225,11 @@ mod chat_regression_tests {
         }
     }
 
+    static TEST_MUTEX: Mutex<()> = Mutex::new(());
+
     #[tokio::test]
     async fn test_run_gateway_chat_with_tools_exercises_process_message_success() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let recorded_message = Arc::new(Mutex::new(None));
         let recorded_session = Arc::new(Mutex::new(None));
         let recorded_origin = Arc::new(Mutex::new(None));
@@ -1275,6 +1278,7 @@ mod chat_regression_tests {
 
     #[tokio::test]
     async fn test_run_gateway_chat_with_tools_exercises_process_message_error_propagation() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let runner = Arc::new(MockChatRunner {
             recorded_message: Arc::new(Mutex::new(None)),
             recorded_session: Arc::new(Mutex::new(None)),

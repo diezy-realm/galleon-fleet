@@ -2263,6 +2263,7 @@ mod tests {
     }
 
     async fn websocket_handler_projects_anthropic_empty_terminal_stream_as_user_error_inner() {
+        clawcrew_runtime::install_agent_runner();
         // This is a real WebSocket upgrade and a real agent built from live
         // config. The local Anthropic-shaped server completes an empty SSE
         // response, then returns an empty non-stream fallback, exercising the
@@ -2460,6 +2461,7 @@ data: {\"type\":\"message_stop\"}\n\n",
     }
 
     async fn websocket_connect_persists_a_restore_time_trim_before_going_live_inner() {
+        clawcrew_runtime::install_agent_runner();
         use clawcrew_infra::session_backend::SessionBackend;
 
         let tmp = tempfile::tempdir().expect("temporary gateway workspace");
