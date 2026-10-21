@@ -70,7 +70,7 @@ impl ::clawcrew_api::attribution::Attributable for AgentAttribution<'_> {
 }
 
 #[allow(unused_imports)]
-pub use agent::{Agent, AgentBuilder, TurnEvent};
+pub use agent::{Agent, AgentBuilder, RuntimeAgentRunner, TurnEvent, install_agent_runner};
 #[allow(unused_imports)]
 pub use loop_::{process_message, run};
 

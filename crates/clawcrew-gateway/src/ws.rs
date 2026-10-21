@@ -500,23 +500,16 @@ async fn handle_socket(
         return;
     }
 
-    let mut agent =
-        match clawcrew_runtime::Agent::from_pinned_live_config_with_session_cwd_and_mcp_backchannel(
-            Arc::clone(&state.config),
-            &agent_alias,
-            Some(&session_cwd),
-            true,
-            false,
-            // The gateway WebSocket turn does not transport ACP file attachments.
-            false,
-            None,
-            None,
-            Some(state.canvas_store.clone()),
-        )
-        .await
-        {
-            Ok(a) => a,
-            Err(e) => {
+    let mut agent = match clawcrew_api::agent::create_agent_session(
+        Arc::clone(&state.config),
+        &agent_alias,
+        Some(&session_cwd),
+        Some(state.canvas_store.clone()),
+    )
+    .await
+    {
+        Ok(a) => a,
+        Err(e) => {
                 ::clawcrew_log::record!(
                     ERROR,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
@@ -627,19 +620,23 @@ async fn handle_socket(
         pending_approvals.clone(),
         Duration::from_secs(WS_APPROVAL_TIMEOUT_SECS),
     ));
-    agent
-        .channel_handles()
-        .register_channel(WS_CHANNEL_KEY, approval_channel.clone());
+    agent.register_channel(WS_CHANNEL_KEY, approval_channel.clone());
 
-    let ch = agent.channel_handles();
-    let channel_names = clawcrew_channels::orchestrator::register_channels_for_tools(
-        &config,
-        &ch.ask_user,
-        &ch.channel_room,
-        &Some(ch.reaction.clone()),
-        &ch.poll,
-        &ch.escalate,
-    );
+    let channel_names = if let Some(ch) = agent
+        .channel_handles_any()
+        .downcast_ref::<clawcrew_tools::send_via::AgentChannelHandles>()
+    {
+        clawcrew_channels::orchestrator::register_channels_for_tools(
+            &config,
+            &ch.ask_user,
+            &ch.channel_room,
+            &Some(ch.reaction.clone()),
+            &ch.poll,
+            &ch.escalate,
+        )
+    } else {
+        Vec::new()
+    };
     if !channel_names.is_empty() {
         ::clawcrew_log::record!(
             INFO,
@@ -1032,7 +1029,7 @@ fn replace_conversation_state_unless_deleted(
 fn persist_agent_conversation_state(
     backend: &dyn clawcrew_infra::session_backend::SessionBackend,
     session_key: &str,
-    agent: &clawcrew_runtime::Agent,
+    agent: &(dyn clawcrew_api::agent::AgentSession + '_),
 ) -> bool {
     let durable = clawcrew_providers::durable_chat_messages(agent.history());
     replace_conversation_state_unless_deleted(
@@ -1404,7 +1401,7 @@ fn build_done_frame_json(
 #[allow(clippy::too_many_arguments)]
 async fn process_chat_message(
     state: &AppState,
-    agent: &mut clawcrew_runtime::Agent,
+    agent: &mut (dyn clawcrew_api::agent::AgentSession + '_),
     sender: &mut futures_util::stream::SplitSink<WebSocket, Message>,
     receiver: &mut futures_util::stream::SplitStream<WebSocket>,
     approval_event_rx: &mut tokio::sync::mpsc::Receiver<clawcrew_api::agent::TurnEvent>,
@@ -1885,12 +1882,34 @@ async fn process_chat_message(
             // The route that actually served the FINAL call is authoritative for
             // the terminal frame (see `done_frame_context_limits`). Resolve from
             // the final route only when no call was served (e.g. a cache hit).
-            let fallback_limits = outcome
-                .final_context_limits
-                .is_none()
-                .then(|| agent.context_limits_for_route(&active_provider, &active_model));
+            let fallback_limits = outcome.final_context_limits.is_none().then(|| {
+                let (budget, window) =
+                    agent.context_limits_for_route_raw(&active_provider, &active_model);
+                clawcrew_config::schema::ResolvedContextLimits {
+                    model_context_window: window.unwrap_or(
+                        clawcrew_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK as u64,
+                    ) as usize,
+                    context_token_budget: budget.unwrap_or(0) as usize,
+                    model_context_window_source: if window.is_some() {
+                        clawcrew_config::schema::ModelContextWindowSource::Configured
+                    } else {
+                        clawcrew_config::schema::ModelContextWindowSource::CompatibilityFallback
+                    },
+                }
+            });
+            let final_limits = outcome.final_context_limits.map(|l| {
+                clawcrew_config::schema::ResolvedContextLimits {
+                    model_context_window: l.model_context_window,
+                    context_token_budget: l.context_token_budget,
+                    model_context_window_source: if l.is_compatibility_fallback {
+                        clawcrew_config::schema::ModelContextWindowSource::CompatibilityFallback
+                    } else {
+                        clawcrew_config::schema::ModelContextWindowSource::Configured
+                    },
+                }
+            });
             let (max_context_tokens, model_context_window) = done_frame_context_limits(
-                outcome.final_context_limits,
+                final_limits,
                 usage_fold.last_context_token_budget,
                 usage_fold.last_model_context_window,
                 fallback_limits,
@@ -1922,9 +1941,26 @@ async fn process_chat_message(
             // `outcome.new_messages`, so it is not persisted into the session
             // transcript. Privacy: only the model names cross the wire — the
             // classifier `category` (and any refusal explanation) never do.
-            let safeguard_notice = outcome.safeguard_fallback.as_ref();
+            let safeguard_notice = outcome.safeguard_fallback.as_ref().map(|s| {
+                clawcrew_providers::SafeguardFallbackNotice {
+                    kind: match s.kind {
+                        clawcrew_api::agent::AgentSafeguardKind::ServerSide => {
+                            clawcrew_providers::SafeguardFallbackKind::ServerSide
+                        }
+                        clawcrew_api::agent::AgentSafeguardKind::ClientSide => {
+                            clawcrew_providers::SafeguardFallbackKind::ClientSide
+                        }
+                        clawcrew_api::agent::AgentSafeguardKind::ClientAndServer => {
+                            clawcrew_providers::SafeguardFallbackKind::ClientAndServer
+                        }
+                    },
+                    requested_model: s.requested_model.clone(),
+                    served_model: s.served_model.clone(),
+                    category: None,
+                }
+            });
             let done = build_done_frame_json(&meta, &usage_by_provider_vec);
-            for frame in success_terminal_ws_frames(safeguard_notice, done) {
+            for frame in success_terminal_ws_frames(safeguard_notice.as_ref(), done) {
                 let _ = sender.send(Message::Text(frame.to_string().into())).await;
             }
 

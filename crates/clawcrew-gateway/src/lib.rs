@@ -1138,8 +1138,8 @@ pub async fn run_gateway_chat_with_tools(
         turn_usage.clone(),
         clawcrew_config::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
             cost_tracking_context,
-            clawcrew_runtime::process_message(
-                config,
+            clawcrew_api::agent::process_message(
+                Box::new(config),
                 &agent_alias,
                 message,
                 session_id,
@@ -1175,5 +1175,123 @@ impl clawcrew_api::model_provider::ModelProvider for UnconfiguredModelProvider {
         _temperature: Option<f64>,
     ) -> anyhow::Result<String> {
         anyhow::bail!("model provider is not configured")
+    }
+}
+
+#[cfg(test)]
+mod chat_regression_tests {
+    use super::*;
+    use clawcrew_api::agent::{AgentRunner, AgentSession, set_agent_runner};
+    use clawcrew_api::ingress::TurnOrigin;
+    use std::sync::{Arc, Mutex};
+
+    struct MockChatRunner {
+        recorded_message: Arc<Mutex<Option<String>>>,
+        recorded_session: Arc<Mutex<Option<Option<String>>>>,
+        recorded_origin: Arc<Mutex<Option<TurnOrigin>>>,
+        simulated_response: String,
+        should_fail: bool,
+    }
+
+    #[async_trait::async_trait]
+    impl AgentRunner for MockChatRunner {
+        async fn create_session(
+            &self,
+            _config: Box<dyn std::any::Any + Send + Sync>,
+            _agent_alias: &str,
+            _session_cwd: Option<&std::path::Path>,
+            _canvas_store: Option<Box<dyn std::any::Any + Send + Sync>>,
+        ) -> anyhow::Result<Box<dyn AgentSession>> {
+            anyhow::bail!("create_session not implemented for mock")
+        }
+
+        async fn process_message(
+            &self,
+            _config: Box<dyn std::any::Any + Send>,
+            _agent_alias: &str,
+            message: &str,
+            session_id: Option<&str>,
+            origin: TurnOrigin,
+        ) -> anyhow::Result<String> {
+            *self.recorded_message.lock().unwrap() = Some(message.to_string());
+            *self.recorded_session.lock().unwrap() = Some(session_id.map(ToString::to_string));
+            *self.recorded_origin.lock().unwrap() = Some(origin);
+
+            if self.should_fail {
+                anyhow::bail!("simulated turn error")
+            } else {
+                Ok(self.simulated_response.clone())
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_run_gateway_chat_with_tools_exercises_process_message_success() {
+        let recorded_message = Arc::new(Mutex::new(None));
+        let recorded_session = Arc::new(Mutex::new(None));
+        let recorded_origin = Arc::new(Mutex::new(None));
+
+        let runner = Arc::new(MockChatRunner {
+            recorded_message: Arc::clone(&recorded_message),
+            recorded_session: Arc::clone(&recorded_session),
+            recorded_origin: Arc::clone(&recorded_origin),
+            simulated_response: "hello back from mock agent".to_string(),
+            should_fail: false,
+        });
+
+        set_agent_runner(runner);
+
+        let config = clawcrew_config::schema::Config::default();
+        let state = crate::api_config::tests::test_state(config);
+
+        let outcome = run_gateway_chat_with_tools(
+            &state,
+            "test chat message",
+            Some("session-123"),
+            Some("main"),
+        )
+        .await
+        .expect("chat should succeed");
+
+        assert_eq!(outcome.response, "hello back from mock agent");
+        assert_eq!(
+            recorded_message.lock().unwrap().as_deref(),
+            Some("test chat message")
+        );
+        assert_eq!(
+            recorded_session.lock().unwrap().as_ref().unwrap().as_deref(),
+            Some("session-123")
+        );
+        assert_eq!(
+            *recorded_origin.lock().unwrap(),
+            Some(TurnOrigin::Interactive)
+        );
+    }
+
+    #[tokio::test]
+    async fn test_run_gateway_chat_with_tools_exercises_process_message_error_propagation() {
+        let runner = Arc::new(MockChatRunner {
+            recorded_message: Arc::new(Mutex::new(None)),
+            recorded_session: Arc::new(Mutex::new(None)),
+            recorded_origin: Arc::new(Mutex::new(None)),
+            simulated_response: String::new(),
+            should_fail: true,
+        });
+
+        set_agent_runner(runner);
+
+        let config = clawcrew_config::schema::Config::default();
+        let state = crate::api_config::tests::test_state(config);
+
+        let err = run_gateway_chat_with_tools(
+            &state,
+            "failing message",
+            None,
+            Some("main"),
+        )
+        .await
+        .expect_err("chat should fail when process_message fails");
+
+        assert!(err.to_string().contains("simulated turn error"));
     }
 }
