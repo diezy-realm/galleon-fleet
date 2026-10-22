@@ -291,6 +291,52 @@ impl RouteHandler for VersionCheckApiHandler {
     }
 }
 
+/// Adapter for `/api/turn` streaming turn delegation to Go AgentEngine (SPEC-006 / T3-05a).
+#[derive(Clone)]
+pub struct TurnApiHandler {
+    pub state: AppState,
+}
+
+impl std::fmt::Debug for TurnApiHandler {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TurnApiHandler").finish()
+    }
+}
+
+impl TurnApiHandler {
+    #[must_use]
+    pub fn new(state: AppState) -> Self {
+        Self { state }
+    }
+}
+
+#[async_trait::async_trait]
+impl RouteHandler for TurnApiHandler {
+    async fn handle(&self, req: Request) -> Result<Response, String> {
+        let body_bytes = axum::body::to_bytes(req.into_body(), 1024 * 1024)
+            .await
+            .map_err(|e| format!("failed to read body: {e}"))?;
+        let payload: crate::strangler_runner::ApiTurnPayload = serde_json::from_slice(&body_bytes)
+            .map_err(|e| format!("invalid JSON payload: {e}"))?;
+        match crate::strangler_runner::handle_api_turn(None, payload).await {
+            Ok(resp) => Ok(resp),
+            Err((status, msg)) => Ok((status, msg).into_response()),
+        }
+    }
+
+    fn path_pattern(&self) -> &str {
+        "/api/turn"
+    }
+
+    fn http_method(&self) -> &str {
+        "POST"
+    }
+
+    fn name(&self) -> &str {
+        "TurnApiHandler"
+    }
+}
+
 /// Registers the core immutable route handlers with the dynamic router.
 pub async fn register_core_handlers(
     router: &DynamicRouter,
@@ -301,7 +347,8 @@ pub async fn register_core_handlers(
     router.register(Box::new(AuthRateLimitHandler::new(state.clone()))).await?;
     router.register(Box::new(WebAuthnApiHandler::new(state.clone()))).await?;
     router.register(Box::new(AuditApiHandler::new(state.clone()))).await?;
-    router.register(Box::new(VersionCheckApiHandler::new(state))).await?;
+    router.register(Box::new(VersionCheckApiHandler::new(state.clone()))).await?;
+    router.register(Box::new(TurnApiHandler::new(state))).await?;
     Ok(())
 }
 
@@ -341,7 +388,7 @@ mod tests {
 
         // 1. Register core handlers
         register_core_handlers(&router, state.clone()).await?;
-        assert_eq!(router.len().await, 6);
+        assert_eq!(router.len().await, 7);
 
         // 2. Collision rejection: Attempting to register another handler on /api/config must fail
         #[derive(Debug)]

@@ -53,6 +53,7 @@ pub mod security_headers;
 pub mod session_queue;
 pub mod sse;
 pub mod static_files;
+pub mod strangler_runner;
 pub mod tls;
 pub mod version;
 #[cfg(feature = "gateway-voice-duplex")]
@@ -116,6 +117,9 @@ pub mod ws_sop_runs;
 
 // Re-export key types from extracted modules
 pub use gateway::{run_gateway, run_gateway_with_plugin_webhooks, start_grpc_server};
+pub use strangler_runner::{
+    StranglerAgentRunner, StranglerAgentSession, install_strangler_agent_runner,
+};
 pub use rate_limit::{GatewayRateLimiter, IdempotencyStore, SlidingWindowRateLimiter};
 pub use rate_limit::{
     IDEMPOTENCY_MAX_KEYS_DEFAULT, RATE_LIMIT_MAX_KEYS_DEFAULT, RATE_LIMIT_WINDOW_SECS,

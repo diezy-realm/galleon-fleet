@@ -25,7 +25,7 @@ fn compile_agent_service_proto() {
 
     tonic_build::configure()
         .build_server(true)
-        .build_client(false)
+        .build_client(true)
         .compile_protos(&[proto_path.to_string_lossy().to_string()], &[proto_path
             .parent()
             .unwrap()
