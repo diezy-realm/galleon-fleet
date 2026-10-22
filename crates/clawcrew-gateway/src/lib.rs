@@ -115,7 +115,10 @@ pub mod ws_approval;
 pub mod ws_sop_runs;
 
 // Re-export key types from extracted modules
-pub use gateway::{run_gateway, run_gateway_with_plugin_webhooks, start_grpc_server};
+pub use gateway::{
+    build_gateway_router, handle_health, handle_ready, run_gateway,
+    run_gateway_with_plugin_webhooks, start_grpc_server,
+};
 pub use rate_limit::{GatewayRateLimiter, IdempotencyStore, SlidingWindowRateLimiter};
 pub use rate_limit::{
     IDEMPOTENCY_MAX_KEYS_DEFAULT, RATE_LIMIT_MAX_KEYS_DEFAULT, RATE_LIMIT_WINDOW_SECS,
