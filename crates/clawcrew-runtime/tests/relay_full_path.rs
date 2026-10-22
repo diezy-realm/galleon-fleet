@@ -13,13 +13,13 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use clawcrew_relay_proto::{Control, SUBPROTOCOL, decode_data, encode_data};
 use futures_util::{SinkExt, StreamExt};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::tungstenite::{ClientRequestBuilder, Message};
 use tokio_util::sync::CancellationToken;
-use clawcrew_relay_proto::{Control, SUBPROTOCOL, decode_data, encode_data};
 
 #[derive(Debug, Clone, Copy)]
 enum RelayClientRoute {
@@ -108,7 +108,7 @@ async fn zerocode_to_relay_to_daemon_full_path() {
     // Daemon mTLS materials + an issued client cert (the inner session).
     let dir = tempfile::tempdir().unwrap();
     let mats = clawcrew_tls::ensure_server_materials(dir.path(), &[]).unwrap();
-    let acceptor: TlsAcceptor = clawcrew_runtime::rpc::wss::build_tls_acceptor(
+    let acceptor: TlsAcceptor = clawcrew_tls::build_mtls_acceptor(
         mats.server_cert_path.to_str().unwrap(),
         mats.server_key_path.to_str().unwrap(),
         mats.ca_cert_path.to_str().unwrap(),

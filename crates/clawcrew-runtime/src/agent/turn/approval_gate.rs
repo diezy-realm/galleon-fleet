@@ -267,20 +267,18 @@ mod tests {
     use crate::agent::turn::context::TurnCtx;
     use crate::approval::ApprovalManager;
     use crate::observability::NoopObserver;
-    use crate::rpc::approval_channel::RpcApprovalChannel;
-    use crate::rpc::context::ApprovalPendingMap;
     use crate::security::AutonomyLevel;
     use async_trait::async_trait;
-    use std::sync::Arc;
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    use tokio::sync::mpsc;
-    use tokio_util::sync::CancellationToken;
     use clawcrew_api::attribution::{Attributable, ChannelKind, Role};
     use clawcrew_api::channel::{
         Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
     };
     use clawcrew_api::jsonrpc::RpcOutbound;
     use clawcrew_config::schema::{PacingConfig, RiskProfileConfig, StreamReasoningMode};
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use tokio::sync::mpsc;
+    use tokio_util::sync::CancellationToken;
 
     fn full_always_ask_profile() -> RiskProfileConfig {
         RiskProfileConfig {
@@ -479,18 +477,94 @@ mod tests {
         );
     }
 
+    #[derive(Default)]
+    struct TestPendingMap {
+        inner: std::sync::Mutex<std::collections::HashSet<String>>,
+    }
+
+    impl TestPendingMap {
+        fn contains(&self, id: &str) -> bool {
+            self.inner.lock().unwrap().contains(id)
+        }
+        fn insert(&self, id: String) {
+            self.inner.lock().unwrap().insert(id);
+        }
+        fn remove(&self, id: &str) {
+            self.inner.lock().unwrap().remove(id);
+        }
+    }
+
+    struct TestApprovalChannel {
+        writer_tx: mpsc::Sender<String>,
+        pending: Arc<TestPendingMap>,
+    }
+
+    impl Attributable for TestApprovalChannel {
+        fn role(&self) -> Role {
+            Role::Channel(ChannelKind::AcpChannel)
+        }
+        fn alias(&self) -> &str {
+            "rpc"
+        }
+    }
+
+    #[async_trait]
+    impl Channel for TestApprovalChannel {
+        fn name(&self) -> &str {
+            "rpc"
+        }
+        async fn send(&self, _message: &SendMessage) -> anyhow::Result<()> {
+            Ok(())
+        }
+        async fn listen(&self, _tx: mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
+            anyhow::bail!("not supported")
+        }
+        async fn request_approval(
+            &self,
+            _recipient: &str,
+            request: &ChannelApprovalRequest,
+        ) -> anyhow::Result<Option<ChannelApprovalResponse>> {
+            let req_id = format!("{}:{}", request.tool_name, uuid::Uuid::new_v4());
+            self.pending.insert(req_id.clone());
+            struct DropGuard {
+                pending: Arc<TestPendingMap>,
+                id: String,
+            }
+            impl Drop for DropGuard {
+                fn drop(&mut self) {
+                    self.pending.remove(&self.id);
+                }
+            }
+            let _guard = DropGuard {
+                pending: Arc::clone(&self.pending),
+                id: req_id.clone(),
+            };
+            let _ = self
+                .writer_tx
+                .send(
+                    serde_json::to_string(&serde_json::json!({
+                        "jsonrpc": "2.0",
+                        "method": "approval/request",
+                        "params": {
+                            "request_id": req_id
+                        }
+                    }))
+                    .unwrap(),
+                )
+                .await;
+            std::future::pending::<()>().await;
+            unreachable!()
+        }
+    }
+
     #[tokio::test]
     async fn cancelling_turn_drops_pending_channel_approval() {
         let (writer_tx, mut writer_rx) = mpsc::channel::<String>(4);
-        let rpc = Arc::new(RpcOutbound::new(writer_tx));
-        let pending = Arc::new(ApprovalPendingMap::default());
-        let channel = RpcApprovalChannel::new(
-            "rpc",
-            "session-approval",
-            rpc,
-            Arc::clone(&pending),
-            Default::default(),
-        );
+        let pending = Arc::new(TestPendingMap::default());
+        let channel = TestApprovalChannel {
+            writer_tx,
+            pending: Arc::clone(&pending),
+        };
         let approval =
             ApprovalManager::for_non_interactive_backchannel(&RiskProfileConfig::default());
         let observer = NoopObserver;

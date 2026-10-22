@@ -651,7 +651,6 @@ pub(crate) use galleon_channel_core::approval::{
     resolve_pending_approval_with_tool,
 };
 
-
 /// Generate a conversation history key from a channel message.
 pub fn conversation_history_key(msg: &clawcrew_api::channel::ChannelMessage) -> String {
     match &msg.thread_ts {
@@ -1370,8 +1369,8 @@ mod tests {
         // literal-key typos in feature-gated sources.
         const SOURCES: &[&str] = &[
             include_str!("../../galleon-channel-telegram/src/lib.rs"),
-            include_str!("discord/mod.rs"),
-            include_str!("discord/approval.rs"),
+            include_str!("../../galleon-channel-discord/src/lib.rs"),
+            include_str!("../../galleon-channel-discord/src/approval.rs"),
             include_str!("whatsapp.rs"),
             include_str!("whatsapp_web.rs"),
             include_str!("util.rs"),

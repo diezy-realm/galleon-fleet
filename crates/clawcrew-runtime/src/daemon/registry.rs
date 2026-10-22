@@ -1,16 +1,15 @@
 use anyhow::Result;
+use clawcrew_config::schema::{Config, MqttConfig};
 use serde_json::Value;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
-use tokio::sync::{broadcast, watch};
+use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
-use clawcrew_config::schema::{Config, MqttConfig};
 
-use super::{GatewayReadinessReporter, SocketReadinessReporter};
-use crate::rpc::context::RpcContext;
-use crate::rpc::tui_identity::TuiRegistry;
+use super::{DaemonTransportContext, GatewayReadinessReporter, SocketReadinessReporter};
+use crate::tui_identity::TuiRegistry;
 
 pub type StarterFuture = Pin<Box<dyn Future<Output = Result<()>> + Send>>;
 
@@ -36,7 +35,7 @@ pub type ChannelsStarter = Box<dyn Fn(Config, CancellationToken) -> StarterFutur
 /// Starts the local IPC transport and optionally reports its secured bind.
 pub type SocketStarter = Box<
     dyn Fn(
-            Arc<RpcContext>,
+            Arc<DaemonTransportContext>,
             CancellationToken,
             Arc<AtomicUsize>,
             Option<SocketReadinessReporter>,
@@ -45,9 +44,11 @@ pub type SocketStarter = Box<
         + Sync,
 >;
 
-/// Starts an RPC transport using the shared daemon RPC context.
+/// Starts an RPC transport using the shared daemon transport context.
 pub type RpcStarter = Box<
-    dyn Fn(Arc<RpcContext>, CancellationToken, Arc<AtomicUsize>) -> StarterFuture + Send + Sync,
+    dyn Fn(Arc<DaemonTransportContext>, CancellationToken, Arc<AtomicUsize>) -> StarterFuture
+        + Send
+        + Sync,
 >;
 
 /// Starts the MQTT SOP listener for one configured MQTT channel alias.
@@ -62,10 +63,6 @@ pub struct DaemonRegistry {
     relay_start: Option<RpcStarter>,
     enroll_start: Option<RpcStarter>,
     mqtt_start: Option<MqttStarter>,
-    /// Shared SOP engine built by the daemon reload loop. Passed through to
-    /// RpcContext so RPC/TUI agent sessions share the same engine.
-    sop_engine: Option<Arc<std::sync::Mutex<crate::sop::SopEngine>>>,
-    sop_audit: Option<Arc<crate::sop::SopAuditLogger>>,
 }
 
 impl DaemonRegistry {
@@ -100,6 +97,7 @@ impl DaemonRegistry {
         self
     }
 
+    #[cfg(test)]
     pub(crate) fn has_socket_start(&self) -> bool {
         self.socket_start.is_some()
     }
@@ -109,6 +107,7 @@ impl DaemonRegistry {
         self
     }
 
+    #[cfg(test)]
     pub(crate) fn has_wss_start(&self) -> bool {
         self.wss_start.is_some()
     }
@@ -118,6 +117,7 @@ impl DaemonRegistry {
         self
     }
 
+    #[cfg(test)]
     pub(crate) fn has_relay_start(&self) -> bool {
         self.relay_start.is_some()
     }
@@ -134,6 +134,7 @@ impl DaemonRegistry {
         self
     }
 
+    #[cfg(test)]
     pub(crate) fn has_enroll_start(&self) -> bool {
         self.enroll_start.is_some()
     }
@@ -170,26 +171,6 @@ impl DaemonRegistry {
 
     pub(crate) fn take_mqtt_start(&mut self) -> Option<MqttStarter> {
         self.mqtt_start.take()
-    }
-
-    /// Set the shared SOP engine for this daemon iteration.
-    pub fn set_sop_engine(
-        &mut self,
-        sop_engine: Option<Arc<std::sync::Mutex<crate::sop::SopEngine>>>,
-        sop_audit: Option<Arc<crate::sop::SopAuditLogger>>,
-    ) -> &mut Self {
-        self.sop_engine = sop_engine;
-        self.sop_audit = sop_audit;
-        self
-    }
-
-    pub(crate) fn take_sop_engine(
-        &mut self,
-    ) -> (
-        Option<Arc<std::sync::Mutex<crate::sop::SopEngine>>>,
-        Option<Arc<crate::sop::SopAuditLogger>>,
-    ) {
-        (self.sop_engine.take(), self.sop_audit.take())
     }
 }
 

@@ -18,12 +18,8 @@ use std::path::{Path, PathBuf};
 /// Files that own a shared, concurrently-reachable transport into the broker.
 /// None of these may call the inline resolver.
 const SHARED_TRANSPORT_CALL_SITES: &[&str] = &[
-    "crates/clawcrew-gateway/src/api_sop.rs",
-    "crates/clawcrew-gateway/src/api_sop_author.rs",
-    "crates/clawcrew-gateway/src/ws.rs",
-    "crates/clawcrew-runtime/src/rpc/dispatch.rs",
+    "crates/clawcrew-runtime/src/sop/runner.rs",
     "crates/clawcrew-runtime/src/tools/sop_approve.rs",
-    "crates/clawcrew-channels/src/orchestrator/mod.rs",
 ];
 
 fn workspace_root() -> PathBuf {
