@@ -1,15 +1,15 @@
 //! Dynamic route handlers for plugin self-registration and core handlers migration.
 
-use std::collections::HashMap;
-use std::sync::Arc;
+use crate::AppState;
 use axum::{
+    Json,
     extract::{Query, Request, State},
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use clawcrew_routing::{DynamicRouter, RouteHandler};
-use crate::AppState;
+use std::collections::HashMap;
+use std::sync::Arc;
 
 /// Adapter for `/api/config`
 #[derive(Clone)]
@@ -78,12 +78,9 @@ impl RouteHandler for LogsApiHandler {
             .map(|Query(q)| q)
             .unwrap_or_default();
 
-        let resp = crate::api_logs::handle_api_logs(
-            State(self.state.clone()),
-            headers,
-            Query(query_map),
-        )
-        .await;
+        let resp =
+            crate::api_logs::handle_api_logs(State(self.state.clone()), headers, Query(query_map))
+                .await;
         Ok(resp)
     }
 
@@ -220,12 +217,9 @@ impl RouteHandler for AuditApiHandler {
             .map(|Query(q)| q)
             .unwrap_or_default();
 
-        let resp = crate::api_audit::handle_api_audit(
-            State(self.state.clone()),
-            headers,
-            Query(query),
-        )
-        .await;
+        let resp =
+            crate::api_audit::handle_api_audit(State(self.state.clone()), headers, Query(query))
+                .await;
         Ok(resp)
     }
 
@@ -268,13 +262,10 @@ impl RouteHandler for VersionCheckApiHandler {
         let query: crate::version::CheckQuery = Query::try_from_uri(req.uri())
             .map(|Query(q)| q)
             .unwrap_or_default();
-        let resp = crate::version::handle_version_check(
-            State(self.state.clone()),
-            headers,
-            Query(query),
-        )
-        .await
-        .into_response();
+        let resp =
+            crate::version::handle_version_check(State(self.state.clone()), headers, Query(query))
+                .await
+                .into_response();
         Ok(resp)
     }
 
@@ -338,17 +329,28 @@ impl RouteHandler for TurnApiHandler {
 }
 
 /// Registers the core immutable route handlers with the dynamic router.
-pub async fn register_core_handlers(
-    router: &DynamicRouter,
-    state: AppState,
-) -> Result<(), String> {
-    router.register(Box::new(ConfigApiHandler::new(state.clone()))).await?;
-    router.register(Box::new(LogsApiHandler::new(state.clone()))).await?;
-    router.register(Box::new(AuthRateLimitHandler::new(state.clone()))).await?;
-    router.register(Box::new(WebAuthnApiHandler::new(state.clone()))).await?;
-    router.register(Box::new(AuditApiHandler::new(state.clone()))).await?;
-    router.register(Box::new(VersionCheckApiHandler::new(state.clone()))).await?;
-    router.register(Box::new(TurnApiHandler::new(state))).await?;
+pub async fn register_core_handlers(router: &DynamicRouter, state: AppState) -> Result<(), String> {
+    router
+        .register(Box::new(ConfigApiHandler::new(state.clone())))
+        .await?;
+    router
+        .register(Box::new(LogsApiHandler::new(state.clone())))
+        .await?;
+    router
+        .register(Box::new(AuthRateLimitHandler::new(state.clone())))
+        .await?;
+    router
+        .register(Box::new(WebAuthnApiHandler::new(state.clone())))
+        .await?;
+    router
+        .register(Box::new(AuditApiHandler::new(state.clone())))
+        .await?;
+    router
+        .register(Box::new(VersionCheckApiHandler::new(state.clone())))
+        .await?;
+    router
+        .register(Box::new(TurnApiHandler::new(state)))
+        .await?;
     Ok(())
 }
 
@@ -382,7 +384,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_register_core_handlers_and_collision_rejection() -> Result<(), Box<dyn std::error::Error>> {
+    async fn test_register_core_handlers_and_collision_rejection()
+    -> Result<(), Box<dyn std::error::Error>> {
         let state = mock_app_state();
         let router = DynamicRouter::new();
 
@@ -410,9 +413,15 @@ mod tests {
         }
 
         let collision_res = router.register(Box::new(RoguePluginHandler)).await;
-        assert!(collision_res.is_err(), "Collision with core /api/config must be rejected");
+        assert!(
+            collision_res.is_err(),
+            "Collision with core /api/config must be rejected"
+        );
         match collision_res {
-            Err(msg) => assert!(msg.contains("Route collision"), "Error message must specify route collision"),
+            Err(msg) => assert!(
+                msg.contains("Route collision"),
+                "Error message must specify route collision"
+            ),
             Ok(_) => panic!("expected collision rejection error"),
         }
         Ok(())
@@ -430,7 +439,10 @@ mod tests {
             .uri("/api/auth/ratelimit")
             .body(Body::empty())?;
 
-        let resp = router.dispatch(req).await.map_err(|e| format!("dispatch error: {e}"))?;
+        let resp = router
+            .dispatch(req)
+            .await
+            .map_err(|e| format!("dispatch error: {e}"))?;
         assert_eq!(resp.status(), StatusCode::OK);
 
         // Check /api/webauthn
@@ -439,7 +451,10 @@ mod tests {
             .uri("/api/webauthn")
             .body(Body::empty())?;
 
-        let resp = router.dispatch(req).await.map_err(|e| format!("dispatch error: {e}"))?;
+        let resp = router
+            .dispatch(req)
+            .await
+            .map_err(|e| format!("dispatch error: {e}"))?;
         assert_eq!(resp.status(), StatusCode::OK);
         Ok(())
     }
@@ -461,11 +476,7 @@ mod tests {
         // Standard route
         let res = app
             .clone()
-            .oneshot(
-                Request::builder()
-                    .uri("/api/ping")
-                    .body(Body::empty())?,
-            )
+            .oneshot(Request::builder().uri("/api/ping").body(Body::empty())?)
             .await?;
         assert_eq!(res.status(), StatusCode::OK);
 

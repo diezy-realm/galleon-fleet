@@ -117,14 +117,14 @@ pub mod ws_sop_runs;
 
 // Re-export key types from extracted modules
 pub use gateway::{run_gateway, run_gateway_with_plugin_webhooks, start_grpc_server};
-pub use strangler_runner::{
-    StranglerAgentRunner, StranglerAgentSession, install_strangler_agent_runner,
-};
 pub use rate_limit::{GatewayRateLimiter, IdempotencyStore, SlidingWindowRateLimiter};
 pub use rate_limit::{
     IDEMPOTENCY_MAX_KEYS_DEFAULT, RATE_LIMIT_MAX_KEYS_DEFAULT, RATE_LIMIT_WINDOW_SECS,
 };
 pub use state::{AppState, GatewaySupervision};
+pub use strangler_runner::{
+    StranglerAgentRunner, StranglerAgentSession, install_strangler_agent_runner,
+};
 
 // Types from other modules that extracted files need
 pub use clawcrew_api::memory_traits::MemoryStrategy;

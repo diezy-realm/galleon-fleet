@@ -1,15 +1,13 @@
 //! Strangler pattern boundary layer delegating Agent execution from the Axum gateway
 //! to the Go AgentEngine service over gRPC/IPC (SPEC-006 / T3-05a).
 
+use anyhow::{Context, Result};
+use async_trait::async_trait;
+use clawcrew_api::agent::{AgentRunner, AgentSession, AgentTurnError, AgentTurnSuccess, TurnEvent};
+use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
 use std::any::Any;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use anyhow::{Context, Result};
-use async_trait::async_trait;
-use clawcrew_api::agent::{
-    AgentRunner, AgentSession, AgentTurnError, AgentTurnSuccess, TurnEvent,
-};
-use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use tonic::transport::Channel;
@@ -99,7 +97,11 @@ impl AgentRunner for StranglerAgentRunner {
             .into_inner();
 
         let mut accumulated_response = String::new();
-        while let Some(resp) = stream.message().await.context("error reading turn stream")? {
+        while let Some(resp) = stream
+            .message()
+            .await
+            .context("error reading turn stream")?
+        {
             if resp.r#type == EventType::TextChunk as i32 {
                 accumulated_response.push_str(&resp.content);
             } else if resp.r#type == EventType::Error as i32 {
@@ -139,11 +141,7 @@ pub struct StranglerAgentSession {
 
 impl StranglerAgentSession {
     #[must_use]
-    pub fn new(
-        endpoint: String,
-        agent_alias: String,
-        session_cwd: Option<PathBuf>,
-    ) -> Self {
+    pub fn new(endpoint: String, agent_alias: String, session_cwd: Option<PathBuf>) -> Self {
         Self {
             endpoint,
             agent_alias,
@@ -175,10 +173,7 @@ impl AgentSession for StranglerAgentSession {
         self.history_has_trim_breadcrumb
     }
 
-    fn seed_history_with_event(
-        &mut self,
-        messages: &[ChatMessage],
-    ) -> Option<TurnEvent> {
+    fn seed_history_with_event(&mut self, messages: &[ChatMessage]) -> Option<TurnEvent> {
         for msg in messages {
             self.history.push(ConversationMessage::Chat(msg.clone()));
         }
@@ -443,7 +438,9 @@ pub async fn handle_api_turn(
 mod tests {
     use super::*;
     use crate::grpc_system_gateway::agent_engine_server::{AgentEngine, AgentEngineServer};
-    use crate::grpc_system_gateway::{HealthCheckResponse, QueryRequest, QueryResponse, TurnResponse};
+    use crate::grpc_system_gateway::{
+        HealthCheckResponse, QueryRequest, QueryResponse, TurnResponse,
+    };
     use tokio::sync::mpsc;
     use tokio_stream::wrappers::ReceiverStream;
     use tonic::{Request, Response, Status};
@@ -637,10 +634,22 @@ mod tests {
             events.push(evt);
         }
 
-        assert!(events.iter().any(|e| matches!(e, TurnEvent::Thinking { .. })));
+        assert!(
+            events
+                .iter()
+                .any(|e| matches!(e, TurnEvent::Thinking { .. }))
+        );
         assert!(events.iter().any(|e| matches!(e, TurnEvent::Chunk { .. })));
-        assert!(events.iter().any(|e| matches!(e, TurnEvent::ToolCall { .. })));
-        assert!(events.iter().any(|e| matches!(e, TurnEvent::ToolResult { .. })));
+        assert!(
+            events
+                .iter()
+                .any(|e| matches!(e, TurnEvent::ToolCall { .. }))
+        );
+        assert!(
+            events
+                .iter()
+                .any(|e| matches!(e, TurnEvent::ToolResult { .. }))
+        );
 
         let _ = shutdown_tx.send(());
     }
@@ -682,7 +691,12 @@ mod tests {
         let (event_tx, _event_rx) = mpsc::channel(32);
 
         let err = session
-            .turn_streamed_with_steering_state("cancelled prompt", event_tx, Some(cancel_token), None)
+            .turn_streamed_with_steering_state(
+                "cancelled prompt",
+                event_tx,
+                Some(cancel_token),
+                None,
+            )
             .await
             .expect_err("turn should be cancelled");
 
@@ -707,5 +721,3 @@ mod tests {
         let _ = shutdown_tx.send(());
     }
 }
-
-
