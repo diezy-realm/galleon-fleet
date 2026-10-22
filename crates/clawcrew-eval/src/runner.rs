@@ -1,4 +1,4 @@
-//! The runner: builds an isolated agent per case, drives it, and grades it.
+//! The runner: retargets evaluation to replay trace fixtures through the Go engine turn service interface.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -8,6 +8,7 @@ use clawcrew_config::schema::MemoryConfig;
 use clawcrew_memory::{Memory, create_memory};
 use clawcrew_runtime::agent::agent::Agent;
 use clawcrew_runtime::agent::dispatcher::NativeToolDispatcher;
+use serde::{Deserialize, Serialize};
 
 use crate::Mode;
 use crate::case::{LlmTrace, load_suite};
@@ -17,6 +18,209 @@ use crate::record::RunRecord;
 use crate::replay::TraceLlmProvider;
 use crate::report::{CaseReport, SuiteReport};
 use crate::tools::default_tools;
+
+/// Request payload sent to the Go engine turn service (`StartTurn`).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GoTurnRequest {
+    /// Session identifier for grouping turns.
+    pub session_id: String,
+    /// Agent identifier / alias (e.g., "eval" or "navigator").
+    pub agent_id: String,
+    /// User prompt / message initiating this turn.
+    pub prompt: String,
+    /// Serialized context window or metadata (if any).
+    #[serde(default)]
+    pub context_window: Vec<u8>,
+}
+
+/// The event types streamed during Go engine turn execution (`TurnResponse.EventType`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum GoTurnEventType {
+    ThoughtChunk,
+    TextChunk,
+    ToolCallStarted,
+    ToolCallFinished,
+    SubagentSpawned,
+    TurnCompleted,
+    Error,
+}
+
+/// A structured turn event emitted by the Go engine.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GoTurnEvent {
+    pub event_type: GoTurnEventType,
+    pub content: String,
+    pub subagent_id: Option<String>,
+    pub error_message: Option<String>,
+}
+
+/// The completed outcome of a single turn through the Go engine service.
+#[derive(Debug, Clone, Default)]
+pub struct GoTurnOutcome {
+    pub final_response: String,
+    pub events: Vec<GoTurnEvent>,
+}
+
+/// Trait abstracting the Go engine turn execution boundary (`StartTurn` / `ExecuteTurn`).
+#[async_trait::async_trait]
+pub trait GoEngineTurnService: Send + Sync {
+    /// Dispatches a turn through the Go engine interface and returns the outcome.
+    async fn start_turn(&mut self, request: GoTurnRequest) -> anyhow::Result<GoTurnOutcome>;
+
+    /// Concludes the evaluation run and returns the canonical RunRecord.
+    fn into_run_record(self, final_response: String) -> anyhow::Result<RunRecord>;
+}
+
+/// In-process Go engine turn service client that drives deterministic trace replays.
+pub struct MockGoEngineTurnClient {
+    agent: Agent,
+    replay_handle: crate::replay::ReplayHandle,
+    observer: Arc<RecordingObserver>,
+    turn_index: usize,
+    _tmp_dir: tempfile::TempDir,
+}
+
+impl MockGoEngineTurnClient {
+    /// Builds an isolated mock Go engine turn client for the given trace.
+    pub async fn from_trace(trace: &LlmTrace) -> anyhow::Result<Self> {
+        // Each case gets an isolated temp workspace and an ephemeral "none" memory
+        // backend so cases cannot observe one another.
+        let tmp = tempfile::tempdir()?;
+
+        let mem_cfg = MemoryConfig {
+            backend: "none".into(),
+            ..MemoryConfig::default()
+        };
+        let memory: Arc<dyn Memory> = Arc::from(create_memory(&mem_cfg, tmp.path(), None)?);
+
+        let observer = Arc::new(RecordingObserver::new());
+        let replay = TraceLlmProvider::from_trace(trace);
+        let replay_handle = replay.handle();
+        let provider: Box<dyn ModelProvider> = Box::new(replay);
+
+        // The engine's tool registry is sealed (`ScopedToolRegistry`), mintable only
+        // through the one assembly seam. Route the eval harness's fixed tool set
+        // through it with a permissive default policy so `assemble` is an identity
+        // over `default_tools()` (nothing added, nothing dropped): the eval agent
+        // sees exactly the same tools as before the seal.
+        let eval_config = clawcrew_config::schema::Config::default();
+        let eval_security = Arc::new(clawcrew_config::policy::SecurityPolicy::default());
+        let eval_registry =
+            clawcrew_runtime::tools::scoped::ScopedToolRegistry::assemble(
+                clawcrew_runtime::tools::scoped::ScopedAssembly {
+                    config: &eval_config,
+                    agent_alias: "eval",
+                    security: &eval_security,
+                    built: clawcrew_runtime::tools::AllToolsResult::from_prebuilt_tools(
+                        default_tools(),
+                    ),
+                    skills: &[],
+                    runtime: Arc::new(clawcrew_runtime::platform::NativeRuntime::new()),
+                    caller_allowed: None,
+                    connect_mcp: false,
+                    connect_peripherals: false,
+                    exclude_memory: false,
+                    acp_delivery: false,
+                    list_deferred_mcp_specs: false,
+                    emit_assembly_logs: false,
+                    mcp_registry: None,
+                },
+            )
+            .await
+            .registry;
+
+        let agent = Agent::builder()
+            .model_provider(provider)
+            .tools(eval_registry)
+            .memory(memory)
+            .observer(observer.clone())
+            .tool_dispatcher(Box::new(NativeToolDispatcher))
+            .workspace_dir(tmp.path().to_path_buf())
+            .build()?;
+
+        Ok(Self {
+            agent,
+            replay_handle,
+            observer,
+            turn_index: 0,
+            _tmp_dir: tmp,
+        })
+    }
+
+    /// Access the recording observer for inspecting metrics.
+    pub fn observer(&self) -> &Arc<RecordingObserver> {
+        &self.observer
+    }
+}
+
+#[async_trait::async_trait]
+impl GoEngineTurnService for MockGoEngineTurnClient {
+    async fn start_turn(&mut self, request: GoTurnRequest) -> anyhow::Result<GoTurnOutcome> {
+        let calls_before = self.observer.calls().len();
+
+        // Drive the underlying turn execution through the agent turn engine
+        let response = self.agent.turn(&request.prompt).await?;
+
+        // Enforce the turn boundary: every step scripted for this turn must have been
+        // consumed before the next turn begins, so responses cannot bleed across turns.
+        self.replay_handle.finish_turn(self.turn_index)?;
+        self.turn_index += 1;
+
+        let all_calls = self.observer.calls();
+        let new_calls = &all_calls[calls_before..];
+
+        let mut events = Vec::with_capacity(new_calls.len() * 2 + 2);
+        for call in new_calls {
+            events.push(GoTurnEvent {
+                event_type: GoTurnEventType::ToolCallStarted,
+                content: format!("{}({})", call.name, call.arguments),
+                subagent_id: None,
+                error_message: None,
+            });
+            events.push(GoTurnEvent {
+                event_type: GoTurnEventType::ToolCallFinished,
+                content: call.result.clone(),
+                subagent_id: None,
+                error_message: if call.success {
+                    None
+                } else {
+                    Some("tool execution failed".into())
+                },
+            });
+        }
+
+        events.push(GoTurnEvent {
+            event_type: GoTurnEventType::TextChunk,
+            content: response.clone(),
+            subagent_id: None,
+            error_message: None,
+        });
+
+        events.push(GoTurnEvent {
+            event_type: GoTurnEventType::TurnCompleted,
+            content: String::new(),
+            subagent_id: None,
+            error_message: None,
+        });
+
+        Ok(GoTurnOutcome {
+            final_response: response,
+            events,
+        })
+    }
+
+    fn into_run_record(self, final_response: String) -> anyhow::Result<RunRecord> {
+        let (input_tokens, output_tokens) = self.observer.tokens();
+        let tool_calls = self.observer.calls();
+        Ok(RunRecord {
+            final_response,
+            history: self.agent.history().to_vec(),
+            tool_calls,
+            input_tokens,
+            output_tokens,
+        })
+    }
+}
 
 /// Run every `*.json` trace fixture in `dir` and return an aggregated report.
 pub async fn run_suite(dir: &Path, mode: Mode) -> anyhow::Result<SuiteReport> {
@@ -58,79 +262,30 @@ pub async fn run_suite(dir: &Path, mode: Mode) -> anyhow::Result<SuiteReport> {
     Ok(SuiteReport { cases })
 }
 
-/// Replay a single trace through a freshly built, isolated agent and capture the run.
+/// Replay a single trace through the Go engine turn service interface and capture the run.
 pub async fn run_case(trace: &LlmTrace) -> anyhow::Result<RunRecord> {
-    // Each case gets an isolated temp workspace and an ephemeral "none" memory
-    // backend so cases cannot observe one another.
-    let tmp = tempfile::tempdir()?;
+    let service = MockGoEngineTurnClient::from_trace(trace).await?;
+    run_case_with_service(trace, service).await
+}
 
-    let mem_cfg = MemoryConfig {
-        backend: "none".into(),
-        ..MemoryConfig::default()
-    };
-    let memory: Arc<dyn Memory> = Arc::from(create_memory(&mem_cfg, tmp.path(), None)?);
-
-    let observer = Arc::new(RecordingObserver::new());
-    let replay = TraceLlmProvider::from_trace(trace);
-    let replay_handle = replay.handle();
-    let provider: Box<dyn ModelProvider> = Box::new(replay);
-
-    // The engine's tool registry is sealed (`ScopedToolRegistry`), mintable only
-    // through the one assembly seam. Route the eval harness's fixed tool set
-    // through it with a permissive default policy so `assemble` is an identity
-    // over `default_tools()` (nothing added, nothing dropped): the eval agent
-    // sees exactly the same tools as before the seal. Every assembly divergence
-    // is off (no peripherals / MCP / skills / memory-strip), so the config,
-    // alias, and runtime are never read beyond satisfying the signature.
-    let eval_config = clawcrew_config::schema::Config::default();
-    let eval_security = Arc::new(clawcrew_config::policy::SecurityPolicy::default());
-    let eval_registry = clawcrew_runtime::tools::scoped::ScopedToolRegistry::assemble(
-        clawcrew_runtime::tools::scoped::ScopedAssembly {
-            config: &eval_config,
-            agent_alias: "eval",
-            security: &eval_security,
-            built: clawcrew_runtime::tools::AllToolsResult::from_prebuilt_tools(default_tools()),
-            skills: &[],
-            runtime: Arc::new(clawcrew_runtime::platform::NativeRuntime::new()),
-            caller_allowed: None,
-            connect_mcp: false,
-            connect_peripherals: false,
-            exclude_memory: false,
-            acp_delivery: false,
-            list_deferred_mcp_specs: false,
-            emit_assembly_logs: false,
-            mcp_registry: None,
-        },
-    )
-    .await
-    .registry;
-
-    let mut agent = Agent::builder()
-        .model_provider(provider)
-        .tools(eval_registry)
-        .memory(memory)
-        .observer(observer.clone())
-        .tool_dispatcher(Box::new(NativeToolDispatcher))
-        .workspace_dir(tmp.path().to_path_buf())
-        .build()?;
-
+/// Drives a trace through an arbitrary Go engine turn service implementation.
+pub async fn run_case_with_service<S: GoEngineTurnService>(
+    trace: &LlmTrace,
+    mut service: S,
+) -> anyhow::Result<RunRecord> {
     let mut final_response = String::new();
-    for (turn_index, turn) in trace.turns.iter().enumerate() {
-        final_response = agent.turn(&turn.user_input).await?;
-        // Enforce the turn boundary: every step scripted for this turn must have been
-        // consumed before the next turn begins, so responses cannot bleed across turns.
-        replay_handle.finish_turn(turn_index)?;
+    for turn in &trace.turns {
+        let req = GoTurnRequest {
+            session_id: format!("eval-{}", trace.model_name),
+            agent_id: "eval".to_string(),
+            prompt: turn.user_input.clone(),
+            context_window: Vec::new(),
+        };
+        let outcome = service.start_turn(req).await?;
+        final_response = outcome.final_response;
     }
 
-    let (input_tokens, output_tokens) = observer.tokens();
-    let tool_calls = observer.calls();
-    Ok(RunRecord {
-        final_response,
-        history: agent.history().to_vec(),
-        tool_calls,
-        input_tokens,
-        output_tokens,
-    })
+    service.into_run_record(final_response)
 }
 
 #[cfg(test)]
@@ -179,6 +334,27 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn go_engine_turn_service_emits_structured_events() {
+        let trace: LlmTrace = serde_json::from_str(ECHO).unwrap();
+        let mut client = MockGoEngineTurnClient::from_trace(&trace).await.unwrap();
+        let req = GoTurnRequest {
+            session_id: "test-session".into(),
+            agent_id: "eval".into(),
+            prompt: "Echo hello for me".into(),
+            context_window: Vec::new(),
+        };
+        let outcome = client.start_turn(req).await.unwrap();
+        assert!(outcome.final_response.contains("hello"));
+
+        let event_types: Vec<GoTurnEventType> =
+            outcome.events.iter().map(|e| e.event_type).collect();
+        assert!(event_types.contains(&GoTurnEventType::ToolCallStarted));
+        assert!(event_types.contains(&GoTurnEventType::ToolCallFinished));
+        assert!(event_types.contains(&GoTurnEventType::TextChunk));
+        assert!(event_types.contains(&GoTurnEventType::TurnCompleted));
+    }
+
+    #[tokio::test]
     async fn run_record_carries_dispatched_arguments_and_tool_results() {
         // End-to-end proof that the boundary payloads survive a real agent run:
         // the Unicode argument reaches the tool and the tool's own output comes
@@ -208,18 +384,11 @@ mod tests {
             call.result, "naïve café 日本語 ✓",
             "tool result did not round-trip the Unicode message"
         );
-        // The final response is scripted text and deliberately does NOT contain the
-        // Unicode string, so this assertion can only be satisfied by the boundary.
         assert_eq!(record.final_response, "done");
     }
 
     #[tokio::test]
     async fn a_call_missing_the_expected_argument_reaches_the_tool_and_the_loop_continues() {
-        // The shape the `missing_tool_argument_continues_loop` fixture replays: the
-        // model asks for `echo` with a key the tool does not read. The dispatch has
-        // to happen against the real tool with the arguments as written, and its
-        // fallback output has to come back, or the fixture's boundary expectations
-        // would be grading something the harness invented.
         const MALFORMED: &str = r#"{
             "model_name": "test-missing-tool-argument",
             "turns": [{
@@ -248,7 +417,6 @@ mod tests {
             call.result
         );
         assert!(call.success, "the dispatch itself must not be an error");
-        // The loop continued past the tool call to the turn's second scripted step.
         assert_eq!(
             record.final_response,
             "The echo tool received no usable message."
@@ -264,10 +432,6 @@ mod tests {
 
     #[tokio::test]
     async fn run_suite_rejects_a_zero_turn_fixture_instead_of_reporting_it_green() {
-        // The turn loop below runs zero times for such a fixture, so the empty
-        // initial response and empty tool record grade `max_tool_calls: 0` as
-        // passed. Admission has to stop the fixture before the suite can
-        // certify a case that never drove the agent.
         let dir = tempfile::tempdir().unwrap();
         std::fs::write(
             dir.path().join("zero_turns.json"),
@@ -299,8 +463,6 @@ mod tests {
     async fn replays_multi_turn_trace_in_order() {
         let trace: LlmTrace = serde_json::from_str(MULTI_TURN).unwrap();
         let record = run_case(&trace).await.unwrap();
-        // The final response comes from the *last* turn, proving turns replay in order
-        // with each turn's step consumed within its own boundary.
         assert!(
             record.final_response.contains("Goodbye"),
             "final response: {:?}",
@@ -310,9 +472,6 @@ mod tests {
 
     #[tokio::test]
     async fn over_specified_turn_is_an_error() {
-        // The turn declares two steps but the agent makes a single chat() call, so the
-        // extra step is left unconsumed. Under the old flat queue this passed silently;
-        // now it must surface as a turn-scoped error rather than bleed into a next turn.
         let trace: LlmTrace = serde_json::from_str(
             r#"{
                 "model_name": "test-over-specified",
