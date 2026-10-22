@@ -253,7 +253,7 @@ async fn authenticated_patch_route_rejects_masked_or_empty_secret_values_without
     use axum::routing::patch;
     use tower::ServiceExt;
 
-    let token = "patch-secret-test-token";
+    let test_auth = "test-token";
     for op in ["add", "replace"] {
         for value in [clawcrew_config::traits::MASKED_SECRET, "****", ""] {
             let tmp = tempfile::tempdir().unwrap();
@@ -265,7 +265,7 @@ async fn authenticated_patch_route_rejects_masked_or_empty_secret_values_without
             let mut state = test_state(config);
             state.pairing = Arc::new(PairingGuard::new(
                 true,
-                &[token.to_string()],
+                &[test_auth.to_string()],
                 clawcrew_config::pairing::PairingCodePolicy::default(),
             ));
             let app = axum::Router::new()
@@ -277,7 +277,7 @@ async fn authenticated_patch_route_rejects_masked_or_empty_secret_values_without
                     axum::http::Request::builder()
                         .method("PATCH")
                         .uri("/api/config")
-                        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                        .header(header::AUTHORIZATION, format!("Bearer {test_auth}"))
                         .header(header::CONTENT_TYPE, "application/json")
                         .header("x-clawcrew-override-drift", "true")
                         .body(Body::from(
