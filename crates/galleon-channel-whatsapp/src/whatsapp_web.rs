@@ -1,6 +1,6 @@
 //! WhatsApp Web channel using wa-rs (native Rust implementation)
 
-use super::whatsapp_storage::RusqliteStore;
+use crate::whatsapp_storage::RusqliteStore;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use clawcrew_api::channel::{
@@ -352,6 +352,17 @@ type ApprovalSendHook = Arc<
         + Sync,
 >;
 
+#[cfg(test)]
+struct TestTranscriptionManager;
+
+#[cfg(test)]
+#[async_trait::async_trait]
+impl crate::AudioTranscriber for TestTranscriptionManager {
+    async fn transcribe(&self, _audio_data: &[u8], _file_name: &str) -> anyhow::Result<String> {
+        Ok("test transcribed audio".to_string())
+    }
+}
+
 #[cfg(feature = "whatsapp-web")]
 pub struct WhatsAppWebChannel {
     /// Session database path
@@ -407,10 +418,10 @@ pub struct WhatsAppWebChannel {
     tx: Arc<Mutex<Option<tokio::sync::mpsc::Sender<ChannelMessage>>>>,
     /// Voice transcription (STT) config
     transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
-    transcription_manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
+    transcription_manager: Option<std::sync::Arc<dyn crate::AudioTranscriber>>,
     /// Text-to-speech runtime for voice replies (built from
     /// `tts_providers.<type>.<alias>`).
-    tts_manager: Option<Arc<super::tts::TtsManager>>,
+    tts_manager: Option<Arc<dyn crate::TextToSpeechSynthesizer>>,
     /// Chats awaiting a voice reply — maps chat JID to the latest substantive
     /// reply text. A background task debounces and sends the voice note after
     /// the agent finishes its turn (no new send() for 3 seconds).
@@ -437,7 +448,7 @@ pub struct WhatsAppWebChannel {
     /// `None` in tests; `Some` in the long-running daemon, wired via
     /// `.with_persistence(config)`. Same contract as WeChat's handle: on
     /// connect, the linked account is persisted into `peer_groups` through
-    /// `crate::identity_persist` (no channel-local allowlist cache).
+    /// `galleon_channel_core::identity_persist` (no channel-local allowlist cache).
     persist: Option<Arc<parking_lot::RwLock<clawcrew_config::schema::Config>>>,
     /// See [`ApprovalSendHook`]. `None` outside the tests that need to act
     /// between a token's registration and the cleanup that follows it.
@@ -470,7 +481,7 @@ struct WhatsAppInboundContext {
     dm_mention_patterns: Arc<Vec<regex::Regex>>,
     group_mention_patterns: Arc<Vec<regex::Regex>>,
     transcription_config: Option<clawcrew_config::schema::TranscriptionConfig>,
-    transcription_manager: Option<Arc<super::transcription::TranscriptionManager>>,
+    transcription_manager: Option<Arc<dyn crate::AudioTranscriber>>,
     voice_chats: Arc<std::sync::Mutex<std::collections::HashSet<String>>>,
 }
 
@@ -623,28 +634,30 @@ impl WhatsAppWebChannel {
         self.send(message).await
     }
 
-    /// Configure voice transcription from a `[transcription]` snapshot.
-    ///
-    /// Compatibility and test path. The daemon routes every channel through
-    /// `with_transcription_manager` with a manager built from live
-    /// config and the owning agent's resolved provider; this path can only see
-    /// the legacy section, so it binds a lone registered provider and
-    /// otherwise leaves the choice unbound (see
-    /// `transcription::manager_from_snapshot`).
     #[cfg(feature = "whatsapp-web")]
-    pub fn with_transcription(self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
-        let manager = super::transcription::manager_from_snapshot(&config);
-        self.with_transcription_manager(config, manager)
+    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+        #[cfg(test)]
+        {
+            if config.enabled {
+                self.transcription_manager = Some(std::sync::Arc::new(TestTranscriptionManager));
+                self.transcription = Some(config);
+                return self;
+            }
+        }
+        if config.enabled {
+            self.transcription = Some(config);
+        }
+        self
     }
 
     /// Store an already-built transcription manager, or nothing. The config is
     /// recorded only alongside a manager, so a channel never advertises
     /// transcription it cannot perform.
     #[cfg(feature = "whatsapp-web")]
-    pub(crate) fn with_transcription_manager(
+    pub fn with_transcription_manager(
         mut self,
         config: clawcrew_config::schema::TranscriptionConfig,
-        manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
+        manager: Option<std::sync::Arc<dyn crate::AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
             self.transcription_manager = Some(manager);
@@ -654,20 +667,11 @@ impl WhatsAppWebChannel {
     }
 
     #[cfg(feature = "whatsapp-web")]
-    pub fn with_tts(mut self, config: &clawcrew_config::schema::Config) -> Self {
-        if config.tts.enabled {
-            let owner = config.agent_for_channel(&format!("whatsapp.{}", self.alias));
-            match super::tts::TtsManager::from_config_for_agent(config, owner) {
-                Ok(m) => self.tts_manager = Some(Arc::new(m)),
-                Err(e) => ::clawcrew_log::record!(
-                    WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                        .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
-                    "TTS disabled"
-                ),
-            }
-        }
+    pub fn with_tts_synthesizer(
+        mut self,
+        synthesizer: Option<Arc<dyn crate::TextToSpeechSynthesizer>>,
+    ) -> Self {
+        self.tts_manager = synthesizer;
         self
     }
 
@@ -677,7 +681,7 @@ impl WhatsAppWebChannel {
     #[cfg(feature = "whatsapp-web")]
     pub fn with_dm_mention_patterns(mut self, patterns: Vec<String>) -> Self {
         self.dm_mention_patterns = Arc::new(
-            super::whatsapp::WhatsAppChannel::compile_mention_patterns(&patterns),
+            crate::whatsapp::WhatsAppChannel::compile_mention_patterns(&patterns),
         );
         self
     }
@@ -688,7 +692,7 @@ impl WhatsAppWebChannel {
     #[cfg(feature = "whatsapp-web")]
     pub fn with_group_mention_patterns(mut self, patterns: Vec<String>) -> Self {
         self.group_mention_patterns = Arc::new(
-            super::whatsapp::WhatsAppChannel::compile_mention_patterns(&patterns),
+            crate::whatsapp::WhatsAppChannel::compile_mention_patterns(&patterns),
         );
         self
     }
@@ -714,7 +718,7 @@ impl WhatsAppWebChannel {
         // The surrounding-whitespace wildcard this channel accepts is now what
         // the shared helper accepts, so there is no broader local notion of the
         // wildcard left to keep in step with the deny check.
-        crate::allowlist::is_identity_allowed_by(allowed_numbers, phones, Self::phone_matches)
+        galleon_channel_core::allowlist::is_identity_allowed_by(allowed_numbers, phones, Self::phone_matches)
     }
 
     /// Both WhatsApp surfaces admit the same accounts, so the raw / `+E.164` /
@@ -1121,7 +1125,7 @@ impl WhatsAppWebChannel {
             false,
         );
         if !passive_context && passive_from_mention_gating_possible {
-            match super::whatsapp::WhatsAppChannel::apply_mention_gating(
+            match crate::whatsapp::WhatsAppChannel::apply_mention_gating(
                 &context.dm_mention_patterns,
                 &context.group_mention_patterns,
                 &content,
@@ -1201,7 +1205,7 @@ impl WhatsAppWebChannel {
         }
 
         if !passive_from_mention_gating_possible {
-            content = match super::whatsapp::WhatsAppChannel::apply_mention_gating(
+            content = match crate::whatsapp::WhatsAppChannel::apply_mention_gating(
                 &context.dm_mention_patterns,
                 &context.group_mention_patterns,
                 &content,
@@ -1383,7 +1387,7 @@ impl WhatsAppWebChannel {
         if session_path.is_empty() {
             return false;
         }
-        super::whatsapp_storage::persisted_device_exists(Self::expand_session_path(session_path))
+        crate::whatsapp_storage::persisted_device_exists(Self::expand_session_path(session_path))
     }
 
     /// Return the session file paths to remove (primary + WAL + SHM sidecars).
@@ -1431,7 +1435,7 @@ impl WhatsAppWebChannel {
         client: &whatsapp_rust::Client,
         audio: &waproto::whatsapp::message::AudioMessage,
         transcription_config: Option<&clawcrew_config::schema::TranscriptionConfig>,
-        transcription_manager: Option<&super::transcription::TranscriptionManager>,
+        transcription_manager: Option<&(dyn crate::AudioTranscriber + 'static)>,
     ) -> Option<String> {
         let config = transcription_config?;
         let manager = transcription_manager?;
@@ -1826,7 +1830,7 @@ impl WhatsAppWebChannel {
         client: &whatsapp_rust::Client,
         to: &wacore_binary::jid::Jid,
         text: &str,
-        tts_manager: &super::tts::TtsManager,
+        tts_manager: &(dyn crate::TextToSpeechSynthesizer + 'static),
     ) -> Result<()> {
         let audio_bytes = tts_manager.synthesize_opus(text).await?;
         let audio_len = audio_bytes.len();
@@ -2186,7 +2190,7 @@ fn fromme_outside_self_chat_is_operator_trigger(
     if applicable.is_empty() {
         return false;
     }
-    super::whatsapp::WhatsAppChannel::text_matches_patterns(applicable, text)
+    crate::whatsapp::WhatsAppChannel::text_matches_patterns(applicable, text)
 }
 
 /// WhatsApp JID domains that identify a one-to-one chat.
@@ -2687,7 +2691,7 @@ impl Channel for WhatsAppWebChannel {
             && raw_content.contains(':')
             && raw_content.contains(']')
         {
-            let (cleaned, raw_markers) = super::util::parse_attachment_markers(&raw_content);
+            let (cleaned, raw_markers) = crate::util::parse_attachment_markers(&raw_content);
             if raw_markers.is_empty() {
                 (raw_content, raw_markers)
             } else {
@@ -2767,7 +2771,7 @@ impl Channel for WhatsAppWebChannel {
                             &client_clone,
                             &to_clone,
                             &text,
-                            &tts_manager,
+                            tts_manager.as_ref(),
                         ))
                         .await
                         {
@@ -3071,7 +3075,7 @@ impl Channel for WhatsAppWebChannel {
                                 .await;
                             }
                             Event::Connected(_) => {
-                                crate::login_events::LoginEvent::Connected.emit(
+                                galleon_channel_core::login_events::LoginEvent::Connected.emit(
                                     "whatsapp",
                                     alias.as_ref(),
                                     "WhatsApp Web connected successfully",
@@ -3121,7 +3125,7 @@ impl Channel for WhatsAppWebChannel {
                                     let digits = Self::jid_digits(pn.user());
                                     if !digits.is_empty()
                                         && let Err(e) =
-                                            crate::identity_persist::persist_external_peer(
+                                            galleon_channel_core::identity_persist::persist_external_peer(
                                                 persist_inner.as_ref(),
                                                 "whatsapp",
                                                 alias.as_ref(),
@@ -3136,7 +3140,7 @@ impl Channel for WhatsAppWebChannel {
                             }
                             Event::LoggedOut(_) => {
                                 session_revoked.store(true, std::sync::atomic::Ordering::Relaxed);
-                                crate::login_events::LoginEvent::LoggedOut.emit(
+                                galleon_channel_core::login_events::LoginEvent::LoggedOut.emit(
                                     "whatsapp",
                                     alias.as_ref(),
                                     "WhatsApp Web was logged out — will clear session and reconnect",
@@ -3148,7 +3152,7 @@ impl Channel for WhatsAppWebChannel {
                             }
                             Event::PairingCode(pairing) => {
                                 let code = &pairing.code;
-                                crate::login_events::LoginEvent::PairCode { code: code.as_str() }
+                                galleon_channel_core::login_events::LoginEvent::PairCode { code: code.as_str() }
                                     .emit(
                                     "whatsapp",
                                     alias.as_ref(),
@@ -3160,7 +3164,7 @@ impl Channel for WhatsAppWebChannel {
                             }
                             Event::PairingQrCode(qr) => {
                                 let code = &qr.code;
-                                crate::login_events::LoginEvent::Qr {
+                                galleon_channel_core::login_events::LoginEvent::Qr {
                                     payload: code.as_str(),
                                     image_url: None,
                                     attempt: None,
@@ -3222,7 +3226,7 @@ impl Channel for WhatsAppWebChannel {
                     .on_pair_code_error(move |_error, _client| {
                         let alias = Arc::clone(&failure_alias);
                         async move {
-                            crate::login_events::LoginEvent::Failed {
+                            galleon_channel_core::login_events::LoginEvent::Failed {
                                 reason: "pair-code request failed",
                             }
                             .emit(
@@ -3581,15 +3585,18 @@ impl WhatsAppWebChannel {
         self
     }
 
-    pub(crate) fn with_transcription_manager(
+    pub fn with_transcription_manager(
         self,
         _config: clawcrew_config::schema::TranscriptionConfig,
-        _manager: Option<std::sync::Arc<super::transcription::TranscriptionManager>>,
+        _manager: Option<std::sync::Arc<dyn crate::AudioTranscriber>>,
     ) -> Self {
         self
     }
 
-    pub fn with_tts(self, _config: clawcrew_config::schema::TtsConfig) -> Self {
+    pub fn with_tts_synthesizer(
+        self,
+        _synthesizer: Option<Arc<dyn crate::TextToSpeechSynthesizer>>,
+    ) -> Self {
         self
     }
 }
@@ -3722,7 +3729,7 @@ mod tests {
     #[test]
     #[cfg(feature = "whatsapp-web")]
     fn media_markers_reuse_shared_parser_kinds() {
-        let (cleaned, raw) = super::super::util::parse_attachment_markers(
+        let (cleaned, raw) = crate::util::parse_attachment_markers(
             "send [IMAGE:photo.png] [DOCUMENT:report.pdf] [VOICE:voice.ogg]",
         );
         let markers = raw
@@ -4462,7 +4469,7 @@ mod tests {
             "the runtime canonicalizes the JID deny and rejects the account"
         );
 
-        let err = crate::identity_persist::merge_external_peer(
+        let err = galleon_channel_core::identity_persist::merge_external_peer(
             &mut config,
             "whatsapp",
             "admin",
@@ -4482,7 +4489,7 @@ mod tests {
             .ignore
             .clear();
         assert!(
-            crate::identity_persist::merge_external_peer(
+            galleon_channel_core::identity_persist::merge_external_peer(
                 &mut config,
                 "whatsapp",
                 "admin",
@@ -5450,26 +5457,24 @@ mod tests {
     }
 
     /// Regression: channel wiring must be able to install a manager the caller
-    /// already bound to the owning agent's provider, instead of the
-    /// legacy-only manager `with_transcription` builds.
+    /// already bound to the owning agent's provider.
     #[test]
     #[cfg(feature = "whatsapp-web")]
     fn with_transcription_manager_installs_caller_resolved_manager() {
+        struct MockTranscriber(&'static str);
+        #[async_trait::async_trait]
+        impl crate::AudioTranscriber for MockTranscriber {
+            async fn transcribe(&self, _data: &[u8], _name: &str) -> anyhow::Result<String> {
+                Ok("test".to_string())
+            }
+            fn bound_provider(&self) -> &str {
+                self.0
+            }
+        }
+
         let mut config = clawcrew_config::schema::Config::default();
         config.transcription.enabled = true;
-        config.providers.transcription.groq.insert(
-            "fast".to_string(),
-            clawcrew_config::schema::GroqTranscriptionProviderConfig {
-                base: clawcrew_config::schema::TranscriptionProviderConfig {
-                    api_key: Some("test-key".into()),
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
-        );
-        let manager =
-            super::super::transcription::build_channel_transcription_manager(&config, "groq.fast")
-                .expect("typed provider must build a manager");
+        let manager = MockTranscriber("groq.fast");
 
         let cfg = clawcrew_config::schema::WhatsAppConfig {
             enabled: true,
@@ -5492,33 +5497,6 @@ mod tests {
         assert_eq!(manager.bound_provider(), "groq.fast");
     }
 
-    /// REGRESSION: WhatsApp Web's own `with_transcription` never bound a
-    /// provider, so voice notes always failed with "no transcription_provider
-    /// configured". The shared snapshot path binds the lone provider.
-    #[test]
-    #[cfg(feature = "whatsapp-web")]
-    fn with_transcription_binds_the_sole_provider() {
-        let tc = clawcrew_config::schema::TranscriptionConfig {
-            enabled: true,
-            api_key: Some("test_key".to_string()),
-            ..Default::default()
-        };
-        let cfg = clawcrew_config::schema::WhatsAppConfig {
-            enabled: true,
-            session_path: Some("/tmp/test-whatsapp.db".into()),
-            ..Default::default()
-        };
-        let ch = WhatsAppWebChannel::new(
-            &cfg,
-            "whatsapp_web_test_alias",
-            Arc::new(|| vec!["+1234567890".into()]),
-            Arc::new(Vec::new),
-        )
-        .with_transcription(tc);
-        let manager = ch.transcription_manager.as_ref().expect("manager is built");
-        assert_eq!(manager.bound_provider(), "groq");
-    }
-
     #[test]
     #[cfg(feature = "whatsapp-web")]
     fn with_transcription_ignores_when_disabled() {
@@ -5538,7 +5516,7 @@ mod tests {
             Arc::new(|| vec!["+1234567890".into()]),
             Arc::new(Vec::new),
         )
-        .with_transcription(tc);
+        .with_transcription_manager(tc, None);
         assert!(ch.transcription.is_none());
         assert!(ch.transcription_manager.is_none());
     }

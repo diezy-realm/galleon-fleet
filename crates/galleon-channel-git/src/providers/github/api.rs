@@ -8,7 +8,7 @@ use super::payloads::{
     GhComment, GhInstallation, GhIssue, GhRelease, GhRepo, GhReviewComment, GhTokenResponse,
     GhWorkflowRun, InstallationId, RepoEventsPage,
 };
-use crate::git::types::{GitChannelError, IssueRef, RepoRef};
+use crate::types::{GitChannelError, IssueRef, RepoRef};
 
 const MAX_PAGES_PER_POLL: usize = 20;
 

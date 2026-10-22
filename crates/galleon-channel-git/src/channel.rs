@@ -205,7 +205,7 @@ impl GitChannel {
     fn is_user_allowed(&self, login: &str) -> bool {
         let peers = (self.peer_resolver)();
         // Forge logins are case-insensitive (and ASCII-only).
-        crate::allowlist::is_user_allowed(&peers, login, crate::allowlist::Match::CaseInsensitive)
+        galleon_channel_core::allowlist::is_user_allowed(&peers, login, galleon_channel_core::allowlist::Match::CaseInsensitive)
     }
 
     /// Resolve the bot identity from the provider, memoizing the value for
@@ -872,8 +872,8 @@ mod tests {
     #[cfg(feature = "provider-github")]
     mod github_integration {
         use super::*;
-        use crate::git::providers::github::api_test_support::with_base;
-        use crate::git::providers::github::{GithubProvider, TEST_KEY_PEM};
+        use crate::providers::github::api_test_support::with_base;
+        use crate::providers::github::{GithubProvider, TEST_KEY_PEM};
 
         fn base_cfg() -> GitConfig {
             GitConfig {

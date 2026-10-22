@@ -5,9 +5,9 @@ use chrono::{DateTime, Utc};
 
 use super::api::GiteaApi;
 use super::mapping;
-use crate::git::poll::PollStream;
-use crate::git::traits::{FetchPage, GitProvider, ReactionTarget, SelfIdentity};
-use crate::git::types::{GitChannelError, IssueRef, RepoRef};
+use crate::poll::PollStream;
+use crate::traits::{FetchPage, GitProvider, ReactionTarget, SelfIdentity};
+use crate::types::{GitChannelError, IssueRef, RepoRef};
 
 pub struct GiteaProvider {
     api: GiteaApi,
@@ -222,15 +222,15 @@ impl GitProvider for GiteaProvider {
 
     async fn forge_request(
         &self,
-        req: crate::git::types::ForgeRequest,
-    ) -> Result<crate::git::types::ForgeResponse, GitChannelError> {
+        req: crate::types::ForgeRequest,
+    ) -> Result<crate::types::ForgeResponse, GitChannelError> {
         let req = translate_to_gitea(req);
-        let method = crate::git::providers::forge_method_to_reqwest(req.method);
+        let method = crate::providers::forge_method_to_reqwest(req.method);
         let (status, body) = self
             .api
             .forge_call(self.token()?, method, &req.path, req.body.as_ref())
             .await?;
-        Ok(crate::git::types::ForgeResponse { status, body })
+        Ok(crate::types::ForgeResponse { status, body })
     }
 }
 
@@ -245,11 +245,11 @@ impl GitProvider for GiteaProvider {
 /// `state_reason`; and `ReviewStateType` spells approval `APPROVED`, not
 /// GitHub's `APPROVE`. Shapes Gitea shares with GitHub (pull close via
 /// `{state:closed}`, labels, milestone id, comments) pass through untouched.
-fn translate_to_gitea(req: crate::git::types::ForgeRequest) -> crate::git::types::ForgeRequest {
-    use crate::git::types::ForgeMethod;
+fn translate_to_gitea(req: crate::types::ForgeRequest) -> crate::types::ForgeRequest {
+    use crate::types::ForgeMethod;
     use serde_json::Value;
 
-    let crate::git::types::ForgeRequest { method, path, body } = req;
+    let crate::types::ForgeRequest { method, path, body } = req;
 
     let is_merge = method == ForgeMethod::Put && path.ends_with("/merge");
     if is_merge {
@@ -273,7 +273,7 @@ fn translate_to_gitea(req: crate::git::types::ForgeRequest) -> crate::git::types
         if !out.contains_key("Do") {
             out.insert("Do".into(), Value::String("merge".into()));
         }
-        return crate::git::types::ForgeRequest {
+        return crate::types::ForgeRequest {
             method: ForgeMethod::Post,
             path,
             body: Some(Value::Object(out)),
@@ -290,7 +290,7 @@ fn translate_to_gitea(req: crate::git::types::ForgeRequest) -> crate::git::types
         }
     }
 
-    crate::git::types::ForgeRequest { method, path, body }
+    crate::types::ForgeRequest { method, path, body }
 }
 
 #[cfg(test)]
@@ -301,7 +301,7 @@ mod tests {
 
     #[test]
     fn translate_merge_maps_method_verb_and_body_keys() {
-        use crate::git::types::{ForgeMethod, ForgeRequest};
+        use crate::types::{ForgeMethod, ForgeRequest};
         let req = ForgeRequest {
             method: ForgeMethod::Put,
             path: "repos/o/r/pulls/5/merge".into(),
@@ -322,7 +322,7 @@ mod tests {
 
     #[test]
     fn translate_merge_rebase_becomes_rebase_merge() {
-        use crate::git::types::{ForgeMethod, ForgeRequest};
+        use crate::types::{ForgeMethod, ForgeRequest};
         let req = ForgeRequest {
             method: ForgeMethod::Put,
             path: "repos/o/r/pulls/5/merge".into(),
@@ -334,7 +334,7 @@ mod tests {
 
     #[test]
     fn translate_strips_issue_state_reason() {
-        use crate::git::types::{ForgeMethod, ForgeRequest};
+        use crate::types::{ForgeMethod, ForgeRequest};
         let req = ForgeRequest {
             method: ForgeMethod::Patch,
             path: "repos/o/r/issues/12".into(),
@@ -348,7 +348,7 @@ mod tests {
 
     #[test]
     fn translate_review_approve_becomes_approved() {
-        use crate::git::types::{ForgeMethod, ForgeRequest};
+        use crate::types::{ForgeMethod, ForgeRequest};
         let req = ForgeRequest {
             method: ForgeMethod::Post,
             path: "repos/o/r/pulls/5/reviews".into(),
@@ -360,7 +360,7 @@ mod tests {
 
     #[test]
     fn translate_pull_close_passes_through_untouched() {
-        use crate::git::types::{ForgeMethod, ForgeRequest};
+        use crate::types::{ForgeMethod, ForgeRequest};
         let req = ForgeRequest {
             method: ForgeMethod::Patch,
             path: "repos/o/r/pulls/5".into(),

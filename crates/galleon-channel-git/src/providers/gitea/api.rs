@@ -6,7 +6,7 @@ use serde::de::DeserializeOwned;
 use super::payloads::{
     CreatedComment, GITEA_USER_AGENT, GiteaComment, GiteaIssue, GiteaRelease, GiteaRepo, GiteaUser,
 };
-use crate::git::types::{GitChannelError, IssueRef, RepoRef};
+use crate::types::{GitChannelError, IssueRef, RepoRef};
 
 /// Pin a raw forge-call path under the configured Gitea API base. Same origin
 /// guarantee as the GitHub client: the path is only ever appended after

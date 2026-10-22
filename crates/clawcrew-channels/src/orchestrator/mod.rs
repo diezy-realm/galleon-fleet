@@ -11956,6 +11956,30 @@ fn resolve_telegram_tts(
     }
 }
 
+#[cfg(feature = "whatsapp-web")]
+fn resolve_whatsapp_tts(
+    config: &clawcrew_config::schema::Config,
+    alias: &str,
+) -> Option<Arc<dyn galleon_channel_whatsapp::TextToSpeechSynthesizer>> {
+    if !config.tts.enabled {
+        return None;
+    }
+    let owner = config.agent_for_channel(&format!("whatsapp.{alias}"));
+    match crate::tts::TtsManager::from_config_for_agent(config, owner) {
+        Ok(m) => Some(Arc::new(m)),
+        Err(e) => {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
+                "TTS disabled"
+            );
+            None
+        }
+    }
+}
+
 /// Build a single channel instance by config section name (e.g. "telegram").
 fn build_channel_by_id(
     config_arc: &Arc<RwLock<Config>>,
@@ -13240,6 +13264,30 @@ fn resolved_transcription_manager(
     }
 }
 
+#[cfg(feature = "whatsapp-web")]
+fn resolve_whatsapp_tts(
+    config: &clawcrew_config::schema::Config,
+    alias: &str,
+) -> Option<Arc<dyn galleon_channel_whatsapp::TextToSpeechSynthesizer>> {
+    if !config.tts.enabled {
+        return None;
+    }
+    let owner = config.agent_for_channel(&format!("whatsapp.{alias}"));
+    match crate::tts::TtsManager::from_config_for_agent(config, owner) {
+        Ok(m) => Some(Arc::new(m)),
+        Err(e) => {
+            ::clawcrew_log::record!(
+                WARN,
+                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
+                "TTS disabled"
+            );
+            None
+        }
+    }
+}
+
 #[cfg(feature = "channel-discord")]
 fn configure_discord_transcription(
     channel: DiscordChannel,
@@ -13931,9 +13979,10 @@ fn collect_configured_channels(
                                     resolved_transcription_manager(
                                         &config,
                                         &format!("whatsapp.{alias}"),
-                                    ),
+                                    )
+                                    .map(|m| m as Arc<dyn galleon_channel_whatsapp::AudioTranscriber>),
                                 )
-                                .with_tts(&config)
+                                .with_tts_synthesizer(resolve_whatsapp_tts(&config, &alias))
                                 .with_workspace_dir(workspace_dir)
                                 .with_dm_mention_patterns(wa.dm_mention_patterns.clone())
                                 .with_group_mention_patterns(wa.group_mention_patterns.clone()),

@@ -1678,7 +1678,6 @@ dependencies = [
  "async-trait",
  "axum 0.8.9",
  "base64",
- "bytes",
  "cbc 0.1.2",
  "chrono",
  "clawcrew-api",
@@ -1702,6 +1701,7 @@ dependencies = [
  "galleon-channel-discord",
  "galleon-channel-email",
  "galleon-channel-filesystem",
+ "galleon-channel-git",
  "galleon-channel-imessage",
  "galleon-channel-irc",
  "galleon-channel-lark",
@@ -1720,17 +1720,18 @@ dependencies = [
  "galleon-channel-telegram",
  "galleon-channel-twitch",
  "galleon-channel-twitter",
+ "galleon-channel-voice-call",
  "galleon-channel-webhook",
  "galleon-channel-wechat",
  "galleon-channel-wecom",
  "galleon-channel-wecom-ws",
+ "galleon-channel-whatsapp",
  "galleon-i18n",
  "galleon-security-scrub",
  "glob",
  "hex",
  "hmac 0.12.1",
  "image",
- "jsonwebtoken",
  "lapin",
  "lettre",
  "libc",
@@ -1744,7 +1745,6 @@ dependencies = [
  "portable-atomic",
  "prost 0.14.4",
  "pulldown-cmark",
- "qrcode",
  "rand 0.10.2",
  "regex",
  "reqwest 0.12.28",
@@ -1758,7 +1758,6 @@ dependencies = [
  "sha2 0.10.9",
  "shellexpand",
  "tempfile",
- "thiserror 2.0.20",
  "tokio",
  "tokio-executor-trait",
  "tokio-reactor-trait",
@@ -1769,13 +1768,7 @@ dependencies = [
  "url",
  "urlencoding",
  "uuid",
- "wacore",
- "wacore-binary",
- "waproto",
  "webpki-roots 1.0.9",
- "whatsapp-rust",
- "whatsapp-rust-tokio-transport",
- "whatsapp-rust-ureq-http-client",
  "wiremock",
 ]
 
@@ -4453,6 +4446,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-channel-git"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-providers",
+ "galleon-channel-core",
+ "jsonwebtoken",
+ "parking_lot",
+ "rand 0.8.6",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
 name = "galleon-channel-imessage"
 version = "0.8.5"
 dependencies = [
@@ -4837,6 +4854,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-channel-voice-call"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.8.9",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "galleon-channel-core",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
 name = "galleon-channel-webhook"
 version = "0.8.5"
 dependencies = [
@@ -4939,6 +4975,41 @@ dependencies = [
  "tokio-tungstenite 0.29.0",
  "toml 1.1.2+spec-1.1.0",
  "tracing",
+]
+
+[[package]]
+name = "galleon-channel-whatsapp"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bytes",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "galleon-channel-core",
+ "galleon-i18n",
+ "parking_lot",
+ "qrcode",
+ "regex",
+ "reqwest 0.12.28",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "shellexpand",
+ "tempfile",
+ "tokio",
+ "toml 0.8.23",
+ "uuid",
+ "wacore",
+ "wacore-binary",
+ "waproto",
+ "whatsapp-rust",
+ "whatsapp-rust-tokio-transport",
+ "whatsapp-rust-ureq-http-client",
+ "wiremock",
 ]
 
 [[package]]

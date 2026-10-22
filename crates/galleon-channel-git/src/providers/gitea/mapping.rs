@@ -1,10 +1,10 @@
 //! Gitea-compatible payload normalization.
 
 use super::payloads::{GiteaComment, GiteaIssue, GiteaRelease, GiteaUser};
-use crate::git::events::{
+use crate::events::{
     CommentPost, EventActor, GitEvent, IssuePost, PullPost, PullTransition, ReleasePost,
 };
-use crate::git::types::RepoRef;
+use crate::types::RepoRef;
 
 fn actor(user: &GiteaUser) -> EventActor {
     EventActor {

@@ -1293,6 +1293,18 @@ impl galleon_channel_slack::AudioTranscriber for TranscriptionManager {
     }
 }
 
+#[cfg(feature = "whatsapp-web")]
+#[async_trait]
+impl galleon_channel_whatsapp::AudioTranscriber for TranscriptionManager {
+    async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String> {
+        self.transcribe(audio_data, file_name).await
+    }
+    #[cfg(test)]
+    fn bound_provider(&self) -> &str {
+        self.bound_provider()
+    }
+}
+
 /// Bind the provider a channel's manager should dispatch to.
 ///
 /// `agent_provider` is the owning agent's `transcription_provider` as the
@@ -1389,18 +1401,7 @@ pub(crate) fn build_channel_transcription_manager(
 /// returns `None` when transcription is disabled or the manager cannot be
 /// built; the failure is logged once here rather than in every channel, and
 /// the channel stays up without transcription.
-#[cfg(any(
-    feature = "channel-telegram",
-    feature = "channel-discord",
-    feature = "channel-slack",
-    feature = "channel-mattermost",
-    feature = "whatsapp-web",
-    feature = "channel-lark",
-    feature = "channel-line",
-    feature = "channel-qq",
-    feature = "channel-matrix",
-    feature = "voice-wake"
-))]
+#[cfg(test)]
 pub(crate) fn manager_from_snapshot(
     config: &TranscriptionConfig,
 ) -> Option<std::sync::Arc<TranscriptionManager>> {

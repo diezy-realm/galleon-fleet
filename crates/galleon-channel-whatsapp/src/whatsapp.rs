@@ -372,7 +372,7 @@ impl WhatsAppChannel {
     /// and the wildcard grant admits a sender the operator ignored.
     fn is_number_allowed(&self, phone: &str) -> bool {
         let peers = (self.peer_resolver)();
-        crate::allowlist::is_user_allowed_by(&peers, phone, phone_matches)
+        galleon_channel_core::allowlist::is_user_allowed_by(&peers, phone, phone_matches)
     }
 
     /// Get the verify token for webhook verification
@@ -999,7 +999,7 @@ impl Channel for WhatsAppChannel {
         recipient: &str,
         request: &ChannelApprovalRequest,
     ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
-        let token = crate::util::new_approval_token();
+        let token = galleon_channel_core::approval::new_approval_token();
         let text = crate::util::build_yesno_approval_prompt(
             &token,
             &request.tool_name,
