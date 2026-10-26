@@ -20,10 +20,7 @@ pub trait AudioTranscriber: Send + Sync {
     async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> anyhow::Result<String>;
 }
 
-async fn ensure_success(
-    resp: reqwest::Response,
-    what: &str,
-) -> anyhow::Result<reqwest::Response> {
+async fn ensure_success(resp: reqwest::Response, what: &str) -> anyhow::Result<reqwest::Response> {
     if resp.status().is_success() {
         return Ok(resp);
     }
@@ -498,7 +495,7 @@ async fn handle_webhook(
             match state.dm_policy {
                 LineDmPolicy::Open => {}
                 LineDmPolicy::Allowlist => {
-                    if !is_line_user_allowed(&*state, user_id) {
+                    if !is_line_user_allowed(&state, user_id) {
                         ::clawcrew_log::record!(
                             WARN,
                             ::clawcrew_log::Event::new(
@@ -513,7 +510,7 @@ async fn handle_webhook(
                     }
                 }
                 LineDmPolicy::Pairing => {
-                    if !is_line_user_allowed(&*state, user_id) {
+                    if !is_line_user_allowed(&state, user_id) {
                         // Try pairing bind
                         if let Some(code) = LineChannel::extract_bind_code(text) {
                             // Pairing is the authorization handshake; show loading during bind.
@@ -573,7 +570,7 @@ async fn handle_webhook(
                                 match guard.reserve_pair(code, user_id).await {
                                     Ok(Some(reservation)) => {
                                         if let Err(e) =
-                                            persist_line_paired_identity(&*state, user_id).await
+                                            persist_line_paired_identity(&state, user_id).await
                                         {
                                             // Reply with the failure message
                                             // rather than the success one: the
