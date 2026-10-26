@@ -34,12 +34,12 @@ pub mod slash_options;
 pub mod types;
 
 pub(crate) use chunk::*;
+pub use discord_slash_state as slash_state;
 pub(crate) use interaction::*;
 pub(crate) use markers::*;
 pub(crate) use rest::*;
 pub use slash::*;
 pub use types::*;
-pub use discord_slash_state as slash_state;
 
 use embed::DiscordEmbed;
 use pending::ComponentIntent;
@@ -196,11 +196,11 @@ pub fn strip_tool_call_tags(message: &str) -> String {
         result.push_str(&message[cursor..tag_start]);
 
         let after_open = tag_start + open_tag.len();
-        if let Some(close_tag) = matching_close_tag(open_tag) {
-            if let Some(close_offset) = message[after_open..].find(close_tag) {
-                cursor = after_open + close_offset + close_tag.len();
-                continue;
-            }
+        if let Some(close_tag) = matching_close_tag(open_tag)
+            && let Some(close_offset) = message[after_open..].find(close_tag)
+        {
+            cursor = after_open + close_offset + close_tag.len();
+            continue;
         }
 
         if let Some(json_end) = extract_first_json_end(&message[after_open..]) {
@@ -443,7 +443,10 @@ impl DiscordChannel {
     }
 
     /// Configure voice transcription from a `[transcription]` snapshot.
-    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(
+        mut self,
+        config: clawcrew_config::schema::TranscriptionConfig,
+    ) -> Self {
         self.transcription = Some(config);
         self
     }
@@ -7047,7 +7050,11 @@ mod tests {
                 anyhow::bail!("transcription failed: {}", resp.status());
             }
             let body = resp.json::<serde_json::Value>().await?;
-            Ok(body.get("text").and_then(|v| v.as_str()).unwrap_or_default().to_string())
+            Ok(body
+                .get("text")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string())
         }
     }
 
