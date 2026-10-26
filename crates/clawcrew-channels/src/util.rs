@@ -615,7 +615,7 @@ pub(crate) fn approval_position_line(position: Option<(u32, u32)>) -> String {
 /// Localized text-reply approval prompt using approve/deny/always reply
 /// keywords: Matrix's own reply parser (distinct from
 /// [`parse_approval_reply`]) expects this shape.
-#[cfg(any(feature = "channel-matrix", test))]
+#[cfg(test)]
 pub(crate) fn build_approve_deny_approval_prompt(
     token: &str,
     tool_name: &str,
