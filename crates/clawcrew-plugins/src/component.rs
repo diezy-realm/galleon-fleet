@@ -403,7 +403,6 @@ impl PluginState {
         self.scope.grants().allows(PluginPermission::FileWrite)
     }
 
-
     /// The inbound queue this plugin drains. Host code holds a clone to enqueue.
     pub(crate) fn inbound(&self) -> &InboundQueue {
         &self.inbound
@@ -1144,7 +1143,6 @@ mod tests {
             "FileWrite must be true when granted"
         );
     }
-
 
     #[test]
     fn grant_does_not_enable_http_without_adapter_opt_in() {

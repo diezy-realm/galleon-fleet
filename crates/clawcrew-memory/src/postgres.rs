@@ -5,13 +5,13 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use clawcrew_api::memory_traits::MemoryScope;
+use clawcrew_api::session_keys::sanitize_session_key;
 use parking_lot::Mutex;
 use postgres::{Client, NoTls, Row};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::oneshot;
 use uuid::Uuid;
-use clawcrew_api::session_keys::sanitize_session_key;
 
 /// Maximum allowed connect timeout (seconds) to avoid unreasonable waits.
 const POSTGRES_CONNECT_TIMEOUT_CAP_SECS: u64 = 300;

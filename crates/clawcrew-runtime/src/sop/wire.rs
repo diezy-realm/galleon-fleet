@@ -11,7 +11,6 @@ const MAX_SWITCH_PORTS: usize = 256;
 
 pub use clawcrew_sop_graph::{WireEdit, WireError, WireOp};
 
-
 /// Apply one wire edit to a draft SOP, mutating the routing field the edit's
 /// role maps to. Validates both endpoints first; on `Err` the SOP is
 /// unchanged. Semantics per role:

@@ -9,8 +9,8 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use serde::{Deserialize, Serialize};
 use clawcrew_api::app_manifest::AppManifest;
+use serde::{Deserialize, Serialize};
 
 /// Version of the persisted registry payload. A higher on-disk version is
 /// refused rather than partially read (downgrade is unsafe).
@@ -88,10 +88,12 @@ impl AppRegistry {
         if !path.exists() {
             return Ok(registry);
         }
-        let raw = std::fs::read_to_string(&path)
-            .map_err(|e| anyhow::Error::msg(format!("read app registry {}: {e}", path.display())))?;
-        let persisted: PersistedRegistry = serde_json::from_str(&raw)
-            .map_err(|e| anyhow::Error::msg(format!("parse app registry {}: {e}", path.display())))?;
+        let raw = std::fs::read_to_string(&path).map_err(|e| {
+            anyhow::Error::msg(format!("read app registry {}: {e}", path.display()))
+        })?;
+        let persisted: PersistedRegistry = serde_json::from_str(&raw).map_err(|e| {
+            anyhow::Error::msg(format!("parse app registry {}: {e}", path.display()))
+        })?;
         anyhow::ensure!(
             persisted.schema_version <= APP_REGISTRY_SCHEMA_VERSION,
             "app registry schema {} is newer than supported {}",
@@ -121,8 +123,9 @@ impl AppRegistry {
             return Ok(());
         };
         let dir = data_dir.join("apps");
-        std::fs::create_dir_all(&dir)
-            .map_err(|e| anyhow::Error::msg(format!("create app registry dir {}: {e}", dir.display())))?;
+        std::fs::create_dir_all(&dir).map_err(|e| {
+            anyhow::Error::msg(format!("create app registry dir {}: {e}", dir.display()))
+        })?;
         let payload = PersistedRegistry {
             schema_version: APP_REGISTRY_SCHEMA_VERSION,
             apps: self
@@ -139,10 +142,12 @@ impl AppRegistry {
         // Atomic replace: a crashed write must not leave a truncated registry.
         let tmp = dir.join("registry.json.tmp");
         let final_path = dir.join("registry.json");
-        std::fs::write(&tmp, serialized)
-            .map_err(|e| anyhow::Error::msg(format!("write app registry {}: {e}", tmp.display())))?;
-        std::fs::rename(&tmp, &final_path)
-            .map_err(|e| anyhow::Error::msg(format!("commit app registry {}: {e}", final_path.display())))?;
+        std::fs::write(&tmp, serialized).map_err(|e| {
+            anyhow::Error::msg(format!("write app registry {}: {e}", tmp.display()))
+        })?;
+        std::fs::rename(&tmp, &final_path).map_err(|e| {
+            anyhow::Error::msg(format!("commit app registry {}: {e}", final_path.display()))
+        })?;
         Ok(())
     }
 
@@ -179,10 +184,9 @@ impl AppRegistry {
             .ok_or_else(|| anyhow::Error::msg(format!("unknown App {id}")))?;
         validate_runtime_version(&entry.manifest.min_runtime_version, runtime_version)?;
         for dependency in &entry.manifest.dependencies {
-            let dependency_entry = self
-                .apps
-                .get(&dependency.id)
-                .ok_or_else(|| anyhow::Error::msg(format!("missing App dependency {}", dependency.id)))?;
+            let dependency_entry = self.apps.get(&dependency.id).ok_or_else(|| {
+                anyhow::Error::msg(format!("missing App dependency {}", dependency.id))
+            })?;
             anyhow::ensure!(
                 dependency_entry.state == AppState::Enabled,
                 "App dependency {} is not enabled",
@@ -254,19 +258,19 @@ impl AppRegistry {
     /// declared by its manifest, and the caller-supplied core approval decision
     /// (from `ApprovalManager`/audit) must allow it. The verdict is a projection
     /// of core governance, never App-managed.
-    pub fn authorize_tool(
-        &self,
-        app_id: &str,
-        tool: &str,
-        core_approved: bool,
-    ) -> AppToolVerdict {
+    pub fn authorize_tool(&self, app_id: &str, tool: &str, core_approved: bool) -> AppToolVerdict {
         let Some(entry) = self.apps.get(app_id) else {
             return AppToolVerdict::AppNotEnabled;
         };
         if entry.state != AppState::Enabled {
             return AppToolVerdict::AppNotEnabled;
         }
-        if !entry.manifest.tools.iter().any(|declared| declared.name == tool) {
+        if !entry
+            .manifest
+            .tools
+            .iter()
+            .any(|declared| declared.name == tool)
+        {
             return AppToolVerdict::UndeclaredTool;
         }
         if !core_approved {

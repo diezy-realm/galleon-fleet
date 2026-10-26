@@ -651,7 +651,8 @@ impl SopRunner for RuntimeSopRunner {
         let val = serde_json::to_value(sop)?;
         let mut rt_sop: super::types::Sop = serde_json::from_value(val)?;
         let wire_edit: clawcrew_sop_graph::WireEdit = serde_json::from_value(edit.clone())?;
-        super::apply_wire(&mut rt_sop, &wire_edit).map_err(|e| anyhow::Error::msg(e.to_string()))?;
+        super::apply_wire(&mut rt_sop, &wire_edit)
+            .map_err(|e| anyhow::Error::msg(e.to_string()))?;
         let config = self.config.read();
         let agent = config.agents.keys().min().cloned().unwrap_or_default();
         let specs = super::tool_specs_from_config(&config, &agent);

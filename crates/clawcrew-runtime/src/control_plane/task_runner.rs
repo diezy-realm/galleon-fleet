@@ -743,7 +743,10 @@ impl TaskRunner {
                         cmd.current_dir(dir);
                     }
                     let output = cmd.output().await.map_err(|e| {
-                        anyhow::Error::msg(format!("failed to spawn validation command: {}: {}", command, e))
+                        anyhow::Error::msg(format!(
+                            "failed to spawn validation command: {}: {}",
+                            command, e
+                        ))
                     })?;
                     if !output.status.success() {
                         let stderr = String::from_utf8_lossy(&output.stderr);
