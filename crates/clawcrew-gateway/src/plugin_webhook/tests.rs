@@ -9,10 +9,19 @@ use http_body_util::BodyExt;
 use tower::ServiceExt;
 use tower_http::limit::RequestBodyLimitLayer;
 
-use crate::{
-    GatewayRateLimiter, MAX_BODY_SIZE, SlidingWindowRateLimiter, tests::admin_paircode_state,
-};
+use crate::{GatewayRateLimiter, MAX_BODY_SIZE, SlidingWindowRateLimiter};
 use clawcrew_api::webhook::WebhookOutcome;
+
+fn admin_paircode_state(
+    tmp: &tempfile::TempDir,
+    _require_pairing: bool,
+    _with_registry: bool,
+) -> AppState {
+    let mut config = clawcrew_config::schema::Config::default();
+    config.config_path = tmp.path().join("config.toml");
+    config.data_dir = tmp.path().join("workspace");
+    crate::api_config::tests::test_state(config)
+}
 
 fn plugin_webhook_test_router(
     state: AppState,
