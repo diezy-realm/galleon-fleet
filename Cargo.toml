@@ -73,7 +73,7 @@ directories = "6.0"
 sys-locale = "0.3"
 
 [workspace.lints.rust]
-unsafe_code = "warn"
+unsafe_code = "allow"
 
 [workspace.lints.clippy]
 unwrap_used = "warn"

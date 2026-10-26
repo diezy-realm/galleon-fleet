@@ -2,7 +2,7 @@
 //! This is NOT a `Channel` trait implementor — it routes MQTT messages
 //! to the SOP engine via `dispatch_untrusted_fan_in`, not to the chat loop.
 
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use anyhow::Result;
 use rumqttc::{AsyncClient, Event, MqttOptions, Packet, QoS, Transport};
