@@ -49,6 +49,7 @@ pub(crate) struct AdvertisedGatewayEndpoint {
 
 impl AdvertisedGatewayEndpoint {
     #[must_use]
+    #[allow(dead_code)]
     pub(crate) fn new(host: impl Into<String>, port: u16) -> Self {
         Self {
             host: host.into(),
@@ -287,7 +288,9 @@ fn exposed_skills(config: &Config, alias: &str) -> Vec<AgentSkill> {
     let install_root = config.install_root_dir();
     let mut resolved = Vec::new();
     for bundle in &agent.skill_bundles {
-        let Ok(bundle_dir) = clawcrew_config::skill_bundles::resolve_directory(config, &install_root, bundle) else {
+        let Ok(bundle_dir) =
+            clawcrew_config::skill_bundles::resolve_directory(config, &install_root, bundle)
+        else {
             continue;
         };
         let Ok(entries) = std::fs::read_dir(&bundle_dir) else {
@@ -315,14 +318,16 @@ fn exposed_skills(config: &Config, alias: &str) -> Vec<AgentSkill> {
 
     let mut out = Vec::new();
     for wanted in &agent.a2a.exposed_skills {
-        if let Some((bundle, dir_name, name, description, category)) = resolved.iter().find(|(b, dir_n, _, _, _)| {
-            dir_n == wanted
-                && agent.skill_bundles.iter().any(|ab| ab == b)
-                && config
-                    .skill_bundles
-                    .get(b)
-                    .is_some_and(|b_cfg| b_cfg.admits_skill(dir_n))
-        }) {
+        if let Some((bundle, dir_name, name, description, category)) =
+            resolved.iter().find(|(b, dir_n, _, _, _)| {
+                dir_n == wanted
+                    && agent.skill_bundles.iter().any(|ab| ab == b)
+                    && config
+                        .skill_bundles
+                        .get(b)
+                        .is_some_and(|b_cfg| b_cfg.admits_skill(dir_n))
+            })
+        {
             let mut tags = vec![bundle.clone()];
             if let Some(cat) = category {
                 if !cat.is_empty() {

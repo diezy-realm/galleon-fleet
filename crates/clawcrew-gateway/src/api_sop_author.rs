@@ -297,7 +297,10 @@ pub async fn handle_sop_decide(
             .into_response();
     };
 
-    match runner.resolve_author_approval(&name, &run_id, decision, principal).await {
+    match runner
+        .resolve_author_approval(&name, &run_id, decision, principal)
+        .await
+    {
         Ok((code, body)) => (
             StatusCode::from_u16(code).unwrap_or(StatusCode::OK),
             Json(body),
@@ -317,6 +320,7 @@ pub struct SopCancelBody {
     pub reason: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, serde::Serialize)]
 struct SopCancelResponse {
     run_id: String,
@@ -1047,7 +1051,8 @@ mod tests {
     async fn authoring_decide_pending_quorum_returns_overlay_shape() {
         let first_member = "member-token-1";
         let second_member = "member-token-2";
-        let (_tmp, state, run_id) = authoring_state_with_quorum_gate(first_member, second_member, 2);
+        let (_tmp, state, run_id) =
+            authoring_state_with_quorum_gate(first_member, second_member, 2);
 
         let resp = handle_sop_decide(
             State(state.clone()),

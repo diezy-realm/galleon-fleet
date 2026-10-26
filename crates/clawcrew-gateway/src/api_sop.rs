@@ -21,9 +21,9 @@ use axum::response::IntoResponse;
 use serde::Deserialize;
 
 use crate::{AdminReloadGate, AppState, admin_reload_gate};
-use clawcrew_api::sop::{
-    ApprovalDecision, ApprovalPrincipal, BrokerOutcome, ResolveOutcome, SopRunStatus,
-};
+#[cfg(test)]
+use clawcrew_api::sop::SopRunStatus;
+use clawcrew_api::sop::{ApprovalDecision, ApprovalPrincipal, BrokerOutcome, ResolveOutcome};
 
 type JsonErr = (StatusCode, Json<serde_json::Value>);
 

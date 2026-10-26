@@ -136,11 +136,17 @@ pub use clawcrew_tools::canvas::CanvasStore;
 
 use axum::Json;
 use axum::Router;
+#[allow(unused_imports)]
 use axum::body::Bytes;
+#[allow(unused_imports)]
 use axum::extract::{Path, Query, State};
 use axum::http::{HeaderMap, StatusCode, header};
+#[allow(unused_imports)]
 use axum::response::{IntoResponse, Response};
-use axum::routing::{get, post};
+#[allow(unused_imports)]
+use axum::routing::get;
+use axum::routing::post;
+#[allow(unused_imports)]
 use clawcrew_api::channel::Channel;
 use clawcrew_config::pairing::constant_time_eq;
 use std::net::{IpAddr, SocketAddr};
@@ -505,6 +511,7 @@ fn require_gateway_chat_agent_alias(
     })
 }
 
+#[allow(dead_code)]
 fn optional_channel_routes() -> Router<AppState> {
     let router: Router<AppState> = Router::new();
     #[cfg(feature = "channel-whatsapp-cloud")]
@@ -529,6 +536,7 @@ fn optional_channel_routes() -> Router<AppState> {
     router
 }
 
+#[allow(dead_code)]
 fn sop_webhook_routes() -> Router<AppState> {
     Router::new().route("/sop/{*rest}", post(api_sop_webhook::handle_sop_webhook))
 }

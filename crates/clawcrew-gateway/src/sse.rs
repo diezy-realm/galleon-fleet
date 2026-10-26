@@ -172,11 +172,13 @@ fn is_public_sse_event(event: &serde_json::Value) -> bool {
         .is_none()
 }
 
+#[allow(dead_code)]
 pub(crate) struct BroadcastObserver {
     tx: tokio::sync::broadcast::Sender<serde_json::Value>,
     buffer: Arc<EventBuffer>,
 }
 
+#[allow(dead_code)]
 impl BroadcastObserver {
     pub(crate) fn new(
         tx: tokio::sync::broadcast::Sender<serde_json::Value>,
