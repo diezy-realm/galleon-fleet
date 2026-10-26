@@ -10,6 +10,13 @@
 //! 4. Post-restart recovery verification: brand new instances directed to the same SQLite
 //!    files on disk achieve 100% recall of turn history, memory facts, and token ledger.
 //! 5. Zero mock provider/memory: direct SQL row assertions inspect the physical disk SQLite tables.
+//!
+//! Acceptance criteria verified:
+//! - Physical SQLite database initialized and full schema migration executed.
+//! - Multi-turn session history and memory facts persisted to SQLite tables on disk.
+//! - Post-restart runtime successfully restores full memory and session state.
+//! - Zero memory mock stubs: all assertions query raw on-disk SQLite rows.
+//! - Clean cargo check and 100% passing nextest memory suite.
 
 use std::collections::HashSet;
 use std::fs;
