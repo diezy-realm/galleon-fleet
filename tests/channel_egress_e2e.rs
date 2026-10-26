@@ -10,12 +10,12 @@
 
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener};
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use clawcrew_infra::net_guard::{
-    egress_host_matches, normalize_egress_patterns, NetworkGuardError, PrivateNetworkAccess,
-    ResolvedDestination,
+    NetworkGuardError, PrivateNetworkAccess, ResolvedDestination, egress_host_matches,
+    normalize_egress_patterns,
 };
 
 // ── local test TCP server ─────────────────────────────────────────
@@ -537,9 +537,9 @@ mod wasm_cranelift_e2e {
         AliasedAgentConfig, AnthropicModelProviderConfig, Config, PluginChannelConfig,
         PluginEntryConfig, RiskProfileConfig,
     };
+    use clawcrew_plugins::PluginCapability;
     use clawcrew_plugins::host::PluginHost;
     use clawcrew_plugins::instance::PluginInstanceScope;
-    use clawcrew_plugins::PluginCapability;
     use std::collections::HashMap;
     use std::path::PathBuf;
     use std::process::Command;
