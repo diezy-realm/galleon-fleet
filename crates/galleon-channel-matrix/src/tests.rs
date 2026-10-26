@@ -2715,10 +2715,8 @@ mod ack_reactions {
 
 mod user_boundary {
     use std::sync::Arc;
-    use std::time::Duration;
 
-    use clawcrew_api::channel::Channel;
-    use clawcrew_config::schema::{Config, MatrixConfig, MatrixStreamMode};
+    use clawcrew_config::schema::{MatrixConfig, MatrixStreamMode};
     use matrix_sdk::config::SyncSettings;
     use matrix_sdk::event_handler::RawEvent;
     use matrix_sdk::ruma::events::room::message::OriginalSyncRoomMessageEvent;
