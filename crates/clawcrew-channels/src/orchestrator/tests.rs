@@ -5476,23 +5476,6 @@ fn test_runtime_ctx_with_observer_and_tools(
     })
 }
 
-#[cfg(feature = "channel-matrix")]
-pub(crate) async fn process_message_with_dummy_provider(
-    channel: Arc<dyn Channel>,
-    msg: clawcrew_api::channel::ChannelMessage,
-    prompt_config: clawcrew_config::schema::Config,
-) {
-    let runtime_ctx = test_runtime_ctx_with_config_agent_and_provider_ref(
-        channel,
-        Arc::new(DummyModelProvider),
-        prompt_config,
-        clawcrew_config::schema::AliasedAgentConfig::default(),
-        "test-provider",
-        None,
-    );
-    process_channel_message(runtime_ctx, msg, CancellationToken::new()).await;
-}
-
 fn test_runtime_ctx_with_observer(
     channel: Arc<dyn Channel>,
     model_provider: Arc<dyn ModelProvider>,

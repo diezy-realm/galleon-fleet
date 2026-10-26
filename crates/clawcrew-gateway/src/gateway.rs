@@ -87,6 +87,11 @@ pub async fn run_gateway_with_plugin_webhooks(
         sop_runner,
     );
     let app = build_gateway_router(state.clone());
+    #[cfg(feature = "plugins-wasm")]
+    let app = app.merge(
+        crate::plugin_webhook::routes(supervision.plugin_webhooks.clone())
+            .with_state(state.clone()),
+    );
 
     let bind_addr = format!("{host}:{port}");
     let listener = tokio::net::TcpListener::bind(&bind_addr).await?;
