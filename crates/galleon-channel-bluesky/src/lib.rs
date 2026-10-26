@@ -602,13 +602,7 @@ impl Channel for BlueskyChannel {
                             return None;
                         }
 
-                        match resp.json::<NotificationListResponse>().await {
-                            Ok(listing) => Some(listing),
-                            Err(_error) => {
-                                // ceiling: upstream emits a `clawcrew_log` WARN; dropped.
-                                None
-                            }
-                        }
+                        resp.json::<NotificationListResponse>().await.ok()
                     }
                 })
                 .await;
