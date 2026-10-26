@@ -203,6 +203,10 @@ pub fn build_gateway_router(state: AppState) -> Router {
                 .patch(crate::api_config::handle_patch)
                 .options(crate::api_config::handle_options_config),
         )
+        .route(
+            "/api/config/drift",
+            get(crate::api_config::handle_drift),
+        )
         .route("/api/logs", get(crate::api_logs::handle_api_logs))
         .route(
             "/api/auth/ratelimit",

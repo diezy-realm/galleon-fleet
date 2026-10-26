@@ -24,6 +24,9 @@ pub struct DriftEntry {
     pub on_disk_value: Option<serde_json::Value>,
 }
 
+/// Summary alias for configuration drift entries.
+pub type ConfigDriftSummary = Vec<DriftEntry>;
+
 /// They're skipped by [`compute_drift`] so the dashboard doesn't surface a
 /// banner the operator can't act on. Add new entries here when a similar
 /// gateway-managed field lands (e.g. webhook secret rotation).
@@ -37,9 +40,9 @@ pub async fn compute_drift(in_memory: &clawcrew_config::schema::Config) -> Vec<D
     try_compute_drift(in_memory).await.unwrap_or_default()
 }
 
-pub(crate) async fn try_compute_drift(
+pub async fn try_compute_drift(
     in_memory: &clawcrew_config::schema::Config,
-) -> Result<Vec<DriftEntry>, ConfigApiError> {
+) -> Result<ConfigDriftSummary, ConfigApiError> {
     let path = &in_memory.config_path;
     let raw = match tokio::fs::read_to_string(path).await {
         Ok(s) => s,

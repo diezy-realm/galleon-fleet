@@ -124,7 +124,7 @@ pub(crate) fn parse_patch_ops(value: serde_json::Value) -> Result<Vec<PatchOp>, 
 /// holds the guard, so re-locking here would deadlock. The `debug_assert!`
 /// below catches a caller that passed a look-alike guard from the wrong
 /// mutex instead of the one actually held.
-pub(crate) async fn persist_and_swap(
+pub async fn persist_and_swap(
     state: &AppState,
     mut new_config: clawcrew_config::schema::Config,
     _guard: &ConfigWriteGuard,
