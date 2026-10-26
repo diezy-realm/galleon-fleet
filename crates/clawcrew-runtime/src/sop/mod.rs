@@ -1971,13 +1971,17 @@ mod tests {
         use std::collections::HashMap;
 
         let mut agents = HashMap::new();
-        let mut specialist_cfg = AliasedAgentConfig::default();
-        specialist_cfg.model_provider = ModelProviderRef::new("anthropic.claude-opus");
-        specialist_cfg.skill_bundles = vec!["code-review".into(), "security-audit".into()];
+        let specialist_cfg = AliasedAgentConfig {
+            model_provider: ModelProviderRef::new("anthropic.claude-opus"),
+            skill_bundles: vec!["code-review".into(), "security-audit".into()],
+            ..Default::default()
+        };
         agents.insert("specialist".to_string(), specialist_cfg);
 
-        let mut default_agent_cfg = AliasedAgentConfig::default();
-        default_agent_cfg.model_provider = ModelProviderRef::new("openai.gpt-4o");
+        let default_agent_cfg = AliasedAgentConfig {
+            model_provider: ModelProviderRef::new("openai.gpt-4o"),
+            ..Default::default()
+        };
         agents.insert("default_agent".to_string(), default_agent_cfg);
 
         let sop = Sop {
@@ -2057,9 +2061,11 @@ mod tests {
         use std::collections::HashMap;
 
         let mut agents = HashMap::new();
-        let mut default_agent_cfg = AliasedAgentConfig::default();
-        default_agent_cfg.model_provider = ModelProviderRef::new("openai.gpt-4o");
-        default_agent_cfg.skill_bundles = vec!["general-skills".into()];
+        let default_agent_cfg = AliasedAgentConfig {
+            model_provider: ModelProviderRef::new("openai.gpt-4o"),
+            skill_bundles: vec!["general-skills".into()],
+            ..Default::default()
+        };
         agents.insert("sop_parent".to_string(), default_agent_cfg);
 
         let sop = Sop {

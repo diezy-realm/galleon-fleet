@@ -63,7 +63,7 @@ pub(crate) fn resolved_tool_provenance(
 }
 
 #[derive(Clone, Copy)]
-pub(crate) struct ToolDispatchContext<'a> {
+pub struct ToolDispatchContext<'a> {
     pub tools_registry: &'a [Box<dyn Tool>],
     pub activated_tools: Option<&'a std::sync::Arc<std::sync::Mutex<ActivatedToolSet>>>,
     pub app_registry: Option<&'a std::sync::Arc<std::sync::RwLock<crate::platform::app_registry::AppRegistry>>>,

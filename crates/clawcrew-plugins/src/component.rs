@@ -394,12 +394,12 @@ impl PluginState {
     }
 
     /// Whether this plugin instance is granted permission to read files (BL-23).
-    pub(crate) fn file_read_enabled(&self) -> bool {
+    pub fn file_read_enabled(&self) -> bool {
         self.scope.grants().allows(PluginPermission::FileRead)
     }
 
     /// Whether this plugin instance is granted permission to write files (BL-23).
-    pub(crate) fn file_write_enabled(&self) -> bool {
+    pub fn file_write_enabled(&self) -> bool {
         self.scope.grants().allows(PluginPermission::FileWrite)
     }
 

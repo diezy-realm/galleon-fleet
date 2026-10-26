@@ -15,6 +15,7 @@ pub(crate) mod media_degrade;
 pub(crate) mod outcome;
 pub(crate) mod parse_response;
 pub(crate) mod post_exec;
+#[cfg(test)]
 pub(crate) mod progress;
 pub(crate) mod protocol_detect;
 pub(crate) mod provider_call;

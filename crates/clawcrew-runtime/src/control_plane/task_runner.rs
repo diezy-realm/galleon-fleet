@@ -123,9 +123,10 @@ impl Default for RetryPolicy {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum StepStatus {
+    #[default]
     Pending,
     Executing,
     Validating,
@@ -148,12 +149,6 @@ impl StepStatus {
                 | (Self::Paused(_), Self::Executing)
                 | (Self::Failed(_), Self::Executing)
         )
-    }
-}
-
-impl Default for StepStatus {
-    fn default() -> Self {
-        Self::Pending
     }
 }
 
@@ -354,7 +349,7 @@ impl TaskRunner {
             .steps
             .get(self.spec.current_step_index)
             .map(|s| s.id.clone())
-            .ok_or_else(|| anyhow::anyhow!("task is already completed"))?;
+            .ok_or_else(|| anyhow::Error::msg("task is already completed"))?;
         self.spec.checkpoint = Some(Checkpoint {
             id: format!("checkpoint-{}", uuid::Uuid::new_v4()),
             step_id,
@@ -372,7 +367,7 @@ impl TaskRunner {
             .spec
             .checkpoint
             .clone()
-            .ok_or_else(|| anyhow::anyhow!("no checkpoint to resume from"))?;
+            .ok_or_else(|| anyhow::Error::msg("no checkpoint to resume from"))?;
         anyhow::ensure!(
             checkpoint.verified,
             "cannot resume from an unverified checkpoint"
@@ -382,7 +377,7 @@ impl TaskRunner {
             .steps
             .iter()
             .position(|s| s.id == checkpoint.step_id)
-            .ok_or_else(|| anyhow::anyhow!("checkpoint step not found in spec"))?;
+            .ok_or_else(|| anyhow::Error::msg("checkpoint step not found in spec"))?;
         anyhow::ensure!(
             self.spec.steps[..index]
                 .iter()
@@ -674,7 +669,7 @@ impl TaskRunner {
             .approval_gates
             .iter_mut()
             .find(|g| g.id == gate_id)
-            .ok_or_else(|| anyhow::anyhow!("approval gate {gate_id} not found"))?;
+            .ok_or_else(|| anyhow::Error::msg(format!("approval gate {gate_id} not found")))?;
         anyhow::ensure!(
             gate.granted_approvals < gate.required_approvals,
             "approval gate {} already satisfied",
@@ -748,7 +743,7 @@ impl TaskRunner {
                         cmd.current_dir(dir);
                     }
                     let output = cmd.output().await.map_err(|e| {
-                        anyhow::anyhow!("failed to spawn validation command: {}: {}", command, e)
+                        anyhow::Error::msg(format!("failed to spawn validation command: {}: {}", command, e))
                     })?;
                     if !output.status.success() {
                         let stderr = String::from_utf8_lossy(&output.stderr);

@@ -3,8 +3,6 @@
 //! draft `Sop`. The graph is a projection; these edits write back to the
 //! source of truth it was projected from.
 
-use serde::{Deserialize, Serialize};
-
 use super::graph::FlowRole;
 use super::step_contract::{StepFailure, SwitchRule};
 use super::types::Sop;

@@ -207,6 +207,8 @@ mod tests {
         assert!(!registry.has_socket_start());
         assert!(!registry.has_wss_start());
         assert!(!registry.has_mqtt_start());
+        assert!(!registry.has_relay_start());
+        assert!(!registry.has_enroll_start());
     }
 
     #[test]
@@ -217,13 +219,17 @@ mod tests {
             .register_channels(channels_starter())
             .register_socket(socket_starter())
             .register_wss(rpc_starter())
-            .register_mqtt(mqtt_starter());
+            .register_mqtt(mqtt_starter())
+            .register_relay(rpc_starter())
+            .register_enroll(rpc_starter());
 
         assert!(registry.has_gateway_start());
         assert!(registry.has_channels_start());
         assert!(registry.has_socket_start());
         assert!(registry.has_wss_start());
         assert!(registry.has_mqtt_start());
+        assert!(registry.has_relay_start());
+        assert!(registry.has_enroll_start());
     }
 
     #[test]
@@ -234,18 +240,24 @@ mod tests {
             .register_channels(channels_starter())
             .register_socket(socket_starter())
             .register_wss(rpc_starter())
-            .register_mqtt(mqtt_starter());
+            .register_mqtt(mqtt_starter())
+            .register_relay(rpc_starter())
+            .register_enroll(rpc_starter());
 
         assert!(registry.take_gateway_start().is_some());
         assert!(registry.take_channels_start().is_some());
         assert!(registry.take_socket_start().is_some());
         assert!(registry.take_wss_start().is_some());
         assert!(registry.take_mqtt_start().is_some());
+        assert!(registry.take_relay_start().is_some());
+        assert!(registry.take_enroll_start().is_some());
 
         assert!(!registry.has_gateway_start());
         assert!(!registry.has_channels_start());
         assert!(!registry.has_socket_start());
         assert!(!registry.has_wss_start());
         assert!(!registry.has_mqtt_start());
+        assert!(!registry.has_relay_start());
+        assert!(!registry.has_enroll_start());
     }
 }

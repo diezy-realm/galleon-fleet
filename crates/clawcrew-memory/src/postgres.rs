@@ -4,6 +4,7 @@ use super::traits::{Memory, MemoryCategory, MemoryEntry, normalize_recent_recall
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use clawcrew_api::memory_traits::MemoryScope;
 use parking_lot::Mutex;
 use postgres::{Client, NoTls, Row};
 use std::sync::Arc;
@@ -255,6 +256,16 @@ impl PostgresMemory {
         }
     }
 
+    fn parse_scope(value: &str) -> MemoryScope {
+        match value {
+            "user" => MemoryScope::User,
+            "agent" => MemoryScope::Agent,
+            "project" => MemoryScope::Project,
+            "workspace" => MemoryScope::Workspace,
+            _ => MemoryScope::Workspace,
+        }
+    }
+
     fn try_enable_pgvector(
         client: &mut Client,
         qualified_table: &str,
@@ -286,6 +297,10 @@ impl PostgresMemory {
             key: row.get("key"),
             content: row.get("content"),
             category: Self::parse_category(&row.get::<_, String>("category")),
+            scope: row
+                .try_get::<_, String>("scope")
+                .map(|s| Self::parse_scope(&s))
+                .unwrap_or_default(),
             timestamp: timestamp.to_rfc3339(),
             session_id: row.get("session_id"),
             score: row.try_get("score").ok(),

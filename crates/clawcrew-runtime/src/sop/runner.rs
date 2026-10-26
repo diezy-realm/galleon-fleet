@@ -123,7 +123,7 @@ impl SopRunner for RuntimeSopRunner {
             return Ok(Vec::new());
         };
         let runs = super::run_summaries_for(engine, sop_name)
-            .map_err(|_| anyhow::anyhow!("engine lock poisoned"))?;
+            .map_err(|_| anyhow::Error::msg("engine lock poisoned"))?;
         let val = serde_json::to_value(runs)?;
         let mapped: Vec<SopRunSummary> = serde_json::from_value(val)?;
         Ok(mapped)
@@ -153,11 +153,11 @@ impl SopRunner for RuntimeSopRunner {
 
     fn get_pending_runs(&self) -> anyhow::Result<Vec<serde_json::Value>> {
         let Some(engine) = &self.engine else {
-            return Err(anyhow::anyhow!("sop_disabled"));
+            anyhow::bail!("sop_disabled");
         };
         let guard = engine
             .lock()
-            .map_err(|_| anyhow::anyhow!("lock poisoned"))?;
+            .map_err(|_| anyhow::Error::msg("lock poisoned"))?;
         let pending: Vec<serde_json::Value> = guard
             .active_runs()
             .values()
@@ -188,11 +188,11 @@ impl SopRunner for RuntimeSopRunner {
 
     fn get_metrics(&self) -> anyhow::Result<serde_json::Value> {
         let Some(engine) = &self.engine else {
-            return Err(anyhow::anyhow!("sop_disabled"));
+            anyhow::bail!("sop_disabled");
         };
         let guard = engine
             .lock()
-            .map_err(|_| anyhow::anyhow!("lock poisoned"))?;
+            .map_err(|_| anyhow::Error::msg("lock poisoned"))?;
         let snapshot = guard.metrics().snapshot();
         Ok(serde_json::to_value(snapshot)?)
     }
@@ -204,19 +204,19 @@ impl SopRunner for RuntimeSopRunner {
         Option<tokio::sync::broadcast::Receiver<SopRunSummary>>,
     )> {
         let Some(engine) = &self.engine else {
-            return Err(anyhow::anyhow!("sop_disabled"));
+            anyhow::bail!("sop_disabled");
         };
         let (summaries, rx) = {
             let guard = engine
                 .lock()
-                .map_err(|_| anyhow::anyhow!("engine lock poisoned"))?;
+                .map_err(|_| anyhow::Error::msg("engine lock poisoned"))?;
             (guard.run_summaries(None), guard.subscribe_run_changes())
         };
         let val = serde_json::to_value(summaries)?;
         let mapped_summaries: Vec<SopRunSummary> = serde_json::from_value(val)?;
         let mapped_rx = rx.map(|mut r| {
             let (tx, mapped_receiver) = tokio::sync::broadcast::channel(32);
-            tokio::spawn(async move {
+            clawcrew_spawn::spawn!(async move {
                 while let Ok(item) = r.recv().await {
                     if let Ok(val) = serde_json::to_value(item) {
                         if let Ok(mapped) = serde_json::from_value::<SopRunSummary>(val) {
@@ -232,10 +232,10 @@ impl SopRunner for RuntimeSopRunner {
 
     async fn start_sop(&self, name: &str) -> anyhow::Result<(u16, serde_json::Value)> {
         let Some(engine) = &self.engine else {
-            return Err(anyhow::anyhow!("sop_disabled"));
+            anyhow::bail!("sop_disabled");
         };
         let Some(audit) = self.audit.as_ref() else {
-            return Err(anyhow::anyhow!("sop_audit_unavailable"));
+            anyhow::bail!("sop_audit_unavailable");
         };
         let event = super::types::SopEvent {
             source: super::types::SopTriggerSource::Manual,
@@ -321,15 +321,15 @@ impl SopRunner for RuntimeSopRunner {
         principal: ApprovalPrincipal,
     ) -> anyhow::Result<BrokerOutcome> {
         let Some(engine) = &self.engine else {
-            return Err(anyhow::anyhow!("sop_disabled"));
+            anyhow::bail!("sop_disabled");
         };
         let outcome = {
             let mut guard = engine
                 .lock()
-                .map_err(|_| anyhow::anyhow!("lock poisoned"))?;
+                .map_err(|_| anyhow::Error::msg("lock poisoned"))?;
             guard
                 .resolve_via_broker_deferred(run_id, decision, principal)
-                .map_err(|e| anyhow::anyhow!("resolve failed: {e}"))?
+                .map_err(|e| anyhow::Error::msg(format!("resolve failed: {e}")))?
         };
         let config = self.config.read();
         super::drive_resumed_broker_action(
@@ -373,7 +373,7 @@ impl SopRunner for RuntimeSopRunner {
         {
             let mut guard = engine
                 .lock()
-                .map_err(|_| anyhow::anyhow!("SOP engine lock poisoned"))?;
+                .map_err(|_| anyhow::Error::msg("SOP engine lock poisoned"))?;
             let run_sop_name = match guard.get_run(run_id).map(|run| run.sop_name.clone()) {
                 Some(n) => n,
                 None => {
@@ -533,7 +533,7 @@ impl SopRunner for RuntimeSopRunner {
         };
         let mut guard = engine
             .lock()
-            .map_err(|_| anyhow::anyhow!("engine lock poisoned"))?;
+            .map_err(|_| anyhow::Error::msg("engine lock poisoned"))?;
         let Some(run) = guard.get_run(run_id) else {
             return Ok((
                 404,
@@ -617,7 +617,7 @@ impl SopRunner for RuntimeSopRunner {
                 Ok(Some(sop))
             }
             Err(e) if e.to_string().contains("not found") => Ok(None),
-            Err(e) => Err(anyhow::anyhow!("{e}")),
+            Err(e) => Err(anyhow::Error::msg(e.to_string())),
         }
     }
 
@@ -627,7 +627,7 @@ impl SopRunner for RuntimeSopRunner {
         let dir = super::resolve_sops_dir(&install_root, config.sop.sops_dir.as_deref());
         let val = serde_json::to_value(sop)?;
         let rt_sop: super::types::Sop = serde_json::from_value(val)?;
-        super::create_sop_typed(&dir, &rt_sop).map_err(|e| anyhow::anyhow!("{e}"))
+        super::create_sop_typed(&dir, &rt_sop).map_err(|e| anyhow::Error::msg(e.to_string()))
     }
 
     fn save_sop(&self, name: &str, sop: &Sop) -> anyhow::Result<()> {
@@ -637,21 +637,21 @@ impl SopRunner for RuntimeSopRunner {
         let val = serde_json::to_value(sop)?;
         let mut rt_sop: super::types::Sop = serde_json::from_value(val)?;
         rt_sop.name = name.to_string();
-        super::save_sop(&dir, &rt_sop).map_err(|e| anyhow::anyhow!("{e}"))
+        super::save_sop(&dir, &rt_sop).map_err(|e| anyhow::Error::msg(e.to_string()))
     }
 
     fn delete_sop(&self, name: &str) -> anyhow::Result<()> {
         let config = self.config.read();
         let install_root = self.install_root.clone();
         let dir = super::resolve_sops_dir(&install_root, config.sop.sops_dir.as_deref());
-        super::delete_sop_typed(&dir, name).map_err(|e| anyhow::anyhow!("{e}"))
+        super::delete_sop_typed(&dir, name).map_err(|e| anyhow::Error::msg(e.to_string()))
     }
 
     fn wire_draft(&self, sop: &Sop, edit: &serde_json::Value) -> anyhow::Result<serde_json::Value> {
         let val = serde_json::to_value(sop)?;
         let mut rt_sop: super::types::Sop = serde_json::from_value(val)?;
         let wire_edit: clawcrew_sop_graph::WireEdit = serde_json::from_value(edit.clone())?;
-        super::apply_wire(&mut rt_sop, &wire_edit).map_err(|e| anyhow::anyhow!("{e}"))?;
+        super::apply_wire(&mut rt_sop, &wire_edit).map_err(|e| anyhow::Error::msg(e.to_string()))?;
         let config = self.config.read();
         let agent = config.agents.keys().min().cloned().unwrap_or_default();
         let specs = super::tool_specs_from_config(&config, &agent);
@@ -674,7 +674,7 @@ impl SopRunner for RuntimeSopRunner {
             if self.engine.is_none() && self.audit.is_none() {
                 return Ok(false);
             }
-            return Err(anyhow::anyhow!("sop_dispatch_unavailable"));
+            anyhow::bail!("sop_dispatch_unavailable");
         };
         let event = super::types::SopEvent {
             source: super::types::SopTriggerSource::Webhook,
@@ -685,7 +685,7 @@ impl SopRunner for RuntimeSopRunner {
         engine
             .lock()
             .map(|engine| !engine.match_trigger(&event).is_empty())
-            .map_err(|_| anyhow::anyhow!("sop_dispatch_unavailable"))
+            .map_err(|_| anyhow::Error::msg("sop_dispatch_unavailable"))
     }
 
     async fn dispatch_webhook_sop(
@@ -694,7 +694,7 @@ impl SopRunner for RuntimeSopRunner {
         payload: Option<&str>,
     ) -> anyhow::Result<Option<clawcrew_api::sop::WebhookDispatchResult>> {
         let (Some(engine), Some(audit)) = (&self.engine, &self.audit) else {
-            return Err(anyhow::anyhow!("sop_dispatch_unavailable"));
+            anyhow::bail!("sop_dispatch_unavailable");
         };
         let results = super::dispatch::dispatch_untrusted_fan_in(
             engine,
@@ -706,7 +706,7 @@ impl SopRunner for RuntimeSopRunner {
         )
         .await;
         if results.is_empty() {
-            return Err(anyhow::anyhow!("sop_dispatch_unavailable"));
+            anyhow::bail!("sop_dispatch_unavailable");
         }
         if results
             .iter()
