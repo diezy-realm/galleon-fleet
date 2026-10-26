@@ -49,7 +49,6 @@ pub(crate) async fn read_response_body_limited(
     Ok(body)
 }
 
-
 pub(crate) fn build_yesno_approval_prompt(
     token: &str,
     tool_name: &str,
@@ -736,7 +735,10 @@ impl MattermostChannel {
     /// otherwise leaves the choice unbound (see
     /// `transcription::manager_from_snapshot`).
     /// Configure voice transcription from a `[transcription]` snapshot (no-op stub without provider manager).
-    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(
+        mut self,
+        config: clawcrew_config::schema::TranscriptionConfig,
+    ) -> Self {
         self.transcription = Some(config);
         self
     }
@@ -1046,24 +1048,21 @@ impl MattermostChannel {
             return None;
         }
 
-        let bytes =
-            match read_response_body_limited(response, MAX_MATTERMOST_AUDIO_BYTES)
-                .await
-            {
-                Ok(b) => b,
-                Err(e) => {
-                    ::clawcrew_log::record!(
-                        WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(
-                                ::serde_json::json!({"error": format!("{}", e), "file_id": file_id})
-                            ),
-                        "failed to read audio bytes for"
-                    );
-                    return None;
-                }
-            };
+        let bytes = match read_response_body_limited(response, MAX_MATTERMOST_AUDIO_BYTES).await {
+            Ok(b) => b,
+            Err(e) => {
+                ::clawcrew_log::record!(
+                    WARN,
+                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        .with_attrs(
+                            ::serde_json::json!({"error": format!("{}", e), "file_id": file_id})
+                        ),
+                    "failed to read audio bytes for"
+                );
+                return None;
+            }
+        };
 
         match manager.transcribe(&bytes, file_name).await {
             Ok(text) => {
@@ -1261,10 +1260,10 @@ impl Channel for MattermostChannel {
             let url = format!("{base_url}/api/v4/users/me/typing");
             loop {
                 let mut body = serde_json::json!({ "channel_id": channel_id });
-                if let Some(ref pid) = parent_id {
-                    if let Some(obj) = body.as_object_mut() {
-                        obj.insert("parent_id".to_string(), serde_json::json!(pid));
-                    }
+                if let Some(ref pid) = parent_id
+                    && let Some(obj) = body.as_object_mut()
+                {
+                    obj.insert("parent_id".to_string(), serde_json::json!(pid));
                 }
 
                 if let Ok(r) = client
@@ -2044,8 +2043,7 @@ impl MattermostChannel {
             .get("message")
             .and_then(|message| message.as_str())
             .unwrap_or("");
-        let Some((token, response)) =
-            galleon_channel_core::approval::parse_approval_reply(text)
+        let Some((token, response)) = galleon_channel_core::approval::parse_approval_reply(text)
         else {
             return ApprovalReplyOutcome::NotFound;
         };
@@ -2526,7 +2524,5 @@ fn normalize_mattermost_content(
     Some(trimmed.to_string())
 }
 
-
 #[cfg(test)]
 include!("tests.rs");
-

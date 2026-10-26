@@ -1401,6 +1401,7 @@ pub(crate) fn build_channel_transcription_manager(
     feature = "channel-matrix",
     feature = "voice-wake"
 ))]
+#[allow(dead_code)]
 pub(crate) fn manager_from_snapshot(
     config: &TranscriptionConfig,
 ) -> Option<std::sync::Arc<TranscriptionManager>> {
