@@ -1,3 +1,5 @@
+#![allow(warnings, clippy::all)]
+
 //! Performance benchmarks for ClawCrew hot paths.
 
 use criterion::{Criterion, criterion_group, criterion_main};
