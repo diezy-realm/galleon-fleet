@@ -91,6 +91,8 @@ impl CronStore {
         conn.execute_batch(
             "PRAGMA busy_timeout = 5000;
              PRAGMA foreign_keys = ON;
+             PRAGMA journal_mode = WAL;
+             PRAGMA synchronous = NORMAL;
              CREATE TABLE IF NOT EXISTS cron_jobs (
                 id               TEXT PRIMARY KEY,
                 expression       TEXT NOT NULL,

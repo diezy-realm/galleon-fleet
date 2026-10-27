@@ -3493,7 +3493,7 @@ pub fn migrate_sqlite_memory_to_v3(db_path: &Path, conn: &Connection) -> MigResu
     }
 
     if sqlite_memories_row_count(conn)? > 0 && db_path.exists() {
-        backup_sqlite_for_multi_agent_migration(db_path)?;
+        backup_sqlite_for_multi_agent_migration(db_path, conn)?;
     }
 
     conn.execute_batch("BEGIN IMMEDIATE; PRAGMA defer_foreign_keys = ON;")?;
@@ -3725,7 +3725,8 @@ pub fn sqlite_ensure_agent_uuid(conn: &Connection, alias: &str) -> MigResult<Str
     Ok(final_id)
 }
 
-fn backup_sqlite_for_multi_agent_migration(db_path: &Path) -> MigResult<()> {
+fn backup_sqlite_for_multi_agent_migration(db_path: &Path, conn: &Connection) -> MigResult<()> {
+    let _ = conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);");
     let timestamp = chrono::Utc::now().format("%Y%m%dT%H%M%S").to_string();
     let backup_path = db_path.with_file_name(format!(
         "{}.backup-{timestamp}",

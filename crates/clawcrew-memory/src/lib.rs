@@ -45,6 +45,7 @@ pub mod strategy;
 pub mod threat;
 pub mod traits;
 pub mod vector;
+pub mod wal_migration;
 
 pub use agent_scoped::{AgentMemoryGrant, AgentScopedMemory};
 pub use agent_scoped_markdown::{AgentScopedMarkdownMemory, MarkdownPeer};
@@ -59,7 +60,6 @@ pub use embeddings::EmbeddingIdentity;
 pub use lucid::LucidMemory;
 pub use markdown::MarkdownMemory;
 pub use none::NoneMemory;
-pub use strategy::DefaultMemoryStrategy;
 #[allow(unused_imports)]
 pub use policy::PolicyEnforcer;
 #[cfg(feature = "memory-postgres")]
@@ -72,21 +72,28 @@ pub use response_cache::ResponseCache;
 pub use retrieval::{RetrievalConfig, RetrievalPipeline};
 pub use scanned::ScannedMemory;
 pub use sqlite::SqliteMemory;
+pub use strategy::DefaultMemoryStrategy;
 pub use traits::Memory;
 #[allow(unused_imports)]
 pub use traits::{
     EraseIdentityReport, ExportFilter, MemoryCategory, MemoryEntry, ProceduralMessage,
     erase_identity, is_recent_recall_query, normalize_recent_recall_query,
 };
+pub use wal_migration::{
+    TableChecksum, WalBackupReport, WalCheckpointMode, WalCheckpointResult, WalMigrationReport,
+    backup_database_from_connection, backup_database_with_wal_checkpoint, checkpoint_wal,
+    checkpoint_wal_truncate, compute_all_tables_checksums, compute_table_checksum, ensure_wal_mode,
+    is_wal_mode, migrate_database_file, verify_database_integrity,
+};
 
 use anyhow::Context;
-use std::path::Path;
-use std::sync::Arc;
 use clawcrew_config::providers::ModelProviders;
 use clawcrew_config::schema::{
     ActiveStorage, Config, EmbeddingRouteConfig, MemoryConfig, MemoryPolicyConfig,
     PostgresStorageConfig,
 };
+use std::path::Path;
+use std::sync::Arc;
 
 /// Erase all memory data for a given agent across this backend (BL-30).
 pub async fn forget_all_for_agent(
@@ -1177,13 +1184,13 @@ pub fn create_response_cache(config: &MemoryConfig, workspace_dir: &Path) -> Opt
 #[cfg(test)]
 mod tests {
     use super::*;
+    use clawcrew_config::schema::Config;
+    use clawcrew_config::schema::EmbeddingRouteConfig;
     #[cfg(unix)]
     use std::fs;
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
     use tempfile::TempDir;
-    use clawcrew_config::schema::Config;
-    use clawcrew_config::schema::EmbeddingRouteConfig;
 
     #[test]
     fn factory_sqlite() {
