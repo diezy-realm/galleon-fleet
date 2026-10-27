@@ -1883,7 +1883,8 @@ mod tests {
         let (tx, mut rx) = tokio::sync::broadcast::channel(8);
         let event_tx = Some(tx);
 
-        let result = run_manual_job(&config, &job, CronDeliveryContext::GatewayManual, &event_tx).await;
+        let result =
+            run_manual_job(&config, &job, CronDeliveryContext::GatewayManual, &event_tx).await;
 
         assert!(result.success);
         assert_eq!(result.status, "ok");

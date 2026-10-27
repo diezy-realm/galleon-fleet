@@ -462,10 +462,7 @@ impl HookRunner {
 
 #[async_trait::async_trait]
 impl clawcrew_api::hook::ChannelHookRunner for HookRunner {
-    async fn run_on_message_received(
-        &self,
-        message: ChannelMessage,
-    ) -> HookResult<ChannelMessage> {
+    async fn run_on_message_received(&self, message: ChannelMessage) -> HookResult<ChannelMessage> {
         self.run_on_message_received(message).await
     }
 
@@ -475,7 +472,8 @@ impl clawcrew_api::hook::ChannelHookRunner for HookRunner {
         recipient: String,
         content: String,
     ) -> HookResult<(String, String, String)> {
-        self.run_on_message_sending(channel, recipient, content).await
+        self.run_on_message_sending(channel, recipient, content)
+            .await
     }
 
     async fn run_on_message_sent(&self, channel: &str, recipient: &str, content: &str) {

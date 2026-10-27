@@ -1150,7 +1150,9 @@ pub(crate) fn socket_path(config: &Config) -> PathBuf {
 /// (`CONNECTION_DRAIN_GRACE`), the point at which a connection that
 /// ignored cancellation is aborted. Returns immediately when no connection was
 /// accepted, which is also the case when no transport listener is running at all.
-pub(crate) async fn await_connection_drain(count: &std::sync::atomic::AtomicUsize) -> ConnectionDrain {
+pub(crate) async fn await_connection_drain(
+    count: &std::sync::atomic::AtomicUsize,
+) -> ConnectionDrain {
     use std::sync::atomic::Ordering;
 
     const POLL_INTERVAL: Duration = Duration::from_millis(25);
@@ -1185,7 +1187,10 @@ pub(crate) async fn await_connection_drain(count: &std::sync::atomic::AtomicUsiz
 /// supervisor restarts a fresh process, which cannot overlap with work this
 /// one never managed to retire. Shutdown exits and failures are returned
 /// unchanged.
-fn settle_exit_against_drain(exit: Result<DaemonExit>, drain: ConnectionDrain) -> Result<DaemonExit> {
+fn settle_exit_against_drain(
+    exit: Result<DaemonExit>,
+    drain: ConnectionDrain,
+) -> Result<DaemonExit> {
     let ConnectionDrain::Outstanding(outstanding) = drain else {
         return exit;
     };
@@ -2546,7 +2551,10 @@ mod tests {
             tokio::time::sleep(Duration::from_millis(200)).await;
             releaser.store(0, std::sync::atomic::Ordering::Relaxed);
         });
-        assert_eq!(await_connection_drain(&count).await, ConnectionDrain::Complete);
+        assert_eq!(
+            await_connection_drain(&count).await,
+            ConnectionDrain::Complete
+        );
         release.await.unwrap();
     }
 
@@ -2555,7 +2563,8 @@ mod tests {
     #[test]
     fn reload_is_refused_when_client_work_is_still_unwinding() {
         assert_eq!(
-            settle_exit_against_drain(Ok(DaemonExit::Reload), ConnectionDrain::Outstanding(1)).unwrap(),
+            settle_exit_against_drain(Ok(DaemonExit::Reload), ConnectionDrain::Outstanding(1))
+                .unwrap(),
             DaemonExit::Shutdown,
             "an undrained reload must shut the process down instead of handing over"
         );
@@ -2565,13 +2574,17 @@ mod tests {
             "a drained reload must still reload"
         );
         assert_eq!(
-            settle_exit_against_drain(Ok(DaemonExit::Shutdown), ConnectionDrain::Outstanding(1)).unwrap(),
+            settle_exit_against_drain(Ok(DaemonExit::Shutdown), ConnectionDrain::Outstanding(1))
+                .unwrap(),
             DaemonExit::Shutdown,
             "a shutdown is unaffected by the drain verdict"
         );
         assert!(
-            settle_exit_against_drain(Err(anyhow::Error::msg("boom")), ConnectionDrain::Outstanding(1))
-                .is_err(),
+            settle_exit_against_drain(
+                Err(anyhow::Error::msg("boom")),
+                ConnectionDrain::Outstanding(1)
+            )
+            .is_err(),
             "a failed daemon run must keep reporting its failure"
         );
     }
