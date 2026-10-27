@@ -184,11 +184,11 @@ pub async fn handle_api_channel_bind(
 
     let mut working = state.config.read().clone();
 
-    // The daemon gives the gateway, the RPC path and the channels separate
-    // `Config` copies of the same file, so `_cfg_guard` alone is not enough:
-    // this handle's `peer_groups` can be older than what another writer has
-    // already saved. Without the refresh, an `ignore` persisted through RPC is
-    // both invisible to the bind check below and overwritten by the save.
+    // The daemon gives the gateway and the channels separate `Config` copies
+    // of the same file, so `_cfg_guard` alone is not enough: this handle's
+    // `peer_groups` can be older than what another writer has already saved.
+    // Without the refresh, an `ignore` persisted concurrently is both invisible
+    // to the bind check below and overwritten by the save.
     match clawcrew_config::schema::persisted_peer_groups(&working.config_path).await {
         Ok(Some(persisted)) => working.peer_groups = persisted,
         Ok(None) => {}

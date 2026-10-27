@@ -129,7 +129,7 @@ fn sse_frame_for_stream(
         return None;
     }
     // Strip the internal marker so the delivered public shape is unchanged.
-    // Shared with every other broadcast consumer (RPC `logs/subscribe`) so the
+    // Shared with every other broadcast consumer so the
     // credential boundary is enforced identically across the bus.
     clawcrew_log::strip_ephemeral_broadcast_marker(&mut value);
     Some(value)

@@ -1,6 +1,6 @@
 //! SOP authoring surface for the web node editor.
 //!
-//! HTTP twin of the daemon's `sops/*` RPC methods, backed by the decoupled
+//! SOP authoring HTTP endpoints, backed by the decoupled
 //! `clawcrew_api::sop::SopRunner` interface. All routes require gateway
 //! auth. Draft endpoints (`wire-draft`, `graph-draft`) are pure: they
 //! transform the submitted SOP and never touch disk.

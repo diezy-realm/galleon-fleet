@@ -1550,10 +1550,10 @@ mod tests {
         let (hook, start_count, end_count) = SessionCountingHook::new("session-watcher");
         runner.register(Box::new(hook));
 
-        runner.fire_session_start("sess-1", "rpc").await;
+        runner.fire_session_start("sess-1", "ws").await;
         assert_eq!(start_count.load(Ordering::SeqCst), 1);
 
-        runner.fire_session_end("sess-1", "rpc").await;
+        runner.fire_session_end("sess-1", "ws").await;
         assert_eq!(end_count.load(Ordering::SeqCst), 1);
     }
 
@@ -1561,7 +1561,7 @@ mod tests {
     async fn empty_runner_lifecycle_events_are_noops() {
         let runner = HookRunner::new();
         // Must not panic when no handlers are registered.
-        runner.fire_session_start("sess-1", "rpc").await;
-        runner.fire_session_end("sess-1", "rpc").await;
+        runner.fire_session_start("sess-1", "ws").await;
+        runner.fire_session_end("sess-1", "ws").await;
     }
 }

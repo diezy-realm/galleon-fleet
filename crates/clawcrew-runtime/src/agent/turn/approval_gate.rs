@@ -503,14 +503,14 @@ mod tests {
             Role::Channel(ChannelKind::AcpChannel)
         }
         fn alias(&self) -> &str {
-            "rpc"
+            "acp"
         }
     }
 
     #[async_trait]
     impl Channel for TestApprovalChannel {
         fn name(&self) -> &str {
-            "rpc"
+            "acp"
         }
         async fn send(&self, _message: &SendMessage) -> anyhow::Result<()> {
             Ok(())
@@ -576,7 +576,7 @@ mod tests {
             context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: None,
             approval: Some(&approval),
-            channel_name: "rpc",
+            channel_name: "acp",
             channel_reply_target: Some("operator"),
             cancellation_token: Some(&cancel),
             on_delta: None,

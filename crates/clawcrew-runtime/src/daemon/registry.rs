@@ -44,8 +44,8 @@ pub type SocketStarter = Box<
         + Sync,
 >;
 
-/// Starts an RPC transport using the shared daemon transport context.
-pub type RpcStarter = Box<
+/// Starts a supervised background transport using the shared daemon transport context.
+pub type TransportStarter = Box<
     dyn Fn(Arc<DaemonTransportContext>, CancellationToken, Arc<AtomicUsize>) -> StarterFuture
         + Send
         + Sync,
@@ -59,9 +59,8 @@ pub struct DaemonRegistry {
     gateway_start: Option<GatewayStarter>,
     channels_start: Option<ChannelsStarter>,
     socket_start: Option<SocketStarter>,
-    wss_start: Option<RpcStarter>,
-    relay_start: Option<RpcStarter>,
-    enroll_start: Option<RpcStarter>,
+    relay_start: Option<TransportStarter>,
+    enroll_start: Option<TransportStarter>,
     mqtt_start: Option<MqttStarter>,
 }
 
@@ -102,34 +101,24 @@ impl DaemonRegistry {
         self.socket_start.is_some()
     }
 
-    pub fn register_wss(&mut self, starter: RpcStarter) -> &mut Self {
-        self.wss_start = Some(starter);
-        self
-    }
-
-    #[cfg(test)]
-    pub(crate) fn has_wss_start(&self) -> bool {
-        self.wss_start.is_some()
-    }
-
-    pub fn register_relay(&mut self, starter: RpcStarter) -> &mut Self {
+    pub fn register_relay(&mut self, starter: TransportStarter) -> &mut Self {
         self.relay_start = Some(starter);
         self
     }
 
-    pub(crate) fn take_relay_start(&mut self) -> Option<RpcStarter> {
+    pub(crate) fn take_relay_start(&mut self) -> Option<TransportStarter> {
         self.relay_start.take()
     }
 
     /// Register the certificate enrollment endpoint (the bootstrap surface a
-    /// certless client reaches for its first cert). Supervised like the WSS
-    /// listener; the starter parks when `[enroll]` is disabled.
-    pub fn register_enroll(&mut self, starter: RpcStarter) -> &mut Self {
+    /// certless client reaches for its first cert). Supervised like the relay
+    /// bridge; the starter parks when `[enroll]` is disabled.
+    pub fn register_enroll(&mut self, starter: TransportStarter) -> &mut Self {
         self.enroll_start = Some(starter);
         self
     }
 
-    pub(crate) fn take_enroll_start(&mut self) -> Option<RpcStarter> {
+    pub(crate) fn take_enroll_start(&mut self) -> Option<TransportStarter> {
         self.enroll_start.take()
     }
 
@@ -155,10 +144,6 @@ impl DaemonRegistry {
         self.socket_start.take()
     }
 
-    pub(crate) fn take_wss_start(&mut self) -> Option<RpcStarter> {
-        self.wss_start.take()
-    }
-
     pub(crate) fn take_mqtt_start(&mut self) -> Option<MqttStarter> {
         self.mqtt_start.take()
     }
@@ -180,7 +165,7 @@ mod tests {
         Box::new(|_, _, _, _| Box::pin(async { Ok(()) }))
     }
 
-    fn rpc_starter() -> RpcStarter {
+    fn transport_starter() -> TransportStarter {
         Box::new(|_, _, _| Box::pin(async { Ok(()) }))
     }
 
@@ -195,7 +180,6 @@ mod tests {
         assert!(!registry.has_gateway_start());
         assert!(!registry.has_channels_start());
         assert!(!registry.has_socket_start());
-        assert!(!registry.has_wss_start());
         assert!(!registry.has_mqtt_start());
     }
 
@@ -206,13 +190,12 @@ mod tests {
             .register_gateway(gateway_starter())
             .register_channels(channels_starter())
             .register_socket(socket_starter())
-            .register_wss(rpc_starter())
+            .register_relay(transport_starter())
             .register_mqtt(mqtt_starter());
 
         assert!(registry.has_gateway_start());
         assert!(registry.has_channels_start());
         assert!(registry.has_socket_start());
-        assert!(registry.has_wss_start());
         assert!(registry.has_mqtt_start());
     }
 
@@ -223,19 +206,18 @@ mod tests {
             .register_gateway(gateway_starter())
             .register_channels(channels_starter())
             .register_socket(socket_starter())
-            .register_wss(rpc_starter())
+            .register_relay(transport_starter())
             .register_mqtt(mqtt_starter());
 
         assert!(registry.take_gateway_start().is_some());
         assert!(registry.take_channels_start().is_some());
         assert!(registry.take_socket_start().is_some());
-        assert!(registry.take_wss_start().is_some());
+        assert!(registry.take_relay_start().is_some());
         assert!(registry.take_mqtt_start().is_some());
 
         assert!(!registry.has_gateway_start());
         assert!(!registry.has_channels_start());
         assert!(!registry.has_socket_start());
-        assert!(!registry.has_wss_start());
         assert!(!registry.has_mqtt_start());
     }
 }

@@ -20,7 +20,7 @@ const ORIGINATING_CHANNEL_TOOLS: &[&str] = &["ask_user", "poll", "escalate_to_hu
 
 /// When `tool_args` omits `channel`, fill it from the turn's originating
 /// channel name so interactive tools prefer the conversation back-channel
-/// (`rpc` / `acp` / `ws` / …) over an arbitrary map entry.
+/// (`ws` / `acp` / …) over an arbitrary map entry.
 pub(crate) fn maybe_inject_originating_channel(
     tool_name: &str,
     tool_args: &mut serde_json::Value,
@@ -316,16 +316,16 @@ mod tests {
     }
 
     #[test]
-    fn ask_user_gets_originating_rpc_channel_when_omitted() {
+    fn ask_user_gets_originating_channel_when_omitted() {
         // Regression: without this, ask_user picks channels.iter().next()
         // (HashMap order) and can hang on an external channel while the user
-        // is waiting in the RPC/Code session that issued the turn.
+        // is waiting in the WS/ACP session that issued the turn.
         let mut args = serde_json::json!({
             "question": "Pick one",
             "choices": ["A", "B"],
         });
-        maybe_inject_originating_channel("ask_user", &mut args, "rpc");
-        assert_eq!(args["channel"], "rpc");
+        maybe_inject_originating_channel("ask_user", &mut args, "ws");
+        assert_eq!(args["channel"], "ws");
     }
 
     #[test]
@@ -334,7 +334,7 @@ mod tests {
             "question": "Pick one",
             "channel": "telegram.default",
         });
-        maybe_inject_originating_channel("ask_user", &mut args, "rpc");
+        maybe_inject_originating_channel("ask_user", &mut args, "ws");
         assert_eq!(args["channel"], "telegram.default");
     }
 

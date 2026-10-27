@@ -93,7 +93,6 @@ pub enum CronDeliveryContext {
     Scheduled,
     ToolManual,
     GatewayManual,
-    RpcManual,
 }
 
 impl CronDeliveryContext {
@@ -105,8 +104,6 @@ impl CronDeliveryContext {
             (Self::ToolManual, false) => "cron_run delivery failed",
             (Self::GatewayManual, true) => "manual cron trigger delivery failed (best_effort)",
             (Self::GatewayManual, false) => "manual cron trigger delivery failed",
-            (Self::RpcManual, true) => "RPC cron trigger delivery failed (best_effort)",
-            (Self::RpcManual, false) => "RPC cron trigger delivery failed",
         }
     }
 }
@@ -1878,7 +1875,7 @@ mod tests {
                 expr: "*/5 * * * *".into(),
                 tz: None,
             },
-            "echo rpc-manual-ok",
+            "echo gateway-manual-ok",
             None,
             true,
         )
@@ -1886,11 +1883,11 @@ mod tests {
         let (tx, mut rx) = tokio::sync::broadcast::channel(8);
         let event_tx = Some(tx);
 
-        let result = run_manual_job(&config, &job, CronDeliveryContext::RpcManual, &event_tx).await;
+        let result = run_manual_job(&config, &job, CronDeliveryContext::GatewayManual, &event_tx).await;
 
         assert!(result.success);
         assert_eq!(result.status, "ok");
-        assert!(result.output.contains("rpc-manual-ok"));
+        assert!(result.output.contains("gateway-manual-ok"));
 
         let updated = cron::get_job(&config, &job.id).expect("job state should update");
         assert_eq!(updated.last_status.as_deref(), Some("ok"));
@@ -1898,7 +1895,7 @@ mod tests {
             updated
                 .last_output
                 .as_deref()
-                .is_some_and(|output| output.contains("rpc-manual-ok"))
+                .is_some_and(|output| output.contains("gateway-manual-ok"))
         );
 
         let runs = cron::list_runs(&config, &job.id, 10).expect("run history should list");
@@ -1909,7 +1906,7 @@ mod tests {
                 .output
                 .as_deref()
                 .unwrap_or("")
-                .contains("rpc-manual-ok")
+                .contains("gateway-manual-ok")
         );
 
         let event = tokio::time::timeout(std::time::Duration::from_secs(1), rx.recv())
@@ -1924,7 +1921,7 @@ mod tests {
             event["output"]
                 .as_str()
                 .unwrap_or("")
-                .contains("rpc-manual-ok")
+                .contains("gateway-manual-ok")
         );
     }
 

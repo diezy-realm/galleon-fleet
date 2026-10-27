@@ -2039,8 +2039,8 @@ async fn channel_bind_still_binds_an_unignored_identity() {
     );
 }
 
-/// The gateway and the RPC path hold separate `Config` copies of one file.
-/// An `ignore` saved through RPC is therefore absent from the gateway's
+/// The gateway and other writers hold separate `Config` copies of one file.
+/// An `ignore` saved concurrently is therefore absent from the gateway's
 /// snapshot, and a bind that trusted that snapshot both missed the deny and
 /// wrote the stale policy table back over it. The handler re-reads the
 /// persisted `peer_groups` under the write lock instead, so the deny is
@@ -2051,7 +2051,7 @@ async fn channel_bind_refuses_a_deny_only_the_other_handle_has_saved() {
     let gateway_config = config_with_telegram_alias(&tmp, "alerts");
     let config_path = gateway_config.config_path.clone();
 
-    // What the RPC handle persisted after the gateway took its snapshot.
+    // What another writer handle persisted after the gateway took its snapshot.
     // The gateway's own copy still has no `peer_groups` at all.
     std::fs::write(
         &config_path,
