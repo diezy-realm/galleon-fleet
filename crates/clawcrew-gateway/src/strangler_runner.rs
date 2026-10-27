@@ -18,6 +18,87 @@ use crate::grpc_system_gateway::{HealthCheckRequest, TurnRequest};
 
 pub const DEFAULT_ENGINE_GRPC_ENDPOINT: &str = "http://127.0.0.1:50051";
 
+/// Default upper bound on previous conversation messages included in context window.
+/// 50 messages represents 25 user-assistant dialogue exchanges, which provides ample
+/// conversational continuity while keeping gRPC wire payload and memory bounded.
+pub const DEFAULT_MAX_HISTORY_MESSAGES: usize = 50;
+
+/// Context window payload schema matching Go `domainCrew.ContextWindowPayload`.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
+pub struct ContextWindowPayload {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub system_prompt: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub persona: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub learned_rules: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub history: Vec<ContextChatMessage>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_tokens: Option<usize>,
+}
+
+/// Chat message matching Go `domainCrew.ChatMessage`.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct ContextChatMessage {
+    pub role: String,
+    pub content: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tool_call_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+}
+
+/// Serializes conversation history into JSON bytes conforming to Go `ContextWindowPayload`.
+pub fn serialize_context_window(
+    history: &[ConversationMessage],
+    max_history_messages: usize,
+) -> Vec<u8> {
+    let start_idx = history.len().saturating_sub(max_history_messages);
+    let messages: Vec<ContextChatMessage> = history[start_idx..]
+        .iter()
+        .filter_map(|msg| match msg {
+            ConversationMessage::Chat(chat) => Some(ContextChatMessage {
+                role: chat.role.clone(),
+                content: chat.content.clone(),
+                tool_call_id: None,
+                name: None,
+            }),
+            ConversationMessage::AssistantToolCalls { text, .. } => {
+                text.as_ref().map(|t| ContextChatMessage {
+                    role: "assistant".to_string(),
+                    content: t.clone(),
+                    tool_call_id: None,
+                    name: None,
+                })
+            }
+            ConversationMessage::ToolResults(results) => {
+                results.first().map(|res| ContextChatMessage {
+                    role: "tool".to_string(),
+                    content: res.content.clone(),
+                    tool_call_id: Some(res.tool_call_id.clone()),
+                    name: if res.tool_name.is_empty() {
+                        None
+                    } else {
+                        Some(res.tool_name.clone())
+                    },
+                })
+            }
+        })
+        .collect();
+
+    if messages.is_empty() {
+        return Vec::new();
+    }
+
+    let payload = ContextWindowPayload {
+        history: messages,
+        ..Default::default()
+    };
+
+    serde_json::to_vec(&payload).unwrap_or_default()
+}
+
 /// Strangler Façade implementing `AgentRunner` to dispatch turns to Go `AgentEngine`.
 #[derive(Clone, Debug)]
 pub struct StranglerAgentRunner {
@@ -83,11 +164,13 @@ impl AgentRunner for StranglerAgentRunner {
         _origin: clawcrew_api::ingress::TurnOrigin,
     ) -> Result<String> {
         let mut client = self.connect().await?;
+        // Point 1: StranglerAgentRunner::process_message is a stateless runner call without
+        // persistent session history; serialize empty history.
         let req = TurnRequest {
             session_id: session_id.unwrap_or("default").to_string(),
             agent_id: agent_alias.to_string(),
             prompt: message.to_string(),
-            context_window: Vec::new(),
+            context_window: serialize_context_window(&[], DEFAULT_MAX_HISTORY_MESSAGES),
         };
 
         let mut stream = client
@@ -242,11 +325,16 @@ impl AgentSession for StranglerAgentSession {
             .clone()
             .unwrap_or_else(|| "default-session".to_string());
 
+        // Point 2: Propagate conversation history from self.history into context_window JSON payload,
+        // bounded by DEFAULT_MAX_HISTORY_MESSAGES (sliding window) to maintain single source of truth
+        // in gateway while ensuring full multi-turn conversational continuity in Go AgentEngine.
+        let context_window = serialize_context_window(&self.history, DEFAULT_MAX_HISTORY_MESSAGES);
+
         let req = TurnRequest {
             session_id,
             agent_id: self.agent_alias.clone(),
             prompt: user_message.to_string(),
-            context_window: Vec::new(),
+            context_window,
         };
 
         let mut stream = match client.start_turn(tonic::Request::new(req)).await {
@@ -465,6 +553,7 @@ mod tests {
 
     struct MockAgentEngine {
         behavior: MockBehavior,
+        request_sink: Option<tokio::sync::mpsc::Sender<TurnRequest>>,
     }
 
     #[tonic::async_trait]
@@ -476,6 +565,9 @@ mod tests {
             request: Request<TurnRequest>,
         ) -> Result<Response<Self::StartTurnStream>, Status> {
             let req = request.into_inner();
+            if let Some(sink) = &self.request_sink {
+                let _ = sink.try_send(req.clone());
+            }
             let (tx, rx) = mpsc::channel(16);
 
             let behavior = self.behavior;
@@ -608,7 +700,10 @@ mod tests {
         let addr = listener.local_addr().unwrap();
         let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
 
-        let service = MockAgentEngine { behavior };
+        let service = MockAgentEngine {
+            behavior,
+            request_sink: None,
+        };
 
         tokio::spawn(async move {
             tonic::transport::Server::builder()
@@ -624,6 +719,37 @@ mod tests {
         });
 
         (format!("http://{addr}"), shutdown_tx)
+    }
+
+    async fn start_mock_engine_recording() -> (
+        String,
+        tokio::sync::mpsc::Receiver<TurnRequest>,
+        tokio::sync::oneshot::Sender<()>,
+    ) {
+        let (req_tx, req_rx) = tokio::sync::mpsc::channel(16);
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
+
+        let service = MockAgentEngine {
+            behavior: MockBehavior::Success,
+            request_sink: Some(req_tx),
+        };
+
+        tokio::spawn(async move {
+            tonic::transport::Server::builder()
+                .add_service(AgentEngineServer::new(service))
+                .serve_with_incoming_shutdown(
+                    tokio_stream::wrappers::TcpListenerStream::new(listener),
+                    async {
+                        let _ = shutdown_rx.await;
+                    },
+                )
+                .await
+                .unwrap();
+        });
+
+        (format!("http://{addr}"), req_rx, shutdown_tx)
     }
 
     #[tokio::test]
@@ -677,22 +803,16 @@ mod tests {
             events.push(evt);
         }
 
-        assert!(
-            events
-                .iter()
-                .any(|e| matches!(e, TurnEvent::Thinking { .. }))
-        );
+        assert!(events
+            .iter()
+            .any(|e| matches!(e, TurnEvent::Thinking { .. })));
         assert!(events.iter().any(|e| matches!(e, TurnEvent::Chunk { .. })));
-        assert!(
-            events
-                .iter()
-                .any(|e| matches!(e, TurnEvent::ToolCall { .. }))
-        );
-        assert!(
-            events
-                .iter()
-                .any(|e| matches!(e, TurnEvent::ToolResult { .. }))
-        );
+        assert!(events
+            .iter()
+            .any(|e| matches!(e, TurnEvent::ToolCall { .. })));
+        assert!(events
+            .iter()
+            .any(|e| matches!(e, TurnEvent::ToolResult { .. })));
 
         let _ = shutdown_tx.send(());
     }
@@ -751,11 +871,19 @@ mod tests {
     async fn test_handle_api_turn_sse() {
         let (endpoint, shutdown_tx) = start_mock_engine(false).await;
 
+        // Point 3: Supply sample context window with prior history to verify propagation.
+        let sample_history = vec![ConversationMessage::Chat(ChatMessage {
+            role: "user".to_string(),
+            content: "previous turn prompt".to_string(),
+        })];
+        let context_window =
+            serialize_context_window(&sample_history, DEFAULT_MAX_HISTORY_MESSAGES);
+
         let payload = ApiTurnPayload {
             session_id: "s1".to_string(),
             agent_id: "a1".to_string(),
             prompt: "hello".to_string(),
-            context_window: Vec::new(),
+            context_window,
         };
 
         let response = handle_api_turn(Some(&endpoint), payload).await.unwrap();
@@ -799,5 +927,109 @@ mod tests {
         );
 
         let _ = shutdown_tx.send(());
+    }
+
+    #[tokio::test]
+    async fn test_strangler_agent_session_multi_turn_context_propagation() {
+        let (endpoint, mut req_rx, shutdown_tx) = start_mock_engine_recording().await;
+        let runner = StranglerAgentRunner::new(endpoint);
+
+        let mut session = runner
+            .create_session(Box::new(()), "code-agent", None, None)
+            .await
+            .unwrap();
+
+        // --- Turn 1 ---
+        let (event_tx1, _rx1) = mpsc::channel(32);
+        let turn1_outcome = session
+            .turn_streamed_with_steering_state("First question from user", event_tx1, None, None)
+            .await
+            .expect("turn 1 should succeed");
+
+        assert_eq!(turn1_outcome.response, "Hello from Go Engine!");
+        assert_eq!(session.history().len(), 2);
+
+        let req1 = req_rx
+            .recv()
+            .await
+            .expect("turn 1 request should be recorded");
+        assert_eq!(req1.prompt, "First question from user");
+        // On turn 1, context_window should be empty because there was no prior history
+        assert!(
+            req1.context_window.is_empty(),
+            "turn 1 context_window should be empty"
+        );
+
+        // --- Turn 2 on the SAME session ---
+        let (event_tx2, _rx2) = mpsc::channel(32);
+        let turn2_outcome = session
+            .turn_streamed_with_steering_state("Second question from user", event_tx2, None, None)
+            .await
+            .expect("turn 2 should succeed");
+
+        assert_eq!(turn2_outcome.response, "Hello from Go Engine!");
+        assert_eq!(session.history().len(), 4);
+
+        let req2 = req_rx
+            .recv()
+            .await
+            .expect("turn 2 request should be recorded");
+        assert_eq!(req2.prompt, "Second question from user");
+        // On turn 2, context_window MUST contain the serialized prior turn history
+        assert!(
+            !req2.context_window.is_empty(),
+            "turn 2 context_window should not be empty"
+        );
+
+        let payload2: ContextWindowPayload =
+            serde_json::from_slice(&req2.context_window).expect("valid context_window JSON");
+        assert_eq!(
+            payload2.history.len(),
+            2,
+            "turn 2 context_window must have exactly 2 messages from turn 1"
+        );
+        assert_eq!(payload2.history[0].role, "user");
+        assert_eq!(payload2.history[0].content, "First question from user");
+        assert_eq!(payload2.history[1].role, "assistant");
+        assert_eq!(payload2.history[1].content, "Hello from Go Engine!");
+
+        // Assert that the current prompt is NOT in history (no duplicate)
+        assert!(
+            !payload2
+                .history
+                .iter()
+                .any(|m| m.content == "Second question from user"),
+            "current prompt should not be duplicated in context_window history"
+        );
+
+        let _ = shutdown_tx.send(());
+    }
+
+    #[test]
+    fn test_serialize_context_window_truncation() {
+        let mut history = Vec::new();
+        for i in 0..10 {
+            history.push(ConversationMessage::Chat(ChatMessage {
+                role: if i % 2 == 0 {
+                    "user".to_string()
+                } else {
+                    "assistant".to_string()
+                },
+                content: format!("msg {i}"),
+            }));
+        }
+
+        // Bounded to last 4 messages
+        let bytes = serialize_context_window(&history, 4);
+        let payload: ContextWindowPayload = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(payload.history.len(), 4);
+        assert_eq!(payload.history[0].content, "msg 6");
+        assert_eq!(payload.history[3].content, "msg 9");
+    }
+
+    #[test]
+    fn test_serialize_context_window_empty_returns_empty_vec() {
+        let bytes = serialize_context_window(&[], DEFAULT_MAX_HISTORY_MESSAGES);
+        assert!(bytes.is_empty());
     }
 }
