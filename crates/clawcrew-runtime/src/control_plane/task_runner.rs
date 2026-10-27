@@ -409,7 +409,7 @@ impl TaskRunner {
 
     /// Apply the recovery decision to the canonical task row: `resumed` leaves the
     /// task paused for an operator resume; ambiguity is surfaced as
-    /// [`TaskStatus::NeedsReview`] (P1.2).
+    /// `TaskStatus::NeedsReview` (P1.2).
     pub async fn apply_recovery_decision(
         &self,
         store: &SqliteTaskStore,
@@ -1223,17 +1223,13 @@ mod tests {
         assert_eq!(ledger[0].correlation_id.as_deref(), Some("corr-123"));
 
         // A gate cannot be granted past its required approval count.
-        assert!(
-            runner
-                .grant_approval(&store, "approval-1", "operator")
-                .is_err()
-        );
+        assert!(runner
+            .grant_approval(&store, "approval-1", "operator")
+            .is_err());
         // Unknown gate is refused.
-        assert!(
-            runner
-                .grant_approval(&store, "missing", "operator")
-                .is_err()
-        );
+        assert!(runner
+            .grant_approval(&store, "missing", "operator")
+            .is_err());
     }
 
     // ── P1.6 — boundary tests ──
@@ -1309,36 +1305,30 @@ mod tests {
         child.depth = 1;
         store.create(child.clone()).await.unwrap();
 
-        assert!(
-            store
-                .aggregate_child_result(
-                    "parent-1",
-                    "child-1",
-                    TaskStatus::Completed,
-                    Some("result".into()),
-                )
-                .await
-                .unwrap()
-        );
+        assert!(store
+            .aggregate_child_result(
+                "parent-1",
+                "child-1",
+                TaskStatus::Completed,
+                Some("result".into()),
+            )
+            .await
+            .unwrap());
         // A second aggregation is a no-op (exactly-once).
-        assert!(
-            !store
-                .aggregate_child_result(
-                    "parent-1",
-                    "child-1",
-                    TaskStatus::Completed,
-                    Some("result".into()),
-                )
-                .await
-                .unwrap()
-        );
+        assert!(!store
+            .aggregate_child_result(
+                "parent-1",
+                "child-1",
+                TaskStatus::Completed,
+                Some("result".into()),
+            )
+            .await
+            .unwrap());
         // A non-child cannot be aggregated into this parent.
-        assert!(
-            !store
-                .aggregate_child_result("parent-1", "task-1", TaskStatus::Completed, None)
-                .await
-                .unwrap()
-        );
+        assert!(!store
+            .aggregate_child_result("parent-1", "task-1", TaskStatus::Completed, None)
+            .await
+            .unwrap());
     }
 
     /// A review-gated (risky) step must not execute until approval is granted;
@@ -1434,23 +1424,19 @@ mod tests {
 
         let mut ok_spec = multi_step_spec(1);
         ok_spec.steps[0].validation_gates = vec![ValidationGate::Build { command: ok.into() }];
-        assert!(
-            TaskRunner::new(task.clone(), ok_spec)
-                .evaluate_validation_gates(0, None)
-                .await
-                .is_ok()
-        );
+        assert!(TaskRunner::new(task.clone(), ok_spec)
+            .evaluate_validation_gates(0, None)
+            .await
+            .is_ok());
 
         let mut fail_spec = multi_step_spec(1);
         fail_spec.steps[0].validation_gates = vec![ValidationGate::Test {
             command: fail.into(),
         }];
-        assert!(
-            TaskRunner::new(task, fail_spec)
-                .evaluate_validation_gates(0, None)
-                .await
-                .is_err()
-        );
+        assert!(TaskRunner::new(task, fail_spec)
+            .evaluate_validation_gates(0, None)
+            .await
+            .is_err());
     }
 
     #[allow(dead_code)]
