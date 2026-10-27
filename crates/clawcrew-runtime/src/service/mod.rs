@@ -1,4 +1,5 @@
 use anyhow::{Context, Result, bail};
+use clawcrew_config::schema::{Config, resolve_runtime_dirs};
 #[cfg(windows)]
 use process_wrap::tokio::{ChildWrapper, CommandWrap, CommandWrapper, JobObject, KillOnDrop};
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
@@ -23,9 +24,9 @@ use tokio::io::{AsyncRead, AsyncReadExt};
 use tokio::process::Child;
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
 use tokio::process::Command as TokioCommand;
-use clawcrew_config::schema::{Config, resolve_runtime_dirs};
 
-const SERVICE_LABEL: &str = "com.clawcrew.daemon";
+const SERVICE_LABEL: &str = "com.galleon.fleet";
+const LEGACY_SERVICE_LABEL: &str = "com.clawcrew.daemon";
 const WINDOWS_TASK_NAME: &str = "ClawCrew Daemon";
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
 const SERVICE_LOG_MAX_BYTES: u64 = 8 * 1024 * 1024;
@@ -1527,10 +1528,12 @@ fn linux_service_base(config: &Config) -> String {
         return "clawcrew".to_string();
     };
     let base = dir_name.strip_prefix('.').unwrap_or(dir_name);
-    if base == "clawcrew" {
+    if base == "clawcrew" || base == "galleon" {
         return base.to_string();
     }
-    if let Some(suffix) = base.strip_prefix("clawcrew-")
+    if let Some(suffix) = base
+        .strip_prefix("clawcrew-")
+        .or_else(|| base.strip_prefix("galleon-"))
         && !suffix.is_empty()
     {
         return base.to_string();
@@ -1539,7 +1542,15 @@ fn linux_service_base(config: &Config) -> String {
 }
 
 fn linux_systemd_unit(config: &Config) -> String {
-    format!("{}.service", linux_service_base(config))
+    let base = linux_service_base(config);
+    if base == "clawcrew" {
+        if let Ok(file) = linux_service_file(config) {
+            if file.exists() {
+                return "galleon.service".to_string();
+            }
+        }
+    }
+    format!("{}.service", base)
 }
 
 fn linux_openrc_service(config: &Config) -> String {
@@ -1548,7 +1559,7 @@ fn linux_openrc_service(config: &Config) -> String {
 
 fn ensure_linux_default_install_scope(config: &Config, action: &str) -> Result<()> {
     let service = linux_service_base(config);
-    if service == "clawcrew" {
+    if service == "clawcrew" || service == "galleon" {
         return Ok(());
     }
 
@@ -1595,11 +1606,14 @@ fn linux_openrc_log_dir(config: &Config) -> PathBuf {
     Path::new("/var/log").join(linux_openrc_service(config))
 }
 
-/// Returns whether the ClawCrew daemon service is currently running.
+/// Returns whether the Galleon daemon service is currently running.
 pub fn is_running(config: &Config) -> bool {
     if cfg!(target_os = "macos") {
         run_capture(Command::new("launchctl").arg("list"))
-            .map(|out| out.lines().any(|l| l.contains(SERVICE_LABEL)))
+            .map(|out| {
+                out.lines()
+                    .any(|l| l.contains(SERVICE_LABEL) || l.contains(LEGACY_SERVICE_LABEL))
+            })
             .unwrap_or(false)
     } else if cfg!(target_os = "linux") {
         is_running_linux(config)
@@ -1621,6 +1635,13 @@ pub fn is_running(config: &Config) -> bool {
 fn is_running_linux(config: &Config) -> bool {
     // Try systemd first, then OpenRC — mirrors detect_init_system() order
     if run_capture(Command::new("systemctl").args(linux_systemd_action_args(config, "is-active")))
+        .map(|out| out.trim() == "active")
+        .unwrap_or(false)
+    {
+        return true;
+    }
+    // Also check legacy clawcrew.service if galleon.service is not active
+    if run_capture(Command::new("systemctl").args(["--user", "is-active", "clawcrew.service"]))
         .map(|out| out.trim() == "active")
         .unwrap_or(false)
     {
@@ -1783,7 +1804,9 @@ fn restart_linux(config: &Config, init_system: InitSystem) -> Result<()> {
 pub fn status(config: &Config, init_system: InitSystem) -> Result<()> {
     if cfg!(target_os = "macos") {
         let out = run_capture(Command::new("launchctl").arg("list"))?;
-        let running = out.lines().any(|line| line.contains(SERVICE_LABEL));
+        let running = out
+            .lines()
+            .any(|line| line.contains(SERVICE_LABEL) || line.contains(LEGACY_SERVICE_LABEL));
         println!(
             "Service: {}",
             if running {
@@ -2073,8 +2096,20 @@ pub fn uninstall(config: &Config, init_system: InitSystem) -> Result<()> {
     if cfg!(target_os = "macos") {
         let file = macos_service_file()?;
         if file.exists() {
+            let _ = run_checked(Command::new("launchctl").arg("unload").arg("-w").arg(&file));
             fs::remove_file(&file)
                 .with_context(|| format!("Failed to remove {}", file.display().to_string()))?;
+        }
+        if let Ok(legacy) = legacy_macos_service_file() {
+            if legacy.exists() {
+                let _ = run_checked(
+                    Command::new("launchctl")
+                        .arg("unload")
+                        .arg("-w")
+                        .arg(&legacy),
+                );
+                let _ = fs::remove_file(&legacy);
+            }
         }
         println!("✅ Service uninstalled ({})", file.display().to_string());
         return Ok(());
@@ -2109,28 +2144,52 @@ fn uninstall_linux(config: &Config, init_system: InitSystem) -> Result<()> {
     match init_system {
         InitSystem::Systemd => {
             let file = linux_service_file(config)?;
+            let unit_name = linux_systemd_unit(config);
+            let _ = run_checked(Command::new("systemctl").args(["--user", "stop", &unit_name]));
+            let _ = run_checked(Command::new("systemctl").args(["--user", "disable", &unit_name]));
             if file.exists() {
                 fs::remove_file(&file)
                     .with_context(|| format!("Failed to remove {}", file.display().to_string()))?;
+            }
+            if let Some(parent) = file.parent() {
+                let legacy = parent.join("clawcrew.service");
+                if legacy.exists() && legacy != file {
+                    let _ = run_checked(Command::new("systemctl").args([
+                        "--user",
+                        "stop",
+                        "clawcrew.service",
+                    ]));
+                    let _ = run_checked(Command::new("systemctl").args([
+                        "--user",
+                        "disable",
+                        "clawcrew.service",
+                    ]));
+                    let _ = fs::remove_file(&legacy);
+                }
             }
             let _ = run_checked(Command::new("systemctl").args(["--user", "daemon-reload"]));
             println!("✅ Service uninstalled ({})", file.display().to_string());
         }
         InitSystem::Openrc => {
-            let init_script = Path::new("/etc/init.d/clawcrew");
+            let init_script = Path::new("/etc/init.d/galleon");
             if init_script.exists() {
                 if let Err(err) =
-                    run_checked(Command::new("rc-update").args(["del", "clawcrew", "default"]))
+                    run_checked(Command::new("rc-update").args(["del", "galleon", "default"]))
                 {
                     eprintln!(
-                        "⚠️  Warning: Could not remove clawcrew from OpenRC default runlevel: {err}"
+                        "⚠️  Warning: Could not remove galleon from OpenRC default runlevel: {err}"
                     );
                 }
                 fs::remove_file(init_script).with_context(|| {
                     format!("Failed to remove {}", init_script.display().to_string())
                 })?;
             }
-            println!("✅ Service uninstalled (/etc/init.d/clawcrew)");
+            let legacy_init = Path::new("/etc/init.d/clawcrew");
+            if legacy_init.exists() {
+                let _ = run_checked(Command::new("rc-update").args(["del", "clawcrew", "default"]));
+                let _ = fs::remove_file(legacy_init);
+            }
+            println!("✅ Service uninstalled (/etc/init.d/galleon)");
         }
         InitSystem::Auto => unreachable!("Auto should be resolved before this point"),
     }
@@ -2247,7 +2306,7 @@ fn install_macos(config: &Config) -> Result<()> {
     if let Some(ref var_dir) = homebrew_var_dir {
         println!("   Homebrew var: {}", var_dir.display());
     }
-    println!("   Start with: clawcrew service start");
+    println!("   Start with: galleon service start");
     Ok(())
 }
 
@@ -2288,8 +2347,7 @@ fn render_macos_launch_agent_plist(
   <true/>
   <key>KeepAlive</key>
   <true/>
-{working_dir_section}
-</dict>
+{working_dir_section}</dict>
 </plist>
 "#,
         label = SERVICE_LABEL,
@@ -2316,18 +2374,22 @@ fn install_linux_systemd(config: &Config) -> Result<()> {
     }
 
     let exe = std::env::current_exe().context("Failed to resolve current executable")?;
+    let unit_name = linux_systemd_unit(config);
     let unit = format!(
         "[Unit]\n\
-         Description=ClawCrew daemon\n\
+         Description=Galleon Fleet Autonomous Daemon\n\
+         Documentation=https://github.com/diezy-realm/galleon-fleet\n\
          After=network.target\n\
          \n\
          [Service]\n\
          Type=simple\n\
          ExecStart={exe} daemon\n\
-         Restart=always\n\
-         RestartSec=3\n\
+         Restart=on-failure\n\
+         RestartSec=5\n\
          # Ensure HOME is set so headless browsers can create profile/cache dirs.\n\
          Environment=HOME=%h\n\
+         Environment=RUST_LOG=info\n\
+         Environment=GALLEON_CONFIG_DIR=%h/.config/galleon\n\
          # Allow inheriting DISPLAY and XDG_RUNTIME_DIR from the user session\n\
          # so graphical/headless browsers can function correctly.\n\
          PassEnvironment=DISPLAY XDG_RUNTIME_DIR\n\
@@ -2339,12 +2401,12 @@ fn install_linux_systemd(config: &Config) -> Result<()> {
 
     fs::write(&file, unit)?;
     let _ = run_checked(Command::new("systemctl").args(["--user", "daemon-reload"]));
-    let _ = run_checked(Command::new("systemctl").args(["--user", "enable", "clawcrew.service"]));
+    let _ = run_checked(Command::new("systemctl").args(["--user", "enable", &unit_name]));
     println!(
         "✅ Installed systemd user service: {}",
         file.display().to_string()
     );
-    println!("   Start with: clawcrew service start");
+    println!("   Start with: galleon service start");
     warn_if_systemd_user_linger_disabled();
     Ok(())
 }
@@ -2996,7 +3058,7 @@ fn install_windows(config: &Config) -> Result<()> {
     println!("✅ Installed Windows scheduled task: {}", task_name);
     println!("   Wrapper: {}", wrapper.display().to_string());
     println!("   Logs: {}", logs_dir.display().to_string());
-    println!("   Start with: clawcrew service start");
+    println!("   Start with: galleon service start");
     Ok(())
 }
 
@@ -3010,6 +3072,16 @@ fn macos_service_file() -> Result<PathBuf> {
         .join(format!("{SERVICE_LABEL}.plist")))
 }
 
+fn legacy_macos_service_file() -> Result<PathBuf> {
+    let home = directories::UserDirs::new()
+        .map(|u| u.home_dir().to_path_buf())
+        .context("Could not find home directory")?;
+    Ok(home
+        .join("Library")
+        .join("LaunchAgents")
+        .join(format!("{LEGACY_SERVICE_LABEL}.plist")))
+}
+
 fn linux_service_file(config: &Config) -> Result<PathBuf> {
     let home = directories::UserDirs::new()
         .map(|u| u.home_dir().to_path_buf())
@@ -3021,7 +3093,7 @@ fn linux_service_file(config: &Config) -> Result<PathBuf> {
         .join(".config")
         .join("systemd")
         .join("user")
-        .join("clawcrew.service"))
+        .join("galleon.service"))
 }
 
 fn linux_systemd_unit_file(config: &Config) -> Result<PathBuf> {
@@ -3960,9 +4032,9 @@ mod linux_service_tests {
     #[test]
     fn linux_service_file_stays_default_for_install_path() {
         let file =
-            linux_service_file(&config_at("/home/user/.clawcrew-p100-104/config.toml")).unwrap();
+            linux_service_file(&config_at("/home/user/.galleon-p100-104/config.toml")).unwrap();
         let path = file.to_string_lossy();
-        assert!(path.ends_with(".config/systemd/user/clawcrew.service"));
+        assert!(path.ends_with(".config/systemd/user/galleon.service"));
     }
 }
 
@@ -4005,7 +4077,37 @@ mod service_helper_tests {
     fn linux_service_file_has_expected_suffix() {
         let file = linux_service_file(&Config::default()).unwrap();
         let path = file.to_string_lossy();
-        assert!(path.ends_with(".config/systemd/user/clawcrew.service"));
+        assert!(path.ends_with(".config/systemd/user/galleon.service"));
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    #[test]
+    fn linux_systemd_user_service_is_non_root() {
+        let file = linux_service_file(&Config::default()).unwrap();
+        let path = file.to_string_lossy();
+        assert!(path.contains(".config/systemd/user/"));
+        assert!(!path.starts_with("/etc/systemd/"));
+        assert!(path.ends_with("galleon.service"));
+    }
+
+    #[test]
+    fn macos_launch_agent_service_file_is_user_level() {
+        let file = macos_service_file().unwrap();
+        let path = file.to_string_lossy();
+        assert!(path.contains("Library/LaunchAgents/"));
+        assert!(!path.starts_with("/Library/LaunchDaemons"));
+        assert!(path.ends_with("com.galleon.fleet.plist"));
+    }
+
+    #[test]
+    fn render_macos_launch_agent_plist_contains_galleon_metadata() {
+        let exe = PathBuf::from("/usr/local/bin/galleon");
+        let config_dir = PathBuf::from("/home/user/.config/galleon");
+        let plist = render_macos_launch_agent_plist(&exe, &config_dir, None);
+        assert!(plist.contains("<string>com.galleon.fleet</string>"));
+        assert!(plist.contains("<key>RunAtLoad</key>"));
+        assert!(plist.contains("<key>KeepAlive</key>"));
+        assert!(plist.contains("<string>run-launchd-daemon</string>"));
     }
 
     #[test]
