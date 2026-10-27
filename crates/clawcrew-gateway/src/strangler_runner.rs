@@ -803,16 +803,22 @@ mod tests {
             events.push(evt);
         }
 
-        assert!(events
-            .iter()
-            .any(|e| matches!(e, TurnEvent::Thinking { .. })));
+        assert!(
+            events
+                .iter()
+                .any(|e| matches!(e, TurnEvent::Thinking { .. }))
+        );
         assert!(events.iter().any(|e| matches!(e, TurnEvent::Chunk { .. })));
-        assert!(events
-            .iter()
-            .any(|e| matches!(e, TurnEvent::ToolCall { .. })));
-        assert!(events
-            .iter()
-            .any(|e| matches!(e, TurnEvent::ToolResult { .. })));
+        assert!(
+            events
+                .iter()
+                .any(|e| matches!(e, TurnEvent::ToolCall { .. }))
+        );
+        assert!(
+            events
+                .iter()
+                .any(|e| matches!(e, TurnEvent::ToolResult { .. }))
+        );
 
         let _ = shutdown_tx.send(());
     }
