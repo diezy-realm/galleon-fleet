@@ -124,12 +124,6 @@ fn channel_ingress_context_falls_back_without_stable_sender() {
     }
 }
 
-/// Upper bound for "this must not deadlock" waits in the assembly tests.
-///
-/// These guards exist to fail a genuine hang, not to assert how fast
-/// assembly is. `scripts/ci/parallel_runtime_test_gate.sh` runs the suite
-/// at 16 threads; under that contention the previous budgets stopped being
-
 #[cfg(feature = "channel-reddit")]
 #[test]
 fn reddit_peer_resolver_uses_the_production_alias() {

@@ -17,9 +17,11 @@ fn admin_paircode_state(
     _require_pairing: bool,
     _with_registry: bool,
 ) -> AppState {
-    let mut config = clawcrew_config::schema::Config::default();
-    config.config_path = tmp.path().join("config.toml");
-    config.data_dir = tmp.path().join("workspace");
+    let config = clawcrew_config::schema::Config {
+        config_path: tmp.path().join("config.toml"),
+        data_dir: tmp.path().join("workspace"),
+        ..Default::default()
+    };
     crate::api_config::tests::test_state(config)
 }
 

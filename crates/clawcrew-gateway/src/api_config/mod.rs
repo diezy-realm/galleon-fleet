@@ -145,11 +145,6 @@ pub struct ChannelBindBody {
     pub identity: String,
 }
 
-/// POST /api/channels/bind — add an inbound identity to a pairing channel's
-/// allowlist. Shares the exact bind core the CLI uses
-/// (`bind_channel_identity_into`), writes ONLY to
-/// `peer_groups.<type>_<alias>.external_peers`, and is gated by the same
-
 #[derive(Debug, Serialize)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 pub struct DriftResponse {
@@ -287,9 +282,6 @@ pub struct InitQuery {
 pub struct InitResponse {
     pub initialized: Vec<String>,
 }
-
-/// POST /api/config/init?section=model_providers — instantiate `None` nested
-/// sections with defaults, and only those: dynamic-map aliases are created
 
 #[derive(Debug, Serialize)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]

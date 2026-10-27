@@ -19,7 +19,7 @@ pub async fn start_grpc_server() -> Result<()> {
 
     let addr: SocketAddr = "127.0.0.1:50052"
         .parse()
-        .map_err(|e| anyhow::anyhow!("failed to parse loopback addr: {e}"))?;
+        .map_err(|e| anyhow::Error::msg(format!("failed to parse loopback addr: {e}")))?;
     ::clawcrew_log::record!(
         INFO,
         ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),

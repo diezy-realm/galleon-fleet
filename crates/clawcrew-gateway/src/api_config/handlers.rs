@@ -148,9 +148,10 @@ pub(crate) fn scoped_validate(
     Ok(Vec::new())
 }
 
-/// Save `new_config` to disk, then install it as the live config.
-///
-
+/// POST /api/channels/bind — add an inbound identity to a pairing channel's
+/// allowlist. Shares the exact bind core the CLI uses
+/// (`bind_channel_identity_into`), writes ONLY to
+/// `peer_groups.<type>_<alias>.external_peers`, and is gated by the same
 /// bearer auth as every other config write. Because the gateway and the
 /// running channels share one `Arc<RwLock<Config>>`, the swap makes the new
 /// peer live immediately — no daemon restart, and no `/bind` message.
@@ -1420,6 +1421,8 @@ pub async fn handle_refresh_context_window(
     .into_response()
 }
 
+/// POST /api/config/init?section=model_providers — instantiate `None` nested
+/// sections with defaults, and only those: dynamic-map aliases are created
 /// through `POST /api/config/map-key`. When every requested section is already
 /// configured, returns `{initialized: []}`.
 pub async fn handle_init(
