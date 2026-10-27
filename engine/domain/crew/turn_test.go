@@ -480,3 +480,38 @@ func TestTurnLifecycle_LoopDetector(t *testing.T) {
 		t.Errorf("expected finish_reason loop_detected, got %q", outcome.FinishReason)
 	}
 }
+
+func TestContextResolver_GatewaySerializedContextWindowContract(t *testing.T) {
+	tokenCounter := domainCrew.NewStandardTokenCounter()
+	resolver := domainCrew.NewContextResolver(tokenCounter)
+
+	// Simulating JSON byte payload serialized by Rust strangler_runner.rs
+	wireJSON := []byte(`{"history":[{"role":"user","content":"Turn 1 user message"},{"role":"assistant","content":"Turn 1 assistant response"}]}`)
+
+	req := &domainCrew.TurnRequest{
+		SessionID:     "session-strangler-contract",
+		AgentID:       "code-agent",
+		Prompt:        "Turn 2 prompt",
+		ContextWindow: wireJSON,
+	}
+
+	resolved, err := resolver.ResolveContext(context.Background(), req, nil)
+	if err != nil {
+		t.Fatalf("failed to resolve context from gateway wire payload: %v", err)
+	}
+
+	// Must contain exactly 3 messages: 2 from history, 1 for current prompt
+	if len(resolved.Messages) != 3 {
+		t.Fatalf("expected 3 messages, got %d", len(resolved.Messages))
+	}
+
+	if resolved.Messages[0].Role != domainCrew.RoleUser || resolved.Messages[0].Content != "Turn 1 user message" {
+		t.Errorf("unexpected message 0: %+v", resolved.Messages[0])
+	}
+	if resolved.Messages[1].Role != domainCrew.RoleAssistant || resolved.Messages[1].Content != "Turn 1 assistant response" {
+		t.Errorf("unexpected message 1: %+v", resolved.Messages[1])
+	}
+	if resolved.Messages[2].Role != domainCrew.RoleUser || resolved.Messages[2].Content != "Turn 2 prompt" {
+		t.Errorf("unexpected message 2: %+v", resolved.Messages[2])
+	}
+}
