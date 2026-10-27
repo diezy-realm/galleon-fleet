@@ -635,7 +635,10 @@ impl WhatsAppWebChannel {
     }
 
     #[cfg(feature = "whatsapp-web")]
-    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(
+        mut self,
+        config: clawcrew_config::schema::TranscriptionConfig,
+    ) -> Self {
         #[cfg(test)]
         {
             if config.enabled {
@@ -718,7 +721,11 @@ impl WhatsAppWebChannel {
         // The surrounding-whitespace wildcard this channel accepts is now what
         // the shared helper accepts, so there is no broader local notion of the
         // wildcard left to keep in step with the deny check.
-        galleon_channel_core::allowlist::is_identity_allowed_by(allowed_numbers, phones, Self::phone_matches)
+        galleon_channel_core::allowlist::is_identity_allowed_by(
+            allowed_numbers,
+            phones,
+            Self::phone_matches,
+        )
     }
 
     /// Both WhatsApp surfaces admit the same accounts, so the raw / `+E.164` /

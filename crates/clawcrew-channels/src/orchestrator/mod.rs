@@ -13980,7 +13980,9 @@ fn collect_configured_channels(
                                         &config,
                                         &format!("whatsapp.{alias}"),
                                     )
-                                    .map(|m| m as Arc<dyn galleon_channel_whatsapp::AudioTranscriber>),
+                                    .map(|m| {
+                                        m as Arc<dyn galleon_channel_whatsapp::AudioTranscriber>
+                                    }),
                                 )
                                 .with_tts_synthesizer(resolve_whatsapp_tts(&config, &alias))
                                 .with_workspace_dir(workspace_dir)

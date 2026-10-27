@@ -205,7 +205,11 @@ impl GitChannel {
     fn is_user_allowed(&self, login: &str) -> bool {
         let peers = (self.peer_resolver)();
         // Forge logins are case-insensitive (and ASCII-only).
-        galleon_channel_core::allowlist::is_user_allowed(&peers, login, galleon_channel_core::allowlist::Match::CaseInsensitive)
+        galleon_channel_core::allowlist::is_user_allowed(
+            &peers,
+            login,
+            galleon_channel_core::allowlist::Match::CaseInsensitive,
+        )
     }
 
     /// Resolve the bot identity from the provider, memoizing the value for

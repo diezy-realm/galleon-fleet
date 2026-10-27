@@ -8,11 +8,11 @@ use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use async_trait::async_trait;
-use parking_lot::Mutex;
 use clawcrew_api::attribution::{Attributable, ChannelKind, Role};
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 use clawcrew_channels::paced_channel::PacedChannel;
 use clawcrew_config::schema::HasReplyPacing;
+use parking_lot::Mutex;
 
 /// Minimal `HasReplyPacing` test fixture mirroring the production trait
 /// shape. Avoids dragging a full `TelegramConfig` / `WhatsAppConfig`

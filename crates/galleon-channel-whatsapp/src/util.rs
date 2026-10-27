@@ -155,7 +155,9 @@ pub fn build_yesno_approval_prompt(
         ],
     );
 
-    format!("{heading} [{token}]\n{position_line}{tool_label}: {tool_name}\n{args_label}: {arguments_summary}\n\n{reply}")
+    format!(
+        "{heading} [{token}]\n{position_line}{tool_label}: {tool_name}\n{args_label}: {arguments_summary}\n\n{reply}"
+    )
 }
 
 pub fn strip_tool_call_tags(message: &str) -> String {
