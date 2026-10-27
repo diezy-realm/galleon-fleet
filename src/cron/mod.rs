@@ -578,9 +578,10 @@ pub fn handle_command(command: crate::CronCommands, config: &Config) -> Result<(
             // create paths validate inside `add_*_with_approval`; the update
             // path does not, so validate the merged result here.
             let delivery = if delivery_requested {
-                let existing = existing
-                    .as_ref()
-                    .expect("existing job must be loaded when updating delivery");
+                let existing = match existing.as_ref() {
+                    Some(job) => job,
+                    None => bail!("existing job must be loaded when updating delivery"),
+                };
                 let merged = merge_delivery(&existing.delivery, &delivery);
                 validate_delivery_config(merged.as_ref())?;
                 merged
@@ -592,9 +593,10 @@ pub fn handle_command(command: crate::CronCommands, config: &Config) -> Result<(
             // --tz alone updates the timezone and --expression alone
             // preserves the existing timezone.
             let schedule = if expression.is_some() || tz.is_some() {
-                let existing = existing
-                    .as_ref()
-                    .expect("existing job must be loaded when updating schedule");
+                let existing = match existing.as_ref() {
+                    Some(job) => job,
+                    None => bail!("existing job must be loaded when updating schedule"),
+                };
                 let (existing_expr, existing_tz) = match &existing.schedule {
                     Schedule::Cron {
                         expr,
@@ -611,9 +613,10 @@ pub fn handle_command(command: crate::CronCommands, config: &Config) -> Result<(
             };
 
             if !allowed_tools.is_empty() {
-                let existing = existing
-                    .as_ref()
-                    .expect("existing job must be loaded when updating allowed tools");
+                let existing = match existing.as_ref() {
+                    Some(job) => job,
+                    None => bail!("existing job must be loaded when updating allowed tools"),
+                };
                 if existing.job_type != JobType::Agent {
                     bail!("--allowed-tool is only supported for agent cron jobs");
                 }
