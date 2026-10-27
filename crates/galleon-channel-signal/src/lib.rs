@@ -6,7 +6,7 @@
 //! signal-cli JSON-RPC transport (`rpc_request`), the SSE event stream parser
 //! and reconnect loop (`listen`), envelope → [`ChannelMessage`] processing
 //! (`process_envelope`), native polls / reactions / typing / health, and the
-//! full [`Channel`] + [`Attributable`] trait surface.
+//! full `Channel` + `Attributable` trait surface.
 //!
 //! Two couplings in the upstream body reached INTO `clawcrew-channels`-internal
 //! infrastructure. They were the RF-B1 split's real seams; both are now closed
@@ -53,7 +53,7 @@ use std::collections::HashMap;
 use std::num::NonZeroUsize;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::{Mutex, mpsc, oneshot};
+use tokio::sync::{mpsc, oneshot, Mutex};
 use uuid::Uuid;
 
 const GROUP_TARGET_PREFIX: &str = "group:";
