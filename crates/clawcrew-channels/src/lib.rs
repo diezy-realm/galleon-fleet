@@ -66,8 +66,10 @@ pub use galleon_channel_email as email_channel;
 // and callers keep resolving.
 #[cfg(feature = "channel-filesystem")]
 pub use galleon_channel_filesystem as filesystem;
+// RF-B1: the Git channel now lives in its own feature-crate. Re-export it
+// under the historical `git` path so callers keep resolving.
 #[cfg(feature = "channel-git")]
-pub mod git;
+pub use galleon_channel_git as git;
 #[cfg(feature = "channel-email")]
 pub mod gmail_push;
 #[cfg(feature = "channel-imessage")]
@@ -157,8 +159,10 @@ pub use galleon_channel_twitch as twitch;
 // keep resolving.
 #[cfg(feature = "channel-twitter")]
 pub use galleon_channel_twitter as twitter;
+// RF-B1: the VoiceCall channel now lives in its own feature-crate. Re-export it
+// under the historical `voice_call` path so callers keep resolving.
 #[cfg(feature = "channel-voice-call")]
-pub mod voice_call;
+pub use galleon_channel_voice_call as voice_call;
 #[cfg(feature = "voice-wake")]
 pub mod voice_wake;
 // RF-B1: the Webhook channel now lives in its own feature-crate. Re-export it
@@ -179,9 +183,11 @@ pub use galleon_channel_wecom as wecom;
 // under the historical `wecom_ws` path so callers keep resolving.
 #[cfg(feature = "channel-wecom-ws")]
 pub use galleon_channel_wecom_ws as wecom_ws;
+// RF-B1: the WhatsApp channel now lives in its own feature-crate. Re-export it
+// under historical paths so callers keep resolving.
 #[cfg(any(feature = "channel-whatsapp-cloud", feature = "whatsapp-web"))]
-pub mod whatsapp;
+pub use galleon_channel_whatsapp as whatsapp;
 #[cfg(feature = "whatsapp-web")]
-pub mod whatsapp_storage;
+pub use galleon_channel_whatsapp::whatsapp_storage;
 #[cfg(feature = "whatsapp-web")]
-pub mod whatsapp_web;
+pub use galleon_channel_whatsapp::whatsapp_web;

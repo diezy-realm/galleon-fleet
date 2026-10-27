@@ -9,7 +9,7 @@ use jsonwebtoken::{Algorithm, EncodingKey, Header};
 use serde::Serialize;
 
 use super::payloads::CachedToken;
-use crate::git::types::GitChannelError;
+use crate::types::GitChannelError;
 
 /// App JWTs are valid for at most 10 minutes; stay under that and
 /// backdate `iat` to absorb clock drift, per GitHub's documented

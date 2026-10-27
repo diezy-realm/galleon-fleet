@@ -4,10 +4,10 @@
 use super::payloads::{
     GhComment, GhIssue, GhPull, GhRelease, GhRepoEvent, GhReviewComment, GhUser, GhWorkflowRun,
 };
-use crate::git::events::{
+use crate::events::{
     CommentPost, EventActor, GitEvent, IssuePost, PullPost, PullTransition, ReleasePost, RunOutcome,
 };
-use crate::git::types::RepoRef;
+use crate::types::RepoRef;
 
 /// Normalize a GitHub user payload onto the generic actor model.
 fn actor(user: &GhUser) -> EventActor {

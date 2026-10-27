@@ -141,6 +141,9 @@ galleon-channel-matrix = { workspace = true, optional = true }
 # (`crate::slack::SlackChannel`) keep compiling. Optional, behind
 # `channel-slack`.
 galleon-channel-slack = { workspace = true, optional = true }
+galleon-channel-git = { workspace = true, optional = true }
+galleon-channel-voice-call = { workspace = true, optional = true }
+galleon-channel-whatsapp = { workspace = true, optional = true }
 anyhow = "1.0"
 lru = "0.18.2"
 rumqttc = { version = "0.25", optional = true }
@@ -244,25 +247,7 @@ nanohtml2text = "0.2"
 rand = "0.10"
 webpki-roots = { version = "1.0.6", optional = true }
 
-# WhatsApp Web (optional). Registry releases from oxidezap/whatsapp-rust.
-# Moving from the old fork pin to 0.7.0 includes the upstream protobuf-codegen
-# migration, so the storage and event adapters are ported in the same change.
-# Registry dependencies also make clawcrew-channels publishable to crates.io.
-whatsapp-rust = { version = "0.7.0", optional = true, default-features = false, features = [
-  "tokio-runtime",
-] }
-wacore = { version = "0.7.0", optional = true, default-features = false }
-wacore-binary = { version = "0.7.0", optional = true, default-features = false }
-waproto = { version = "0.7.0", optional = true, default-features = false }
-
 cpal = { version = "0.18.1", optional = true }
-whatsapp-rust-ureq-http-client = { version = "0.7.0", optional = true }
-whatsapp-rust-tokio-transport = { version = "0.7.0", optional = true, default-features = false }
-qrcode = { version = "0.14", optional = true }
-# `bytes` is required for the `Bytes` return types in wacore storage
-# traits (SignalStore::get_session / load_prekey). Feature-gated to
-# whatsapp-web alongside the rest of the WA Web stack.
-bytes = { version = "1", optional = true }
 shellexpand = "3.1"
 
 # WeChat iLink (optional) — AES-128-ECB and MD5 are mandated by the iLink
@@ -272,17 +257,6 @@ aes = { version = "0.8", optional = true }
 cbc = { version = "0.1", optional = true }
 ecb = { version = "0.1", optional = true }
 md5 = { version = "0.8", optional = true }
-
-# GitHub App channel - RS256 JWT signing for app authentication. The
-# `aws_lc_rs` backend is required to avoid jsonwebtoken's `rust_crypto`
-# path, which pulls the unmaintained `rsa` crate (RUSTSEC-2023-0071,
-# Marvin Attack, no fixed release) and fails `cargo audit`. aws-lc-rs is
-# already in the workspace lockfile, so this adds no new heavy dependency.
-jsonwebtoken = { version = "10", optional = true, default-features = false, features = [
-  "aws_lc_rs",
-  "use_pem",
-] }
-thiserror = { version = "2.0", optional = true }
 
 [features]
 default = ["default-channels"]
@@ -332,25 +306,18 @@ ws-transport = ["clawcrew-config/ws-transport", "dep:tokio-tungstenite"]
 image-normalization = ["dep:image"]
 channel-telegram = ["dep:galleon-channel-telegram", "image-normalization"]
 channel-lark = ["dep:galleon-channel-lark"]
-channel-git = ["provider-github", "provider-gitea"]
-# Forge providers for the git channel. `provider-github` (GitHub Apps) and
-# `provider-gitea` (Gitea/Forgejo PAT) are default-on under `channel-git`;
-# future forges (e.g. `provider-gitlab`) add their own sub-feature and deps here.
-provider-github = ["dep:jsonwebtoken", "dep:thiserror"]
-provider-gitea = []
+channel-git = [
+  "dep:galleon-channel-git",
+  "provider-github",
+  "provider-gitea",
+]
+provider-github = ["galleon-channel-git?/provider-github"]
+provider-gitea = ["galleon-channel-git?/provider-gitea"]
 channel-line = ["dep:galleon-channel-line"]
 channel-nostr = ["dep:galleon-channel-nostr"]
 whatsapp-web = [
-  "dep:bytes",
-  "dep:qrcode",
-  "dep:rusqlite",
-  "dep:wacore",
-  "dep:wacore-binary",
-  "dep:waproto",
-  "dep:whatsapp-rust",
-  "dep:whatsapp-rust-tokio-transport",
-  "dep:whatsapp-rust-ureq-http-client",
-  "image-normalization",
+  "dep:galleon-channel-whatsapp",
+  "galleon-channel-whatsapp/whatsapp-web",
 ]
 # Channels with no optional deps (cfg gate only)
 channel-discord = ["dep:galleon-channel-discord", "ws-transport"]
@@ -377,8 +344,11 @@ channel-wecom = ["dep:galleon-channel-wecom"]
 channel-wecom-ws = ["dep:galleon-channel-wecom-ws"]
 channel-clawdtalk = ["dep:galleon-channel-clawdtalk"]
 channel-webhook = ["dep:galleon-channel-webhook", "dep:axum"]
-channel-whatsapp-cloud = []
-channel-voice-call = ["dep:axum"]
+channel-whatsapp-cloud = [
+  "dep:galleon-channel-whatsapp",
+  "galleon-channel-whatsapp/channel-whatsapp-cloud",
+]
+channel-voice-call = ["dep:galleon-channel-voice-call"]
 channel-acp-server = []
 channel-matrix = ["dep:galleon-channel-matrix"]
 voice-wake = ["dep:cpal"]

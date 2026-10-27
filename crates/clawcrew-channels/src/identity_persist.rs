@@ -22,8 +22,8 @@
 
 #[allow(unused_imports)]
 pub use galleon_channel_core::identity_persist::{
-    authorizing_group_key, external_peer_deny_conflict, instance_group_key,
-    merge_external_peer, persist_external_peer,
+    authorizing_group_key, external_peer_deny_conflict, instance_group_key, merge_external_peer,
+    persist_external_peer,
 };
 
 #[cfg(test)]

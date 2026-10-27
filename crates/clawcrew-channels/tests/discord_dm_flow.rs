@@ -125,7 +125,6 @@ fn mock_discord_dm_with_attachment(
     })
 }
 
-
 #[tokio::test]
 async fn test_discord_dm_parsing() {
     // Arrange: create mock DM event
@@ -133,11 +132,11 @@ async fn test_discord_dm_parsing() {
 
     // Validate the event structure (sanity check)
     assert_eq!(event["t"], "MESSAGE_CREATE");
+    assert_eq!(event["d"]["author"]["username"].as_str(), Some("alice"));
     assert_eq!(
-        event["d"]["author"]["username"].as_str(),
-        Some("alice")
+        event["d"]["content"].as_str(),
+        Some("Hello bot, what is the time?")
     );
-    assert_eq!(event["d"]["content"].as_str(), Some("Hello bot, what is the time?"));
 
     // DM indicator: no guild_id
     assert!(event["d"]["guild_id"].is_null());
@@ -147,10 +146,7 @@ async fn test_discord_dm_parsing() {
     println!("  Sender: {}", event["d"]["author"]["username"]);
     println!("  Content: {}", event["d"]["content"]);
     println!("  Channel: {}", event["d"]["channel_id"]);
-    println!(
-        "  Is DM: {}",
-        event["d"]["guild_id"].is_null()
-    );
+    println!("  Is DM: {}", event["d"]["guild_id"].is_null());
 }
 
 #[tokio::test]
@@ -194,18 +190,9 @@ async fn test_discord_dm_message_creation() {
         .as_str()
         .unwrap_or("")
         .to_string();
-    let content = event["d"]["content"]
-        .as_str()
-        .unwrap_or("")
-        .to_string();
-    let channel_id = event["d"]["channel_id"]
-        .as_str()
-        .unwrap_or("")
-        .to_string();
-    let message_id = event["d"]["id"]
-        .as_str()
-        .unwrap_or("")
-        .to_string();
+    let content = event["d"]["content"].as_str().unwrap_or("").to_string();
+    let channel_id = event["d"]["channel_id"].as_str().unwrap_or("").to_string();
+    let message_id = event["d"]["id"].as_str().unwrap_or("").to_string();
 
     // Act: build ChannelMessage (simulating what the bot would do)
     let channel_message = ChannelMessage {
@@ -238,29 +225,25 @@ async fn test_discord_dm_message_creation() {
     println!("  Sender: {}", channel_message.sender);
     println!("  Content: {}", channel_message.content);
     println!("  Channel: {}", channel_message.channel);
-    println!("  Reply Target (DM channel): {}", channel_message.reply_target);
+    println!(
+        "  Reply Target (DM channel): {}",
+        channel_message.reply_target
+    );
 }
 
 #[tokio::test]
 async fn test_discord_dm_with_attachments() {
     // Arrange: DM with an attachment
     let attachment_url = "https://discord.com/attachments/123/456/document.pdf";
-    let event = mock_discord_dm_with_attachment(
-        "user_001",
-        "david",
-        "Check this report",
-        attachment_url,
-    );
+    let event =
+        mock_discord_dm_with_attachment("user_001", "david", "Check this report", attachment_url);
 
     let content = event["d"]["content"].as_str().unwrap_or("");
     let attachments = event["d"]["attachments"].as_array().unwrap();
 
     // Assert: attachment presence verified
     assert_eq!(attachments.len(), 1);
-    assert_eq!(
-        attachments[0]["filename"].as_str(),
-        Some("document.pdf")
-    );
+    assert_eq!(attachments[0]["filename"].as_str(), Some("document.pdf"));
     assert_eq!(attachments[0]["url"].as_str(), Some(attachment_url));
 
     println!("✓ DM with attachment validated");
@@ -448,9 +431,7 @@ async fn test_discord_dm_complete_flow_summary() {
     // Step 2: Validate admission criteria
     println!("\n[Step 2] Validate admission criteria:");
     let is_dm = event["d"]["guild_id"].is_null();
-    let is_bot_msg = event["d"]["author"]["bot"]
-        .as_bool()
-        .unwrap_or(false);
+    let is_bot_msg = event["d"]["author"]["bot"].as_bool().unwrap_or(false);
     let passes_allowlist = true; // Assume allowed for test
     let has_content = !content.trim().is_empty();
 
@@ -499,9 +480,6 @@ async fn test_discord_dm_complete_flow_summary() {
 
     // Step 5: Summary
     println!("\n[Result] ✅ Discord DM flow complete");
-    println!(
-        "  Message successfully routed from @{} to Kiro",
-        username
-    );
+    println!("  Message successfully routed from @{} to Kiro", username);
     println!("========================================================\n");
 }

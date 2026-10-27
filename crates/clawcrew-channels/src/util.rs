@@ -482,15 +482,7 @@ pub(crate) fn format_location_content(lat: f64, lng: f64, name: Option<&str>) ->
     }
 }
 
-#[cfg(any(
-    feature = "channel-discord",
-    feature = "channel-mattermost",
-    feature = "channel-signal",
-    feature = "channel-slack",
-    feature = "channel-whatsapp-cloud",
-    feature = "whatsapp-web",
-    test
-))]
+#[cfg(test)]
 pub(crate) fn new_approval_token() -> String {
     use rand::RngExt;
     const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
@@ -538,15 +530,7 @@ pub fn parse_approval_reply(
 /// from the runtime Fluent catalogue; `token`/`tool_name`/`arguments_summary`
 /// are protocol-exact values echoed verbatim — never localized — so a locale
 /// switch cannot desync the prompt from [`parse_approval_reply`].
-#[cfg(any(
-    feature = "channel-discord",
-    feature = "channel-mattermost",
-    feature = "channel-signal",
-    feature = "channel-slack",
-    feature = "channel-whatsapp-cloud",
-    feature = "whatsapp-web",
-    test
-))]
+#[cfg(test)]
 pub(crate) fn build_yesno_approval_prompt(
     token: &str,
     tool_name: &str,
@@ -578,18 +562,7 @@ pub(crate) fn build_yesno_approval_prompt(
 ///
 /// Kept here so every adapter renders the same wording from the same
 /// catalogue key and the phrasing cannot drift per channel.
-#[cfg(any(
-    feature = "channel-discord",
-    feature = "channel-mattermost",
-    feature = "channel-signal",
-    feature = "channel-slack",
-    feature = "channel-whatsapp-cloud",
-    feature = "whatsapp-web",
-    feature = "channel-matrix",
-    feature = "channel-telegram",
-    feature = "channel-lark",
-    test
-))]
+#[cfg(test)]
 pub(crate) fn approval_position_line(position: Option<(u32, u32)>) -> String {
     match position {
         // `1 of 1` tells the operator nothing they did not already know. The
@@ -672,16 +645,7 @@ pub fn conversation_history_key(msg: &clawcrew_api::channel::ChannelMessage) -> 
 /// Sites that need something else, such as a typed error, a sanitized body, a
 /// status-specific retry, or a body that must stay unread so it can be
 /// streamed — keep their own check on purpose.
-#[cfg(any(
-    feature = "channel-dingtalk",
-    feature = "channel-discord",
-    feature = "channel-line",
-    feature = "channel-mochat",
-    feature = "channel-qq",
-    feature = "channel-twitter",
-    feature = "channel-wechat",
-    feature = "channel-wecom"
-))]
+#[cfg(all(test, feature = "channel-qq"))]
 pub(crate) async fn ensure_success(
     resp: reqwest::Response,
     what: &str,
@@ -1371,8 +1335,8 @@ mod tests {
             include_str!("../../galleon-channel-telegram/src/lib.rs"),
             include_str!("../../galleon-channel-discord/src/lib.rs"),
             include_str!("../../galleon-channel-discord/src/approval.rs"),
-            include_str!("whatsapp.rs"),
-            include_str!("whatsapp_web.rs"),
+            include_str!("../../galleon-channel-whatsapp/src/whatsapp.rs"),
+            include_str!("../../galleon-channel-whatsapp/src/whatsapp_web.rs"),
             include_str!("util.rs"),
         ];
         let mut keys = std::collections::BTreeSet::new();
