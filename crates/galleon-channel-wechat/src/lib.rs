@@ -1093,7 +1093,7 @@ impl WeChatChannel {
 
     /// Resolve the effective state directory from the raw
     /// `[channels.wechat.<alias>] state_dir` config value: tilde-expanded
-    /// when set, [`Self::default_state_dir`] otherwise. Single source of
+    /// when set, `Self::default_state_dir` otherwise. Single source of
     /// truth for every consumer of the config value — channel construction
     /// and the readiness probe must agree on the directory.
     pub fn resolve_state_dir(configured: Option<&str>) -> PathBuf {
@@ -1110,7 +1110,7 @@ impl WeChatChannel {
     }
 
     /// Channel-owned persisted-login probe: reports whether this state
-    /// directory holds the same signal [`Self::load_persisted_state`] uses
+    /// directory holds the same signal `Self::load_persisted_state` uses
     /// to resume a session without a fresh QR scan — an `account.json`
     /// carrying a non-empty bot token. Read-only; never creates files.
     pub fn has_persisted_login(state_dir: &Path) -> bool {
@@ -1122,8 +1122,8 @@ impl WeChatChannel {
     /// Channel-owned relink hook: delete the persisted login state so the
     /// next channel start finds no session and begins a fresh QR pairing.
     ///
-    /// Removes exactly the files this module persists — [`ACCOUNT_FILE`]
-    /// (the bot token, i.e. the credential) and [`SYNC_FILE`] (the sync
+    /// Removes exactly the files this module persists — `ACCOUNT_FILE`
+    /// (the bot token, i.e. the credential) and `SYNC_FILE` (the sync
     /// cursor, which belongs to the replaced session) — and never the
     /// directory itself. Returns the paths actually removed; an already
     /// absent file is not an error, so relinking an unpaired channel is a
