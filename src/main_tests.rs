@@ -1421,41 +1421,6 @@
     }
 
     #[test]
-    fn service_cli_subcommands_parse_symmetric_lifecycle() {
-        for bin in ["galleon", "clawcrew"] {
-            let cli_install = Cli::try_parse_from([bin, "service", "install"])
-                .expect("service install should parse");
-            assert!(matches!(
-                cli_install.command,
-                Commands::Service {
-                    service_command: ServiceCommands::Install,
-                    ..
-                }
-            ));
-
-            let cli_status = Cli::try_parse_from([bin, "service", "status"])
-                .expect("service status should parse");
-            assert!(matches!(
-                cli_status.command,
-                Commands::Service {
-                    service_command: ServiceCommands::Status,
-                    ..
-                }
-            ));
-
-            let cli_uninstall = Cli::try_parse_from([bin, "service", "uninstall"])
-                .expect("service uninstall should parse");
-            assert!(matches!(
-                cli_uninstall.command,
-                Commands::Service {
-                    service_command: ServiceCommands::Uninstall,
-                    ..
-                }
-            ));
-        }
-    }
-
-    #[test]
     fn probe_config_dir_extracts_global_flag_in_all_forms() {
         fn argv(parts: &[&str]) -> std::vec::IntoIter<std::ffi::OsString> {
             parts

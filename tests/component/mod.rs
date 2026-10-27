@@ -28,5 +28,6 @@ mod provider_schema;
 mod reply_target_field_regression;
 mod schema_export_feature_graph;
 mod security;
+mod service_cli;
 mod skills_bundle_cli;
 mod whatsapp_webhook_security;

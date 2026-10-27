@@ -1,4 +1,5 @@
 use anyhow::{Context, Result, bail};
+use clawcrew_config::schema::{Config, resolve_runtime_dirs};
 #[cfg(windows)]
 use process_wrap::tokio::{ChildWrapper, CommandWrap, CommandWrapper, JobObject, KillOnDrop};
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
@@ -23,7 +24,6 @@ use tokio::io::{AsyncRead, AsyncReadExt};
 use tokio::process::Child;
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
 use tokio::process::Command as TokioCommand;
-use clawcrew_config::schema::{Config, resolve_runtime_dirs};
 
 const SERVICE_LABEL: &str = "com.galleon.fleet";
 const LEGACY_SERVICE_LABEL: &str = "com.clawcrew.daemon";
@@ -1531,7 +1531,9 @@ fn linux_service_base(config: &Config) -> String {
     if base == "clawcrew" || base == "galleon" {
         return base.to_string();
     }
-    if let Some(suffix) = base.strip_prefix("clawcrew-").or_else(|| base.strip_prefix("galleon-"))
+    if let Some(suffix) = base
+        .strip_prefix("clawcrew-")
+        .or_else(|| base.strip_prefix("galleon-"))
         && !suffix.is_empty()
     {
         return base.to_string();
@@ -1608,7 +1610,10 @@ fn linux_openrc_log_dir(config: &Config) -> PathBuf {
 pub fn is_running(config: &Config) -> bool {
     if cfg!(target_os = "macos") {
         run_capture(Command::new("launchctl").arg("list"))
-            .map(|out| out.lines().any(|l| l.contains(SERVICE_LABEL) || l.contains(LEGACY_SERVICE_LABEL)))
+            .map(|out| {
+                out.lines()
+                    .any(|l| l.contains(SERVICE_LABEL) || l.contains(LEGACY_SERVICE_LABEL))
+            })
             .unwrap_or(false)
     } else if cfg!(target_os = "linux") {
         is_running_linux(config)
@@ -1799,7 +1804,9 @@ fn restart_linux(config: &Config, init_system: InitSystem) -> Result<()> {
 pub fn status(config: &Config, init_system: InitSystem) -> Result<()> {
     if cfg!(target_os = "macos") {
         let out = run_capture(Command::new("launchctl").arg("list"))?;
-        let running = out.lines().any(|line| line.contains(SERVICE_LABEL) || line.contains(LEGACY_SERVICE_LABEL));
+        let running = out
+            .lines()
+            .any(|line| line.contains(SERVICE_LABEL) || line.contains(LEGACY_SERVICE_LABEL));
         println!(
             "Service: {}",
             if running {
@@ -2095,7 +2102,12 @@ pub fn uninstall(config: &Config, init_system: InitSystem) -> Result<()> {
         }
         if let Ok(legacy) = legacy_macos_service_file() {
             if legacy.exists() {
-                let _ = run_checked(Command::new("launchctl").arg("unload").arg("-w").arg(&legacy));
+                let _ = run_checked(
+                    Command::new("launchctl")
+                        .arg("unload")
+                        .arg("-w")
+                        .arg(&legacy),
+                );
                 let _ = fs::remove_file(&legacy);
             }
         }
@@ -2142,8 +2154,16 @@ fn uninstall_linux(config: &Config, init_system: InitSystem) -> Result<()> {
             if let Some(parent) = file.parent() {
                 let legacy = parent.join("clawcrew.service");
                 if legacy.exists() && legacy != file {
-                    let _ = run_checked(Command::new("systemctl").args(["--user", "stop", "clawcrew.service"]));
-                    let _ = run_checked(Command::new("systemctl").args(["--user", "disable", "clawcrew.service"]));
+                    let _ = run_checked(Command::new("systemctl").args([
+                        "--user",
+                        "stop",
+                        "clawcrew.service",
+                    ]));
+                    let _ = run_checked(Command::new("systemctl").args([
+                        "--user",
+                        "disable",
+                        "clawcrew.service",
+                    ]));
                     let _ = fs::remove_file(&legacy);
                 }
             }
