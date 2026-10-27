@@ -2486,10 +2486,9 @@ impl RpcClient {
 
     // ── Quickstart methods ───────────────────────────────────────
     //
-    // Thin RPC mirror of the gateway's `/api/quickstart/*` HTTP routes.
-    // Same shapes both ways; the daemon-side handlers live in
-    // `clawcrew_runtime::rpc::dispatch` and call into
-    // `clawcrew_runtime::quickstart::{validate_only,apply}_with_surface`.
+    // Thin wire mirror of the gateway's `/api/quickstart/*` HTTP routes.
+    // Same shapes both ways; the daemon-side handlers live in the gateway
+    // and call into `clawcrew_runtime::quickstart::{validate_only,apply}_with_surface`.
 
     pub async fn quickstart_state(&self) -> Result<QuickstartStateResult> {
         self.call(method::QUICKSTART_STATE, serde_json::json!({}))
@@ -3458,11 +3457,10 @@ mod skill_frontmatter_tests {
 
 // ── Quickstart types ─────────────────────────────────────────────
 //
-// **Mirror** of the wire shapes defined in
-// `clawcrew_runtime::rpc::types` (the daemon-side single source of
-// truth, which itself mirrors the gateway's HTTP route shapes). The
-// types live in `clawcrew-runtime`, but that crate is not on the
-// `apps/zerocode` dependency tree — pulling it in would compile the
+// **Mirror** of the wire shapes defined in the daemon/gateway
+// (the daemon-side single source of truth, mirroring the gateway HTTP route
+// shapes). The types live in runtime/gateway crates, but those are not on the
+// `apps/zerocode` dependency tree — pulling them in would compile the
 // entire runtime into the TUI binary. Instead we duplicate the wire
 // shape here; the integration drift test enforces equality across
 // surfaces, so divergence is a CI failure rather than a silent bug.
@@ -3596,7 +3594,7 @@ pub struct QuickstartPresetMirror {
     pub help: String,
 }
 
-/// Mirror of `clawcrew_runtime::rpc::types::QuickstartTypeOption`.
+/// Wire type for quickstart type option.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct QuickstartTypeOption {
@@ -4288,8 +4286,7 @@ pub struct LogsQueryResult {
     pub incomplete: bool,
 }
 
-/// Mirror of `clawcrew_runtime::rpc::types::LogsGetResult`. Full log
-/// event payload returned by the lazy-load `logs/get` RPC.
+/// Full log event payload returned by the lazy-load `logs/get` query.
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct LogsGetResult {
@@ -4342,8 +4339,7 @@ pub struct SessionStateResult {
     pub plan: Option<Vec<crate::wire::PlanEntry>>,
 }
 
-/// Session-scoped overrides mirror of
-/// `clawcrew_runtime::rpc::session::SessionOverrides`. Sent on
+/// Session-scoped overrides sent on
 /// `session/configure`; every field is optional and omitted when `None`.
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -4673,8 +4669,7 @@ pub struct MemorySearchResult {
     pub entries: Vec<MemoryEntryResult>,
 }
 
-/// Mirror of `clawcrew_runtime::rpc::types::MemoryGetResult`. Full
-/// memory entry payload returned by the lazy-load `memory/get` RPC.
+/// Full memory entry payload returned by the lazy-load `memory/get` endpoint.
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct MemoryGetResult {
@@ -6569,11 +6564,11 @@ fn relay_ws_config() -> tokio_tungstenite::tungstenite::protocol::WebSocketConfi
     cfg
 }
 
-/// Parser limits for the INNER RPC plane. This is NOT the relay budget: RPC
-/// carries attachments up to `clawcrew_runtime::rpc::attachments::MAX_REQUEST_BYTES`
-/// (20 MiB), so a relay-sized cap would truncate legitimate traffic. 32 MiB
-/// leaves encoding headroom above that limit while still replacing
-/// tungstenite's unbounded-by-default 64 MiB with an explicit ceiling.
+/// Parser limits for the INNER WebSocket plane. This is NOT the relay budget:
+/// the wire protocol carries attachments up to 20 MiB, so a relay-sized cap
+/// would truncate legitimate traffic. 32 MiB leaves encoding headroom above
+/// that limit while still replacing tungstenite's unbounded-by-default 64 MiB
+/// with an explicit ceiling.
 fn rpc_ws_config() -> tokio_tungstenite::tungstenite::protocol::WebSocketConfig {
     const RPC_WS_MAX: usize = 32 * 1024 * 1024;
     let mut cfg = tokio_tungstenite::tungstenite::protocol::WebSocketConfig::default();

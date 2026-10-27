@@ -822,14 +822,14 @@ mod tests {
                 Role::Channel(ChannelKind::AcpChannel)
             }
             fn alias(&self) -> &str {
-                "rpc"
+                "acp"
             }
         }
 
         #[async_trait]
         impl Channel for TestCallPrepApprovalChannel {
             fn name(&self) -> &str {
-                "rpc"
+                "acp"
             }
             async fn send(&self, _message: &SendMessage) -> anyhow::Result<()> {
                 Ok(())

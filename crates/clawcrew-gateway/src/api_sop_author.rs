@@ -1,6 +1,6 @@
 //! SOP authoring surface for the web node editor.
 //!
-//! HTTP twin of the daemon's `sops/*` RPC methods, backed by the decoupled
+//! SOP authoring HTTP endpoints, backed by the decoupled
 //! `clawcrew_api::sop::SopRunner` interface. All routes require gateway
 //! auth. Draft endpoints (`wire-draft`, `graph-draft`) are pure: they
 //! transform the submitted SOP and never touch disk.
@@ -297,7 +297,10 @@ pub async fn handle_sop_decide(
             .into_response();
     };
 
-    match runner.resolve_author_approval(&name, &run_id, decision, principal).await {
+    match runner
+        .resolve_author_approval(&name, &run_id, decision, principal)
+        .await
+    {
         Ok((code, body)) => (
             StatusCode::from_u16(code).unwrap_or(StatusCode::OK),
             Json(body),
@@ -1047,7 +1050,8 @@ mod tests {
     async fn authoring_decide_pending_quorum_returns_overlay_shape() {
         let first_member = "member-token-1";
         let second_member = "member-token-2";
-        let (_tmp, state, run_id) = authoring_state_with_quorum_gate(first_member, second_member, 2);
+        let (_tmp, state, run_id) =
+            authoring_state_with_quorum_gate(first_member, second_member, 2);
 
         let resp = handle_sop_decide(
             State(state.clone()),

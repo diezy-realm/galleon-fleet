@@ -828,9 +828,7 @@ mod tests {
 
         // The recipient's turn runs inside a detached `clawcrew_spawn::spawn!`
         // task that `execute()` does not join. Poll for its completion with a
-        // bounded, sleep-free yield loop (the same pattern already used for
-        // detached-task synchronization in `rpc/dispatch.rs`), never a fixed
-        // sleep.
+        // bounded, sleep-free yield loop, never a fixed sleep.
         let mut recipient_summary = None;
         for _ in 0..20_000 {
             let summary = tracker

@@ -462,10 +462,7 @@ impl HookRunner {
 
 #[async_trait::async_trait]
 impl clawcrew_api::hook::ChannelHookRunner for HookRunner {
-    async fn run_on_message_received(
-        &self,
-        message: ChannelMessage,
-    ) -> HookResult<ChannelMessage> {
+    async fn run_on_message_received(&self, message: ChannelMessage) -> HookResult<ChannelMessage> {
         self.run_on_message_received(message).await
     }
 
@@ -475,7 +472,8 @@ impl clawcrew_api::hook::ChannelHookRunner for HookRunner {
         recipient: String,
         content: String,
     ) -> HookResult<(String, String, String)> {
-        self.run_on_message_sending(channel, recipient, content).await
+        self.run_on_message_sending(channel, recipient, content)
+            .await
     }
 
     async fn run_on_message_sent(&self, channel: &str, recipient: &str, content: &str) {
@@ -1550,10 +1548,10 @@ mod tests {
         let (hook, start_count, end_count) = SessionCountingHook::new("session-watcher");
         runner.register(Box::new(hook));
 
-        runner.fire_session_start("sess-1", "rpc").await;
+        runner.fire_session_start("sess-1", "ws").await;
         assert_eq!(start_count.load(Ordering::SeqCst), 1);
 
-        runner.fire_session_end("sess-1", "rpc").await;
+        runner.fire_session_end("sess-1", "ws").await;
         assert_eq!(end_count.load(Ordering::SeqCst), 1);
     }
 
@@ -1561,7 +1559,7 @@ mod tests {
     async fn empty_runner_lifecycle_events_are_noops() {
         let runner = HookRunner::new();
         // Must not panic when no handlers are registered.
-        runner.fire_session_start("sess-1", "rpc").await;
-        runner.fire_session_end("sess-1", "rpc").await;
+        runner.fire_session_start("sess-1", "ws").await;
+        runner.fire_session_end("sess-1", "ws").await;
     }
 }
