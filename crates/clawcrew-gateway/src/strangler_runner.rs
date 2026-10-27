@@ -261,6 +261,7 @@ impl AgentSession for StranglerAgentSession {
         };
 
         let mut accumulated_response = String::new();
+        let mut terminal_event_received = false;
 
         loop {
             tokio::select! {
@@ -307,6 +308,7 @@ impl AgentSession for StranglerAgentSession {
                                 };
                                 let _ = event_tx.send(TurnEvent::ToolResult { id, name, output, artifact: None }).await;
                             } else if resp.r#type == EventType::TurnCompleted as i32 {
+                                terminal_event_received = true;
                                 break;
                             } else if resp.r#type == EventType::Error as i32 {
                                 let err_msg = if !resp.error_message.is_empty() {
@@ -322,6 +324,7 @@ impl AgentSession for StranglerAgentSession {
                             }
                         }
                         Ok(None) => {
+                            // Stream ended by server without an explicit terminal TurnCompleted event
                             break;
                         }
                         Err(status) => {
@@ -334,6 +337,14 @@ impl AgentSession for StranglerAgentSession {
                     }
                 }
             }
+        }
+
+        if !terminal_event_received {
+            return Err(AgentTurnError {
+                error: anyhow::anyhow!("AgentEngine stream closed before TurnCompleted"),
+                committed_response: accumulated_response,
+                new_messages: Vec::new(),
+            });
         }
 
         let user_msg = ConversationMessage::Chat(ChatMessage {
@@ -445,8 +456,15 @@ mod tests {
     use tokio_stream::wrappers::ReceiverStream;
     use tonic::{Request, Response, Status};
 
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    enum MockBehavior {
+        Success,
+        ErrorEvent,
+        PrematureClose,
+    }
+
     struct MockAgentEngine {
-        fail_stream: bool,
+        behavior: MockBehavior,
     }
 
     #[tonic::async_trait]
@@ -460,86 +478,100 @@ mod tests {
             let req = request.into_inner();
             let (tx, rx) = mpsc::channel(16);
 
-            let fail = self.fail_stream;
+            let behavior = self.behavior;
             tokio::spawn(async move {
-                if fail {
-                    let _ = tx
-                        .send(Ok(TurnResponse {
-                            r#type: EventType::Error as i32,
-                            content: "engine execution failure".to_string(),
-                            subagent_id: String::new(),
-                            error_message: "engine execution failure".to_string(),
-                        }))
-                        .await;
-                    return;
+                match behavior {
+                    MockBehavior::ErrorEvent => {
+                        let _ = tx
+                            .send(Ok(TurnResponse {
+                                r#type: EventType::Error as i32,
+                                content: "engine execution failure".to_string(),
+                                subagent_id: String::new(),
+                                error_message: "engine execution failure".to_string(),
+                            }))
+                            .await;
+                    }
+                    MockBehavior::PrematureClose => {
+                        // Send partial text chunk without TurnCompleted, then close stream abruptly
+                        let _ = tx
+                            .send(Ok(TurnResponse {
+                                r#type: EventType::TextChunk as i32,
+                                content: "Partial output before crash".to_string(),
+                                subagent_id: String::new(),
+                                error_message: String::new(),
+                            }))
+                            .await;
+                        // Drop tx to simulate stream EOF (Ok(None)) without TurnCompleted
+                    }
+                    MockBehavior::Success => {
+                        // 1. Thought
+                        let _ = tx
+                            .send(Ok(TurnResponse {
+                                r#type: EventType::ThoughtChunk as i32,
+                                content: format!("Analyzing prompt: {}", req.prompt),
+                                subagent_id: String::new(),
+                                error_message: String::new(),
+                            }))
+                            .await;
+
+                        // 2. Text chunks
+                        let _ = tx
+                            .send(Ok(TurnResponse {
+                                r#type: EventType::TextChunk as i32,
+                                content: "Hello from ".to_string(),
+                                subagent_id: String::new(),
+                                error_message: String::new(),
+                            }))
+                            .await;
+                        let _ = tx
+                            .send(Ok(TurnResponse {
+                                r#type: EventType::TextChunk as i32,
+                                content: "Go Engine!".to_string(),
+                                subagent_id: String::new(),
+                                error_message: String::new(),
+                            }))
+                            .await;
+
+                        // 3. Tool call & result
+                        let _ = tx
+                            .send(Ok(TurnResponse {
+                                r#type: EventType::ToolCallStarted as i32,
+                                content: serde_json::json!({
+                                    "id": "call-1",
+                                    "name": "read_file",
+                                    "args": {"path": "main.go"}
+                                })
+                                .to_string(),
+                                subagent_id: "sub-1".to_string(),
+                                error_message: String::new(),
+                            }))
+                            .await;
+
+                        let _ = tx
+                            .send(Ok(TurnResponse {
+                                r#type: EventType::ToolCallFinished as i32,
+                                content: serde_json::json!({
+                                    "id": "call-1",
+                                    "name": "read_file",
+                                    "output": "package main"
+                                })
+                                .to_string(),
+                                subagent_id: "sub-1".to_string(),
+                                error_message: String::new(),
+                            }))
+                            .await;
+
+                        // 4. Completed
+                        let _ = tx
+                            .send(Ok(TurnResponse {
+                                r#type: EventType::TurnCompleted as i32,
+                                content: String::new(),
+                                subagent_id: String::new(),
+                                error_message: String::new(),
+                            }))
+                            .await;
+                    }
                 }
-
-                // 1. Thought
-                let _ = tx
-                    .send(Ok(TurnResponse {
-                        r#type: EventType::ThoughtChunk as i32,
-                        content: format!("Analyzing prompt: {}", req.prompt),
-                        subagent_id: String::new(),
-                        error_message: String::new(),
-                    }))
-                    .await;
-
-                // 2. Text chunks
-                let _ = tx
-                    .send(Ok(TurnResponse {
-                        r#type: EventType::TextChunk as i32,
-                        content: "Hello from ".to_string(),
-                        subagent_id: String::new(),
-                        error_message: String::new(),
-                    }))
-                    .await;
-                let _ = tx
-                    .send(Ok(TurnResponse {
-                        r#type: EventType::TextChunk as i32,
-                        content: "Go Engine!".to_string(),
-                        subagent_id: String::new(),
-                        error_message: String::new(),
-                    }))
-                    .await;
-
-                // 3. Tool call & result
-                let _ = tx
-                    .send(Ok(TurnResponse {
-                        r#type: EventType::ToolCallStarted as i32,
-                        content: serde_json::json!({
-                            "id": "call-1",
-                            "name": "read_file",
-                            "args": {"path": "main.go"}
-                        })
-                        .to_string(),
-                        subagent_id: "sub-1".to_string(),
-                        error_message: String::new(),
-                    }))
-                    .await;
-
-                let _ = tx
-                    .send(Ok(TurnResponse {
-                        r#type: EventType::ToolCallFinished as i32,
-                        content: serde_json::json!({
-                            "id": "call-1",
-                            "name": "read_file",
-                            "output": "package main"
-                        })
-                        .to_string(),
-                        subagent_id: "sub-1".to_string(),
-                        error_message: String::new(),
-                    }))
-                    .await;
-
-                // 4. Completed
-                let _ = tx
-                    .send(Ok(TurnResponse {
-                        r#type: EventType::TurnCompleted as i32,
-                        content: String::new(),
-                        subagent_id: String::new(),
-                        error_message: String::new(),
-                    }))
-                    .await;
             });
 
             Ok(Response::new(ReceiverStream::new(rx)))
@@ -561,11 +593,22 @@ mod tests {
     }
 
     async fn start_mock_engine(fail_stream: bool) -> (String, tokio::sync::oneshot::Sender<()>) {
+        let behavior = if fail_stream {
+            MockBehavior::ErrorEvent
+        } else {
+            MockBehavior::Success
+        };
+        start_mock_engine_with_behavior(behavior).await
+    }
+
+    async fn start_mock_engine_with_behavior(
+        behavior: MockBehavior,
+    ) -> (String, tokio::sync::oneshot::Sender<()>) {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
         let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
 
-        let service = MockAgentEngine { fail_stream };
+        let service = MockAgentEngine { behavior };
 
         tokio::spawn(async move {
             tonic::transport::Server::builder()
@@ -717,6 +760,43 @@ mod tests {
 
         let response = handle_api_turn(Some(&endpoint), payload).await.unwrap();
         assert_eq!(response.status(), axum::http::StatusCode::OK);
+
+        let _ = shutdown_tx.send(());
+    }
+
+    #[tokio::test]
+    async fn test_strangler_agent_session_premature_stream_closure() {
+        let (endpoint, shutdown_tx) =
+            start_mock_engine_with_behavior(MockBehavior::PrematureClose).await;
+        let runner = StranglerAgentRunner::new(endpoint);
+
+        let mut session = runner
+            .create_session(Box::new(()), "code-agent", None, None)
+            .await
+            .unwrap();
+
+        let (event_tx, _event_rx) = mpsc::channel(32);
+
+        let err = session
+            .turn_streamed_with_steering_state("interrupted prompt", event_tx, None, None)
+            .await
+            .expect_err("turn should fail when stream closes before TurnCompleted");
+
+        assert!(
+            err.error
+                .to_string()
+                .contains("AgentEngine stream closed before TurnCompleted"),
+            "unexpected error message: {}",
+            err.error
+        );
+        assert_eq!(
+            err.committed_response, "Partial output before crash",
+            "partial output should be retained in committed_response"
+        );
+        assert!(
+            err.new_messages.is_empty(),
+            "new_messages should be empty on premature stream closure"
+        );
 
         let _ = shutdown_tx.send(());
     }
