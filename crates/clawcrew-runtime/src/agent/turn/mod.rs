@@ -15,7 +15,6 @@ pub(crate) mod media_degrade;
 pub(crate) mod outcome;
 pub(crate) mod parse_response;
 pub(crate) mod post_exec;
-pub(crate) mod progress;
 pub(crate) mod protocol_detect;
 pub(crate) mod provider_call;
 pub(crate) mod redact;
@@ -80,15 +79,15 @@ use crate::agent::tool_execution::{
 use crate::security::ingress::{IngressPolicy, ingress_policy};
 use crate::util::truncate_with_ellipsis;
 use anyhow::Result;
+use clawcrew_api::agent::TurnEvent;
+use clawcrew_api::channel::Channel;
+use clawcrew_api::ingress::{IngressContext, IngressDecision};
+use clawcrew_providers::{ChatMessage, ModelProvider};
 use std::collections::HashSet;
 use std::io::Write as _;
 use std::sync::Arc;
 use std::time::Instant;
 use tokio_util::sync::CancellationToken;
-use clawcrew_api::agent::TurnEvent;
-use clawcrew_api::channel::Channel;
-use clawcrew_api::ingress::{IngressContext, IngressDecision};
-use clawcrew_providers::{ChatMessage, ModelProvider};
 
 /// Maximum malformed internal tool-protocol retries before returning a safe fallback.
 pub(crate) const MAX_MALFORMED_TOOL_PROTOCOL_RETRIES: usize = 2;
@@ -3255,7 +3254,7 @@ async fn drive_live_sop_actions(
                                             temperature: eff_temperature,
                                         },
                                         ResolvedIo {
-    app_registry: None,
+                                            app_registry: None,
                                             tools_registry: eff_registry,
                                             observer,
                                             silent,
@@ -4726,14 +4725,14 @@ mod trim_budget_tests {
 #[cfg(test)]
 mod active_route_context_tests {
     use super::*;
-    use std::collections::{HashMap, HashSet};
-    use std::sync::Mutex;
     use clawcrew_api::observability_traits::{ObserverEvent, ObserverMetric};
     use clawcrew_config::schema::{
         AliasedAgentConfig, Config, CustomModelProviderConfig, ModelProviderConfig,
         RuntimeProfileConfig,
     };
     use clawcrew_providers::{ChatResponse, traits::TokenUsage};
+    use std::collections::{HashMap, HashSet};
+    use std::sync::Mutex;
 
     #[derive(Default)]
     struct RouteObserver {
@@ -5017,9 +5016,9 @@ mod active_route_context_tests {
             ResolvedAgentExecution, ResolvedIo, ResolvedModelAccess, ResolvedRuntimeKnobs, ToolLoop,
         };
         use axum::{Json, Router, routing::post};
-        use std::sync::atomic::{AtomicUsize, Ordering};
         use clawcrew_api::tool::{Tool, ToolResult};
         use clawcrew_providers::ToolCall;
+        use std::sync::atomic::{AtomicUsize, Ordering};
 
         // Mock vision endpoint: always replies with a small plain-text answer.
         async fn vision_reply(Json(_body): Json<serde_json::Value>) -> Json<serde_json::Value> {
@@ -5228,7 +5227,7 @@ vision_model_provider = "custom.vision"
                     temperature: None,
                 },
                 ResolvedIo {
-    app_registry: None,
+                    app_registry: None,
                     tools_registry: &tools_registry,
                     observer: &observer,
                     silent: true,
@@ -5360,8 +5359,8 @@ mod shared_iteration_budget_tests {
 #[cfg(test)]
 mod sop_step_reassembly_tests {
     use super::*;
-    use std::sync::atomic::{AtomicUsize, Ordering};
     use clawcrew_providers::{ChatResponse, ToolCall};
+    use std::sync::atomic::{AtomicUsize, Ordering};
 
     // ── Gate: pure decision properties ───────────────────────────────────────
 
@@ -6802,10 +6801,10 @@ mod tool_lifecycle_abandonment_tests {
 
     use super::*;
     use crate::observability::NoopObserver;
-    use std::sync::Mutex;
-    use std::time::Duration;
     use clawcrew_api::hook::ToolCallHookContext;
     use clawcrew_providers::{ChatResponse, ToolCall};
+    use std::sync::Mutex;
+    use std::time::Duration;
 
     struct LifecycleRecorder {
         events: Arc<Mutex<Vec<String>>>,

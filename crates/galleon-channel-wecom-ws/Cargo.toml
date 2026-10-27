@@ -5,6 +5,9 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 description = "WeCom WebSocket channel for the Galleon fleet."
+repository.workspace = true
+homepage.workspace = true
+publish = true
 
 [lints]
 workspace = true

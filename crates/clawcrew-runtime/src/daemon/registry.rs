@@ -117,11 +117,6 @@ impl DaemonRegistry {
         self
     }
 
-    #[cfg(test)]
-    pub(crate) fn has_relay_start(&self) -> bool {
-        self.relay_start.is_some()
-    }
-
     pub(crate) fn take_relay_start(&mut self) -> Option<RpcStarter> {
         self.relay_start.take()
     }
@@ -132,11 +127,6 @@ impl DaemonRegistry {
     pub fn register_enroll(&mut self, starter: RpcStarter) -> &mut Self {
         self.enroll_start = Some(starter);
         self
-    }
-
-    #[cfg(test)]
-    pub(crate) fn has_enroll_start(&self) -> bool {
-        self.enroll_start.is_some()
     }
 
     pub(crate) fn take_enroll_start(&mut self) -> Option<RpcStarter> {
