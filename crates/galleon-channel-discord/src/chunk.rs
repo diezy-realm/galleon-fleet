@@ -1,7 +1,7 @@
 //! Outbound message chunking: split agent text into Discord's 2000-character
 //! message limit, with a paragraph- and code-fence-aware multi-message mode.
 //! Also fits a message's embeds to Discord's structural limits (see
-//! [`budget_embeds`]).
+//! `budget_embeds`).
 
 use super::embed::DiscordEmbed;
 use super::types::DISCORD_MAX_MESSAGE_LENGTH;

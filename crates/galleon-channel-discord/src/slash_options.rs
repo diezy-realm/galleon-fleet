@@ -18,7 +18,7 @@ pub enum OptKind {
 }
 
 impl OptKind {
-    /// The Discord wire projection of a canonical [`SlashOptionKind`]. Exhaustive
+    /// The Discord wire projection of a canonical `SlashOptionKind`. Exhaustive
     /// so a new canonical variant forces a wire mapping here rather than silently
     /// dropping.
     pub fn from_kind(kind: clawcrew_api::skill::SlashOptionKind) -> Self {
