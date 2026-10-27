@@ -4,12 +4,12 @@ use crate::cron::{
 };
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
+use clawcrew_config::schema::{Config, CronShellOutputFormat};
 use rusqlite::types::{FromSqlResult, ValueRef};
 use rusqlite::{Connection, OpenFlags, params};
 use std::collections::HashSet;
 use std::sync::{LazyLock, Mutex, OnceLock};
 use uuid::Uuid;
-use clawcrew_config::schema::{Config, CronShellOutputFormat};
 
 const MAX_CRON_OUTPUT_BYTES: usize = 16 * 1024;
 const TRUNCATED_OUTPUT_MARKER: &str = "\n...[truncated]";
@@ -1971,6 +1971,8 @@ fn apply_run_completion_state(
 fn initialize_schema(conn: &Connection) -> Result<()> {
     conn.execute_batch(
         "PRAGMA foreign_keys = ON;
+         PRAGMA journal_mode = WAL;
+         PRAGMA synchronous = NORMAL;
          CREATE TABLE IF NOT EXISTS cron_jobs (
             id               TEXT PRIMARY KEY,
             expression       TEXT NOT NULL,
@@ -2050,8 +2052,8 @@ fn initialize_schema(conn: &Connection) -> Result<()> {
 mod tests {
     use super::*;
     use chrono::Duration as ChronoDuration;
-    use tempfile::TempDir;
     use clawcrew_config::schema::Config;
+    use tempfile::TempDir;
 
     fn test_config(tmp: &TempDir) -> Config {
         let config = Config {
