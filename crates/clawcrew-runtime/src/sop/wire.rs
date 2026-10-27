@@ -3,8 +3,6 @@
 //! draft `Sop`. The graph is a projection; these edits write back to the
 //! source of truth it was projected from.
 
-use serde::{Deserialize, Serialize};
-
 use super::graph::FlowRole;
 use super::step_contract::{StepFailure, SwitchRule};
 use super::types::Sop;
@@ -12,7 +10,6 @@ use super::types::Sop;
 const MAX_SWITCH_PORTS: usize = 256;
 
 pub use clawcrew_sop_graph::{WireEdit, WireError, WireOp};
-
 
 /// Apply one wire edit to a draft SOP, mutating the routing field the edit's
 /// role maps to. Validates both endpoints first; on `Err` the SOP is

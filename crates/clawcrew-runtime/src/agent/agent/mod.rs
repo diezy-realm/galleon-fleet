@@ -1935,46 +1935,6 @@ impl Agent {
         .map_err(|join| anyhow::Error::msg(format!("agent construction task failed: {join}")))?
     }
 
-    /// Build a daemon-backed ACP TUI Agent with access to the shared durable
-    /// session store. The store is a read view for session tools; TUI turns do
-    /// not gain ACP file-delivery authority.
-    pub(crate) async fn from_live_config_with_tui_env_and_acp_sessions(
-        live_config: Arc<parking_lot::RwLock<Config>>,
-        agent_alias: &str,
-        session_cwd: Option<&Path>,
-        initialize_mcp: bool,
-        exclude_memory: bool,
-        tui_env: Option<std::collections::HashMap<String, String>>,
-        sop_engine: Option<Arc<std::sync::Mutex<SopEngine>>>,
-        sop_audit: Option<Arc<SopAuditLogger>>,
-        acp_session_store: Arc<clawcrew_infra::acp_session_store::AcpSessionStore>,
-    ) -> Result<Self> {
-        let handle = tokio::runtime::Handle::current();
-        let agent_alias = agent_alias.to_string();
-        let session_cwd = session_cwd.map(|p| p.to_path_buf());
-        tokio::task::spawn_blocking(move || {
-            let config = live_config.read().clone();
-            handle.block_on(Self::from_config_with_session_cwd_and_mcp_approval_mode(
-                &config,
-                &agent_alias,
-                session_cwd.as_deref(),
-                initialize_mcp,
-                true,
-                exclude_memory,
-                false,
-                tui_env,
-                sop_engine,
-                sop_audit,
-                None,
-                Some(acp_session_store),
-                Some(Arc::clone(&live_config)),
-                Some(live_config),
-            ))
-        })
-        .await
-        .map_err(|join| anyhow::Error::msg(format!("agent construction task failed: {join}")))?
-    }
-
     #[allow(clippy::too_many_arguments)]
     async fn from_config_with_session_cwd_and_mcp_approval_mode(
         config: &Config,

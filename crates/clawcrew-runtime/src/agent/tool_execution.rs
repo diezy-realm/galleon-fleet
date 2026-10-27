@@ -8,9 +8,9 @@ use tokio_util::sync::CancellationToken;
 use crate::approval::ApprovalManager;
 use crate::observability::{Observer, ObserverEvent};
 use crate::tools::{ActivatedToolSet, Tool};
-use tokio::sync::mpsc::Sender;
 use clawcrew_api::agent::{ToolArtifact, TurnEvent};
 use clawcrew_api::attribution::Attributable;
+use tokio::sync::mpsc::Sender;
 
 // Items that still live in `loop_` — import via the parent module.
 use super::loop_::{ParsedToolCall, ToolLoopCancelled, is_tool_loop_cancelled, scrub_credentials};
@@ -66,7 +66,8 @@ pub(crate) fn resolved_tool_provenance(
 pub(crate) struct ToolDispatchContext<'a> {
     pub tools_registry: &'a [Box<dyn Tool>],
     pub activated_tools: Option<&'a std::sync::Arc<std::sync::Mutex<ActivatedToolSet>>>,
-    pub app_registry: Option<&'a std::sync::Arc<std::sync::RwLock<crate::platform::app_registry::AppRegistry>>>,
+    pub app_registry:
+        Option<&'a std::sync::Arc<std::sync::RwLock<crate::platform::app_registry::AppRegistry>>>,
     pub excluded_tools: &'a [String],
     pub model_switch_callback: Option<&'a ModelSwitchCallback>,
 }
@@ -187,6 +188,7 @@ pub(crate) async fn execute_one_tool(
         turn_id: Some(meta.turn_id.to_string()),
     });
     let start = Instant::now();
+    let _ = dispatch.app_registry;
 
     if is_excluded_tool(call_name, dispatch.excluded_tools) {
         return Ok(unavailable_tool_outcome(
@@ -292,11 +294,8 @@ pub(crate) async fn execute_one_tool(
     }
 
     let resolved_policy = ::clawcrew_log::active_resolved_policy();
-    let captured_input = ::clawcrew_log::capture_tool_input(
-        &resolved_policy,
-        call_name,
-        &scrubbed_full_args,
-    );
+    let captured_input =
+        ::clawcrew_log::capture_tool_input(&resolved_policy, call_name, &scrubbed_full_args);
 
     use ::clawcrew_log::Instrument;
     let tool_span = ::clawcrew_log::info_span!(
@@ -386,14 +385,16 @@ pub(crate) async fn execute_one_tool(
                         success_attrs["input"] = ::serde_json::Value::String(cap.text.clone());
                         if cap.truncated {
                             success_attrs["input_truncated"] = ::serde_json::Value::Bool(true);
-                            success_attrs["input_original_bytes"] = ::serde_json::Value::from(cap.original_bytes);
+                            success_attrs["input_original_bytes"] =
+                                ::serde_json::Value::from(cap.original_bytes);
                         }
                     }
                     if let Some(ref cap) = captured_output {
                         success_attrs["output"] = ::serde_json::Value::String(cap.text.clone());
                         if cap.truncated {
                             success_attrs["output_truncated"] = ::serde_json::Value::Bool(true);
-                            success_attrs["output_original_bytes"] = ::serde_json::Value::from(cap.original_bytes);
+                            success_attrs["output_original_bytes"] =
+                                ::serde_json::Value::from(cap.original_bytes);
                         }
                     }
                     ::clawcrew_log::record!(
@@ -409,7 +410,11 @@ pub(crate) async fn execute_one_tool(
                         format!("tool result: {call_name}")
                     );
                 } else {
-                    let scrubbed_err = r.error.as_deref().map(scrub_credentials).unwrap_or_default();
+                    let scrubbed_err = r
+                        .error
+                        .as_deref()
+                        .map(scrub_credentials)
+                        .unwrap_or_default();
                     let mut fail_attrs = ::serde_json::json!({
                         "tool": call_name,
                         "tool_call_id": tool_call_id,
@@ -419,14 +424,16 @@ pub(crate) async fn execute_one_tool(
                         fail_attrs["input"] = ::serde_json::Value::String(cap.text.clone());
                         if cap.truncated {
                             fail_attrs["input_truncated"] = ::serde_json::Value::Bool(true);
-                            fail_attrs["input_original_bytes"] = ::serde_json::Value::from(cap.original_bytes);
+                            fail_attrs["input_original_bytes"] =
+                                ::serde_json::Value::from(cap.original_bytes);
                         }
                     }
                     if let Some(ref cap) = captured_output {
                         fail_attrs["output"] = ::serde_json::Value::String(cap.text.clone());
                         if cap.truncated {
                             fail_attrs["output_truncated"] = ::serde_json::Value::Bool(true);
-                            fail_attrs["output_original_bytes"] = ::serde_json::Value::from(cap.original_bytes);
+                            fail_attrs["output_original_bytes"] =
+                                ::serde_json::Value::from(cap.original_bytes);
                         }
                     }
                     ::clawcrew_log::record!(
@@ -532,7 +539,8 @@ pub(crate) async fn execute_one_tool(
                     err_attrs["input"] = ::serde_json::Value::String(cap.text.clone());
                     if cap.truncated {
                         err_attrs["input_truncated"] = ::serde_json::Value::Bool(true);
-                        err_attrs["input_original_bytes"] = ::serde_json::Value::from(cap.original_bytes);
+                        err_attrs["input_original_bytes"] =
+                            ::serde_json::Value::from(cap.original_bytes);
                     }
                 }
                 ::clawcrew_log::record!(
@@ -723,9 +731,9 @@ mod tests {
     use crate::observability::traits::ObserverMetric;
     use crate::tools::ActivatedToolSet;
     use async_trait::async_trait;
+    use clawcrew_api::tool::Tool;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::{Arc, Mutex};
-    use clawcrew_api::tool::Tool;
 
     /// Minimal tool that records invocations. Used to verify that the
     /// poisoned-lock recovery path still resolves an activated tool and
@@ -1185,7 +1193,7 @@ mod tests {
                 ToolDispatchContext {
                     tools_registry: &tools,
                     activated_tools: None,
-                app_registry: None,
+                    app_registry: None,
                     excluded_tools: &[],
                     model_switch_callback: None,
                 },
@@ -1496,7 +1504,9 @@ mod tests {
     impl Observer for RecordingObserver {
         fn record_event(&self, event: &ObserverEvent) {
             match event {
-                ObserverEvent::ToolCall { result, arguments, .. } => {
+                ObserverEvent::ToolCall {
+                    result, arguments, ..
+                } => {
                     *self.last_result.lock().unwrap() = result.clone();
                     *self.last_args.lock().unwrap() = arguments.clone();
                 }
@@ -1663,7 +1673,10 @@ mod tests {
             fn parameters_schema(&self) -> serde_json::Value {
                 serde_json::json!({"type": "object"})
             }
-            async fn execute(&self, args: serde_json::Value) -> anyhow::Result<crate::tools::ToolResult> {
+            async fn execute(
+                &self,
+                args: serde_json::Value,
+            ) -> anyhow::Result<crate::tools::ToolResult> {
                 let text = args.get("val").and_then(|v| v.as_str()).unwrap_or("");
                 Ok(crate::tools::ToolResult {
                     success: true,
@@ -1716,13 +1729,19 @@ mod tests {
                         if let Some(input_val) = attrs.get("input").and_then(|v| v.as_str()) {
                             assert!(!input_val.contains("sk-1234567890abcdef-super-secret-key"));
                             assert!(input_val.contains("[REDACTED]"));
-                            assert!(input_val.len() <= 40, "input must be truncated to <= 40 bytes");
+                            assert!(
+                                input_val.len() <= 40,
+                                "input must be truncated to <= 40 bytes"
+                            );
                             invoke_found = true;
                         }
                         if let Some(output_val) = attrs.get("output").and_then(|v| v.as_str()) {
                             assert!(!output_val.contains("sk-1234567890abcdef-super-secret-key"));
                             assert!(output_val.contains("[REDACTED]"));
-                            assert!(output_val.len() <= 40, "output must be truncated to <= 40 bytes");
+                            assert!(
+                                output_val.len() <= 40,
+                                "output must be truncated to <= 40 bytes"
+                            );
                             complete_found = true;
                         }
                     }
@@ -1733,8 +1752,14 @@ mod tests {
             }
             tokio::time::sleep(std::time::Duration::from_millis(10)).await;
         }
-        assert!(invoke_found, "Invoke log event must carry redacted and truncated input");
-        assert!(complete_found, "Complete log event must carry redacted and truncated output");
+        assert!(
+            invoke_found,
+            "Invoke log event must carry redacted and truncated input"
+        );
+        assert!(
+            complete_found,
+            "Complete log event must carry redacted and truncated output"
+        );
     }
 
     /// Fake failing tool with a caller-supplied `ToolOutput` and `error`, so a
@@ -1875,7 +1900,7 @@ mod tests {
                 ToolDispatchContext {
                     tools_registry: &tools,
                     activated_tools: None,
-                app_registry: None,
+                    app_registry: None,
                     excluded_tools: &[],
                     model_switch_callback: None,
                 },
@@ -1994,7 +2019,7 @@ mod tests {
                 ToolDispatchContext {
                     tools_registry: &tools,
                     activated_tools: None,
-                app_registry: None,
+                    app_registry: None,
                     excluded_tools: &[],
                     model_switch_callback: None,
                 },
@@ -2110,7 +2135,7 @@ mod tests {
                 ToolDispatchContext {
                     tools_registry: &tools,
                     activated_tools: None,
-                app_registry: None,
+                    app_registry: None,
                     excluded_tools: &[],
                     model_switch_callback: None,
                 },
@@ -2260,8 +2285,8 @@ mod tests {
         use crate::agent::loop_detector::{LoopDetector, LoopDetectorConfig};
         use crate::agent::turn::history_append::append_tool_round_to_history;
         use crate::agent::turn::results_collect::collect_tool_results;
-        use std::collections::HashSet;
         use clawcrew_providers::ChatMessage;
+        use std::collections::HashSet;
 
         let secret = "sk-HISTORY0123456789";
         let tools: Vec<Box<dyn Tool>> = vec![Box::new(ConfigurableFailingTool {
