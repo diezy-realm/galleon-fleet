@@ -7,6 +7,7 @@
 //! package, in, and a live `Channel` backed by a compiled component, out.
 
 #![cfg(feature = "plugins-wasm-cranelift")]
+#![allow(clippy::expect_used, clippy::unwrap_used)]
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -14,7 +15,6 @@ use std::process::Command;
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
-use tempfile::TempDir;
 use clawcrew_api::channel::SendMessage;
 use clawcrew_api::webhook::{PluginWebhookRegistry, RawWebhook, WebhookOutcome};
 use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
@@ -26,6 +26,7 @@ use clawcrew_config::schema::{
 use clawcrew_plugins::PluginCapability;
 use clawcrew_plugins::host::PluginHost;
 use clawcrew_plugins::instance::PluginInstanceScope;
+use tempfile::TempDir;
 
 const MANIFEST: &str =
     "crates/clawcrew-plugins/tests/fixtures/channel-fixture/plugin-manifest.toml";

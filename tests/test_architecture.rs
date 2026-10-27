@@ -3,6 +3,8 @@
 //! invariant is violated. See AGENTS.md §1 ("ABSOLUTE RULE — SINGLE
 //! SOURCE OF TRUTH") for context on why these gates exist.
 
+#![allow(clippy::expect_used, clippy::unwrap_used)]
+
 #[path = "architecture/no_duplicate_state.rs"]
 mod no_duplicate_state;
 
