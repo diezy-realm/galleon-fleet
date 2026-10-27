@@ -12,6 +12,7 @@ import (
 	appErrors "github.com/diezy-realm/galleon-fleet/engine/core/errors"
 	"github.com/diezy-realm/galleon-fleet/engine/core/logger"
 	"github.com/diezy-realm/galleon-fleet/engine/core/metrics"
+	domainCrew "github.com/diezy-realm/galleon-fleet/engine/domain/crew"
 	"github.com/diezy-realm/galleon-fleet/engine/pkg/client"
 	"github.com/diezy-realm/galleon-fleet/engine/pkg/pb"
 )
@@ -21,6 +22,8 @@ type service struct {
 	activeTurns     map[string]context.CancelFunc
 	dispatcher      ToolDispatcher
 	gateway         client.SystemGatewayClient
+	resolver        domainCrew.ContextResolver
+	tokenCounter    domainCrew.TokenCounter
 	activeSubagents int
 	maxSubagents    int
 }
@@ -30,10 +33,13 @@ func NewService(
 	dispatcher ToolDispatcher,
 	gateway client.SystemGatewayClient,
 ) Orchestrator {
+	tokenCounter := domainCrew.NewStandardTokenCounter()
 	return &service{
 		activeTurns:  make(map[string]context.CancelFunc),
 		dispatcher:   dispatcher,
 		gateway:      gateway,
+		resolver:     domainCrew.NewContextResolver(tokenCounter),
+		tokenCounter: tokenCounter,
 		maxSubagents: 4, // Default sub-agent concurrency ceiling (BG-D1 / BL-18)
 	}
 }
@@ -88,25 +94,48 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 		slog.String("agent_id", metricAgent),
 	)
 
-	// 1. Prepare protobuf ExecuteTurnRequest for Rust SystemGateway
+	// 1. Resolve prompt context and tool definitions via domain engine
+	var availableTools []domainCrew.ToolDefinition
+	if s.dispatcher != nil {
+		for _, t := range s.dispatcher.GetAvailableTools() {
+			paramBytes, _ := json.Marshal(t.Parameters)
+			availableTools = append(availableTools, domainCrew.ToolDefinition{
+				Name:           t.Name,
+				Description:    t.Description,
+				ParametersJSON: string(paramBytes),
+			})
+		}
+	}
+
+	resolved, err := s.resolver.ResolveContext(turnCtx, &domainCrew.TurnRequest{
+		SessionID:     req.SessionID,
+		AgentID:       req.AgentID,
+		Prompt:        req.Prompt,
+		ContextWindow: req.ContextWindow,
+	}, availableTools)
+	if err != nil {
+		return appErrors.Wrap(err, appErrors.CodeInternal, "failed to resolve prompt context", appErrors.LayerService)
+	}
+
 	protoReq := &pb.ExecuteTurnRequest{
-		SessionId: req.SessionID,
-		Messages: []*pb.TurnChatMessage{
-			{Role: "user", Content: req.Prompt},
-		},
+		SessionId:    req.SessionID,
+		SystemPrompt: resolved.SystemPrompt,
 	}
 	if agentID != "" {
 		protoReq.AgentAlias = &agentID
 	}
-	if s.dispatcher != nil {
-		for _, t := range s.dispatcher.GetAvailableTools() {
-			paramBytes, _ := json.Marshal(t.Parameters)
-			protoReq.Tools = append(protoReq.Tools, &pb.TurnToolDefinition{
-				Name:           t.Name,
-				Description:    t.Description,
-				ParametersJson: string(paramBytes),
-			})
-		}
+	for _, m := range resolved.Messages {
+		protoReq.Messages = append(protoReq.Messages, &pb.TurnChatMessage{
+			Role:    m.Role,
+			Content: m.Content,
+		})
+	}
+	for _, t := range resolved.Tools {
+		protoReq.Tools = append(protoReq.Tools, &pb.TurnToolDefinition{
+			Name:           t.Name,
+			Description:    t.Description,
+			ParametersJson: t.ParametersJSON,
+		})
 	}
 
 	// 2. Concurrently invoke Rust SystemGateway ExecuteTurn stream (Rust LLM SSOT)
@@ -190,14 +219,16 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 					// BG-D1 / BL-18: Subagent resource-gate (cap active concurrent sub-agents)
 					// Must be checked BEFORE subagentWg.Add(1) and goroutine spawn!
 					s.mu.Lock()
-					if s.maxSubagents > 0 && s.activeSubagents >= s.maxSubagents {
+					currActive := s.activeSubagents
+					maxSub := s.maxSubagents
+					if maxSub > 0 && currActive >= maxSub {
 						s.mu.Unlock()
 						select {
 						case <-turnCtx.Done():
 							return appErrors.New(appErrors.CodeTimeout, "turn cancelled or timed out", appErrors.LayerService)
 						case eventCh <- &TurnEvent{
 							Type:       EventToolCallFinished,
-							Content:    fmt.Sprintf("Resource gate rejection: maximum concurrent sub-agents reached (%d/%d)", s.activeSubagents, s.maxSubagents),
+							Content:    fmt.Sprintf("Resource gate rejection: maximum concurrent sub-agents reached (%d/%d)", currActive, maxSub),
 							SubagentID: res.SubagentID,
 						}:
 						}
@@ -245,7 +276,12 @@ func (s *service) StartTurn(ctx context.Context, req *TurnRequest, eventCh chan<
 			return appErrors.New(appErrors.CodeInternal, ev.Error.Message, appErrors.LayerService)
 
 		case *pb.TurnToken_Complete:
-			// Turn generation complete
+			// Turn generation complete: reconcile and record Prometheus token usage
+			if ev.Complete != nil {
+				c := ev.Complete
+				metrics.LLMTokenUsage.WithLabelValues("galleon-runtime", "system", "prompt").Add(float64(c.PromptTokens))
+				metrics.LLMTokenUsage.WithLabelValues("galleon-runtime", "system", "completion").Add(float64(c.CompletionTokens))
+			}
 		}
 	}
 
@@ -327,10 +363,12 @@ func (s *service) CancelTurn(ctx context.Context, sessionID string) error {
 // with the resource-gate check inherited from BG-D1 (BG-D4 / eks-BL-18 part 2).
 func (s *service) HandoffSubagent(ctx context.Context, req *HandoffRequest, eventCh chan<- *TurnEvent) error {
 	s.mu.Lock()
-	if s.maxSubagents > 0 && s.activeSubagents >= s.maxSubagents {
+	currActive := s.activeSubagents
+	maxSub := s.maxSubagents
+	if maxSub > 0 && currActive >= maxSub {
 		s.mu.Unlock()
 		return appErrors.New(appErrors.CodeFailedPrecondition,
-			fmt.Sprintf("resource gate rejection: maximum concurrent sub-agents reached (%d/%d)", s.activeSubagents, s.maxSubagents),
+			fmt.Sprintf("resource gate rejection: maximum concurrent sub-agents reached (%d/%d)", currActive, maxSub),
 			appErrors.LayerService)
 	}
 	s.activeSubagents++
