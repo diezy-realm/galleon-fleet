@@ -53,6 +53,7 @@ pub mod security_headers;
 pub mod session_queue;
 pub mod sse;
 pub mod static_files;
+pub mod strangler_runner;
 pub mod tls;
 pub mod version;
 #[cfg(feature = "gateway-voice-duplex")]
@@ -127,6 +128,9 @@ pub use rate_limit::{
     IDEMPOTENCY_MAX_KEYS_DEFAULT, RATE_LIMIT_MAX_KEYS_DEFAULT, RATE_LIMIT_WINDOW_SECS,
 };
 pub use state::{AppState, GatewaySupervision};
+pub use strangler_runner::{
+    StranglerAgentRunner, StranglerAgentSession, install_strangler_agent_runner,
+};
 
 // Types from other modules that extracted files need
 pub use clawcrew_api::memory_traits::MemoryStrategy;
