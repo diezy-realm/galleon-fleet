@@ -87,8 +87,8 @@ impl SlidingWindowRateLimiter {
 /// Rate limiter with separate pair and webhook limiters
 #[derive(Debug)]
 pub struct GatewayRateLimiter {
-    pair: SlidingWindowRateLimiter,
-    webhook: SlidingWindowRateLimiter,
+    pub(crate) pair: SlidingWindowRateLimiter,
+    pub(crate) webhook: SlidingWindowRateLimiter,
 }
 
 impl GatewayRateLimiter {
@@ -114,21 +114,21 @@ impl GatewayRateLimiter {
 pub struct IdempotencyStore {
     ttl: Duration,
     max_keys: usize,
-    entries: Mutex<IdempotencyEntries>,
+    pub(crate) entries: Mutex<IdempotencyEntries>,
     #[cfg(feature = "plugins-wasm")]
     next_generation: std::sync::atomic::AtomicU64,
 }
 
 #[derive(Debug, Default)]
-struct IdempotencyEntries {
-    committed: HashMap<String, Instant>,
+pub(crate) struct IdempotencyEntries {
+    pub(crate) committed: HashMap<String, Instant>,
     #[cfg(feature = "plugins-wasm")]
-    pending: HashMap<String, PendingIdempotencyReservation>,
+    pub(crate) pending: HashMap<String, PendingIdempotencyReservation>,
 }
 
 #[cfg(feature = "plugins-wasm")]
 #[derive(Debug)]
-struct PendingIdempotencyReservation {
+pub(crate) struct PendingIdempotencyReservation {
     generation: u64,
     status: tokio::sync::watch::Sender<clawcrew_api::webhook::WebhookReservationStatus>,
 }
@@ -180,6 +180,101 @@ impl IdempotencyStore {
         }
 
         entries.committed.insert(key.to_owned(), now);
+        true
+    }
+
+    #[cfg(feature = "plugins-wasm")]
+    pub(crate) fn begin_reservation(&self, key: &str) -> clawcrew_api::webhook::WebhookReservation {
+        use clawcrew_api::webhook::{
+            WebhookReservation, WebhookReservationStatus, WebhookReservationToken,
+            WebhookReservationWaiter,
+        };
+
+        let now = Instant::now();
+        let mut entries = self.entries.lock();
+        entries
+            .committed
+            .retain(|_, seen_at| now.duration_since(*seen_at) < self.ttl);
+        if entries.committed.contains_key(key) {
+            return WebhookReservation::Committed;
+        }
+        if let Some(pending) = entries.pending.get(key) {
+            return WebhookReservation::InFlight(WebhookReservationWaiter::new(
+                pending.status.subscribe(),
+            ));
+        }
+
+        if entries.pending.len() >= self.max_keys {
+            return WebhookReservation::Unavailable;
+        }
+
+        let generation = self
+            .next_generation
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let (status, _) = tokio::sync::watch::channel(WebhookReservationStatus::InFlight);
+        entries.pending.insert(
+            key.to_string(),
+            PendingIdempotencyReservation { generation, status },
+        );
+        WebhookReservation::Owner(WebhookReservationToken::new(key.to_string(), generation))
+    }
+
+    #[cfg(feature = "plugins-wasm")]
+    pub(crate) fn commit_reservation(
+        &self,
+        token: &clawcrew_api::webhook::WebhookReservationToken,
+    ) -> bool {
+        let mut entries = self.entries.lock();
+        if entries
+            .pending
+            .get(token.key())
+            .is_none_or(|pending| pending.generation != token.generation())
+        {
+            return false;
+        }
+        let Some(pending) = entries.pending.remove(token.key()) else {
+            return false;
+        };
+        pending
+            .status
+            .send_replace(clawcrew_api::webhook::WebhookReservationStatus::Committed);
+        let now = Instant::now();
+        entries
+            .committed
+            .retain(|_, seen_at| now.duration_since(*seen_at) < self.ttl);
+        if entries.committed.len() >= self.max_keys {
+            let evict_key = entries
+                .committed
+                .iter()
+                .min_by_key(|(_, seen_at)| *seen_at)
+                .map(|(key, _)| key.clone());
+            if let Some(evict_key) = evict_key {
+                entries.committed.remove(&evict_key);
+            }
+        }
+        entries.committed.insert(token.key().to_string(), now);
+        true
+    }
+
+    #[cfg(feature = "plugins-wasm")]
+    pub(crate) fn rollback_reservation(
+        &self,
+        token: &clawcrew_api::webhook::WebhookReservationToken,
+    ) -> bool {
+        let mut entries = self.entries.lock();
+        if entries
+            .pending
+            .get(token.key())
+            .is_none_or(|pending| pending.generation != token.generation())
+        {
+            return false;
+        }
+        let Some(pending) = entries.pending.remove(token.key()) else {
+            return false;
+        };
+        pending
+            .status
+            .send_replace(clawcrew_api::webhook::WebhookReservationStatus::RolledBack);
         true
     }
 }

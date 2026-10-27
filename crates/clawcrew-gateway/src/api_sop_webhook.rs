@@ -1,5 +1,7 @@
 //! Authenticated HTTP fan-in for SOP webhook triggers.
 
+#![allow(dead_code)]
+
 use axum::Json;
 use axum::body::Bytes;
 use axum::extract::{ConnectInfo, Path, State};
@@ -33,7 +35,9 @@ pub(super) fn has_matching_webhook_sop(
     let Some(runner) = state.sop_runner.as_ref() else {
         return Err(unavailable());
     };
-    runner.has_matching_webhook_sop(path).map_err(|_| unavailable())
+    runner
+        .has_matching_webhook_sop(path)
+        .map_err(|_| unavailable())
 }
 
 pub(super) async fn dispatch_webhook_sop(

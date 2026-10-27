@@ -1323,7 +1323,12 @@ fn reconcile_spawned_daemon_identity(
     Ok(false)
 }
 
-#[cfg(unix)]
+// Only exercised by the signal-cleanup tests below — the production shutdown
+// path relies on `SpawnedDaemon::drop` to reap the child, so this helper has
+// no non-test caller. `#[cfg(test)]` matches reality: without it, a
+// production build (`cargo check --no-default-features`) correctly flags it
+// as dead code.
+#[cfg(all(unix, test))]
 fn cleanup_spawned_daemon_after_signal(daemon: &mut SpawnedDaemon) -> anyhow::Result<()> {
     daemon
         .terminate_and_wait()

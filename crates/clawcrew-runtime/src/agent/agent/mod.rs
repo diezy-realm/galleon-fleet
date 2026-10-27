@@ -1938,7 +1938,7 @@ impl Agent {
     /// Build a daemon-backed ACP TUI Agent with access to the shared durable
     /// session store. The store is a read view for session tools; TUI turns do
     /// not gain ACP file-delivery authority.
-    pub(crate) async fn from_live_config_with_tui_env_and_acp_sessions(
+    pub async fn from_live_config_with_tui_env_and_acp_sessions(
         live_config: Arc<parking_lot::RwLock<Config>>,
         agent_alias: &str,
         session_cwd: Option<&Path>,
@@ -4281,7 +4281,7 @@ impl clawcrew_api::agent::AgentRunner for RuntimeAgentRunner {
     ) -> anyhow::Result<Box<dyn clawcrew_api::agent::AgentSession>> {
         let config_arc = config
             .downcast::<std::sync::Arc<parking_lot::RwLock<Config>>>()
-            .map_err(|_| anyhow::anyhow!("invalid config type for create_session"))?;
+            .map_err(|_| anyhow::Error::msg("invalid config type for create_session"))?;
         let canvas = match canvas_store {
             Some(cs) => {
                 if cs.is::<Option<tools::CanvasStore>>() {
@@ -4291,7 +4291,7 @@ impl clawcrew_api::agent::AgentRunner for RuntimeAgentRunner {
                 } else if cs.is::<tools::CanvasStore>() {
                     cs.downcast::<tools::CanvasStore>().ok().map(|b| *b)
                 } else {
-                    return Err(anyhow::anyhow!("invalid canvas_store type"));
+                    anyhow::bail!("invalid canvas_store type");
                 }
             }
             None => None,
@@ -4321,7 +4321,7 @@ impl clawcrew_api::agent::AgentRunner for RuntimeAgentRunner {
     ) -> anyhow::Result<String> {
         let cfg = config
             .downcast::<Config>()
-            .map_err(|_| anyhow::anyhow!("invalid config type for process_message"))?;
+            .map_err(|_| anyhow::Error::msg("invalid config type for process_message"))?;
         crate::agent::loop_::process_message(*cfg, agent_alias, message, session_id, origin).await
     }
 }

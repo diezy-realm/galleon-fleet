@@ -274,6 +274,7 @@ impl CronStore {
         Ok(runs)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn add_agent_job(
         &self,
         agent_alias: &str,

@@ -20,10 +20,11 @@ pub enum SessionState {
 }
 
 /// Classification of a session by its owning surface (P0.3).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum SessionType {
     /// Interactive user/agent session.
+    #[default]
     User,
     /// Cron-triggered session.
     Cron,
@@ -31,12 +32,6 @@ pub enum SessionType {
     Subagent,
     /// TaskRunner workflow session.
     Workflow,
-}
-
-impl Default for SessionType {
-    fn default() -> Self {
-        Self::User
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -491,6 +491,7 @@ pub(crate) fn format_location_content(lat: f64, lng: f64, name: Option<&str>) ->
     feature = "whatsapp-web",
     test
 ))]
+#[allow(dead_code)]
 pub(crate) fn new_approval_token() -> String {
     use rand::RngExt;
     const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
@@ -547,6 +548,7 @@ pub fn parse_approval_reply(
     feature = "whatsapp-web",
     test
 ))]
+#[allow(dead_code)]
 pub(crate) fn build_yesno_approval_prompt(
     token: &str,
     tool_name: &str,
@@ -590,6 +592,7 @@ pub(crate) fn build_yesno_approval_prompt(
     feature = "channel-lark",
     test
 ))]
+#[allow(dead_code)]
 pub(crate) fn approval_position_line(position: Option<(u32, u32)>) -> String {
     match position {
         // `1 of 1` tells the operator nothing they did not already know. The
@@ -612,7 +615,7 @@ pub(crate) fn approval_position_line(position: Option<(u32, u32)>) -> String {
 /// Localized text-reply approval prompt using approve/deny/always reply
 /// keywords: Matrix's own reply parser (distinct from
 /// [`parse_approval_reply`]) expects this shape.
-#[cfg(any(feature = "channel-matrix", test))]
+#[cfg(test)]
 pub(crate) fn build_approve_deny_approval_prompt(
     token: &str,
     tool_name: &str,
@@ -682,6 +685,7 @@ pub fn conversation_history_key(msg: &clawcrew_api::channel::ChannelMessage) -> 
     feature = "channel-wechat",
     feature = "channel-wecom"
 ))]
+#[allow(dead_code)]
 pub(crate) async fn ensure_success(
     resp: reqwest::Response,
     what: &str,

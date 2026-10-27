@@ -1,20 +1,17 @@
 use async_trait::async_trait;
+use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 use serde_json::json;
 use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
 const TWITTER_API_BASE: &str = "https://api.x.com/2";
 
-/// X/Twitter channel — uses the Twitter API v2 with OAuth 2.0 Bearer Token
-/// for sending tweets/DMs and filtered stream for receiving mentions.
+// X/Twitter channel — uses the Twitter API v2 with OAuth 2.0 Bearer Token
+// for sending tweets/DMs and filtered stream for receiving mentions.
 
-async fn ensure_success(
-    resp: reqwest::Response,
-    what: &str,
-) -> anyhow::Result<reqwest::Response> {
+async fn ensure_success(resp: reqwest::Response, what: &str) -> anyhow::Result<reqwest::Response> {
     if resp.status().is_success() {
         return Ok(resp);
     }
@@ -415,7 +412,15 @@ impl Channel for TwitterChannel {
                         continue;
                     }
                     let err = resp.text().await.unwrap_or_default();
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", err), "status": status.to_string()})), "mentions request failed");
+                    ::clawcrew_log::record!(
+                        WARN,
+                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_attrs(
+                                ::serde_json::json!({"error": err, "status": status.to_string()})
+                            ),
+                        "mentions request failed"
+                    );
                 }
                 Err(e) => {
                     ::clawcrew_log::record!(

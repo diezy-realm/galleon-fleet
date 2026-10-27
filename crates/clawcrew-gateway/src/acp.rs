@@ -61,13 +61,11 @@ async fn handle_socket(socket: WebSocket, state: AppState, default_agent: Option
     let (input_tx, input_rx) = mpsc::channel::<String>(256);
     let (output_tx, mut output_rx) = mpsc::channel::<String>(256);
 
-    let server_task = if let Some(runner) = state.acp_runner.clone() {
-        Some(clawcrew_spawn::spawn!(async move {
+    let server_task = state.acp_runner.clone().map(|runner| {
+        clawcrew_spawn::spawn!(async move {
             runner.run_session(input_rx, output_tx, default_agent).await;
-        }))
-    } else {
-        None
-    };
+        })
+    });
 
     let output_task = clawcrew_spawn::spawn!(async move {
         while let Some(line) = output_rx.recv().await {

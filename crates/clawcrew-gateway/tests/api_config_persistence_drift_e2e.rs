@@ -260,7 +260,8 @@ async fn test_api_config_external_modification_live_drift_detection() {
     let base_url = format!("http://{local_addr}");
 
     // Sebelum modifikasi eksternal: verifikasi drift adalah 0 (tidak ada pergeseran)
-    let initial_drift: ConfigDriftSummary = try_compute_drift(&state.config.read())
+    let cfg = state.config.read().clone();
+    let initial_drift: ConfigDriftSummary = try_compute_drift(&cfg)
         .await
         .expect("try_compute_drift must succeed");
     assert!(
@@ -280,7 +281,8 @@ async fn test_api_config_external_modification_live_drift_detection() {
         .expect("write external modification directly to physical disk");
 
     // Panggil fungsi try_compute_drift, dan verifikasi ringkasan drift (ConfigDriftSummary)
-    let drift_summary: ConfigDriftSummary = try_compute_drift(&state.config.read())
+    let cfg_after_edit = state.config.read().clone();
+    let drift_summary: ConfigDriftSummary = try_compute_drift(&cfg_after_edit)
         .await
         .expect("try_compute_drift after external edit");
 
@@ -377,7 +379,8 @@ async fn test_api_config_external_modification_live_drift_detection() {
     assert_eq!(state.config.read().gateway.port, 9999);
 
     // 3. Drift sekarang bersih (0 pergeseran)
-    let post_override_drift: ConfigDriftSummary = try_compute_drift(&state.config.read())
+    let post_override_cfg = state.config.read().clone();
+    let post_override_drift: ConfigDriftSummary = try_compute_drift(&post_override_cfg)
         .await
         .expect("compute drift after override");
     assert!(

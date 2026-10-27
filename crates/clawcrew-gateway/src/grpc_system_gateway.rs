@@ -1505,8 +1505,10 @@ mod tests {
     async fn test_execute_turn_with_valid_agent_alias() -> Result<(), Box<dyn std::error::Error>> {
         use futures_util::StreamExt;
         let mut config = clawcrew_config::schema::Config::default();
-        let mut agent = clawcrew_config::schema::AliasedAgentConfig::default();
-        agent.model_provider = "anthropic.claude-3-5-sonnet".into();
+        let agent = clawcrew_config::schema::AliasedAgentConfig {
+            model_provider: "anthropic.claude-3-5-sonnet".into(),
+            ..Default::default()
+        };
         config.agents.insert("navigator".to_string(), agent);
 
         let svc = SystemGatewayService::new(None).with_config(std::sync::Arc::new(config));

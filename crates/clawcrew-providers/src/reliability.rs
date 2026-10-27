@@ -73,10 +73,10 @@ impl ProviderHealthRecord {
     }
 
     pub fn is_in_cooldown(&self) -> bool {
-        if let Some(ref until_str) = self.in_cooldown_until {
-            if let Ok(until_time) = chrono::DateTime::parse_from_rfc3339(until_str) {
-                return chrono::Utc::now() < until_time.with_timezone(&chrono::Utc);
-            }
+        if let Some(ref until_str) = self.in_cooldown_until
+            && let Ok(until_time) = chrono::DateTime::parse_from_rfc3339(until_str)
+        {
+            return chrono::Utc::now() < until_time.with_timezone(&chrono::Utc);
         }
         false
     }

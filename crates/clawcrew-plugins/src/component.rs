@@ -394,15 +394,14 @@ impl PluginState {
     }
 
     /// Whether this plugin instance is granted permission to read files (BL-23).
-    pub(crate) fn file_read_enabled(&self) -> bool {
+    pub fn file_read_enabled(&self) -> bool {
         self.scope.grants().allows(PluginPermission::FileRead)
     }
 
     /// Whether this plugin instance is granted permission to write files (BL-23).
-    pub(crate) fn file_write_enabled(&self) -> bool {
+    pub fn file_write_enabled(&self) -> bool {
         self.scope.grants().allows(PluginPermission::FileWrite)
     }
-
 
     /// The inbound queue this plugin drains. Host code holds a clone to enqueue.
     pub(crate) fn inbound(&self) -> &InboundQueue {
@@ -1144,7 +1143,6 @@ mod tests {
             "FileWrite must be true when granted"
         );
     }
-
 
     #[test]
     fn grant_does_not_enable_http_without_adapter_opt_in() {

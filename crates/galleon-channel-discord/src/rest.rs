@@ -1,5 +1,5 @@
 //! Outbound Discord REST: turn a message (content + future embeds/components,
-//! via [`DiscordOutgoing`]) plus optional files into an HTTP request and parse
+//! via `DiscordOutgoing`) plus optional files into an HTTP request and parse
 //! the response. Channel-message + reaction-URL builders only — interaction
 //! callbacks (defer/reject/followup) live in `interaction`.
 

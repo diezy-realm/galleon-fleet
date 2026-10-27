@@ -60,10 +60,11 @@ pub enum TaskStatus {
 /// Version of the persisted generic task status contract.
 pub const TASK_STATUS_CONTRACT_VERSION: u16 = 1;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RecoveryOutcome {
     /// The task was registered during the current process lifetime.
+    #[default]
     Fresh,
     /// An existing task was claimed by a successor owner after restart.
     Resumed,
@@ -71,12 +72,6 @@ pub enum RecoveryOutcome {
     Lost,
     /// Recovery cannot safely determine whether external work was completed.
     NeedsReview,
-}
-
-impl Default for RecoveryOutcome {
-    fn default() -> Self {
-        Self::Fresh
-    }
 }
 
 impl TaskStatus {
@@ -95,21 +90,16 @@ impl TaskStatus {
 }
 
 /// The state of a cancellation request against a task.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CancellationState {
     /// No cancellation requested.
+    #[default]
     None,
     /// Cancellation requested by an operator or parent task.
     Requested,
     /// Cancellation request acknowledged by the task loop.
     Acknowledged,
-}
-
-impl Default for CancellationState {
-    fn default() -> Self {
-        CancellationState::None
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

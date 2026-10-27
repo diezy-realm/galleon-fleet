@@ -9,7 +9,7 @@
 //!
 //! ## Seam closed by `galleon-channel-core`
 //!
-//! * **Allowlist policy.** [`IMessageChannel::is_contact_allowed`] calls
+//! * **Allowlist policy.** `IMessageChannel::is_contact_allowed` calls
 //!   [`galleon_channel_core::allowlist::is_user_allowed`], the same
 //!   `clawcrew_config::schema` peer-policy SSOT upstream uses — reused, not
 //!   reimplemented.
@@ -19,11 +19,11 @@
 //! helpers below is unchanged from upstream.
 
 use async_trait::async_trait;
+use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 use directories::UserDirs;
 use rusqlite::{Connection, OpenFlags};
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
 fn extract_text_from_attributed_body(blob: &[u8]) -> Option<String> {
     // Find the start-of-text marker: [0x01, 0x2B]

@@ -71,6 +71,7 @@ pub fn list_runs(config: &Config, id: &str, limit: usize) -> anyhow::Result<Vec<
     store.list_runs(id, limit)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn add_agent_job(
     config: &Config,
     agent_alias: &str,
@@ -116,7 +117,7 @@ pub fn add_shell_job_with_approval_and_format(
     let dialect = clawcrew_api::runtime_traits::ShellDialect::Posix;
     security
         .validate_command_execution_for_shell(command, approved, dialect)
-        .map_err(|reason| anyhow::anyhow!("blocked by security policy: {reason}"))?;
+        .map_err(|reason| anyhow::Error::msg(format!("blocked by security policy: {reason}")))?;
     validate_delivery_config(delivery.as_ref())?;
     let store = CronStore::new(&config.data_dir)?;
     store.add_shell_job(
@@ -170,7 +171,9 @@ pub fn update_shell_job_with_approval(
         let dialect = clawcrew_api::runtime_traits::ShellDialect::Posix;
         security
             .validate_command_execution_for_shell(command, approved, dialect)
-            .map_err(|reason| anyhow::anyhow!("blocked by security policy: {reason}"))?;
+            .map_err(|reason| {
+                anyhow::Error::msg(format!("blocked by security policy: {reason}"))
+            })?;
     }
     store.update_job(job_id, patch)
 }
@@ -347,7 +350,9 @@ pub fn sync_declarative_jobs(
                 let dt = chrono::DateTime::parse_from_rfc3339(at)
                     .map(|dt| dt.with_timezone(&chrono::Utc))
                     .map_err(|e| {
-                        anyhow::anyhow!("Invalid RFC 3339 timestamp in declarative job '{id}': {e}")
+                        anyhow::Error::msg(format!(
+                            "Invalid RFC 3339 timestamp in declarative job '{id}': {e}"
+                        ))
                     })?;
                 Schedule::At { at: dt }
             }
@@ -376,7 +381,7 @@ pub fn sync_declarative_jobs(
         let allowed_tools_json = decl
             .allowed_tools
             .as_ref()
-            .map(|t| serde_json::to_string(t))
+            .map(serde_json::to_string)
             .transpose()?;
         let command = decl.command.as_deref().unwrap_or("");
         let delete_after_run = matches!(decl.schedule, CronScheduleDecl::At { .. });

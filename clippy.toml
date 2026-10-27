@@ -12,6 +12,10 @@ too-many-lines-threshold = 200
 # Keep linting enabled while reducing false positives from those cases.
 array-size-threshold = 65536
 
+# Allow unwrap and expect in tests and test harnesses.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+
 # Hard ban on direct tracing/log/print log-event macros workspace-wide.
 # Every log emission goes through `::clawcrew_log::record!` so events
 # carry the structured `zc_*` shape, the alias-bound attribution span

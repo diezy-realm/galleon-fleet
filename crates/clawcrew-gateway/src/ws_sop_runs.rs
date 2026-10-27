@@ -18,7 +18,6 @@ use axum::{
     response::IntoResponse,
 };
 use futures_util::{SinkExt, StreamExt};
-use clawcrew_api::sop::SopRunSummary;
 
 const WS_PROTOCOL: &str = "clawcrew.v1";
 

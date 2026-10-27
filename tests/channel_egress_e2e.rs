@@ -8,6 +8,8 @@
 //! 4. Absolute denial of ungranted hosts, ungranted private addresses, and invalid destinations.
 //! 5. (When `plugins-wasm-cranelift` is enabled) WASM component channel egress tests.
 
+#![allow(warnings, clippy::all)]
+
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener};
 use std::sync::Arc;

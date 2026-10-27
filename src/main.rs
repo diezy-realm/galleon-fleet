@@ -30,6 +30,10 @@
     clippy::unnecessary_literal_bound,
     clippy::unnecessary_map_or,
     clippy::unnecessary_wraps,
+    clippy::wildcard_imports,
+    clippy::expect_used,
+    clippy::semicolon_if_nothing_returned,
+    clippy::unnecessary_semicolon,
     unused_variables,
     unused_imports
 )]
@@ -3828,7 +3832,10 @@ fn main() -> Result<()> {
     {
         // SAFETY: this synchronous bootstrap runs before the Tokio runtime (and
         // therefore its worker threads) is constructed.
-        unsafe { std::env::set_var("CLAWCREW_CONFIG_DIR", config_dir) };
+        #[allow(unsafe_code)]
+        unsafe {
+            std::env::set_var("CLAWCREW_CONFIG_DIR", config_dir)
+        };
     }
 
     async_main(command)

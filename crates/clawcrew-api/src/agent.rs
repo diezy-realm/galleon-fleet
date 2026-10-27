@@ -424,8 +424,9 @@ pub async fn process_message(
     session_id: Option<&str>,
     origin: crate::ingress::TurnOrigin,
 ) -> anyhow::Result<String> {
-    let runner =
-        get_agent_runner().ok_or_else(|| anyhow::anyhow!("agent runner not registered"))?;
+    let Some(runner) = get_agent_runner() else {
+        anyhow::bail!("agent runner not registered");
+    };
     runner
         .process_message(config, agent_alias, message, session_id, origin)
         .await
@@ -441,8 +442,9 @@ where
     C: std::any::Any + Send + Sync + 'static,
     S: std::any::Any + Send + Sync + 'static,
 {
-    let runner =
-        get_agent_runner().ok_or_else(|| anyhow::anyhow!("agent runner not registered"))?;
+    let Some(runner) = get_agent_runner() else {
+        anyhow::bail!("agent runner not registered");
+    };
     let canvas_box = canvas_store.map(|s| Box::new(s) as Box<dyn std::any::Any + Send + Sync>);
     runner
         .create_session(Box::new(config), agent_alias, session_cwd, canvas_box)

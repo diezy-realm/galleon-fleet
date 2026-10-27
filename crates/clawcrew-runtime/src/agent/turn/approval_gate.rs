@@ -273,7 +273,6 @@ mod tests {
     use clawcrew_api::channel::{
         Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
     };
-    use clawcrew_api::jsonrpc::RpcOutbound;
     use clawcrew_config::schema::{PacingConfig, RiskProfileConfig, StreamReasoningMode};
     use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};

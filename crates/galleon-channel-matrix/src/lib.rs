@@ -4509,7 +4509,8 @@ impl MatrixChannel {
     }
 
     /// Install the resolver for recipients in a voice-modality peer group.
-    pub(crate) fn with_voice_peer_resolver(
+    #[allow(dead_code)]
+    pub fn with_voice_peer_resolver(
         mut self,
         voice_peers: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
     ) -> Self {

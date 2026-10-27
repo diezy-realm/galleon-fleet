@@ -136,11 +136,17 @@ pub use clawcrew_tools::canvas::CanvasStore;
 
 use axum::Json;
 use axum::Router;
+#[allow(unused_imports)]
 use axum::body::Bytes;
+#[allow(unused_imports)]
 use axum::extract::{Path, Query, State};
 use axum::http::{HeaderMap, StatusCode, header};
+#[allow(unused_imports)]
 use axum::response::{IntoResponse, Response};
-use axum::routing::{get, post};
+#[allow(unused_imports)]
+use axum::routing::get;
+use axum::routing::post;
+#[allow(unused_imports)]
 use clawcrew_api::channel::Channel;
 use clawcrew_config::pairing::constant_time_eq;
 use std::net::{IpAddr, SocketAddr};
@@ -505,6 +511,7 @@ fn require_gateway_chat_agent_alias(
     })
 }
 
+#[allow(dead_code)]
 fn optional_channel_routes() -> Router<AppState> {
     let router: Router<AppState> = Router::new();
     #[cfg(feature = "channel-whatsapp-cloud")]
@@ -529,6 +536,7 @@ fn optional_channel_routes() -> Router<AppState> {
     router
 }
 
+#[allow(dead_code)]
 fn sop_webhook_routes() -> Router<AppState> {
     Router::new().route("/sop/{*rest}", post(api_sop_webhook::handle_sop_webhook))
 }
@@ -1231,11 +1239,11 @@ mod chat_regression_tests {
         }
     }
 
-    static TEST_MUTEX: Mutex<()> = Mutex::new(());
+    static TEST_MUTEX: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
     #[tokio::test]
     async fn test_run_gateway_chat_with_tools_exercises_process_message_success() {
-        let _guard = TEST_MUTEX.lock().unwrap();
+        let _guard = TEST_MUTEX.lock().await;
         let recorded_message = Arc::new(Mutex::new(None));
         let recorded_session = Arc::new(Mutex::new(None));
         let recorded_origin = Arc::new(Mutex::new(None));
@@ -1284,7 +1292,7 @@ mod chat_regression_tests {
 
     #[tokio::test]
     async fn test_run_gateway_chat_with_tools_exercises_process_message_error_propagation() {
-        let _guard = TEST_MUTEX.lock().unwrap();
+        let _guard = TEST_MUTEX.lock().await;
         let runner = Arc::new(MockChatRunner {
             recorded_message: Arc::new(Mutex::new(None)),
             recorded_session: Arc::new(Mutex::new(None)),
