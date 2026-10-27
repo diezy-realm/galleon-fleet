@@ -1253,7 +1253,7 @@ enum EditMessageResult {
 /// always a genuine permanent skip.
 ///
 /// Whether an update is acknowledged is therefore decided by the listener's
-/// ordered acknowledgement queue together with [`UpdateOutcome`].
+/// ordered acknowledgement queue together with `UpdateOutcome`.
 /// `RetryTransient` is reserved for fallible I/O (file download,
 /// transcription, disk writes) so the caller can leave the update
 /// unacknowledged and retry it on the next poll instead of silently dropping
