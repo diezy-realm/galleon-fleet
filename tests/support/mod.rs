@@ -1,4 +1,4 @@
-#![allow(dead_code, unused_imports, clippy::expect_used, clippy::unwrap_used)]
+#![allow(dead_code, unused_imports)]
 
 pub mod assertions;
 pub mod helpers;
