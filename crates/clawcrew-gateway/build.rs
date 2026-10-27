@@ -23,14 +23,18 @@ fn compile_agent_service_proto() {
 
     println!("cargo:rerun-if-changed={}", proto_path.display());
 
-    tonic_build::configure()
+    let proto_dir = match proto_path.parent() {
+        Some(dir) => dir.to_string_lossy().to_string(),
+        None => "proto".to_string(),
+    };
+
+    if let Err(e) = tonic_build::configure()
         .build_server(true)
         .build_client(true)
-        .compile_protos(
-            &[proto_path.to_string_lossy().to_string()],
-            &[proto_path.parent().unwrap().to_string_lossy().to_string()],
-        )
-        .expect("failed to compile proto/agent_service.proto");
+        .compile_protos(&[proto_path.to_string_lossy().to_string()], &[proto_dir])
+    {
+        panic!("failed to compile proto/agent_service.proto: {e}");
+    }
 }
 
 fn build_web_dashboard() {
