@@ -1,4 +1,3 @@
-
 use super::*;
 use clawcrew_config::schema::{Config, TelegramConfig};
 use galleon_channel_core::allowlist;
@@ -28,7 +27,6 @@ pub fn channel_ingress_context(msg: &ChannelMessage) -> clawcrew_api::ingress::I
     ingress.trust = TrustClass::Untrusted;
     ingress
 }
-
 
 fn telegram_alias_config(alias: &str, multi_message_delay_ms: u64) -> Arc<RwLock<Config>> {
     let mut config = Config::default();

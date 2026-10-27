@@ -110,7 +110,6 @@ pub fn approval_position_line(position: Option<(u32, u32)>) -> String {
     }
 }
 
-
 /// How long a successful `getUpdates` exchange stays evidence that the listener
 /// is working.
 ///
@@ -1222,8 +1221,7 @@ pub struct TelegramChannel {
     skills_resolver: Option<TelegramSkillsResolver>,
     /// Pending approval requests: callback_data key → oneshot sender.
     /// `listen()` resolves these when a matching `callback_query` arrives.
-    pending_approvals:
-        Arc<tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>>,
+    pending_approvals: Arc<tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>>,
     /// Opaque, short-lived callback tokens for model-picker keyboards.
     pending_model_pickers: tokio::sync::Mutex<HashMap<String, PendingModelPicker>>,
     /// Seconds to wait for the operator to tap an inline-keyboard button on a
@@ -2935,11 +2933,7 @@ impl TelegramChannel {
             .iter()
             .map(|peer| Self::normalize_identity(peer))
             .collect();
-        allowlist::is_user_allowed(
-            &peers,
-            &identity,
-            allowlist::Match::CaseInsensitive,
-        )
+        allowlist::is_user_allowed(&peers, &identity, allowlist::Match::CaseInsensitive)
     }
 
     /// Senderless voice-peer check for a destination chat address, used where
@@ -3385,7 +3379,10 @@ impl TelegramChannel {
         self
     }
 
-    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(
+        mut self,
+        config: clawcrew_config::schema::TranscriptionConfig,
+    ) -> Self {
         #[cfg(test)]
         {
             if config.enabled {
@@ -3474,12 +3471,11 @@ impl AudioTranscriber for TestTranscriptionManager {
             let part = reqwest::multipart::Part::bytes(audio_data.to_vec())
                 .file_name(file_name.to_string());
             let form = reqwest::multipart::Form::new().part("file", part);
-            if let Ok(resp) = client.post(&self.api_url).multipart(form).send().await {
-                if let Ok(body) = resp.json::<serde_json::Value>().await {
-                    if let Some(text) = body.get("text").and_then(|v| v.as_str()) {
-                        return Ok(text.to_string());
-                    }
-                }
+            if let Ok(resp) = client.post(&self.api_url).multipart(form).send().await
+                && let Ok(body) = resp.json::<serde_json::Value>().await
+                && let Some(text) = body.get("text").and_then(|v| v.as_str())
+            {
+                return Ok(text.to_string());
             }
         }
         let ext = std::path::Path::new(file_name)
@@ -3487,18 +3483,14 @@ impl AudioTranscriber for TestTranscriptionManager {
             .and_then(|e| e.to_str())
             .unwrap_or("");
         match ext.to_ascii_lowercase().as_str() {
-            "flac" | "mp3" | "mpeg" | "mpga" | "mp4" | "m4a" | "ogg" | "oga" | "opus" | "wav" | "webm" => {
-                Ok("test transcribed audio".to_string())
-            }
+            "flac" | "mp3" | "mpeg" | "mpga" | "mp4" | "m4a" | "ogg" | "oga" | "opus" | "wav"
+            | "webm" => Ok("test transcribed audio".to_string()),
             _ => anyhow::bail!("Unsupported audio format: {}", ext),
         }
     }
 }
 
 impl TelegramChannel {
-
-
-
     /// Parse reply_target into (chat_id, optional thread_id).
     fn parse_reply_target(reply_target: &str) -> (String, Option<String>) {
         if let Some((chat_id, thread_id)) = reply_target.split_once(':') {
@@ -4651,11 +4643,7 @@ impl TelegramChannel {
             .map(|p| Self::normalize_identity(&p))
             .filter(|p| !p.is_empty())
             .collect();
-        allowlist::is_identity_allowed(
-            &peers,
-            &identities,
-            allowlist::Match::Sensitive,
-        )
+        allowlist::is_identity_allowed(&peers, &identities, allowlist::Match::Sensitive)
     }
 
     fn approval_callback_context(callback: &serde_json::Value) -> (Vec<String>, Option<String>) {
@@ -8798,9 +8786,7 @@ Ensure only one `clawcrew` process is using this bot token."
         let args = Self::escape_html(&request.arguments_summary);
         // Back-to-back cards from one message are otherwise indistinguishable
         // before the operator taps, so say which call this is.
-        let position = Self::escape_html(&approval_position_line(
-            request.position_counter(),
-        ));
+        let position = Self::escape_html(&approval_position_line(request.position_counter()));
         let text = format!(
             "\u{1f527} <b>{heading}</b>\n\n\
              {position}\
@@ -8864,8 +8850,7 @@ Ensure only one `clawcrew` process is using this bot token."
                 // Fallback: plain text, no parse_mode, keep the buttons.
                 // Unescaped position line: this send has no parse_mode, so the
                 // HTML-escaped one above would show its entities literally.
-                let plain_position =
-                    approval_position_line(request.position_counter());
+                let plain_position = approval_position_line(request.position_counter());
                 let plain_text = format!(
                     "🔧 {heading}\n\n{plain_position}{tool_label}: {}\n{}\n\n{tap_instruction}",
                     request.tool_name, request.arguments_summary
