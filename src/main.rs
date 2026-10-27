@@ -30,6 +30,10 @@
     clippy::unnecessary_literal_bound,
     clippy::unnecessary_map_or,
     clippy::unnecessary_wraps,
+    clippy::wildcard_imports,
+    clippy::expect_used,
+    clippy::semicolon_if_nothing_returned,
+    clippy::unnecessary_semicolon,
     unused_variables,
     unused_imports
 )]
