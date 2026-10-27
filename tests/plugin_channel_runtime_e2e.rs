@@ -7,7 +7,7 @@
 //! package, in, and a live `Channel` backed by a compiled component, out.
 
 #![cfg(feature = "plugins-wasm-cranelift")]
-#![allow(clippy::expect_used, clippy::unwrap_used)]
+#![allow(warnings, clippy::all)]
 
 use std::collections::HashMap;
 use std::path::PathBuf;

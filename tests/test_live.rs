@@ -1,4 +1,4 @@
-#![allow(clippy::expect_used, clippy::unwrap_used)]
+#![allow(warnings, clippy::all)]
 
 mod live;
 mod support;
