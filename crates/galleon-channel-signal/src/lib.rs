@@ -53,7 +53,7 @@ use std::collections::HashMap;
 use std::num::NonZeroUsize;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::{mpsc, oneshot, Mutex};
+use tokio::sync::{Mutex, mpsc, oneshot};
 use uuid::Uuid;
 
 const GROUP_TARGET_PREFIX: &str = "group:";
