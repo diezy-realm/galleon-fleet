@@ -3,7 +3,7 @@
 - **Status:** Proposed | Accepted | Deprecated | Superseded
 - **Tanggal:** YYYY-MM-DD
 - **Pengusul:** [Nama / Tim]
-- **Konteks:** `galleon-fleet` 4-tier architecture
+- **Konteks:** `galleon-fleet` 3-tier architecture (Desktop shell / Rust Core / UI Web), Rust bahasa tunggal (ADR-0018)
 - **Terkait:** ODR-xx, ADR-xxxx
 
 ---
