@@ -121,7 +121,7 @@ impl std::str::FromStr for FilesystemEventKind {
     Serialize,
     Deserialize,
     strum_macros::EnumDiscriminants,
-    clawcrew_macros::TriggerFields,
+    galleon_macros::TriggerFields,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(tag = "type", rename_all = "lowercase")]

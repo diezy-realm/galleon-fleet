@@ -90,7 +90,7 @@ fn attrs_have_serde_meta(attrs: &[syn::Attribute], ident: &str) -> bool {
 ///    section is opt-in:
 ///
 /// ```ignore
-/// use clawcrew_macros::Configurable;
+/// use galleon_macros::Configurable;
 ///
 /// #[derive(Debug, Clone, Default, Serialize, Deserialize, Configurable)]
 /// #[prefix = "channels.your-channel"]
@@ -118,7 +118,7 @@ fn attrs_have_serde_meta(attrs: &[syn::Attribute], ident: &str) -> bool {
 /// enum's definition site:
 ///
 /// ```ignore
-/// #[derive(Serialize, Deserialize, clawcrew_macros::ConfigEnum)]
+/// #[derive(Serialize, Deserialize, galleon_macros::ConfigEnum)]
 /// pub enum YourEnum { /* ... */ }
 /// ```
 ///

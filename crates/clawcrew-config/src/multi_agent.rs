@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
-use clawcrew_macros::Configurable;
+use galleon_macros::Configurable;
 
 crate::define_provider_ref!(AgentAlias, "agents");
 crate::define_provider_ref!(PeerGroupName, "peer_groups");

@@ -14790,7 +14790,7 @@ api_key = "op://clawcrew/provider/openai-api-key"
     // T: Configurable>>` field today (every `providers.models.<type>` slot is
     // itself a single-level `HashMap<String, T>` field of a plain nested
     // struct, not a hashmap key) — so the two-level routing branch in
-    // `derive_configurable` (crates/clawcrew-macros/src/lib.rs, the
+    // `derive_configurable` (crates/galleon-macros/src/lib.rs, the
     // `double_value_ty` arm) can't be exercised through `Config` directly.
     // Exercise it directly with a minimal local fixture instead.
     #[derive(Debug, Clone, Default, Serialize, Deserialize, Configurable)]

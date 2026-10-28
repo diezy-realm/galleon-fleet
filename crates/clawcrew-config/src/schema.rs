@@ -23,7 +23,7 @@ use tokio::fs::File;
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use clawcrew_api::runtime_status::RuntimeConfigKind;
-use clawcrew_macros::Configurable;
+use galleon_macros::Configurable;
 
 const SUPPORTED_PROXY_SERVICE_KEYS: &[&str] = &[
     "model_provider.anthropic",
@@ -768,7 +768,7 @@ pub trait FamilyEndpoint {
 /// slots default to `responses`; other families default to chat-completions
 /// (or ignore the field) when unset.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -789,7 +789,7 @@ impl WireApi {
 
 /// Policy for image markers embedded in native tool-result content.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -809,7 +809,7 @@ fn is_default_tool_result_image_policy(value: &ToolResultImagePolicy) -> bool {
 /// (e.g. Qwen, Minimax can use API key OR OAuth). Families that only support a
 /// single auth flow simply omit this field from their config struct.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -834,7 +834,7 @@ pub enum AuthMode {
 /// JSON) sits outside that guarantee and must order 1h before 5m when
 /// mixing lifetimes in one request.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 pub enum CacheTtl {
@@ -1090,7 +1090,7 @@ pub struct ModelProviderConfig {
 
 /// OpenAI canonical endpoint. Single variant — OpenAI publishes one base URL.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1157,7 +1157,7 @@ impl Default for OpenAIModelProviderConfig {
 /// runtime by substituting `{resource}` and `{deployment}` from the typed
 /// config fields.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1215,7 +1215,7 @@ pub struct AzureModelProviderConfig {
 
 /// Anthropic canonical endpoint.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1262,7 +1262,7 @@ pub struct AnthropicModelProviderConfig {
 /// account; the runtime resolves the URI from the chosen variant unless
 /// overridden by `base.uri`. Code variant is intl-only.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1314,7 +1314,7 @@ impl FamilyEndpoint for MoonshotModelProviderConfig {
 
 /// Qwen endpoint variants. Operators pick the region matching their account.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1387,7 +1387,7 @@ impl FamilyEndpoint for QwenModelProviderConfig {
 // ── OpenRouter ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1416,7 +1416,7 @@ pub struct OpenRouterModelProviderConfig {
 // ── Ollama (local-default endpoint) ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1465,7 +1465,7 @@ pub struct OllamaModelProviderConfig {
 pub const HAILO_OLLAMA_DEFAULT_URI: &str = "http://localhost:8000";
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1496,7 +1496,7 @@ pub struct HailoOllamaModelProviderConfig {
 // ── Together ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1525,7 +1525,7 @@ pub struct TogetherModelProviderConfig {
 // ── Fireworks ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1554,7 +1554,7 @@ pub struct FireworksModelProviderConfig {
 // ── Groq ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1583,7 +1583,7 @@ pub struct GroqModelProviderConfig {
 // ── Crusoe ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1658,7 +1658,7 @@ model = "deepseek-ai/DeepSeek-V4-Flash"
 // ── Mistral ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1714,7 +1714,7 @@ pub struct AtomicChatModelProviderConfig {
 // ── DeepSeek ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1743,7 +1743,7 @@ pub struct DeepseekModelProviderConfig {
 // ── Cohere ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1772,7 +1772,7 @@ pub struct CohereModelProviderConfig {
 // ── Perplexity ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1801,7 +1801,7 @@ pub struct PerplexityModelProviderConfig {
 // ── xAI (Grok) ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1830,7 +1830,7 @@ pub struct XaiModelProviderConfig {
 // ── Cerebras ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1859,7 +1859,7 @@ pub struct CerebrasModelProviderConfig {
 // ── SambaNova ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1888,7 +1888,7 @@ pub struct SambanovaModelProviderConfig {
 // ── Hyperbolic ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1917,7 +1917,7 @@ pub struct HyperbolicModelProviderConfig {
 // ── DeepInfra ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1946,7 +1946,7 @@ pub struct DeepinfraModelProviderConfig {
 // ── Hugging Face ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -1975,7 +1975,7 @@ pub struct HuggingfaceModelProviderConfig {
 // ── AI21 ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2002,7 +2002,7 @@ pub struct Ai21ModelProviderConfig {
 // ── Reka ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2029,7 +2029,7 @@ pub struct RekaModelProviderConfig {
 // ── BaseTen ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2056,7 +2056,7 @@ pub struct BasetenModelProviderConfig {
 // ── NScale ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2083,7 +2083,7 @@ pub struct NscaleModelProviderConfig {
 // ── AnyScale ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2110,7 +2110,7 @@ pub struct AnyscaleModelProviderConfig {
 // ── Nebius ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2137,7 +2137,7 @@ pub struct NebiusModelProviderConfig {
 // ── Friendli ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2164,7 +2164,7 @@ pub struct FriendliModelProviderConfig {
 // ── Stepfun ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2203,7 +2203,7 @@ impl FamilyEndpoint for StepfunModelProviderConfig {
 // ── AIHubMix ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2230,7 +2230,7 @@ pub struct AihubmixModelProviderConfig {
 // ── SiliconFlow ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2257,7 +2257,7 @@ pub struct SiliconflowModelProviderConfig {
 // ── Astrai ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2284,7 +2284,7 @@ pub struct AstraiModelProviderConfig {
 // ── Avian ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2311,7 +2311,7 @@ pub struct AvianModelProviderConfig {
 // ── DeepMyst ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2338,7 +2338,7 @@ pub struct DeepmystModelProviderConfig {
 // ── Venice ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2365,7 +2365,7 @@ pub struct VeniceModelProviderConfig {
 // ── NEAR AI Cloud ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2392,7 +2392,7 @@ pub struct NearaiModelProviderConfig {
 // ── Novita ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2419,7 +2419,7 @@ pub struct NovitaModelProviderConfig {
 // ── NVIDIA ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2446,7 +2446,7 @@ pub struct NvidiaModelProviderConfig {
 // ── Telnyx ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2473,7 +2473,7 @@ pub struct TelnyxModelProviderConfig {
 // ── Vercel AI Gateway ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2500,7 +2500,7 @@ pub struct VercelModelProviderConfig {
 // ── Cloudflare AI Gateway ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2527,7 +2527,7 @@ pub struct CloudflareModelProviderConfig {
 // ── Atlas Cloud ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2554,7 +2554,7 @@ pub struct AtlasCloudModelProviderConfig {
 // ── OVH ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2581,7 +2581,7 @@ pub struct OvhModelProviderConfig {
 // ── GitHub Copilot ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2608,7 +2608,7 @@ pub struct CopilotModelProviderConfig {
 // ── GLM (multi-region) ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2645,7 +2645,7 @@ impl FamilyEndpoint for GlmModelProviderConfig {
 // ── Minimax (multi-region + auth_mode) ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -2710,7 +2710,7 @@ impl FamilyEndpoint for MinimaxModelProviderConfig {
 // ── Z.AI (multi-region) ──
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -3470,7 +3470,7 @@ pub struct KiloCliModelProviderConfig {
 
 /// Kilo AI Gateway endpoint. Single canonical endpoint at kilo.ai.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -3525,7 +3525,7 @@ impl FamilyEndpoint for KiloModelProviderConfig {
 /// [`ZEROROUTER_DEFAULT_URL`] is the canonical default consumed by both
 /// schema and provider construction.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -3587,7 +3587,7 @@ pub struct CustomModelProviderConfig {
 /// AWS Bedrock endpoint template. Single variant; the URL is computed at
 /// runtime by substituting `{region}` from the typed config field.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -5350,7 +5350,7 @@ where
 
 /// Hardware transport mode.
 #[derive(
-    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 pub enum HardwareTransport {
@@ -5545,7 +5545,7 @@ impl Default for TranscriptionConfig {
 
 /// Transport type for MCP server connections.
 #[derive(
-    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -5980,7 +5980,7 @@ pub trait TtsEndpoint {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -6006,7 +6006,7 @@ pub struct OpenAITtsProviderConfig {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -6032,7 +6032,7 @@ pub struct ElevenLabsTtsProviderConfig {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -6058,7 +6058,7 @@ pub struct GoogleTtsProviderConfig {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -6085,7 +6085,7 @@ pub struct EdgeTtsProviderConfig {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -6353,7 +6353,7 @@ impl Default for LocalWhisperTranscriptionProviderConfig {
 
 /// Determines when a `ToolFilterGroup` is active.
 #[derive(
-    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -6677,7 +6677,7 @@ impl Default for PacingConfig {
 
 /// Skills loading configuration (`[skills]` section).
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -8623,7 +8623,7 @@ pub struct WebFetchConfig {
 
 /// Firecrawl fallback mode: scrape a single page or crawl linked pages.
 #[derive(
-    Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq, clawcrew_macros::ConfigEnum,
+    Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -10691,7 +10691,7 @@ impl Default for OpenCodeCliConfig {
 
 /// Proxy application scope — determines which outbound traffic uses the proxy.
 #[derive(
-    Debug, Clone, Copy, Serialize, Deserialize, Default, PartialEq, Eq, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, Serialize, Deserialize, Default, PartialEq, Eq, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -12312,7 +12312,7 @@ fn default_qdrant_collection() -> String {
 }
 
 /// Search strategy for memory recall.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, clawcrew_macros::ConfigEnum)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, galleon_macros::ConfigEnum)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum SearchMode {
@@ -12849,7 +12849,7 @@ pub fn validate_whatsapp_semantics(
 
 /// Write-time duplicate handling policy for memory entries.
 #[derive(
-    Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -12863,7 +12863,7 @@ pub enum MemoryDedupAction {
 
 /// Memory budget eviction order.
 #[derive(
-    Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -12999,7 +12999,7 @@ impl Default for MemoryConfig {
 
 /// Observability sink backend.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -13029,7 +13029,7 @@ impl ObservabilityBackend {
 
 /// JSONL log persistence mode.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -13063,7 +13063,7 @@ impl LogPersistence {
 
 /// Tool I/O capture policy.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -13089,7 +13089,7 @@ impl LogToolIo {
 /// prompt/messages sent on each `llm_request`. Defaults to `Off` because the
 /// full payload is the entire system prompt plus conversation every turn.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -13114,7 +13114,7 @@ impl LogLlmRequestPayload {
 /// OTel content capture policy. Mirrors [`LogToolIo`] but gates OTel span
 /// attribute emission, not log persistence. Defaults to `Off` for privacy.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -13814,7 +13814,7 @@ impl Default for OidcConfig {
 
 /// Token validation strategy for an OIDC trust relationship.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -13845,7 +13845,7 @@ pub enum OidcValidation {
 
 /// The actor kind an OIDC `actor_claim`'s presence proves.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -14467,7 +14467,7 @@ pub struct McpBundleConfig {
 
 /// Runtime adapter kind.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -15113,7 +15113,7 @@ impl Default for CronJobDecl {
 }
 
 /// Output format for shell cron job stdout.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, clawcrew_macros::ConfigEnum)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, galleon_macros::ConfigEnum)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum CronShellOutputFormat {
@@ -15145,7 +15145,7 @@ impl From<clawcrew_infra::cron_types::CronShellOutputFormat> for CronShellOutput
 }
 
 /// Schedule variant for declarative cron jobs.
-#[derive(Debug, Clone, Serialize, Deserialize, clawcrew_macros::ConfigEnum)]
+#[derive(Debug, Clone, Serialize, Deserialize, galleon_macros::ConfigEnum)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(tag = "kind", rename_all = "lowercase")]
 pub enum CronScheduleDecl {
@@ -16120,7 +16120,7 @@ impl Default for PluginChannelConfig {
 
 /// Streaming mode for channels that support progressive message updates.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -16144,7 +16144,7 @@ pub enum StreamMode {
 
 /// Matrix streaming mode for progressive response delivery.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -16164,7 +16164,7 @@ pub enum MatrixStreamMode {
 
 /// Matrix single-message reasoning visibility.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -16229,7 +16229,7 @@ pub enum StreamToolArgumentEntry {
 /// iteration and single-server bots). When `guild` is set with an empty
 /// `guild_ids`, the channel logs a warning and falls back to global.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -16468,7 +16468,7 @@ impl ChannelConfig for TelegramConfig {
 /// Developer Portal toggle needed) and archives matching reactions to the
 /// channel's `discord.db` sidecar when `archive` is enabled.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -16869,7 +16869,7 @@ fn resolve_slack_token(configured: Option<&str>, kind: &str) -> Option<String> {
 
 /// How the Mattermost channel receives inbound messages.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -17590,7 +17590,7 @@ impl ChannelConfig for SignalConfig {
 /// into `peer_groups` on load, so it names no knob the current model exposes;
 /// senders resolve from `[peer_groups.<name>].external_peers` scoped to the
 /// alias.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, clawcrew_macros::ConfigEnum)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, galleon_macros::ConfigEnum)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum WhatsAppWebMode {
@@ -17608,7 +17608,7 @@ pub enum WhatsAppWebMode {
 /// Policy for a particular WhatsApp chat type (DMs or groups).
 ///
 /// Applied under both `mode = "business"` and `mode = "personal"`.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, clawcrew_macros::ConfigEnum)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, galleon_macros::ConfigEnum)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum WhatsAppChatPolicy {
@@ -18427,7 +18427,7 @@ fn default_filesystem_max_content_bytes() -> Option<usize> {
 /// field: their fan-in is trigger-driven, opting in via a SOP `channel` trigger
 /// while the normal agent turn always runs. The mode is source-agnostic.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -18718,7 +18718,7 @@ fn default_irc_port() -> u16 {
 ///
 /// - `websocket` (default) — persistent WSS long-connection; no public URL required.
 /// - `webhook` — HTTP callback server; requires a public HTTPS endpoint.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default, galleon_macros::ConfigEnum)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum LarkReceiveMode {
@@ -18863,7 +18863,7 @@ impl ChannelConfig for LarkConfig {
 
 /// DM (1:1 chat) access policy for the LINE channel.
 #[derive(
-    Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -18880,7 +18880,7 @@ pub enum LineDmPolicy {
 
 /// Group / multi-person chat policy for the LINE channel.
 #[derive(
-    Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -19165,7 +19165,7 @@ fn default_webauthn_rp_name() -> String {
 
 /// OTP validation strategy.
 #[derive(
-    Debug, Clone, Copy, Serialize, Deserialize, Default, PartialEq, Eq, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, Serialize, Deserialize, Default, PartialEq, Eq, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "kebab-case")]
@@ -19292,7 +19292,7 @@ impl Default for EstopConfig {
 
 /// Operational mode of the payment lockout gate (BL-40).
 #[derive(
-    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -19306,7 +19306,7 @@ pub enum PaymentLockMode {
 
 /// Classification of financial or payment operations covered by the lockout gate (BL-40).
 #[derive(
-    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -19585,7 +19585,7 @@ impl Default for SandboxConfig {
 }
 
 /// Sandbox backend selection
-#[derive(Debug, Clone, Serialize, Deserialize, Default, clawcrew_macros::ConfigEnum)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, galleon_macros::ConfigEnum)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum SandboxBackend {
@@ -20312,7 +20312,7 @@ pub struct VoiceDuplexConfig {
 /// Listens on the default microphone for a configurable wake word,
 /// then captures the following utterance and transcribes it via the
 /// existing transcription API.
-#[derive(Debug, Clone, Serialize, Deserialize, clawcrew_macros::Configurable)]
+#[derive(Debug, Clone, Serialize, Deserialize, galleon_macros::Configurable)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[prefix = "voice_wake"]
 pub struct VoiceWakeConfig {
@@ -24865,7 +24865,7 @@ impl Config {
             // agent field name, value list). Both names use the schema's
             // kebab form: section name matches what `get_map_keys` expects
             // (macro converts snake→kebab via `snake_to_kebab` per
-            // crates/clawcrew-macros/src/lib.rs:1056); field name matches
+            // crates/galleon-macros/src/lib.rs:1056); field name matches
             // what `prop_fields()` emits, so DanglingReference paths bind
             // directly to the right inline error in the dashboard form.
             let bare_multi: &[(&str, &str, &[String])] = &[
@@ -25934,7 +25934,7 @@ struct NaturalKeySection {
 /// that the inner segment resolver (`resolve_dirty_segments`) uses.
 /// That is deliberate and mirrors the in-memory routing macro's
 /// `section_path == expected` check in
-/// `crates/clawcrew-macros/src/lib.rs` (the `get_map_keys` /
+/// `crates/galleon-macros/src/lib.rs` (the `get_map_keys` /
 /// `route_vec_path` arms) — making either side dash-tolerant in
 /// isolation would let the dispatcher and the writer disagree on
 /// which call participates in this branch, which is exactly the
@@ -26999,7 +26999,7 @@ fn default_sop_execution_mode() -> String {
 /// is a serde enum rather than free text (mirrors `SandboxBackend` /
 /// `ObservabilityBackend` in this file); unknown values are rejected at parse time.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -27014,7 +27014,7 @@ pub enum SopRunStoreBackend {
 /// WHO may clear a SOP approval gate. Layered with execution_mode / priority /
 /// requires_confirmation (all of which still apply). Closed set => serde enum.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
@@ -27032,7 +27032,7 @@ pub enum ApprovalMode {
 /// What happens to a SOP approval gate when it times out. Default is fail-closed:
 /// the gate never self-approves. Closed set => serde enum.
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]

@@ -78,7 +78,7 @@ uuid = { version = "1.22", default-features = false, features = ["v4", "std"] }
 webpki-roots = "1.0.6"
 which = "8.0"
 zeroize = { version = "1.8", features = ["alloc"] }
-clawcrew-macros.workspace = true
+galleon-macros.workspace = true
 
 # Optional deps
 prometheus = { version = "0.14", default-features = false, optional = true }

@@ -29,7 +29,7 @@ Ukuran dan arah dependency: Phase 5 §1 (`cargo metadata`).
 | Kelompok | Crate | Peran |
 |---|---|---|
 | Kontrak/leaf | `clawcrew-api` | Trait + tipe bersama (tanpa dep internal) |
-| | `clawcrew-macros`, `-commands`, `-relay-proto`, `-sop-graph`, `-dist` | Macro config, katalog slash-command, protokol relay, proyeksi graf SOP, registri target rilis |
+| | `galleon-macros`, `-commands`, `-relay-proto`, `-sop-graph`, `-dist` | Macro config, katalog slash-command, protokol relay, proyeksi graf SOP, registri target rilis |
 | Fondasi | `clawcrew-log`, `-spawn`, `-infra`, `-tls` | Logging terstruktur, spawn ber-atribusi, backend sesi/watchdog, TLS/mTLS |
 | | `clawcrew-config` (85k LOC, hub), `galleon-i18n` | Skema config & secret; Fluent i18n |
 | Domain | `clawcrew-providers` | **SSOT LLM** (ADR 0001) |

@@ -5,7 +5,7 @@ use crate::traits::{ChannelConfig, HasPropKind, PropKind};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
-use clawcrew_macros::Configurable;
+use galleon_macros::Configurable;
 
 // ── Agent config types ──────────────────────────────────────────
 
@@ -533,7 +533,7 @@ pub struct EmailOAuth2Config {
     pub scopes: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, clawcrew_macros::Configurable)]
+#[derive(Debug, Clone, Serialize, Deserialize, galleon_macros::Configurable)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[prefix = "channels.email"]
 pub struct EmailConfig {
@@ -631,7 +631,7 @@ fn default_label_filter() -> Vec<String> {
     vec!["INBOX".into()]
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, clawcrew_macros::Configurable)]
+#[derive(Debug, Clone, Serialize, Deserialize, galleon_macros::Configurable)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[prefix = "channels.gmail"]
 pub struct GmailPushConfig {
@@ -681,7 +681,7 @@ impl Default for GmailPushConfig {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, clawcrew_macros::Configurable)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, galleon_macros::Configurable)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[prefix = "channels.clawdtalk"]
 pub struct ClawdTalkConfig {

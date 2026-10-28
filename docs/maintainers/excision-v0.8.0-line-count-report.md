@@ -55,7 +55,7 @@ The v0.8.0 branch grows the repo by **+17,660 lines total**, of which:
 | clawcrew-config            | 12,980       | 17,377       | **+4,397** |
 | clawcrew-runtime           | 38,480       | 39,373       | +893   |
 | web                        | 20,742       | 21,518       | +776   |
-| clawcrew-macros            | 912          | 1,581        | +669   |
+| galleon-macros            | 912          | 1,581        | +669   |
 | clawcrew-memory            | 5,789        | 6,856        | +1,067 |
 | clawcrew-gateway           | 8,759        | 9,323        | +564   |
 | clawcrew-channels          | 34,556       | 34,576       | +20    |
@@ -93,7 +93,7 @@ By category, the excision pass:
 - Deleted ~−1,500 lines of dead-on-arrival files, WIP stubs, dead provider helpers + tests, channel-WIP clusters, schema bloat (FeishuConfig fold), Claude Code residue, and dead config sections.
 - Added ~+150 lines of new code: V2→V3 migration step for the FeishuConfig fold, three new migration tests, and the audit trail under `docs/maintainers/excision-v0.8.0-incidents.md`.
 
-The deletions explain the negative deltas in `clawcrew-providers` (−1,430), `clawcrew-tools` (−795), and the test reductions in providers (−1,302). The +669 in `clawcrew-macros` is non-excision V3 work (Configurable derive extensions for the schema overhaul).
+The deletions explain the negative deltas in `clawcrew-providers` (−1,430), `clawcrew-tools` (−795), and the test reductions in providers (−1,302). The +669 in `galleon-macros` is non-excision V3 work (Configurable derive extensions for the schema overhaul).
 
 ## Headline
 

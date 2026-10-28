@@ -4,7 +4,7 @@ use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use clawcrew_macros::Configurable;
+use galleon_macros::Configurable;
 
 /// Maximum failed pairing attempts before lockout.
 const MAX_PAIR_ATTEMPTS: u32 = 5;
@@ -40,7 +40,7 @@ const UNAMBIGUOUS_ALPHABET: &[u8] = b"0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
 /// Character family a pairing code is drawn from.
 #[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, clawcrew_macros::ConfigEnum,
+    Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]

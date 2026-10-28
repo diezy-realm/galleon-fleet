@@ -1719,8 +1719,8 @@ dependencies = [
  "clawcrew-api",
  "clawcrew-infra",
  "clawcrew-log",
- "clawcrew-macros",
  "directories",
+ "galleon-macros",
  "hex",
  "hmac 0.12.1",
  "hostname",
@@ -1911,15 +1911,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "clawcrew-macros"
-version = "0.8.5"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.117",
-]
-
-[[package]]
 name = "clawcrew-memory"
 version = "0.8.5"
 dependencies = [
@@ -2038,7 +2029,6 @@ dependencies = [
  "clawcrew-config",
  "clawcrew-infra",
  "clawcrew-log",
- "clawcrew-macros",
  "clawcrew-memory",
  "clawcrew-plugins",
  "clawcrew-providers",
@@ -2053,6 +2043,7 @@ dependencies = [
  "futures-util",
  "galleon-commands",
  "galleon-i18n",
+ "galleon-macros",
  "galleon-relay-proto",
  "galleon-security-scrub",
  "galleon-sop-graph",
@@ -4861,7 +4852,6 @@ dependencies = [
  "clawcrew-gateway",
  "clawcrew-infra",
  "clawcrew-log",
- "clawcrew-macros",
  "clawcrew-memory",
  "clawcrew-plugins",
  "clawcrew-providers",
@@ -4876,6 +4866,7 @@ dependencies = [
  "flate2",
  "futures-util",
  "galleon-hardware",
+ "galleon-macros",
  "galleon-tls",
  "galleon-tool-call-parser",
  "hex",
@@ -4955,6 +4946,15 @@ dependencies = [
  "serde_json",
  "sys-locale",
  "toml 1.1.2+spec-1.1.0",
+]
+
+[[package]]
+name = "galleon-macros"
+version = "0.8.5"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
 ]
 
 [[package]]

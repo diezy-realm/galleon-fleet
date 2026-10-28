@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
     Ord,
     Serialize,
     Deserialize,
-    clawcrew_macros::ConfigEnum,
+    galleon_macros::ConfigEnum,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -44,7 +44,7 @@ impl crate::config::HasPropKind for DelegationMode {
 
 /// Risk-profile delegation policy for work sent to agents that share it.
 #[derive(
-    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, clawcrew_macros::Configurable,
+    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, galleon_macros::Configurable,
 )]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 pub struct DelegationPolicy {
