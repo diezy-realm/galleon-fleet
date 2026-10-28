@@ -1,5 +1,8 @@
 # ADR 0002: web-2 Backend Logic Policy — Zero Logic, Nginx + Go API
 
+> [!NOTE]
+> **Diamandemen oleh ADR-0018 / ODR-2026-10-29:** "backend = Go API" dibaca "backend = Rust gateway" (Nginx + Rust gateway). Isi lain tetap.
+
 **Status:** Accepted  
 **Date:** 2026-10-03  
 **Deciders:** Achmad (Product Owner), squad-lead (Tech Lead)
