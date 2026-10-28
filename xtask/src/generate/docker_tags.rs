@@ -143,7 +143,8 @@ mod tests {
     // newer semver-compatible deps than the reviewed Cargo.lock.
     #[test]
     fn relay_dockerfile_build_is_lockfile_enforced() {
-        let dockerfile = std::fs::read_to_string(root().join("apps/galleonrelay/Dockerfile")).unwrap();
+        let dockerfile =
+            std::fs::read_to_string(root().join("apps/galleonrelay/Dockerfile")).unwrap();
         assert!(
             dockerfile.contains("cargo build --release --locked -p galleonrelay"),
             "the relay image build must use --locked for a reproducible signed artifact"
