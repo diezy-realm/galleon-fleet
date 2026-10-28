@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Result, bail};
 use reqwest::header::HeaderValue;
 
-use clawcrew_config::schema::{Config, TtsProviderConfig};
+use galleon_config::schema::{Config, TtsProviderConfig};
 
 /// Maximum text length before synthesis is rejected (default: 4096 chars).
 const DEFAULT_MAX_TEXT_LENGTH: usize = 4096;
@@ -98,7 +98,7 @@ impl OpenAiTtsProvider {
                 .clone()
                 .filter(|f| !f.trim().is_empty())
                 .unwrap_or_else(|| "opus".to_string()),
-            client: clawcrew_config::schema::apply_runtime_proxy_to_builder(
+            client: galleon_config::schema::apply_runtime_proxy_to_builder(
                 reqwest::Client::builder().timeout(TTS_HTTP_TIMEOUT),
                 "channel.tts.openai",
             )
@@ -208,7 +208,7 @@ impl ElevenLabsTtsProvider {
                 .unwrap_or_else(|| "eleven_monolingual_v1".to_string()),
             stability: config.stability.unwrap_or(0.5),
             similarity_boost: config.similarity_boost.unwrap_or(0.5),
-            client: clawcrew_config::schema::apply_runtime_proxy_to_builder(
+            client: galleon_config::schema::apply_runtime_proxy_to_builder(
                 reqwest::Client::builder().timeout(TTS_HTTP_TIMEOUT),
                 "channel.tts.elevenlabs",
             )
@@ -337,7 +337,7 @@ impl GoogleTtsProvider {
                 .clone()
                 .filter(|c| !c.trim().is_empty())
                 .unwrap_or_else(|| "en-US".to_string()),
-            client: clawcrew_config::schema::apply_runtime_proxy_to_builder(
+            client: galleon_config::schema::apply_runtime_proxy_to_builder(
                 reqwest::Client::builder().timeout(TTS_HTTP_TIMEOUT),
                 "channel.tts.google",
             )
@@ -947,7 +947,7 @@ impl PiperTtsProvider {
             .unwrap_or_else(|| "http://127.0.0.1:5000/v1/audio/speech".to_string());
         Self {
             alias: alias.to_string(),
-            client: clawcrew_config::schema::apply_runtime_proxy_to_builder(
+            client: galleon_config::schema::apply_runtime_proxy_to_builder(
                 reqwest::Client::builder().timeout(TTS_HTTP_TIMEOUT),
                 "channel.tts.piper",
             )
@@ -1600,14 +1600,14 @@ mod tests {
         let mut cfg = Config::default();
         cfg.agents.insert(
             "default".into(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 tts_provider: "edge.default".into(),
                 ..Default::default()
             },
         );
         cfg.providers.tts.edge.insert(
             "default".to_string(),
-            clawcrew_config::schema::EdgeTtsProviderConfig {
+            galleon_config::schema::EdgeTtsProviderConfig {
                 base: TtsProviderConfig {
                     binary_path: Some("edge-tts".to_string()),
                     ..TtsProviderConfig::default()
@@ -1758,14 +1758,14 @@ mod tests {
         let mut cfg = Config::default();
         cfg.agents.insert(
             "default".into(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 tts_provider: "piper.default".into(),
                 ..Default::default()
             },
         );
         cfg.providers.tts.piper.insert(
             "default".to_string(),
-            clawcrew_config::schema::PiperTtsProviderConfig {
+            galleon_config::schema::PiperTtsProviderConfig {
                 base: TtsProviderConfig {
                     uri: Some("http://127.0.0.1:5000/v1/audio/speech".to_string()),
                     ..TtsProviderConfig::default()
@@ -1798,14 +1798,14 @@ mod tests {
         cfg.agents.clear();
         cfg.agents.insert(
             "primary".into(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 tts_provider: "edge.default".into(),
                 ..Default::default()
             },
         );
         cfg.agents.insert(
             "background".into(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 ..Default::default()
             },
         );
@@ -1908,7 +1908,7 @@ mod tests {
 
     #[test]
     fn tts_config_defaults() {
-        let config = clawcrew_config::schema::TtsConfig::default();
+        let config = galleon_config::schema::TtsConfig::default();
         assert!(!config.enabled);
         // TtsConfig has no global default-provider field; per-agent
         // `tts_provider` is the only selector.
@@ -1921,14 +1921,14 @@ mod tests {
         let mut cfg = Config::default();
         cfg.agents.insert(
             "default".into(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 tts_provider: "openai.default".into(),
                 ..Default::default()
             },
         );
         cfg.providers.tts.openai.insert(
             "default".to_string(),
-            clawcrew_config::schema::OpenAITtsProviderConfig {
+            galleon_config::schema::OpenAITtsProviderConfig {
                 base: TtsProviderConfig {
                     api_key: Some("sk-test".to_string()),
                     response_format: Some("wav".to_string()),
@@ -2084,7 +2084,7 @@ mod tests {
         let mut cfg = Config::default();
         cfg.providers.tts.openai.insert(
             "stoa".to_string(),
-            clawcrew_config::schema::OpenAITtsProviderConfig {
+            galleon_config::schema::OpenAITtsProviderConfig {
                 base: TtsProviderConfig {
                     uri: Some("http://localhost:8880/v1/audio/speech".to_string()),
                     ..TtsProviderConfig::default()

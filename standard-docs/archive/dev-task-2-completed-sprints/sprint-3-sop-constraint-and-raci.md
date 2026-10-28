@@ -261,12 +261,12 @@ fn enforce_role_restriction(
 
 ## D. SOP Execution Model — Delivery Separation & Cost Cap (dari `automation-cron-webhook-backlog.md`, belum pernah masuk sprint manapun sebelum audit 2026-10-05)
 
-- [x] **BL-13 (LOW-MEDIUM, MULAI DENGAN VERIFIKASI, bukan langsung kode)** Cost cap eksplisit per cron-job/SOP-run. **Verifikasi dulu**: `SecurityPolicy.max_actions_per_hour`/`record_action()`/`is_rate_limited()` (`crates/clawcrew-config/src/policy.rs:349`) sudah dipakai luas di `cron/scheduler.rs:898,1272` dan `subagent/mod.rs` — kemungkinan BESAR task ini SUDAH tercakup existing mechanism, bukan gap baru. Definition of Done tahap ini: dokumentasikan apakah `max_actions_per_hour` sudah cukup sebagai cost-cap level cron-job/SOP-run, atau genuinely butuh field tambahan (mis. cap biaya USD, bukan cuma jumlah aksi).
+- [x] **BL-13 (LOW-MEDIUM, MULAI DENGAN VERIFIKASI, bukan langsung kode)** Cost cap eksplisit per cron-job/SOP-run. **Verifikasi dulu**: `SecurityPolicy.max_actions_per_hour`/`record_action()`/`is_rate_limited()` (`crates/galleon-config/src/policy.rs:349`) sudah dipakai luas di `cron/scheduler.rs:898,1272` dan `subagent/mod.rs` — kemungkinan BESAR task ini SUDAH tercakup existing mechanism, bukan gap baru. Definition of Done tahap ini: dokumentasikan apakah `max_actions_per_hour` sudah cukup sebagai cost-cap level cron-job/SOP-run, atau genuinely butuh field tambahan (mis. cap biaya USD, bukan cuma jumlah aksi).
 
 #### Detail Eksekusi — BL-13
 
 **Langkah pengerjaan (VERIFIKASI, bukan kode):**
-1. Baca `crates/clawcrew-config/src/policy.rs` sekitar baris 349 (`SecurityPolicy.max_actions_per_hour`) penuh — pahami apa yang dihitung sebagai "action" (setiap tool call? setiap SOP step? setiap turn?).
+1. Baca `crates/galleon-config/src/policy.rs` sekitar baris 349 (`SecurityPolicy.max_actions_per_hour`) penuh — pahami apa yang dihitung sebagai "action" (setiap tool call? setiap SOP step? setiap turn?).
 2. Baca pemanggilan di `cron/scheduler.rs:898,1272` dan `subagent/mod.rs` — konfirmasi baris persis (dokumen lama, nomor bisa bergeser — verifikasi ulang).
 3. Tulis dokumen temuan singkat (markdown, di `standard-docs/decisions/` atau sejenis) menjawab: apakah ini CUKUP sebagai cost-cap, atau butuh dimensi baru (biaya USD aktual dari token LLM, bukan hitungan aksi).
 4. KEPUTUSAN: kalau cukup, tiket ini SELESAI tanpa kode baru (dokumentasi saja). Kalau tidak cukup, tulis AC lanjutan sebagai tiket terpisah untuk ditambahkan (butuh approval Lead/Owner karena menambah dimensi baru ke `SecurityPolicy`).
@@ -293,7 +293,7 @@ fn enforce_role_restriction(
 | A | `crates/clawcrew-runtime/src/sop/types.rs` (field baru), `engine/src/mission/` (Quest Go) | Backend-Rust + Backend-Go |
 | B | `crates/clawcrew-runtime/src/sop/{types.rs,constraint.rs}` (baru), `crates/clawcrew-runtime/src/hooks/` (reuse existing) | Backend-Rust — **serialkan A dan B pada `sop/types.rs` kalau bersinggungan** |
 | C | `crates/galleon-eval/`, `.github/workflows/` (check baru, non-blocking), `galleon-gateway/src/` (endpoint metrics baru) | Backend-Rust + Platform/DevOps |
-| D | `crates/clawcrew-config/src/policy.rs` (baca, verifikasi BL-13), `standard-docs/decisions/` (design-spec baru BL-12) | squad-lead (evaluasi/dokumentasi dulu, bukan kode) |
+| D | `crates/galleon-config/src/policy.rs` (baca, verifikasi BL-13), `standard-docs/decisions/` (design-spec baru BL-12) | squad-lead (evaluasi/dokumentasi dulu, bukan kode) |
 
 ## Keluaran Sprint
 

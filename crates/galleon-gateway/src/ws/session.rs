@@ -11,7 +11,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 pub(crate) fn websocket_ping_interval(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
 ) -> Option<tokio::time::Interval> {
     let seconds = config.gateway.websocket_ping_interval_secs;
     if seconds == 0 {
@@ -34,13 +34,13 @@ pub(crate) async fn tick_websocket_ping(interval: &mut Option<tokio::time::Inter
 }
 
 pub(crate) async fn resolve_ws_memory_handle(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     agent_alias: &str,
 ) -> anyhow::Result<Option<Arc<dyn galleon_memory::Memory>>> {
     if config.agent(agent_alias).is_some_and(|agent| {
         matches!(
             agent.memory.backend,
-            clawcrew_config::multi_agent::MemoryBackendKind::None
+            galleon_config::multi_agent::MemoryBackendKind::None
         )
     }) {
         return Ok(None);
@@ -690,7 +690,7 @@ pub(crate) fn resolve_session_cwd(
 
 pub(crate) fn resolve_ws_session_cwd(
     requested_cwd: Option<&str>,
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     agent_alias: &str,
 ) -> anyhow::Result<PathBuf> {
     let agent_workspace = config.agent_workspace_dir(agent_alias);

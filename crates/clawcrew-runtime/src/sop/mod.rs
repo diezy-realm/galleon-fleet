@@ -73,7 +73,7 @@ use anyhow::Result;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use clawcrew_config::schema::SopConfig;
+use galleon_config::schema::SopConfig;
 use galleon_memory::traits::Memory;
 use types::{SopManifest, SopMeta};
 
@@ -84,11 +84,11 @@ use types::{SopManifest, SopMeta};
 /// call, not a hand-authored list.
 #[must_use]
 pub fn tool_specs_from_config(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     agent_alias: &str,
 ) -> ToolSpecs {
     let security = Arc::new(
-        clawcrew_config::policy::SecurityPolicy::for_agent(config, agent_alias).unwrap_or_default(),
+        galleon_config::policy::SecurityPolicy::for_agent(config, agent_alias).unwrap_or_default(),
     );
     crate::tools::default_tools(security)
         .iter()
@@ -1966,8 +1966,8 @@ mod tests {
 
     #[test]
     fn test_sop_step_agent_resolves_valid_alias_from_config_agents() {
-        use clawcrew_config::providers::ModelProviderRef;
-        use clawcrew_config::schema::{AliasedAgentConfig, SopConfig};
+        use galleon_config::providers::ModelProviderRef;
+        use galleon_config::schema::{AliasedAgentConfig, SopConfig};
         use std::collections::HashMap;
 
         let mut agents = HashMap::new();
@@ -2052,8 +2052,8 @@ mod tests {
 
     #[test]
     fn test_sop_step_agent_invalid_alias_falls_back_to_sop_default_without_crash() {
-        use clawcrew_config::providers::ModelProviderRef;
-        use clawcrew_config::schema::{AliasedAgentConfig, SopConfig};
+        use galleon_config::providers::ModelProviderRef;
+        use galleon_config::schema::{AliasedAgentConfig, SopConfig};
         use std::collections::HashMap;
 
         let mut agents = HashMap::new();
@@ -2119,7 +2119,7 @@ mod tests {
 
     #[test]
     fn test_sop_step_agent_invalid_alias_with_no_sop_parent_falls_back_to_none_without_crash() {
-        use clawcrew_config::schema::{AliasedAgentConfig, SopConfig};
+        use galleon_config::schema::{AliasedAgentConfig, SopConfig};
         use std::collections::HashMap;
 
         let mut agents = HashMap::new();

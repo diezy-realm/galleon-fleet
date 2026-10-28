@@ -9,7 +9,7 @@ use clawcrew_api::media::{
     is_provider_image_mime,
 };
 use clawcrew_api::model_provider::ChatMessage;
-use clawcrew_config::schema::{MultimodalConfig, build_runtime_proxy_client_with_timeouts};
+use galleon_config::schema::{MultimodalConfig, build_runtime_proxy_client_with_timeouts};
 
 pub const IMAGE_MARKER_PREFIX: &str = "[IMAGE:";
 

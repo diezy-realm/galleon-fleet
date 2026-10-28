@@ -586,7 +586,7 @@ mod tests {
     use crate::sqlite::SqliteMemory;
     use crate::traits::MemoryCategory;
     use std::sync::atomic::{AtomicUsize, Ordering};
-    use clawcrew_config::schema::SearchMode;
+    use galleon_config::schema::SearchMode;
 
     /// Cache config with the opt-in hot cache enabled (the production default
     /// keeps it off).

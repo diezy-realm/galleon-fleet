@@ -14,7 +14,7 @@ use super::reference::{self, SkillRef, SkillRefError};
 use super::scaffold::{self, ScaffoldError, ScaffoldOptions};
 use super::{DroppedSkill, ShadowedSkill};
 use std::collections::HashMap;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 /// Per-skill view returned by [`SkillsService::list_skills`].
 // `Eq` dropped: `frontmatter.slash_options` carry `f64` bounds (not `Eq`).
@@ -336,7 +336,7 @@ fn has_manifest(path: &Path) -> bool {
 mod tests {
     use super::*;
     use tempfile::TempDir;
-    use clawcrew_config::schema::SkillBundleConfig;
+    use galleon_config::schema::SkillBundleConfig;
 
     fn fixture(bundles: &[&str]) -> (TempDir, Config) {
         let dir = tempfile::tempdir().unwrap();
@@ -459,7 +459,7 @@ mod tests {
         cfg.config_path = dir.path().join("config.toml");
         cfg.agents.insert(
             "default".into(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 skill_bundles: vec!["core".into()],
                 ..Default::default()
             },
@@ -612,7 +612,7 @@ mod tests {
         cfg.config_path = dir.path().join("config.toml");
         cfg.agents.insert(
             "default".into(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 skill_bundles: vec!["core".into()],
                 ..Default::default()
             },
@@ -650,7 +650,7 @@ mod tests {
         cfg.config_path = dir.path().join("config.toml");
         cfg.agents.insert(
             "default".into(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 skill_bundles: vec!["core".into()],
                 ..Default::default()
             },
@@ -687,7 +687,7 @@ mod tests {
         cfg.config_path = dir.path().join("config.toml");
         cfg.agents.insert(
             "default".into(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 skill_bundles: vec!["core".into()],
                 ..Default::default()
             },

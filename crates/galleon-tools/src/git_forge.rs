@@ -16,7 +16,7 @@ use serde_json::{Value, json};
 use std::sync::Arc;
 use clawcrew_api::channel::ForgeApiRequest;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::{SecurityPolicy, ToolOperation};
+use galleon_config::policy::{SecurityPolicy, ToolOperation};
 
 use crate::reaction::ChannelMapHandle;
 

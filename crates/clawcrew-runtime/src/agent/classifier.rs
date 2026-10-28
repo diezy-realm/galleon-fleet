@@ -1,4 +1,4 @@
 //! Rule-based query classification re-export.
-//! Canonical implementation lives in `clawcrew_config::classifier`.
+//! Canonical implementation lives in `galleon_config::classifier`.
 
-pub use clawcrew_config::classifier::*;
+pub use galleon_config::classifier::*;

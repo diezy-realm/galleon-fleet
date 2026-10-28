@@ -5,7 +5,7 @@ use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::runtime_traits::RuntimeAdapter;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 pub struct CronRunTool {
     config: Arc<Config>,
@@ -264,7 +264,7 @@ mod tests {
     use std::time::Duration;
     use tempfile::TempDir;
     use clawcrew_api::runtime_traits::{RuntimeAdapter, ShellDialect};
-    use clawcrew_config::schema::Config;
+    use galleon_config::schema::Config;
 
     const TEST_AGENT: &str = "test-agent";
 
@@ -294,7 +294,7 @@ mod tests {
             .ensure("openrouter", TEST_AGENT)
             .expect("known family");
         config.agents.entry(TEST_AGENT.to_string()).or_insert(
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 model_provider: format!("openrouter.{TEST_AGENT}").into(),
                 risk_profile: TEST_AGENT.into(),
                 runtime_profile: TEST_AGENT.into(),

@@ -1,14 +1,14 @@
 //! End-to-end migration tests for the V1 → V2 → V3 chain.
 
-use clawcrew_config::autonomy::AutonomyLevel;
-use clawcrew_config::migration::{
+use galleon_config::autonomy::AutonomyLevel;
+use galleon_config::migration::{
     CURRENT_SCHEMA_VERSION, GenerateOptions, MigrateReport, detect_version, encrypt_secret_strings,
     ensure_disk_at_current_version, generate, migrate_file, migrate_file_in_place,
     migrate_to_current,
 };
-use clawcrew_config::schema::Config;
-use clawcrew_config::schema::v2::V2Config;
-use clawcrew_config::secrets::SecretStore;
+use galleon_config::schema::Config;
+use galleon_config::schema::v2::V2Config;
+use galleon_config::secrets::SecretStore;
 
 const V1_FIXTURE: &str = include_str!("../fixtures/v1.toml");
 
@@ -707,7 +707,7 @@ schedule = { kind = "cron", expr = "0 7 * * *" }
 
     // V2 had `id: String` on CronJobDecl; V3 removed it. Assert via raw value.
     let raw_value: toml::Value = toml::from_str(
-        &clawcrew_config::migration::migrate_file(raw)
+        &galleon_config::migration::migrate_file(raw)
             .expect("migrate_file succeeds")
             .expect("migration ran"),
     )
@@ -1040,7 +1040,7 @@ default_model = "gpt-4o-mini"
 custom_field = "preserved-through-chain"
 nested_value = 42
 "#;
-    let migrated = clawcrew_config::migration::migrate_file(raw)
+    let migrated = galleon_config::migration::migrate_file(raw)
         .expect("migrate_file succeeds")
         .expect("migration ran");
     let value: toml::Value = toml::from_str(&migrated).expect("migrated TOML parses");
@@ -1993,8 +1993,8 @@ funnel = true
 #[test]
 fn v3_channel_types_covers_every_typed_channel_slot() {
     use std::collections::HashSet;
-    use clawcrew_config::schema::Config;
-    use clawcrew_config::schema::v2::V3_CHANNEL_TYPES;
+    use galleon_config::schema::Config;
+    use galleon_config::schema::v2::V3_CHANNEL_TYPES;
 
     let listed: HashSet<&str> = V3_CHANNEL_TYPES.iter().copied().collect();
 
@@ -2026,7 +2026,7 @@ fn v3_channel_types_covers_every_typed_channel_slot() {
         missing.is_empty(),
         "ChannelsConfig has typed channel slots that V3_CHANNEL_TYPES does \
          not alias-wrap during V2→V3 migration. Add each missing entry to \
-         the const in `crates/clawcrew-config/src/schema/v2.rs`, or add a \
+         the const in `crates/galleon-config/src/schema/v2.rs`, or add a \
          dedicated fold step before the alias-wrap loop and list the slot \
          under `folded_into_sibling` here.\n\nMissing slots: {:?}",
         missing
@@ -2237,7 +2237,7 @@ fn generate_current_retires_dashboard_code_length_and_surfaces_pairing_code() {
         .get("pairing_code")
         .and_then(toml::Value::as_table)
         .expect("[gateway.pairing_code] must be surfaced");
-    let default = clawcrew_config::pairing::PairingCodePolicy::default();
+    let default = galleon_config::pairing::PairingCodePolicy::default();
     assert_eq!(
         policy.get("length").and_then(toml::Value::as_integer),
         Some(default.length as i64),
@@ -2777,7 +2777,7 @@ fn lookup_dotted<'a>(value: &'a toml::Value, path: &str) -> Option<&'a toml::Val
 
 #[test]
 fn get_prop_resolves_model_field_for_typed_provider_alias() {
-    use clawcrew_config::schema::Config;
+    use galleon_config::schema::Config;
     let raw = r#"
 schema_version = 3
 
@@ -2807,7 +2807,7 @@ fn prop_fields_includes_providers_models_alias_model_path() {
     // lookup_prop_field walks Config::prop_fields() and finds a matching entry.
     // If the model path isn't in prop_fields(), the gateway returns 404 and
     // the frontend's resolveModelToProviderType walk silently drops the alias.
-    use clawcrew_config::schema::Config;
+    use galleon_config::schema::Config;
     let raw = r#"
 schema_version = 3
 
@@ -2830,7 +2830,7 @@ model = "claude-opus-4-7"
 
 #[test]
 fn typed_family_root_is_not_a_map_keyed_section() {
-    use clawcrew_config::schema::Config;
+    use galleon_config::schema::Config;
     let raw = r#"
 schema_version = 3
 [providers.models.anthropic.glados]
@@ -2854,10 +2854,10 @@ fn map_key_sections_exposes_typed_family_slots() {
     // the slot list from /api/config/templates (backed by
     // Config::map_key_sections()). Verify every providers.<category>
     // typed-family root has its per-type slots registered there.
-    use clawcrew_config::schema::Config;
+    use galleon_config::schema::Config;
     let paths: std::collections::HashSet<&'static str> = Config::map_key_sections()
         .iter()
-        .filter(|s| matches!(s.kind, clawcrew_config::traits::MapKeyKind::Map))
+        .filter(|s| matches!(s.kind, galleon_config::traits::MapKeyKind::Map))
         .map(|s| s.path)
         .collect();
     for required in [
@@ -2904,7 +2904,7 @@ api_key = "sk-openai-lead"
     );
 
     let serialized = toml::to_string(&v3).expect("V3 output serializes");
-    let cfg: clawcrew_config::schema::Config =
+    let cfg: galleon_config::schema::Config =
         toml::from_str(&serialized).expect("V3 output parses as Config");
 
     assert!(
@@ -2953,7 +2953,7 @@ allowed_tools = []
         profile.allowed_tools
     );
     assert!(!profile.deny_all_tools);
-    let policy = clawcrew_config::policy::SecurityPolicy::from_risk_profile(
+    let policy = galleon_config::policy::SecurityPolicy::from_risk_profile(
         profile,
         std::path::Path::new("/ws"),
     );
@@ -2980,7 +2980,7 @@ deny_all_tools = true
         .get("default")
         .expect("default profile present");
     assert!(profile.deny_all_tools);
-    let policy = clawcrew_config::policy::SecurityPolicy::from_risk_profile(
+    let policy = galleon_config::policy::SecurityPolicy::from_risk_profile(
         profile,
         std::path::Path::new("/ws"),
     );

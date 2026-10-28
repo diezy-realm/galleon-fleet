@@ -12,7 +12,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 use clawcrew_api::agent::TurnEvent;
-use clawcrew_config::schema::{AliasedAgentConfig, MemoryConfig, RiskProfileConfig};
+use galleon_config::schema::{AliasedAgentConfig, MemoryConfig, RiskProfileConfig};
 use galleon_memory::{self, Memory};
 
 clawcrew_api::mock_tool_attribution!(CountingTool, EchoTool, FailingTool, PanickingTool);
@@ -584,7 +584,7 @@ async fn turn_bails_out_at_max_iterations() {
     let model_provider = Box::new(ScriptedModelProvider::new(responses));
 
     let config = AliasedAgentConfig {
-        resolved: clawcrew_config::schema::ResolvedRuntime {
+        resolved: galleon_config::schema::ResolvedRuntime {
             max_tool_iterations: max_iters,
             ..Default::default()
         },
@@ -730,7 +730,7 @@ async fn history_trims_after_max_messages() {
 
     let model_provider = Box::new(ScriptedModelProvider::new(responses));
     let config = AliasedAgentConfig {
-        resolved: clawcrew_config::schema::ResolvedRuntime {
+        resolved: galleon_config::schema::ResolvedRuntime {
             max_history_messages: max_history,
             ..Default::default()
         },

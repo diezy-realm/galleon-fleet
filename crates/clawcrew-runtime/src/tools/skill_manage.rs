@@ -273,7 +273,7 @@ async fn collect_support_files(skill_dir: &Path) -> Vec<String> {
 /// Mutating: patch a SKILL.md, write a support file, or archive a skill.
 pub struct SkillManageTool {
     workspace_dir: PathBuf,
-    config: clawcrew_config::schema::SkillImprovementConfig,
+    config: galleon_config::schema::SkillImprovementConfig,
     /// Mirrors `config.skills.allow_scripts` so post-mutation audit applies
     /// the same script policy that the loader/installer enforces.
     allow_scripts: bool,
@@ -282,7 +282,7 @@ pub struct SkillManageTool {
 impl SkillManageTool {
     pub fn new(
         workspace_dir: PathBuf,
-        config: clawcrew_config::schema::SkillImprovementConfig,
+        config: galleon_config::schema::SkillImprovementConfig,
         allow_scripts: bool,
     ) -> Self {
         Self {
@@ -788,16 +788,16 @@ mod tests {
         tempfile::tempdir().unwrap()
     }
 
-    fn cfg_no_cooldown() -> clawcrew_config::schema::SkillImprovementConfig {
-        clawcrew_config::schema::SkillImprovementConfig {
+    fn cfg_no_cooldown() -> galleon_config::schema::SkillImprovementConfig {
+        galleon_config::schema::SkillImprovementConfig {
             enabled: true,
             cooldown_secs: 0,
             ..Default::default()
         }
     }
 
-    fn cfg_with_cooldown(secs: u64) -> clawcrew_config::schema::SkillImprovementConfig {
-        clawcrew_config::schema::SkillImprovementConfig {
+    fn cfg_with_cooldown(secs: u64) -> galleon_config::schema::SkillImprovementConfig {
+        galleon_config::schema::SkillImprovementConfig {
             enabled: true,
             cooldown_secs: secs,
             ..Default::default()
@@ -1098,7 +1098,7 @@ mod tests {
         // feature flag, not a timer that will eventually clear.
         let dir = tempdir();
         write_skill(dir.path(), "deploy", VALID_SKILL).await;
-        let cfg = clawcrew_config::schema::SkillImprovementConfig {
+        let cfg = galleon_config::schema::SkillImprovementConfig {
             enabled: false,
             cooldown_secs: 0,
             ..Default::default()

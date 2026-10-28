@@ -16,7 +16,7 @@ use crate::observability::ObserverEvent;
 use crate::tools::ToolSpec;
 use anyhow::Result;
 use std::time::{Duration, Instant};
-use clawcrew_config::schema::StreamReasoningMode;
+use galleon_config::schema::StreamReasoningMode;
 use galleon_providers::dispatch::{AcceptedRoute, AccountedAttempt, with_exact_dispatch_route};
 use galleon_providers::{ChatMessage, ChatRequest, ChatResponse, ModelProvider, ProviderDispatch};
 
@@ -432,7 +432,7 @@ mod payload_capture_tests {
     use crate::observability::NoopObserver;
     use async_trait::async_trait;
     use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
-    use clawcrew_config::schema::{PacingConfig, StreamReasoningMode};
+    use galleon_config::schema::{PacingConfig, StreamReasoningMode};
     use clawcrew_log::LogConfig;
     use galleon_providers::{ChatMessage, ModelProvider};
 
@@ -478,11 +478,11 @@ mod payload_capture_tests {
             observer,
             provider_name: "stub",
             model: "stub-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits {
+            context_limits: galleon_config::schema::ResolvedContextLimits {
                 model_context_window: 32_000,
                 context_token_budget: 32_000,
                 model_context_window_source:
-                    clawcrew_config::schema::ModelContextWindowSource::Configured,
+                    galleon_config::schema::ModelContextWindowSource::Configured,
             },
             temperature: None,
             approval: None,
@@ -688,7 +688,7 @@ mod streaming_fallback_tests {
     use tokio::net::TcpListener;
     use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
     use clawcrew_api::model_provider::{ModelRefusalError, StreamError, StreamEvent};
-    use clawcrew_config::schema::PacingConfig;
+    use galleon_config::schema::PacingConfig;
     use galleon_providers::compatible::{AuthStyle, OpenAiCompatibleModelProvider};
     use galleon_providers::reliable::ReliableModelProvider;
     use galleon_providers::traits::{StreamOptions, StreamResult, TokenUsage};
@@ -1177,7 +1177,7 @@ mod streaming_fallback_tests {
             observer: &observer,
             provider_name: "test-provider",
             model: "test-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+            context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: Some(0.0),
             approval: None,
             channel_name: "test",
@@ -1279,7 +1279,7 @@ mod streaming_fallback_tests {
             observer: &observer,
             provider_name: "test-provider",
             model: "test-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+            context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: Some(0.0),
             approval: None,
             channel_name: "test",
@@ -1333,7 +1333,7 @@ mod streaming_fallback_tests {
             observer: &observer,
             provider_name: "test-provider",
             model: "test-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+            context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: Some(0.0),
             approval: None,
             channel_name: "test",
@@ -1468,7 +1468,7 @@ mod streaming_fallback_tests {
                 observer: &observer,
                 provider_name: "test-provider",
                 model: "test-model",
-                context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+                context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
                 temperature: Some(0.0),
                 approval: None,
                 channel_name: "test",
@@ -1553,7 +1553,7 @@ mod streaming_fallback_tests {
             observer: &observer,
             provider_name: "requested-provider",
             model: "requested-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+            context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: Some(0.0),
             approval: None,
             channel_name: "test",
@@ -1657,7 +1657,7 @@ mod streaming_fallback_tests {
             observer: &observer,
             provider_name: "test-provider",
             model: "test-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+            context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: Some(0.0),
             approval: None,
             channel_name: "test",
@@ -1727,7 +1727,7 @@ mod streaming_fallback_tests {
             observer: &observer,
             provider_name: "requested-provider",
             model: "requested-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+            context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: Some(0.0),
             approval: None,
             channel_name: "test",
@@ -1798,7 +1798,7 @@ mod streaming_fallback_tests {
             observer: &observer,
             provider_name: "requested-provider",
             model: "requested-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+            context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: Some(0.0),
             approval: None,
             channel_name: "test",

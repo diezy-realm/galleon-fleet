@@ -4,7 +4,7 @@ use crate::util_helpers::truncate_with_ellipsis;
 use async_trait::async_trait;
 use serde_json::json;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::schema::CloudOpsConfig;
+use galleon_config::schema::CloudOpsConfig;
 
 /// Read-only cloud operations advisory tool.
 /// Actions: `review_iac`, `assess_migration`, `cost_analysis`, `architecture_review`.

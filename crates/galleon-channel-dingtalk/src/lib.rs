@@ -81,7 +81,7 @@ impl DingTalkChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_channel_proxy_client(
+        galleon_config::schema::build_channel_proxy_client(
             "channel.dingtalk",
             self.proxy_url.as_deref(),
         )
@@ -225,7 +225,7 @@ impl Channel for DingTalkChannel {
             ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
             "connecting to stream WebSocket..."
         );
-        let (ws_stream, _) = clawcrew_config::schema::ws_connect_with_proxy(
+        let (ws_stream, _) = galleon_config::schema::ws_connect_with_proxy(
             &ws_url,
             "channel.dingtalk",
             self.proxy_url.as_deref(),
@@ -491,7 +491,7 @@ client_id = "app_id_123"
 client_secret = "secret_456"
 allowed_users = ["user1", "*"]
 "#;
-        let cfg = clawcrew_config::migration::migrate_to_current(v2_toml)
+        let cfg = galleon_config::migration::migrate_to_current(v2_toml)
             .expect("V2 dingtalk config migrates to V3");
         let dingtalk = cfg
             .channels
@@ -522,7 +522,7 @@ enabled = true
 client_id = "id"
 client_secret = "secret"
 "#;
-        let cfg = clawcrew_config::migration::migrate_to_current(v2_toml)
+        let cfg = galleon_config::migration::migrate_to_current(v2_toml)
             .expect("V2 dingtalk config without allowed_users migrates");
         assert!(
             !cfg.peer_groups.contains_key("dingtalk_default"),

@@ -1,3 +1,3 @@
-//! Configuration schema — re-exported from `clawcrew-config`.
+//! Configuration schema — re-exported from `galleon-config`.
 
-pub use clawcrew_config::schema::*;
+pub use galleon_config::schema::*;

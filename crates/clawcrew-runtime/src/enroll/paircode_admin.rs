@@ -246,7 +246,7 @@ fn now_unix() -> i64 {
 mod tests {
     use std::sync::Arc;
 
-    use clawcrew_config::pairing::{PairingCodePolicy, PairingGuard};
+    use galleon_config::pairing::{PairingCodePolicy, PairingGuard};
 
     use super::*;
     use crate::enroll::RelayProfile;

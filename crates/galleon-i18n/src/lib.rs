@@ -284,7 +284,7 @@ fn load_ftl_with_reader(
     filename: &str,
     read: impl Fn(&std::path::Path) -> Option<String>,
 ) -> Option<String> {
-    let path = clawcrew_config::schema::ftl_locale_dir(locale)
+    let path = galleon_config::schema::ftl_locale_dir(locale)
         .ok()
         .map(|d| d.join(filename));
     let search_paths = [path];

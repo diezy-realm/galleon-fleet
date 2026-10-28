@@ -66,7 +66,7 @@ impl NotionChannel {
             alias: alias.into(),
             status_type: Arc::new(RwLock::new("select".to_string())),
             inflight: Arc::new(RwLock::new(HashSet::new())),
-            http: clawcrew_config::schema::build_runtime_proxy_client("channel.notion"),
+            http: galleon_config::schema::build_runtime_proxy_client("channel.notion"),
             recover_stale,
         }
     }

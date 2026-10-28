@@ -17,7 +17,7 @@ use std::future::Future;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 const OPENAI_CODEX_PROVIDER: &str = "openai-codex";
 const ANTHROPIC_PROVIDER: &str = "anthropic";
@@ -962,8 +962,8 @@ fn pending_oauth_login_path(config: &Config, model_provider: &str) -> PathBuf {
     state_dir_from_config(config).join(filename)
 }
 
-fn pending_oauth_secret_store(config: &Config) -> clawcrew_config::secrets::SecretStore {
-    clawcrew_config::secrets::SecretStore::new(
+fn pending_oauth_secret_store(config: &Config) -> galleon_config::secrets::SecretStore {
+    galleon_config::secrets::SecretStore::new(
         &state_dir_from_config(config),
         config.secrets.encrypt,
     )

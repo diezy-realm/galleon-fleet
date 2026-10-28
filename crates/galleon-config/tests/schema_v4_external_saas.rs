@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 #[test]
 fn linkedin_schema_v4_removal_scope_matches_schema_leaf_paths() {

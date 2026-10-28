@@ -254,14 +254,14 @@ let captured_input = clawcrew_log::capture_tool_input(&resolved_policy, call_nam
 
 **JANGAN DIUBAH:** `ToolIoCapture`/`capture_tool_input`/`capture_tool_output`/`capture_with_policy` di `tool_io.rs` — API ini sudah benar sesuai dokumentasinya sendiri, tiket ini murni WIRING caller, bukan mengubah fungsi itu.
 
-- [x] **BL-37 Tahap 2 (SETELAH Tahap 1)** Pisah axis policy: technical tool I/O (default truncated) vs conversational tool I/O (default `Off`). File: `crates/clawcrew-config/src/schema.rs`, `crates/clawcrew-log/src/{tool_io.rs,config.rs}`. Status: COMPLETED (`conversational_tool_io_defaults_to_off_while_technical_is_captured` passed).
+- [x] **BL-37 Tahap 2 (SETELAH Tahap 1)** Pisah axis policy: technical tool I/O (default truncated) vs conversational tool I/O (default `Off`). File: `crates/galleon-config/src/schema.rs`, `crates/clawcrew-log/src/{tool_io.rs,config.rs}`. Status: COMPLETED (`conversational_tool_io_defaults_to_off_while_technical_is_captured` passed).
 
 #### Detail Eksekusi — BL-37 Tahap 2
 
 **File & simbol spesifik:** `ToolIoPolicy` enum (dipakai di `tool_io.rs`, didefinisikan kemungkinan di `clawcrew-log/src/config.rs` — BELUM diverifikasi sesi ini, WAJIB cek sebelum eksekusi) saat ini SATU axis (`Off|Full|Redacted`) berlaku untuk SEMUA tool. Tiket ini minta DUA axis terpisah: tool teknis (file-write, shell, dll — default `Redacted`/truncated) vs tool conversational (kirim pesan ke user/channel — default `Off`, karena isi percakapan user adalah data sensitif yang berbeda kelas dari argumen command teknis).
 
 **Langkah pengerjaan:**
-1. Baca `crates/clawcrew-config/src/schema.rs` untuk struktur `ResolvedPolicy`/`ToolIoPolicy` existing persis.
+1. Baca `crates/galleon-config/src/schema.rs` untuk struktur `ResolvedPolicy`/`ToolIoPolicy` existing persis.
 2. Tentukan cara membedakan "tool teknis" vs "tool conversational" — kemungkinan via klasifikasi existing di tool registry (`ToolManifest`? — cek apakah ada field kategori tool yang sudah ada, JANGAN buat klasifikasi baru kalau sudah ada yang bisa direuse).
 3. Tambah field policy baru (`technical_tool_io: ToolIoPolicy`, `conversational_tool_io: ToolIoPolicy`) dengan default berbeda, atau skema lain yang konsisten dengan pola existing — baca dulu bagaimana field policy lain di `schema.rs` didefinisikan (default value, serde attribute) untuk konsistensi.
 4. Update `capture_with_policy`/callsite BL-37 Tahap 1 untuk memilih axis yang tepat berdasarkan kategori tool.
@@ -321,7 +321,7 @@ fn restrict_log_file_acl(path: &Path) -> std::io::Result<()> {
 |---|---|---|---|
 | A (BL-52) | `galleon-infra/src/debounce.rs`, `galleon-channels/src/orchestrator/mod.rs` | Backend-Rust | **Tunggu BL-14 (Sprint 0) merge dulu** |
 | B (BL-53/54/55) | `clawcrew-api/src/media.rs`, Front App entry point per-channel, Core agregasi | Backend-Rust + Frontend (per-channel) | BL-55 tunggu BL-52 merge |
-| C (BL-37/38/39) | `clawcrew-runtime/src/agent/tool_execution.rs`, `clawcrew-config/src/schema.rs`, `clawcrew-log/src/*` | Backend-Rust (crew berbeda dari A/B, file tidak beririsan) | Bisa paralel penuh dengan A/B |
+| C (BL-37/38/39) | `clawcrew-runtime/src/agent/tool_execution.rs`, `galleon-config/src/schema.rs`, `clawcrew-log/src/*` | Backend-Rust (crew berbeda dari A/B, file tidak beririsan) | Bisa paralel penuh dengan A/B |
 
 ## Keluaran Sprint
 

@@ -10,15 +10,15 @@
 //!
 //! * **Allowlist policy.** [`is_author_allowed`](BlueskyChannel::is_author_allowed)
 //!   calls [`galleon_channel_core::allowlist::is_identity_allowed_by`], the
-//!   same `clawcrew_config::schema` peer-policy SSOT upstream uses — reused, not
+//!   same `galleon_config::schema` peer-policy SSOT upstream uses — reused, not
 //!   reimplemented, and WITHOUT dragging `clawcrew-runtime`. Handle and DID are
 //!   judged together against one snapshot of the peer list.
 //!
 //! ## Documented ceilings (ponytail: cut corners with a known upgrade path)
 //!
 //! * **Env-proxy client.** Upstream `http_client` calls
-//!   `clawcrew_config::schema::build_runtime_proxy_client`, which honours the
-//!   environment proxy fallback. That drags `clawcrew-config`; here only an
+//!   `galleon_config::schema::build_runtime_proxy_client`, which honours the
+//!   environment proxy fallback. That drags `galleon-config`; here only an
 //!   EXPLICIT per-channel `proxy_url` is honoured (plain `reqwest::Proxy`),
 //!   mirroring the signal crate. The env-proxy fallback is the ceiling.
 //! * **Structured logging.** Upstream emits `clawcrew_log` structured events on
@@ -49,7 +49,7 @@ pub struct BlueskyChannel {
     /// The resolver reads live configuration and is not cached.
     peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
     /// Per-channel explicit proxy URL. `None` = direct connection.
-    /// ponytail: env-proxy fallback (upstream `clawcrew_config` runtime proxy)
+    /// ponytail: env-proxy fallback (upstream `galleon_config` runtime proxy)
     /// is the documented ceiling — only an explicit URL is honoured here.
     proxy_url: Option<String>,
     auth: Mutex<BlueskyAuth>,

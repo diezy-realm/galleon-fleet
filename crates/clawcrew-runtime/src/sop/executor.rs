@@ -229,7 +229,7 @@ pub(crate) async fn drive_shared_deterministic_run(
 /// agent, `DeterministicStep` routes through the engine's headless
 /// deterministic driver, and every other action is already parked or terminal.
 pub fn spawn_headless_run_driver(
-    config: clawcrew_config::schema::Config,
+    config: galleon_config::schema::Config,
     engine: Arc<Mutex<SopEngine>>,
     audit: Option<Arc<SopAuditLogger>>,
     first_action: SopRunAction,
@@ -246,7 +246,7 @@ pub fn spawn_headless_run_driver(
 /// the transport response separate from the lifecycle obligation to schedule
 /// the resumed action.
 pub fn drive_resumed_broker_action(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     engine: Arc<Mutex<SopEngine>>,
     audit: Option<Arc<SopAuditLogger>>,
     outcome: &BrokerOutcome,
@@ -259,7 +259,7 @@ pub fn drive_resumed_broker_action(
 }
 
 async fn drive_headless_run(
-    config: clawcrew_config::schema::Config,
+    config: galleon_config::schema::Config,
     engine: Arc<Mutex<SopEngine>>,
     audit: Option<Arc<SopAuditLogger>>,
     first_action: SopRunAction,
@@ -562,7 +562,7 @@ mod tests {
         SopStepResult, SopStepStatus, SopTrigger, SopTriggerSource,
     };
     use serde_json::json;
-    use clawcrew_config::schema::SopConfig;
+    use galleon_config::schema::SopConfig;
 
     fn test_sop(name: &str) -> Sop {
         Sop {

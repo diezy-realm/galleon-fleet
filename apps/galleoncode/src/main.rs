@@ -1965,7 +1965,7 @@ mod connection_tests {
         let mut cmd = std::process::Command::new("clawcrew");
         configure_ephemeral_daemon_command(
             &mut cmd,
-            std::path::Path::new("/tmp/clawcrew-config"),
+            std::path::Path::new("/tmp/galleon-config"),
             std::path::Path::new("/tmp/clawcrew.sock"),
         );
 
@@ -1977,7 +1977,7 @@ mod connection_tests {
                 "daemon",
                 "--ephemeral",
                 "--config-dir",
-                "/tmp/clawcrew-config",
+                "/tmp/galleon-config",
             ]
         );
         assert_eq!(

@@ -3673,7 +3673,7 @@
                 .build()
         };
 
-        let permissive = build(clawcrew_config::schema::MultimodalConfig::default());
+        let permissive = build(galleon_config::schema::MultimodalConfig::default());
         let prepared = permissive
             .normalize_messages_for_upstream(&messages)
             .await
@@ -3684,7 +3684,7 @@
             "default policy admits both images"
         );
 
-        let capped = build(clawcrew_config::schema::MultimodalConfig {
+        let capped = build(galleon_config::schema::MultimodalConfig {
             max_images: 1,
             ..Default::default()
         });
@@ -3708,7 +3708,7 @@
             .auth_style(AuthStyle::Bearer)
             .build();
 
-        let defaults = clawcrew_config::schema::MultimodalConfig::default();
+        let defaults = galleon_config::schema::MultimodalConfig::default();
         assert_eq!(provider.multimodal.max_images, defaults.max_images);
     }
 

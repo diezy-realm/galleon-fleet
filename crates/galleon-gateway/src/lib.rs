@@ -76,7 +76,7 @@ pub const LONG_RUNNING_REQUEST_TIMEOUT_SECS: u64 = 600;
 
 /// Gateway request timeout (seconds) for routes other than the long-running
 /// cron-trigger endpoint. Reads from typed config.
-pub fn gateway_request_timeout_secs(cfg: &clawcrew_config::schema::GatewayConfig) -> u64 {
+pub fn gateway_request_timeout_secs(cfg: &galleon_config::schema::GatewayConfig) -> u64 {
     cfg.request_timeout_secs
 }
 
@@ -84,7 +84,7 @@ pub fn gateway_request_timeout_secs(cfg: &clawcrew_config::schema::GatewayConfig
 /// gateway-wide [`gateway_request_timeout_secs`] limit so synchronous agent
 /// jobs can run to completion. Reads from typed config.
 pub fn gateway_long_running_request_timeout_secs(
-    cfg: &clawcrew_config::schema::GatewayConfig,
+    cfg: &galleon_config::schema::GatewayConfig,
 ) -> u64 {
     cfg.long_running_request_timeout_secs
 }
@@ -96,7 +96,7 @@ pub enum WebDashboardAvailability {
 }
 
 pub fn resolve_web_dashboard_availability(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
 ) -> Option<WebDashboardAvailability> {
     #[cfg(feature = "embedded-web")]
     {
@@ -136,8 +136,8 @@ pub use strangler_runner::{
 
 // Types from other modules that extracted files need
 pub use clawcrew_api::memory_traits::MemoryStrategy;
-pub use clawcrew_config::pairing::PairingCodePolicy;
-pub use clawcrew_config::schema::Config;
+pub use galleon_config::pairing::PairingCodePolicy;
+pub use galleon_config::schema::Config;
 pub use galleon_tools::canvas::CanvasStore;
 
 use axum::Json;
@@ -148,7 +148,7 @@ use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use clawcrew_api::channel::Channel;
-use clawcrew_config::pairing::constant_time_eq;
+use galleon_config::pairing::constant_time_eq;
 use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 
@@ -304,8 +304,8 @@ pub fn client_key_from_request(
 }
 
 pub(crate) async fn persist_pairing_tokens(
-    config: Arc<parking_lot::RwLock<clawcrew_config::schema::Config>>,
-    pairing: &clawcrew_config::pairing::PairingGuard,
+    config: Arc<parking_lot::RwLock<galleon_config::schema::Config>>,
+    pairing: &galleon_config::pairing::PairingGuard,
     config_write_lock: Arc<tokio::sync::Mutex<()>>,
 ) -> anyhow::Result<()> {
     let _guard = config_write_lock.lock_owned().await;
@@ -1134,8 +1134,8 @@ pub async fn run_gateway_chat_with_tools(
     let agent_alias = require_gateway_chat_agent_alias(&config, agent_override)?;
 
     let cost_tracking_context = state.cost_tracker.as_ref().map(|tracker| {
-        let pricing = clawcrew_config::cost::build_model_provider_pricing(&config);
-        clawcrew_config::cost::ToolLoopCostTrackingContext::new(
+        let pricing = galleon_config::cost::build_model_provider_pricing(&config);
+        galleon_config::cost::ToolLoopCostTrackingContext::new(
             tracker.clone(),
             std::sync::Arc::new(pricing),
         )
@@ -1143,12 +1143,12 @@ pub async fn run_gateway_chat_with_tools(
     });
     let turn_usage = state.cost_tracker.as_ref().map(|_| {
         std::sync::Arc::new(parking_lot::Mutex::new(
-            clawcrew_config::cost::TurnUsage::default(),
+            galleon_config::cost::TurnUsage::default(),
         ))
     });
-    let response = Box::pin(clawcrew_config::cost::TOOL_LOOP_TURN_USAGE.scope(
+    let response = Box::pin(galleon_config::cost::TOOL_LOOP_TURN_USAGE.scope(
         turn_usage.clone(),
-        clawcrew_config::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
+        galleon_config::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
             cost_tracking_context,
             clawcrew_api::agent::process_message(
                 Box::new(config),
@@ -1256,7 +1256,7 @@ mod chat_regression_tests {
 
         set_agent_runner(runner);
 
-        let config = clawcrew_config::schema::Config::default();
+        let config = galleon_config::schema::Config::default();
         let state = crate::api_config::tests::test_state(config);
 
         let outcome = run_gateway_chat_with_tools(
@@ -1301,7 +1301,7 @@ mod chat_regression_tests {
 
         set_agent_runner(runner);
 
-        let config = clawcrew_config::schema::Config::default();
+        let config = galleon_config::schema::Config::default();
         let state = crate::api_config::tests::test_state(config);
 
         let err = run_gateway_chat_with_tools(&state, "failing message", None, Some("main"))

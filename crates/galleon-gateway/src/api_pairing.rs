@@ -730,7 +730,7 @@ pub async fn rotate_token(
             "message": "Old token revoked. Use this code to re-pair the device.",
         }))
         .into_response(),
-        Err(clawcrew_config::pairing::GeneratePairingCodeError::Pending) => {
+        Err(galleon_config::pairing::GeneratePairingCodeError::Pending) => {
             Json(serde_json::json!({
                 "device_id": device_id,
                 "pairing_code": null,
@@ -738,7 +738,7 @@ pub async fn rotate_token(
             }))
             .into_response()
         }
-        Err(clawcrew_config::pairing::GeneratePairingCodeError::PairingDisabled) => {
+        Err(galleon_config::pairing::GeneratePairingCodeError::PairingDisabled) => {
             Json(serde_json::json!({
                 "device_id": device_id,
                 "pairing_code": null,
@@ -758,8 +758,8 @@ mod tests {
     use axum::Json;
     use http_body_util::BodyExt;
     use std::sync::Arc;
-    use clawcrew_config::pairing::PairingGuard;
-    use clawcrew_config::schema::Config;
+    use galleon_config::pairing::PairingGuard;
+    use galleon_config::schema::Config;
 
     /// Build an `AppState` whose device-registry points at a non-existent
     /// path so every SQLite write fails. Pairing enabled so a freshly
@@ -769,7 +769,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         state.device_registry = Some(Arc::new(DeviceRegistry::with_db_path(PathBuf::from(
             "/this/path/does/not/exist/devices.db",
@@ -831,7 +831,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         let tmp = tempfile::TempDir::new().unwrap();
         let blocker = tmp.path().join("blocker");
@@ -881,7 +881,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         // Default config does not trust forwarded headers.
         assert!(!state.trust_forwarded_headers);
@@ -938,7 +938,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         state.trust_forwarded_headers = true;
         state.rate_limiter = Arc::new(GatewayRateLimiter::new(1, 100, 100));
@@ -991,7 +991,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         state.rate_limiter = Arc::new(GatewayRateLimiter::new(2, 100, 100));
         let peer: SocketAddr = "203.0.113.20:55555".parse().unwrap();
@@ -1035,7 +1035,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         state.rate_limiter = Arc::new(GatewayRateLimiter::new(100, 100, 100));
         state.auth_limiter = Arc::new(AuthRateLimiter::new());
@@ -1080,7 +1080,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         state.rate_limiter = Arc::new(GatewayRateLimiter::new(100, 100, 100));
         state.auth_limiter = Arc::new(AuthRateLimiter::new());
@@ -1188,7 +1188,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         state.rate_limiter = Arc::new(GatewayRateLimiter::new(100, 100, 100));
         state.auth_limiter = Arc::new(AuthRateLimiter::new());
@@ -1218,7 +1218,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         state.rate_limiter = Arc::new(GatewayRateLimiter::new(100, 100, 100));
         state.auth_limiter = Arc::new(AuthRateLimiter::new());

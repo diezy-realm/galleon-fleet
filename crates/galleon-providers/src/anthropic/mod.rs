@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 pub use clawcrew_api::model_provider::ModelRefusalError as AnthropicRefusalError;
 use clawcrew_api::model_provider::ThinkingDisplay;
 use clawcrew_api::tool::ToolSpec;
-use clawcrew_config::schema::CacheTtl;
+use galleon_config::schema::CacheTtl;
 
 /// Anthropic's API documentation lists 1.0 as the default sampling temperature.
 const TEMPERATURE_DEFAULT: f64 = 1.0;
@@ -2281,7 +2281,7 @@ impl AnthropicModelProvider {
     }
 
     fn http_client(&self) -> Client {
-        clawcrew_config::schema::build_runtime_proxy_client_with_timeouts(
+        galleon_config::schema::build_runtime_proxy_client_with_timeouts(
             "model_provider.anthropic",
             self.timeout_secs,
             10,
@@ -2295,7 +2295,7 @@ impl AnthropicModelProvider {
         let builder = Client::builder()
             .connect_timeout(std::time::Duration::from_secs(10))
             .read_timeout(STREAM_IDLE_TIMEOUT);
-        let builder = clawcrew_config::schema::apply_runtime_proxy_to_builder(
+        let builder = galleon_config::schema::apply_runtime_proxy_to_builder(
             builder,
             "model_provider.anthropic",
         );

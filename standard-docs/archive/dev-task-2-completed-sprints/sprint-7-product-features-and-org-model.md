@@ -92,13 +92,13 @@ depends_on: Sprint 4 §E (BG-F1/F3 org model), Sprint 1 §A (BG-B4 untuk FW-C5)
 
 > Desain+riset sudah lengkap (`decisions/payment-lockout-gate-scheme.md`, diperkuat 4 temuan riset: AP2 v0.2, insiden Comet/Replit, OWASP Agentic ASI03/09/10). Ditunda Owner 2026-10-05 (fokus BL-32 dulu) — sekarang BL-32 sudah di Sprint 0, jadi sprint ini adalah titik eksekusi wajar.
 
-- [x] **BL-40 (MEDIUM-importance/LOW-urgency, tidak ada dependency)** `PaymentLockConfig` schema (termasuk `unlock_expires_at`) di `clawcrew-config`.
+- [x] **BL-40 (MEDIUM-importance/LOW-urgency, tidak ada dependency)** `PaymentLockConfig` schema (termasuk `unlock_expires_at`) di `galleon-config`.
 
 #### Detail Eksekusi — BL-40
 
 **Verifikasi:** `PaymentLockConfig` **TIDAK ADA** di kode (0 match) — konfirmasi genuinely baru (desain sudah lengkap di `decisions/payment-lockout-gate-scheme.md`, implementasi belum mulai). **Langkah pertama WAJIB:** baca `decisions/payment-lockout-gate-scheme.md` PENUH untuk spesifikasi schema persis sebelum menulis struct — dokumen desain itu adalah SSOT untuk shape field, bukan diasumsikan dari judul tiket saja.
 
-**File & simbol spesifik:** Tambah ke `crates/clawcrew-config/src/schema.rs` — ikuti pola struct config lain di file ini (lihat `ToolIoPolicy`/field lain yang sudah di-grep Sprint 2).
+**File & simbol spesifik:** Tambah ke `crates/galleon-config/src/schema.rs` — ikuti pola struct config lain di file ini (lihat `ToolIoPolicy`/field lain yang sudah di-grep Sprint 2).
 
 **Spesifikasi API (pola, verifikasi detail persis dari dokumen desain):**
 ```rust

@@ -221,7 +221,7 @@ mod tests {
         SopTrigger, SopTriggerSource,
     };
     use std::sync::Arc;
-    use clawcrew_config::schema::{ApprovalMode, SopConfig};
+    use galleon_config::schema::{ApprovalMode, SopConfig};
 
     /// A store that fails every `append_event` (the gate ledger) but delegates
     /// everything else to a real in-memory store - to prove gate resolution fails
@@ -661,7 +661,7 @@ mod tests {
         // The timeout path is fail-closed too: a cancel must not terminate a run
         // unless its `gate_timed_out` row is durably recorded.
         use crate::sop::types::SopRunStatus;
-        use clawcrew_config::schema::ApprovalTimeoutAction;
+        use galleon_config::schema::ApprovalTimeoutAction;
 
         let cfg = SopConfig {
             approval_mode: ApprovalMode::Both,

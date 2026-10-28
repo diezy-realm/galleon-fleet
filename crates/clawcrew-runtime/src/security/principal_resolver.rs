@@ -24,7 +24,7 @@ use parking_lot::RwLock;
 
 use clawcrew_api::grants::ResolvedGrants;
 use clawcrew_api::principal::{AuthenticatedIdentity, DenyReason, IdentitySubject, Principal};
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 /// One identity's resolution at a specific policy generation.
 #[derive(Clone, Debug)]
@@ -674,7 +674,7 @@ mod tests {
 
     #[test]
     fn duplicate_effective_principal_id_rejects_the_roster() {
-        use clawcrew_config::schema::UserConfig;
+        use galleon_config::schema::UserConfig;
         let mut config = Config::default();
         for (name, uid, profile) in [("alice", 1u32, "reader"), ("bob", 2u32, "ops")] {
             config.users.insert(
@@ -699,7 +699,7 @@ mod tests {
 
     #[test]
     fn reload_with_duplicate_principal_id_keeps_the_old_policy() {
-        use clawcrew_config::schema::UserConfig;
+        use galleon_config::schema::UserConfig;
         let resolver = PrincipalResolver::new(policy());
         let before = resolver.generation();
         let mut bad = Config::default();
@@ -722,7 +722,7 @@ mod tests {
 
     /// A known-valid auth config (mirrors `policy_compiles_from_config_sections`).
     fn valid_auth_config() -> Config {
-        use clawcrew_config::schema::{OidcConfig, PermissionProfileConfig};
+        use galleon_config::schema::{OidcConfig, PermissionProfileConfig};
         let mut config = Config::default();
         config.permission_profiles.insert(
             "operator".to_string(),
@@ -835,7 +835,7 @@ mod tests {
 
     #[test]
     fn policy_compiles_from_config_sections() {
-        use clawcrew_config::schema::{OidcConfig, PermissionProfileConfig, UserConfig};
+        use galleon_config::schema::{OidcConfig, PermissionProfileConfig, UserConfig};
         let mut config = Config::default();
         config.permission_profiles.insert(
             "operator".to_string(),

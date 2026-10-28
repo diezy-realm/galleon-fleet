@@ -1592,7 +1592,7 @@ fn row_to_entry(row: &rusqlite::Row<'_>) -> rusqlite::Result<LedgerEntry> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::AuditConfig;
+    use galleon_config::schema::AuditConfig;
 
     fn entry(fp: &str, device: &str) -> LedgerEntry {
         LedgerEntry {

@@ -5,8 +5,8 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::autonomy::AutonomyLevel;
-use clawcrew_config::policy::SecurityPolicy;
+use galleon_config::autonomy::AutonomyLevel;
+use galleon_config::policy::SecurityPolicy;
 
 use crate::util_helpers::clean_verbatim_path;
 
@@ -2187,7 +2187,7 @@ mod tests {
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
     use tempfile::TempDir;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::policy::SecurityPolicy;
 
     #[cfg(unix)]
     struct MarkerGitCommandBoundary {

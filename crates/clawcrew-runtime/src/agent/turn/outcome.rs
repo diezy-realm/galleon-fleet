@@ -14,7 +14,7 @@ pub type ModelSwitchCallback = Arc<Mutex<Option<(String, String)>>>;
 pub struct ServedRoute {
     pub provider_name: String,
     pub model: String,
-    pub context_limits: clawcrew_config::schema::ResolvedContextLimits,
+    pub context_limits: galleon_config::schema::ResolvedContextLimits,
 }
 
 /// Shared sink a caller hands the loop to observe the final serving route.

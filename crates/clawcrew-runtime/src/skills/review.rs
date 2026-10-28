@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use tokio::task_local;
 use tokio_util::sync::CancellationToken;
 use clawcrew_api::tool::Tool;
-use clawcrew_config::schema::{MultimodalConfig, PacingConfig, SkillImprovementConfig};
+use galleon_config::schema::{MultimodalConfig, PacingConfig, SkillImprovementConfig};
 use galleon_providers::{ChatMessage, ModelProvider};
 
 use crate::observability::Observer;
@@ -24,7 +24,7 @@ pub async fn maybe_run_skill_review(
     // Full config, for resolving the configured `vision_model_provider`'s
     // alias-specific options on the review fork's vision route. `None` on
     // configless (test) paths; the production caller (`run`) threads `Some`.
-    full_config: Option<&clawcrew_config::schema::Config>,
+    full_config: Option<&galleon_config::schema::Config>,
     workspace_dir: PathBuf,
     config: SkillImprovementConfig,
     allow_scripts: bool,
@@ -77,10 +77,10 @@ pub async fn maybe_run_skill_review(
     // skill tool and would only be probably-neutral. Every assembly divergence
     // is off (no peripherals, no MCP, no skills, no memory strip), so `config` /
     // `agent_alias` are never read beyond satisfying the signature.
-    let review_default_config = clawcrew_config::schema::Config::default();
+    let review_default_config = galleon_config::schema::Config::default();
     let review_config_ref = full_config.unwrap_or(&review_default_config);
     let review_alias = agent_alias.unwrap_or("default");
-    let review_security = Arc::new(clawcrew_config::policy::SecurityPolicy::default());
+    let review_security = Arc::new(galleon_config::policy::SecurityPolicy::default());
     let assembled_review =
         crate::tools::scoped::ScopedToolRegistry::assemble(crate::tools::scoped::ScopedAssembly {
             config: review_config_ref,
@@ -157,7 +157,7 @@ pub async fn maybe_run_skill_review(
                         max_tool_result_chars,
                         context_limits: full_config.zip(agent_alias).map_or_else(
                             || {
-                                clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(
+                                galleon_config::schema::ResolvedContextLimits::legacy_fallback(
                                     context_token_budget,
                                 )
                             },

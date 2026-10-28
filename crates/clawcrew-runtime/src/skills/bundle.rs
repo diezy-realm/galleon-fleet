@@ -1,12 +1,12 @@
 //! Runtime-side bundle facade. The directory rules (default path, inside-
-//! `shared/` containment, uniqueness) live in [`clawcrew_config::skill_bundles`]
+//! `shared/` containment, uniqueness) live in [`galleon_config::skill_bundles`]
 //! so `Config::validate` and the SkillsService share one implementation.
 //! This module is a thin re-exporter plus the `BundleSummary` shape
 
 use std::path::{Path, PathBuf};
 
-use clawcrew_config::schema::Config;
-pub use clawcrew_config::skill_bundles::{
+use galleon_config::schema::Config;
+pub use galleon_config::skill_bundles::{
     BundleDirectoryError as BundleError, default_directory, resolve_directory, validate_directory,
     validate_uniqueness,
 };

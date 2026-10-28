@@ -11,9 +11,9 @@ use std::path::Path;
 use std::process::{ExitStatus, Output};
 use std::sync::Arc;
 use clawcrew_api::tool::Tool;
-use clawcrew_config::autonomy::AutonomyLevel;
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::{
+use galleon_config::autonomy::AutonomyLevel;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::{
     ClaudeCodeConfig, ClaudeCodeRunnerConfig, CodexCliConfig, GeminiCliConfig, OpenCodeCliConfig,
 };
 

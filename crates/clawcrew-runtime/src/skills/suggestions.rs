@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use clawcrew_config::schema::ExternalRegistryKind;
+use galleon_config::schema::ExternalRegistryKind;
 
 #[cfg(feature = "plugins-wasm")]
 use galleon_plugins::registry::{
@@ -60,7 +60,7 @@ pub(crate) fn render_missing_skill_install_suggestion(
     installed_skills: &[Skill],
     installed_runtime_capabilities: &[&str],
     workspace_dir: &Path,
-    extra_registries: &[clawcrew_config::schema::ExternalRegistry],
+    extra_registries: &[galleon_config::schema::ExternalRegistry],
     enabled: bool,
 ) -> Option<String> {
     if !enabled || prompt.trim().is_empty() {
@@ -128,7 +128,7 @@ fn suggest_missing_skill_install(
 
 fn load_cached_installable_skill_capabilities(
     workspace_dir: &Path,
-    extra_registries: &[clawcrew_config::schema::ExternalRegistry],
+    extra_registries: &[galleon_config::schema::ExternalRegistry],
 ) -> Vec<InstallableSkillCapability> {
     let mut capabilities = Vec::new();
     let skills_dir = workspace_dir.join(SKILLS_REGISTRY_DIR_NAME).join("skills");
@@ -138,7 +138,7 @@ fn load_cached_installable_skill_capabilities(
         .iter()
         .filter(|registry| registry.enabled && registry.kind == ExternalRegistryKind::Git)
     {
-        if !clawcrew_config::schema::ExternalRegistry::is_valid_name(&registry.name) {
+        if !galleon_config::schema::ExternalRegistry::is_valid_name(&registry.name) {
             continue;
         }
         let skills_dir = workspace_dir
@@ -430,7 +430,7 @@ mod tests {
         }
     }
 
-    fn extra_registry(name: &str, enabled: bool) -> clawcrew_config::schema::ExternalRegistry {
+    fn extra_registry(name: &str, enabled: bool) -> galleon_config::schema::ExternalRegistry {
         extra_registry_with_kind(name, "git", enabled)
     }
 
@@ -438,8 +438,8 @@ mod tests {
         name: &str,
         kind: &str,
         enabled: bool,
-    ) -> clawcrew_config::schema::ExternalRegistry {
-        clawcrew_config::schema::ExternalRegistry {
+    ) -> galleon_config::schema::ExternalRegistry {
+        galleon_config::schema::ExternalRegistry {
             name: name.to_string(),
             url: format!("file:///tmp/{name}"),
             kind: kind.to_string().into(),

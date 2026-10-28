@@ -5,7 +5,7 @@
 //! logic can be reused without an upward dependency. It is parameterized by the
 //! neutral [`ServerConfigParams`] / [`ClientAuthParams`] types rather than any
 //! consumer crate's configuration struct, keeping this crate free of upward
-//! dependencies on `clawcrew-config` and friends.
+//! dependencies on `galleon-config` and friends.
 
 use anyhow::{Context, Result};
 use rustls::RootCertStore;

@@ -128,7 +128,7 @@ pub(crate) fn check_payment_lock_gate(
         let default_mgr = crate::security::payment_lock::PaymentLockManager::default_locked();
         let mgr = manager.unwrap_or(&default_mgr);
         mgr.check_allowed(
-            clawcrew_config::schema::PaymentActionCategory::CardPayment,
+            galleon_config::schema::PaymentActionCategory::CardPayment,
             scope,
         )
         .map_err(|e| format!("Payment lockout gate rejected execution of '{tool_name}': {e}"))
@@ -1166,9 +1166,9 @@ mod tests {
         });
 
         let http_tool = galleon_tools::http_request::HttpRequestTool::new(
-            Arc::new(clawcrew_config::policy::SecurityPolicy {
+            Arc::new(galleon_config::policy::SecurityPolicy {
                 autonomy: AutonomyLevel::Supervised,
-                ..clawcrew_config::policy::SecurityPolicy::default()
+                ..galleon_config::policy::SecurityPolicy::default()
             }),
             vec!["127.0.0.1".into()],
             1_000_000,
@@ -2108,9 +2108,9 @@ mod tests {
         });
 
         let http_tool = galleon_tools::http_request::HttpRequestTool::new(
-            Arc::new(clawcrew_config::policy::SecurityPolicy {
+            Arc::new(galleon_config::policy::SecurityPolicy {
                 autonomy: AutonomyLevel::Supervised,
-                ..clawcrew_config::policy::SecurityPolicy::default()
+                ..galleon_config::policy::SecurityPolicy::default()
             }),
             vec!["127.0.0.1".into()],
             1_000_000,
@@ -2406,8 +2406,8 @@ mod tests {
     use super::should_execute_tools_in_parallel;
     use crate::agent::loop_::ParsedToolCall;
     use crate::approval::ApprovalManager;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::schema::RiskProfileConfig;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::schema::RiskProfileConfig;
 
     fn parsed_tool_call(name: &str) -> ParsedToolCall {
         ParsedToolCall {
@@ -2452,7 +2452,7 @@ mod tests {
         // `tool_search` branch and the approval branch is an implementation
         // detail. The important invariant is: `tool_search` present ⇒ serial.
         let calls = vec![parsed_tool_call("tool_search"), parsed_tool_call("shell")];
-        let approval_cfg = clawcrew_config::schema::RiskProfileConfig::default();
+        let approval_cfg = galleon_config::schema::RiskProfileConfig::default();
         let approval_mgr = ApprovalManager::from_risk_profile(&approval_cfg);
 
         assert!(

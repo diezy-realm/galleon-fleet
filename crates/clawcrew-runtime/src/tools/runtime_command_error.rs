@@ -1,4 +1,4 @@
-use clawcrew_config::platform::docker::DockerWorkspaceMountError;
+use galleon_config::platform::docker::DockerWorkspaceMountError;
 
 pub(super) fn format_runtime_command_error(error: &anyhow::Error) -> String {
     if let Some(error) = error.downcast_ref::<DockerWorkspaceMountError>() {

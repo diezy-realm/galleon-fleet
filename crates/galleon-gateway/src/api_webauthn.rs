@@ -12,7 +12,7 @@ use axum::{
 use parking_lot::Mutex;
 use serde::Deserialize;
 use std::collections::HashMap;
-use clawcrew_config::webauthn::{
+use galleon_config::webauthn::{
     AuthenticateCredentialResponse, AuthenticationState, RegisterCredentialResponse,
     RegistrationState, WebAuthnManager,
 };

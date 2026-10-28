@@ -4,7 +4,7 @@
 
 use anyhow::{Context as _, Result};
 
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 use crate::transcription::TranscriptionManager;
 use crate::tts::TtsManager;
@@ -137,7 +137,7 @@ impl VoicePipeline {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::{
+    use galleon_config::schema::{
         AliasedAgentConfig, EdgeTtsProviderConfig, GroqTranscriptionProviderConfig,
         TranscriptionConfig, TranscriptionProviderConfig, TtsProviderConfig,
     };

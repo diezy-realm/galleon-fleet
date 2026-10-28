@@ -2648,7 +2648,7 @@
     #[test]
     #[cfg(feature = "agent-runtime")]
     fn onboard_cli_positional_sections_parse() {
-        for w in clawcrew_config::sections::QUICKSTART_SECTIONS {
+        for w in galleon_config::sections::QUICKSTART_SECTIONS {
             let cli = Cli::try_parse_from(["clawcrew", "onboard", w.as_str()])
                 .unwrap_or_else(|_| panic!("onboard {} should parse", w.as_str()));
             match cli.command {
@@ -2818,7 +2818,7 @@
         );
 
         let known_paths: Vec<String> = config.prop_fields().into_iter().map(|f| f.name).collect();
-        let api_key_path = clawcrew_config::helpers::resolve_field_path(
+        let api_key_path = galleon_config::helpers::resolve_field_path(
             &known_paths,
             "providers.models.deepseek.default.api-key",
         );
@@ -2912,12 +2912,12 @@
         // Mirror the CLI `config set` path exactly: resolve, materialize the
         // map key, then re-resolve so the now-present alias field is found.
         let known: Vec<String> = config.prop_fields().into_iter().map(|f| f.name).collect();
-        let mut path = clawcrew_config::helpers::resolve_field_path(&known, raw);
+        let mut path = galleon_config::helpers::resolve_field_path(&known, raw);
         let created = ensure_map_key_for_prop_path(&mut config, &path)
             .expect("known typed transcription provider path should be materialized");
         assert!(created, "missing transcription alias should be created");
         let known: Vec<String> = config.prop_fields().into_iter().map(|f| f.name).collect();
-        path = clawcrew_config::helpers::resolve_field_path(&known, &path);
+        path = galleon_config::helpers::resolve_field_path(&known, &path);
 
         config
             .set_prop_persistent(&path, "whisper-large-v3")
@@ -3007,13 +3007,13 @@
         let raw = "agents.assistant.workspace.path";
 
         let known: Vec<String> = config.prop_fields().into_iter().map(|f| f.name).collect();
-        let mut path = clawcrew_config::helpers::resolve_field_path(&known, raw);
+        let mut path = galleon_config::helpers::resolve_field_path(&known, raw);
         let created = ensure_map_key_for_prop_path(&mut config, &path)
             .expect("agent alias and workspace path should materialize");
         assert!(created, "missing agent alias should be created");
 
         let known: Vec<String> = config.prop_fields().into_iter().map(|f| f.name).collect();
-        path = clawcrew_config::helpers::resolve_field_path(&known, &path);
+        path = galleon_config::helpers::resolve_field_path(&known, &path);
         config
             .set_prop_persistent(&path, "/srv/clawcrew/assistant")
             .expect("agent workspace path should be writable");
@@ -3053,7 +3053,7 @@
         let mut config = Config::default();
         config.cron.insert(
             "morning-brief".to_string(),
-            clawcrew_config::schema::CronJobDecl::default(),
+            galleon_config::schema::CronJobDecl::default(),
         );
 
         let created = ensure_map_key_for_prop_path(&mut config, "cron.morning-brief.name")
@@ -3209,7 +3209,7 @@
     #[cfg(feature = "agent-runtime")]
     async fn sop_maintenance_tick_dispatches_cached_cron_triggers() {
         use std::sync::{Arc, Mutex};
-        use clawcrew_config::schema::{MemoryConfig, SopConfig};
+        use galleon_config::schema::{MemoryConfig, SopConfig};
         use galleon_memory::traits::Memory;
         use clawcrew_runtime::sop::{
             Sop, SopEngine, SopExecutionMode, SopPriority, SopStep, SopStepKind, SopTrigger,

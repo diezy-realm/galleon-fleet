@@ -10,7 +10,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use serde::Deserialize;
-use clawcrew_config::schema::ChannelsConfig;
+use galleon_config::schema::ChannelsConfig;
 use clawcrew_runtime::tools::default_tools;
 
 const SNIPPET_DIR: &str = "docs/book/src/_snippets";
@@ -147,7 +147,7 @@ fn providers_rows(parity: &Parity) -> Result<Vec<Row>> {
 }
 
 fn tools_rows(parity: &Parity) -> Result<Vec<Row>> {
-    let security = Arc::new(clawcrew_config::policy::SecurityPolicy::default());
+    let security = Arc::new(galleon_config::policy::SecurityPolicy::default());
     let mut rows = Vec::new();
     let mut walked = std::collections::BTreeSet::new();
     for tool in default_tools(security) {

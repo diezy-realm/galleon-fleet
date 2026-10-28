@@ -422,7 +422,7 @@ impl QQChannel {
     /// transcription it cannot perform.
     pub fn with_transcription_manager<T>(
         mut self,
-        _config: clawcrew_config::schema::TranscriptionConfig,
+        _config: galleon_config::schema::TranscriptionConfig,
         manager: Option<Arc<T>>,
     ) -> Self
     where
@@ -435,7 +435,7 @@ impl QQChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_channel_proxy_client("channel.qq", self.proxy_url.as_deref())
+        galleon_config::schema::build_channel_proxy_client("channel.qq", self.proxy_url.as_deref())
     }
 
     fn is_user_allowed(&self, user_id: &str) -> bool {
@@ -1468,7 +1468,7 @@ impl Channel for QQChannel {
             ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
             "connecting to gateway WebSocket..."
         );
-        let (ws_stream, _) = clawcrew_config::schema::ws_connect_with_proxy(
+        let (ws_stream, _) = galleon_config::schema::ws_connect_with_proxy(
             &gw_url,
             "channel.qq",
             self.proxy_url.as_deref(),
@@ -2160,7 +2160,7 @@ app_id = "12345"
 app_secret = "secret_abc"
 allowed_users = ["user1"]
 "#;
-        let cfg = clawcrew_config::migration::migrate_to_current(v2_toml)
+        let cfg = galleon_config::migration::migrate_to_current(v2_toml)
             .expect("V2 qq config migrates to V3");
         let qq = cfg
             .channels

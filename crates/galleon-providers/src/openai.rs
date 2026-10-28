@@ -454,7 +454,7 @@ impl OpenAiModelProvider {
     }
 
     fn http_client(&self) -> Client {
-        clawcrew_config::schema::build_runtime_proxy_client_with_timeouts(
+        galleon_config::schema::build_runtime_proxy_client_with_timeouts(
             "model_provider.openai",
             self.timeout_secs,
             10,
@@ -1204,7 +1204,7 @@ impl OpenAiResponsesModelProvider {
             builder = builder.default_headers(default_headers);
         }
         let builder = crate::opencode_session::restrict_redirects(builder, &self.responses_url);
-        let builder = clawcrew_config::schema::apply_runtime_proxy_to_builder(
+        let builder = galleon_config::schema::apply_runtime_proxy_to_builder(
             builder,
             "model_provider.openai",
         );
@@ -1220,7 +1220,7 @@ impl OpenAiResponsesModelProvider {
             builder = builder.default_headers(default_headers);
         }
         let builder = crate::opencode_session::restrict_redirects(builder, &self.responses_url);
-        let builder = clawcrew_config::schema::apply_runtime_proxy_to_builder(
+        let builder = galleon_config::schema::apply_runtime_proxy_to_builder(
             builder,
             "model_provider.openai",
         );
@@ -1591,7 +1591,7 @@ mod tests {
             atomic::{AtomicUsize, Ordering},
         };
         use tokio::net::TcpListener;
-        use clawcrew_config::schema::{ProxyConfig, ProxyScope, set_runtime_proxy_config};
+        use galleon_config::schema::{ProxyConfig, ProxyScope, set_runtime_proxy_config};
 
         async fn proxy_response(State(hits): State<Arc<AtomicUsize>>) -> Json<serde_json::Value> {
             hits.fetch_add(1, Ordering::SeqCst);

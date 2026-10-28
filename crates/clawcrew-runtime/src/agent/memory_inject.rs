@@ -95,7 +95,7 @@ impl MemoryInjectConfig {
     /// rerank stage settings; budgets stay at the renderer defaults.
     #[must_use]
     pub fn from_memory_config(
-        memory: &clawcrew_config::schema::MemoryConfig,
+        memory: &galleon_config::schema::MemoryConfig,
         limit: usize,
     ) -> Self {
         let limit = if memory.rerank_enabled {
@@ -118,7 +118,7 @@ impl MemoryInjectConfig {
 /// An unknown `rerank_strategy` falls back to no advanced rerank (the blend,
 /// duplicate collapse, and trim still run) with a once-per-process warning.
 fn build_rerank_config(
-    memory: &clawcrew_config::schema::MemoryConfig,
+    memory: &galleon_config::schema::MemoryConfig,
     final_limit: usize,
 ) -> rerank::RerankConfig {
     let strategy = match memory.rerank_strategy.trim().to_ascii_lowercase().as_str() {
@@ -1254,11 +1254,11 @@ mod tests {
     #[tokio::test]
     async fn injection_goldens_across_origin_budget_and_flags() {
         let flags_off = MemoryInjectConfig::from_memory_config(
-            &clawcrew_config::schema::MemoryConfig::default(),
+            &galleon_config::schema::MemoryConfig::default(),
             DEFAULT_RECALL_LIMIT,
         );
         let rerank_on = MemoryInjectConfig::from_memory_config(
-            &clawcrew_config::schema::MemoryConfig {
+            &galleon_config::schema::MemoryConfig {
                 rerank_enabled: true,
                 rerank_strategy: "mmr".into(),
                 ..Default::default()
@@ -1540,7 +1540,7 @@ mod tests {
         ));
 
         let mem = FixtureMemory::with(pool);
-        let mut memory = clawcrew_config::schema::MemoryConfig {
+        let mut memory = galleon_config::schema::MemoryConfig {
             rerank_enabled: true,
             candidate_multiplier: 20,
             min_relevance_score: 0.0,
@@ -1630,7 +1630,7 @@ mod tests {
 
     #[test]
     fn from_memory_config_threads_rerank_settings() {
-        let mut memory = clawcrew_config::schema::MemoryConfig::default();
+        let mut memory = galleon_config::schema::MemoryConfig::default();
         let cfg = MemoryInjectConfig::from_memory_config(&memory, 7);
         assert_eq!(cfg.limit, 7);
         assert!((cfg.min_relevance_score - memory.min_relevance_score).abs() < f64::EPSILON);
@@ -1867,7 +1867,7 @@ mod tests {
             "term-frequency relevance must remain distinguishable"
         );
 
-        let config = clawcrew_config::schema::MemoryConfig {
+        let config = galleon_config::schema::MemoryConfig {
             rerank_enabled: true,
             rerank_strategy: "none".into(),
             min_relevance_score: 0.4,

@@ -36,7 +36,7 @@ Achmad: *"saya takut ada agent yang dibuat untuk transaksi... buat skema untuk m
 
 ### 3.1 Konfigurasi — Satu Setting Terpusat
 
-Field baru di `clawcrew-config` (lokasi: `crates/clawcrew-config/src/schema.rs`, mengikuti pola `EstopConfig`/`OtpConfig` yang sudah ada):
+Field baru di `galleon-config` (lokasi: `crates/galleon-config/src/schema.rs`, mengikuti pola `EstopConfig`/`OtpConfig` yang sudah ada):
 
 ```rust
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -146,7 +146,7 @@ pub struct ToolManifest {
 }
 ```
 
-Tool registry (titik registrasi tool, `clawcrew-runtime/src/tools/mod.rs`) menolak registrasi tool yang namanya/deskripsinya cocok heuristik finansial (`pay`, `transfer`, `charge`, `wallet`, `crypto`, dst — daftar kata kunci di `clawcrew-config`) TANPA `payment_category` terisi — **fail-closed di waktu registrasi**, bukan hanya di waktu eksekusi. Ini mencegah tool pembayaran baru "lolos" gate hanya karena developer lupa mengisi metadata.
+Tool registry (titik registrasi tool, `clawcrew-runtime/src/tools/mod.rs`) menolak registrasi tool yang namanya/deskripsinya cocok heuristik finansial (`pay`, `transfer`, `charge`, `wallet`, `crypto`, dst — daftar kata kunci di `galleon-config`) TANPA `payment_category` terisi — **fail-closed di waktu registrasi**, bukan hanya di waktu eksekusi. Ini mencegah tool pembayaran baru "lolos" gate hanya karena developer lupa mengisi metadata.
 
 ### 3.4 Perubahan Mode — Siapa yang Bisa Membuka
 
@@ -172,7 +172,7 @@ Permukaan di `web/src/components/features/SettingsView.tsx` (sudah ada di grep s
 
 ## 5. Rencana Implementasi (Breakdown Kerja)
 
-1. **BL-40** — Tambah `PaymentLockConfig`/`PaymentLockMode`/`PaymentActionCategory` ke `clawcrew-config` schema + default fail-closed (`mode: Locked`). Scope kecil, pola langsung niru `EstopConfig`.
+1. **BL-40** — Tambah `PaymentLockConfig`/`PaymentLockMode`/`PaymentActionCategory` ke `galleon-config` schema + default fail-closed (`mode: Locked`). Scope kecil, pola langsung niru `EstopConfig`.
 2. **BL-41** — Buat `PaymentLockManager` (`security/payment_lock.rs`, BARU) + titik panggil di `agent/tool_execution.rs` SEBELUM eksekusi tool manapun berkategori payment. Test: tool dengan `payment_category: Some(_)` ditolak saat `mode: Locked` (default), diterima hanya setelah `Unlocked` + scope cocok.
 3. **BL-42** — Tambah field `payment_category: Option<PaymentActionCategory>` ke `ToolManifest` + enforce fail-closed di waktu REGISTRASI tool (heuristik kata kunci finansial tanpa metadata = registrasi ditolak). Test: tool bernama `transfer_crypto` tanpa `payment_category` gagal registrasi.
 4. **BL-43** — UI Settings: toggle "Allow agents to make payments" + sub-kategori + scope picker + badge status dashboard. Frontend-only, tidak ada logic baru (reuse API yang expose state dari BL-40/41).

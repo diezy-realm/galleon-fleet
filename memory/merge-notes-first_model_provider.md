@@ -3,7 +3,7 @@
 When merging upstream/master into integration/zerocode, after resolving conflicts,
 destroy ALL traces of `first_model_provider` and its family.
 
-## Definitions to delete (crates/clawcrew-config/src/schema.rs)
+## Definitions to delete (crates/galleon-config/src/schema.rs)
 - `fn first_model_provider()`
 - `fn first_model_provider_mut()`
 - `fn first_model_provider_type()`
@@ -36,8 +36,8 @@ Replacements (per a1665774b):
 5. Commit with message: "nuke: remove first_model_provider family entirely"
 
 ## Files touched in a1665774b (27 files)
-- crates/clawcrew-config/src/schema.rs
-- crates/clawcrew-config/src/providers.rs
+- crates/galleon-config/src/schema.rs
+- crates/galleon-config/src/providers.rs
 - crates/galleon-providers/src/lib.rs
 - crates/galleon-gateway/src/lib.rs, api.rs, api_onboard.rs, ws.rs
 - crates/galleon-channels/src/orchestrator/mod.rs, acp_server.rs

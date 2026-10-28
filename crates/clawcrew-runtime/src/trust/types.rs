@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-pub use clawcrew_config::scattered_types::TrustConfig;
+pub use galleon_config::scattered_types::TrustConfig;
 
 /// Per-domain trust score
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -193,7 +193,7 @@ impl TrustTracker {
 mod tests {
     use super::*;
     use chrono::{Duration, Utc};
-    use clawcrew_config::scattered_types::TrustConfig;
+    use galleon_config::scattered_types::TrustConfig;
 
     fn cfg() -> TrustConfig {
         TrustConfig::default()

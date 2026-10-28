@@ -863,7 +863,7 @@ mod tests {
             thread_replies,
             mention_only,
         )
-        .with_transcription(clawcrew_config::schema::TranscriptionConfig {
+        .with_transcription(galleon_config::schema::TranscriptionConfig {
             enabled: true,
             api_key: Some(String::new()),
             api_url: "https://api.groq.com/openai/v1/audio/transcriptions".to_string(),
@@ -1055,7 +1055,7 @@ mod tests {
             thread_replies,
             mention_only,
         )
-        .with_transcription(clawcrew_config::schema::TranscriptionConfig {
+        .with_transcription(galleon_config::schema::TranscriptionConfig {
             enabled: true,
             api_key: Some("test_key".to_string()),
             api_url: "https://api.groq.com/openai/v1/audio/transcriptions".to_string(),
@@ -1127,7 +1127,7 @@ mod tests {
                 thread_replies,
                 mention_only,
             )
-            .with_transcription(clawcrew_config::schema::TranscriptionConfig {
+            .with_transcription(galleon_config::schema::TranscriptionConfig {
                 enabled: true,
                 api_key: None,
                 api_url: "https://api.groq.com/openai/v1/audio/transcriptions".to_string(),
@@ -1140,7 +1140,7 @@ mod tests {
                 deepgram: None,
                 assemblyai: None,
                 google: None,
-                local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
+                local_whisper: Some(galleon_config::schema::LocalWhisperConfig {
                     url: whisper_url,
                     bearer_token: Some("test_token".to_string()),
                     max_audio_bytes: 25_000_000,
@@ -1195,7 +1195,7 @@ mod tests {
                 false,
                 false,
             )
-            .with_transcription(clawcrew_config::schema::TranscriptionConfig {
+            .with_transcription(galleon_config::schema::TranscriptionConfig {
                 enabled: true,
                 api_key: None,
                 api_url: "https://api.groq.com/openai/v1/audio/transcriptions".to_string(),
@@ -1208,7 +1208,7 @@ mod tests {
                 deepgram: None,
                 assemblyai: None,
                 google: None,
-                local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
+                local_whisper: Some(galleon_config::schema::LocalWhisperConfig {
                     url: format!("{}/v1/audio/transcriptions", mock_server.uri()),
                     bearer_token: Some("test_token".to_string()),
                     max_audio_bytes: 25_000_000,
@@ -1254,7 +1254,7 @@ mod tests {
                 thread_replies,
                 mention_only,
             )
-            .with_transcription(clawcrew_config::schema::TranscriptionConfig {
+            .with_transcription(galleon_config::schema::TranscriptionConfig {
                 enabled: true,
                 api_key: None,
                 api_url: "https://api.groq.com/openai/v1/audio/transcriptions".to_string(),
@@ -1267,7 +1267,7 @@ mod tests {
                 deepgram: None,
                 assemblyai: None,
                 google: None,
-                local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
+                local_whisper: Some(galleon_config::schema::LocalWhisperConfig {
                     url: mock_server.uri(),
                     bearer_token: Some("test_token".to_string()),
                     max_audio_bytes: 25_000_000,
@@ -2549,7 +2549,7 @@ mod approval_tests {
             .await;
 
         let ch = channel_at(&server.uri(), vec![ALLOWED_USER.to_string()])
-            .with_listen_mode(clawcrew_config::schema::MattermostListenMode::Websocket)
+            .with_listen_mode(galleon_config::schema::MattermostListenMode::Websocket)
             .with_approval_timeout_secs(0);
 
         let _ = ch
@@ -2639,7 +2639,7 @@ mod approval_tests {
         let ch = channel_with_peers(Vec::new());
         assert_eq!(
             ch.approval_timeout_secs,
-            clawcrew_config::schema::MattermostConfig::default().approval_timeout_secs,
+            galleon_config::schema::MattermostConfig::default().approval_timeout_secs,
         );
         assert!(ch.approval_timeout_secs > 0);
     }

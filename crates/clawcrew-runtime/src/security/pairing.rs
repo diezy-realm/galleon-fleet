@@ -1,1 +1,1 @@
-pub use clawcrew_config::pairing::*;
+pub use galleon_config::pairing::*;

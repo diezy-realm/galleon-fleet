@@ -39,7 +39,7 @@ pub struct OpenAiCodexModelProvider {
     /// Operator `[multimodal]` policy for this provider's own image-marker
     /// expansion pass. Resolved once at construction from
     /// `ModelProviderRuntimeOptions`.
-    multimodal: clawcrew_config::schema::MultimodalConfig,
+    multimodal: galleon_config::schema::MultimodalConfig,
 }
 
 #[derive(Debug, Serialize)]
@@ -148,7 +148,7 @@ impl OpenAiCodexModelProvider {
     }
 
     fn http_client(&self) -> Client {
-        clawcrew_config::schema::build_runtime_proxy_client_with_read_timeout(
+        galleon_config::schema::build_runtime_proxy_client_with_read_timeout(
             "model_provider.openai",
             300,
             10,
@@ -1771,7 +1771,7 @@ mod tests {
 
     #[test]
     fn provider_construction_carries_operator_multimodal_policy() {
-        let multimodal = clawcrew_config::schema::MultimodalConfig {
+        let multimodal = galleon_config::schema::MultimodalConfig {
             max_images: 1,
             max_image_size_mb: 2,
             ..Default::default()
@@ -1797,7 +1797,7 @@ mod tests {
             atomic::{AtomicUsize, Ordering},
         };
         use tokio::net::TcpListener;
-        use clawcrew_config::schema::{ProxyConfig, ProxyScope, set_runtime_proxy_config};
+        use galleon_config::schema::{ProxyConfig, ProxyScope, set_runtime_proxy_config};
 
         async fn proxy_response(State(hits): State<Arc<AtomicUsize>>) -> Json<serde_json::Value> {
             hits.fetch_add(1, Ordering::SeqCst);

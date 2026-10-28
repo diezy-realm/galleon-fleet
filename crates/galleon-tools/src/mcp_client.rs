@@ -21,7 +21,7 @@ use crate::mcp_transport::{
     McpRecoveryGate, McpRequestLifecycle, McpTransportError, SharedMcpTransportConn,
     create_shared_transport,
 };
-use clawcrew_config::schema::{McpServerConfig, McpTransport};
+use galleon_config::schema::{McpServerConfig, McpTransport};
 
 /// Timeout for receiving a response from an MCP server during init/list.
 /// Prevents a hung server from blocking the daemon indefinitely.
@@ -1406,7 +1406,7 @@ mod tests {
     use crate::mcp_transport::create_transport;
     #[cfg(unix)]
     use crate::mcp_transport::{StdioTransport, StdioWriteTestHook};
-    use clawcrew_config::schema::McpTransport;
+    use galleon_config::schema::McpTransport;
 
     #[cfg(unix)]
     fn write_executable_script(path: &std::path::Path, body: &[u8]) {
@@ -2320,7 +2320,7 @@ mod tests {
             server_index,
         });
 
-        let security = Arc::new(clawcrew_config::policy::SecurityPolicy {
+        let security = Arc::new(galleon_config::policy::SecurityPolicy {
             workspace_dir: dir.path().to_path_buf(),
             ..Default::default()
         });

@@ -6,7 +6,7 @@ use clawcrew_log::LogEvent;
 
 pub use clawcrew_log::{LogEvent as RuntimeTraceEvent, LogFilter, LogPage};
 
-fn to_log_config(config: &clawcrew_config::schema::ObservabilityConfig) -> clawcrew_log::LogConfig {
+fn to_log_config(config: &galleon_config::schema::ObservabilityConfig) -> clawcrew_log::LogConfig {
     clawcrew_log::LogConfig {
         log_persistence: config.log_persistence.as_wire().to_string(),
         log_persistence_path: config.log_persistence_path.clone(),
@@ -27,7 +27,7 @@ fn to_log_config(config: &clawcrew_config::schema::ObservabilityConfig) -> clawc
 
 /// Initialize log persistence from the observability config.
 pub fn init_from_config(
-    config: &clawcrew_config::schema::ObservabilityConfig,
+    config: &galleon_config::schema::ObservabilityConfig,
     workspace_dir: &Path,
 ) {
     clawcrew_log::init_from_config(&to_log_config(config), workspace_dir);
@@ -35,7 +35,7 @@ pub fn init_from_config(
 
 /// Resolve the configured log path (used by the doctor command).
 pub fn resolve_trace_path(
-    config: &clawcrew_config::schema::ObservabilityConfig,
+    config: &galleon_config::schema::ObservabilityConfig,
     workspace_dir: &Path,
 ) -> std::path::PathBuf {
     let policy = clawcrew_log::ResolvedPolicy::from_config(&to_log_config(config), workspace_dir);

@@ -8,7 +8,7 @@ use crate::mcp_prompt::McpGetPromptResult;
 use crate::mcp_resource::McpResourceContents;
 use crate::tool_search::ToolAccessPolicy;
 use std::sync::Arc;
-use clawcrew_config::schema::McpServerConfig;
+use galleon_config::schema::McpServerConfig;
 
 pub async fn build_pinned_resources_section(
     registry: &Arc<McpRegistry>,
@@ -128,7 +128,7 @@ mod tests {
     use crate::mcp_prompt::{McpGetPromptResult, McpPromptMessage};
     use crate::mcp_resource::{McpResourceContent, McpResourceContents};
     use tokio;
-    use clawcrew_config::schema::McpServerConfig;
+    use galleon_config::schema::McpServerConfig;
 
     #[tokio::test]
     async fn pinned_section_empty_for_empty_registry() {

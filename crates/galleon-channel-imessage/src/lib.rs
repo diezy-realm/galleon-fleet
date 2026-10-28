@@ -11,7 +11,7 @@
 //!
 //! * **Allowlist policy.** [`IMessageChannel::is_contact_allowed`] calls
 //!   [`galleon_channel_core::allowlist::is_user_allowed`], the same
-//!   `clawcrew_config::schema` peer-policy SSOT upstream uses — reused, not
+//!   `galleon_config::schema` peer-policy SSOT upstream uses — reused, not
 //!   reimplemented.
 //!
 //! No production path uses `unwrap`/`expect` on fallible IO; errors propagate

@@ -329,10 +329,10 @@ pub fn build_model_provider(
         })?;
 
     let raw = std::fs::read_to_string(dir.join("config.toml"))?;
-    let mut config: clawcrew_config::schema::Config = toml::from_str(&raw)?;
+    let mut config: galleon_config::schema::Config = toml::from_str(&raw)?;
 
     // Decrypt secrets through the canonical store (same path the daemon uses).
-    let store = clawcrew_config::secrets::SecretStore::new(&dir, config.secrets.encrypt);
+    let store = galleon_config::secrets::SecretStore::new(&dir, config.secrets.encrypt);
     config.decrypt_secrets(&store)?;
 
     // Resolve bare-or-dotted name to a concrete `kind.alias` + its model + key.

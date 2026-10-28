@@ -13,7 +13,7 @@ publish = true
 clawcrew-api.workspace = true
 galleon-spawn.workspace = true
 galleon-infra.workspace = true
-clawcrew-config = { workspace = true, default-features = false }
+galleon-config = { workspace = true, default-features = false }
 clawcrew-log.workspace = true
 galleon-memory.workspace = true
 galleon-providers.workspace = true
@@ -302,7 +302,7 @@ channel-email = [
   "dep:galleon-channel-email",
 ]
 tls-client = ["dep:tokio-rustls", "dep:webpki-roots"]
-ws-transport = ["clawcrew-config/ws-transport", "dep:tokio-tungstenite"]
+ws-transport = ["galleon-config/ws-transport", "dep:tokio-tungstenite"]
 image-normalization = ["dep:image"]
 channel-telegram = ["dep:galleon-channel-telegram", "image-normalization"]
 channel-lark = ["dep:galleon-channel-lark"]

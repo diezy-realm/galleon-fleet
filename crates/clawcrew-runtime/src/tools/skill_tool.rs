@@ -410,7 +410,7 @@ mod tests {
     use crate::security::{AutonomyLevel, SecurityPolicy};
     use crate::skills::SkillTool;
     use clawcrew_api::attribution::{Attributable, ToolProvenance};
-    use clawcrew_config::schema::DockerRuntimeConfig;
+    use galleon_config::schema::DockerRuntimeConfig;
 
     fn test_security() -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy {

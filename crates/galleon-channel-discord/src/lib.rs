@@ -262,18 +262,18 @@ pub struct DiscordChannel {
     /// Anything other than `Off` adds the two reaction intents to the
     /// IDENTIFY mask. Same connection-scoped snapshot semantics as the
     /// mask override above.
-    reaction_scope: clawcrew_config::schema::DiscordReactionScope,
+    reaction_scope: galleon_config::schema::DiscordReactionScope,
     typing_handles: Mutex<HashMap<String, tokio::task::JoinHandle<()>>>,
     /// Per-channel proxy URL override.
     proxy_url: Option<String>,
     /// Voice transcription config — when set, audio attachments are
     /// downloaded, transcribed, and their text inlined into the message.
-    transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
+    transcription: Option<galleon_config::schema::TranscriptionConfig>,
     transcription_manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     /// Workspace directory for saving downloaded inbound media attachments.
     workspace_dir: Option<PathBuf>,
     /// Streaming mode: Off, Partial (draft edits), or MultiMessage (paragraph splits).
-    stream_mode: clawcrew_config::schema::StreamMode,
+    stream_mode: galleon_config::schema::StreamMode,
     /// Minimum interval (ms) between draft message edits (Partial mode only).
     draft_update_interval_ms: u64,
     /// Delay (ms) between sending each message chunk (MultiMessage mode only).
@@ -302,7 +302,7 @@ pub struct DiscordChannel {
     /// `DiscordConfig.slash_command_scope`. Under `guild`, commands register to
     /// each `guild_ids` entry (instant propagation); empty `guild_ids` falls
     /// back to global at reconcile time.
-    slash_command_scope: clawcrew_config::schema::SlashCommandScope,
+    slash_command_scope: galleon_config::schema::SlashCommandScope,
     /// Live interaction credentials, held channel-locally so the bearer
     /// token never enters reply targets, logs, session keys, or memory
     /// rows. Keyed by interaction id; swept on insert; entries expire with
@@ -344,13 +344,13 @@ impl DiscordChannel {
             listen_to_bots,
             mention_only,
             intents_mask_override: None,
-            reaction_scope: clawcrew_config::schema::DiscordReactionScope::Off,
+            reaction_scope: galleon_config::schema::DiscordReactionScope::Off,
             typing_handles: Mutex::new(HashMap::new()),
             proxy_url: None,
             transcription: None,
             transcription_manager: None,
             workspace_dir: None,
-            stream_mode: clawcrew_config::schema::StreamMode::Off,
+            stream_mode: galleon_config::schema::StreamMode::Off,
             draft_update_interval_ms: 1000,
             multi_message_delay_ms: 800,
             last_draft_edit: Mutex::new(HashMap::new()),
@@ -362,7 +362,7 @@ impl DiscordChannel {
             thread_channels: Arc::new(AsyncMutex::new(HashMap::new())),
             gateway_session: Mutex::new(DiscordGatewaySession::default()),
             slash_commands: false,
-            slash_command_scope: clawcrew_config::schema::SlashCommandScope::Global,
+            slash_command_scope: galleon_config::schema::SlashCommandScope::Global,
             pending_interactions: Arc::new(Mutex::new(HashMap::new())),
             pending_components: Arc::new(Mutex::new(pending::PendingComponents::default())),
             slash_command_resolver: None,
@@ -387,7 +387,7 @@ impl DiscordChannel {
     /// are enabled.
     pub fn with_slash_command_scope(
         mut self,
-        scope: clawcrew_config::schema::SlashCommandScope,
+        scope: galleon_config::schema::SlashCommandScope,
     ) -> Self {
         self.slash_command_scope = scope;
         self
@@ -412,7 +412,7 @@ impl DiscordChannel {
     /// mask.
     pub fn with_reaction_notifications(
         mut self,
-        scope: clawcrew_config::schema::DiscordReactionScope,
+        scope: galleon_config::schema::DiscordReactionScope,
     ) -> Self {
         self.reaction_scope = scope;
         self
@@ -425,7 +425,7 @@ impl DiscordChannel {
             return mask;
         }
         let mut mask = BASELINE_INTENTS;
-        if self.reaction_scope != clawcrew_config::schema::DiscordReactionScope::Off {
+        if self.reaction_scope != galleon_config::schema::DiscordReactionScope::Off {
             mask |= INTENT_GUILD_MESSAGE_REACTIONS | INTENT_DIRECT_MESSAGE_REACTIONS;
         }
         mask
@@ -443,7 +443,7 @@ impl DiscordChannel {
     }
 
     /// Configure voice transcription from a `[transcription]` snapshot.
-    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(mut self, config: galleon_config::schema::TranscriptionConfig) -> Self {
         self.transcription = Some(config);
         self
     }
@@ -453,7 +453,7 @@ impl DiscordChannel {
     /// transcription it cannot perform.
     pub fn with_transcription_manager(
         mut self,
-        config: clawcrew_config::schema::TranscriptionConfig,
+        config: galleon_config::schema::TranscriptionConfig,
         manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
@@ -480,7 +480,7 @@ impl DiscordChannel {
     /// Configure streaming mode for progressive draft updates or multi-message delivery.
     pub fn with_streaming(
         mut self,
-        stream_mode: clawcrew_config::schema::StreamMode,
+        stream_mode: galleon_config::schema::StreamMode,
         draft_update_interval_ms: u64,
         multi_message_delay_ms: u64,
     ) -> Self {
@@ -696,7 +696,7 @@ impl DiscordChannel {
         d: &serde_json::Value,
         bot_user_id: &str,
     ) {
-        use clawcrew_config::schema::DiscordReactionScope;
+        use galleon_config::schema::DiscordReactionScope;
 
         let user_id = d.get("user_id").and_then(|u| u.as_str()).unwrap_or("");
         let message_id = d.get("message_id").and_then(|m| m.as_str()).unwrap_or("");
@@ -929,7 +929,7 @@ impl DiscordChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_channel_proxy_client(
+        galleon_config::schema::build_channel_proxy_client(
             "channel.discord",
             self.proxy_url.as_deref(),
         )
@@ -2013,7 +2013,7 @@ impl Channel for DiscordChannel {
             !local_files.is_empty() || !embeds.is_empty() || !component_action_rows.is_empty(),
         );
         let inter_chunk_delay_ms =
-            if self.stream_mode == clawcrew_config::schema::StreamMode::MultiMessage {
+            if self.stream_mode == galleon_config::schema::StreamMode::MultiMessage {
                 self.multi_message_delay_ms
             } else {
                 500
@@ -2159,7 +2159,7 @@ impl Channel for DiscordChannel {
             "connecting to gateway..."
         );
 
-        let (ws_stream, _) = clawcrew_config::schema::ws_connect_with_proxy(
+        let (ws_stream, _) = galleon_config::schema::ws_connect_with_proxy(
             &ws_url,
             "channel.discord",
             self.proxy_url.as_deref(),
@@ -2430,16 +2430,16 @@ impl Channel for DiscordChannel {
                                         // Resolve the registration target: `guild` with no guild_ids
                                         // can't register anywhere, so fall back to global.
                                         let effective_scope = match slash_command_scope {
-                                            clawcrew_config::schema::SlashCommandScope::Guild
+                                            galleon_config::schema::SlashCommandScope::Guild
                                                 if guild_ids.is_empty() =>
                                             {
                                                 ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), "slash_command_scope=guild but guild_ids is empty; falling back to global slash registration");
                                                 SlashScope::Global
                                             }
-                                            clawcrew_config::schema::SlashCommandScope::Guild => {
+                                            galleon_config::schema::SlashCommandScope::Guild => {
                                                 SlashScope::Guild
                                             }
-                                            clawcrew_config::schema::SlashCommandScope::Global => {
+                                            galleon_config::schema::SlashCommandScope::Global => {
                                                 SlashScope::Global
                                             }
                                         };
@@ -3267,7 +3267,7 @@ impl Channel for DiscordChannel {
                         || event_type == "MESSAGE_REACTION_REMOVE"
                     {
                         if self.reaction_scope
-                            != clawcrew_config::schema::DiscordReactionScope::Off
+                            != galleon_config::schema::DiscordReactionScope::Off
                             && let Some(d) = event.get("d")
                         {
                             self.handle_reaction_event(event_type, d, &bot_user_id).await;
@@ -3279,7 +3279,7 @@ impl Channel for DiscordChannel {
                         || event_type == "MESSAGE_REACTION_REMOVE_EMOJI"
                     {
                         if self.reaction_scope
-                            != clawcrew_config::schema::DiscordReactionScope::Off
+                            != galleon_config::schema::DiscordReactionScope::Off
                             && let Some(d) = event.get("d")
                         {
                             self.sweep_message_reactions(event_type, d).await;
@@ -3595,13 +3595,13 @@ impl Channel for DiscordChannel {
     fn supports_draft_updates(&self) -> bool {
         matches!(
             self.stream_mode,
-            clawcrew_config::schema::StreamMode::Partial
-                | clawcrew_config::schema::StreamMode::MultiMessage
+            galleon_config::schema::StreamMode::Partial
+                | galleon_config::schema::StreamMode::MultiMessage
         )
     }
 
     fn supports_multi_message_streaming(&self) -> bool {
-        self.stream_mode == clawcrew_config::schema::StreamMode::MultiMessage
+        self.stream_mode == galleon_config::schema::StreamMode::MultiMessage
     }
 
     fn multi_message_delay_ms(&self) -> u64 {
@@ -3609,7 +3609,7 @@ impl Channel for DiscordChannel {
     }
 
     async fn send_draft(&self, message: &SendMessage) -> anyhow::Result<Option<String>> {
-        use clawcrew_config::schema::StreamMode;
+        use galleon_config::schema::StreamMode;
         // Interaction replies have no channel to draft into — the recipient
         // is a sentinel, not a channel id. The final answer arrives via the
         // followup-webhook edit in send().
@@ -3658,7 +3658,7 @@ impl Channel for DiscordChannel {
         message_id: &str,
         text: &str,
     ) -> anyhow::Result<()> {
-        use clawcrew_config::schema::StreamMode;
+        use galleon_config::schema::StreamMode;
         // Sentinel recipients have no draft message (see send_draft).
         if parse_discord_interaction_target(recipient).is_some() {
             return Ok(());
@@ -3818,7 +3818,7 @@ impl Channel for DiscordChannel {
         text: &str,
         _suppress_voice: bool,
     ) -> anyhow::Result<()> {
-        if self.stream_mode == clawcrew_config::schema::StreamMode::MultiMessage {
+        if self.stream_mode == galleon_config::schema::StreamMode::MultiMessage {
             // Flush remaining buffered text.
             let thread_ts = self
                 .multi_message_thread_ts
@@ -3987,7 +3987,7 @@ impl Channel for DiscordChannel {
     }
 
     async fn cancel_draft(&self, recipient: &str, message_id: &str) -> anyhow::Result<()> {
-        if self.stream_mode == clawcrew_config::schema::StreamMode::MultiMessage {
+        if self.stream_mode == galleon_config::schema::StreamMode::MultiMessage {
             self.multi_message_sent_len.lock().remove(recipient);
             self.multi_message_thread_ts.lock().remove(recipient);
             return Ok(());
@@ -5790,7 +5790,7 @@ mod tests {
         assert!(bare.contains("mask 0x1"));
     }
 
-    use clawcrew_config::schema::DiscordReactionScope;
+    use galleon_config::schema::DiscordReactionScope;
 
     fn reaction_test_channel(
         scope: DiscordReactionScope,
@@ -7594,7 +7594,7 @@ mod tests {
 
     #[test]
     fn supports_draft_updates_respects_stream_mode() {
-        use clawcrew_config::schema::StreamMode;
+        use galleon_config::schema::StreamMode;
 
         let listen_to_bots = false;
         let mention_only = false;
@@ -7636,7 +7636,7 @@ mod tests {
     #[tokio::test]
     async fn send_draft_returns_none_when_not_partial() {
         use clawcrew_api::channel::SendMessage;
-        use clawcrew_config::schema::StreamMode;
+        use galleon_config::schema::StreamMode;
 
         let listen_to_bots = false;
         let mention_only = false;
@@ -7669,7 +7669,7 @@ mod tests {
 
     #[tokio::test]
     async fn update_draft_rate_limit_short_circuits() {
-        use clawcrew_config::schema::StreamMode;
+        use galleon_config::schema::StreamMode;
 
         let listen_to_bots = false;
         let mention_only = false;
@@ -7695,7 +7695,7 @@ mod tests {
 
     #[tokio::test]
     async fn cancel_draft_cleans_up_tracking() {
-        use clawcrew_config::schema::StreamMode;
+        use galleon_config::schema::StreamMode;
 
         let listen_to_bots = false;
         let mention_only = false;
@@ -7779,21 +7779,21 @@ mod tests {
     // loop in send() iterated zero times, silently skipping the file upload.
     #[test]
     fn chunks_for_send_emits_empty_chunk_when_multi_message_paragraph_collapses_to_only_a_file() {
-        use clawcrew_config::schema::StreamMode;
+        use galleon_config::schema::StreamMode;
         let chunks = chunks_for_send("", StreamMode::MultiMessage, 2000, true);
         assert_eq!(chunks, vec![String::new()]);
     }
 
     #[test]
     fn chunks_for_send_does_not_emit_empty_chunk_when_no_files_to_upload() {
-        use clawcrew_config::schema::StreamMode;
+        use galleon_config::schema::StreamMode;
         let chunks = chunks_for_send("", StreamMode::MultiMessage, 2000, false);
         assert!(chunks.is_empty());
     }
 
     #[test]
     fn chunks_for_send_passes_through_non_empty_content() {
-        use clawcrew_config::schema::StreamMode;
+        use galleon_config::schema::StreamMode;
         for mode in [
             StreamMode::MultiMessage,
             StreamMode::Partial,

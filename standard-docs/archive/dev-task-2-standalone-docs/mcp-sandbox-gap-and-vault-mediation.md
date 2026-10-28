@@ -4,7 +4,7 @@
 - **Referensi Tugas:** Sprint 5 (`BL-20`, `BL-21`)
 - **Implementasi Terkait:**
   - MCP Transport Host: `crates/galleon-tools/src/mcp_transport.rs`
-  - Secrets Management: `crates/clawcrew-config/src/secrets.rs`
+  - Secrets Management: `crates/galleon-config/src/secrets.rs`
 
 ---
 
@@ -37,7 +37,7 @@ Dalam `crates/galleon-tools/src/mcp_transport.rs::apply_default_mcp_sandbox`:
 ## 3. Desain Vault-Mediation untuk Secret MCP (BL-21)
 
 ### Prinsip Utama
-- **Single Source of Truth**: Memanfaatkan `crates/clawcrew-config/src/secrets.rs` (`encrypt`, `decrypt`, `decrypt_and_migrate`) sebagai backend penyimpanan dan enkripsi rahasia. Jangan membuat modul vault terpisah.
+- **Single Source of Truth**: Memanfaatkan `crates/galleon-config/src/secrets.rs` (`encrypt`, `decrypt`, `decrypt_and_migrate`) sebagai backend penyimpanan dan enkripsi rahasia. Jangan membuat modul vault terpisah.
 - **Resolusi JIT (Just-In-Time)**: Secret dalam header HTTP atau environment variable MCP (`config.env` dan `config.headers`) tidak boleh disimpan dalam plaintext di konfigurasi on-disk.
 - **Protokol Enkripsi**:
   1. Config menyimpan ciphertext berformat `$clawvault$v1$...`.

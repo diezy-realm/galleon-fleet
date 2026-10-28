@@ -7,8 +7,8 @@ use std::net::{IpAddr, SocketAddr};
 use std::path::PathBuf;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::policy::ToolOperation;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::policy::ToolOperation;
 
 const FAL_RESPONSE_LIMIT_BYTES: usize = 1024 * 1024;
 const FAL_ERROR_LIMIT_BYTES: usize = 16 * 1024;
@@ -533,8 +533,8 @@ impl Tool for ImageGenTool {
 mod tests {
     use super::*;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
 
     async fn held_open_chunked_response(
         byte_count: usize,

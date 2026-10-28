@@ -16,7 +16,7 @@ impl Default for DockerSandbox {
         Self {
             // Read from the config crate so the sandbox default and the
             // `[security.sandbox].image` serde default cannot drift apart.
-            image: clawcrew_config::schema::DEFAULT_SANDBOX_IMAGE.to_string(),
+            image: galleon_config::schema::DEFAULT_SANDBOX_IMAGE.to_string(),
             workspace_dir: None,
         }
     }
@@ -158,7 +158,7 @@ mod tests {
         let sandbox = DockerSandbox::default();
         assert_eq!(
             sandbox.image,
-            clawcrew_config::schema::DEFAULT_SANDBOX_IMAGE
+            galleon_config::schema::DEFAULT_SANDBOX_IMAGE
         );
         assert_eq!(sandbox.image, "alpine:latest");
     }

@@ -3,8 +3,8 @@ use futures_util::StreamExt;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::FileUploadConfig;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::FileUploadConfig;
 
 const RESPONSE_BODY_LIMIT_BYTES: usize = 4 * 1024;
 
@@ -331,7 +331,7 @@ impl Tool for FileUploadTool {
 
         let form = reqwest::multipart::Form::new().part(self.config.field_name.clone(), part);
 
-        let client = clawcrew_config::schema::build_runtime_proxy_client_with_timeouts(
+        let client = galleon_config::schema::build_runtime_proxy_client_with_timeouts(
             "tool.file_upload",
             self.config.timeout_secs,
             10,
@@ -388,7 +388,7 @@ mod tests {
     use tempfile::TempDir;
     use wiremock::matchers::{header, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
-    use clawcrew_config::autonomy::AutonomyLevel;
+    use galleon_config::autonomy::AutonomyLevel;
 
     fn test_security(workspace: PathBuf, level: AutonomyLevel) -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy {

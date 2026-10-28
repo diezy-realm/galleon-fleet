@@ -5,7 +5,7 @@ use super::ledger::{GateEventKind, GateLedgerEntry};
 use super::principal::ApprovalPrincipal;
 use crate::sop::engine::{SopEngine, now_iso8601};
 use crate::sop::types::{SopRunAction, SopRunStatus};
-use clawcrew_config::schema::ApprovalTimeoutAction;
+use galleon_config::schema::ApprovalTimeoutAction;
 
 /// Apply the configured timeout action to a single timed-out `WaitingApproval`
 /// run. Returns an action only when the run actually advanced: `Cancel` -> the

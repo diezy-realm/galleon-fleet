@@ -10,7 +10,7 @@ use crate::peers::resolve_peer_set;
 use anyhow::Result;
 use async_trait::async_trait;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 use parking_lot::Mutex;
 use serde_json::json;
 use std::sync::Arc;
@@ -275,13 +275,13 @@ fn build_description() -> String {
     )
 }
 
-pub use clawcrew_config::peers::render_sender_peer_map_for_channel;
+pub use galleon_config::peers::render_sender_peer_map_for_channel;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
-    use clawcrew_config::schema::AliasedAgentConfig;
+    use galleon_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
+    use galleon_config::schema::AliasedAgentConfig;
 
     #[test]
     fn description_stays_channel_agnostic() {
@@ -543,7 +543,7 @@ mod tests {
         use crate::agent::cost::record_tool_loop_cost_usage;
         use crate::agent::turn::provider_call::enforce_tool_loop_budget;
         use crate::cost::CostTracker;
-        use clawcrew_config::schema::CostConfig;
+        use galleon_config::schema::CostConfig;
         use galleon_providers::traits::TokenUsage;
         use std::collections::HashMap;
 
@@ -709,7 +709,7 @@ mod tests {
         use crate::agent::turn::provider_call::enforce_tool_loop_budget;
         use crate::cost::CostTracker;
         use axum::{Json, Router, extract::State, routing::post};
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             CostConfig, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
         };
         use std::collections::HashMap;

@@ -41,7 +41,7 @@ pub struct CronAddBody {
     /// `"raw"`. Only meaningful when `job_type` is `"shell"` (or inferred as
     /// shell when no prompt is given). Rejected for agent jobs.
     #[serde(default)]
-    pub shell_output_format: Option<clawcrew_config::schema::CronShellOutputFormat>,
+    pub shell_output_format: Option<galleon_config::schema::CronShellOutputFormat>,
 }
 
 #[derive(Deserialize)]
@@ -66,7 +66,7 @@ pub struct CronPatchBody {
     /// Shell output format override. `"wrapped"` (default) or `"raw"`.
     /// Only applied to shell-type jobs.
     #[serde(default)]
-    pub shell_output_format: Option<clawcrew_config::schema::CronShellOutputFormat>,
+    pub shell_output_format: Option<galleon_config::schema::CronShellOutputFormat>,
 }
 
 enum CronTimezonePatch {

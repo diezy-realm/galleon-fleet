@@ -1,4 +1,4 @@
-use clawcrew_config::schema::{ObservabilityConfig, OtelContentPolicy};
+use galleon_config::schema::{ObservabilityConfig, OtelContentPolicy};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct OtelContentConfig {

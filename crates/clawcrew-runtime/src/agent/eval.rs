@@ -1,4 +1,4 @@
-pub use clawcrew_config::scattered_types::{AutoClassifyConfig, EvalConfig};
+pub use galleon_config::scattered_types::{AutoClassifyConfig, EvalConfig};
 
 // ── Complexity estimation ───────────────────────────────────────
 
@@ -60,7 +60,7 @@ pub fn estimate_complexity(message: &str) -> ComplexityTier {
 // ── Auto-classify extension ─────────────────────────────────────
 
 /// Extension trait adding complexity-tier mapping to `AutoClassifyConfig`.
-/// This lives here rather than in `clawcrew_config` because `ComplexityTier`
+/// This lives here rather than in `galleon_config` because `ComplexityTier`
 /// is defined in the main crate.
 pub trait AutoClassifyExt {
     /// Map a complexity tier to the configured hint, if any.

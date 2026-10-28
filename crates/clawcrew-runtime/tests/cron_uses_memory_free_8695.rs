@@ -8,7 +8,7 @@ use std::sync::Arc;
 use axum::{Router, extract::State, routing::post};
 use tempfile::TempDir;
 use tokio::sync::Mutex as AsyncMutex;
-use clawcrew_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
+use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
 use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
 use clawcrew_runtime::agent::loop_::AgentRunOverrides;
 
@@ -54,7 +54,7 @@ async fn config_with_planted_memory(provider_uri: &str, workspace_dir: &std::pat
         .unwrap();
     }
 
-    let mut providers = clawcrew_config::providers::Providers::default();
+    let mut providers = galleon_config::providers::Providers::default();
     {
         let base = providers
             .models

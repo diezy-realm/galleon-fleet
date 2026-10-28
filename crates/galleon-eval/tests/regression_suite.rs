@@ -4,7 +4,7 @@
 //! excludes this target from the published crate archive.
 
 use std::path::PathBuf;
-use clawcrew_config::scattered_types::EvalHarnessConfig;
+use galleon_config::scattered_types::EvalHarnessConfig;
 use galleon_eval::case::load_suite;
 use galleon_eval::grader::evaluate_expects;
 use galleon_eval::{LlmTrace, Mode, RecordedCall, RunRecord, run_case, run_suite};

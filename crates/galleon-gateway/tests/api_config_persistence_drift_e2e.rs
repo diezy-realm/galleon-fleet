@@ -13,8 +13,8 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use clawcrew_config::multi_agent::MemoryBackendKind;
-use clawcrew_config::schema::{
+use galleon_config::multi_agent::MemoryBackendKind;
+use galleon_config::schema::{
     AliasedAgentConfig, Config, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
     RuntimeProfileConfig,
 };
@@ -63,7 +63,7 @@ fn setup_physical_config(tmp: &tempfile::TempDir) -> Config {
         model_provider: "ollama.default".into(),
         risk_profile: "default".into(),
         runtime_profile: "default".into(),
-        workspace: clawcrew_config::multi_agent::AgentWorkspaceConfig {
+        workspace: galleon_config::multi_agent::AgentWorkspaceConfig {
             path: Some(workspace),
             ..Default::default()
         },

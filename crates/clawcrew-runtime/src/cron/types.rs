@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use clawcrew_config::schema::CronShellOutputFormat;
+use galleon_config::schema::CronShellOutputFormat;
 
 pub fn deserialize_maybe_stringified<T: serde::de::DeserializeOwned>(
     v: &serde_json::Value,

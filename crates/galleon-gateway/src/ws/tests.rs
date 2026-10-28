@@ -34,10 +34,10 @@ fn ws_terminal_failure_uses_localized_message_without_reclassifying_diagnostic()
 
 #[test]
 fn done_context_limits_prefer_active_usage_route() {
-    let stale_startup_limits = clawcrew_config::schema::ResolvedContextLimits {
+    let stale_startup_limits = galleon_config::schema::ResolvedContextLimits {
         model_context_window: 200_000,
         context_token_budget: 180_000,
-        model_context_window_source: clawcrew_config::schema::ModelContextWindowSource::Configured,
+        model_context_window_source: galleon_config::schema::ModelContextWindowSource::Configured,
     };
     assert_eq!(
         resolve_done_context_limits(Some(7_200), Some(8_000), stale_startup_limits),
@@ -48,10 +48,10 @@ fn done_context_limits_prefer_active_usage_route() {
 
 #[test]
 fn done_context_limits_fall_back_to_agent_active_route_without_usage() {
-    let active_limits = clawcrew_config::schema::ResolvedContextLimits {
+    let active_limits = galleon_config::schema::ResolvedContextLimits {
         model_context_window: 8_000,
         context_token_budget: 0,
-        model_context_window_source: clawcrew_config::schema::ModelContextWindowSource::Configured,
+        model_context_window_source: galleon_config::schema::ModelContextWindowSource::Configured,
     };
     assert_eq!(
         resolve_done_context_limits(None, None, active_limits),
@@ -61,11 +61,11 @@ fn done_context_limits_fall_back_to_agent_active_route_without_usage() {
 
 #[test]
 fn done_context_limits_omit_unknown_compatibility_capacity() {
-    let active_limits = clawcrew_config::schema::ResolvedContextLimits {
-        model_context_window: clawcrew_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK,
+    let active_limits = galleon_config::schema::ResolvedContextLimits {
+        model_context_window: galleon_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK,
         context_token_budget: 16_000,
         model_context_window_source:
-            clawcrew_config::schema::ModelContextWindowSource::CompatibilityFallback,
+            galleon_config::schema::ModelContextWindowSource::CompatibilityFallback,
     };
     assert_eq!(
         resolve_done_context_limits(None, None, active_limits),
@@ -78,10 +78,10 @@ fn done_context_limits_omit_unknown_compatibility_capacity() {
 // vision reply) must report the FINAL route, not the earlier one.
 #[test]
 fn done_frame_prefers_final_served_route_over_stale_usage() {
-    let final_vision = clawcrew_config::schema::ResolvedContextLimits {
+    let final_vision = galleon_config::schema::ResolvedContextLimits {
         model_context_window: 8_000,
         context_token_budget: 7_200,
-        model_context_window_source: clawcrew_config::schema::ModelContextWindowSource::Configured,
+        model_context_window_source: galleon_config::schema::ModelContextWindowSource::Configured,
     };
     // Earlier usage-bearing text route left 180k/200k on the wire trackers.
     assert_eq!(
@@ -95,10 +95,10 @@ fn done_frame_prefers_final_served_route_over_stale_usage() {
 // then to the resolved fallback route — preserving legacy behavior.
 #[test]
 fn done_frame_falls_back_when_no_call_served() {
-    let fallback = clawcrew_config::schema::ResolvedContextLimits {
+    let fallback = galleon_config::schema::ResolvedContextLimits {
         model_context_window: 200_000,
         context_token_budget: 180_000,
-        model_context_window_source: clawcrew_config::schema::ModelContextWindowSource::Configured,
+        model_context_window_source: galleon_config::schema::ModelContextWindowSource::Configured,
     };
     // No final route, no usage: fall back to the resolved route.
     assert_eq!(
@@ -209,7 +209,7 @@ data: {\"type\":\"message_stop\"}\n\n",
     let tmp = tempfile::tempdir().expect("temporary gateway workspace");
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir_all(&workspace).expect("gateway workspace");
-    let mut config = clawcrew_config::schema::Config {
+    let mut config = galleon_config::schema::Config {
         data_dir: workspace.clone(),
         config_path: tmp.path().join("config.toml"),
         ..Default::default()
@@ -218,8 +218,8 @@ data: {\"type\":\"message_stop\"}\n\n",
     config.reliability.provider_retries = 0;
     config.providers.models.anthropic.insert(
         "fixture".to_string(),
-        clawcrew_config::schema::AnthropicModelProviderConfig {
-            base: clawcrew_config::schema::ModelProviderConfig {
+        galleon_config::schema::AnthropicModelProviderConfig {
+            base: galleon_config::schema::ModelProviderConfig {
                 api_key: Some("test-key".to_string()),
                 uri: Some(format!("http://{mock_addr}")),
                 model: Some("claude-test".to_string()),
@@ -230,19 +230,19 @@ data: {\"type\":\"message_stop\"}\n\n",
     );
     config.risk_profiles.insert(
         "fixture".to_string(),
-        clawcrew_config::schema::RiskProfileConfig::default(),
+        galleon_config::schema::RiskProfileConfig::default(),
     );
     config.runtime_profiles.insert(
         "fixture".to_string(),
-        clawcrew_config::schema::RuntimeProfileConfig::default(),
+        galleon_config::schema::RuntimeProfileConfig::default(),
     );
     config.agents.insert(
         "web".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             model_provider: "anthropic.fixture".into(),
             risk_profile: "fixture".into(),
             runtime_profile: "fixture".into(),
-            workspace: clawcrew_config::multi_agent::AgentWorkspaceConfig {
+            workspace: galleon_config::multi_agent::AgentWorkspaceConfig {
                 path: Some(workspace),
                 ..Default::default()
             },
@@ -365,7 +365,7 @@ async fn websocket_connect_persists_a_restore_time_trim_before_going_live_inner(
     let tmp = tempfile::tempdir().expect("temporary gateway workspace");
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir_all(&workspace).expect("gateway workspace");
-    let mut config = clawcrew_config::schema::Config {
+    let mut config = galleon_config::schema::Config {
         data_dir: workspace.clone(),
         config_path: tmp.path().join("config.toml"),
         ..Default::default()
@@ -376,8 +376,8 @@ async fn websocket_connect_persists_a_restore_time_trim_before_going_live_inner(
     // network round trip.
     config.providers.models.anthropic.insert(
         "fixture".to_string(),
-        clawcrew_config::schema::AnthropicModelProviderConfig {
-            base: clawcrew_config::schema::ModelProviderConfig {
+        galleon_config::schema::AnthropicModelProviderConfig {
+            base: galleon_config::schema::ModelProviderConfig {
                 api_key: Some("test-key".to_string()),
                 uri: Some("http://127.0.0.1:1".to_string()),
                 model: Some("claude-test".to_string()),
@@ -388,22 +388,22 @@ async fn websocket_connect_persists_a_restore_time_trim_before_going_live_inner(
     );
     config.risk_profiles.insert(
         "fixture".to_string(),
-        clawcrew_config::schema::RiskProfileConfig::default(),
+        galleon_config::schema::RiskProfileConfig::default(),
     );
     config.runtime_profiles.insert(
         "fixture".to_string(),
-        clawcrew_config::schema::RuntimeProfileConfig {
+        galleon_config::schema::RuntimeProfileConfig {
             max_history_messages: Some(2),
             ..Default::default()
         },
     );
     config.agents.insert(
         "web".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             model_provider: "anthropic.fixture".into(),
             risk_profile: "fixture".into(),
             runtime_profile: "fixture".into(),
-            workspace: clawcrew_config::multi_agent::AgentWorkspaceConfig {
+            workspace: galleon_config::multi_agent::AgentWorkspaceConfig {
                 path: Some(workspace),
                 ..Default::default()
             },
@@ -510,7 +510,7 @@ async fn websocket_connect_persists_a_restore_time_trim_before_going_live_inner(
 
 #[tokio::test]
 async fn websocket_ping_interval_skips_missed_ticks() {
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.gateway.websocket_ping_interval_secs = 1;
 
     let interval = websocket_ping_interval(&config).expect("enabled ping interval");
@@ -523,7 +523,7 @@ async fn websocket_ping_interval_skips_missed_ticks() {
 
 #[test]
 fn websocket_ping_interval_handles_unvalidated_overflow_without_panicking() {
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.gateway.websocket_ping_interval_secs = u64::MAX;
 
     assert!(websocket_ping_interval(&config).is_none());
@@ -532,7 +532,7 @@ fn websocket_ping_interval_handles_unvalidated_overflow_without_panicking() {
 #[tokio::test]
 async fn idle_chat_route_pings_before_and_preserves_the_first_client_message() {
     use axum::{Router, routing::get};
-    use clawcrew_config::{
+    use galleon_config::{
         multi_agent::MemoryBackendKind,
         schema::{AliasedAgentConfig, Config},
     };
@@ -982,8 +982,8 @@ fn event_matches_session_defaults_drops_unwhitelisted_no_session_frames() {
 
 #[tokio::test]
 async fn ws_memory_resolution_honors_agent_backend_none_over_install_backend() {
-    use clawcrew_config::multi_agent::MemoryBackendKind;
-    use clawcrew_config::schema::{AliasedAgentConfig, Config};
+    use galleon_config::multi_agent::MemoryBackendKind;
+    use galleon_config::schema::{AliasedAgentConfig, Config};
     use tempfile::TempDir;
 
     let tmp = TempDir::new().unwrap();
@@ -1106,7 +1106,7 @@ fn resolve_session_cwd_uses_default_workspace_without_request() {
 
 #[test]
 fn resolve_ws_session_cwd_defaults_to_agent_workspace_without_request() {
-    use clawcrew_config::schema::{AliasedAgentConfig, Config};
+    use galleon_config::schema::{AliasedAgentConfig, Config};
     use tempfile::TempDir;
 
     let tmp = TempDir::new().unwrap();
@@ -1131,7 +1131,7 @@ fn resolve_ws_session_cwd_defaults_to_agent_workspace_without_request() {
 
 #[test]
 fn resolve_ws_session_cwd_keeps_requested_cwd_strict() {
-    use clawcrew_config::schema::{AliasedAgentConfig, Config};
+    use galleon_config::schema::{AliasedAgentConfig, Config};
     use tempfile::TempDir;
 
     let tmp = TempDir::new().unwrap();
@@ -1166,7 +1166,7 @@ fn resolve_session_cwd_rejects_missing_directory() {
 
 #[test]
 fn needs_onboarding_ws_error_points_to_onboard() {
-    let config = clawcrew_config::schema::Config::default();
+    let config = galleon_config::schema::Config::default();
     let frame =
         needs_onboarding_ws_error(&config).expect("empty model must produce a WS onboarding error");
 
@@ -1189,11 +1189,11 @@ fn needs_onboarding_ws_error_points_to_onboard() {
 
 #[test]
 fn needs_onboarding_ws_error_uses_current_configured_model() {
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.providers.models.openai.insert(
         "default".to_string(),
-        clawcrew_config::schema::OpenAIModelProviderConfig {
-            base: clawcrew_config::schema::ModelProviderConfig {
+        galleon_config::schema::OpenAIModelProviderConfig {
+            base: galleon_config::schema::ModelProviderConfig {
                 model: Some("openai/gpt-4o-mini".to_string()),
                 api_key: Some("sk-test".to_string()),
                 ..Default::default()
@@ -1493,7 +1493,7 @@ impl futures_util::Sink<Message> for CollectSink {
 
 #[tokio::test]
 async fn ws_sop_frame_enforces_policy_membership_via_auth_subject() {
-    use clawcrew_config::pairing::PairingGuard;
+    use galleon_config::pairing::PairingGuard;
     // Reuse the HTTP policied-gate harness: a run parked at a `prod` policy whose
     // group is granted to the paired-token subject (bare, any source).
     let (state, run_id) = crate::api_sop::tests::state_with_policied_gate("ws-tok");
@@ -1551,7 +1551,7 @@ async fn ws_sop_frame_enforces_policy_membership_via_auth_subject() {
 /// explicit `context_window`, absent when it does not.
 #[test]
 fn done_frame_model_context_window_presence_tracks_provider_config() {
-    use clawcrew_config::schema::{AliasedAgentConfig, Config, RuntimeProfileConfig};
+    use galleon_config::schema::{AliasedAgentConfig, Config, RuntimeProfileConfig};
     use std::collections::HashMap;
 
     // (provider_alias, context_window, expected_model_window,
@@ -1590,7 +1590,7 @@ fn done_frame_model_context_window_presence_tracks_provider_config() {
             },
         );
 
-        let mut providers = clawcrew_config::providers::Providers::default();
+        let mut providers = galleon_config::providers::Providers::default();
         let entry = providers
             .models
             .ensure(vendor, model_alias)
@@ -1667,7 +1667,7 @@ fn done_frame_model_context_window_presence_tracks_provider_config() {
 /// not the static agent alias. Both paths use the same shared resolver.
 #[test]
 fn done_frame_model_window_follows_live_provider_switch() {
-    use clawcrew_config::schema::{AliasedAgentConfig, Config, RuntimeProfileConfig};
+    use galleon_config::schema::{AliasedAgentConfig, Config, RuntimeProfileConfig};
     use std::collections::HashMap;
 
     // (switched_provider_alias, scenario_label)
@@ -1697,7 +1697,7 @@ fn done_frame_model_window_follows_live_provider_switch() {
             },
         );
 
-        let mut providers = clawcrew_config::providers::Providers::default();
+        let mut providers = galleon_config::providers::Providers::default();
         // Provider A (static binding) — no context_window.
         providers
             .models
@@ -1767,7 +1767,7 @@ fn done_frame_model_window_follows_live_provider_switch() {
 /// so clients fall back to the trim budget.
 #[test]
 fn done_frame_model_window_omitted_on_same_profile_model_fallback() {
-    use clawcrew_config::schema::{AliasedAgentConfig, Config, RuntimeProfileConfig};
+    use galleon_config::schema::{AliasedAgentConfig, Config, RuntimeProfileConfig};
     use std::collections::HashMap;
 
     let mut runtime_profiles = HashMap::new();
@@ -1790,7 +1790,7 @@ fn done_frame_model_window_omitted_on_same_profile_model_fallback() {
         },
     );
 
-    let mut providers = clawcrew_config::providers::Providers::default();
+    let mut providers = galleon_config::providers::Providers::default();
     let entry = providers
         .models
         .ensure("openai", "default")

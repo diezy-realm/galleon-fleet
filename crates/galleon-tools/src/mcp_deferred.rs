@@ -8,7 +8,7 @@ use crate::mcp_protocol::McpToolDef;
 use crate::mcp_tool::McpToolWrapper;
 use crate::tool_search::ToolAccessPolicy;
 use clawcrew_api::tool::{Tool, ToolSpec};
-use clawcrew_config::policy::SecurityPolicy;
+use galleon_config::policy::SecurityPolicy;
 
 // ── DeferredMcpToolStub ──────────────────────────────────────────────────
 

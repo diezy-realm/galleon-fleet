@@ -221,9 +221,9 @@ mod tests {
     use crate::opencode_cli::OpenCodeCliTool;
     use std::sync::Mutex;
     use clawcrew_api::tool::Tool;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
-    use clawcrew_config::schema::{
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
+    use galleon_config::schema::{
         ClaudeCodeConfig, CodexCliConfig, GeminiCliConfig, OpenCodeCliConfig,
     };
 

@@ -3102,7 +3102,7 @@
         request_route: Option<&str>,
         adapter: std::sync::Arc<dyn crate::sop::approval::ApprovalRouteAdapter>,
     ) -> SopEngine {
-        use clawcrew_config::schema::ApprovalPolicyConfig;
+        use galleon_config::schema::ApprovalPolicyConfig;
         let mut config = SopConfig::default();
         config.approval.policies.insert(
             "prod".to_string(),
@@ -3161,7 +3161,7 @@
         // durable: when save_run fails at park, the exec claim is kept (fail-closed) and
         // the request-route delivery is withheld (retry_pending_park_persists re-issues
         // it once a retry persists the park).
-        use clawcrew_config::schema::ApprovalPolicyConfig;
+        use galleon_config::schema::ApprovalPolicyConfig;
         let calls = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
         let adapter = std::sync::Arc::new(RecordingRouteAdapter {
             calls: calls.clone(),
@@ -3327,7 +3327,7 @@
         sop.steps[0].mode = Some(SopExecutionMode::Auto);
         let mut engine = engine_with_config_sops(
             SopConfig {
-                approval_mode: clawcrew_config::schema::ApprovalMode::OutOfBandRequired,
+                approval_mode: galleon_config::schema::ApprovalMode::OutOfBandRequired,
                 ..SopConfig::default()
             },
             vec![sop],
@@ -3690,7 +3690,7 @@
         crate::sop::approval::timeout::apply_timeout_action(
             &mut engine,
             &run_id,
-            clawcrew_config::schema::ApprovalTimeoutAction::Escalate,
+            galleon_config::schema::ApprovalTimeoutAction::Escalate,
         );
 
         assert_eq!(
@@ -3768,7 +3768,7 @@
     fn timeout_cancel_finishes_run() {
         let mut engine = SopEngine::new(SopConfig {
             approval_timeout_secs: 1,
-            approval_timeout_action: clawcrew_config::schema::ApprovalTimeoutAction::Cancel,
+            approval_timeout_action: galleon_config::schema::ApprovalTimeoutAction::Cancel,
             ..SopConfig::default()
         });
         engine.set_sops_for_test(vec![test_sop(
@@ -3801,7 +3801,7 @@
         });
         let mut engine = SopEngine::new(SopConfig {
             approval_timeout_secs: 1,
-            approval_timeout_action: clawcrew_config::schema::ApprovalTimeoutAction::Cancel,
+            approval_timeout_action: galleon_config::schema::ApprovalTimeoutAction::Cancel,
             ..SopConfig::default()
         })
         .with_store(store.clone());
@@ -3896,7 +3896,7 @@
         // The legacy fail-open behavior is reachable ONLY via the explicit opt-in.
         let mut engine = SopEngine::new(SopConfig {
             approval_timeout_secs: 1,
-            approval_timeout_action: clawcrew_config::schema::ApprovalTimeoutAction::AutoApprove,
+            approval_timeout_action: galleon_config::schema::ApprovalTimeoutAction::AutoApprove,
             ..SopConfig::default()
         });
         engine.set_sops_for_test(vec![test_sop(
@@ -6679,7 +6679,7 @@
 
     #[test]
     fn durable_policied_checkpoint_delivers_exactly_one_request_notice() {
-        use clawcrew_config::schema::ApprovalPolicyConfig;
+        use galleon_config::schema::ApprovalPolicyConfig;
 
         let calls = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
         let adapter = std::sync::Arc::new(RecordingRouteAdapter {
@@ -6728,7 +6728,7 @@
 
     #[test]
     fn policied_checkpoint_retry_delivers_once_after_persist_succeeds() {
-        use clawcrew_config::schema::ApprovalPolicyConfig;
+        use galleon_config::schema::ApprovalPolicyConfig;
 
         let calls = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
         let adapter = std::sync::Arc::new(RecordingRouteAdapter {
@@ -9408,7 +9408,7 @@ type = "manual"
 
     #[test]
     fn restored_policied_checkpoint_replays_request_route() {
-        use clawcrew_config::schema::ApprovalPolicyConfig;
+        use galleon_config::schema::ApprovalPolicyConfig;
 
         let store = std::sync::Arc::new(InMemoryRunStore::new());
         let calls = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));

@@ -2,7 +2,7 @@
 //! (table instead of array-of-tables) must be reported as a dropped section,
 //! never silently swallowed into defaults.
 
-use clawcrew_config::migration::migrate_to_current_salvaged;
+use galleon_config::migration::migrate_to_current_salvaged;
 
 #[test]
 fn malformed_plugins_entries_reports_dropped_section() {

@@ -1,6 +1,6 @@
 //! Canonical `SKILL.md` frontmatter.
 
-use clawcrew_config::traits::{PropFieldInfo, PropKind};
+use galleon_config::traits::{PropFieldInfo, PropKind};
 
 // `Eq` is intentionally NOT derived: `slash_options` carries `SkillSlashOption`,
 // whose `min`/`max` bounds are `f64` (no total ordering). `PartialEq` is all the
@@ -65,7 +65,7 @@ impl SkillFrontmatterExt for SkillFrontmatter {
                 description: "Free-form tags. The `slash` tag opts the skill into Discord slash commands (clawcrew-labs/clawcrew#7490); others drive tiering / registry grouping.",
                 derived_from_secret: false,
                 credential_class: None,
-                tab: clawcrew_config::config::ConfigTab::None,
+                tab: galleon_config::config::ConfigTab::None,
                 alias_source: None,
                 multiline: false,
             },
@@ -80,7 +80,7 @@ impl SkillFrontmatterExt for SkillFrontmatter {
                 description: "Keep this skill's instructions inlined in the system prompt even in compact skill-prompt mode.",
                 derived_from_secret: false,
                 credential_class: None,
-                tab: clawcrew_config::config::ConfigTab::None,
+                tab: galleon_config::config::ConfigTab::None,
                 alias_source: None,
                 multiline: false,
             },
@@ -109,7 +109,7 @@ fn field(
         description,
         derived_from_secret: false,
         credential_class: None,
-        tab: clawcrew_config::config::ConfigTab::None,
+        tab: galleon_config::config::ConfigTab::None,
         alias_source: None,
         multiline: false,
     }

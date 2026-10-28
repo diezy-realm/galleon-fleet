@@ -6,13 +6,13 @@
 //! policy and the text-reply approval prompt — are provided here so a feature
 //! crate does not have to reimplement them or reach back into
 //! `galleon-channels` internals. Neither helper drags `clawcrew-runtime`:
-//! `clawcrew-config` depends only on api/log/infra/macros, and the approval
+//! `galleon-config` depends only on api/log/infra/macros, and the approval
 //! helper here is the i18n-free half.
 //!
 //! ## [`allowlist`] — seam #1, closed
 //!
 //! The grant / deny / `!name` / wildcard peer-policy is security-critical and
-//! has a single source of truth in `clawcrew_config::schema`
+//! has a single source of truth in `galleon_config::schema`
 //! (`peer_policy_admits` and friends). `galleon-channels::allowlist` is a thin
 //! wrapper over it. This module **re-exports that same policy** rather than
 //! reimplementing the precedence rules — reuse over a second copy that could
@@ -31,7 +31,7 @@
 //! ceiling (`APPROVAL_I18N_CEILING`) — the one part of seam #2 that cannot
 //! close without the runtime.
 
-/// Peer-policy allowlist — re-exported from the `clawcrew_config::schema` SSOT.
+/// Peer-policy allowlist — re-exported from the `galleon_config::schema` SSOT.
 ///
 /// `galleon-channels::allowlist` wraps the same functions; sharing them here
 /// keeps the grant/deny/precedence rules defined once. See the crate-level docs
@@ -48,8 +48,8 @@ pub mod allowlist {
     }
 
     /// `!`-prefix that marks a resolved peer entry as a deny rule.
-    pub use clawcrew_config::schema::PEER_DENY_PREFIX as DENY_PREFIX;
-    use clawcrew_config::schema::{
+    pub use galleon_config::schema::PEER_DENY_PREFIX as DENY_PREFIX;
+    use galleon_config::schema::{
         peer_deny_identity, peer_deny_names, peer_grant_identity, peer_is_wildcard,
         peer_policy_admits, peer_policy_denies,
     };

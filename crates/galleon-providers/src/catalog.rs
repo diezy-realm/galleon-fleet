@@ -223,7 +223,7 @@ pub async fn list_models_for_family(family: &str) -> Result<Vec<String>> {
 }
 
 pub async fn model_catalog_with_config(
-    config: Option<&clawcrew_config::schema::Config>,
+    config: Option<&galleon_config::schema::Config>,
     model_provider: &str,
 ) -> (
     Vec<String>,
@@ -385,7 +385,7 @@ mod tests {
             };
         }
         let families: Vec<&str> =
-            clawcrew_config::for_each_model_provider_slot!(collect_family_names);
+            galleon_config::for_each_model_provider_slot!(collect_family_names);
         let mut missing: Vec<&str> = Vec::new();
         for family in &families {
             if catalog_source_for(family).is_none() {

@@ -62,7 +62,7 @@ use anyhow::Result;
 pub use tool_registry::{ToolError, ToolRegistry};
 
 // Re-export config types so wizard can use `hardware::HardwareConfig` etc.
-pub use clawcrew_config::schema::{HardwareConfig, HardwareTransport};
+pub use galleon_config::schema::{HardwareConfig, HardwareTransport};
 
 // ── Phase 5: boot() — hardware tool integration into agent loop ───────────────
 
@@ -225,7 +225,7 @@ fn inject_rpi_context(
 #[cfg(feature = "hardware")]
 #[allow(unused_mut)] // tools and context_files_prompt are mutated on Linux+peripheral-rpi
 pub async fn boot(
-    peripherals: &clawcrew_config::schema::PeripheralsConfig,
+    peripherals: &galleon_config::schema::PeripheralsConfig,
 ) -> anyhow::Result<HardwareBootResult> {
     use self::serial::HardwareSerialTransport;
     use device::DeviceCapabilities;
@@ -344,7 +344,7 @@ pub async fn boot(
 #[cfg(not(feature = "hardware"))]
 #[allow(unused_mut)] // tools and context_files_prompt are mutated on Linux+peripheral-rpi
 pub async fn boot(
-    _peripherals: &clawcrew_config::schema::PeripheralsConfig,
+    _peripherals: &galleon_config::schema::PeripheralsConfig,
 ) -> anyhow::Result<HardwareBootResult> {
     let devices = std::sync::Arc::new(tokio::sync::RwLock::new(DeviceRegistry::new()));
     let registry = ToolRegistry::load(devices.clone()).await?;

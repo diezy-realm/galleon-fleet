@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use base64::Engine as _;
 use cbc::cipher::{BlockDecryptMut, KeyIvInit, block_padding::NoPadding};
 use clawcrew_api::channel::{Channel, ChannelConversationScope, ChannelMessage, SendMessage};
-use clawcrew_config::schema::{StreamMode, WeComWsConfig};
+use galleon_config::schema::{StreamMode, WeComWsConfig};
 use galleon_tool_call_parser::TERMINAL_MARKERS;
 use futures_util::{SinkExt, StreamExt};
 use galleon_i18n as i18n;
@@ -328,7 +328,7 @@ impl WeComWsChannel {
             );
         }
 
-        let client = clawcrew_config::schema::build_channel_proxy_client_with_timeouts(
+        let client = galleon_config::schema::build_channel_proxy_client_with_timeouts(
             "channel.wecom_ws",
             config.proxy_url.as_deref(),
             WECOM_HTTP_TIMEOUT_SECS,
@@ -1556,7 +1556,7 @@ impl Channel for WeComWsChannel {
         loop {
             wecom_log_info!("[wecom_ws] connecting to {WECOM_WS_URL}");
 
-            let ws_stream = match clawcrew_config::schema::ws_connect_with_proxy(
+            let ws_stream = match galleon_config::schema::ws_connect_with_proxy(
                 WECOM_WS_URL,
                 "channel.wecom_ws",
                 self.cfg.proxy_url.as_deref(),
@@ -3187,7 +3187,7 @@ mod tests {
         // and concatenated them, so a wildcard under `wecom-ws` never met an
         // `ignore` under `wecom_ws` and the ignored sender was admitted. Both
         // startup paths now share `wecom_ws_external_peers`, which this uses.
-        let config: clawcrew_config::schema::Config = toml::from_str(
+        let config: galleon_config::schema::Config = toml::from_str(
             r#"
             [peer_groups.wecom_grant]
             channel = "wecom-ws.ops"

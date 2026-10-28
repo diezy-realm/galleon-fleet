@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
-use clawcrew_config::policy::SecurityPolicy;
+use galleon_config::policy::SecurityPolicy;
 
 pub struct FileEditTool {
     security: Arc<SecurityPolicy>,
@@ -289,8 +289,8 @@ fn no_match_diagnostic(content: &str, old_string: &str) -> String {
 mod tests {
     use super::*;
     use crate::wrappers::{PathGuardedTool, RateLimitedTool};
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
 
     fn test_tool(workspace: std::path::PathBuf) -> FileEditTool {
         let security = Arc::new(SecurityPolicy {

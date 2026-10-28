@@ -2,7 +2,7 @@ use anyhow::{Context, Result, bail};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Instant;
-use clawcrew_config::schema::SkillImprovementConfig;
+use galleon_config::schema::SkillImprovementConfig;
 use galleon_providers::ChatMessage;
 
 const FRONT_MATTER_DELIM: &str = "---";

@@ -273,7 +273,7 @@ mod tests {
     use clawcrew_api::channel::{
         Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
     };
-    use clawcrew_config::schema::{PacingConfig, RiskProfileConfig, StreamReasoningMode};
+    use galleon_config::schema::{PacingConfig, RiskProfileConfig, StreamReasoningMode};
     use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use tokio::sync::mpsc;
@@ -298,7 +298,7 @@ mod tests {
             observer,
             provider_name: "stub",
             model: "stub-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+            context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: None,
             approval,
             channel_name: "test",
@@ -312,7 +312,7 @@ mod tests {
             strict_tool_parsing: false,
             channel,
             agent_alias: None,
-            draft_reasoning: clawcrew_config::schema::StreamReasoningMode::Status,
+            draft_reasoning: galleon_config::schema::StreamReasoningMode::Status,
             turn_id: "trace-approval-gate",
             serving_provider_name: None,
             serving_model: None,
@@ -573,7 +573,7 @@ mod tests {
             observer: &observer,
             provider_name: "test",
             model: "test-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+            context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: None,
             approval: Some(&approval),
             channel_name: "acp",

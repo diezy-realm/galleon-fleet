@@ -17,7 +17,7 @@ provider-gitea = []
 [dependencies]
 galleon-channel-core.workspace = true
 clawcrew-api.workspace = true
-clawcrew-config.workspace = true
+galleon-config.workspace = true
 clawcrew-log.workspace = true
 galleon-providers.workspace = true
 parking_lot = "0.12"

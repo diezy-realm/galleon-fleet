@@ -112,10 +112,10 @@ use clawcrew_api::memory_traits::MemoryStrategy;
 use clawcrew_api::observability_traits::{Observer, ObserverEvent, ObserverMetric};
 use clawcrew_api::session_keys::sanitize_session_key;
 use clawcrew_api::tool::Tool;
-use clawcrew_config::autonomy::AutonomyLevel;
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::scattered_types::{ThinkingConfig, ThinkingLevel};
-use clawcrew_config::schema::Config;
+use galleon_config::autonomy::AutonomyLevel;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::scattered_types::{ThinkingConfig, ThinkingLevel};
+use galleon_config::schema::Config;
 use galleon_memory::{self, MEMORY_CONTEXT_CLOSE, MEMORY_CONTEXT_OPEN, Memory};
 use galleon_providers::reliable::ProviderFallbackInfo;
 use galleon_providers::{
@@ -426,7 +426,7 @@ enum ChannelRuntimeCommand {
     InvalidThinking(String),
 }
 
-// ModelCacheState / ModelCacheEntry are defined in clawcrew-config::schema
+// ModelCacheState / ModelCacheEntry are defined in galleon-config::schema
 // as the single source of truth for the on-disk cache contract.
 
 #[derive(Debug, Clone)]
@@ -436,7 +436,7 @@ struct ChannelRuntimeDefaults {
     temperature: Option<f64>,
     api_key: Option<String>,
     api_url: Option<String>,
-    reliability: clawcrew_config::schema::ReliabilityConfig,
+    reliability: galleon_config::schema::ReliabilityConfig,
 }
 
 #[derive(Debug, Clone)]
@@ -494,7 +494,7 @@ impl InterruptOnNewMessageConfig {
 /// channel type. This preserves the legacy fallback for inbound messages that
 /// do not carry an alias; aliased messages resolve their own live config.
 fn interrupt_on_new_message_config(
-    channels: &clawcrew_config::schema::ChannelsConfig,
+    channels: &galleon_config::schema::ChannelsConfig,
 ) -> InterruptOnNewMessageConfig {
     InterruptOnNewMessageConfig {
         telegram: channels
@@ -968,8 +968,8 @@ struct ChannelRuntimeContext {
     /// Resolved aliased-agent config for the agent owning this
     /// runtime context. Per-channel agent dispatch (one agent per
     /// channel.`<type>`.`<alias>`) is a follow-up.
-    agent_cfg: Arc<clawcrew_config::schema::AliasedAgentConfig>,
-    prompt_config: Arc<clawcrew_config::schema::Config>,
+    agent_cfg: Arc<galleon_config::schema::AliasedAgentConfig>,
+    prompt_config: Arc<galleon_config::schema::Config>,
     memory: Arc<dyn Memory>,
     memory_strategy: Arc<dyn MemoryStrategy>,
     tools_registry: Arc<clawcrew_api::tool::ScopedToolRegistry>,
@@ -989,14 +989,14 @@ struct ChannelRuntimeContext {
     /// [`ScopedRouteMap`]). Consulted above `route_overrides` in
     /// [`get_route_selection`]; never persisted.
     scope_overrides: ScopedRouteMap,
-    reliability: Arc<clawcrew_config::schema::ReliabilityConfig>,
+    reliability: Arc<galleon_config::schema::ReliabilityConfig>,
     provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions,
     workspace_dir: Arc<PathBuf>,
     message_timeout_secs: u64,
     interrupt_on_new_message: InterruptOnNewMessageConfig,
-    multimodal: clawcrew_config::schema::MultimodalConfig,
-    media_pipeline: clawcrew_config::schema::MediaPipelineConfig,
-    transcription_config: clawcrew_config::schema::TranscriptionConfig,
+    multimodal: galleon_config::schema::MultimodalConfig,
+    media_pipeline: galleon_config::schema::MediaPipelineConfig,
+    transcription_config: galleon_config::schema::TranscriptionConfig,
     /// Resolved per-agent transcription provider alias (`<type>.<alias>`)
     /// for the runtime-active agent that owns this channel context.
     /// Empty when the agent has no transcription_provider set; downstream
@@ -1005,12 +1005,12 @@ struct ChannelRuntimeContext {
     hooks: Option<Arc<dyn clawcrew_api::hook::ChannelHookRunner>>,
     non_cli_excluded_tools: Arc<Vec<String>>,
     autonomy_level: AutonomyLevel,
-    model_routes: Arc<Vec<clawcrew_config::schema::ModelRouteConfig>>,
-    query_classification: clawcrew_config::schema::QueryClassificationConfig,
+    model_routes: Arc<Vec<galleon_config::schema::ModelRouteConfig>>,
+    query_classification: galleon_config::schema::QueryClassificationConfig,
     ack_reactions: bool,
     show_tool_calls: bool,
     session_store: Option<Arc<dyn galleon_infra::session_backend::SessionBackend>>,
-    pacing: clawcrew_config::schema::PacingConfig,
+    pacing: galleon_config::schema::PacingConfig,
     debouncer: Arc<galleon_infra::debounce::MessageDebouncer>,
     last_applied_config_stamp: Arc<Mutex<Option<ConfigFileStamp>>>,
     runtime_defaults_override: Arc<Mutex<Option<Arc<ChannelRuntimeOverride>>>>,
@@ -2894,7 +2894,7 @@ fn parse_thinking_command_arg(raw: Option<&str>) -> Result<Option<ThinkingLevel>
 struct ChannelThinkingResolution {
     effective_content: String,
     level: ThinkingLevel,
-    params: clawcrew_config::thinking::ThinkingParams,
+    params: galleon_config::thinking::ThinkingParams,
     effective_temperature: Option<f64>,
 }
 
@@ -2905,16 +2905,16 @@ fn resolve_channel_thinking(
     base_temperature: Option<f64>,
 ) -> ChannelThinkingResolution {
     let (directive, effective_content) =
-        match clawcrew_config::thinking::parse_thinking_directive(content) {
+        match galleon_config::thinking::parse_thinking_directive(content) {
             Some((level, remaining)) => (Some(level), remaining),
             None => (None, content.to_string()),
         };
     let level =
-        clawcrew_config::thinking::resolve_thinking_level(directive, session_override, config);
-    let params = clawcrew_config::thinking::apply_thinking_level_with_config(level, config);
+        galleon_config::thinking::resolve_thinking_level(directive, session_override, config);
+    let params = galleon_config::thinking::apply_thinking_level_with_config(level, config);
 
     let effective_temperature = base_temperature
-        .map(|bt| clawcrew_config::thinking::clamp_temperature(bt + params.temperature_adjustment));
+        .map(|bt| galleon_config::thinking::clamp_temperature(bt + params.temperature_adjustment));
 
     ChannelThinkingResolution {
         effective_content,
@@ -2926,13 +2926,13 @@ fn resolve_channel_thinking(
 
 #[cfg(test)]
 fn resolve_channel_context_limits(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     agent_alias: &str,
     route: &ChannelRouteSelection,
     legacy_budget: usize,
-) -> clawcrew_config::schema::ResolvedContextLimits {
+) -> galleon_config::schema::ResolvedContextLimits {
     if agent_alias.is_empty() {
-        return clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(legacy_budget);
+        return galleon_config::schema::ResolvedContextLimits::legacy_fallback(legacy_budget);
     }
     config.resolved_context_limits_for_route(agent_alias, &route.model_provider, &route.model)
 }
@@ -3046,7 +3046,7 @@ enum ModelsCommandResolution {
 }
 
 fn resolve_models_command(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     raw: &str,
 ) -> ModelsCommandResolution {
     let candidate = raw.trim();
@@ -3121,7 +3121,7 @@ fn resolved_runtime_model_provider_ref(
 fn model_provider_entry_for_ref<'a>(
     config: &'a Config,
     model_provider: &str,
-) -> anyhow::Result<(String, &'a clawcrew_config::schema::ModelProviderConfig)> {
+) -> anyhow::Result<(String, &'a galleon_config::schema::ModelProviderConfig)> {
     let trimmed = model_provider.trim();
     if trimmed.is_empty() {
         anyhow::bail!("model_provider reference must not be empty");
@@ -3230,16 +3230,16 @@ async fn load_runtime_config_and_defaults(
     let contents = tokio::fs::read_to_string(path)
         .await
         .with_context(|| format!("Failed to read {}", path.display()))?;
-    let mut parsed: Config = clawcrew_config::migration::migrate_to_current(&contents)
+    let mut parsed: Config = galleon_config::migration::migrate_to_current(&contents)
         .with_context(|| format!("Failed to migrate {}", path.display()))?;
     parsed.config_path = path.to_path_buf();
 
     if let Some(clawcrew_dir) = path.parent() {
         let store =
-            clawcrew_config::secrets::SecretStore::new(clawcrew_dir, parsed.secrets.encrypt);
+            galleon_config::secrets::SecretStore::new(clawcrew_dir, parsed.secrets.encrypt);
         parsed.decrypt_secrets(&store)?;
     }
-    let applied = clawcrew_config::env_overrides::apply_env_overrides(&mut parsed)?;
+    let applied = galleon_config::env_overrides::apply_env_overrides(&mut parsed)?;
     parsed.env_overridden_paths = applied.paths;
     parsed.pre_override_snapshots = applied.snapshots;
 
@@ -3408,7 +3408,7 @@ fn set_route_selection(
 
 fn apply_model_ref(
     sel: &mut ChannelRouteSelection,
-    model_routes: &[clawcrew_config::schema::ModelRouteConfig],
+    model_routes: &[galleon_config::schema::ModelRouteConfig],
     model: &str,
 ) {
     if let Some(route) = model_routes
@@ -3583,7 +3583,7 @@ fn sender_prefers_voice(
     ctx: &ChannelRuntimeContext,
     msg: &clawcrew_api::channel::ChannelMessage,
 ) -> Option<bool> {
-    use clawcrew_config::multi_agent::OutputModality;
+    use galleon_config::multi_agent::OutputModality;
 
     let channel_type = msg.channel.as_str();
     let matrix = channel_type.starts_with("matrix");
@@ -4516,7 +4516,7 @@ fn load_cached_model_preview(
         let Ok(raw) = std::fs::read_to_string(cache_path) else {
             continue;
         };
-        let Ok(state) = serde_json::from_str::<clawcrew_config::schema::ModelCacheState>(&raw)
+        let Ok(state) = serde_json::from_str::<galleon_config::schema::ModelCacheState>(&raw)
         else {
             continue;
         };
@@ -4557,7 +4557,7 @@ fn provider_cache_key(provider_name: &str, route_api_key: Option<&str>, generati
 }
 
 fn provider_credentials_for_ref(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     provider_ref: &str,
 ) -> (Option<String>, Option<String>) {
     let Some((type_key, alias_key)) = provider_ref.trim().split_once('.') else {
@@ -4639,11 +4639,11 @@ async fn get_or_create_provider(
 }
 
 async fn create_resilient_model_provider_nonblocking(
-    config: Arc<clawcrew_config::schema::Config>,
+    config: Arc<galleon_config::schema::Config>,
     provider_name: &str,
     api_key: Option<String>,
     api_url: Option<String>,
-    reliability: clawcrew_config::schema::ReliabilityConfig,
+    reliability: galleon_config::schema::ReliabilityConfig,
     provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions,
 ) -> anyhow::Result<Box<dyn ModelProvider>> {
     let provider_name = provider_name.to_string();
@@ -4670,7 +4670,7 @@ fn build_models_help_response(
     current: &ChannelRouteSelection,
     data_dir: &Path,
     agent_workspace_dir: &Path,
-    model_routes: &[clawcrew_config::schema::ModelRouteConfig],
+    model_routes: &[galleon_config::schema::ModelRouteConfig],
 ) -> String {
     let mut response = String::new();
     response.push_str(&channel_runtime_cli_string_with_args(
@@ -4757,7 +4757,7 @@ fn build_providers_help_response(current: &ChannelRouteSelection) -> String {
 fn build_config_text_response(
     current: &ChannelRouteSelection,
     _workspace_dir: &Path,
-    model_routes: &[clawcrew_config::schema::ModelRouteConfig],
+    model_routes: &[galleon_config::schema::ModelRouteConfig],
 ) -> String {
     let mut resp = String::new();
     resp.push_str(&channel_runtime_cli_string_with_args(
@@ -4802,7 +4802,7 @@ fn build_config_block_kit(
     current: &ChannelRouteSelection,
     data_dir: &Path,
     agent_workspace_dir: &Path,
-    model_routes: &[clawcrew_config::schema::ModelRouteConfig],
+    model_routes: &[galleon_config::schema::ModelRouteConfig],
 ) -> String {
     let provider_options: Vec<serde_json::Value> = galleon_providers::list_model_providers()
         .iter()
@@ -5641,7 +5641,7 @@ fn parse_reply_intent(response: &str) -> AssistantChannelOutcome {
 
 async fn resolve_classifier_route(
     ctx: &ChannelRuntimeContext,
-    provider_ref: &clawcrew_config::providers::ModelProviderRef,
+    provider_ref: &galleon_config::providers::ModelProviderRef,
     defaults_snapshot: &ChannelRuntimeDefaultsSnapshot,
 ) -> Option<(Arc<dyn ModelProvider>, String, Option<f64>)> {
     let provider_str = provider_ref.as_str().trim();
@@ -6030,7 +6030,7 @@ async fn run_draft_updater(
     // `turn_flush_narration` is false (every other draft-capable channel).
     turn_flush_narration: bool,
     outbound_hooks: Option<Arc<dyn clawcrew_api::hook::ChannelHookRunner>>,
-    outbound_leak_detection: clawcrew_config::schema::LeakDetectionConfig,
+    outbound_leak_detection: galleon_config::schema::LeakDetectionConfig,
     outbound_channel: String,
     mut rx: tokio::sync::mpsc::Receiver<clawcrew_api::channel::DraftEvent>,
 ) {
@@ -6218,7 +6218,7 @@ fn sanitize_channel_response(response: &str, tools: &[Box<dyn Tool>]) -> String 
     sanitize_channel_response_with_leak_detection(
         response,
         tools,
-        &clawcrew_config::schema::LeakDetectionConfig::default(),
+        &galleon_config::schema::LeakDetectionConfig::default(),
     )
 }
 
@@ -6243,7 +6243,7 @@ fn outbound_content_format_for_channel(channel: &str) -> OutboundContentFormat {
 fn sanitize_channel_response_with_leak_detection(
     response: &str,
     tools: &[Box<dyn Tool>],
-    leak_detection: &clawcrew_config::schema::LeakDetectionConfig,
+    leak_detection: &galleon_config::schema::LeakDetectionConfig,
 ) -> String {
     sanitize_channel_response_for_format_with_leak_detection(
         response,
@@ -6256,7 +6256,7 @@ fn sanitize_channel_response_with_leak_detection(
 fn sanitize_channel_response_for_format_with_leak_detection(
     response: &str,
     tools: &[Box<dyn Tool>],
-    leak_detection: &clawcrew_config::schema::LeakDetectionConfig,
+    leak_detection: &galleon_config::schema::LeakDetectionConfig,
     content_format: OutboundContentFormat,
 ) -> String {
     let known_tool_names: HashSet<String> = tools
@@ -6304,7 +6304,7 @@ fn sanitize_channel_response_for_format_with_leak_detection(
 /// hook that cancels/rewrites the send is honored before anything is posted.
 async fn apply_multi_message_narration_policy(
     hooks: Option<&dyn clawcrew_api::hook::ChannelHookRunner>,
-    leak_detection: &clawcrew_config::schema::LeakDetectionConfig,
+    leak_detection: &galleon_config::schema::LeakDetectionConfig,
     channel: &str,
     reply_target: &str,
     prior_tail: &str,
@@ -6371,7 +6371,7 @@ async fn apply_multi_message_narration_policy(
 async fn flush_completed_narration_turn(
     channel: &Arc<dyn Channel>,
     hooks: Option<&dyn clawcrew_api::hook::ChannelHookRunner>,
-    leak_detection: &clawcrew_config::schema::LeakDetectionConfig,
+    leak_detection: &galleon_config::schema::LeakDetectionConfig,
     outbound_channel: &str,
     reply_target: &str,
     draft_id: &str,
@@ -6472,7 +6472,7 @@ async fn flush_completed_narration_turn(
 
 fn redact_channel_outbound_leaks(
     content: &str,
-    leak_detection: &clawcrew_config::schema::LeakDetectionConfig,
+    leak_detection: &galleon_config::schema::LeakDetectionConfig,
     content_format: OutboundContentFormat,
 ) -> String {
     if !leak_detection.enabled {
@@ -6518,7 +6518,7 @@ const NARRATION_LEAK_CONTEXT_CHARS: usize = 512;
 fn redact_channel_outbound_leaks_with_prior_context(
     prior_tail: &str,
     content: &str,
-    leak_detection: &clawcrew_config::schema::LeakDetectionConfig,
+    leak_detection: &galleon_config::schema::LeakDetectionConfig,
     content_format: OutboundContentFormat,
 ) -> String {
     // First redact secrets contained entirely within this turn.
@@ -7375,7 +7375,7 @@ fn compute_max_in_flight_messages(
 
 fn max_in_flight_messages_for_config(
     channel_count: usize,
-    config: &clawcrew_config::schema::ChannelsConfig,
+    config: &galleon_config::schema::ChannelsConfig,
 ) -> usize {
     compute_max_in_flight_messages(channel_count, config.max_concurrent_per_channel)
 }
@@ -7829,18 +7829,18 @@ async fn process_channel_message_with_delivery_id(
 /// the channel still owns draft rendering, while the orchestrator avoids
 /// sending duplicate standalone tool-notification messages.
 fn matrix_single_message_streaming_enabled_for_config(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     msg: &clawcrew_api::channel::ChannelMessage,
 ) -> bool {
     matrix_config_for_message(config, msg).is_some_and(|config| {
-        config.stream_mode == clawcrew_config::schema::MatrixStreamMode::SingleMessage
+        config.stream_mode == galleon_config::schema::MatrixStreamMode::SingleMessage
     })
 }
 
 fn matrix_config_for_message<'a>(
-    config: &'a clawcrew_config::schema::Config,
+    config: &'a galleon_config::schema::Config,
     msg: &clawcrew_api::channel::ChannelMessage,
-) -> Option<&'a clawcrew_config::schema::MatrixConfig> {
+) -> Option<&'a galleon_config::schema::MatrixConfig> {
     if msg.channel != "matrix" {
         return None;
     }
@@ -7855,10 +7855,10 @@ fn matrix_single_message_streaming_enabled(
 }
 
 fn matrix_draft_update_interval_ms_for_config(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     msg: &clawcrew_api::channel::ChannelMessage,
 ) -> u64 {
-    let default_interval = clawcrew_config::schema::MatrixConfig::default()
+    let default_interval = galleon_config::schema::MatrixConfig::default()
         .draft_update_interval_ms
         .max(50);
     matrix_config_for_message(config, msg).map_or(default_interval, |config| {
@@ -7874,10 +7874,10 @@ fn matrix_draft_update_interval_ms(
 }
 
 fn matrix_stream_draft_lines_for_config(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     msg: &clawcrew_api::channel::ChannelMessage,
 ) -> usize {
-    let default_lines = clawcrew_config::schema::MatrixConfig::default().stream_draft_lines;
+    let default_lines = galleon_config::schema::MatrixConfig::default().stream_draft_lines;
     matrix_config_for_message(config, msg).map_or(default_lines, |config| config.stream_draft_lines)
 }
 
@@ -8218,7 +8218,7 @@ fn matrix_tool_subject(
     tool: &str,
     arguments: &serde_json::Value,
     tool_provenance: Option<clawcrew_api::attribution::ToolProvenance>,
-    settings: &[clawcrew_config::schema::StreamToolArgumentEntry],
+    settings: &[galleon_config::schema::StreamToolArgumentEntry],
 ) -> String {
     // Tool lookup can fail, leaving a parser/model-supplied name without a
     // trusted registry identity. Scrub and flatten every name at the Matrix
@@ -8235,9 +8235,9 @@ fn matrix_tool_argument_hint(
     tool: &str,
     arguments: &serde_json::Value,
     tool_provenance: Option<clawcrew_api::attribution::ToolProvenance>,
-    settings: &[clawcrew_config::schema::StreamToolArgumentEntry],
+    settings: &[galleon_config::schema::StreamToolArgumentEntry],
 ) -> Option<String> {
-    use clawcrew_config::schema::{
+    use galleon_config::schema::{
         DEFAULT_STREAM_TOOL_ARGUMENT_CHARS, StreamToolArgumentBase, StreamToolArgumentEntry,
     };
 
@@ -8784,7 +8784,7 @@ async fn process_channel_message_body(
             );
             return;
         }
-        if clawcrew_config::peers::should_drop_self_loop(
+        if galleon_config::peers::should_drop_self_loop(
             &msg.sender,
             channel.self_handle().as_deref(),
         ) {
@@ -9030,7 +9030,7 @@ async fn process_channel_message_body(
     let mut route = get_route_selection(ctx.as_ref(), &msg, &history_key, &runtime_defaults);
 
     if let Some(hint) =
-        clawcrew_config::classifier::classify(&ctx.query_classification, &msg.content)
+        galleon_config::classifier::classify(&ctx.query_classification, &msg.content)
         && let Some(matched_route) = ctx
             .model_routes
             .iter()
@@ -9280,7 +9280,7 @@ async fn process_channel_message_body(
     if send_message_to_peer_tool_available(ctx.as_ref(), &msg)
         && let Some(current_channel_ref) = peer_prompt_channel_ref(ctx.as_ref(), &msg)
     {
-        let peer_map = clawcrew_config::peers::render_sender_peer_map_for_channel(
+        let peer_map = galleon_config::peers::render_sender_peer_map_for_channel(
             ctx.prompt_config.as_ref(),
             ctx.agent_alias.as_str(),
             &current_channel_ref,
@@ -10346,13 +10346,13 @@ async fn process_channel_message_body(
                     .clone()
                     .unwrap_or_else(|| msg.reply_target.clone());
                 let suppress = match route.modality {
-                    clawcrew_config::multi_agent::OutputModality::Text => Some(true),
-                    clawcrew_config::multi_agent::OutputModality::Voice => Some(false),
-                    clawcrew_config::multi_agent::OutputModality::Mirror => None,
+                    galleon_config::multi_agent::OutputModality::Text => Some(true),
+                    galleon_config::multi_agent::OutputModality::Voice => Some(false),
+                    galleon_config::multi_agent::OutputModality::Mirror => None,
                 };
                 let force_voice = matches!(
                     route.modality,
-                    clawcrew_config::multi_agent::OutputModality::Voice
+                    galleon_config::multi_agent::OutputModality::Voice
                 );
                 (ch, recipient, suppress, force_voice)
             } else {
@@ -11024,7 +11024,7 @@ fn unique_channel_handles(
 async fn dispatch_channel_sop_gate(
     router: &AgentRouter,
     msg: &clawcrew_api::channel::ChannelMessage,
-    _config: &clawcrew_config::schema::Config,
+    _config: &galleon_config::schema::Config,
     gate_prompt_channels: &[Arc<dyn Channel>],
     gate_channel_route_keys: &[String],
 ) -> bool {
@@ -11128,7 +11128,7 @@ fn resolve_effective_debounce_window(
     global_ms: u64,
     channel: &str,
     channel_alias: Option<&str>,
-    telegram_configs: &std::collections::HashMap<String, clawcrew_config::schema::TelegramConfig>,
+    telegram_configs: &std::collections::HashMap<String, galleon_config::schema::TelegramConfig>,
 ) -> std::time::Duration {
     let per_channel_ms = if channel == "telegram" {
         channel_alias
@@ -11905,8 +11905,8 @@ fn slack_thread_context_max_messages_resolver(
             .channels
             .slack
             .get(&alias)
-            .map(clawcrew_config::schema::SlackConfig::effective_thread_context_max_messages)
-            .unwrap_or(clawcrew_config::schema::DEFAULT_SLACK_THREAD_CONTEXT_MAX_MESSAGES)
+            .map(galleon_config::schema::SlackConfig::effective_thread_context_max_messages)
+            .unwrap_or(galleon_config::schema::DEFAULT_SLACK_THREAD_CONTEXT_MAX_MESSAGES)
     })
 }
 
@@ -11934,7 +11934,7 @@ impl std::error::Error for UnknownChannelId {}
 
 #[cfg(feature = "channel-telegram")]
 fn resolve_telegram_tts(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     alias: &str,
 ) -> Option<Arc<dyn galleon_channel_telegram::TextToSpeechSynthesizer>> {
     if !config.tts.enabled {
@@ -11958,7 +11958,7 @@ fn resolve_telegram_tts(
 
 #[cfg(feature = "whatsapp-web")]
 fn resolve_whatsapp_tts(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     alias: &str,
 ) -> Option<Arc<dyn galleon_channel_whatsapp::TextToSpeechSynthesizer>> {
     if !config.tts.enabled {
@@ -13266,7 +13266,7 @@ fn resolved_transcription_manager(
 
 #[cfg(feature = "whatsapp-web")]
 fn resolve_whatsapp_tts(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     alias: &str,
 ) -> Option<Arc<dyn galleon_channel_whatsapp::TextToSpeechSynthesizer>> {
     if !config.tts.enabled {
@@ -13305,7 +13305,7 @@ fn build_configured_discord_channel(
     config_arc: &Arc<RwLock<Config>>,
     config: &Config,
     alias: &str,
-    dc: &clawcrew_config::schema::DiscordConfig,
+    dc: &galleon_config::schema::DiscordConfig,
 ) -> DiscordChannel {
     let peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync> = {
         let cfg_arc = config_arc.clone();
@@ -13395,7 +13395,7 @@ pub(crate) fn build_configured_matrix_channel(
     config_arc: &Arc<RwLock<Config>>,
     config: &Config,
     alias: &str,
-    mx: &clawcrew_config::schema::MatrixConfig,
+    mx: &galleon_config::schema::MatrixConfig,
 ) -> Result<MatrixChannel> {
     let state_dir = matrix_state_dir(&config.config_path, alias);
     let peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync> = {
@@ -15991,7 +15991,7 @@ pub async fn start_channels_with_plugin_webhooks(
 }
 
 pub async fn deliver_announcement(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     channel: &str,
     target: &str,
     thread_id: Option<String>,
@@ -16395,11 +16395,11 @@ fn concurrent_persist_lock_serialization() {
         model_provider: Arc::new(tests::DummyModelProvider),
         model_provider_ref: Arc::new("test".into()),
         agent_alias: Arc::new("test".into()),
-        agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
+        agent_cfg: Arc::new(galleon_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(tests::NoopMemory),
         memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(tests::NoopMemory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
@@ -16423,7 +16423,7 @@ fn concurrent_persist_lock_serialization() {
         route_overrides: Arc::new(Mutex::new(HashMap::new())),
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
-        reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
+        reliability: Arc::new(galleon_config::schema::ReliabilityConfig::default()),
         interrupt_on_new_message: InterruptOnNewMessageConfig {
             telegram: false,
             slack: false,
@@ -16432,23 +16432,23 @@ fn concurrent_persist_lock_serialization() {
             matrix: false,
             whatsapp: false,
         },
-        multimodal: clawcrew_config::schema::MultimodalConfig::default(),
-        media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
-        transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
+        multimodal: galleon_config::schema::MultimodalConfig::default(),
+        media_pipeline: galleon_config::schema::MediaPipelineConfig::default(),
+        transcription_config: galleon_config::schema::TranscriptionConfig::default(),
         agent_transcription_provider: String::new(),
         hooks: None,
         provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
-        prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
+        prompt_config: Arc::new(galleon_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
         non_cli_excluded_tools: Arc::new(Vec::new()),
         autonomy_level: AutonomyLevel::default(),
         model_routes: Arc::new(Vec::new()),
-        query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
+        query_classification: galleon_config::schema::QueryClassificationConfig::default(),
         ack_reactions: true,
         show_tool_calls: true,
         session_store: Some(Arc::new(backend) as Arc<dyn SessionBackend>),
-        pacing: clawcrew_config::schema::PacingConfig::default(),
+        pacing: galleon_config::schema::PacingConfig::default(),
         debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
@@ -16559,11 +16559,11 @@ fn test_channel_ctx_with_backend(
         model_provider: Arc::new(tests::DummyModelProvider),
         model_provider_ref: Arc::new("test".into()),
         agent_alias: Arc::new("test".into()),
-        agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
+        agent_cfg: Arc::new(galleon_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(tests::NoopMemory),
         memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(tests::NoopMemory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
@@ -16587,7 +16587,7 @@ fn test_channel_ctx_with_backend(
         route_overrides: Arc::new(Mutex::new(HashMap::new())),
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
-        reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
+        reliability: Arc::new(galleon_config::schema::ReliabilityConfig::default()),
         interrupt_on_new_message: InterruptOnNewMessageConfig {
             telegram: false,
             slack: false,
@@ -16596,23 +16596,23 @@ fn test_channel_ctx_with_backend(
             matrix: false,
             whatsapp: false,
         },
-        multimodal: clawcrew_config::schema::MultimodalConfig::default(),
-        media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
-        transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
+        multimodal: galleon_config::schema::MultimodalConfig::default(),
+        media_pipeline: galleon_config::schema::MediaPipelineConfig::default(),
+        transcription_config: galleon_config::schema::TranscriptionConfig::default(),
         agent_transcription_provider: String::new(),
         hooks: None,
         provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
-        prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
+        prompt_config: Arc::new(galleon_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
         non_cli_excluded_tools: Arc::new(Vec::new()),
         autonomy_level: AutonomyLevel::default(),
         model_routes: Arc::new(Vec::new()),
-        query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
+        query_classification: galleon_config::schema::QueryClassificationConfig::default(),
         ack_reactions: true,
         show_tool_calls: true,
         session_store: Some(backend),
-        pacing: clawcrew_config::schema::PacingConfig::default(),
+        pacing: galleon_config::schema::PacingConfig::default(),
         debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             std::time::Duration::ZERO,
         )),
@@ -16641,18 +16641,18 @@ fn test_channel_ctx_with_backend_channel_and_provider(
     let mut channels_by_name = HashMap::new();
     channels_by_name.insert(channel.name().to_string(), channel);
 
-    let mut prompt_config = clawcrew_config::schema::Config::default();
+    let mut prompt_config = galleon_config::schema::Config::default();
     prompt_config.runtime_profiles.insert(
         "test".to_string(),
-        clawcrew_config::schema::RuntimeProfileConfig {
+        galleon_config::schema::RuntimeProfileConfig {
             max_context_tokens: Some(context_token_budget),
             ..Default::default()
         },
     );
     prompt_config.agents.insert(
         "test".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
-            runtime_profile: clawcrew_config::providers::RuntimeProfileRef::from("test"),
+        galleon_config::schema::AliasedAgentConfig {
+            runtime_profile: galleon_config::providers::RuntimeProfileRef::from("test"),
             ..Default::default()
         },
     );
@@ -16662,11 +16662,11 @@ fn test_channel_ctx_with_backend_channel_and_provider(
         model_provider,
         model_provider_ref: Arc::new("test".into()),
         agent_alias: Arc::new("test".into()),
-        agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
+        agent_cfg: Arc::new(galleon_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(tests::NoopMemory),
         memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(tests::NoopMemory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         tools_registry: Arc::new(clawcrew_api::tool::ScopedToolRegistry::from_raw_for_test(
@@ -16690,7 +16690,7 @@ fn test_channel_ctx_with_backend_channel_and_provider(
         route_overrides: Arc::new(Mutex::new(HashMap::new())),
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
-        reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
+        reliability: Arc::new(galleon_config::schema::ReliabilityConfig::default()),
         interrupt_on_new_message: InterruptOnNewMessageConfig {
             telegram: false,
             slack: false,
@@ -16699,9 +16699,9 @@ fn test_channel_ctx_with_backend_channel_and_provider(
             matrix: false,
             whatsapp: false,
         },
-        multimodal: clawcrew_config::schema::MultimodalConfig::default(),
-        media_pipeline: clawcrew_config::schema::MediaPipelineConfig::default(),
-        transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
+        multimodal: galleon_config::schema::MultimodalConfig::default(),
+        media_pipeline: galleon_config::schema::MediaPipelineConfig::default(),
+        transcription_config: galleon_config::schema::TranscriptionConfig::default(),
         agent_transcription_provider: String::new(),
         hooks: None,
         provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
@@ -16711,11 +16711,11 @@ fn test_channel_ctx_with_backend_channel_and_provider(
         non_cli_excluded_tools: Arc::new(Vec::new()),
         autonomy_level: AutonomyLevel::default(),
         model_routes: Arc::new(Vec::new()),
-        query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
+        query_classification: galleon_config::schema::QueryClassificationConfig::default(),
         ack_reactions: true,
         show_tool_calls: true,
         session_store: Some(backend),
-        pacing: clawcrew_config::schema::PacingConfig::default(),
+        pacing: galleon_config::schema::PacingConfig::default(),
         debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             std::time::Duration::ZERO,
         )),
@@ -17683,7 +17683,7 @@ fn channel_trim_resync_preserves_a_concurrent_workers_later_turn_across_eviction
     Arc::get_mut(&mut ctx)
         .expect("sole owner right after construction")
         .agent_cfg = Arc::new({
-        let mut cfg = clawcrew_config::schema::AliasedAgentConfig::default();
+        let mut cfg = galleon_config::schema::AliasedAgentConfig::default();
         cfg.resolved.max_history_messages = 2;
         cfg
     });
@@ -17761,7 +17761,7 @@ mod omitted_feature_tests {
         let mut config = Config::default();
         config.channels.telegram.insert(
             "default".to_string(),
-            clawcrew_config::schema::TelegramConfig {
+            galleon_config::schema::TelegramConfig {
                 enabled: true,
                 ..Default::default()
             },
@@ -17779,7 +17779,7 @@ mod omitted_feature_tests {
 #[cfg(test)]
 mod debounce_resolution_tests {
     use super::resolve_effective_debounce_window;
-    use clawcrew_config::schema::TelegramConfig;
+    use galleon_config::schema::TelegramConfig;
     use std::collections::HashMap;
     use std::time::Duration;
 

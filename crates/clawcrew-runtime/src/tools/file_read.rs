@@ -1178,7 +1178,7 @@ mod tests {
     mod e2e_helpers {
         use crate::observability::{NoopObserver, Observer};
         use std::sync::{Arc, Mutex};
-        use clawcrew_config::schema::MemoryConfig;
+        use galleon_config::schema::MemoryConfig;
         use galleon_memory::{self, Memory};
         use galleon_providers::{ChatMessage, ChatRequest, ChatResponse, ModelProvider};
 

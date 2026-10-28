@@ -253,7 +253,7 @@ mod tests {
     use super::*;
     use crate::sop::engine::SopEngine;
     use crate::sop::types::*;
-    use clawcrew_config::schema::SopConfig;
+    use galleon_config::schema::SopConfig;
 
     fn test_sop(name: &str) -> Sop {
         Sop {

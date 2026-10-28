@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use crate::sop::types::SopRunStatus;
-use clawcrew_config::schema::{SopConfig, SopRunStoreBackend};
+use galleon_config::schema::{SopConfig, SopRunStoreBackend};
 
 pub use model::{
     ClaimToken, PersistedRun, ProposalKind, ProposalRecord, ProposalStatus, RetentionPolicy,

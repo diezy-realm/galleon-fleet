@@ -4,7 +4,7 @@ use serde_json::{Value, json};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::{SecurityPolicy, ToolOperation};
+use galleon_config::policy::{SecurityPolicy, ToolOperation};
 
 const JIRA_SEARCH_PAGE_SIZE: u32 = 100;
 const MAX_ERROR_BODY_CHARS: usize = 500;
@@ -1653,8 +1653,8 @@ fn build_adf(text: &str, mentions: &HashMap<String, (String, String)>) -> Value 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
 
     fn test_security() -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy {

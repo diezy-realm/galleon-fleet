@@ -3,7 +3,7 @@ use serde_json::json;
 use std::sync::Arc;
 use std::time::Duration;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
+use galleon_config::policy::SecurityPolicy;
 
 use crate::helpers::domain_guard;
 
@@ -457,8 +457,8 @@ fn validate_resolved_host_is_public(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
 
     fn test_tool() -> TextBrowserTool {
         let security = Arc::new(SecurityPolicy {

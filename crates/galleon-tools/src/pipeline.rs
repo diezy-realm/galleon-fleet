@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::schema::PipelineConfig;
+use galleon_config::schema::PipelineConfig;
 
 use crate::tool_search::ToolAccessPolicy;
 

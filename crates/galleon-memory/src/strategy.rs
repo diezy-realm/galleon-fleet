@@ -5,14 +5,14 @@ use clawcrew_api::model_provider::ModelProvider;
 /// Default turn consolidation and governance strategy for long-term memory.
 pub struct DefaultMemoryStrategy {
     memory: Arc<dyn Memory>,
-    memory_config: clawcrew_config::schema::MemoryConfig,
+    memory_config: galleon_config::schema::MemoryConfig,
     workspace_dir: std::path::PathBuf,
 }
 
 impl DefaultMemoryStrategy {
     pub fn new(
         memory: Arc<dyn Memory>,
-        memory_config: clawcrew_config::schema::MemoryConfig,
+        memory_config: galleon_config::schema::MemoryConfig,
         workspace_dir: impl Into<std::path::PathBuf>,
     ) -> Self {
         Self {
@@ -27,7 +27,7 @@ impl DefaultMemoryStrategy {
     /// windows, hygiene toggle, etc.) rather than hardcoded defaults.
     pub fn with_config(
         memory: Arc<dyn Memory>,
-        memory_config: clawcrew_config::schema::MemoryConfig,
+        memory_config: galleon_config::schema::MemoryConfig,
         workspace_dir: impl Into<std::path::PathBuf>,
     ) -> Self {
         Self::new(memory, memory_config, workspace_dir)

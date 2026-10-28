@@ -488,7 +488,7 @@ impl AzureOpenAiModelProvider {
     }
 
     fn http_client(&self) -> Client {
-        clawcrew_config::schema::build_runtime_proxy_client_with_timeouts(
+        galleon_config::schema::build_runtime_proxy_client_with_timeouts(
             "model_provider.azure_openai",
             120,
             10,

@@ -325,7 +325,7 @@ fn protected_terms() -> &'static [String] {
             }
         }
 
-        for channel in clawcrew_config::schema::Config::default()
+        for channel in galleon_config::schema::Config::default()
             .channels
             .channels()
         {

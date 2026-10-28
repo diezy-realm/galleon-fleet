@@ -18,7 +18,7 @@ pub use tailscale::TailscaleTunnel;
 use anyhow::{Result, bail};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use clawcrew_config::schema::{TailscaleTunnelConfig, TunnelConfig};
+use galleon_config::schema::{TailscaleTunnelConfig, TunnelConfig};
 
 // ── Tunnel trait ─────────────────────────────────────────────────
 
@@ -194,7 +194,7 @@ pub fn create_tunnel(config: &TunnelConfig) -> Result<Option<Box<dyn Tunnel>>> {
 mod tests {
     use super::*;
     use tokio::process::Command;
-    use clawcrew_config::schema::{
+    use galleon_config::schema::{
         CloudflareTunnelConfig, CustomTunnelConfig, NgrokTunnelConfig, OpenVpnTunnelConfig,
         PinggyTunnelConfig, TunnelConfig,
     };

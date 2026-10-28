@@ -35,16 +35,16 @@ expect "runtime live-config regression" "true" \
 expect "runtime elsewhere" "true" \
     "crates/clawcrew-runtime/src/tools/mod.rs"
 
-# Config-only changes must run the backend job: clawcrew-config owns the
+# Config-only changes must run the backend job: galleon-config owns the
 # operator-facing plugin config surface that galleon-plugins compiles
 # against, so this job can break with nothing under the plugin crate touched.
 expect "config plugin entry schema" "true" \
-    "crates/clawcrew-config/src/schema.rs"
+    "crates/galleon-config/src/schema.rs"
 expect "config crate elsewhere" "true" \
-    "crates/clawcrew-config/src/lib.rs"
+    "crates/galleon-config/src/lib.rs"
 expect "mixed unrelated then config" "true" \
     "web/src/pages/AgentChat.tsx" \
-    "crates/clawcrew-config/src/schema.rs"
+    "crates/galleon-config/src/schema.rs"
 
 # The root-package channel activation e2e must run the backend job. It is the
 # only piece of this job's coverage that lives outside a crate directory,

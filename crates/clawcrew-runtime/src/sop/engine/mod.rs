@@ -23,7 +23,7 @@ use super::types::{
 };
 use crate::calendar::{CALENDAR_NO_SHOW_TOPIC, CalendarNoShowEvent};
 use crate::security::{ContentSafety, new_marker_id};
-use clawcrew_config::schema::{AliasedAgentConfig, Config, SopConfig};
+use galleon_config::schema::{AliasedAgentConfig, Config, SopConfig};
 use serde_json::Value;
 
 /// Central SOP orchestrator: loads SOPs, matches triggers, manages run lifecycle.
@@ -5533,7 +5533,7 @@ impl SopEngine {
     #[cfg(test)]
     pub(crate) fn set_approval_config_for_test(
         &mut self,
-        approval: clawcrew_config::schema::SopApprovalConfig,
+        approval: galleon_config::schema::SopApprovalConfig,
     ) {
         self.config.approval = approval;
     }
@@ -5737,7 +5737,7 @@ impl SopEngine {
     /// The live `[sop.approval]` config - the single source of truth for approval
     /// groups and policies. The broker resolves membership/policy from this at
     /// use-time rather than holding a cloned copy that could drift on reload.
-    pub fn approval_config(&self) -> &clawcrew_config::schema::SopApprovalConfig {
+    pub fn approval_config(&self) -> &galleon_config::schema::SopApprovalConfig {
         &self.config.approval
     }
 

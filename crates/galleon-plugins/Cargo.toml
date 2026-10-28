@@ -74,5 +74,5 @@ rustls-native-certs = { version = "0.8", optional = true }
 rcgen = "0.13"
 tempfile = "3.26"
 tokio = { version = "1.50", default-features = false, features = ["io-util", "net"] }
-clawcrew-config = { path = "../clawcrew-config" }
+galleon-config = { path = "../galleon-config" }
 galleon-spawn.workspace = true

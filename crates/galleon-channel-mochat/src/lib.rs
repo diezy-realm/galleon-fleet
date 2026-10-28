@@ -68,7 +68,7 @@ impl MochatChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_runtime_proxy_client("channel.mochat")
+        galleon_config::schema::build_runtime_proxy_client("channel.mochat")
     }
 
     fn is_user_allowed(&self, user_id: &str) -> bool {
@@ -433,7 +433,7 @@ api_url = "https://mochat.example.com"
 api_token = "secret"
 allowed_users = ["user1"]
 "#;
-        let cfg = clawcrew_config::migration::migrate_to_current(v2_toml)
+        let cfg = galleon_config::migration::migrate_to_current(v2_toml)
             .expect("V2 mochat config migrates to V3");
         let mochat = cfg
             .channels
@@ -464,7 +464,7 @@ enabled = true
 api_url = "https://mochat.example.com"
 api_token = "secret"
 "#;
-        let cfg = clawcrew_config::migration::migrate_to_current(v2_toml)
+        let cfg = galleon_config::migration::migrate_to_current(v2_toml)
             .expect("V2 mochat config without allowed_users migrates");
         assert!(
             !cfg.peer_groups.contains_key("mochat_default"),

@@ -639,7 +639,7 @@ mod tests {
     use crate::sqlite::SqliteMemory;
     use crate::traits::{MemoryKind, SemanticSubtype};
     use tempfile::TempDir;
-    use clawcrew_config::schema::SearchMode;
+    use galleon_config::schema::SearchMode;
 
     fn fresh_sqlite() -> (TempDir, Arc<SqliteMemory>) {
         let tmp = TempDir::new().unwrap();

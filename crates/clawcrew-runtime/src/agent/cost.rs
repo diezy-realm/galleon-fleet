@@ -6,10 +6,10 @@ use std::sync::OnceLock;
 
 // ── Cost tracking via task-local ──
 
-pub use clawcrew_config::cost::pricing::{
+pub use galleon_config::cost::pricing::{
     build_model_provider_pricing, build_type_level_model_provider_pricing, provider_pricing,
 };
-pub use clawcrew_config::cost::{
+pub use galleon_config::cost::{
     BudgetCheck, ModelProviderPricing, TOOL_LOOP_COST_TRACKING_CONTEXT, TOOL_LOOP_TURN_USAGE,
     ToolLoopCostTrackingContext, TurnUsage, tool_loop_cost_tracking_context_for_agent,
     tool_loop_cost_tracking_context_from_tracker,
@@ -55,7 +55,7 @@ fn merge_config_and_live_rates(config_rates: ModelRates, live: Option<ModelRates
 
 fn normalized_rates(rates: ModelRates) -> ModelRates {
     let valid =
-        |rate: Option<f64>| rate.filter(|value| clawcrew_config::cost::is_sane_usd_rate(*value));
+        |rate: Option<f64>| rate.filter(|value| galleon_config::cost::is_sane_usd_rate(*value));
     ModelRates {
         input_per_mtok: valid(rates.input_per_mtok),
         output_per_mtok: valid(rates.output_per_mtok),
@@ -130,7 +130,7 @@ pub struct UnpricedModel {
 /// Return per-model unpriced token subsets from the ledger-derived summary,
 /// sorted by model id for stable output.
 pub fn unpriced_models_in_summary(
-    by_model: &HashMap<String, clawcrew_config::cost::ModelStats>,
+    by_model: &HashMap<String, galleon_config::cost::ModelStats>,
 ) -> Vec<UnpricedModel> {
     let mut out: Vec<UnpricedModel> = by_model
         .values()
@@ -471,8 +471,8 @@ mod tests {
     use super::*;
     use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
     use clawcrew_api::model_provider::{ChatMessage, ChatRequest, ChatResponse, ModelProvider};
-    use clawcrew_config::cost::tracker::CostTracker;
-    use clawcrew_config::schema::{Config, DeepseekModelProviderConfig, ModelProviderConfig};
+    use galleon_config::cost::tracker::CostTracker;
+    use galleon_config::schema::{Config, DeepseekModelProviderConfig, ModelProviderConfig};
     use galleon_providers::ProviderDispatch;
     use galleon_providers::dispatch::{AccountedChatScope, with_exact_dispatch_route};
     use std::sync::Arc;
@@ -496,8 +496,8 @@ mod tests {
         total_tokens: u64,
         cost_usd: f64,
         unpriced_tokens: u64,
-    ) -> clawcrew_config::cost::ModelStats {
-        clawcrew_config::cost::ModelStats {
+    ) -> galleon_config::cost::ModelStats {
+        galleon_config::cost::ModelStats {
             model: model.to_string(),
             cost_usd,
             input_tokens: total_tokens,
@@ -595,7 +595,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 workspace.path(),
             )
             .unwrap(),
@@ -625,7 +625,7 @@ mod tests {
         assert!((cost_usd - expected).abs() < 1e-12);
         let stored = std::fs::read_to_string(workspace.path().join("state").join("costs.jsonl"))
             .expect("costs.jsonl should be written");
-        let record: clawcrew_config::cost::types::CostRecord =
+        let record: galleon_config::cost::types::CostRecord =
             serde_json::from_str(stored.lines().next().expect("one record")).unwrap();
         assert!(record.usage.pricing_available);
         assert_eq!(record.usage.unpriced_tokens, 0);
@@ -636,7 +636,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig {
+                galleon_config::schema::CostConfig {
                     enabled: true,
                     ..Default::default()
                 },
@@ -713,7 +713,7 @@ mod tests {
             .unwrap()
             .lines()
             .map(|line| {
-                serde_json::from_str::<clawcrew_config::cost::types::CostRecord>(line).unwrap()
+                serde_json::from_str::<galleon_config::cost::types::CostRecord>(line).unwrap()
             })
             .collect::<Vec<_>>();
         assert_eq!(records.len(), 2);
@@ -728,7 +728,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig {
+                galleon_config::schema::CostConfig {
                     enabled: true,
                     ..Default::default()
                 },
@@ -1172,7 +1172,7 @@ mod tests {
 
     #[test]
     fn build_pricing_keeps_same_type_aliases_distinct() {
-        use clawcrew_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
+        use galleon_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
 
         let mut config = Config::default();
         config.providers.models.openai.insert(
@@ -1284,7 +1284,7 @@ mod tests {
         );
         config.cost.rates.providers.models.deepseek.insert(
             "deepseek-v4-flash".to_string(),
-            clawcrew_config::schema::ModelCostRates {
+            galleon_config::schema::ModelCostRates {
                 input_per_mtok: Some(0.14),
                 output_per_mtok: Some(0.28),
                 cached_input_per_mtok: Some(0.0028),
@@ -1369,7 +1369,7 @@ mod tests {
         );
         config.cost.rates.providers.models.deepseek.insert(
             "deepseek-v4-flash".to_string(),
-            clawcrew_config::schema::ModelCostRates {
+            galleon_config::schema::ModelCostRates {
                 input_per_mtok: Some(0.14),
                 output_per_mtok: Some(0.28),
                 cached_input_per_mtok: Some(0.0028),
@@ -1436,7 +1436,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 workspace.path(),
             )
             .unwrap(),
@@ -1470,7 +1470,7 @@ mod tests {
 
         let stored = std::fs::read_to_string(workspace.path().join("state").join("costs.jsonl"))
             .expect("costs.jsonl should be written");
-        let record: clawcrew_config::cost::types::CostRecord =
+        let record: galleon_config::cost::types::CostRecord =
             serde_json::from_str(stored.lines().next().expect("one record")).unwrap();
         assert_eq!(record.usage.cached_input_tokens, 4_000);
         assert_eq!(record.usage.billable_input_tokens(), 1_000);
@@ -1481,7 +1481,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 workspace.path(),
             )
             .unwrap(),
@@ -1518,7 +1518,7 @@ mod tests {
             .expect("costs.jsonl should be written");
         let mut conversation_ids = Vec::new();
         for line in stored.lines() {
-            let record: clawcrew_config::cost::types::CostRecord =
+            let record: galleon_config::cost::types::CostRecord =
                 serde_json::from_str(line).unwrap();
             assert_eq!(record.session_id, tracker.session_id());
             conversation_ids.push(record.conversation_id.expect("conversation id"));
@@ -1536,7 +1536,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 workspace.path(),
             )
             .unwrap(),
@@ -1572,7 +1572,7 @@ mod tests {
 
         let stored = std::fs::read_to_string(workspace.path().join("state").join("costs.jsonl"))
             .expect("costs.jsonl should be written");
-        let record: clawcrew_config::cost::types::CostRecord =
+        let record: galleon_config::cost::types::CostRecord =
             serde_json::from_str(stored.lines().next().expect("one record")).unwrap();
         assert_eq!(record.usage.cache_creation_input_tokens, 1_000);
     }
@@ -1582,7 +1582,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 workspace.path(),
             )
             .unwrap(),
@@ -1649,7 +1649,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 workspace.path(),
             )
             .unwrap(),
@@ -1682,7 +1682,7 @@ mod tests {
         assert!((cost_usd - expected).abs() < 1e-12);
         let stored = std::fs::read_to_string(workspace.path().join("state").join("costs.jsonl"))
             .expect("costs.jsonl should be written");
-        let record: clawcrew_config::cost::types::CostRecord =
+        let record: galleon_config::cost::types::CostRecord =
             serde_json::from_str(stored.lines().next().expect("one record")).unwrap();
         assert!(record.usage.pricing_available);
         assert_eq!(record.usage.unpriced_tokens, 0);
@@ -1693,7 +1693,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 workspace.path(),
             )
             .unwrap(),
@@ -1735,7 +1735,7 @@ mod tests {
         assert!((cost_usd - expected).abs() < 1e-12);
         let stored = std::fs::read_to_string(workspace.path().join("state").join("costs.jsonl"))
             .expect("costs.jsonl should be written");
-        let record: clawcrew_config::cost::types::CostRecord =
+        let record: galleon_config::cost::types::CostRecord =
             serde_json::from_str(stored.lines().next().expect("one record")).unwrap();
         assert!(record.usage.pricing_available);
         assert_eq!(record.usage.unpriced_tokens, 0);
@@ -1746,7 +1746,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 workspace.path(),
             )
             .unwrap(),
@@ -1787,7 +1787,7 @@ mod tests {
 
         let stored = std::fs::read_to_string(workspace.path().join("state").join("costs.jsonl"))
             .expect("costs.jsonl should be written");
-        let records: Vec<clawcrew_config::cost::types::CostRecord> = stored
+        let records: Vec<galleon_config::cost::types::CostRecord> = stored
             .lines()
             .map(|line| serde_json::from_str(line).unwrap())
             .collect();
@@ -1804,7 +1804,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 workspace.path(),
             )
             .unwrap(),
@@ -1821,7 +1821,7 @@ mod tests {
         );
         config.cost.rates.providers.models.deepseek.insert(
             "invalid-model".to_string(),
-            clawcrew_config::schema::ModelCostRates {
+            galleon_config::schema::ModelCostRates {
                 input_per_mtok: Some(-1.0),
                 output_per_mtok: Some(f64::INFINITY),
                 cached_input_per_mtok: None,
@@ -1857,7 +1857,7 @@ mod tests {
 
         let stored = std::fs::read_to_string(workspace.path().join("state").join("costs.jsonl"))
             .expect("costs.jsonl should be written");
-        let records: Vec<clawcrew_config::cost::types::CostRecord> = stored
+        let records: Vec<galleon_config::cost::types::CostRecord> = stored
             .lines()
             .map(|line| serde_json::from_str(line).unwrap())
             .collect();
@@ -1876,7 +1876,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 workspace.path(),
             )
             .unwrap(),
@@ -1905,7 +1905,7 @@ mod tests {
 
         let stored = std::fs::read_to_string(workspace.path().join("state").join("costs.jsonl"))
             .expect("the safety record must not be dropped");
-        let record: clawcrew_config::cost::types::CostRecord =
+        let record: galleon_config::cost::types::CostRecord =
             serde_json::from_str(stored.lines().next().expect("one record")).unwrap();
         assert!(record.usage.cost_usd.is_finite());
         assert!(!record.usage.pricing_available);
@@ -1923,7 +1923,7 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 workspace.path(),
             )
             .unwrap(),
@@ -2017,10 +2017,10 @@ mod tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig {
+                galleon_config::schema::CostConfig {
                     enabled: true,
                     track_per_agent: true,
-                    ..clawcrew_config::schema::CostConfig::default()
+                    ..galleon_config::schema::CostConfig::default()
                 },
                 workspace.path(),
             )

@@ -1,4 +1,4 @@
-# Audit: `galleon-tools`, `clawcrew-config`, `galleon-providers` (BR-C8)
+# Audit: `galleon-tools`, `galleon-config`, `galleon-providers` (BR-C8)
 
 **Ticket:** BR-C8 · R-18 · PR-97  
 **Principle:** Single Source of Truth & Ponytail (No speculative splitting / YAGNI)  
@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary
 
-Audit ini mengevaluasi apakah `crates/galleon-tools`, `crates/clawcrew-config`, dan `crates/galleon-providers` memerlukan pemecahan crate (crate splitting) pada fase ini.
+Audit ini mengevaluasi apakah `crates/galleon-tools`, `crates/galleon-config`, dan `crates/galleon-providers` memerlukan pemecahan crate (crate splitting) pada fase ini.
 
 **Kesimpulan:** **TIDAK PERLU DIPECAH (Keep As-Is, No Speculative Splitting).**  
 Ketiga crate memiliki batas tanggung jawab (cohesion) yang jelas, dependency graph yang satu arah tanpa siklus, dan pemecahan spekulatif hanya akan menambah overhead kompilasi dan boilerplate re-export tanpa manfaat arsitektural yang nyata.
@@ -19,7 +19,7 @@ Ketiga crate memiliki batas tanggung jawab (cohesion) yang jelas, dependency gra
 
 | Crate | Jumlah File `.rs` | Total Baris Kode (LOC) | Peran Arsitektural |
 | :--- | :--- | :--- | :--- |
-| `crates/clawcrew-config` | 46 | 85,838 | Canonical SSOT Schema & Defaults untuk seluruh workspace |
+| `crates/galleon-config` | 46 | 85,838 | Canonical SSOT Schema & Defaults untuk seluruh workspace |
 | `crates/galleon-providers` | 49 | 84,251 | Implementasi Model & Inference Providers |
 | `crates/galleon-tools` | 97 | 85,720 | Implementasi Native Tools platform |
 
@@ -27,7 +27,7 @@ Ketiga crate memiliki batas tanggung jawab (cohesion) yang jelas, dependency gra
 
 ## 3. Analisis per Crate
 
-### 3.1 `clawcrew-config`
+### 3.1 `galleon-config`
 - **Fungsi:** Menyediakan schema validasi, serialisasi TOML/JSON, dan defaults.
 - **Ketergantungan:** Leaf/near-leaf crate. Hampir seluruh crate di workspace bergantung padanya untuk membaca config secara read-only.
 - **Risiko jika dipecah:** Memecah schema per-fitur akan menciptakan siklus atau duplikasi tipe (`ApprovalConfig`, `ChannelConfig`, dll.) yang saat ini berada rapi di bawah satu schema validator.
@@ -35,7 +35,7 @@ Ketiga crate memiliki batas tanggung jawab (cohesion) yang jelas, dependency gra
 
 ### 3.2 `galleon-providers`
 - **Fungsi:** Mengintegrasikan model provider (OpenAI, Anthropic, Gemini, Harbor, Ollama, DeepSeek).
-- **Ketergantungan:** Bergantung pada `clawcrew-config` dan HTTP transport.
+- **Ketergantungan:** Bergantung pada `galleon-config` dan HTTP transport.
 - **Risiko jika dipecah:** Provider sudah diisolasi di balik feature flags (`feature = "provider-openai"`, dsb.). Cargo feature gates sudah cukup untuk mengontrol kompilasi tanpa perlu memecah repo menjadi lusinan sub-crate mini.
 - **Rekomendasi:** Pertahankan arsitektur feature-gated tunggal.
 

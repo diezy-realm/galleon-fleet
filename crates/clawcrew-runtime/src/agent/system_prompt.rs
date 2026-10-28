@@ -59,7 +59,7 @@ fn load_openclaw_bootstrap_files(
 fn append_project_context(
     prompt: &mut String,
     workspace_dir: &std::path::Path,
-    identity_config: Option<&clawcrew_config::schema::IdentityConfig>,
+    identity_config: Option<&galleon_config::schema::IdentityConfig>,
     bootstrap_max_chars: Option<usize>,
     inject_memory: bool,
 ) {
@@ -103,7 +103,7 @@ pub fn build_system_prompt(
     model_name: &str,
     tools: &[(&str, &str)],
     skills: &[Skill],
-    identity_config: Option<&clawcrew_config::schema::IdentityConfig>,
+    identity_config: Option<&galleon_config::schema::IdentityConfig>,
     bootstrap_max_chars: Option<usize>,
 ) -> String {
     build_system_prompt_with_mode(
@@ -114,7 +114,7 @@ pub fn build_system_prompt(
         identity_config,
         bootstrap_max_chars,
         false,
-        clawcrew_config::schema::SkillsPromptInjectionMode::default(),
+        galleon_config::schema::SkillsPromptInjectionMode::default(),
         AutonomyLevel::default(),
     )
 }
@@ -126,7 +126,7 @@ pub fn build_system_prompt_with_tool_calls(
     model_name: &str,
     tools: &[(&str, &str)],
     skills: &[Skill],
-    identity_config: Option<&clawcrew_config::schema::IdentityConfig>,
+    identity_config: Option<&galleon_config::schema::IdentityConfig>,
     bootstrap_max_chars: Option<usize>,
     show_tool_calls: bool,
 ) -> String {
@@ -137,9 +137,9 @@ pub fn build_system_prompt_with_tool_calls(
         skills,
         identity_config,
         bootstrap_max_chars,
-        Some(&clawcrew_config::schema::RiskProfileConfig::default()),
+        Some(&galleon_config::schema::RiskProfileConfig::default()),
         false,
-        clawcrew_config::schema::SkillsPromptInjectionMode::default(),
+        galleon_config::schema::SkillsPromptInjectionMode::default(),
         false,
         0,
         true,
@@ -153,13 +153,13 @@ pub fn build_system_prompt_with_mode(
     model_name: &str,
     tools: &[(&str, &str)],
     skills: &[Skill],
-    identity_config: Option<&clawcrew_config::schema::IdentityConfig>,
+    identity_config: Option<&galleon_config::schema::IdentityConfig>,
     bootstrap_max_chars: Option<usize>,
     native_tool_specs_present: bool,
-    skills_prompt_mode: clawcrew_config::schema::SkillsPromptInjectionMode,
+    skills_prompt_mode: galleon_config::schema::SkillsPromptInjectionMode,
     autonomy_level: AutonomyLevel,
 ) -> String {
-    let autonomy_cfg = clawcrew_config::schema::RiskProfileConfig {
+    let autonomy_cfg = galleon_config::schema::RiskProfileConfig {
         level: autonomy_level,
         ..Default::default()
     };
@@ -187,11 +187,11 @@ pub fn build_system_prompt_with_mode_and_autonomy(
     model_name: &str,
     tools: &[(&str, &str)],
     skills: &[Skill],
-    identity_config: Option<&clawcrew_config::schema::IdentityConfig>,
+    identity_config: Option<&galleon_config::schema::IdentityConfig>,
     bootstrap_max_chars: Option<usize>,
-    autonomy_config: Option<&clawcrew_config::schema::RiskProfileConfig>,
+    autonomy_config: Option<&galleon_config::schema::RiskProfileConfig>,
     native_tool_specs_present: bool,
-    skills_prompt_mode: clawcrew_config::schema::SkillsPromptInjectionMode,
+    skills_prompt_mode: galleon_config::schema::SkillsPromptInjectionMode,
     compact_context: bool,
     max_system_prompt_chars: usize,
     // When `false`, `MEMORY.md` is omitted from the injected bootstrap files.
@@ -237,11 +237,11 @@ pub fn build_system_prompt_with_mode_and_effective_tools(
     tools: &[(&str, &str)],
     is_tool_available: impl Fn(&str) -> bool,
     skills: &[Skill],
-    identity_config: Option<&clawcrew_config::schema::IdentityConfig>,
+    identity_config: Option<&galleon_config::schema::IdentityConfig>,
     bootstrap_max_chars: Option<usize>,
-    autonomy_config: Option<&clawcrew_config::schema::RiskProfileConfig>,
+    autonomy_config: Option<&galleon_config::schema::RiskProfileConfig>,
     native_tool_specs_present: bool,
-    skills_prompt_mode: clawcrew_config::schema::SkillsPromptInjectionMode,
+    skills_prompt_mode: galleon_config::schema::SkillsPromptInjectionMode,
     compact_context: bool,
     max_system_prompt_chars: usize,
     inject_memory: bool,
@@ -613,7 +613,7 @@ pub fn finalize_system_prompt(mut prompt: String, max_chars: usize) -> String {
 pub fn build_skills_prompt_with_effective_tools(
     skills: &[Skill],
     workspace_dir: &std::path::Path,
-    mode: clawcrew_config::schema::SkillsPromptInjectionMode,
+    mode: galleon_config::schema::SkillsPromptInjectionMode,
     is_tool_available: impl Fn(&str) -> bool,
 ) -> String {
     crate::skills::skills_to_prompt_with_mode_and_availability(
@@ -671,7 +671,7 @@ fn inject_workspace_file(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::SkillsPromptInjectionMode;
+    use galleon_config::schema::SkillsPromptInjectionMode;
 
     #[test]
     fn compact_skills_fall_back_to_full_when_loader_is_described_but_unavailable() {
@@ -1036,7 +1036,7 @@ mod tests {
         always_ask: &[&str],
     ) -> String {
         let workspace = tempfile::TempDir::new().expect("tempdir");
-        let autonomy = clawcrew_config::schema::RiskProfileConfig {
+        let autonomy = galleon_config::schema::RiskProfileConfig {
             level,
             always_ask: always_ask.iter().map(|tool| (*tool).to_string()).collect(),
             ..Default::default()
@@ -1305,7 +1305,7 @@ mod tests {
             &skills,
             None,
             Some(8_000),
-            Some(&clawcrew_config::schema::RiskProfileConfig::default()),
+            Some(&galleon_config::schema::RiskProfileConfig::default()),
             false,
             SkillsPromptInjectionMode::Compact,
             true,
@@ -1360,7 +1360,7 @@ mod tests {
             &skills,
             None,
             Some(8_000),
-            Some(&clawcrew_config::schema::RiskProfileConfig::default()),
+            Some(&galleon_config::schema::RiskProfileConfig::default()),
             false,
             SkillsPromptInjectionMode::Compact,
             true,

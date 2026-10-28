@@ -29,7 +29,7 @@ pub use galleon_channel_core::identity_persist::{
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::Config;
+    use galleon_config::schema::Config;
     use std::sync::Arc;
 
     /// Stands in for a channel whose identities are compared verbatim, for the
@@ -42,7 +42,7 @@ mod tests {
         let mut config = Config::default();
         config.channels.whatsapp.insert(
             alias.to_string(),
-            clawcrew_config::schema::WhatsAppConfig {
+            galleon_config::schema::WhatsAppConfig {
                 enabled: true,
                 ..Default::default()
             },
@@ -107,8 +107,8 @@ mod tests {
 
     #[test]
     fn merge_preserves_existing_group_membership() {
-        use clawcrew_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
         let mut config = config_with_whatsapp("admin");
         config.peer_groups.insert(
@@ -157,7 +157,7 @@ mod tests {
         let mut config = Config::default();
         config.channels.telegram.insert(
             "admin".to_string(),
-            clawcrew_config::schema::TelegramConfig {
+            galleon_config::schema::TelegramConfig {
                 enabled: true,
                 ..Default::default()
             },
@@ -177,8 +177,8 @@ mod tests {
 
     #[test]
     fn merge_surfaces_a_conflict_instead_of_persisting_a_shadowed_grant() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
         // The end of the recovery path: pairing is available again once a
         // fully shadowed grant no longer counts as authorization, so it must
@@ -244,8 +244,8 @@ mod tests {
 
     #[test]
     fn merge_rejects_conventional_key_with_mismatched_channel_ref() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
         // A stale/hand-edited [peer_groups.whatsapp_admin] that points at a
         // different channel must not silently receive the WhatsApp identity:
@@ -277,8 +277,8 @@ mod tests {
 
     #[test]
     fn merge_targets_group_by_channel_ref_not_map_key() {
-        use clawcrew_config::multi_agent::PeerGroupConfig;
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::PeerGroupConfig;
+        use galleon_config::providers::ChannelRef;
 
         // The reader authorizes by the group's `channel` field, so the
         // writer appends to the group carrying the dotted ref even when it
@@ -319,8 +319,8 @@ mod tests {
 
     #[test]
     fn merge_appends_to_matching_group_even_when_conventional_key_is_taken() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
         // The mismatched conventional key only blocks *creation*. When some
         // other group already carries this channel's dotted ref, the append
@@ -375,8 +375,8 @@ mod tests {
 
     #[test]
     fn merge_prefers_the_conventional_key_when_several_groups_match() {
-        use clawcrew_config::multi_agent::PeerGroupConfig;
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::PeerGroupConfig;
+        use galleon_config::providers::ChannelRef;
 
         // Two instance-scoped groups both carry `whatsapp.admin`; the append
         // deterministically targets the conventional `<type>_<alias>` key.
@@ -419,8 +419,8 @@ mod tests {
 
     #[test]
     fn merge_is_a_noop_when_a_type_wide_group_already_authorizes() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
         // A bare-type group (`channel = "whatsapp"`) already authorizes the
         // identity for every alias of the type; the reader-driven
@@ -446,8 +446,8 @@ mod tests {
 
     #[test]
     fn merge_does_not_treat_an_ignored_identity_as_already_authorized() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
         // The resolved list carries grants and denies together, so a grant this
         // identity matches can sit beside an `ignore` that denies it. Comparing
@@ -558,8 +558,8 @@ mod tests {
     /// exist. An operator following that answer edits the wrong group.
     #[test]
     fn authorizing_group_key_names_a_type_wide_source() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
         let mut config = config_with_whatsapp("admin");
         config.peer_groups.insert(
@@ -604,8 +604,8 @@ mod tests {
     /// been published and saved.
     #[tokio::test]
     async fn a_competing_ignore_survives_a_pairing_write() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
         let dir = tempfile::tempdir().expect("tempdir");
         let config_path = dir.path().join("config.toml");
@@ -614,7 +614,7 @@ mod tests {
         config.save().await.expect("seed the config file");
         let shared = Arc::new(parking_lot::RwLock::new(config));
 
-        let guard = clawcrew_config::write_lock::shared_config_write_lock()
+        let guard = galleon_config::write_lock::shared_config_write_lock()
             .lock_owned()
             .await;
 
@@ -686,8 +686,8 @@ mod tests {
     /// has to come from re-reading the persisted policy under the lock.
     #[tokio::test]
     async fn a_deny_saved_through_a_separate_handle_survives_and_blocks_the_bind() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
         let dir = tempfile::tempdir().expect("tempdir");
         let config_path = dir.path().join("config.toml");
@@ -773,7 +773,7 @@ mod tests {
         // `peer_groups` entirely.
         gateway.channels.whatsapp.insert(
             "ops".to_string(),
-            clawcrew_config::schema::WhatsAppConfig {
+            galleon_config::schema::WhatsAppConfig {
                 enabled: true,
                 ..Default::default()
             },
@@ -817,8 +817,8 @@ mod tests {
     /// against a concurrent writer.
     #[tokio::test]
     async fn a_competing_ignore_naming_the_paired_identity_blocks_the_bind() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
         let dir = tempfile::tempdir().expect("tempdir");
         let config_path = dir.path().join("config.toml");
@@ -827,7 +827,7 @@ mod tests {
         config.save().await.expect("seed the config file");
         let shared = Arc::new(parking_lot::RwLock::new(config));
 
-        let guard = clawcrew_config::write_lock::shared_config_write_lock()
+        let guard = galleon_config::write_lock::shared_config_write_lock()
             .lock_owned()
             .await;
 

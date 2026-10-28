@@ -9,7 +9,7 @@
 fn matrix_does_not_opt_into_turn_flush_narration() {
     use super::MatrixChannel;
     use clawcrew_api::channel::Channel;
-    use clawcrew_config::schema::{MatrixConfig, MatrixStreamMode};
+    use galleon_config::schema::{MatrixConfig, MatrixStreamMode};
     use std::sync::Arc;
 
     let config = MatrixConfig {
@@ -40,7 +40,7 @@ mod voice_reply_delivery {
     use std::sync::Arc;
 
     use clawcrew_api::channel::{Channel, SendMessage};
-    use clawcrew_config::schema::{
+    use galleon_config::schema::{
         AliasedAgentConfig, Config, MatrixConfig, OpenAITtsProviderConfig, TtsProviderConfig,
     };
     use matrix_sdk::config::SyncSettings;
@@ -761,7 +761,7 @@ mod voice_reply_gate {
         allowlist::{voice_peer_matches, voice_peers_verdict},
     };
     use clawcrew_api::channel::SendMessage;
-    use clawcrew_config::schema::MatrixConfig;
+    use galleon_config::schema::MatrixConfig;
     use std::sync::Arc;
 
     const ROOM: &str = "!room:localhost";
@@ -937,7 +937,7 @@ mod media_filename_resolution {
     use super::super::AudioTranscriber;
     use super::super::inbound::transcription_safe_filename;
     use anyhow::Context;
-    use clawcrew_config::schema::TranscriptionConfig;
+    use galleon_config::schema::TranscriptionConfig;
 
     struct MatrixTestTranscriptionManager {
         url: String,
@@ -976,7 +976,7 @@ mod media_filename_resolution {
     }
 
     fn build_transcription_manager(
-        config: &clawcrew_config::schema::Config,
+        config: &galleon_config::schema::Config,
         _provider: &str,
     ) -> anyhow::Result<MatrixTestTranscriptionManager> {
         let lw = config
@@ -990,8 +990,8 @@ mod media_filename_resolution {
         })
     }
 
-    fn local_whisper_config(url: &str) -> clawcrew_config::schema::LocalWhisperConfig {
-        clawcrew_config::schema::LocalWhisperConfig {
+    fn local_whisper_config(url: &str) -> galleon_config::schema::LocalWhisperConfig {
+        galleon_config::schema::LocalWhisperConfig {
             url: url.to_string(),
             bearer_token: Some("test-token".to_string()),
             max_audio_bytes: 10 * 1024 * 1024,
@@ -999,10 +999,10 @@ mod media_filename_resolution {
         }
     }
 
-    fn config_with(transcription: TranscriptionConfig) -> clawcrew_config::schema::Config {
-        clawcrew_config::schema::Config {
+    fn config_with(transcription: TranscriptionConfig) -> galleon_config::schema::Config {
+        galleon_config::schema::Config {
             transcription,
-            ..clawcrew_config::schema::Config::default()
+            ..galleon_config::schema::Config::default()
         }
     }
 
@@ -1246,7 +1246,7 @@ mod inbound_route {
     use std::time::Duration;
 
     use clawcrew_api::channel::ChannelApprovalResponse;
-    use clawcrew_config::schema::{MatrixConfig, TranscriptionConfig};
+    use galleon_config::schema::{MatrixConfig, TranscriptionConfig};
     use matrix_sdk::ruma::events::AnySyncTimelineEvent;
     use matrix_sdk::ruma::serde::Raw;
     use matrix_sdk::ruma::{RoomId, room_id, user_id};
@@ -1344,7 +1344,7 @@ mod inbound_route {
             Some(super::super::legacy_transcription_resolver(
                 TranscriptionConfig {
                     enabled: true,
-                    local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
+                    local_whisper: Some(galleon_config::schema::LocalWhisperConfig {
                         url: stt_url.to_string(),
                         bearer_token: Some("test-token".to_string()),
                         max_audio_bytes: 10 * 1024 * 1024,
@@ -1490,7 +1490,7 @@ mod inbound_route {
     /// short-circuits provider selection.
     #[tokio::test]
     async fn configured_route_transcribes_via_the_agents_provider() {
-        use clawcrew_config::schema::LocalWhisperTranscriptionProviderConfig;
+        use galleon_config::schema::LocalWhisperTranscriptionProviderConfig;
 
         let wav = build_wav();
 
@@ -1522,7 +1522,7 @@ mod inbound_route {
 
         // Provider aliases share no name with the channel alias or the
         // agent alias, so nothing can route correctly by coincidence.
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.transcription.enabled = true;
         config.channels.matrix.insert(
             "home".to_string(),
@@ -1535,7 +1535,7 @@ mod inbound_route {
         );
         config.agents.insert(
             "listener".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 enabled: true,
                 channels: vec!["matrix.home".into()],
                 transcription_provider: "local_whisper.wanted".into(),
@@ -2684,7 +2684,7 @@ mod ack_reactions {
     use std::sync::Arc;
 
     use clawcrew_api::channel::Channel;
-    use clawcrew_config::schema::MatrixConfig;
+    use galleon_config::schema::MatrixConfig;
     use tempfile::TempDir;
 
     use super::super::MatrixChannel;
@@ -2719,7 +2719,7 @@ mod user_boundary {
     use std::time::Duration;
 
     use clawcrew_api::channel::Channel;
-    use clawcrew_config::schema::{Config, MatrixConfig, MatrixStreamMode};
+    use galleon_config::schema::{Config, MatrixConfig, MatrixStreamMode};
     use matrix_sdk::config::SyncSettings;
     use matrix_sdk::event_handler::RawEvent;
     use matrix_sdk::ruma::events::room::message::OriginalSyncRoomMessageEvent;
@@ -2976,7 +2976,7 @@ mod streaming {
     use clawcrew_api::channel::{
         DRAFT_PLACEHOLDER, REASONING_FULL_PREFIX, THINKING_STATUS_PREFIX, thinking_status_text,
     };
-    use clawcrew_config::schema::{MatrixConfig, MatrixStreamMode};
+    use galleon_config::schema::{MatrixConfig, MatrixStreamMode};
     use matrix_sdk::config::SyncSettings;
     use matrix_sdk::ruma::{
         OwnedEventId,
@@ -4376,7 +4376,7 @@ mod live_smoke {
     };
 
     use clawcrew_api::channel::{Channel, SendMessage};
-    use clawcrew_config::schema::{MatrixConfig, MatrixStreamMode};
+    use galleon_config::schema::{MatrixConfig, MatrixStreamMode};
     use matrix_sdk::config::SyncSettings;
     use tempfile::TempDir;
 
@@ -4796,7 +4796,7 @@ mod auth_gating {
         can_password_relogin, resolve_access_token_identity, saved_session_is_foreign,
         store_has_orphan_data,
     };
-    use clawcrew_config::schema::MatrixConfig;
+    use galleon_config::schema::MatrixConfig;
     use tempfile::TempDir;
     use wiremock::{
         Mock, MockServer, ResponseTemplate,
@@ -4821,7 +4821,7 @@ mod auth_gating {
             stream_draft_lines: 10,
             message_max_bytes: 48_000,
             stream_draft_delete: true,
-            stream_reasoning: clawcrew_config::schema::StreamReasoningMode::Status,
+            stream_reasoning: galleon_config::schema::StreamReasoningMode::Status,
             mention_only: false,
             recovery_key: None,
             password: password.map(String::from),
@@ -5998,7 +5998,7 @@ mod transcription_gate {
 
     use super::super::inbound::{MediaCategory, should_transcribe};
     use super::super::legacy_transcription_resolver;
-    use clawcrew_config::schema::TranscriptionConfig;
+    use galleon_config::schema::TranscriptionConfig;
 
     fn enabled_cfg() -> TranscriptionConfig {
         // Construct via Default + struct update so we stay robust to
@@ -6041,7 +6041,7 @@ mod transcription_gate {
     #[test]
     fn resolver_yields_a_manager_when_enabled() {
         let resolver = legacy_transcription_resolver(TranscriptionConfig {
-            local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
+            local_whisper: Some(galleon_config::schema::LocalWhisperConfig {
                 url: "http://127.0.0.1:9999/v1/transcribe".to_string(),
                 bearer_token: None,
                 max_audio_bytes: 10 * 1024 * 1024,

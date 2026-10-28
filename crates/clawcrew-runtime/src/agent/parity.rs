@@ -3,8 +3,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use tokio::sync::mpsc;
 use clawcrew_api::ingress::IngressContext;
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::Config;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::Config;
 use galleon_providers::ChatMessage;
 
 use super::safety_net::{CountingTool, ScriptedProvider, text_response, tool_call, tool_response};
@@ -161,7 +161,7 @@ async fn parity_l1_engine_honors_excluded_tools() {
                 observer: &observability::NoopObserver {},
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 hooks: None,
                 activated_tools: None,
@@ -172,15 +172,15 @@ async fn parity_l1_engine_honors_excluded_tools() {
                 max_tool_iterations: 5,
                 excluded_tools: &excluded,
                 dedup_exempt_tools: &[],
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 30_000,
-                context_limits: clawcrew_config::schema::ResolvedContextLimits {
+                context_limits: galleon_config::schema::ResolvedContextLimits {
                     model_context_window: 100_000,
                     context_token_budget: 100_000,
                     model_context_window_source:
-                        clawcrew_config::schema::ModelContextWindowSource::Configured,
+                        galleon_config::schema::ModelContextWindowSource::Configured,
                 },
                 context_limits_resolver: None,
                 knobs: &LoopKnobs::default(),
@@ -329,8 +329,8 @@ async fn parity_l2_builtin_filter_semantic_parity() {
 /// helper hands the engine, which is what this asserts.
 #[tokio::test]
 async fn parity_l2_sop_live_step_agent_isolation() {
-    use clawcrew_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind};
-    use clawcrew_config::schema::{
+    use galleon_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind};
+    use galleon_config::schema::{
         AliasedAgentConfig, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
         SopConfig,
     };

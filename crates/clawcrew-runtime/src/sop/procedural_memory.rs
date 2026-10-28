@@ -511,7 +511,7 @@ mod tests {
         Sop, SopEvent, SopExecutionMode, SopPriority, SopStep, SopStepResult, SopStepStatus,
         SopTrigger, SopTriggerSource,
     };
-    use clawcrew_config::schema::SopConfig;
+    use galleon_config::schema::SopConfig;
 
     fn engine_with_workspace(tmp: &Path) -> SopEngine {
         SopEngine::new(SopConfig {

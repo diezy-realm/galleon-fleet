@@ -3,7 +3,7 @@
 use std::sync::{Arc, Mutex};
 
 use clawcrew_api::model_provider::{ChatRequest, ChatResponse, SemanticEmptyTerminalCompletion};
-use clawcrew_config::schema::{MultimodalConfig, PacingConfig, ResolvedContextLimits};
+use galleon_config::schema::{MultimodalConfig, PacingConfig, ResolvedContextLimits};
 use galleon_providers::dispatch::{AccountedAttempt, with_exact_dispatch_route};
 use galleon_providers::{ModelProvider, ProviderDispatch, multimodal};
 
@@ -199,7 +199,7 @@ pub struct ResolvedAgentExecution<'a> {
     /// alias-specific runtime options (the `vision` override, endpoint URI,
     /// credentials) on the vision route. `None` on configless (test) paths,
     /// where the route falls back to the legacy factory.
-    pub config: Option<&'a clawcrew_config::schema::Config>,
+    pub config: Option<&'a galleon_config::schema::Config>,
     /// Agentic loop iteration cap.
     pub max_tool_iterations: usize,
     /// Lifecycle hooks; `None` when unconfigured.
@@ -248,7 +248,7 @@ pub struct ResolvedIo<'a> {
     pub multimodal_config: &'a MultimodalConfig,
     /// Full config for vision-route provider-alias resolution; `None` on
     /// configless (test) paths. See [`ResolvedAgentExecution::config`].
-    pub config: Option<&'a clawcrew_config::schema::Config>,
+    pub config: Option<&'a galleon_config::schema::Config>,
     pub hooks: Option<&'a HookRunner>,
     pub activated_tools: Option<&'a Arc<Mutex<ActivatedToolSet>>>,
     pub app_registry: Option<&'a Arc<std::sync::RwLock<crate::platform::app_registry::AppRegistry>>>,
@@ -653,7 +653,7 @@ mod run_model_query_tests {
         let workspace = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             crate::cost::CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 workspace.path(),
             )
             .unwrap(),
@@ -716,7 +716,7 @@ mod run_model_query_tests {
         let projected = summaries[0].cost_usd.expect("rejected cost is priced");
         let stored = std::fs::read_to_string(workspace.path().join("state").join("costs.jsonl"))
             .expect("costs.jsonl should be written");
-        let record: clawcrew_config::cost::types::CostRecord =
+        let record: galleon_config::cost::types::CostRecord =
             serde_json::from_str(stored.lines().next().expect("one record")).unwrap();
         assert_eq!(record.usage.cache_creation_input_tokens, 1_000);
         assert!(

@@ -146,7 +146,7 @@ impl GlmModelProvider {
     }
 
     fn http_client(&self) -> Client {
-        clawcrew_config::schema::build_runtime_proxy_client_with_timeouts("model_provider.glm", 120, 10)
+        galleon_config::schema::build_runtime_proxy_client_with_timeouts("model_provider.glm", 120, 10)
     }
 }
 

@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::{SecurityPolicy, ToolOperation};
+use galleon_config::policy::{SecurityPolicy, ToolOperation};
 
 const NOTION_API_BASE: &str = "https://api.notion.com/v1";
 const NOTION_VERSION: &str = "2022-06-28";
@@ -348,7 +348,7 @@ impl Tool for NotionTool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::policy::SecurityPolicy;
 
     fn test_tool() -> NotionTool {
         let security = Arc::new(SecurityPolicy::default());

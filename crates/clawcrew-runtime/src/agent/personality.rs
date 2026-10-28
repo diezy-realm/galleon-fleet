@@ -104,11 +104,11 @@ pub fn load_personality(workspace_dir: &Path) -> PersonalityProfile {
 }
 
 pub async fn seed_default_personality(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     alias: &str,
     workspace_dir: &Path,
 ) -> std::io::Result<Vec<&'static str>> {
-    use clawcrew_config::multi_agent::MemoryBackendKind;
+    use galleon_config::multi_agent::MemoryBackendKind;
     let include_memory = config
         .agents
         .get(alias)
@@ -341,13 +341,13 @@ mod tests {
 
     fn config_with_agent_memory_backend(
         alias: &str,
-        backend: clawcrew_config::multi_agent::MemoryBackendKind,
-    ) -> clawcrew_config::schema::Config {
-        let mut config = clawcrew_config::schema::Config::default();
+        backend: galleon_config::multi_agent::MemoryBackendKind,
+    ) -> galleon_config::schema::Config {
+        let mut config = galleon_config::schema::Config::default();
         config.agents.insert(
             alias.to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
-                memory: clawcrew_config::multi_agent::AgentMemoryConfig { backend },
+            galleon_config::schema::AliasedAgentConfig {
+                memory: galleon_config::multi_agent::AgentMemoryConfig { backend },
                 ..Default::default()
             },
         );
@@ -356,7 +356,7 @@ mod tests {
 
     #[tokio::test]
     async fn seed_default_personality_memoryless_agent_uses_no_memory_variant() {
-        use clawcrew_config::multi_agent::MemoryBackendKind;
+        use galleon_config::multi_agent::MemoryBackendKind;
         let dir = tempfile::tempdir().unwrap();
         // The agent's OWN backend is `none`, even though the install-wide
         // default (config.memory.backend) is memory-enabled (sqlite).
@@ -386,7 +386,7 @@ mod tests {
 
     #[tokio::test]
     async fn seed_default_personality_memory_agent_gets_memory_variant() {
-        use clawcrew_config::multi_agent::MemoryBackendKind;
+        use galleon_config::multi_agent::MemoryBackendKind;
         let dir = tempfile::tempdir().unwrap();
         let config = config_with_agent_memory_backend("clawdia", MemoryBackendKind::Sqlite);
 

@@ -5,8 +5,8 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::{ClassificationRule, Config, DelegateTargetConfig, ModelRouteConfig};
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::{ClassificationRule, Config, DelegateTargetConfig, ModelRouteConfig};
 use galleon_providers::ProviderDispatch;
 
 const DEFAULT_AGENT_MAX_DEPTH: u32 = 3;
@@ -41,7 +41,7 @@ impl ModelRoutingConfigTool {
         })?;
 
         let mut parsed =
-            clawcrew_config::migration::migrate_to_current(&contents).map_err(|error| {
+            galleon_config::migration::migrate_to_current(&contents).map_err(|error| {
                 ::clawcrew_log::record!(
                     ERROR,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
@@ -951,7 +951,7 @@ impl ModelRoutingConfigTool {
 
         // Validate the provider route before mutating any provider, profile, or agent state.
         let agent_model_provider_ref = if let Some((family, alias)) = provider_ref_parts {
-            if !clawcrew_config::providers::ModelProviders::slot_names().contains(&family) {
+            if !galleon_config::providers::ModelProviders::slot_names().contains(&family) {
                 Self::reject_unknown_model_provider_family(family, &name)?;
             }
             if cfg.providers.models.find(family, alias).is_none() {
@@ -961,7 +961,7 @@ impl ModelRoutingConfigTool {
             }
             model_provider.clone()
         } else {
-            if !clawcrew_config::providers::ModelProviders::slot_names()
+            if !galleon_config::providers::ModelProviders::slot_names()
                 .contains(&model_provider.as_str())
             {
                 Self::reject_unknown_model_provider_family(&model_provider, &name)?;
@@ -1299,8 +1299,8 @@ impl Tool for ModelRoutingConfigTool {
 mod tests {
     use super::*;
     use tempfile::TempDir;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
 
     fn test_security() -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy {
@@ -1332,9 +1332,9 @@ mod tests {
         cfg_path: &std::path::Path,
         family: &str,
         alias: &str,
-    ) -> Option<clawcrew_config::schema::ModelProviderConfig> {
+    ) -> Option<galleon_config::schema::ModelProviderConfig> {
         let contents = std::fs::read_to_string(cfg_path).ok()?;
-        let cfg = clawcrew_config::migration::migrate_to_current(&contents).ok()?;
+        let cfg = galleon_config::migration::migrate_to_current(&contents).ok()?;
         cfg.providers.models.find(family, alias).cloned()
     }
 
@@ -1637,7 +1637,7 @@ mod tests {
             .unwrap();
         assert!(upsert.success, "{:?}", upsert.error);
 
-        let cfg = clawcrew_config::migration::migrate_to_current(
+        let cfg = galleon_config::migration::migrate_to_current(
             &std::fs::read_to_string(&cfg_path).unwrap(),
         )
         .unwrap();
@@ -1659,7 +1659,7 @@ mod tests {
             .unwrap();
         assert!(clear.success, "{:?}", clear.error);
 
-        let cfg = clawcrew_config::migration::migrate_to_current(
+        let cfg = galleon_config::migration::migrate_to_current(
             &std::fs::read_to_string(&cfg_path).unwrap(),
         )
         .unwrap();
@@ -1685,7 +1685,7 @@ mod tests {
             .unwrap();
         assert!(legacy_empty.success, "{:?}", legacy_empty.error);
 
-        let cfg = clawcrew_config::migration::migrate_to_current(
+        let cfg = galleon_config::migration::migrate_to_current(
             &std::fs::read_to_string(&cfg_path).unwrap(),
         )
         .unwrap();
@@ -1718,7 +1718,7 @@ mod tests {
             .unwrap();
         assert!(deny.success, "{:?}", deny.error);
 
-        let cfg = clawcrew_config::migration::migrate_to_current(
+        let cfg = galleon_config::migration::migrate_to_current(
             &std::fs::read_to_string(&cfg_path).unwrap(),
         )
         .unwrap();
@@ -1742,7 +1742,7 @@ mod tests {
             .unwrap();
         assert!(allow.success, "{:?}", allow.error);
 
-        let cfg = clawcrew_config::migration::migrate_to_current(
+        let cfg = galleon_config::migration::migrate_to_current(
             &std::fs::read_to_string(&cfg_path).unwrap(),
         )
         .unwrap();

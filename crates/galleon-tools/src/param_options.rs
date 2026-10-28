@@ -9,8 +9,8 @@
 use std::collections::BTreeSet;
 
 use clawcrew_api::tool::{OptionDomain, OptionEntry, Tool};
-use clawcrew_config::peers::resolve_peer_set;
-use clawcrew_config::schema::Config;
+use galleon_config::peers::resolve_peer_set;
+use galleon_config::schema::Config;
 
 /// Resolve the selectable values for one domain.
 ///
@@ -196,7 +196,7 @@ fn truncate(s: &str, max: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
+    use galleon_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
 
     fn config_with_groups() -> Config {
         let mut config = Config::default();

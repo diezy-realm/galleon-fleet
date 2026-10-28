@@ -30,7 +30,7 @@ pub use traits::Peripheral;
 
 use anyhow::Result;
 use clawcrew_api::tool::Tool;
-use clawcrew_config::schema::{PeripheralBoardConfig, PeripheralsConfig};
+use galleon_config::schema::{PeripheralBoardConfig, PeripheralsConfig};
 #[cfg(feature = "hardware")]
 use galleon_tools::hardware_memory_map::HardwareMemoryMapTool;
 
@@ -225,7 +225,7 @@ pub fn create_board_info_tools(_config: &PeripheralsConfig) -> Vec<Box<dyn Tool>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::{PeripheralBoardConfig, PeripheralsConfig};
+    use galleon_config::schema::{PeripheralBoardConfig, PeripheralsConfig};
 
     #[test]
     fn list_configured_boards_when_disabled_returns_empty() {

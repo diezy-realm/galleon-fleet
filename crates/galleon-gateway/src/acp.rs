@@ -191,8 +191,8 @@ mod tests {
     /// construction is offline) and one dispatchable agent `test-agent`, with
     /// `config_path` pinned so `agent_workspace_dir` resolves under the temp
     /// install root. Pairing is disabled so the WS client needs no token.
-    fn front_door_config(install_root: &std::path::Path) -> clawcrew_config::schema::Config {
-        use clawcrew_config::schema::{
+    fn front_door_config(install_root: &std::path::Path) -> galleon_config::schema::Config {
+        use galleon_config::schema::{
             AliasedAgentConfig, AnthropicModelProviderConfig, Config, ModelProviderConfig,
             RiskProfileConfig, RuntimeProfileConfig,
         };
@@ -246,7 +246,7 @@ mod tests {
         let port = listener.local_addr().unwrap().port();
 
         struct MockAcpRunner {
-            config: clawcrew_config::schema::Config,
+            config: galleon_config::schema::Config,
         }
 
         #[async_trait::async_trait]

@@ -1,4 +1,4 @@
-pub use clawcrew_config::cost::*;
+pub use galleon_config::cost::*;
 pub mod types {
-    pub use clawcrew_config::cost::types::*;
+    pub use galleon_config::cost::types::*;
 }

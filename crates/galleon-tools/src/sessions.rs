@@ -6,8 +6,8 @@ use std::collections::BTreeSet;
 use std::fmt::Write;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::policy::ToolOperation;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::policy::ToolOperation;
 use galleon_infra::acp_session_store::{
     AcpSessionAccess, AcpSessionData, AcpSessionStore, AcpSessionSummary,
 };

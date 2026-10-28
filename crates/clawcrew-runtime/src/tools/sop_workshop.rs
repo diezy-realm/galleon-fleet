@@ -320,7 +320,7 @@ mod tests {
     use super::*;
     use crate::sop::SopEngine;
     use clawcrew_api::attribution::{Attributable, ToolProvenance};
-    use clawcrew_config::schema::SopConfig;
+    use galleon_config::schema::SopConfig;
 
     #[test]
     fn first_party_sop_workshop_is_native() {

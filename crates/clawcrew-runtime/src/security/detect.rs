@@ -3,7 +3,7 @@
 use crate::security::traits::Sandbox;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use clawcrew_config::schema::{RuntimeKind, SandboxBackend, SandboxConfig};
+use galleon_config::schema::{RuntimeKind, SandboxBackend, SandboxConfig};
 
 /// Extra filesystem roots beyond the primary workspace that a sandbox should
 /// also grant access to, mirroring `SecurityPolicy`'s allowed-roots tiers
@@ -696,7 +696,7 @@ pub fn linux_memcg_available() -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::DEFAULT_SANDBOX_IMAGE;
+    use galleon_config::schema::DEFAULT_SANDBOX_IMAGE;
 
     #[cfg(target_os = "macos")]
     #[test]

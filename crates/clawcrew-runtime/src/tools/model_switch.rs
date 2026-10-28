@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 #[cfg(test)]
 type ModelCatalogResolver = std::sync::Arc<

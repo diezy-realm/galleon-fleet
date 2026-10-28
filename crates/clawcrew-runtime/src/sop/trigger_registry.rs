@@ -196,7 +196,7 @@ pub struct TriggerSourceRegistry {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// Config-derived channel instance used as input to `build_registry`;
-/// decoupled from `clawcrew_config` so the walk is testable without a full
+/// decoupled from `galleon_config` so the walk is testable without a full
 /// `Config`.
 pub struct ConfiguredChannel {
     pub channel_type: String,
@@ -213,7 +213,7 @@ fn setup_path_for(channel: &str) -> String {
 /// (normalizing `-` to `_` to match `ChannelKind` wire names) and delegates
 /// to `build_registry`.
 #[must_use]
-pub fn registry_from_config(config: &clawcrew_config::schema::Config) -> TriggerSourceRegistry {
+pub fn registry_from_config(config: &galleon_config::schema::Config) -> TriggerSourceRegistry {
     let configured: Vec<ConfiguredChannel> = config
         .channels_by_alias()
         .into_iter()
@@ -609,7 +609,7 @@ mod tests {
 
     #[test]
     fn retired_wati_kind_is_absent_from_default_trigger_registry() {
-        let registry = registry_from_config(&clawcrew_config::schema::Config::default());
+        let registry = registry_from_config(&galleon_config::schema::Config::default());
         assert!(
             registry.channels.iter().all(|row| row.channel != "wati"),
             "the historical WATI attribution kind must not appear as a live SOP source"

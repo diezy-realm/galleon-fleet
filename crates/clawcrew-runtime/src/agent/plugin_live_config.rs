@@ -28,8 +28,8 @@ use std::sync::{Arc, OnceLock};
 
 use parking_lot::RwLock;
 use tempfile::TempDir;
-use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-use clawcrew_config::schema::{
+use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+use galleon_config::schema::{
     AliasedAgentConfig, Config, DelegateExecutionMode, DelegateTargetConfig, PluginEntryConfig,
     RiskProfileConfig, RuntimeProfileConfig,
 };

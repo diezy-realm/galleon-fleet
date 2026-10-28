@@ -226,7 +226,7 @@ mod tests {
     use super::*;
     use crate::sop::engine::SopEngine;
     use crate::sop::types::*;
-    use clawcrew_config::schema::SopConfig;
+    use galleon_config::schema::SopConfig;
 
     fn test_sop() -> Sop {
         Sop {
@@ -321,7 +321,7 @@ mod tests {
         // The agent tool cannot self-satisfy a gate under out_of_band_required; the
         // gate stays open for a CLI/gateway approver.
         let cfg = SopConfig {
-            approval_mode: clawcrew_config::schema::ApprovalMode::OutOfBandRequired,
+            approval_mode: galleon_config::schema::ApprovalMode::OutOfBandRequired,
             ..SopConfig::default()
         };
         let mut engine = SopEngine::new(cfg);

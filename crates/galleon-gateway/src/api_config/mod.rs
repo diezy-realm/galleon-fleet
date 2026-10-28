@@ -18,7 +18,7 @@ pub use handlers::*;
 pub use patch::*;
 
 #[cfg(test)]
-pub(crate) use clawcrew_config::typed_value::coerce_for_set_prop as json_to_setprop_string;
+pub(crate) use galleon_config::typed_value::coerce_for_set_prop as json_to_setprop_string;
 
 pub(crate) fn is_false(b: &bool) -> bool {
     !*b
@@ -64,7 +64,7 @@ pub struct PropResponse {
     /// this surfaces warnings against the post-save state. Empty when
     /// nothing is flagged.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub warnings: Vec<clawcrew_config::validation_warnings::ValidationWarning>,
+    pub warnings: Vec<galleon_config::validation_warnings::ValidationWarning>,
 }
 
 /// Response for a secret GET / PUT / DELETE — never carries the value or its
@@ -210,7 +210,7 @@ pub struct MapPathQuery {
 #[derive(Debug, Deserialize)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 pub struct AliasSourceQuery {
-    pub source: clawcrew_config::traits::AliasSource,
+    pub source: galleon_config::traits::AliasSource,
 }
 
 /// A single config reference site to an aliased entry, for the delete preview.

@@ -12,7 +12,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::process::Command;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
+use galleon_config::policy::SecurityPolicy;
 
 /// Computer-use sidecar settings.
 #[derive(Clone)]
@@ -1105,7 +1105,7 @@ impl BrowserTool {
             }
         });
 
-        let client = clawcrew_config::schema::build_runtime_proxy_client("tool.browser");
+        let client = galleon_config::schema::build_runtime_proxy_client("tool.browser");
         let mut request = client
             .post(endpoint)
             .timeout(Duration::from_millis(self.computer_use.timeout_ms))
@@ -3281,7 +3281,7 @@ mod tests {
 
     // ============ Screenshot path validation tests ============
 
-    use clawcrew_config::policy::AutonomyLevel;
+    use galleon_config::policy::AutonomyLevel;
 
     fn screenshot_tool_with_workspace(ws: &std::path::Path) -> BrowserTool {
         let security = Arc::new(SecurityPolicy {

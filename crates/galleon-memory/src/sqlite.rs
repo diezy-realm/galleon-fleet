@@ -18,7 +18,7 @@ use std::thread;
 use std::time::Duration;
 use uuid::Uuid;
 use clawcrew_api::session_keys::sanitize_session_key;
-use clawcrew_config::schema::SearchMode;
+use galleon_config::schema::SearchMode;
 
 /// Maximum allowed open timeout (seconds) to avoid unreasonable waits.
 const SQLITE_OPEN_TIMEOUT_CAP_SECS: u64 = 300;
@@ -119,7 +119,7 @@ impl SqliteMemory {
              PRAGMA temp_store   = MEMORY;",
         )?;
         Self::init_schema(&conn)?;
-        clawcrew_config::schema::v2::migrate_sqlite_memory_to_v3(db_path, &conn)?;
+        galleon_config::schema::v2::migrate_sqlite_memory_to_v3(db_path, &conn)?;
         Self::init_schema(&conn)?;
         Ok(conn)
     }
@@ -228,7 +228,7 @@ impl SqliteMemory {
         execute_batch_retry(
             conn,
             "-- Core memories table. This is an intermediate shape; the V3
-            -- migration in `clawcrew_config::schema::v2::migrate_sqlite_memory_to_v3`
+            -- migration in `galleon_config::schema::v2::migrate_sqlite_memory_to_v3`
             -- rebuilds it with the `agent_id` column and a composite
             -- `UNIQUE (agent_id, key)` constraint immediately after init.
             CREATE TABLE IF NOT EXISTS memories (
@@ -2224,7 +2224,7 @@ impl Memory for SqliteMemory {
         let alias = alias.to_string();
         tokio::task::spawn_blocking(move || -> anyhow::Result<String> {
             let conn = conn.lock();
-            clawcrew_config::schema::v2::sqlite_ensure_agent_uuid(&conn, &alias)
+            galleon_config::schema::v2::sqlite_ensure_agent_uuid(&conn, &alias)
         })
         .await?
     }

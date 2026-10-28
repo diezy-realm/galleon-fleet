@@ -5,7 +5,7 @@
 //! a `[peer_groups.<name>]` entry in `config.toml` whose `channel` field
 //! is the dotted `<channel_type>.<alias>` instance ref.
 
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 /// The conflict message when a matching `ignore` already denies `identity`,
 /// or `None` when a pairing write would take effect.
@@ -87,8 +87,8 @@ pub fn merge_external_peer(
     identity: &str,
     match_fn: impl Fn(&str, &str) -> bool,
 ) -> anyhow::Result<Option<String>> {
-    use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-    use clawcrew_config::providers::ChannelRef;
+    use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+    use galleon_config::providers::ChannelRef;
 
     let normalized = identity.trim();
     if normalized.is_empty() {
@@ -173,12 +173,12 @@ pub async fn persist_external_peer(
         );
         return Ok(());
     };
-    let _write_guard = clawcrew_config::write_lock::shared_config_write_lock()
+    let _write_guard = galleon_config::write_lock::shared_config_write_lock()
         .lock_owned()
         .await;
     let mut staged = config.read().clone();
     if let Some(persisted) =
-        clawcrew_config::schema::persisted_peer_groups(&staged.config_path).await?
+        galleon_config::schema::persisted_peer_groups(&staged.config_path).await?
     {
         staged.peer_groups = persisted;
     }

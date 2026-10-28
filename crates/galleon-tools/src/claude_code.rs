@@ -2,9 +2,9 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::policy::ToolOperation;
-use clawcrew_config::schema::ClaudeCodeConfig;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::policy::ToolOperation;
+use galleon_config::schema::ClaudeCodeConfig;
 
 use crate::coding_cli::{
     CodingCliCommand, CodingCliExecutionError, CodingCliExecutor, DirectCodingCliExecutor,
@@ -310,9 +310,9 @@ impl Tool for ClaudeCodeTool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
-    use clawcrew_config::schema::ClaudeCodeConfig;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
+    use galleon_config::schema::ClaudeCodeConfig;
 
     fn test_config() -> ClaudeCodeConfig {
         ClaudeCodeConfig::default()

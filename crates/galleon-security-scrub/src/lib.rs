@@ -8,7 +8,7 @@ pub mod content_safety;
 pub mod leak_detector;
 pub mod prompt_guard;
 
-pub use clawcrew_config::schema::LeakDetectionConfig;
+pub use galleon_config::schema::LeakDetectionConfig;
 pub use content_safety::{
     ContentSafety, FramingPolicy, OutboundPolicy, ScanOutcome, ScanPolicy, ScreenVerdict,
     cap_untrusted, frame_untrusted, new_marker_id, sanitize_untrusted, sanitize_untrusted_topic,

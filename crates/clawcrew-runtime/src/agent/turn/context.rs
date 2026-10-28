@@ -10,7 +10,7 @@ use tokio::sync::mpsc::Sender;
 use tokio_util::sync::CancellationToken;
 use clawcrew_api::agent::TurnEvent;
 use clawcrew_api::channel::Channel;
-use clawcrew_config::schema::{PacingConfig, ResolvedContextLimits, StreamReasoningMode};
+use galleon_config::schema::{PacingConfig, ResolvedContextLimits, StreamReasoningMode};
 
 pub(crate) struct TurnCtx<'a> {
     pub(crate) observer: &'a dyn Observer,

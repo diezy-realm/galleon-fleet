@@ -11,7 +11,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use clawcrew_api::channel::Channel;
 use clawcrew_api::webhook::PluginWebhookRegistryLease;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 pub use clawcrew_api::plugin::WASM_PLUGIN_SUPPORT_COMPILED;
 
@@ -264,7 +264,7 @@ pub(crate) fn plugin_limits(config: &Config) -> galleon_plugins::component::Plug
 /// is for.
 #[cfg(feature = "plugins-wasm")]
 fn plugin_sender_allowed(config: &Config, alias: &str, sender: &str) -> bool {
-    clawcrew_config::schema::peer_policy_admits(
+    galleon_config::schema::peer_policy_admits(
         &config.channel_external_peers("plugin", alias),
         &[sender],
         |entry, user| entry == user,
@@ -630,8 +630,8 @@ mod tests {
     use std::path::Path;
 
     use tempfile::TempDir;
-    use clawcrew_config::providers::ChannelRef;
-    use clawcrew_config::schema::{AliasedAgentConfig, PluginChannelConfig};
+    use galleon_config::providers::ChannelRef;
+    use galleon_config::schema::{AliasedAgentConfig, PluginChannelConfig};
 
     use super::*;
 
@@ -660,8 +660,8 @@ mod tests {
     #[cfg(feature = "plugins-wasm")]
     #[test]
     fn channel_sender_policy_resolves_plugin_peer_groups_live() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
         let live = Arc::new(RwLock::new(Config::default()));
         let authorizer = channel_sender_authorizer(
@@ -699,8 +699,8 @@ mod tests {
     #[cfg(feature = "plugins-wasm")]
     #[test]
     fn channel_sender_policy_applies_denies_before_grants() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
         let policy = |grants: &[&str], ignore: &[&str]| {
             let live = Arc::new(RwLock::new(Config::default()));

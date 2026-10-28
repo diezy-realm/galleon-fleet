@@ -21,7 +21,7 @@ use std::time::Duration;
 use tokio::io::AsyncWriteExt;
 use tokio_util::sync::CancellationToken;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::schema::{
+use galleon_config::schema::{
     AliasedAgentConfig, Config, DelegateExecutionMode, DelegateToolConfig, ModelProviderConfig,
     ResolvedRuntime, RiskProfileConfig, RuntimeProfileConfig, SkillBundleConfig,
 };
@@ -213,7 +213,7 @@ pub struct DelegateTool {
     /// agentic delegation.
     runtime: Option<Arc<dyn crate::platform::RuntimeAdapter>>,
     /// Inherited multimodal handling config for sub-agent loops.
-    multimodal_config: clawcrew_config::schema::MultimodalConfig,
+    multimodal_config: galleon_config::schema::MultimodalConfig,
     /// Global delegate tool config providing default timeout values.
     delegate_config: DelegateToolConfig,
     /// Workspace directory inherited from the root agent context.
@@ -360,7 +360,7 @@ impl DelegateTool {
             operator_approval_available: true,
             parent_tools: Arc::new(RwLock::new(Vec::new())),
             runtime: None,
-            multimodal_config: clawcrew_config::schema::MultimodalConfig::default(),
+            multimodal_config: galleon_config::schema::MultimodalConfig::default(),
             delegate_config: DelegateToolConfig::default(),
             workspace_dir: PathBuf::new(),
             cancellation_token: CancellationToken::new(),
@@ -412,7 +412,7 @@ impl DelegateTool {
             operator_approval_available: true,
             parent_tools: Arc::new(RwLock::new(Vec::new())),
             runtime: None,
-            multimodal_config: clawcrew_config::schema::MultimodalConfig::default(),
+            multimodal_config: galleon_config::schema::MultimodalConfig::default(),
             delegate_config: DelegateToolConfig::default(),
             workspace_dir: PathBuf::new(),
             cancellation_token: CancellationToken::new(),
@@ -444,7 +444,7 @@ impl DelegateTool {
     /// Attach multimodal configuration for sub-agent tool loops.
     pub fn with_multimodal_config(
         mut self,
-        config: clawcrew_config::schema::MultimodalConfig,
+        config: galleon_config::schema::MultimodalConfig,
     ) -> Self {
         self.multimodal_config = config;
         self
@@ -3996,7 +3996,7 @@ impl DelegateTool {
         let receipt_generator = receipt_scope.as_ref().map(|s| &s.generator);
         let collected_receipts = receipt_scope.as_ref().map(|s| s.collector.as_ref());
         let turn_id = uuid::Uuid::new_v4().to_string();
-        let pacing = clawcrew_config::schema::PacingConfig::default();
+        let pacing = galleon_config::schema::PacingConfig::default();
         let loop_knobs = LoopKnobs::default();
         let execution = tokio::time::timeout(
             Duration::from_secs(agentic_timeout_secs),

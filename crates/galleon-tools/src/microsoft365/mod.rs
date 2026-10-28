@@ -9,8 +9,8 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::policy::ToolOperation;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::policy::ToolOperation;
 
 /// Maximum download size for OneDrive files (10 MB).
 const MAX_ONEDRIVE_DOWNLOAD_SIZE: usize = 10 * 1024 * 1024;
@@ -31,7 +31,7 @@ impl Microsoft365Tool {
         security: Arc<SecurityPolicy>,
         clawcrew_dir: &std::path::Path,
     ) -> anyhow::Result<Self> {
-        let http_client = clawcrew_config::schema::build_runtime_proxy_client_with_timeouts(
+        let http_client = galleon_config::schema::build_runtime_proxy_client_with_timeouts(
             "tool.microsoft365",
             60,
             10,

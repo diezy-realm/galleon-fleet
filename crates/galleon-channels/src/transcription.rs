@@ -7,8 +7,8 @@ use reqwest::{
     multipart::{Form, Part},
 };
 
-use clawcrew_config::providers::{TranscriptionProviderEntry, TranscriptionProviders};
-use clawcrew_config::schema::{Config, TranscriptionConfig};
+use galleon_config::providers::{TranscriptionProviderEntry, TranscriptionProviders};
+use galleon_config::schema::{Config, TranscriptionConfig};
 
 /// Maximum upload size accepted by most Whisper-compatible APIs (25 MB).
 const MAX_AUDIO_BYTES: usize = 25 * 1024 * 1024;
@@ -161,7 +161,7 @@ impl GroqProvider {
     /// Build from a typed `[providers.transcription.groq.<alias>]` entry.
     pub fn from_typed_config(
         alias: &str,
-        cfg: &clawcrew_config::schema::GroqTranscriptionProviderConfig,
+        cfg: &galleon_config::schema::GroqTranscriptionProviderConfig,
     ) -> Result<Self> {
         let api_key = cfg
             .base
@@ -198,7 +198,7 @@ impl TranscriptionProvider for GroqProvider {
     async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> Result<String> {
         let (normalized_name, mime) = validate_audio(audio_data, file_name)?;
 
-        let client = clawcrew_config::schema::build_runtime_proxy_client("transcription.groq");
+        let client = galleon_config::schema::build_runtime_proxy_client("transcription.groq");
 
         let file_part = Part::bytes(audio_data.to_vec())
             .file_name(normalized_name)
@@ -240,7 +240,7 @@ pub struct OpenAiWhisperProvider {
 impl OpenAiWhisperProvider {
     pub fn from_config(
         alias: &str,
-        config: &clawcrew_config::schema::OpenAiSttConfig,
+        config: &galleon_config::schema::OpenAiSttConfig,
     ) -> Result<Self> {
         let api_key = config
             .api_key
@@ -262,7 +262,7 @@ impl OpenAiWhisperProvider {
     /// Build from a typed `[providers.transcription.openai.<alias>]` entry.
     pub fn from_typed_config(
         alias: &str,
-        cfg: &clawcrew_config::schema::OpenAiTranscriptionProviderConfig,
+        cfg: &galleon_config::schema::OpenAiTranscriptionProviderConfig,
     ) -> Result<Self> {
         let api_key = cfg
             .base
@@ -299,7 +299,7 @@ impl TranscriptionProvider for OpenAiWhisperProvider {
     async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> Result<String> {
         let (normalized_name, mime) = validate_audio(audio_data, file_name)?;
 
-        let client = clawcrew_config::schema::build_runtime_proxy_client("transcription.openai");
+        let client = galleon_config::schema::build_runtime_proxy_client("transcription.openai");
 
         let file_part = Part::bytes(audio_data.to_vec())
             .file_name(normalized_name)
@@ -340,7 +340,7 @@ pub struct DeepgramProvider {
 impl DeepgramProvider {
     pub fn from_config(
         alias: &str,
-        config: &clawcrew_config::schema::DeepgramSttConfig,
+        config: &galleon_config::schema::DeepgramSttConfig,
     ) -> Result<Self> {
         let api_key = config
             .api_key
@@ -362,7 +362,7 @@ impl DeepgramProvider {
     /// Build from a typed `[providers.transcription.deepgram.<alias>]` entry.
     pub fn from_typed_config(
         alias: &str,
-        cfg: &clawcrew_config::schema::DeepgramTranscriptionProviderConfig,
+        cfg: &galleon_config::schema::DeepgramTranscriptionProviderConfig,
     ) -> Result<Self> {
         let api_key = cfg
             .base
@@ -405,7 +405,7 @@ impl TranscriptionProvider for DeepgramProvider {
     async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> Result<String> {
         let (_, mime) = validate_audio(audio_data, file_name)?;
 
-        let client = clawcrew_config::schema::build_runtime_proxy_client("transcription.deepgram");
+        let client = galleon_config::schema::build_runtime_proxy_client("transcription.deepgram");
 
         let url = reqwest::Url::parse_with_params(
             &self.api_url,
@@ -461,7 +461,7 @@ pub struct AssemblyAiProvider {
 impl AssemblyAiProvider {
     pub fn from_config(
         alias: &str,
-        config: &clawcrew_config::schema::AssemblyAiSttConfig,
+        config: &galleon_config::schema::AssemblyAiSttConfig,
     ) -> Result<Self> {
         let api_key = config
             .api_key
@@ -480,7 +480,7 @@ impl AssemblyAiProvider {
     /// Build from a typed `[providers.transcription.assemblyai.<alias>]` entry.
     pub fn from_typed_config(
         alias: &str,
-        cfg: &clawcrew_config::schema::AssemblyAiTranscriptionProviderConfig,
+        cfg: &galleon_config::schema::AssemblyAiTranscriptionProviderConfig,
     ) -> Result<Self> {
         let api_key = cfg
             .base
@@ -511,7 +511,7 @@ impl TranscriptionProvider for AssemblyAiProvider {
         let (_, _) = validate_audio(audio_data, file_name)?;
 
         let client =
-            clawcrew_config::schema::build_runtime_proxy_client("transcription.assemblyai");
+            galleon_config::schema::build_runtime_proxy_client("transcription.assemblyai");
 
         // Step 1: Upload the audio file.
         let upload_resp = client
@@ -635,7 +635,7 @@ pub struct GoogleSttProvider {
 impl GoogleSttProvider {
     pub fn from_config(
         alias: &str,
-        config: &clawcrew_config::schema::GoogleSttConfig,
+        config: &galleon_config::schema::GoogleSttConfig,
     ) -> Result<Self> {
         let api_key = config
             .api_key
@@ -655,7 +655,7 @@ impl GoogleSttProvider {
     /// Build from a typed `[providers.transcription.google.<alias>]` entry.
     pub fn from_typed_config(
         alias: &str,
-        cfg: &clawcrew_config::schema::GoogleTranscriptionProviderConfig,
+        cfg: &galleon_config::schema::GoogleTranscriptionProviderConfig,
     ) -> Result<Self> {
         let api_key = cfg
             .base
@@ -691,7 +691,7 @@ impl GoogleSttProvider {
 
     fn build_request(&self, request_body: &serde_json::Value) -> Result<reqwest::RequestBuilder> {
         Ok(
-            clawcrew_config::schema::build_runtime_proxy_client("transcription.google")
+            galleon_config::schema::build_runtime_proxy_client("transcription.google")
                 .post(GOOGLE_STT_ENDPOINT)
                 .header(GOOGLE_API_KEY_HEADER, self.sensitive_api_key_header()?)
                 .json(request_body)
@@ -791,7 +791,7 @@ impl LocalWhisperProvider {
     /// server expects.
     pub fn from_config(
         alias: &str,
-        config: &clawcrew_config::schema::LocalWhisperConfig,
+        config: &galleon_config::schema::LocalWhisperConfig,
     ) -> Result<Self> {
         let url = config.url.trim().to_string();
         anyhow::ensure!(!url.is_empty(), "local_whisper: `url` must not be empty");
@@ -850,9 +850,9 @@ impl LocalWhisperProvider {
     /// uses `uri` instead of `url` but is otherwise identical.
     pub fn from_typed_config(
         alias: &str,
-        cfg: &clawcrew_config::schema::LocalWhisperTranscriptionProviderConfig,
+        cfg: &galleon_config::schema::LocalWhisperTranscriptionProviderConfig,
     ) -> Result<Self> {
-        let bridge = clawcrew_config::schema::LocalWhisperConfig {
+        let bridge = galleon_config::schema::LocalWhisperConfig {
             url: cfg.uri.clone(),
             bearer_token: cfg.bearer_token.clone(),
             max_audio_bytes: cfg.max_audio_bytes,
@@ -880,7 +880,7 @@ impl TranscriptionProvider for LocalWhisperProvider {
         let (normalized_name, mime) = resolve_audio_format(file_name)?;
 
         let client =
-            clawcrew_config::schema::build_runtime_proxy_client("transcription.local_whisper");
+            galleon_config::schema::build_runtime_proxy_client("transcription.local_whisper");
 
         // to_vec() clones the buffer for the multipart payload; peak memory per
         // call is ~2× max_audio_bytes. TODO: replace with streaming upload once
@@ -1732,11 +1732,11 @@ mod tests {
 
         let config = TranscriptionConfig {
             api_key: Some("test-groq-key".to_string()),
-            openai: Some(clawcrew_config::schema::OpenAiSttConfig {
+            openai: Some(galleon_config::schema::OpenAiSttConfig {
                 api_key: Some("test-openai-key".to_string()),
                 model: "whisper-1".to_string(),
             }),
-            deepgram: Some(clawcrew_config::schema::DeepgramSttConfig {
+            deepgram: Some(galleon_config::schema::DeepgramSttConfig {
                 api_key: Some("test-deepgram-key".to_string()),
                 model: "nova-2".to_string(),
             }),
@@ -1777,7 +1777,7 @@ mod tests {
         unsafe { std::env::remove_var("GROQ_API_KEY") };
 
         let config = TranscriptionConfig {
-            openai: Some(clawcrew_config::schema::OpenAiSttConfig {
+            openai: Some(galleon_config::schema::OpenAiSttConfig {
                 api_key: Some("test-openai-key".to_string()),
                 model: "whisper-1".to_string(),
             }),
@@ -1792,28 +1792,28 @@ mod tests {
 
     #[test]
     fn manager_from_config_for_agent_registers_dotted_provider_refs() {
-        let mut config = clawcrew_config::schema::Config {
+        let mut config = galleon_config::schema::Config {
             transcription: TranscriptionConfig {
                 enabled: true,
                 ..TranscriptionConfig::default()
             },
-            ..clawcrew_config::schema::Config::default()
+            ..galleon_config::schema::Config::default()
         };
         config.providers.transcription.groq.insert(
             "default".to_string(),
-            clawcrew_config::schema::GroqTranscriptionProviderConfig {
-                base: clawcrew_config::schema::TranscriptionProviderConfig {
+            galleon_config::schema::GroqTranscriptionProviderConfig {
+                base: galleon_config::schema::TranscriptionProviderConfig {
                     api_key: Some("test-groq-key".to_string()),
-                    ..clawcrew_config::schema::TranscriptionProviderConfig::default()
+                    ..galleon_config::schema::TranscriptionProviderConfig::default()
                 },
-                ..clawcrew_config::schema::GroqTranscriptionProviderConfig::default()
+                ..galleon_config::schema::GroqTranscriptionProviderConfig::default()
             },
         );
         config.agents.insert(
             "default".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 transcription_provider: "groq.default".into(),
-                ..clawcrew_config::schema::AliasedAgentConfig::default()
+                ..galleon_config::schema::AliasedAgentConfig::default()
             },
         );
 
@@ -1834,27 +1834,27 @@ mod tests {
         let mut typed = TranscriptionProviders::default();
         typed.groq.insert(
             "invalid".to_string(),
-            clawcrew_config::schema::GroqTranscriptionProviderConfig::default(),
+            galleon_config::schema::GroqTranscriptionProviderConfig::default(),
         );
         typed.openai.insert(
             "invalid".to_string(),
-            clawcrew_config::schema::OpenAiTranscriptionProviderConfig::default(),
+            galleon_config::schema::OpenAiTranscriptionProviderConfig::default(),
         );
         typed.deepgram.insert(
             "invalid".to_string(),
-            clawcrew_config::schema::DeepgramTranscriptionProviderConfig::default(),
+            galleon_config::schema::DeepgramTranscriptionProviderConfig::default(),
         );
         typed.assemblyai.insert(
             "invalid".to_string(),
-            clawcrew_config::schema::AssemblyAiTranscriptionProviderConfig::default(),
+            galleon_config::schema::AssemblyAiTranscriptionProviderConfig::default(),
         );
         typed.google.insert(
             "invalid".to_string(),
-            clawcrew_config::schema::GoogleTranscriptionProviderConfig::default(),
+            galleon_config::schema::GoogleTranscriptionProviderConfig::default(),
         );
         typed.local_whisper.insert(
             "invalid".to_string(),
-            clawcrew_config::schema::LocalWhisperTranscriptionProviderConfig::default(),
+            galleon_config::schema::LocalWhisperTranscriptionProviderConfig::default(),
         );
 
         let assert_events = |entry_point: &str, events: Vec<serde_json::Value>| {
@@ -1901,7 +1901,7 @@ mod tests {
             }
         };
 
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.providers.transcription = typed.clone();
         TranscriptionManager::from_config_for_agent(&config, None)
             .expect("invalid typed providers should be skipped when transcription is disabled");
@@ -1922,15 +1922,15 @@ mod tests {
         use wiremock::matchers::method;
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
-        let base = clawcrew_config::schema::TranscriptionProviderConfig {
+        let base = galleon_config::schema::TranscriptionProviderConfig {
             api_key: Some("test-key".to_string()),
             language: Some("it".to_string()),
-            ..clawcrew_config::schema::TranscriptionProviderConfig::default()
+            ..galleon_config::schema::TranscriptionProviderConfig::default()
         };
 
         let groq = GroqProvider::from_typed_config(
             "default",
-            &clawcrew_config::schema::GroqTranscriptionProviderConfig {
+            &galleon_config::schema::GroqTranscriptionProviderConfig {
                 base: base.clone(),
                 model: Some("   ".to_string()),
             },
@@ -1940,7 +1940,7 @@ mod tests {
 
         let mut openai = OpenAiWhisperProvider::from_typed_config(
             "default",
-            &clawcrew_config::schema::OpenAiTranscriptionProviderConfig {
+            &galleon_config::schema::OpenAiTranscriptionProviderConfig {
                 base: base.clone(),
                 model: Some(String::new()),
             },
@@ -1951,7 +1951,7 @@ mod tests {
 
         let mut deepgram = DeepgramProvider::from_typed_config(
             "default",
-            &clawcrew_config::schema::DeepgramTranscriptionProviderConfig {
+            &galleon_config::schema::DeepgramTranscriptionProviderConfig {
                 base: base.clone(),
                 model: Some("\t".to_string()),
             },
@@ -1995,8 +1995,8 @@ mod tests {
 
         let google = GoogleSttProvider::from_typed_config(
             "default",
-            &clawcrew_config::schema::GoogleTranscriptionProviderConfig {
-                base: clawcrew_config::schema::TranscriptionProviderConfig {
+            &galleon_config::schema::GoogleTranscriptionProviderConfig {
+                base: galleon_config::schema::TranscriptionProviderConfig {
                     language: Some("  ".to_string()),
                     ..base
                 },
@@ -2170,8 +2170,8 @@ mod tests {
 
     // ── LocalWhisperProvider tests (TDD — added below as red/green cycles) ──
 
-    fn local_whisper_config(url: &str) -> clawcrew_config::schema::LocalWhisperConfig {
-        clawcrew_config::schema::LocalWhisperConfig {
+    fn local_whisper_config(url: &str) -> galleon_config::schema::LocalWhisperConfig {
+        galleon_config::schema::LocalWhisperConfig {
             url: url.to_string(),
             bearer_token: Some("test-token".to_string()),
             max_audio_bytes: 10 * 1024 * 1024,
@@ -2299,7 +2299,7 @@ mod tests {
 
     #[test]
     fn local_whisper_default_uses_serde_defaults_not_rust_zero() {
-        let cfg = clawcrew_config::schema::LocalWhisperConfig::default();
+        let cfg = galleon_config::schema::LocalWhisperConfig::default();
         assert_eq!(
             cfg.max_audio_bytes,
             25 * 1024 * 1024,
@@ -2328,10 +2328,10 @@ mod tests {
         // `url` and `bearer_token`: the scaffolded `max_audio_bytes` /
         // `timeout_secs` defaults must already be valid, so from_config
         // succeeds without manual adjustment.
-        let cfg = clawcrew_config::schema::LocalWhisperConfig {
+        let cfg = galleon_config::schema::LocalWhisperConfig {
             url: "http://127.0.0.1:9999/v1/transcribe".to_string(),
             bearer_token: Some("test-token".to_string()),
-            ..clawcrew_config::schema::LocalWhisperConfig::default()
+            ..galleon_config::schema::LocalWhisperConfig::default()
         };
 
         let provider = LocalWhisperProvider::from_config("local_whisper", &cfg)
@@ -2350,7 +2350,7 @@ mod tests {
         // `#[derive(Default)]` here would let `max_audio_bytes = 0` /
         // `timeout_secs = 0` leak through into a typed map entry the same
         // way it did through the legacy `Default::default()` path.
-        let cfg = clawcrew_config::schema::LocalWhisperTranscriptionProviderConfig::default();
+        let cfg = galleon_config::schema::LocalWhisperTranscriptionProviderConfig::default();
         assert_eq!(
             cfg.max_audio_bytes,
             25 * 1024 * 1024,
@@ -2386,10 +2386,10 @@ mod tests {
         // `timeout_secs = 0`; the typed-config bridge forwards those zeros
         // into `LocalWhisperProvider::from_config`, which rejects them at
         // load, and the alias landed in `dropped_config: providers.transcription.local_whisper`.
-        let cfg = clawcrew_config::schema::LocalWhisperTranscriptionProviderConfig {
+        let cfg = galleon_config::schema::LocalWhisperTranscriptionProviderConfig {
             uri: "http://127.0.0.1:9999/v1/transcribe".to_string(),
             bearer_token: Some("test-token".to_string()),
-            ..clawcrew_config::schema::LocalWhisperTranscriptionProviderConfig::default()
+            ..galleon_config::schema::LocalWhisperTranscriptionProviderConfig::default()
         };
 
         let provider = LocalWhisperProvider::from_typed_config("local_whisper", &cfg).expect(
@@ -2409,10 +2409,10 @@ mod tests {
     /// value leakage.
     #[test]
     fn local_whisper_serde_round_trip() {
-        let scaffolded = clawcrew_config::schema::LocalWhisperConfig {
+        let scaffolded = galleon_config::schema::LocalWhisperConfig {
             url: "http://127.0.0.1:9999/v1/transcribe".to_string(),
             bearer_token: Some("test-token".to_string()),
-            ..clawcrew_config::schema::LocalWhisperConfig::default()
+            ..galleon_config::schema::LocalWhisperConfig::default()
         };
 
         let toml_str =
@@ -2426,7 +2426,7 @@ mod tests {
             "config init TOML must contain timeout_secs = 300;\ngot:\n{toml_str}"
         );
 
-        let reloaded: clawcrew_config::schema::LocalWhisperConfig =
+        let reloaded: galleon_config::schema::LocalWhisperConfig =
             toml::from_str(&toml_str).expect("round-tripped TOML must deserialize");
         assert_eq!(reloaded.max_audio_bytes, 25 * 1024 * 1024);
         assert_eq!(reloaded.timeout_secs, 300);
@@ -2477,9 +2477,9 @@ mod tests {
         // disk (load_or_init created it), so save_dirty below runs the
         // incremental existing-document machinery, not the full-save
         // fallback for a missing file.
-        let initial = clawcrew_config::schema::Config {
+        let initial = galleon_config::schema::Config {
             config_path: config_path.clone(),
-            ..clawcrew_config::schema::Config::default()
+            ..galleon_config::schema::Config::default()
         };
         initial
             .save()
@@ -2491,9 +2491,9 @@ mod tests {
         );
 
         // Step 2 — the real scaffold: no handcrafted struct assignment.
-        let mut config = clawcrew_config::schema::Config {
+        let mut config = galleon_config::schema::Config {
             config_path: config_path.clone(),
-            ..clawcrew_config::schema::Config::default()
+            ..galleon_config::schema::Config::default()
         };
         let initialized = config.init_defaults(Some("transcription.local_whisper"));
         assert!(
@@ -2534,7 +2534,7 @@ mod tests {
         // Step 4 — the real resilient daemon load.
         let contents =
             std::fs::read_to_string(&config_path).expect("persisted config.toml must be readable");
-        let salvage = clawcrew_config::migration::migrate_to_current_salvaged(&contents);
+        let salvage = galleon_config::migration::migrate_to_current_salvaged(&contents);
 
         assert!(
             !salvage.dropped.iter().any(|path| path == "transcription"),
@@ -2830,8 +2830,8 @@ mod tests {
 
     #[tokio::test]
     async fn with_typed_providers_registers_dotted_alias_keys() {
-        use clawcrew_config::providers::TranscriptionProviders;
-        use clawcrew_config::schema::{
+        use galleon_config::providers::TranscriptionProviders;
+        use galleon_config::schema::{
             GroqTranscriptionProviderConfig, TranscriptionProviderConfig,
         };
 
@@ -2942,7 +2942,7 @@ mod channel_builder_tests {
         assert_eq!(sole.agent_transcription_provider, "groq");
 
         let mut two = config_with_legacy_groq();
-        two.transcription.openai = Some(clawcrew_config::schema::OpenAiSttConfig {
+        two.transcription.openai = Some(galleon_config::schema::OpenAiSttConfig {
             api_key: Some("k".to_string()),
             ..Default::default()
         });

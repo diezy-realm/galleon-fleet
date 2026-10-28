@@ -9,8 +9,8 @@ use cpal::Sample;
 use tokio::sync::mpsc;
 
 use crate::transcription::TranscriptionManager;
-use clawcrew_config::schema::TranscriptionConfig;
-use clawcrew_config::schema::VoiceWakeConfig;
+use galleon_config::schema::TranscriptionConfig;
+use galleon_config::schema::VoiceWakeConfig;
 
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
@@ -573,7 +573,7 @@ pub fn encode_wav_from_f32(samples: &[f32], sample_rate: u32, channels: u16) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::traits::ChannelConfig;
+    use galleon_config::traits::ChannelConfig;
 
     // ── State machine tests ────────────────────────────────
 
@@ -884,7 +884,7 @@ mod tests {
 
     #[tokio::test]
     async fn dotted_typed_provider_dispatches_through_voice_wake_manager() {
-        use clawcrew_config::schema::{Config, LocalWhisperTranscriptionProviderConfig};
+        use galleon_config::schema::{Config, LocalWhisperTranscriptionProviderConfig};
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 

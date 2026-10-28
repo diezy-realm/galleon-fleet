@@ -8,7 +8,7 @@ use crate::agent::turn::redact::scrub_credentials_value;
 use crate::hooks::traits::{HookHandler, HookResult};
 use clawcrew_api::hook::ToolCallHookContext;
 use clawcrew_api::tool::ToolResult;
-use clawcrew_config::schema::WebhookAuditConfig;
+use galleon_config::schema::WebhookAuditConfig;
 
 fn validate_webhook_url(url: &str) -> Result<(), String> {
     let parsed = reqwest::Url::parse(url).map_err(|e| format!("invalid webhook URL: {e}"))?;

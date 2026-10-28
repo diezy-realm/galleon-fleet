@@ -10,12 +10,12 @@
 //!
 //! Two couplings in the upstream body reached INTO `galleon-channels`-internal
 //! infrastructure. They were the RF-B1 split's real seams; both are now closed
-//! by sharing [`galleon_channel_core`] (which reuses the `clawcrew_config`
+//! by sharing [`galleon_channel_core`] (which reuses the `galleon_config`
 //! peer-policy SSOT without dragging the runtime):
 //!
 //! 1. **Allowlist policy — CLOSED.** `is_sender_allowed` now delegates to
 //!    [`galleon_channel_core::allowlist::is_user_allowed`], the full
-//!    grant/deny/`!name`/wildcard peer-policy (`clawcrew_config::schema`
+//!    grant/deny/`!name`/wildcard peer-policy (`galleon_config::schema`
 //!    semantics) rather than the earlier exact-match-plus-`*` stopgap.
 //! 2. **Approval prompt — SHARED, i18n is the remaining ceiling.** Token
 //!    generation, reply parsing and the prompt wire shape come from
@@ -27,7 +27,7 @@
 //! One coupling remains fully a local simplification:
 //!
 //! * **Structured logging + env proxy.** Upstream uses the `clawcrew_log`
-//!    structured-event macro and `clawcrew_config` env-proxy fallback. Here
+//!    structured-event macro and `galleon_config` env-proxy fallback. Here
 //!    logging is dropped (a proof crate needs no event bus) and only an
 //!    EXPLICIT per-channel `proxy_url` is honoured (plain `reqwest::Proxy`);
 //!    the env-proxy fallback is the ceiling.
@@ -88,7 +88,7 @@ pub struct SignalChannel {
     ignore_attachments: bool,
     ignore_stories: bool,
     /// Per-channel explicit proxy URL. `None` = direct connection.
-    /// ponytail: env-proxy fallback (upstream `clawcrew_config` runtime proxy)
+    /// ponytail: env-proxy fallback (upstream `galleon_config` runtime proxy)
     /// is the documented ceiling — only an explicit URL is honoured here.
     proxy_url: Option<String>,
     pending_approvals: Arc<Mutex<HashMap<String, oneshot::Sender<ChannelApprovalResponse>>>>,

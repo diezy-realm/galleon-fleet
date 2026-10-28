@@ -6,7 +6,7 @@ use futures_util::TryStreamExt;
 use mail_parser::{MessageParser, MimeHeaders};
 use clawcrew_api::attribution::ToolKind;
 use clawcrew_api::tool::{Tool, ToolResult};
-use clawcrew_config::scattered_types::EmailConfig;
+use galleon_config::scattered_types::EmailConfig;
 
 use crate::email_imap::imap_connect;
 use crate::email_search::{format_address, resolve_channel};

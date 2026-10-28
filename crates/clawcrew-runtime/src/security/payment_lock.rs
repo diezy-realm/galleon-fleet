@@ -4,7 +4,7 @@
 //! payment or financial transactions unless deliberately unlocked by the operator.
 //! Compliant with OWASP Agentic ASI09/ASI10 and AP2/FIDO preventive security principles.
 
-use clawcrew_config::schema::{PaymentActionCategory, PaymentLockConfig, PaymentLockMode};
+use galleon_config::schema::{PaymentActionCategory, PaymentLockConfig, PaymentLockMode};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

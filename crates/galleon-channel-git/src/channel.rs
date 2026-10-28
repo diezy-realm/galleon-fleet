@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_config::schema::GitConfig;
+use galleon_config::schema::GitConfig;
 
 use super::events::{self, EventFilter, GitEvent};
 use super::poll::{PollState, PollStream};
@@ -1048,7 +1048,7 @@ mod tests {
             let mut cfg = base_cfg();
             cfg.events.insert(
                 "pull_request.opened".to_string(),
-                clawcrew_config::schema::GitEventRoute {
+                galleon_config::schema::GitEventRoute {
                     message: false,
                     sop: Some("pr-triage".to_string()),
                 },
@@ -1209,7 +1209,7 @@ mod tests {
             let mut cfg = base_cfg();
             cfg.events.insert(
                 "workflow_run.failed".to_string(),
-                clawcrew_config::schema::GitEventRoute {
+                galleon_config::schema::GitEventRoute {
                     message: true,
                     sop: None,
                 },

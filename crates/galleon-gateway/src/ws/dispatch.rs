@@ -152,7 +152,7 @@ pub(crate) fn success_terminal_ws_frames(
 }
 
 pub(crate) fn needs_onboarding_ws_error(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
 ) -> Option<serde_json::Value> {
     let model = config.resolve_default_model().unwrap_or_default();
     crate::needs_quickstart_for(&model)?;
@@ -175,7 +175,7 @@ pub(crate) fn first_chat_message_content(text: &str) -> Option<String> {
 pub(crate) fn resolve_done_context_limits(
     usage_budget: Option<u64>,
     usage_model_window: Option<u64>,
-    active_limits: clawcrew_config::schema::ResolvedContextLimits,
+    active_limits: galleon_config::schema::ResolvedContextLimits,
 ) -> (u64, Option<u64>) {
     (
         usage_budget.unwrap_or(active_limits.context_token_budget as u64),
@@ -197,10 +197,10 @@ pub(crate) fn resolve_done_context_limits(
 /// was served this turn (a cache hit) does `final_limits` become `None`, and the
 /// frame falls back to the usage values, then to `fallback_limits`.
 pub(crate) fn done_frame_context_limits(
-    final_limits: Option<clawcrew_config::schema::ResolvedContextLimits>,
+    final_limits: Option<galleon_config::schema::ResolvedContextLimits>,
     usage_budget: Option<u64>,
     usage_model_window: Option<u64>,
-    fallback_limits: Option<clawcrew_config::schema::ResolvedContextLimits>,
+    fallback_limits: Option<galleon_config::schema::ResolvedContextLimits>,
 ) -> (u64, Option<u64>) {
     match final_limits {
         Some(limits) => (
@@ -210,11 +210,11 @@ pub(crate) fn done_frame_context_limits(
         None => resolve_done_context_limits(
             usage_budget,
             usage_model_window,
-            fallback_limits.unwrap_or(clawcrew_config::schema::ResolvedContextLimits {
-                model_context_window: clawcrew_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK,
+            fallback_limits.unwrap_or(galleon_config::schema::ResolvedContextLimits {
+                model_context_window: galleon_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK,
                 context_token_budget: 0,
                 model_context_window_source:
-                    clawcrew_config::schema::ModelContextWindowSource::CompatibilityFallback,
+                    galleon_config::schema::ModelContextWindowSource::CompatibilityFallback,
             }),
         ),
     }
@@ -433,13 +433,13 @@ pub(crate) async fn process_chat_message(
     let provider_label = turn_provider.clone();
     let cost_tracking_context = state.cost_tracker.as_ref().map(|tracker| {
         let config = state.config.read();
-        let pricing = clawcrew_config::cost::build_model_provider_pricing(&config);
-        clawcrew_config::cost::ToolLoopCostTrackingContext::new(tracker.clone(), Arc::new(pricing))
+        let pricing = galleon_config::cost::build_model_provider_pricing(&config);
+        galleon_config::cost::ToolLoopCostTrackingContext::new(tracker.clone(), Arc::new(pricing))
             .with_agent_alias(&turn_alias)
     });
     let turn_usage = state.cost_tracker.as_ref().map(|_| {
         Arc::new(parking_lot::Mutex::new(
-            clawcrew_config::cost::TurnUsage::default(),
+            galleon_config::cost::TurnUsage::default(),
         ))
     });
 
@@ -491,9 +491,9 @@ pub(crate) async fn process_chat_message(
         );
         clawcrew_api::scope_session_key(
             Some(session_key_owned.clone()),
-            clawcrew_config::cost::TOOL_LOOP_TURN_USAGE.scope(
+            galleon_config::cost::TOOL_LOOP_TURN_USAGE.scope(
                 turn_usage.clone(),
-                clawcrew_config::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
+                galleon_config::cost::TOOL_LOOP_COST_TRACKING_CONTEXT.scope(
                     cost_tracking_context.clone(),
                     agent
                         .turn_streamed_with_steering_state(
@@ -896,26 +896,26 @@ pub(crate) async fn process_chat_message(
             let fallback_limits = outcome.final_context_limits.is_none().then(|| {
                 let (budget, window) =
                     agent.context_limits_for_route_raw(&active_provider, &active_model);
-                clawcrew_config::schema::ResolvedContextLimits {
+                galleon_config::schema::ResolvedContextLimits {
                     model_context_window: window.unwrap_or(
-                        clawcrew_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK as u64,
+                        galleon_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK as u64,
                     ) as usize,
                     context_token_budget: budget.unwrap_or(0) as usize,
                     model_context_window_source: if window.is_some() {
-                        clawcrew_config::schema::ModelContextWindowSource::Configured
+                        galleon_config::schema::ModelContextWindowSource::Configured
                     } else {
-                        clawcrew_config::schema::ModelContextWindowSource::CompatibilityFallback
+                        galleon_config::schema::ModelContextWindowSource::CompatibilityFallback
                     },
                 }
             });
             let final_limits = outcome.final_context_limits.map(|l| {
-                clawcrew_config::schema::ResolvedContextLimits {
+                galleon_config::schema::ResolvedContextLimits {
                     model_context_window: l.model_context_window,
                     context_token_budget: l.context_token_budget,
                     model_context_window_source: if l.is_compatibility_fallback {
-                        clawcrew_config::schema::ModelContextWindowSource::CompatibilityFallback
+                        galleon_config::schema::ModelContextWindowSource::CompatibilityFallback
                     } else {
-                        clawcrew_config::schema::ModelContextWindowSource::Configured
+                        galleon_config::schema::ModelContextWindowSource::Configured
                     },
                 }
             });

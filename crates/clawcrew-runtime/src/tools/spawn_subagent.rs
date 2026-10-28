@@ -12,7 +12,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 use clawcrew_log::scope;
 
 /// Spawn an ephemeral SubAgent that inherits the parent agent's
@@ -300,7 +300,7 @@ impl Tool for SpawnSubagentTool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
+    use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
 
     fn config_with_agent(alias: &str) -> Config {
         let mut config = Config::default();

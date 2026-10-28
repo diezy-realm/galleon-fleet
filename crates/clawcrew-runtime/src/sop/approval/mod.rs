@@ -33,12 +33,12 @@ pub use principal::{ApprovalPrincipal, ApprovalSource};
 // The approval-policy config enums live in the config crate (one source of truth,
 // like `SopRunStoreBackend`); re-exported here so the runtime reads them from the
 // approval module.
-pub use clawcrew_config::schema::{ApprovalMode, ApprovalTimeoutAction};
+pub use galleon_config::schema::{ApprovalMode, ApprovalTimeoutAction};
 
 #[cfg(test)]
 mod config_tests {
     use super::{ApprovalMode, ApprovalTimeoutAction};
-    use clawcrew_config::schema::SopConfig;
+    use galleon_config::schema::SopConfig;
 
     #[test]
     fn defaults_are_backward_compatible_and_fail_closed() {

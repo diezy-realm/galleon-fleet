@@ -960,12 +960,12 @@ mod tests {
     fn pairing_guard(
         require: bool,
         tokens: &[&str],
-    ) -> Arc<clawcrew_config::pairing::PairingGuard> {
+    ) -> Arc<galleon_config::pairing::PairingGuard> {
         let owned: Vec<String> = tokens.iter().map(|t| (*t).to_string()).collect();
-        Arc::new(clawcrew_config::pairing::PairingGuard::new(
+        Arc::new(galleon_config::pairing::PairingGuard::new(
             require,
             &owned,
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ))
     }
 
@@ -976,7 +976,7 @@ mod tests {
     async fn route_withholds_credential_frame_on_unauthenticated_events_stream() {
         use tower::ServiceExt as _;
 
-        let mut state = crate::api::test_state(clawcrew_config::schema::Config::default());
+        let mut state = crate::api::test_state(galleon_config::schema::Config::default());
         state.pairing = pairing_guard(false, &[]);
         let (tx, _rx) = tokio::sync::broadcast::channel(16);
         state.event_tx = tx.clone();
@@ -1023,7 +1023,7 @@ mod tests {
         use tower::ServiceExt as _;
 
         // No token.
-        let mut state = crate::api::test_state(clawcrew_config::schema::Config::default());
+        let mut state = crate::api::test_state(galleon_config::schema::Config::default());
         state.pairing = pairing_guard(true, &["valid-token"]);
         let response = events_app(state)
             .oneshot(
@@ -1038,7 +1038,7 @@ mod tests {
         assert_eq!(response.status(), axum::http::StatusCode::UNAUTHORIZED);
 
         // Bad token.
-        let mut state = crate::api::test_state(clawcrew_config::schema::Config::default());
+        let mut state = crate::api::test_state(galleon_config::schema::Config::default());
         state.pairing = pairing_guard(true, &["valid-token"]);
         let response = events_app(state)
             .oneshot(
@@ -1060,7 +1060,7 @@ mod tests {
     async fn route_delivers_credential_without_marker_to_authenticated_client() {
         use tower::ServiceExt as _;
 
-        let mut state = crate::api::test_state(clawcrew_config::schema::Config::default());
+        let mut state = crate::api::test_state(galleon_config::schema::Config::default());
         state.pairing = pairing_guard(true, &["valid-token"]);
         let (tx, _rx) = tokio::sync::broadcast::channel(16);
         state.event_tx = tx.clone();

@@ -1,6 +1,6 @@
 //! Plugin manifest — `~/.clawcrew/tools/<name>/tool.toml` schema.
 
-use clawcrew_config::schema::PaymentActionCategory;
+use galleon_config::schema::PaymentActionCategory;
 use serde::Deserialize;
 
 /// Full plugin manifest — parsed from `tool.toml`.

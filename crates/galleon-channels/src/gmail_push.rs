@@ -12,7 +12,7 @@ use tokio::sync::{Mutex, mpsc};
 
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
-pub use clawcrew_config::scattered_types::GmailPushConfig;
+pub use galleon_config::scattered_types::GmailPushConfig;
 
 // ── Pub/Sub notification payload ─────────────────────────────────
 
@@ -166,7 +166,7 @@ impl GmailPushChannel {
         alias: impl Into<String>,
         peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
     ) -> Self {
-        let http = clawcrew_config::schema::apply_runtime_proxy_to_builder(
+        let http = galleon_config::schema::apply_runtime_proxy_to_builder(
             Client::builder().timeout(Duration::from_secs(30)),
             "channel.gmail_push",
         )

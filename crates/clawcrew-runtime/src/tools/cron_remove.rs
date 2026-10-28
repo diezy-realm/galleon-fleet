@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 pub struct CronRemoveTool {
     config: Arc<Config>,
@@ -135,7 +135,7 @@ mod tests {
     use super::*;
     use crate::security::AutonomyLevel;
     use tempfile::TempDir;
-    use clawcrew_config::schema::Config;
+    use galleon_config::schema::Config;
 
     const TEST_AGENT: &str = "test-agent";
     const OTHER_AGENT: &str = "other-agent";
@@ -167,7 +167,7 @@ mod tests {
             .ensure("openrouter", alias)
             .expect("known family");
         config.agents.entry(alias.to_string()).or_insert(
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 model_provider: format!("openrouter.{alias}").into(),
                 risk_profile: alias.into(),
                 runtime_profile: alias.into(),

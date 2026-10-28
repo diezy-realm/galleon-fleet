@@ -11,7 +11,7 @@ use crate::traits::{
     Memory, MemoryCategory, MemoryEntry, MemoryKind, SemanticSubtype, StoreOptions,
 };
 use clawcrew_api::model_provider::ModelProvider;
-use clawcrew_config::schema::MemoryConfig;
+use galleon_config::schema::MemoryConfig;
 use galleon_providers::ProviderDispatch;
 use galleon_providers::multimodal::strip_media_markers;
 
@@ -528,7 +528,7 @@ mod tests {
     use parking_lot::Mutex;
     use std::sync::Arc;
     use clawcrew_api::model_provider::ChatMessage;
-    use clawcrew_config::schema::{MemoryDedupAction, MemoryPolicyConfig, MemoryTypesConfig};
+    use galleon_config::schema::{MemoryDedupAction, MemoryPolicyConfig, MemoryTypesConfig};
 
     #[derive(Debug, Clone)]
     enum RecordedWrite {
@@ -1275,7 +1275,7 @@ mod consolidate_turn_tests {
     use std::sync::Mutex;
     use tempfile::TempDir;
     use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
-    use clawcrew_config::schema::MemoryDedupAction;
+    use galleon_config::schema::MemoryDedupAction;
 
     /// Scripted model: returns a canned consolidation reply (or fails) and
     /// records the prompt it was sent, so tests can assert on the outbound

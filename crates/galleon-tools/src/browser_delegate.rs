@@ -5,9 +5,9 @@ use regex::Regex;
 use std::sync::Arc;
 use tokio::time::{Duration, timeout};
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
+use galleon_config::policy::SecurityPolicy;
 
-pub use clawcrew_config::scattered_types::BrowserDelegateConfig;
+pub use galleon_config::scattered_types::BrowserDelegateConfig;
 
 /// Tool that delegates browser-based tasks to a browser-capable CLI subprocess.
 pub struct BrowserDelegateTool {

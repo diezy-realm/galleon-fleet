@@ -1,17 +1,17 @@
 use super::*;
 use crate::AppState;
 use axum::extract::State;
-use clawcrew_config::api_error::{ConfigApiCode, ConfigApiError};
-use clawcrew_config::dto::*;
+use galleon_config::api_error::{ConfigApiCode, ConfigApiError};
+use galleon_config::dto::*;
 
 const DEV_CONFIG_TEMPLATE: &str = include_str!("../../../../dev/config.template.toml");
 const DEV_HARNESS_TEMPLATE: &str = include_str!("../../../../dev/config.harness-test.toml");
 
-fn parse_dev_template(raw: &str, name: &str) -> clawcrew_config::schema::Config {
+fn parse_dev_template(raw: &str, name: &str) -> galleon_config::schema::Config {
     toml::from_str(raw).unwrap_or_else(|err| panic!("{name} must parse as schema V3: {err}"))
 }
 
-fn assert_common_dev_template_contract(cfg: &clawcrew_config::schema::Config) {
+fn assert_common_dev_template_contract(cfg: &galleon_config::schema::Config) {
     assert_eq!(cfg.schema_version, 3);
 
     let provider = cfg
@@ -44,7 +44,7 @@ fn assert_common_dev_template_contract(cfg: &clawcrew_config::schema::Config) {
         .expect("default risk profile must exist");
     assert_eq!(
         risk.level,
-        clawcrew_config::autonomy::AutonomyLevel::Supervised
+        galleon_config::autonomy::AutonomyLevel::Supervised
     );
     assert!(cfg.runtime_profile_for_agent("default").is_some());
 
@@ -115,7 +115,7 @@ fn dev_harness_template_preserves_runtime_contract() {
 
 #[test]
 fn build_agent_options_returns_every_configured_alias() {
-    let mut cfg = clawcrew_config::schema::Config::default();
+    let mut cfg = galleon_config::schema::Config::default();
     cfg.create_map_key("providers.models.anthropic", "default")
         .unwrap();
     cfg.create_map_key("risk_profiles", "alpha_risk").unwrap();
@@ -140,7 +140,7 @@ fn build_agent_options_returns_every_configured_alias() {
 
 #[test]
 fn typed_provider_catalog_keys_create_snake_config_sections() {
-    let mut cfg = clawcrew_config::schema::Config::default();
+    let mut cfg = galleon_config::schema::Config::default();
     let cases = [
         ("providers.models", "atomic_chat"),
         ("providers.models", "gemini_cli"),
@@ -172,7 +172,7 @@ fn typed_provider_catalog_keys_create_snake_config_sections() {
 
 #[test]
 fn derive_section_status_requires_dispatchable_agent() {
-    let mut cfg = clawcrew_config::schema::Config::default();
+    let mut cfg = galleon_config::schema::Config::default();
     let resp = derive_section_status(&cfg);
     assert!(resp.needs_quickstart);
     assert_eq!(resp.reason, "fresh_install");
@@ -240,7 +240,7 @@ fn derive_section_status_requires_dispatchable_agent() {
 
 #[test]
 fn derive_section_status_completed_sections_without_dispatchable_agent_stays_pending() {
-    let mut cfg = clawcrew_config::schema::Config::default();
+    let mut cfg = galleon_config::schema::Config::default();
     cfg.onboard_state
         .completed_sections
         .push("providers.models".into());
@@ -254,7 +254,7 @@ fn derive_section_status_completed_sections_without_dispatchable_agent_stays_pen
 
 #[test]
 fn apply_first_run_agent_defaults_binds_existing_provider_and_profiles() {
-    let mut cfg = clawcrew_config::schema::Config::default();
+    let mut cfg = galleon_config::schema::Config::default();
     cfg.create_map_key("providers.models.anthropic", "work")
         .unwrap();
     cfg.create_map_key("risk_profiles", "default").unwrap();
@@ -271,7 +271,7 @@ fn apply_first_run_agent_defaults_binds_existing_provider_and_profiles() {
 
 #[test]
 fn memory_section_ready_tracks_onboarding_progress_not_default_backend() {
-    let cfg = clawcrew_config::schema::Config::default();
+    let cfg = galleon_config::schema::Config::default();
     assert!(
         !section_ready(&cfg, "memory", false),
         "fresh onboarding should not show Memory checked merely because a default backend exists"
@@ -282,11 +282,11 @@ fn memory_section_ready_tracks_onboarding_progress_not_default_backend() {
     );
 }
 
-fn empty_cfg() -> clawcrew_config::schema::Config {
-    clawcrew_config::schema::Config::default()
+fn empty_cfg() -> galleon_config::schema::Config {
+    galleon_config::schema::Config::default()
 }
 
-fn section_test_state(config: clawcrew_config::schema::Config) -> AppState {
+fn section_test_state(config: galleon_config::schema::Config) -> AppState {
     let memory: std::sync::Arc<dyn clawcrew_api::memory_traits::Memory> =
         std::sync::Arc::new(galleon_memory::NoneMemory::new("none"));
     AppState {
@@ -299,15 +299,15 @@ fn section_test_state(config: clawcrew_config::schema::Config) -> AppState {
         memory_strategy: std::sync::Arc::new(
             galleon_memory::strategy::DefaultMemoryStrategy::with_config(
                 memory,
-                clawcrew_config::schema::MemoryConfig::default(),
+                galleon_config::schema::MemoryConfig::default(),
                 std::path::PathBuf::new(),
             ),
         ),
         auto_save: false,
-        pairing: std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
+        pairing: std::sync::Arc::new(galleon_config::pairing::PairingGuard::new(
             false,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         )),
         trust_forwarded_headers: false,
         rate_limiter: std::sync::Arc::new(crate::GatewayRateLimiter::new(100, 100, 100)),
@@ -379,7 +379,7 @@ fn handle_sections_derives_every_top_level_field_from_schema() {
     // Mirror handle_sections: map-keyed sections surface even when
     // their HashMap is empty (prop_fields only emits paths for
     // populated entries).
-    for s in clawcrew_config::schema::Config::map_key_sections() {
+    for s in galleon_config::schema::Config::map_key_sections() {
         if let Some(first) = s.path.split('.').next() {
             roots.insert(first.to_string());
         }
@@ -650,7 +650,7 @@ fn tunnel_picker_badges_present_option_fields_as_configured() {
     cfg.tunnel.tunnel_provider = "cloudflare".to_string();
     // Materialize the cloudflare nested Option directly so the picker sees
     // it as present, without writing the developer's real config.
-    cfg.tunnel.cloudflare = Some(clawcrew_config::schema::CloudflareTunnelConfig::default());
+    cfg.tunnel.cloudflare = Some(galleon_config::schema::CloudflareTunnelConfig::default());
     let items = tunnel_provider_picker(&cfg);
     let cloudflare = items
         .iter()
@@ -677,7 +677,7 @@ fn tunnel_picker_badges_present_option_fields_as_configured() {
 #[tokio::test]
 async fn tunnel_select_updates_canonical_provider_and_active_picker_badge() {
     let tmp = tempfile::tempdir().expect("tempdir");
-    let cfg = clawcrew_config::schema::Config {
+    let cfg = galleon_config::schema::Config {
         config_path: tmp.path().join("config.toml"),
         ..Default::default()
     };
@@ -726,7 +726,7 @@ async fn existing_section_selection_without_changes_skips_reload() {
 
     let tmp = tempfile::tempdir().expect("tempdir");
     let config_path = tmp.path().join("config.toml");
-    let mut cfg = clawcrew_config::schema::Config {
+    let mut cfg = galleon_config::schema::Config {
         config_path: config_path.clone(),
         ..Default::default()
     };
@@ -781,7 +781,7 @@ async fn unchanged_memory_and_tunnel_selections_skip_reload() {
 
     let memory_tmp = tempfile::tempdir().expect("memory tempdir");
     let memory_path = memory_tmp.path().join("config.toml");
-    let mut memory_cfg = clawcrew_config::schema::Config {
+    let mut memory_cfg = galleon_config::schema::Config {
         config_path: memory_path.clone(),
         ..Default::default()
     };
@@ -835,7 +835,7 @@ async fn unchanged_memory_and_tunnel_selections_skip_reload() {
 
     let tunnel_tmp = tempfile::tempdir().expect("tunnel tempdir");
     let tunnel_path = tunnel_tmp.path().join("config.toml");
-    let mut tunnel_cfg = clawcrew_config::schema::Config {
+    let mut tunnel_cfg = galleon_config::schema::Config {
         config_path: tunnel_path.clone(),
         ..Default::default()
     };
@@ -891,7 +891,7 @@ async fn unchanged_memory_selection_rejects_disk_drift() {
 
     let tmp = tempfile::tempdir().expect("memory tempdir");
     let config_path = tmp.path().join("config.toml");
-    let mut live_cfg = clawcrew_config::schema::Config {
+    let mut live_cfg = galleon_config::schema::Config {
         config_path: config_path.clone(),
         ..Default::default()
     };
@@ -950,7 +950,7 @@ async fn unchanged_tunnel_selection_rejects_default_disk_drift() {
 
     let tmp = tempfile::tempdir().expect("tunnel tempdir");
     let config_path = tmp.path().join("config.toml");
-    let mut live_cfg = clawcrew_config::schema::Config {
+    let mut live_cfg = galleon_config::schema::Config {
         config_path: config_path.clone(),
         ..Default::default()
     };
@@ -1013,7 +1013,7 @@ async fn unchanged_memory_and_tunnel_selections_reject_uninspectable_config() {
         for malformed in [false, true] {
             let tmp = tempfile::tempdir().expect("section tempdir");
             let config_path = tmp.path().join("config.toml");
-            let mut live_cfg = clawcrew_config::schema::Config {
+            let mut live_cfg = galleon_config::schema::Config {
                 config_path: config_path.clone(),
                 ..Default::default()
             };
@@ -1094,7 +1094,7 @@ async fn section_select_snapshot_read_failure_stops_before_save() {
     let tmp = tempfile::tempdir().unwrap();
     let config_path = tmp.path().join("config.toml");
     std::fs::create_dir_all(&config_path).unwrap();
-    let state = section_test_state(clawcrew_config::schema::Config {
+    let state = section_test_state(galleon_config::schema::Config {
         config_path: config_path.clone(),
         ..Default::default()
     });
@@ -1199,7 +1199,7 @@ fn one_tier_alias_map_picker_surfaces_created_aliases() {
 
 #[test]
 fn picker_dispatch_covers_every_section_variant() {
-    use clawcrew_config::sections::Section;
+    use galleon_config::sections::Section;
     let cfg = empty_cfg();
     // The full Section surface = wizard steps + explorer-only.
     // Spelling them out here pins both groups, so adding a row to

@@ -16,7 +16,7 @@
 //! single canonical user, so any of them resolves to the same groups. Until then,
 //! the config-backed resolver can grant a group to each channel identity directly.
 
-use clawcrew_config::schema::SopApprovalConfig;
+use galleon_config::schema::SopApprovalConfig;
 
 use super::principal::ApprovalPrincipal;
 
@@ -99,7 +99,7 @@ impl ApprovalIdentityResolver for LocalConfigApprovalIdentityResolver {
 mod tests {
     use super::*;
     use std::collections::HashMap;
-    use clawcrew_config::schema::ApprovalGroupConfig;
+    use galleon_config::schema::ApprovalGroupConfig;
 
     fn cfg_with(groups: &[(&str, &[&str])]) -> SopApprovalConfig {
         let mut map = HashMap::new();

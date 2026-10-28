@@ -128,7 +128,7 @@ mod tests {
     use crate::sop::engine::SopEngine;
     use crate::sop::types::*;
     use std::sync::Arc;
-    use clawcrew_config::schema::SopConfig;
+    use galleon_config::schema::SopConfig;
 
     fn test_sop(name: &str, priority: SopPriority) -> Sop {
         Sop {

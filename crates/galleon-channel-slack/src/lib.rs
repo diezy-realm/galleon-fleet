@@ -313,7 +313,7 @@ pub struct SlackChannel {
     api_base_url: Option<String>,
     /// Voice transcription config — when set, audio file attachments are
     /// downloaded, transcribed, and their text inlined into the message.
-    transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
+    transcription: Option<galleon_config::schema::TranscriptionConfig>,
     transcription_manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     /// Enable progressive draft message updates via `chat.update`.
     stream_drafts: bool,
@@ -573,7 +573,7 @@ impl SlackChannel {
             seen_threads: Mutex::new(HashSet::new()),
             api_method_cooldowns,
             thread_context_max_messages_resolver: Arc::new(|| {
-                clawcrew_config::schema::DEFAULT_SLACK_THREAD_CONTEXT_MAX_MESSAGES
+                galleon_config::schema::DEFAULT_SLACK_THREAD_CONTEXT_MAX_MESSAGES
             }),
             use_markdown_blocks: false,
             proxy_url: None,
@@ -700,7 +700,7 @@ impl SlackChannel {
     /// the legacy section, so it binds a lone registered provider and
     /// otherwise leaves the choice unbound (see
     /// `transcription::manager_from_snapshot`).
-    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(mut self, config: galleon_config::schema::TranscriptionConfig) -> Self {
         #[cfg(test)]
         {
             if config.enabled {
@@ -722,7 +722,7 @@ impl SlackChannel {
     /// transcription it cannot perform.
     pub fn with_transcription_manager(
         mut self,
-        config: clawcrew_config::schema::TranscriptionConfig,
+        config: galleon_config::schema::TranscriptionConfig,
         manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
@@ -1134,7 +1134,7 @@ impl SlackChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_channel_proxy_client_with_timeouts(
+        galleon_config::schema::build_channel_proxy_client_with_timeouts(
             "channel.slack",
             self.proxy_url.as_deref(),
             30,
@@ -2887,7 +2887,7 @@ impl SlackChannel {
     }
 
     fn slack_media_http_client_no_redirect(&self) -> anyhow::Result<reqwest::Client> {
-        let builder = clawcrew_config::schema::apply_channel_proxy_to_builder(
+        let builder = galleon_config::schema::apply_channel_proxy_to_builder(
             reqwest::Client::builder()
                 .redirect(reqwest::redirect::Policy::none())
                 .timeout(Duration::from_secs(30))
@@ -4235,7 +4235,7 @@ impl SlackChannel {
                 }
             };
 
-            let (ws_stream, _) = match clawcrew_config::schema::ws_connect_with_proxy(
+            let (ws_stream, _) = match galleon_config::schema::ws_connect_with_proxy(
                 &ws_url,
                 "channel.slack",
                 self.proxy_url.as_deref(),
@@ -6295,7 +6295,7 @@ mod tests {
     /// path binds the lone provider; the daemon path binds the owning agent's.
     #[test]
     fn with_transcription_binds_the_sole_provider() {
-        let tc = clawcrew_config::schema::TranscriptionConfig {
+        let tc = galleon_config::schema::TranscriptionConfig {
             enabled: true,
             api_key: Some("test_key".to_string()),
             ..Default::default()

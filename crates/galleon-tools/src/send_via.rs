@@ -3,9 +3,9 @@
 use async_trait::async_trait;
 use clawcrew_api::channel::{Channel, SendMessage};
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::multi_agent::OutputModality;
-use clawcrew_config::multi_agent::PeerGroupConfig;
-use clawcrew_config::policy::{SecurityPolicy, ToolOperation};
+use galleon_config::multi_agent::OutputModality;
+use galleon_config::multi_agent::PeerGroupConfig;
+use galleon_config::policy::{SecurityPolicy, ToolOperation};
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -585,7 +585,7 @@ mod tests {
     use async_trait::async_trait;
     use clawcrew_api::attribution::{Attributable, ChannelKind, Role};
     use clawcrew_api::channel::ChannelMessage;
-    use clawcrew_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
+    use galleon_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
 
     struct StubChannel {
         name: String,

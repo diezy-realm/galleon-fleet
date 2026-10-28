@@ -39,7 +39,7 @@ use serde::Deserialize;
 use clawcrew_api::principal::{
     AuthMethod, AuthOutcome, AuthenticatedIdentity, DenyReason, IdentitySubject,
 };
-use clawcrew_config::schema::{OidcActorKind, OidcConfig, OidcValidation};
+use galleon_config::schema::{OidcActorKind, OidcConfig, OidcValidation};
 
 use super::{AuthProvider, Credential};
 

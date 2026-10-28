@@ -30,7 +30,7 @@ use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio_util::sync::CancellationToken;
-use clawcrew_config::pairing::{PairingCodePolicy, PairingGuard};
+use galleon_config::pairing::{PairingCodePolicy, PairingGuard};
 
 use crate::security::cert_ledger::{CertLedger, CertStatus, IssuanceActor, LedgerEntry};
 
@@ -64,7 +64,7 @@ pub struct RelayProfile {
 /// fingerprint, sourced from the relay bridge's pin store when it exists.
 pub fn relay_profile(
     data_dir: &std::path::Path,
-    relay: &clawcrew_config::schema::RelayConfig,
+    relay: &galleon_config::schema::RelayConfig,
 ) -> RelayProfile {
     if relay.enabled && !relay.url.is_empty() {
         let node_id = crate::relay::ensure_node_id(data_dir, &relay.node_id)
@@ -894,7 +894,7 @@ mod tests {
         let _ = rustls::crypto::ring::default_provider().install_default();
         let dir = tempfile::tempdir().unwrap();
         let audit = crate::security::audit::AuditLogger::new(
-            clawcrew_config::schema::AuditConfig {
+            galleon_config::schema::AuditConfig {
                 enabled: true,
                 log_path: "missing/audit.log".to_string(),
                 max_size_mb: 100,
@@ -944,7 +944,7 @@ mod tests {
         let _ = rustls::crypto::ring::default_provider().install_default();
         let dir = tempfile::tempdir().unwrap();
         let audit = crate::security::audit::AuditLogger::new(
-            clawcrew_config::schema::AuditConfig {
+            galleon_config::schema::AuditConfig {
                 enabled: true,
                 log_path: "audit.log".to_string(),
                 max_size_mb: 100,
@@ -1024,7 +1024,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let audit = Arc::new(
             crate::security::audit::AuditLogger::new(
-                clawcrew_config::schema::AuditConfig {
+                galleon_config::schema::AuditConfig {
                     enabled: true,
                     log_path: "audit.log".to_string(),
                     max_size_mb: 100,

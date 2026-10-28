@@ -351,7 +351,7 @@ pub fn load_skills(workspace_dir: &Path) -> Vec<Skill> {
 /// Load skills using runtime config values (preferred at runtime).
 pub fn load_skills_with_config(
     workspace_dir: &Path,
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
 ) -> Vec<Skill> {
     load_skills_with_config_audited(workspace_dir, config).0
 }
@@ -360,7 +360,7 @@ pub fn load_skills_with_config(
 /// candidates the resolver skipped, so the dashboard can surface them
 pub fn load_skills_with_config_audited(
     workspace_dir: &Path,
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
 ) -> (Vec<Skill>, Vec<DroppedSkill>) {
     #[allow(unused_mut)]
     let (mut skills, mut dropped) = load_skills_with_open_skills_config(
@@ -382,7 +382,7 @@ pub fn load_skills_with_config_audited(
 
 pub fn load_skills_for_agent(
     workspace_dir: &Path,
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     agent_alias: &str,
 ) -> Vec<Skill> {
     load_skills_for_agent_audited(workspace_dir, config, agent_alias).0
@@ -405,7 +405,7 @@ fn origin_hint_of(skill: &Skill) -> &'static str {
 /// re-walking
 pub fn load_skills_for_agent_audited(
     workspace_dir: &Path,
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     agent_alias: &str,
 ) -> (Vec<Skill>, Vec<DroppedSkill>, Vec<ShadowedSkill>) {
     let (mut skills, mut dropped) = load_skills_with_config_audited(workspace_dir, config);
@@ -432,7 +432,7 @@ pub fn load_skills_for_agent_audited(
                 continue;
             }
         };
-        let dir = match clawcrew_config::skill_bundles::resolve_directory(
+        let dir = match galleon_config::skill_bundles::resolve_directory(
             config,
             &install_root,
             bundle_alias,
@@ -473,7 +473,7 @@ pub fn load_skills_for_agent_audited(
 }
 
 pub fn load_skills_for_agent_from_config(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     agent_alias: &str,
 ) -> Vec<Skill> {
     load_skills_for_agent_from_config_audited(config, agent_alias).0
@@ -483,7 +483,7 @@ pub fn load_skills_for_agent_from_config(
 /// candidates the resolver skipped — the dashboard's source for the
 /// skipped-audit banner and shadow badges
 pub fn load_skills_for_agent_from_config_audited(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     agent_alias: &str,
 ) -> (Vec<Skill>, Vec<DroppedSkill>, Vec<ShadowedSkill>) {
     load_skills_for_agent_audited(
@@ -1393,22 +1393,22 @@ pub fn skills_to_prompt(skills: &[Skill], workspace_dir: &Path) -> String {
     skills_to_prompt_with_mode(
         skills,
         workspace_dir,
-        clawcrew_config::schema::SkillsPromptInjectionMode::Full,
+        galleon_config::schema::SkillsPromptInjectionMode::Full,
     )
 }
 
 /// Resolve compact skill prompting against the effective tool surface.
 /// Compact mode is only safe when `read_skill` is available for the turn.
 pub fn skills_prompt_mode_with_loader_fallback(
-    mode: clawcrew_config::schema::SkillsPromptInjectionMode,
+    mode: galleon_config::schema::SkillsPromptInjectionMode,
     read_skill_available: bool,
-) -> clawcrew_config::schema::SkillsPromptInjectionMode {
+) -> galleon_config::schema::SkillsPromptInjectionMode {
     if matches!(
         mode,
-        clawcrew_config::schema::SkillsPromptInjectionMode::Compact
+        galleon_config::schema::SkillsPromptInjectionMode::Compact
     ) && !read_skill_available
     {
-        clawcrew_config::schema::SkillsPromptInjectionMode::Full
+        galleon_config::schema::SkillsPromptInjectionMode::Full
     } else {
         mode
     }
@@ -1435,7 +1435,7 @@ pub fn skills_to_prompt_with_mode(
     // The caller supplies the resolved mode after applying any runtime-profile
     // override over the global value. Full inlines instructions eagerly;
     // Compact renders summaries whose instructions load via `read_skill`.
-    mode: clawcrew_config::schema::SkillsPromptInjectionMode,
+    mode: galleon_config::schema::SkillsPromptInjectionMode,
 ) -> String {
     skills_to_prompt_with_mode_and_availability(skills, workspace_dir, mode, |_| true)
 }
@@ -1446,7 +1446,7 @@ pub fn skills_to_prompt_with_mode(
 pub(crate) fn skills_to_prompt_with_mode_and_availability(
     skills: &[Skill],
     workspace_dir: &Path,
-    mode: clawcrew_config::schema::SkillsPromptInjectionMode,
+    mode: galleon_config::schema::SkillsPromptInjectionMode,
     is_tool_available: impl Fn(&str) -> bool,
 ) -> String {
     use std::fmt::Write;
@@ -1457,7 +1457,7 @@ pub(crate) fn skills_to_prompt_with_mode_and_availability(
 
     let is_full = matches!(
         mode,
-        clawcrew_config::schema::SkillsPromptInjectionMode::Full
+        galleon_config::schema::SkillsPromptInjectionMode::Full
     );
 
     let mut prompt = if is_full {
@@ -2589,7 +2589,7 @@ pub fn is_extra_registry_source(source: &str) -> bool {
 pub fn parse_extra_registry_source(source: &str) -> Option<(String, String)> {
     let rest = source.strip_prefix("registry:")?;
     let (name, skill) = rest.split_once('/')?;
-    if !clawcrew_config::schema::ExternalRegistry::is_valid_name(name) || !is_registry_source(skill)
+    if !galleon_config::schema::ExternalRegistry::is_valid_name(name) || !is_registry_source(skill)
     {
         return None;
     }
@@ -2942,7 +2942,7 @@ pub fn install_extra_registry_skill_source(
     skills_path: &Path,
     allow_scripts: bool,
     workspace_dir: &Path,
-    extra_registries: &[clawcrew_config::schema::ExternalRegistry],
+    extra_registries: &[galleon_config::schema::ExternalRegistry],
     suppress_tier_banner: bool,
 ) -> Result<(PathBuf, usize)> {
     let (registry_name, skill_name) = parse_extra_registry_source(source).with_context(|| {
@@ -2972,7 +2972,7 @@ pub fn install_extra_registry_skill_source(
             }
         })?;
 
-    if registry.kind != clawcrew_config::schema::ExternalRegistryKind::Git {
+    if registry.kind != galleon_config::schema::ExternalRegistryKind::Git {
         anyhow::bail!(
             "registry '{registry_name}' uses unsupported kind '{}'; only 'git' is supported",
             registry.kind
@@ -3035,7 +3035,7 @@ pub fn install_extra_registry_skill_source(
 /// the same logical slot again.
 #[cfg(feature = "plugins-wasm")]
 pub fn load_plugin_skills_from_config(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
 ) -> (Vec<Skill>, Vec<DroppedSkill>) {
     if !config.plugins.enabled {
         return (Vec::new(), Vec::new());
@@ -3395,10 +3395,10 @@ mod registry_tests {
                 .unwrap();
             }
             mark_test_registry_fresh(&registry);
-            let configured = [clawcrew_config::schema::ExternalRegistry {
+            let configured = [galleon_config::schema::ExternalRegistry {
                 name: "custom".to_string(),
                 url: "unused".to_string(),
-                kind: clawcrew_config::schema::ExternalRegistryKind::Git,
+                kind: galleon_config::schema::ExternalRegistryKind::Git,
                 enabled: true,
             }];
 
@@ -4687,7 +4687,7 @@ mod prompt_callable_name_tests {
         let prompt = skills_to_prompt_with_mode(
             std::slice::from_ref(&skill),
             Path::new("/tmp"),
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
+            galleon_config::schema::SkillsPromptInjectionMode::Full,
         );
 
         let registered =
@@ -4833,7 +4833,7 @@ mod prompt_callable_name_tests {
         let prompt = skills_to_prompt_with_mode(
             std::slice::from_ref(&skill),
             Path::new("/tmp"),
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
+            galleon_config::schema::SkillsPromptInjectionMode::Full,
         );
 
         // The callable block comes first, the unregistered <tools> block after.
@@ -4881,15 +4881,15 @@ mod workspace_dir_regression_tests {
         data_dir: &Path,
         agent_alias: &str,
         workspace_path: PathBuf,
-    ) -> clawcrew_config::schema::Config {
-        let mut config = clawcrew_config::schema::Config {
+    ) -> galleon_config::schema::Config {
+        let mut config = galleon_config::schema::Config {
             config_path: install_root.join("config.toml"),
             data_dir: data_dir.to_path_buf(),
             ..Default::default()
         };
 
-        let agent = clawcrew_config::schema::AliasedAgentConfig {
-            workspace: clawcrew_config::multi_agent::AgentWorkspaceConfig {
+        let agent = galleon_config::schema::AliasedAgentConfig {
+            workspace: galleon_config::multi_agent::AgentWorkspaceConfig {
                 path: Some(workspace_path),
                 ..Default::default()
             },

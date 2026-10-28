@@ -1,5 +1,5 @@
 use clawcrew_api::runtime_traits::ShellDialect;
-use clawcrew_config::policy::{CommandRiskLevel, SecurityPolicy};
+use galleon_config::policy::{CommandRiskLevel, SecurityPolicy};
 
 fn powershell_policy() -> SecurityPolicy {
     let mut policy = SecurityPolicy::default();
@@ -152,7 +152,7 @@ fn unknown_powershell_cmdlets_are_high_risk_by_default() {
 
 #[test]
 fn powershell_batch_files_do_not_inherit_native_command_policy() {
-    use clawcrew_config::policy::AutonomyLevel;
+    use galleon_config::policy::AutonomyLevel;
 
     for (allowed, command) in [
         ("git", r".\git.bat status"),
@@ -205,7 +205,7 @@ fn powershell_exe_application_still_matches_native_allowlist_entry() {
 #[test]
 fn mutation_aliases_and_scoped_variables_are_high_risk() {
     let policy = SecurityPolicy {
-        autonomy: clawcrew_config::policy::AutonomyLevel::Full,
+        autonomy: galleon_config::policy::AutonomyLevel::Full,
         allowed_commands: vec!["*".into()],
         block_high_risk_commands: true,
         ..SecurityPolicy::default()
@@ -240,7 +240,7 @@ fn mutation_aliases_and_scoped_variables_are_high_risk() {
 
 #[test]
 fn wildcard_and_risk_flags_keep_their_existing_approval_semantics() {
-    use clawcrew_config::policy::AutonomyLevel;
+    use galleon_config::policy::AutonomyLevel;
 
     let supervised = SecurityPolicy {
         autonomy: AutonomyLevel::Supervised,

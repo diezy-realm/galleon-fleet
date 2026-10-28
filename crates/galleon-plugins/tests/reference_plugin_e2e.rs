@@ -18,7 +18,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::OnceLock;
 
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 use galleon_plugins::component::PluginLimits;
 use galleon_plugins::config::{PluginConfigResolver, resolve_plugin_config};
 use galleon_plugins::host::PluginHost;

@@ -7,8 +7,8 @@ use anyhow::{Context, Result};
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::Config;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::Config;
 
 #[derive(Debug, Clone, Default)]
 pub struct SubAgentOverrides {
@@ -223,7 +223,7 @@ impl Drop for SubagentActiveGuard {
 mod tests {
     use super::*;
     use std::path::PathBuf;
-    use clawcrew_config::schema::{AliasedAgentConfig, RiskProfileConfig};
+    use galleon_config::schema::{AliasedAgentConfig, RiskProfileConfig};
 
     fn config_with_agent(alias: &str) -> Config {
         let mut config = Config::default();

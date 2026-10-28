@@ -598,7 +598,7 @@ mod tests {
     use super::*;
     use crate::platform::{DockerRuntime, NativeRuntime, RuntimeAdapter};
     use crate::security::{AutonomyLevel, SecurityPolicy};
-    use clawcrew_config::schema::DockerRuntimeConfig;
+    use galleon_config::schema::DockerRuntimeConfig;
     use galleon_tools::wrappers::RateLimitedTool;
 
     #[tokio::test]
@@ -757,7 +757,7 @@ mod tests {
     #[tokio::test]
     async fn rebuilt_shell_tool_adopts_reloaded_runtime_shell_dialect() {
         use crate::platform::{ShellDialect, create_runtime};
-        use clawcrew_config::schema::Config;
+        use galleon_config::schema::Config;
 
         let mut config = Config::default();
         #[cfg(target_os = "windows")]

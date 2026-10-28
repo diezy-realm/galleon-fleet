@@ -540,9 +540,9 @@ mod tests {
     #[cfg(unix)]
     use tempfile::TempDir;
     #[cfg(any(feature = "gateway", unix))]
-    use clawcrew_config::schema::Config;
+    use galleon_config::schema::Config;
     #[cfg(unix)]
-    use clawcrew_config::schema::LucidStorageConfig;
+    use galleon_config::schema::LucidStorageConfig;
 
     #[cfg(unix)]
     #[tokio::test]

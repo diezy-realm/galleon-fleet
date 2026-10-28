@@ -9,7 +9,7 @@ use parking_lot::RwLock;
 // others enabled the import vanished while its uses remained, so
 // `--features channel-nextcloud` alone failed to compile. `--all-features`
 // hid it, because `channel-linq` was always along for the ride.
-use clawcrew_config::pairing::PairingGuard;
+use galleon_config::pairing::PairingGuard;
 use galleon_infra::session_backend::SessionBackend;
 use galleon_infra::session_sqlite::SqliteSessionBackend;
 use galleon_infra::session_store::SessionStore;
@@ -151,18 +151,18 @@ impl ::clawcrew_api::attribution::Attributable for MockModelProvider {
 
 /// Wire a minimal agent + model_provider + risk_profile into a test config
 /// so cron-add API tests have an `agent` reference to bind to.
-fn with_test_agent(mut config: clawcrew_config::schema::Config) -> clawcrew_config::schema::Config {
+fn with_test_agent(mut config: galleon_config::schema::Config) -> galleon_config::schema::Config {
     config.providers.models.openrouter.insert(
         "default".to_string(),
-        clawcrew_config::schema::OpenRouterModelProviderConfig::default(),
+        galleon_config::schema::OpenRouterModelProviderConfig::default(),
     );
     config.risk_profiles.insert(
         "test-profile".to_string(),
-        clawcrew_config::schema::RiskProfileConfig::default(),
+        galleon_config::schema::RiskProfileConfig::default(),
     );
     config.agents.insert(
         "test-agent".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             model_provider: "openrouter.default".into(),
             risk_profile: "test-profile".into(),
             ..Default::default()
@@ -171,7 +171,7 @@ fn with_test_agent(mut config: clawcrew_config::schema::Config) -> clawcrew_conf
     config
 }
 
-pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
+pub(crate) fn test_state(config: galleon_config::schema::Config) -> AppState {
     AppState {
         config: Arc::new(RwLock::new(config)),
         config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
@@ -182,7 +182,7 @@ pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
         memory_strategy: Arc::new(
             galleon_memory::strategy::DefaultMemoryStrategy::with_config(
                 Arc::new(MockMemory::default()),
-                clawcrew_config::schema::MemoryConfig::default(),
+                galleon_config::schema::MemoryConfig::default(),
                 std::path::PathBuf::new(),
             ),
         ),
@@ -190,7 +190,7 @@ pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
         pairing: Arc::new(PairingGuard::new(
             false,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         )),
         trust_forwarded_headers: false,
         rate_limiter: Arc::new(GatewayRateLimiter::new(100, 100, 100)),
@@ -244,7 +244,7 @@ pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
 }
 
 fn test_state_with_memory(
-    config: clawcrew_config::schema::Config,
+    config: galleon_config::schema::Config,
     entries: Vec<MemoryEntry>,
 ) -> AppState {
     AppState {
@@ -265,7 +265,7 @@ async fn response_json(response: axum::response::Response) -> serde_json::Value 
 
 #[tokio::test]
 async fn api_status_contract_includes_connected_nodes_and_mdns_peers() {
-    let state = test_state(clawcrew_config::schema::Config::default());
+    let state = test_state(galleon_config::schema::Config::default());
     let (invoke_tx, _invoke_rx) = tokio::sync::mpsc::channel(1);
     assert!(state.node_registry.register(nodes::NodeInfo {
         node_id: "connected-node".into(),
@@ -314,7 +314,7 @@ async fn api_status_contract_includes_connected_nodes_and_mdns_peers() {
 
 #[tokio::test]
 async fn api_status_contract_preserves_nullable_and_nested_fields() {
-    let state = test_state(clawcrew_config::schema::Config::default());
+    let state = test_state(galleon_config::schema::Config::default());
     let response = handle_api_status(
         State(state),
         HeaderMap::new(),
@@ -378,11 +378,11 @@ async fn api_status_contract_preserves_nullable_and_nested_fields() {
 
 #[test]
 fn integration_entry_json_derives_category_label_from_category() {
-    let entry = clawcrew_config::integrations::IntegrationEntry {
+    let entry = galleon_config::integrations::IntegrationEntry {
         name: "Browser".into(),
         description: "Run browser automation".into(),
-        category: clawcrew_config::integrations::IntegrationCategory::ToolsAutomation,
-        status: clawcrew_config::integrations::IntegrationStatus::Active,
+        category: galleon_config::integrations::IntegrationCategory::ToolsAutomation,
+        status: galleon_config::integrations::IntegrationStatus::Active,
         key: None,
     };
 
@@ -396,11 +396,11 @@ fn integration_entry_json_derives_category_label_from_category() {
 
 #[test]
 fn integration_entry_json_exposes_config_key() {
-    let entry = clawcrew_config::integrations::IntegrationEntry {
+    let entry = galleon_config::integrations::IntegrationEntry {
         name: "Z.AI".into(),
         description: String::new(),
-        category: clawcrew_config::integrations::IntegrationCategory::AiModel,
-        status: clawcrew_config::integrations::IntegrationStatus::Available,
+        category: galleon_config::integrations::IntegrationCategory::AiModel,
+        status: galleon_config::integrations::IntegrationStatus::Available,
         key: Some("zai".into()),
     };
 
@@ -453,7 +453,7 @@ fn truncate_memory_api_content_caps_total_chars_with_ellipsis() {
 
 #[tokio::test]
 async fn handle_api_memory_list_truncates_oversized_content() {
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.gateway.require_pairing = false;
     let huge = "x".repeat(MEMORY_API_CONTENT_MAX_CHARS + 128);
     let state = test_state_with_memory(config, vec![memory_entry_with_content(huge.clone())]);
@@ -484,7 +484,7 @@ async fn handle_api_memory_list_truncates_oversized_content() {
 
 #[tokio::test]
 async fn handle_api_memory_search_truncates_oversized_content_after_filtering() {
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.gateway.require_pairing = false;
     let huge = "火".repeat(MEMORY_API_CONTENT_MAX_CHARS + 128);
     let state = test_state_with_memory(config, vec![memory_entry_with_content(huge.clone())]);
@@ -515,7 +515,7 @@ async fn handle_api_memory_search_truncates_oversized_content_after_filtering() 
 async fn handle_api_tools_scopes_listing_by_agent_query() {
     use clawcrew_api::tool::ToolSpec;
 
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.gateway.require_pairing = false;
     let mut state = test_state(config);
 
@@ -575,10 +575,10 @@ async fn handle_api_tools_scopes_listing_by_agent_query() {
 
 #[test]
 fn api_channels_readiness_key_tracks_whatsapp_backend_type() {
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.channels.whatsapp.insert(
         "web".to_string(),
-        clawcrew_config::schema::WhatsAppConfig {
+        galleon_config::schema::WhatsAppConfig {
             enabled: true,
             session_path: Some("~/.clawcrew/state/whatsapp-web/session.db".into()),
             ..Default::default()
@@ -586,7 +586,7 @@ fn api_channels_readiness_key_tracks_whatsapp_backend_type() {
     );
     config.channels.whatsapp.insert(
         "cloud".to_string(),
-        clawcrew_config::schema::WhatsAppConfig {
+        galleon_config::schema::WhatsAppConfig {
             enabled: true,
             access_token: Some("token".into()),
             phone_number_id: Some("phone-id".into()),
@@ -596,7 +596,7 @@ fn api_channels_readiness_key_tracks_whatsapp_backend_type() {
     );
     config.channels.whatsapp.insert(
         "ambiguous".to_string(),
-        clawcrew_config::schema::WhatsAppConfig {
+        galleon_config::schema::WhatsAppConfig {
             enabled: true,
             access_token: Some("token".into()),
             phone_number_id: Some("phone-id".into()),
@@ -606,25 +606,25 @@ fn api_channels_readiness_key_tracks_whatsapp_backend_type() {
         },
     );
 
-    let web = clawcrew_config::schema::ChannelAliasInfo {
+    let web = galleon_config::schema::ChannelAliasInfo {
         channel_type: "whatsapp".to_string(),
         alias: "web".to_string(),
         owning_agent: None,
         enabled: true,
     };
-    let cloud = clawcrew_config::schema::ChannelAliasInfo {
+    let cloud = galleon_config::schema::ChannelAliasInfo {
         channel_type: "whatsapp".to_string(),
         alias: "cloud".to_string(),
         owning_agent: None,
         enabled: true,
     };
-    let ambiguous = clawcrew_config::schema::ChannelAliasInfo {
+    let ambiguous = galleon_config::schema::ChannelAliasInfo {
         channel_type: "whatsapp".to_string(),
         alias: "ambiguous".to_string(),
         owning_agent: None,
         enabled: true,
     };
-    let discord = clawcrew_config::schema::ChannelAliasInfo {
+    let discord = galleon_config::schema::ChannelAliasInfo {
         channel_type: "discord".to_string(),
         alias: "default".to_string(),
         owning_agent: None,
@@ -653,10 +653,10 @@ fn api_channels_readiness_key_tracks_whatsapp_backend_type() {
 #[cfg(not(feature = "channel-nextcloud"))]
 #[tokio::test]
 async fn api_channels_marks_configured_uncompiled_channel_unavailable() {
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.channels.nextcloud_talk.insert(
         "default".to_string(),
-        clawcrew_config::schema::NextcloudTalkConfig {
+        galleon_config::schema::NextcloudTalkConfig {
             enabled: true,
             base_url: "https://cloud.example.com".to_string(),
             app_token: None,
@@ -690,11 +690,11 @@ async fn api_channels_marks_configured_uncompiled_channel_unavailable() {
 
 /// Bind `channel_ref` (e.g. `"wechat.admin"`) to an enabled agent so
 /// readiness reaches the authenticated/listening probes.
-fn bind_channel_to_agent(config: &mut clawcrew_config::schema::Config, channel_ref: &str) {
+fn bind_channel_to_agent(config: &mut galleon_config::schema::Config, channel_ref: &str) {
     config.agents.insert(
         "rowan".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
-            channels: vec![clawcrew_config::providers::ChannelRef::new(
+        galleon_config::schema::AliasedAgentConfig {
+            channels: vec![galleon_config::providers::ChannelRef::new(
                 channel_ref.to_string(),
             )],
             ..Default::default()
@@ -706,11 +706,11 @@ fn bind_channel_to_agent(config: &mut clawcrew_config::schema::Config, channel_r
 #[tokio::test]
 async fn api_channels_wechat_authenticated_tracks_persisted_login() {
     let temp = tempfile::tempdir().unwrap();
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.gateway.require_pairing = false;
     config.channels.wechat.insert(
         "admin".to_string(),
-        clawcrew_config::schema::WeChatConfig {
+        galleon_config::schema::WeChatConfig {
             enabled: true,
             state_dir: Some(temp.path().to_string_lossy().into_owned()),
             ..Default::default()
@@ -772,11 +772,11 @@ async fn api_channels_wechat_authenticated_tracks_persisted_login() {
 async fn api_channels_whatsapp_web_unpaired_reports_missing_auth_without_touching_disk() {
     let temp = tempfile::tempdir().unwrap();
     let session_path = temp.path().join("session.db");
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.gateway.require_pairing = false;
     config.channels.whatsapp.insert(
         "admin".to_string(),
-        clawcrew_config::schema::WhatsAppConfig {
+        galleon_config::schema::WhatsAppConfig {
             enabled: true,
             session_path: Some(session_path.to_string_lossy().into_owned()),
             ..Default::default()
@@ -836,11 +836,11 @@ async fn api_channels_without_login_probe_keeps_authenticated_unknown() {
 #[tokio::test]
 async fn api_channel_relink_wechat_clears_persisted_login_then_noops() {
     let temp = tempfile::tempdir().unwrap();
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.gateway.require_pairing = false;
     config.channels.wechat.insert(
         "admin".to_string(),
-        clawcrew_config::schema::WeChatConfig {
+        galleon_config::schema::WeChatConfig {
             enabled: true,
             state_dir: Some(temp.path().to_string_lossy().into_owned()),
             ..Default::default()
@@ -887,11 +887,11 @@ async fn api_channel_relink_wechat_clears_persisted_login_then_noops() {
 async fn api_channel_relink_whatsapp_web_unpaired_noops_without_touching_disk() {
     let temp = tempfile::tempdir().unwrap();
     let session_path = temp.path().join("session.db");
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.gateway.require_pairing = false;
     config.channels.whatsapp.insert(
         "admin".to_string(),
-        clawcrew_config::schema::WhatsAppConfig {
+        galleon_config::schema::WhatsAppConfig {
             enabled: true,
             session_path: Some(session_path.to_string_lossy().into_owned()),
             ..Default::default()
@@ -939,7 +939,7 @@ async fn api_channel_relink_unsupported_channel_is_explicit_conflict_noop() {
 #[tokio::test]
 async fn api_channel_relink_unknown_channel_is_not_found() {
     let response = handle_api_channel_relink(
-        State(test_state(clawcrew_config::schema::Config::default())),
+        State(test_state(galleon_config::schema::Config::default())),
         Path("wechat.ghost".to_string()),
         HeaderMap::new(),
     )
@@ -954,7 +954,7 @@ async fn api_channel_relink_requires_bearer_auth_when_pairing_enabled() {
         pairing: Arc::new(PairingGuard::new(
             true,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         )),
         ..test_state(config_with_telegram("default"))
     };
@@ -986,13 +986,13 @@ fn config_with_webhook(
     bound: bool,
     port: u16,
     listen_path: Option<&str>,
-) -> clawcrew_config::schema::Config {
-    let mut config = clawcrew_config::schema::Config::default();
+) -> galleon_config::schema::Config {
+    let mut config = galleon_config::schema::Config::default();
     config.gateway.port = 42617;
     config.gateway.require_pairing = false;
     config.channels.webhook.insert(
         alias.to_string(),
-        clawcrew_config::schema::WebhookConfig {
+        galleon_config::schema::WebhookConfig {
             enabled,
             port,
             listen_path: listen_path.map(ToString::to_string),
@@ -1002,8 +1002,8 @@ fn config_with_webhook(
     if bound {
         config.agents.insert(
             "rowan".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
-                channels: vec![clawcrew_config::providers::ChannelRef::new(format!(
+            galleon_config::schema::AliasedAgentConfig {
+                channels: vec![galleon_config::providers::ChannelRef::new(format!(
                     "webhook.{alias}"
                 ))],
                 ..Default::default()
@@ -1013,11 +1013,11 @@ fn config_with_webhook(
     config
 }
 
-fn config_with_telegram(alias: &str) -> clawcrew_config::schema::Config {
-    let mut config = clawcrew_config::schema::Config::default();
+fn config_with_telegram(alias: &str) -> galleon_config::schema::Config {
+    let mut config = galleon_config::schema::Config::default();
     config.channels.telegram.insert(
         alias.to_string(),
-        clawcrew_config::schema::TelegramConfig {
+        galleon_config::schema::TelegramConfig {
             enabled: true,
             bot_token: "test-token".to_string(),
             ..Default::default()
@@ -1025,8 +1025,8 @@ fn config_with_telegram(alias: &str) -> clawcrew_config::schema::Config {
     );
     config.agents.insert(
         "rowan".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
-            channels: vec![clawcrew_config::providers::ChannelRef::new(format!(
+        galleon_config::schema::AliasedAgentConfig {
+            channels: vec![galleon_config::providers::ChannelRef::new(format!(
                 "telegram.{alias}"
             ))],
             ..Default::default()
@@ -1036,8 +1036,8 @@ fn config_with_telegram(alias: &str) -> clawcrew_config::schema::Config {
 }
 
 fn first_channel_info(
-    config: &clawcrew_config::schema::Config,
-) -> clawcrew_config::schema::ChannelAliasInfo {
+    config: &galleon_config::schema::Config,
+) -> galleon_config::schema::ChannelAliasInfo {
     config
         .channels_by_alias()
         .into_iter()
@@ -1134,7 +1134,7 @@ fn channel_readiness_webhook_uses_live_pairing_guard_for_auth() {
     state.pairing = Arc::new(PairingGuard::new(
         true,
         &[],
-        clawcrew_config::pairing::PairingCodePolicy::default(),
+        galleon_config::pairing::PairingCodePolicy::default(),
     ));
     let health = galleon_infra::health::snapshot();
     let info = first_channel_info(&config);
@@ -1194,12 +1194,12 @@ fn channel_readiness_orphan_channel_reports_missing_agent_binding_without_broken
 
 #[test]
 fn require_auth_rejects_empty_bearer_token() {
-    let config = clawcrew_config::schema::Config::default();
+    let config = galleon_config::schema::Config::default();
     let mut state = test_state(config);
     state.pairing = Arc::new(PairingGuard::new(
         true,
         &[],
-        clawcrew_config::pairing::PairingCodePolicy::default(),
+        galleon_config::pairing::PairingCodePolicy::default(),
     ));
 
     let mut headers = HeaderMap::new();
@@ -1245,7 +1245,7 @@ async fn api_channels_serializes_readiness_without_duplicate_summary_fields() {
 }
 
 fn test_state_with_session_backend(
-    config: clawcrew_config::schema::Config,
+    config: galleon_config::schema::Config,
     backend: Arc<dyn SessionBackend>,
 ) -> AppState {
     let mut state = test_state(config);
@@ -1256,10 +1256,10 @@ fn test_state_with_session_backend(
 #[tokio::test]
 async fn session_message_post_persists_and_broadcasts_to_session() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let backend: Arc<dyn SessionBackend> = Arc::new(SessionStore::new(tmp.path()).unwrap());
@@ -1318,10 +1318,10 @@ async fn session_message_post_persists_and_broadcasts_to_session() {
 #[tokio::test]
 async fn session_message_post_rejects_empty_content() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let backend: Arc<dyn SessionBackend> = Arc::new(SessionStore::new(tmp.path()).unwrap());
@@ -1349,10 +1349,10 @@ async fn session_message_post_rejects_empty_content() {
 #[tokio::test]
 async fn session_message_post_rejects_unknown_session_without_creating_it() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let backend: Arc<dyn SessionBackend> = Arc::new(SessionStore::new(tmp.path()).unwrap());
@@ -1381,10 +1381,10 @@ async fn session_message_post_rejects_unknown_session_without_creating_it() {
 #[tokio::test]
 async fn session_message_post_waits_for_session_queue_before_append() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let backend: Arc<dyn SessionBackend> = Arc::new(SessionStore::new(tmp.path()).unwrap());
@@ -1521,7 +1521,7 @@ fn gateway_display_session_id_strips_gw_prefix() {
 
 #[tokio::test]
 async fn session_abort_accepts_full_session_key_from_sessions_list() {
-    let state = test_state(clawcrew_config::schema::Config::default());
+    let state = test_state(galleon_config::schema::Config::default());
     let session_key = "gw_operator-1".to_string();
     let token = tokio_util::sync::CancellationToken::new();
     state
@@ -1546,7 +1546,7 @@ async fn session_abort_accepts_full_session_key_from_sessions_list() {
 
 #[tokio::test]
 async fn session_abort_still_accepts_display_session_id() {
-    let state = test_state(clawcrew_config::schema::Config::default());
+    let state = test_state(galleon_config::schema::Config::default());
     let token = tokio_util::sync::CancellationToken::new();
     state
         .cancel_tokens
@@ -1573,7 +1573,7 @@ async fn session_abort_still_accepts_display_session_id() {
 
 #[tokio::test]
 async fn session_abort_accepts_underscore_display_session_id() {
-    let state = test_state(clawcrew_config::schema::Config::default());
+    let state = test_state(galleon_config::schema::Config::default());
     let token = tokio_util::sync::CancellationToken::new();
     state
         .cancel_tokens
@@ -1605,7 +1605,7 @@ async fn session_abort_accepts_underscore_display_session_id() {
 
 #[tokio::test]
 async fn session_abort_accepts_dotted_display_session_id() {
-    let state = test_state(clawcrew_config::schema::Config::default());
+    let state = test_state(galleon_config::schema::Config::default());
     let token = tokio_util::sync::CancellationToken::new();
     state
         .cancel_tokens
@@ -1632,7 +1632,7 @@ async fn session_abort_accepts_dotted_display_session_id() {
 
 #[tokio::test]
 async fn session_abort_accepts_full_dotted_session_key() {
-    let state = test_state(clawcrew_config::schema::Config::default());
+    let state = test_state(galleon_config::schema::Config::default());
     let token = tokio_util::sync::CancellationToken::new();
     state
         .cancel_tokens
@@ -1659,7 +1659,7 @@ async fn session_abort_accepts_full_dotted_session_key() {
 
 #[tokio::test]
 async fn session_abort_keeps_dotted_and_underscored_ids_separate() {
-    let state = test_state(clawcrew_config::schema::Config::default());
+    let state = test_state(galleon_config::schema::Config::default());
     let dotted_token = tokio_util::sync::CancellationToken::new();
     let underscored_token = tokio_util::sync::CancellationToken::new();
     state
@@ -1712,10 +1712,10 @@ async fn session_abort_keeps_dotted_and_underscored_ids_separate() {
 #[tokio::test]
 async fn session_delete_cancels_full_dotted_session_key() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let backend: Arc<dyn SessionBackend> = Arc::new(SqliteSessionBackend::new(tmp.path()).unwrap());
@@ -1752,10 +1752,10 @@ async fn session_delete_cancels_full_dotted_session_key() {
 #[tokio::test]
 async fn session_delete_cancels_raw_dotted_turn_for_sanitized_persistence_key() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let backend: Arc<dyn SessionBackend> = Arc::new(SqliteSessionBackend::new(tmp.path()).unwrap());
@@ -1795,10 +1795,10 @@ async fn session_delete_cancels_raw_dotted_turn_for_sanitized_persistence_key() 
 #[tokio::test]
 async fn session_message_post_accepts_full_session_key() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let backend: Arc<dyn SessionBackend> = Arc::new(SessionStore::new(tmp.path()).unwrap());
@@ -1851,10 +1851,10 @@ async fn session_message_post_accepts_full_session_key() {
 #[tokio::test]
 async fn session_message_post_accepts_underscore_display_session_id() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let backend: Arc<dyn SessionBackend> = Arc::new(SessionStore::new(tmp.path()).unwrap());
@@ -1896,10 +1896,10 @@ async fn session_message_post_accepts_underscore_display_session_id() {
 #[tokio::test]
 async fn session_rename_accepts_full_session_key() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let backend: Arc<dyn SessionBackend> = Arc::new(SessionStore::new(tmp.path()).unwrap());
@@ -1933,10 +1933,10 @@ async fn session_rename_accepts_full_session_key() {
 #[tokio::test]
 async fn session_rename_accepts_underscore_display_session_id() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let backend: Arc<dyn SessionBackend> = Arc::new(SessionStore::new(tmp.path()).unwrap());
@@ -1965,10 +1965,10 @@ async fn session_rename_accepts_underscore_display_session_id() {
 #[tokio::test]
 async fn session_state_accepts_full_session_key_and_underscore_display_id() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     // File SessionStore does not persist turn state; SQLite does.
@@ -2015,10 +2015,10 @@ async fn session_state_accepts_full_session_key_and_underscore_display_id() {
 #[tokio::test]
 async fn cron_api_shell_roundtrip_includes_delivery() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2065,10 +2065,10 @@ async fn cron_api_shell_roundtrip_includes_delivery() {
 #[tokio::test]
 async fn cron_api_accepts_agent_jobs() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2108,10 +2108,10 @@ async fn cron_api_accepts_agent_jobs() {
 #[tokio::test]
 async fn cron_api_agent_job_persists_session_target_main() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2147,10 +2147,10 @@ async fn cron_api_agent_job_persists_session_target_main() {
 #[tokio::test]
 async fn cron_api_agent_job_accepts_session_target_case_and_whitespace() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2184,10 +2184,10 @@ async fn cron_api_agent_job_accepts_session_target_case_and_whitespace() {
 #[tokio::test]
 async fn cron_api_agent_job_rejects_invalid_session_target_as_bad_request() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2228,10 +2228,10 @@ async fn cron_api_agent_job_rejects_invalid_session_target_as_bad_request() {
 #[tokio::test]
 async fn cron_api_agent_job_rejects_empty_session_target_as_bad_request() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2272,10 +2272,10 @@ async fn cron_api_agent_job_rejects_empty_session_target_as_bad_request() {
 #[tokio::test]
 async fn cron_api_timezone_add_persists_explicit_timezone() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2312,10 +2312,10 @@ async fn cron_api_timezone_add_persists_explicit_timezone() {
 #[tokio::test]
 async fn cron_api_timezone_add_rejects_invalid_timezone_as_bad_request() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2350,10 +2350,10 @@ async fn cron_api_timezone_add_rejects_invalid_timezone_as_bad_request() {
 #[tokio::test]
 async fn cron_api_timezone_patch_schedule_preserves_existing_timezone() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2401,10 +2401,10 @@ async fn cron_api_timezone_patch_schedule_preserves_existing_timezone() {
 #[tokio::test]
 async fn cron_api_timezone_patch_replaces_timezone_when_provided() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2453,10 +2453,10 @@ async fn cron_api_timezone_patch_replaces_timezone_when_provided() {
 #[tokio::test]
 async fn cron_api_timezone_patch_sets_timezone_without_schedule_change() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2504,10 +2504,10 @@ async fn cron_api_timezone_patch_sets_timezone_without_schedule_change() {
 #[tokio::test]
 async fn cron_api_timezone_patch_rejects_invalid_timezone_as_bad_request() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2553,10 +2553,10 @@ async fn cron_api_timezone_patch_rejects_invalid_timezone_as_bad_request() {
 #[tokio::test]
 async fn cron_api_timezone_patch_clears_timezone_with_explicit_signal() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2604,10 +2604,10 @@ async fn cron_api_timezone_patch_clears_timezone_with_explicit_signal() {
 #[tokio::test]
 async fn cron_api_patch_enabled_without_agent() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2651,10 +2651,10 @@ async fn cron_api_patch_enabled_without_agent() {
 #[tokio::test]
 async fn cron_api_patch_name_and_schedule_without_agent() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2708,10 +2708,10 @@ async fn cron_api_patch_name_and_schedule_without_agent() {
 #[tokio::test]
 async fn cron_api_patch_shell_command_requires_known_agent() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2761,10 +2761,10 @@ async fn cron_api_patch_shell_command_requires_known_agent() {
 #[tokio::test]
 async fn cron_api_patch_shell_prompt_unknown_agent_is_bad_request_not_500() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2810,10 +2810,10 @@ async fn cron_api_patch_shell_prompt_unknown_agent_is_bad_request_not_500() {
 #[tokio::test]
 async fn cron_api_patch_agent_prompt_without_agent() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2867,10 +2867,10 @@ async fn cron_api_patch_agent_prompt_without_agent() {
 #[tokio::test]
 async fn cron_api_patch_updates_imperative_shell_output_format() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -2948,10 +2948,10 @@ async fn cron_api_patch_updates_imperative_shell_output_format() {
 #[tokio::test]
 async fn cron_api_patch_rejects_shell_output_format_for_declarative_job() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let mut config = clawcrew_config::schema::Config {
+    let mut config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     config = with_test_agent(config);
@@ -2960,10 +2960,10 @@ async fn cron_api_patch_rejects_shell_output_format_for_declarative_job() {
     // cron::store's own tests.
     config.agents.get_mut("test-agent").unwrap().cron_jobs = vec!["decl-job".to_string()];
 
-    let decl = clawcrew_config::schema::CronJobDecl {
+    let decl = galleon_config::schema::CronJobDecl {
         name: Some("decl-job".to_string()),
         job_type: "shell".to_string(),
-        schedule: clawcrew_config::schema::CronScheduleDecl::Cron {
+        schedule: galleon_config::schema::CronScheduleDecl::Cron {
             expr: "0 2 * * *".to_string(),
             tz: None,
         },
@@ -2975,7 +2975,7 @@ async fn cron_api_patch_rejects_shell_output_format_for_declarative_job() {
         uses_memory: true,
         session_target: None,
         delivery: None,
-        shell_output_format: clawcrew_config::schema::CronShellOutputFormat::Wrapped,
+        shell_output_format: galleon_config::schema::CronShellOutputFormat::Wrapped,
     };
     let mut decls = std::collections::HashMap::new();
     decls.insert("decl-job".to_string(), decl.clone());
@@ -3023,10 +3023,10 @@ async fn cron_api_patch_rejects_shell_output_format_for_declarative_job() {
 #[tokio::test]
 async fn cron_api_patch_rejects_shell_output_format_for_agent_job() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -3084,10 +3084,10 @@ async fn cron_api_patch_rejects_shell_output_format_for_agent_job() {
 #[tokio::test]
 async fn cron_api_add_rejects_shell_output_format_for_agent_job() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -3135,10 +3135,10 @@ async fn cron_api_add_rejects_shell_output_format_for_agent_job() {
 #[tokio::test]
 async fn cron_api_rejects_announce_delivery_without_target() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -3179,10 +3179,10 @@ async fn cron_api_rejects_announce_delivery_without_target() {
 #[tokio::test]
 async fn cron_api_run_executes_shell_job_and_records_run() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -3242,10 +3242,10 @@ async fn cron_api_run_records_best_effort_delivery_failure_as_degraded() {
     ));
 
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -3313,10 +3313,10 @@ async fn cron_api_run_records_best_effort_delivery_failure_as_degraded() {
 #[tokio::test]
 async fn cron_api_run_returns_not_found_for_unknown_job() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -3341,16 +3341,16 @@ use chrono::Utc;
 async fn paired_state_with_device(tmp: &tempfile::TempDir) -> (AppState, String, String) {
     let data_dir = tmp.path().join("workspace");
     std::fs::create_dir_all(&data_dir).unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: data_dir.clone(),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
 
     let pairing = Arc::new(PairingGuard::new(
         true,
         &[],
-        clawcrew_config::pairing::PairingCodePolicy::default(),
+        galleon_config::pairing::PairingCodePolicy::default(),
     ));
     let code = pairing.pairing_code().unwrap();
     let token = pairing.try_pair(&code, "test").await.unwrap().unwrap();
@@ -3444,7 +3444,7 @@ async fn backfilled_orphan_is_revocable_by_its_real_hash() {
     let pairing = PairingGuard::new(
         true,
         &[],
-        clawcrew_config::pairing::PairingCodePolicy::default(),
+        galleon_config::pairing::PairingCodePolicy::default(),
     );
     let code = pairing.pairing_code().unwrap();
     let token = pairing
@@ -3653,16 +3653,16 @@ async fn concurrent_rotates_do_not_both_issue_a_pairing_code() {
     let tmp = tempfile::TempDir::new().unwrap();
     let data_dir = tmp.path().join("workspace");
     std::fs::create_dir_all(&data_dir).unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: data_dir.clone(),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
 
     let pairing = Arc::new(PairingGuard::new(
         true,
         &[],
-        clawcrew_config::pairing::PairingCodePolicy::default(),
+        galleon_config::pairing::PairingCodePolicy::default(),
     ));
     let code = pairing.pairing_code().unwrap();
     let admin_token = pairing.try_pair(&code, "admin").await.unwrap().unwrap();
@@ -3671,7 +3671,7 @@ async fn concurrent_rotates_do_not_both_issue_a_pairing_code() {
     for id in ["dev-a", "dev-b"] {
         // Each device needs its own paired token so revoke has a hash.
         let code = pairing
-            .generate_new_pairing_code(clawcrew_config::pairing::PairingCodePolicy::default())
+            .generate_new_pairing_code(galleon_config::pairing::PairingCodePolicy::default())
             .expect("pairing enabled");
         let tok = pairing.try_pair(&code, id).await.unwrap().unwrap();
         registry
@@ -3730,10 +3730,10 @@ async fn concurrent_rotates_do_not_both_issue_a_pairing_code() {
 #[tokio::test]
 async fn cron_api_shell_raw_output_roundtrip() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("data"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
     let state = test_state(with_test_agent(config));
@@ -3812,10 +3812,10 @@ mod a2a_auth {
     const TOKEN: &str = "a2a-test-token";
 
     fn paired_state() -> AppState {
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.a2a.server.enabled = true;
-        let agent = clawcrew_config::schema::AliasedAgentConfig {
-            a2a: clawcrew_config::multi_agent::AgentA2aConfig {
+        let agent = galleon_config::schema::AliasedAgentConfig {
+            a2a: galleon_config::multi_agent::AgentA2aConfig {
                 published: true,
                 exposed_skills: Vec::new(),
             },
@@ -3826,7 +3826,7 @@ mod a2a_auth {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[TOKEN.to_string()],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         state
     }

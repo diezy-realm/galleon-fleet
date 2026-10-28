@@ -14,7 +14,7 @@ clawcrew-log.workspace = true
 clawcrew-api.workspace = true
 galleon-providers.workspace = true
 galleon-spawn.workspace = true
-clawcrew-config = { workspace = true, default-features = false }
+galleon-config = { workspace = true, default-features = false }
 anyhow = "1.0"
 async-trait = "0.1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
@@ -30,7 +30,7 @@ uuid = { version = "1.22", default-features = false, features = ["v4", "std"] }
 postgres = { version = "0.19", features = ["with-chrono-0_4"], optional = true }
 
 [features]
-memory-postgres = ["dep:postgres", "clawcrew-config/memory-postgres", "tokio/rt"]
+memory-postgres = ["dep:postgres", "galleon-config/memory-postgres", "tokio/rt"]
 
 [dev-dependencies]
 filetime = "0.2"

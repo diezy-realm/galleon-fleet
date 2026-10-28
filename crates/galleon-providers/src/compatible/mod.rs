@@ -19,7 +19,7 @@ use reqwest::{
     header::{HeaderMap, HeaderValue, USER_AGENT},
 };
 use serde::{Deserialize, Serialize};
-use clawcrew_config::schema::{CacheTtl, ToolResultImagePolicy};
+use galleon_config::schema::{CacheTtl, ToolResultImagePolicy};
 
 const TOOL_RESULT_IMAGE_OMITTED_NOTICE: &str = "[tool-result image omitted by provider policy]";
 
@@ -45,7 +45,7 @@ pub struct OpenAiCompatibleModelProvider {
     tool_result_image_policy: ToolResultImagePolicy,
     /// Operator `[multimodal]` policy for this provider's image-marker
     /// expansion pass. Resolved once at build time.
-    multimodal: clawcrew_config::schema::MultimodalConfig,
+    multimodal: galleon_config::schema::MultimodalConfig,
     user_agent: Option<String>,
     /// When true, collect all `system` messages and prepend their content
     /// to the first `user` message, then drop the system messages.
@@ -457,7 +457,7 @@ pub struct OpenAiCompatibleBuilder {
     auth_style: Option<AuthStyle>,
     supports_vision: bool,
     tool_result_image_policy: ToolResultImagePolicy,
-    multimodal: clawcrew_config::schema::MultimodalConfig,
+    multimodal: galleon_config::schema::MultimodalConfig,
     user_agent: Option<String>,
     /// Set via [`OpenAiCompatibleBuilder::merge_system_into_user`] — the
     /// combined "merge + drop native tool calling" preset. Distinct from
@@ -551,7 +551,7 @@ impl OpenAiCompatibleBuilder {
     /// Set the root `[multimodal]` policy used when expanding `[IMAGE:...]`
     /// markers into inline data URIs. Without this the provider falls back to
     /// library defaults and operator limits never reach the outbound request.
-    pub fn multimodal(mut self, config: clawcrew_config::schema::MultimodalConfig) -> Self {
+    pub fn multimodal(mut self, config: galleon_config::schema::MultimodalConfig) -> Self {
         self.multimodal = config;
         self
     }
@@ -812,7 +812,7 @@ impl OpenAiCompatibleModelProvider {
             auth_style: None,
             supports_vision: false,
             tool_result_image_policy: ToolResultImagePolicy::default(),
-            multimodal: clawcrew_config::schema::MultimodalConfig::default(),
+            multimodal: galleon_config::schema::MultimodalConfig::default(),
             user_agent: None,
             merge_system_into_user: false,
             merge_system_into_user_preserve_native: false,
@@ -951,7 +951,7 @@ impl OpenAiCompatibleModelProvider {
                 .default_headers(headers);
             let builder = crate::opencode_session::restrict_redirects(builder, &endpoint);
             let builder = self.add_tls_cert_to_builder(builder);
-            let builder = clawcrew_config::schema::apply_runtime_proxy_to_builder(
+            let builder = galleon_config::schema::apply_runtime_proxy_to_builder(
                 builder,
                 "model_provider.compatible",
             );
@@ -970,7 +970,7 @@ impl OpenAiCompatibleModelProvider {
             });
         }
 
-        clawcrew_config::schema::build_runtime_proxy_client_with_timeouts(
+        galleon_config::schema::build_runtime_proxy_client_with_timeouts(
             "model_provider.compatible",
             timeout,
             10,
@@ -1026,7 +1026,7 @@ impl OpenAiCompatibleModelProvider {
                 .default_headers(headers);
             let builder = crate::opencode_session::restrict_redirects(builder, &endpoint);
             let builder = self.add_tls_cert_to_builder(builder);
-            let builder = clawcrew_config::schema::apply_runtime_proxy_to_builder(
+            let builder = galleon_config::schema::apply_runtime_proxy_to_builder(
                 builder,
                 "provider.compatible",
             );
@@ -1049,7 +1049,7 @@ impl OpenAiCompatibleModelProvider {
             .read_timeout(super::stream_idle_timeout(self.timeout_secs).duration());
         let builder = crate::opencode_session::restrict_redirects(builder, &endpoint);
         let builder =
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(builder, "provider.compatible");
+            galleon_config::schema::apply_runtime_proxy_to_builder(builder, "provider.compatible");
         builder.build().unwrap_or_else(|error| {
             ::clawcrew_log::record!(
                 WARN,

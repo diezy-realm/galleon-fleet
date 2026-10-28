@@ -16,7 +16,7 @@ use tokio::time::{Duration, timeout};
 use tokio_stream::StreamExt;
 
 use crate::mcp_protocol::{JsonRpcRequest, JsonRpcResponse};
-use clawcrew_config::schema::{McpServerConfig, McpTransport};
+use galleon_config::schema::{McpServerConfig, McpTransport};
 
 /// Boundary for wrapping/sandboxing MCP stdio child processes.
 ///

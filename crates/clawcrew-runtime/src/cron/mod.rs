@@ -1,7 +1,7 @@
 use crate::security::SecurityPolicy;
 use anyhow::{Result, bail};
 use clawcrew_api::runtime_traits::RuntimeAdapter;
-use clawcrew_config::schema::{Config, CronShellOutputFormat};
+use galleon_config::schema::{Config, CronShellOutputFormat};
 
 mod schedule;
 mod store;
@@ -550,7 +550,7 @@ mod security_validation_tests {
         let config = test_config(&tmp);
 
         let security = SecurityPolicy::from_risk_profile(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             &config.data_dir,
         );
         assert!(security.is_command_allowed("echo safe"));
@@ -572,7 +572,7 @@ mod security_validation_tests {
             .level = crate::security::AutonomyLevel::Supervised;
 
         let security = SecurityPolicy::from_risk_profile(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             &config.data_dir,
         );
         let runtime = crate::platform::create_runtime(&config.runtime).unwrap();
@@ -658,7 +658,7 @@ mod remap_agent_command_tests {
             .ensure("openrouter", TEST_AGENT)
             .expect("known family");
         config.agents.entry(TEST_AGENT.to_string()).or_insert(
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 model_provider: format!("openrouter.{TEST_AGENT}").into(),
                 risk_profile: TEST_AGENT.into(),
                 runtime_profile: TEST_AGENT.into(),

@@ -7,7 +7,7 @@ use std::fmt;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::time::{self, Duration};
-use clawcrew_config::schema::HeartbeatConfig;
+use galleon_config::schema::HeartbeatConfig;
 
 // ── Structured task types ────────────────────────────────────────
 

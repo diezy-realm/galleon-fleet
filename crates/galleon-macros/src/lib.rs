@@ -123,7 +123,7 @@ fn attrs_have_serde_meta(attrs: &[syn::Attribute], ident: &str) -> bool {
 /// ```
 ///
 /// Live examples: see `ChannelsConfig`, `ProvidersConfig`, and `MemoryConfig`
-/// in `crates/clawcrew-config/src/schema.rs`.
+/// in `crates/galleon-config/src/schema.rs`.
 #[proc_macro_derive(
     Configurable,
     attributes(

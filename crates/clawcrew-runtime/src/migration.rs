@@ -4,7 +4,7 @@ use rusqlite::{Connection, OpenFlags, OptionalExtension};
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 use galleon_memory::{self, Memory, MemoryCategory};
 
 #[derive(Debug, Clone)]
@@ -456,7 +456,7 @@ mod tests {
     use super::*;
     use rusqlite::params;
     use tempfile::TempDir;
-    use clawcrew_config::schema::{Config, MemoryConfig};
+    use galleon_config::schema::{Config, MemoryConfig};
     use galleon_memory::SqliteMemory;
 
     fn test_config(workspace: &Path) -> Config {

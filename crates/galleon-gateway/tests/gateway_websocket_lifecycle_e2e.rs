@@ -5,8 +5,8 @@
 //! tokio-tungstenite with handshake, ping/pong heartbeats, and chat stream frame delivery.
 //! Zero mockup transport or stub routers used.
 
-use clawcrew_config::multi_agent::MemoryBackendKind;
-use clawcrew_config::schema::{
+use galleon_config::multi_agent::MemoryBackendKind;
+use galleon_config::schema::{
     AliasedAgentConfig, Config, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
     RuntimeProfileConfig,
 };
@@ -52,7 +52,7 @@ fn create_test_config(tmp: &tempfile::TempDir) -> Config {
         model_provider: "ollama.default".into(),
         risk_profile: "default".into(),
         runtime_profile: "default".into(),
-        workspace: clawcrew_config::multi_agent::AgentWorkspaceConfig {
+        workspace: galleon_config::multi_agent::AgentWorkspaceConfig {
             path: Some(workspace),
             ..Default::default()
         },

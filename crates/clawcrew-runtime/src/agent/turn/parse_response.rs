@@ -547,7 +547,7 @@ mod argument_preservation_tests {
     use crate::tools::{FileWriteTool, Tool, ToolSpec};
     use serde_json::{Value, json};
     use std::{collections::HashSet, sync::Arc};
-    use clawcrew_config::{autonomy::AutonomyLevel, policy::SecurityPolicy};
+    use galleon_config::{autonomy::AutonomyLevel, policy::SecurityPolicy};
 
     async fn interpret(
         spec: ToolSpec,
@@ -555,13 +555,13 @@ mod argument_preservation_tests {
         native: bool,
         use_native_tools: bool,
     ) -> InterpretedResponse {
-        let pacing = clawcrew_config::schema::PacingConfig::default();
+        let pacing = galleon_config::schema::PacingConfig::default();
         let ctx = TurnCtx {
             parent_agent_alias: None,
             observer: &crate::observability::NoopObserver,
             provider_name: "test.provider",
             model: "test-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+            context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: None,
             approval: None,
             channel_name: "",
@@ -575,7 +575,7 @@ mod argument_preservation_tests {
             strict_tool_parsing: false,
             channel: None,
             agent_alias: None,
-            draft_reasoning: clawcrew_config::schema::StreamReasoningMode::Status,
+            draft_reasoning: galleon_config::schema::StreamReasoningMode::Status,
             turn_id: "argument-preservation",
             serving_provider_name: None,
             serving_model: None,
@@ -779,7 +779,7 @@ mod cost_usd_regression_tests {
         let tmpdir = tempfile::TempDir::new().unwrap();
         let tracker = Arc::new(
             crate::cost::CostTracker::new(
-                clawcrew_config::schema::CostConfig::default(),
+                galleon_config::schema::CostConfig::default(),
                 tmpdir.path(),
             )
             .unwrap(),
@@ -796,18 +796,18 @@ mod cost_usd_regression_tests {
 
         // TurnCtx with event_tx wired; everything else empty/None.
         let (tx, mut rx) = tokio::sync::mpsc::channel::<TurnEvent>(4);
-        let pacing = clawcrew_config::schema::PacingConfig::default();
+        let pacing = galleon_config::schema::PacingConfig::default();
         let dedup_exempt_tools: Vec<String> = Vec::new();
         let ctx = TurnCtx {
             parent_agent_alias: None,
             observer: &crate::observability::NoopObserver,
             provider_name: provider,
             model,
-            context_limits: clawcrew_config::schema::ResolvedContextLimits {
+            context_limits: galleon_config::schema::ResolvedContextLimits {
                 model_context_window: 32_000,
                 context_token_budget: 32_000,
                 model_context_window_source:
-                    clawcrew_config::schema::ModelContextWindowSource::Configured,
+                    galleon_config::schema::ModelContextWindowSource::Configured,
             },
             temperature: None,
             approval: None,
@@ -821,7 +821,7 @@ mod cost_usd_regression_tests {
             pacing: &pacing,
             strict_tool_parsing: false,
             channel: None,
-            draft_reasoning: clawcrew_config::schema::StreamReasoningMode::Status,
+            draft_reasoning: galleon_config::schema::StreamReasoningMode::Status,
             agent_alias: None,
             turn_id: "turn-cost-regression",
             serving_provider_name: None,
@@ -946,14 +946,14 @@ mod cost_usd_regression_tests {
     #[tokio::test]
     async fn malformed_protocol_retains_usage_without_accepted_usage_event() {
         let (tx, mut rx) = tokio::sync::mpsc::channel::<TurnEvent>(1);
-        let pacing = clawcrew_config::schema::PacingConfig::default();
+        let pacing = galleon_config::schema::PacingConfig::default();
         let dedup_exempt_tools = Vec::new();
         let ctx = TurnCtx {
             parent_agent_alias: None,
             observer: &crate::observability::NoopObserver,
             provider_name: "requested.provider",
             model: "requested-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+            context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: None,
             approval: None,
             channel_name: "",
@@ -967,7 +967,7 @@ mod cost_usd_regression_tests {
             strict_tool_parsing: false,
             channel: None,
             agent_alias: None,
-            draft_reasoning: clawcrew_config::schema::StreamReasoningMode::Status,
+            draft_reasoning: galleon_config::schema::StreamReasoningMode::Status,
             turn_id: "malformed-protocol-usage",
             serving_provider_name: None,
             serving_model: None,

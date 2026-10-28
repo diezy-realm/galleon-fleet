@@ -1,6 +1,6 @@
 //! Per-caller loop behaviour knobsconsolidation).
 
-use clawcrew_config::schema::StreamReasoningMode;
+use galleon_config::schema::StreamReasoningMode;
 
 /// How to handle max-tool-iteration exhaustion.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

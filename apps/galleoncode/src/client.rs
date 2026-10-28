@@ -3293,7 +3293,7 @@ pub struct ConfigSectionEntry {
     pub help: String,
     pub completed: bool,
     /// Display group label (`"Foundation"`, `"Tools"`, …) from
-    /// `clawcrew_config::sections::SectionGroup::label()`. Empty when
+    /// `galleon_config::sections::SectionGroup::label()`. Empty when
     /// the daemon predates group plumbing — the sections pane falls
     /// back to the flat ungrouped list.
     #[serde(default)]
@@ -3517,7 +3517,7 @@ pub enum QuickstartFieldSection {
     Channel,
 }
 
-/// Mirror of `clawcrew_config::traits::PropKind` (wire form).
+/// Mirror of `galleon_config::traits::PropKind` (wire form).
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum QuickstartFieldKind {
@@ -3586,7 +3586,7 @@ pub struct QuickstartStateResult {
     pub personality_files: Vec<String>,
 }
 
-/// Mirror of `clawcrew_config::presets::RiskPreset` / `RuntimePreset`.
+/// Mirror of `galleon_config::presets::RiskPreset` / `RuntimePreset`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct QuickstartPresetMirror {
     pub preset_name: String,

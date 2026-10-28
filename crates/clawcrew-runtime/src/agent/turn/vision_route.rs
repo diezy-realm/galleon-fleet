@@ -1,7 +1,7 @@
 //! Vision model-provider routing and per-iteration message preparation.
 
 use anyhow::Result;
-use clawcrew_config::schema::{Config, MultimodalConfig};
+use galleon_config::schema::{Config, MultimodalConfig};
 use galleon_providers::{ChatMessage, ModelProvider, ProviderCapabilityError, multimodal};
 
 pub(crate) struct ResolvedVisionProvider {
@@ -315,7 +315,7 @@ mod tests {
     /// None)` path ignored it entirely).
     #[test]
     fn resolve_vision_provider_honors_configured_alias_vision_override() {
-        use clawcrew_config::schema::{Config, MultimodalConfig};
+        use galleon_config::schema::{Config, MultimodalConfig};
 
         struct NonVisionPrimary;
         #[async_trait::async_trait]
@@ -513,7 +513,7 @@ vision = false
         use axum::{Json, Router, extract::State, routing::post};
         use serde_json::json;
         use tokio::sync::mpsc;
-        use clawcrew_config::schema::{Config, MultimodalConfig};
+        use galleon_config::schema::{Config, MultimodalConfig};
 
         async fn capture_model(
             State(tx): State<mpsc::UnboundedSender<String>>,

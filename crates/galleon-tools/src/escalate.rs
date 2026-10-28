@@ -6,8 +6,8 @@ use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::policy::ToolOperation;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::policy::ToolOperation;
 
 const DEFAULT_TIMEOUT_SECS: u64 = 600;
 

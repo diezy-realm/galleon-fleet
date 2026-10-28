@@ -1,6 +1,6 @@
 //! Configuration drift detection and inspection.
 
-use clawcrew_config::api_error::{ConfigApiCode, ConfigApiError};
+use galleon_config::api_error::{ConfigApiCode, ConfigApiError};
 use serde::Serialize;
 
 use super::is_false;
@@ -36,12 +36,12 @@ pub(crate) fn is_gateway_managed_field(name: &str) -> bool {
     matches!(name, "gateway.paired_tokens")
 }
 
-pub async fn compute_drift(in_memory: &clawcrew_config::schema::Config) -> Vec<DriftEntry> {
+pub async fn compute_drift(in_memory: &galleon_config::schema::Config) -> Vec<DriftEntry> {
     try_compute_drift(in_memory).await.unwrap_or_default()
 }
 
 pub async fn try_compute_drift(
-    in_memory: &clawcrew_config::schema::Config,
+    in_memory: &galleon_config::schema::Config,
 ) -> Result<ConfigDriftSummary, ConfigApiError> {
     let path = &in_memory.config_path;
     let raw = match tokio::fs::read_to_string(path).await {
@@ -56,7 +56,7 @@ pub async fn try_compute_drift(
     };
 
     // Re-parse the on-disk form into a fresh Config for value-by-value comparison.
-    let mut on_disk = toml::from_str::<clawcrew_config::schema::Config>(&raw).map_err(|_| {
+    let mut on_disk = toml::from_str::<galleon_config::schema::Config>(&raw).map_err(|_| {
         ConfigApiError::new(
             ConfigApiCode::ConfigChangedExternally,
             "cannot compare changes because the canonical config is malformed",
@@ -64,13 +64,13 @@ pub async fn try_compute_drift(
     })?;
     on_disk.config_path = path.clone();
 
-    let in_memory_props: std::collections::HashMap<String, clawcrew_config::traits::PropFieldInfo> =
+    let in_memory_props: std::collections::HashMap<String, galleon_config::traits::PropFieldInfo> =
         in_memory
             .prop_fields()
             .into_iter()
             .map(|p| (p.name.clone(), p))
             .collect();
-    let on_disk_props: std::collections::HashMap<String, clawcrew_config::traits::PropFieldInfo> =
+    let on_disk_props: std::collections::HashMap<String, galleon_config::traits::PropFieldInfo> =
         on_disk
             .prop_fields()
             .into_iter()
@@ -94,10 +94,10 @@ pub async fn try_compute_drift(
         let disk = on_disk_props.get(name);
         let mem_display = mem
             .map(|p| p.display_value.as_str())
-            .unwrap_or(clawcrew_config::traits::UNSET_DISPLAY);
+            .unwrap_or(galleon_config::traits::UNSET_DISPLAY);
         let disk_display = disk
             .map(|p| p.display_value.as_str())
-            .unwrap_or(clawcrew_config::traits::UNSET_DISPLAY);
+            .unwrap_or(galleon_config::traits::UNSET_DISPLAY);
         if mem_display == disk_display {
             continue;
         }

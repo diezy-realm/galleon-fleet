@@ -5,8 +5,8 @@ use axum::{
     http::HeaderMap,
     response::{IntoResponse, Response},
 };
-use clawcrew_config::api_error::{ConfigApiCode, ConfigApiError};
-use clawcrew_config::typed_value::coerce_for_set_prop as json_to_setprop_string;
+use galleon_config::api_error::{ConfigApiCode, ConfigApiError};
+use galleon_config::typed_value::coerce_for_set_prop as json_to_setprop_string;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -56,7 +56,7 @@ pub struct PatchResponse {
     pub results: Vec<PatchOpResult>,
     /// Non-fatal validation warnings against the saved configuration.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub warnings: Vec<clawcrew_config::validation_warnings::ValidationWarning>,
+    pub warnings: Vec<galleon_config::validation_warnings::ValidationWarning>,
 }
 
 pub(crate) fn parse_patch_ops(value: serde_json::Value) -> Result<Vec<PatchOp>, ConfigApiError> {
@@ -126,7 +126,7 @@ pub(crate) fn parse_patch_ops(value: serde_json::Value) -> Result<Vec<PatchOp>, 
 /// mutex instead of the one actually held.
 pub async fn persist_and_swap(
     state: &AppState,
-    mut new_config: clawcrew_config::schema::Config,
+    mut new_config: galleon_config::schema::Config,
     _guard: &ConfigWriteGuard,
 ) -> Result<(), ConfigApiError> {
     debug_assert!(
@@ -183,7 +183,7 @@ pub(crate) fn reject_masked_secret_value(
     value: &str,
 ) -> Result<(), ConfigApiError> {
     if is_sensitive
-        && (value == clawcrew_config::traits::MASKED_SECRET || value == "****" || value.is_empty())
+        && (value == galleon_config::traits::MASKED_SECRET || value == "****" || value.is_empty())
     {
         return Err(ConfigApiError::new(
             ConfigApiCode::ValidationFailed,
@@ -458,7 +458,7 @@ pub async fn handle_patch(
     }
     if !annotations.is_empty()
         && let Err(e) =
-            clawcrew_config::comment_writer::apply_comments(&config_path, &annotations).await
+            galleon_config::comment_writer::apply_comments(&config_path, &annotations).await
     {
         // Comments are best-effort decoration; surface as a non-fatal warn.
         // The patch itself succeeded — return success but log the failure.

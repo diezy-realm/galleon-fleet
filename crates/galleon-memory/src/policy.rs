@@ -1,7 +1,7 @@
 //! Policy engine for memory operations.
 
 use super::traits::MemoryCategory;
-use clawcrew_config::schema::MemoryPolicyConfig;
+use galleon_config::schema::MemoryPolicyConfig;
 
 /// Policy enforcer that validates memory operations.
 pub struct PolicyEnforcer {

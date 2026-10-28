@@ -6,8 +6,8 @@ use std::sync::{Arc, OnceLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::io::AsyncWriteExt;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::FileDownloadConfig;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::FileDownloadConfig;
 
 const RESPONSE_BODY_LIMIT_BYTES: usize = 4 * 1024;
 const TOOL_DESCRIPTION_KEY: &str = "tool-file-download";
@@ -279,7 +279,7 @@ impl Tool for FileDownloadTool {
             .connect_timeout(Duration::from_secs(10))
             .redirect(reqwest::redirect::Policy::none());
         let builder =
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(builder, "tool.file_download");
+            galleon_config::schema::apply_runtime_proxy_to_builder(builder, "tool.file_download");
         let client = match builder.build() {
             Ok(c) => c,
             Err(e) => {
@@ -425,7 +425,7 @@ mod tests {
     use tempfile::TempDir;
     use wiremock::matchers::{header, method, path, query_param};
     use wiremock::{Mock, MockServer, ResponseTemplate};
-    use clawcrew_config::autonomy::AutonomyLevel;
+    use galleon_config::autonomy::AutonomyLevel;
 
     fn test_security(workspace: PathBuf, level: AutonomyLevel) -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy {

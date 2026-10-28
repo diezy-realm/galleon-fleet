@@ -103,7 +103,7 @@ fn policy(max_connections: usize) -> EgressHostService {
 }
 
 fn default_max_connections_per_instance() -> usize {
-    clawcrew_config::schema::PluginLimitsConfig::default().max_connections_per_instance
+    galleon_config::schema::PluginLimitsConfig::default().max_connections_per_instance
 }
 
 /// Run the fixture's `execute` and return its report line.

@@ -213,7 +213,7 @@ impl WebSearchTool {
     /// recorded the path in `env_overridden_paths`; this returns that value,
     /// blank included, only while the override is active, and `None` when the
     /// on-disk field is the source of truth.
-    pub fn keenable_api_key_override(config: &clawcrew_config::schema::Config) -> Option<String> {
+    pub fn keenable_api_key_override(config: &galleon_config::schema::Config) -> Option<String> {
         config
             .prop_is_env_overridden(KEENABLE_API_KEY_PROP_PATH)
             .then(|| {
@@ -310,7 +310,7 @@ impl WebSearchTool {
         // Fast path: boot-time key is present and usable (not an encrypted blob).
         if let Some(ref key) = self.boot_brave_api_key
             && !key.is_empty()
-            && !clawcrew_config::secrets::SecretStore::is_encrypted(key)
+            && !galleon_config::secrets::SecretStore::is_encrypted(key)
         {
             return Ok(key.clone());
         }
@@ -339,7 +339,7 @@ impl WebSearchTool {
             ))
         })?;
 
-        let config: clawcrew_config::schema::Config = toml::from_str(&contents).map_err(|e| {
+        let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
             ::clawcrew_log::record!(
                 ERROR,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
@@ -373,10 +373,10 @@ impl WebSearchTool {
             })?;
 
         // Decrypt if necessary.
-        if clawcrew_config::secrets::SecretStore::is_encrypted(&raw_key) {
+        if galleon_config::secrets::SecretStore::is_encrypted(&raw_key) {
             let clawcrew_dir = self.config_path.parent().unwrap_or_else(|| Path::new("."));
             let store =
-                clawcrew_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
+                galleon_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
             let plaintext = store.decrypt(&raw_key)?;
             if plaintext.is_empty() {
                 anyhow::bail!("Brave API key not configured (decrypted value is empty)");
@@ -415,7 +415,7 @@ impl WebSearchTool {
             .timeout(Duration::from_secs(self.timeout_secs))
             .user_agent(headers.user_agent);
         let builder =
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
+            galleon_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
         let client = builder.build()?;
 
         let response = client
@@ -509,7 +509,7 @@ impl WebSearchTool {
 
         let builder = reqwest::Client::builder().timeout(Duration::from_secs(self.timeout_secs));
         let builder =
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
+            galleon_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
         let client = builder.build()?;
 
         let response = client
@@ -532,7 +532,7 @@ impl WebSearchTool {
     fn resolve_tavily_api_key(&self) -> anyhow::Result<String> {
         if let Some(ref key) = self.boot_tavily_api_key
             && !key.is_empty()
-            && !clawcrew_config::secrets::SecretStore::is_encrypted(key)
+            && !galleon_config::secrets::SecretStore::is_encrypted(key)
         {
             return Ok(key.clone());
         }
@@ -559,7 +559,7 @@ impl WebSearchTool {
             ))
         })?;
 
-        let config: clawcrew_config::schema::Config = toml::from_str(&contents).map_err(|e| {
+        let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
             ::clawcrew_log::record!(
                 ERROR,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
@@ -592,10 +592,10 @@ impl WebSearchTool {
                 anyhow::Error::msg("Tavily API key not configured")
             })?;
 
-        if clawcrew_config::secrets::SecretStore::is_encrypted(&raw_key) {
+        if galleon_config::secrets::SecretStore::is_encrypted(&raw_key) {
             let clawcrew_dir = self.config_path.parent().unwrap_or_else(|| Path::new("."));
             let store =
-                clawcrew_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
+                galleon_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
             let plaintext = store.decrypt(&raw_key)?;
             if plaintext.is_empty() {
                 anyhow::bail!("Tavily API key not configured (decrypted value is empty)");
@@ -615,7 +615,7 @@ impl WebSearchTool {
     fn build_tavily_client(&self) -> anyhow::Result<reqwest::Client> {
         let builder = reqwest::Client::builder().timeout(Duration::from_secs(self.timeout_secs));
         let builder =
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
+            galleon_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
         Ok(builder.build()?)
     }
 
@@ -708,7 +708,7 @@ impl WebSearchTool {
     fn resolve_jina_api_key(&self) -> anyhow::Result<String> {
         if let Some(ref key) = self.boot_jina_api_key
             && !key.is_empty()
-            && !clawcrew_config::secrets::SecretStore::is_encrypted(key)
+            && !galleon_config::secrets::SecretStore::is_encrypted(key)
         {
             return Ok(key.clone());
         }
@@ -735,7 +735,7 @@ impl WebSearchTool {
             ))
         })?;
 
-        let config: clawcrew_config::schema::Config = toml::from_str(&contents).map_err(|e| {
+        let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
             ::clawcrew_log::record!(
                 ERROR,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
@@ -768,10 +768,10 @@ impl WebSearchTool {
                 anyhow::Error::msg("Jina AI API key not configured")
             })?;
 
-        if clawcrew_config::secrets::SecretStore::is_encrypted(&raw_key) {
+        if galleon_config::secrets::SecretStore::is_encrypted(&raw_key) {
             let clawcrew_dir = self.config_path.parent().unwrap_or_else(|| Path::new("."));
             let store =
-                clawcrew_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
+                galleon_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
             let plaintext = store.decrypt(&raw_key)?;
             if plaintext.is_empty() {
                 anyhow::bail!("Jina AI API key not configured (decrypted value is empty)");
@@ -789,7 +789,7 @@ impl WebSearchTool {
             .timeout(Duration::from_secs(self.timeout_secs))
             .user_agent("ClawCrew/1.0 (https://clawcrew.ai)");
         let builder =
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
+            galleon_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
         let client = builder.build()?;
 
         // Jina Search API requires POST with JSON body
@@ -874,7 +874,7 @@ impl WebSearchTool {
             ))
         })?;
 
-        let config: clawcrew_config::schema::Config = toml::from_str(&contents).map_err(|e| {
+        let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
             ::clawcrew_log::record!(
                 ERROR,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
@@ -910,10 +910,10 @@ impl WebSearchTool {
                 )
             })?;
 
-        if clawcrew_config::secrets::SecretStore::is_encrypted(&raw_key) {
+        if galleon_config::secrets::SecretStore::is_encrypted(&raw_key) {
             let clawcrew_dir = self.config_path.parent().unwrap_or_else(|| Path::new("."));
             let store =
-                clawcrew_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
+                galleon_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
             let plaintext = store.decrypt(&raw_key)?;
             if plaintext.is_empty() {
                 anyhow::bail!("Bocha AI API key not configured (decrypted value is empty)");
@@ -927,7 +927,7 @@ impl WebSearchTool {
     async fn search_bocha(&self, query: &str) -> anyhow::Result<String> {
         let builder = reqwest::Client::builder().timeout(Duration::from_secs(self.timeout_secs));
         let builder =
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
+            galleon_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
         let client = builder.build()?;
         self.search_bocha_with_client(&client, "https://api.bochaai.com/v1/web-search", query)
             .await
@@ -1074,7 +1074,7 @@ impl WebSearchTool {
             ))
         })?;
 
-        let config: clawcrew_config::schema::Config =
+        let config: galleon_config::schema::Config =
             toml::from_str(&contents).map_err(|error| {
                 let line = anysearch_config_parse_line(&contents, &error);
                 ::clawcrew_log::record!(
@@ -1095,10 +1095,10 @@ impl WebSearchTool {
             return Ok(None);
         };
 
-        if clawcrew_config::secrets::SecretStore::is_encrypted(&raw_key) {
+        if galleon_config::secrets::SecretStore::is_encrypted(&raw_key) {
             let clawcrew_dir = self.config_path.parent().unwrap_or_else(|| Path::new("."));
             let store =
-                clawcrew_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
+                galleon_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
             let plaintext = store.decrypt(&raw_key)?;
             Ok((!plaintext.is_empty()).then_some(plaintext))
         } else {
@@ -1109,7 +1109,7 @@ impl WebSearchTool {
     async fn search_anysearch(&self, query: &str) -> anyhow::Result<String> {
         let builder = reqwest::Client::builder().timeout(Duration::from_secs(self.timeout_secs));
         let builder =
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
+            galleon_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
         let client = builder.build()?;
         self.search_anysearch_with_client(&client, "https://api.anysearch.com/v1/search", query)
             .await
@@ -1262,7 +1262,7 @@ impl WebSearchTool {
             ))
         })?;
 
-        let config: clawcrew_config::schema::Config = toml::from_str(&contents).map_err(|e| {
+        let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
             let failure = SerplyConfigParseFailure::new(&contents, &e);
             ::clawcrew_log::record!(
                 ERROR,
@@ -1280,10 +1280,10 @@ impl WebSearchTool {
             .filter(|k| !k.is_empty())
             .ok_or_else(|| Self::serply_api_key_not_configured("config"))?;
 
-        if clawcrew_config::secrets::SecretStore::is_encrypted(&raw_key) {
+        if galleon_config::secrets::SecretStore::is_encrypted(&raw_key) {
             let clawcrew_dir = self.config_path.parent().unwrap_or_else(|| Path::new("."));
             let store =
-                clawcrew_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
+                galleon_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
             let plaintext = store.decrypt(&raw_key)?;
             if plaintext.is_empty() {
                 anyhow::bail!("Serply API key not configured (decrypted value is empty)");
@@ -1297,7 +1297,7 @@ impl WebSearchTool {
     async fn search_serply(&self, query: &str) -> anyhow::Result<String> {
         let builder = reqwest::Client::builder().timeout(Duration::from_secs(self.timeout_secs));
         let builder =
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
+            galleon_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
         let client = builder.build()?;
         self.search_serply_with_client(&client, "https://api.serply.io/v1/search/", query)
             .await
@@ -1444,7 +1444,7 @@ impl WebSearchTool {
         // the credential itself. Only the stable code and a line number
         // derived from the error span leave this function. A broken config
         // is an error, not a fall-through to keyless search.
-        let config: clawcrew_config::schema::Config = toml::from_str(&contents).map_err(|e| {
+        let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
             let line = toml_error_line(&contents, &e);
             ::clawcrew_log::record!(
                 ERROR,
@@ -1467,10 +1467,10 @@ impl WebSearchTool {
             return Ok(None);
         };
 
-        if clawcrew_config::secrets::SecretStore::is_encrypted(&raw_key) {
+        if galleon_config::secrets::SecretStore::is_encrypted(&raw_key) {
             let clawcrew_dir = self.config_path.parent().unwrap_or_else(|| Path::new("."));
             let store =
-                clawcrew_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
+                galleon_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
             let plaintext = store.decrypt(&raw_key)?;
             // An encrypted-but-empty value is "no key", not a broken key.
             Ok(Some(plaintext).filter(|k| !k.is_empty()))
@@ -1490,7 +1490,7 @@ impl WebSearchTool {
         let builder = reqwest::Client::builder()
             .timeout(Duration::from_secs(self.timeout_secs))
             .redirect(reqwest::redirect::Policy::none());
-        clawcrew_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search").build()
+        galleon_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search").build()
     }
 
     async fn search_keenable(&self, query: &str) -> anyhow::Result<String> {
@@ -1705,7 +1705,7 @@ impl WebSearchTool {
             ))
         })?;
 
-        let config: clawcrew_config::schema::Config = toml::from_str(&contents).map_err(|e| {
+        let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
             ::clawcrew_log::record!(
                 ERROR,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
@@ -1753,7 +1753,7 @@ impl WebSearchTool {
             .timeout(Duration::from_secs(self.timeout_secs))
             .user_agent("ClawCrew/1.0");
         let builder =
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
+            galleon_config::schema::apply_runtime_proxy_to_builder(builder, "tool.web_search");
         let client = builder.build()?;
 
         let response = client
@@ -2108,7 +2108,7 @@ const SEARXNG_NOT_CONFIGURED_KEY: &str = "tool-web-search-tool-error-searxng-not
 
 /// Names only surfaces that exist: no code reads a `SEARXNG_INSTANCE_URL` env
 /// var, so the env route is the generic `CLAWCREW_<path>` override grammar
-/// (`.` -> `__`) implemented in `clawcrew-config::env_overrides`.
+/// (`.` -> `__`) implemented in `galleon-config::env_overrides`.
 static SEARXNG_NOT_CONFIGURED_MESSAGE: LazyLock<String> =
     LazyLock::new(|| crate::i18n::get_required_tool_string(SEARXNG_NOT_CONFIGURED_KEY));
 
@@ -2771,7 +2771,7 @@ mod tests {
     #[test]
     fn test_resolve_brave_api_key_decrypts_encrypted_key() {
         let tmp = tempfile::TempDir::new().unwrap();
-        let store = clawcrew_config::secrets::SecretStore::new(tmp.path(), true);
+        let store = galleon_config::secrets::SecretStore::new(tmp.path(), true);
         let encrypted = store.encrypt("brave-secret-key").unwrap();
 
         let config_path = tmp.path().join("config.toml");
@@ -2947,7 +2947,7 @@ mod tests {
     #[test]
     fn test_resolve_tavily_api_key_decrypts_encrypted_key() {
         let tmp = tempfile::TempDir::new().unwrap();
-        let store = clawcrew_config::secrets::SecretStore::new(tmp.path(), true);
+        let store = galleon_config::secrets::SecretStore::new(tmp.path(), true);
         let encrypted = store.encrypt("tvly-secret-key").unwrap();
 
         let config_path = tmp.path().join("config.toml");
@@ -3357,7 +3357,7 @@ mod tests {
     #[test]
     fn test_resolve_bocha_api_key_decrypts_encrypted_key() {
         let tmp = tempfile::TempDir::new().unwrap();
-        let store = clawcrew_config::secrets::SecretStore::new(tmp.path(), true);
+        let store = galleon_config::secrets::SecretStore::new(tmp.path(), true);
         let encrypted = store.encrypt("bocha-secret-key").unwrap();
 
         let config_path = tmp.path().join("config.toml");
@@ -3593,7 +3593,7 @@ mod tests {
             Some("plain-key")
         );
 
-        let store = clawcrew_config::secrets::SecretStore::new(tmp.path(), true);
+        let store = galleon_config::secrets::SecretStore::new(tmp.path(), true);
         let encrypted = store.encrypt("rotated-secret").unwrap();
         std::fs::write(
             &config_path,
@@ -3667,7 +3667,7 @@ mod tests {
         // Guards the tests below: if a toml upgrade ever stops quoting the
         // offending line, this fails and tells us the fixture no longer
         // reproduces the disclosure the fix exists to prevent.
-        let error = toml::from_str::<clawcrew_config::schema::Config>(MALFORMED_SERPLY_KEY_LINE)
+        let error = toml::from_str::<galleon_config::schema::Config>(MALFORMED_SERPLY_KEY_LINE)
             .unwrap_err();
         assert!(
             error.to_string().contains(MALFORMED_SERPLY_SECRET),
@@ -3700,7 +3700,7 @@ mod tests {
     fn test_serply_config_parse_failure_log_attrs_carry_no_source_text() {
         let failure = SerplyConfigParseFailure::new(
             MALFORMED_SERPLY_KEY_LINE,
-            &toml::from_str::<clawcrew_config::schema::Config>(MALFORMED_SERPLY_KEY_LINE)
+            &toml::from_str::<galleon_config::schema::Config>(MALFORMED_SERPLY_KEY_LINE)
                 .unwrap_err(),
         );
         let path = Path::new("/tmp/clawcrew/config.toml");
@@ -3763,7 +3763,7 @@ mod tests {
         std::fs::write(&config_path, &contents).unwrap();
         let tool = anysearch_tool(config_path.clone(), false);
 
-        let parse_error = toml::from_str::<clawcrew_config::schema::Config>(&contents)
+        let parse_error = toml::from_str::<galleon_config::schema::Config>(&contents)
             .expect_err("unquoted credential must be rejected");
         let line = anysearch_config_parse_line(&contents, &parse_error);
         assert_eq!(line, Some(2));
@@ -4354,7 +4354,7 @@ mod tests {
     #[test]
     fn test_resolve_keenable_api_key_decrypts_encrypted_key() {
         let tmp = tempfile::TempDir::new().unwrap();
-        let store = clawcrew_config::secrets::SecretStore::new(tmp.path(), true);
+        let store = galleon_config::secrets::SecretStore::new(tmp.path(), true);
         let encrypted = store.encrypt("keenable-secret-key").unwrap();
 
         let config_path = tmp.path().join("config.toml");
@@ -4407,7 +4407,7 @@ mod tests {
 
     #[test]
     fn test_keenable_api_key_override_follows_the_loader_override_state() {
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.web_search.keenable_api_key = Some("stored-key".to_string());
         // Not overridden: the on-disk field stays the source of truth and the
         // in-memory value is not carried into the tool.
@@ -4810,7 +4810,7 @@ mod tests {
 
         // The premise the test guards against: the parser text carries the
         // credential, and the derived line number points at it.
-        let parse_err = toml::from_str::<clawcrew_config::schema::Config>(&contents)
+        let parse_err = toml::from_str::<galleon_config::schema::Config>(&contents)
             .expect_err("an unterminated string must not parse");
         assert!(
             parse_err.to_string().contains(SECRET),
@@ -5968,7 +5968,7 @@ mod tests {
     #[test]
     fn test_resolve_serply_api_key_decrypts_encrypted_key() {
         let tmp = tempfile::TempDir::new().unwrap();
-        let store = clawcrew_config::secrets::SecretStore::new(tmp.path(), true);
+        let store = galleon_config::secrets::SecretStore::new(tmp.path(), true);
         let encrypted = store.encrypt("serply-secret-key").unwrap();
         let config_path = tmp.path().join("config.toml");
         std::fs::write(

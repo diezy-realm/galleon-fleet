@@ -66,7 +66,7 @@ pub fn build_spec() -> serde_json::Value {
         UpgradeAcceptedResponse, UpgradeRequest, UpgradeStatusResponse, VersionCheckResponse,
         VersionErrorResponse,
     };
-    use clawcrew_config::api_error::ConfigApiError;
+    use galleon_config::api_error::ConfigApiError;
 
     fn schema_value<T: JsonSchema>() -> serde_json::Value {
         serde_json::to_value(schema_for!(T)).unwrap_or(serde_json::Value::Null)
@@ -95,7 +95,7 @@ pub fn build_spec() -> serde_json::Value {
             "DriftEntry":       schema_value::<DriftEntry>(),
             "DriftResponse":    schema_value::<DriftResponse>(),
             "ReloadStatusResponse": schema_value::<ReloadStatusResponse>(),
-            "Config":           schema_value::<clawcrew_config::schema::Config>(),
+            "Config":           schema_value::<galleon_config::schema::Config>(),
             "VersionCheckResponse":   schema_value::<VersionCheckResponse>(),
             "UpgradeRequest":         schema_value::<UpgradeRequest>(),
             "UpgradeAcceptedResponse": schema_value::<UpgradeAcceptedResponse>(),

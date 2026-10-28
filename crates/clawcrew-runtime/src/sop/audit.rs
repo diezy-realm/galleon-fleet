@@ -225,9 +225,9 @@ mod tests {
 
     #[tokio::test]
     async fn audit_roundtrip() {
-        let mem_cfg = clawcrew_config::schema::MemoryConfig {
+        let mem_cfg = galleon_config::schema::MemoryConfig {
             backend: "sqlite".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: Arc<dyn Memory> =
@@ -263,9 +263,9 @@ mod tests {
 
     #[tokio::test]
     async fn get_nonexistent_run_returns_none() {
-        let mem_cfg = clawcrew_config::schema::MemoryConfig {
+        let mem_cfg = galleon_config::schema::MemoryConfig {
             backend: "sqlite".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: Arc<dyn Memory> =

@@ -9,7 +9,7 @@ use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::{Arc, LazyLock, OnceLock};
 use std::time::Duration;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ModelRates {
@@ -58,7 +58,7 @@ impl ModelRates {
 }
 
 pub(crate) fn sane_mtok(rate: f64) -> Option<f64> {
-    clawcrew_config::cost::is_sane_usd_rate(rate).then_some(rate)
+    galleon_config::cost::is_sane_usd_rate(rate).then_some(rate)
 }
 
 fn per_token_str_to_mtok(value: &Option<String>) -> Option<f64> {
@@ -225,7 +225,7 @@ struct GatewayGroup {
 }
 
 fn enabled_pricing_groups(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
 ) -> (Vec<GatewayGroup>, HashMap<String, usize>) {
     // Count TOTAL aliases per family (opted-in and not), used later to decide
     // whether a bare-family snapshot entry is safe to add.
@@ -695,14 +695,14 @@ mod tests {
         assert_eq!(sane_mtok(3.0), Some(3.0));
         assert_eq!(sane_mtok(0.0), Some(0.0));
         assert_eq!(
-            sane_mtok(clawcrew_config::cost::MAX_SANE_USD_RATE),
-            Some(clawcrew_config::cost::MAX_SANE_USD_RATE)
+            sane_mtok(galleon_config::cost::MAX_SANE_USD_RATE),
+            Some(galleon_config::cost::MAX_SANE_USD_RATE)
         );
         assert!(sane_mtok(-1.0).is_none());
         assert!(sane_mtok(f64::INFINITY).is_none());
         assert!(sane_mtok(f64::NAN).is_none());
         // Above the ceiling ($1/token) -> rejected (parsing artifact / hostile gateway).
-        assert!(sane_mtok(clawcrew_config::cost::MAX_SANE_USD_RATE * 2.0).is_none());
+        assert!(sane_mtok(galleon_config::cost::MAX_SANE_USD_RATE * 2.0).is_none());
     }
 
     // Alias-boundary regression test 1: when one alias opts in and another does

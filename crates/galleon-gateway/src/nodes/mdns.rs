@@ -18,7 +18,7 @@ use tokio::net::UdpSocket;
 use tokio::sync::watch;
 use tokio::time::MissedTickBehavior;
 use uuid::Uuid;
-use clawcrew_config::schema::MdnsConfig;
+use galleon_config::schema::MdnsConfig;
 
 // Proprietary ClawCrew discovery uses an administratively scoped multicast group
 // rather than the IANA-reserved mDNS group at 224.0.0.251.

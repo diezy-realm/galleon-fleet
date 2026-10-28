@@ -22,7 +22,7 @@ fn legacy_install_upgrades_cleanly_with_backup() {
     std::fs::create_dir_all(&legacy_db).unwrap();
     std::fs::write(legacy_db.join("brain.db"), b"sqlite-bytes").unwrap();
 
-    let report = clawcrew_config::schema::v2::migrate_v2_to_v3_install_filesystem(install_root)
+    let report = galleon_config::schema::v2::migrate_v2_to_v3_install_filesystem(install_root)
         .expect("migration must succeed on populated legacy install");
     assert!(
         report.entries_relocated > 0 && report.backup_dir.is_some(),
@@ -84,7 +84,7 @@ fn legacy_install_upgrades_cleanly_with_backup() {
 
     // Idempotent re-run: legacy gone → no-op (no backup, nothing moved).
     let report_again =
-        clawcrew_config::schema::v2::migrate_v2_to_v3_install_filesystem(install_root)
+        galleon_config::schema::v2::migrate_v2_to_v3_install_filesystem(install_root)
             .expect("idempotent re-run must succeed");
     assert!(
         report_again.backup_dir.is_none() && report_again.entries_relocated == 0,
@@ -94,7 +94,7 @@ fn legacy_install_upgrades_cleanly_with_backup() {
 
 #[tokio::test]
 async fn two_sqlite_agents_on_one_install_have_isolated_memory() {
-    use clawcrew_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
+    use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
 
     let tmp = TempDir::new().unwrap();
     let install_root = tmp.path();
@@ -108,7 +108,7 @@ async fn two_sqlite_agents_on_one_install_have_isolated_memory() {
         .insert("default".into(), RiskProfileConfig::default());
     cfg.providers.models.openrouter.insert(
         "default".to_string(),
-        clawcrew_config::schema::OpenRouterModelProviderConfig::default(),
+        galleon_config::schema::OpenRouterModelProviderConfig::default(),
     );
     for alias in ["alpha", "beta"] {
         cfg.agents.insert(
@@ -184,9 +184,9 @@ async fn peer_group_routes_messages_only_within_resolved_peer_set() {
     use serde_json::json;
     use std::sync::Arc;
     use clawcrew_api::tool::Tool;
-    use clawcrew_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
-    use clawcrew_config::providers::ChannelRef;
-    use clawcrew_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
+    use galleon_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
+    use galleon_config::providers::ChannelRef;
+    use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
     use clawcrew_runtime::peers::resolve_peer_set;
     use clawcrew_runtime::tools::SendMessageToPeerTool;
 
@@ -280,9 +280,9 @@ async fn peer_group_dotted_channel_refs_remain_alias_scoped_for_dispatch() {
     use serde_json::json;
     use std::sync::Arc;
     use clawcrew_api::tool::Tool;
-    use clawcrew_config::multi_agent::{AgentAlias, PeerGroupConfig};
-    use clawcrew_config::providers::ChannelRef;
-    use clawcrew_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
+    use galleon_config::multi_agent::{AgentAlias, PeerGroupConfig};
+    use galleon_config::providers::ChannelRef;
+    use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
     use clawcrew_runtime::peers::resolve_peer_set;
     use clawcrew_runtime::tools::SendMessageToPeerTool;
 

@@ -7,8 +7,8 @@ use axum::{
     http::{HeaderMap, header},
     response::{IntoResponse, Response},
 };
-use clawcrew_config::api_error::ConfigApiCode;
-use clawcrew_config::pairing::PairingGuard;
+use galleon_config::api_error::ConfigApiCode;
+use galleon_config::pairing::PairingGuard;
 use galleon_providers::ModelProvider;
 use http_body_util::BodyExt;
 use parking_lot::RwLock;
@@ -23,7 +23,7 @@ fn invalid_etag_value_is_omitted_instead_of_panicking() {
 }
 
 // dirty_entry_for / CascadeReport::dirty_paths tests live in
-// clawcrew_config::alias_refs — single source of truth (the gateway and CLI
+// galleon_config::alias_refs — single source of truth (the gateway and CLI
 // both consume the promoted helper).
 
 #[derive(Default)]
@@ -56,17 +56,17 @@ impl ::clawcrew_api::attribution::Attributable for MockModelProvider {
     }
 }
 
-fn temp_config(tmp: &tempfile::TempDir) -> clawcrew_config::schema::Config {
+fn temp_config(tmp: &tempfile::TempDir) -> galleon_config::schema::Config {
     let data_dir = tmp.path().join("data");
     std::fs::create_dir_all(&data_dir).unwrap();
-    clawcrew_config::schema::Config {
+    galleon_config::schema::Config {
         config_path: tmp.path().join("config.toml"),
         data_dir,
         ..Default::default()
     }
 }
 
-pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
+pub(crate) fn test_state(config: galleon_config::schema::Config) -> AppState {
     let memory: Arc<dyn galleon_memory::Memory> =
         Arc::new(galleon_memory::NoneMemory::new("api-config-test"));
     AppState {
@@ -78,14 +78,14 @@ pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
         mem: memory.clone(),
         memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             memory,
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
         pairing: Arc::new(PairingGuard::new(
             false,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         )),
         trust_forwarded_headers: false,
         rate_limiter: Arc::new(GatewayRateLimiter::new(100, 100, 100)),
@@ -255,7 +255,7 @@ async fn authenticated_patch_route_rejects_masked_or_empty_secret_values_without
 
     let test_auth = "test-token";
     for op in ["add", "replace"] {
-        for value in [clawcrew_config::traits::MASKED_SECRET, "****", ""] {
+        for value in [galleon_config::traits::MASKED_SECRET, "****", ""] {
             let tmp = tempfile::tempdir().unwrap();
             let mut config = temp_config(&tmp);
             config.gateway.webhook_secret = Some("original-secret".into());
@@ -266,7 +266,7 @@ async fn authenticated_patch_route_rejects_masked_or_empty_secret_values_without
             state.pairing = Arc::new(PairingGuard::new(
                 true,
                 &[test_auth.to_string()],
-                clawcrew_config::pairing::PairingCodePolicy::default(),
+                galleon_config::pairing::PairingCodePolicy::default(),
             ));
             let app = axum::Router::new()
                 .route("/api/config", patch(handle_patch))
@@ -324,13 +324,13 @@ async fn migration_preserves_runtime_paths_and_publishes_schema_version() {
     let tmp = tempfile::tempdir().unwrap();
     let config_path = tmp.path().join("selected-config.toml");
     let data_dir = tmp.path().join("selected-data");
-    let legacy = clawcrew_config::migration::generate(
+    let legacy = galleon_config::migration::generate(
         2,
-        &clawcrew_config::migration::GenerateOptions::default(),
+        &galleon_config::migration::GenerateOptions::default(),
     )
     .unwrap();
     tokio::fs::write(&config_path, legacy).await.unwrap();
-    let state = test_state(clawcrew_config::schema::Config {
+    let state = test_state(galleon_config::schema::Config {
         config_path: config_path.clone(),
         data_dir: data_dir.clone(),
         ..Default::default()
@@ -362,7 +362,7 @@ async fn migration_preserves_runtime_paths_and_publishes_schema_version() {
     let live_schema_version = state.config.read().schema_version;
     assert_eq!(
         live_schema_version,
-        clawcrew_config::migration::CURRENT_SCHEMA_VERSION,
+        galleon_config::migration::CURRENT_SCHEMA_VERSION,
         "migration must publish the upgraded schema version live"
     );
     assert_eq!(
@@ -370,7 +370,7 @@ async fn migration_preserves_runtime_paths_and_publishes_schema_version() {
             .get("schema_version")
             .and_then(toml::Value::as_integer),
         Some(i64::from(
-            clawcrew_config::migration::CURRENT_SCHEMA_VERSION
+            galleon_config::migration::CURRENT_SCHEMA_VERSION
         ))
     );
 }
@@ -488,7 +488,7 @@ async fn patch_allow_from_deny_all_persists_and_reloads_tool_policy() {
     let mut config = temp_config(&tmp);
     config.risk_profiles.insert(
         "default".to_string(),
-        clawcrew_config::schema::RiskProfileConfig {
+        galleon_config::schema::RiskProfileConfig {
             deny_all_tools: true,
             ..Default::default()
         },
@@ -521,12 +521,12 @@ async fn patch_allow_from_deny_all_persists_and_reloads_tool_policy() {
     assert_eq!(json["saved"], true);
 
     let written = std::fs::read_to_string(tmp.path().join("config.toml")).unwrap();
-    let reloaded = clawcrew_config::migration::migrate_to_current(&written).unwrap();
+    let reloaded = galleon_config::migration::migrate_to_current(&written).unwrap();
     let profile = reloaded.risk_profiles.get("default").unwrap();
     assert_eq!(profile.allowed_tools, vec!["shell"]);
     assert!(!profile.deny_all_tools);
 
-    let policy = clawcrew_config::policy::SecurityPolicy::from_profiles(profile, None, tmp.path());
+    let policy = galleon_config::policy::SecurityPolicy::from_profiles(profile, None, tmp.path());
     assert!(policy.is_tool_allowed("shell"));
     assert!(!policy.is_tool_allowed("memory_recall"));
 }
@@ -548,7 +548,7 @@ async fn delete_map_key_handler_cascades_model_provider_and_persists() {
         .fallback = vec!["anthropic.default".into()];
     config.agents.insert(
         "triage".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             classifier_provider: "anthropic.default".into(),
             ..Default::default()
         },
@@ -599,7 +599,7 @@ async fn delete_map_key_handler_refuses_model_provider_hard_ref_without_mutation
         .unwrap();
     config.agents.insert(
         "researcher".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             model_provider: "anthropic.default".into(),
             ..Default::default()
         },
@@ -637,7 +637,7 @@ async fn delete_map_key_handler_cascades_channel_and_persists() {
     config.create_map_key("channels.discord", "main").unwrap();
     config.agents.insert(
         "ops".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             channels: vec!["discord.main".into()],
             ..Default::default()
         },
@@ -688,7 +688,7 @@ async fn delete_plan_rejects_unsupported_tts_provider_delete() {
         .unwrap();
     config.agents.insert(
         "voice".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             tts_provider: "elevenlabs.default".into(),
             ..Default::default()
         },
@@ -753,10 +753,10 @@ async fn delete_map_key_handler_rejects_unsupported_tts_without_raw_delete() {
 #[test]
 fn delete_cascade_resolves_custom_workspace_before_removing_entry() {
     let custom = std::path::PathBuf::from("/var/lib/zc-test/custom-victim-ws");
-    let mut cfg = clawcrew_config::schema::Config::default();
+    let mut cfg = galleon_config::schema::Config::default();
     cfg.agents.insert(
         "victim".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig::default(),
+        galleon_config::schema::AliasedAgentConfig::default(),
     );
     cfg.agents.get_mut("victim").unwrap().workspace.path = Some(custom.clone());
 
@@ -765,11 +765,11 @@ fn delete_cascade_resolves_custom_workspace_before_removing_entry() {
 
     // After the cascade removes the entry → it falls back to the DEFAULT
     // path; that is exactly why resolution must happen before the cascade.
-    clawcrew_config::alias_refs::delete_with_cascade(
+    galleon_config::alias_refs::delete_with_cascade(
         &mut cfg,
-        &clawcrew_config::alias_refs::AliasKind::Agent,
+        &galleon_config::alias_refs::AliasKind::Agent,
         "victim",
-        clawcrew_config::alias_refs::CascadePolicy::RefuseOnHard,
+        galleon_config::alias_refs::CascadePolicy::RefuseOnHard,
     )
     .expect("soft-only agent delete succeeds");
     assert!(!cfg.agents.contains_key("victim"));
@@ -817,7 +817,7 @@ async fn agent_rename_leaves_owned_state_put_when_persist_fails() {
     // and the cron seed below still work. data_dir is separate + writable.
     let cfg_dir = tmp.path().join("config.toml");
     std::fs::create_dir_all(&cfg_dir).unwrap();
-    let mut config = clawcrew_config::schema::Config {
+    let mut config = galleon_config::schema::Config {
         config_path: cfg_dir,
         data_dir: tmp.path().join("data"),
         ..Default::default()
@@ -825,7 +825,7 @@ async fn agent_rename_leaves_owned_state_put_when_persist_fails() {
     std::fs::create_dir_all(&config.data_dir).unwrap();
     // Agent under `from` with a resolvable risk_profile + an allowed cron
     // command, so cron::add_job accepts a job tied to the agent.
-    let from_agent = clawcrew_config::schema::AliasedAgentConfig {
+    let from_agent = galleon_config::schema::AliasedAgentConfig {
         risk_profile: "default".into(),
         ..Default::default()
     };
@@ -876,7 +876,7 @@ async fn agent_rename_leaves_owned_state_put_when_persist_fails() {
 #[tokio::test]
 async fn agent_rename_moves_owned_state_after_successful_persist() {
     let tmp = tempfile::tempdir().unwrap();
-    let mut config = clawcrew_config::schema::Config {
+    let mut config = galleon_config::schema::Config {
         config_path: tmp.path().join("config.toml"), // writable -> persist OK
         data_dir: tmp.path().join("data"),
         ..Default::default()
@@ -884,7 +884,7 @@ async fn agent_rename_moves_owned_state_after_successful_persist() {
     std::fs::create_dir_all(&config.data_dir).unwrap();
     // Agent under `from` with a resolvable risk_profile + an allowed cron
     // command, so cron::add_job accepts a job tied to the agent.
-    let from_agent = clawcrew_config::schema::AliasedAgentConfig {
+    let from_agent = galleon_config::schema::AliasedAgentConfig {
         risk_profile: "default".into(),
         ..Default::default()
     };
@@ -936,13 +936,13 @@ async fn agent_rename_moves_owned_state_after_successful_persist() {
 #[tokio::test]
 async fn agent_rename_resume_converges_when_config_already_to() {
     let tmp = tempfile::tempdir().unwrap();
-    let mut config = clawcrew_config::schema::Config {
+    let mut config = galleon_config::schema::Config {
         config_path: tmp.path().join("config.toml"), // writable
         data_dir: tmp.path().join("data"),
         ..Default::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
-    let from_agent = clawcrew_config::schema::AliasedAgentConfig {
+    let from_agent = galleon_config::schema::AliasedAgentConfig {
         risk_profile: "default".into(),
         ..Default::default()
     };
@@ -969,7 +969,7 @@ async fn agent_rename_resume_converges_when_config_already_to() {
     config.agents.remove("from");
     config.agents.insert(
         "to".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             risk_profile: "default".into(),
             ..Default::default()
         },
@@ -1014,7 +1014,7 @@ async fn agent_rename_resume_converges_when_config_already_to() {
 #[tokio::test]
 async fn agent_rename_unrelated_collision_is_not_treated_as_resume() {
     let tmp = tempfile::tempdir().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         config_path: tmp.path().join("config.toml"), // writable
         data_dir: tmp.path().join("data"),
         ..Default::default()
@@ -1028,7 +1028,7 @@ async fn agent_rename_unrelated_collision_is_not_treated_as_resume() {
     let mut config = config;
     config.agents.insert(
         "to".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             risk_profile: "default".into(),
             ..Default::default()
         },
@@ -1110,14 +1110,14 @@ fn json_pointer_to_dotted_handles_empty_root() {
     assert_eq!(json_pointer_to_dotted("/"), "");
 }
 
-use clawcrew_config::traits::PropKind;
+use galleon_config::traits::PropKind;
 
 #[test]
 fn test_op_coercion_bool_typed_value_matches_stored() {
-    let mut cfg = clawcrew_config::schema::Config::default();
+    let mut cfg = galleon_config::schema::Config::default();
     cfg.risk_profiles.insert(
         "default".into(),
-        clawcrew_config::schema::RiskProfileConfig::default(),
+        galleon_config::schema::RiskProfileConfig::default(),
     );
     cfg.set_prop("risk_profiles.default.workspace_only", "true")
         .expect("set_prop bool");
@@ -1142,7 +1142,7 @@ fn test_op_coercion_bool_typed_value_matches_stored() {
 
 #[test]
 fn test_op_coercion_integer_typed_value_matches_stored() {
-    let mut cfg = clawcrew_config::schema::Config::default();
+    let mut cfg = galleon_config::schema::Config::default();
     cfg.set_prop("gateway.port", "42617")
         .expect("set_prop integer");
     let actual = cfg.get_prop("gateway.port").expect("get_prop");
@@ -1161,7 +1161,7 @@ fn test_op_coercion_integer_typed_value_matches_stored() {
 
 #[test]
 fn test_op_coercion_float_typed_value_matches_stored() {
-    let mut cfg = clawcrew_config::schema::Config::default();
+    let mut cfg = galleon_config::schema::Config::default();
     // autonomy doesn't carry floats today; use a model_provider temperature
     // by setting a known model provider entry. The model providers map
     // is set up via map keys, so use a path that's unambiguously float.
@@ -1188,7 +1188,7 @@ fn test_op_coercion_float_typed_value_matches_stored() {
 
 #[test]
 fn test_op_coercion_string_field_no_regression() {
-    let mut cfg = clawcrew_config::schema::Config::default();
+    let mut cfg = galleon_config::schema::Config::default();
     cfg.set_prop("gateway.host", "10.0.0.1")
         .expect("set_prop string");
     let actual = cfg.get_prop("gateway.host").expect("get_prop string");
@@ -1199,10 +1199,10 @@ fn test_op_coercion_string_field_no_regression() {
 
 #[test]
 fn test_op_coercion_mismatched_value_correctly_fails() {
-    let mut cfg = clawcrew_config::schema::Config::default();
+    let mut cfg = galleon_config::schema::Config::default();
     cfg.risk_profiles.insert(
         "default".into(),
-        clawcrew_config::schema::RiskProfileConfig::default(),
+        galleon_config::schema::RiskProfileConfig::default(),
     );
     cfg.set_prop("risk_profiles.default.workspace_only", "true")
         .expect("set_prop");
@@ -1231,7 +1231,7 @@ fn temp_config_path() -> (tempfile::TempDir, PathBuf) {
 #[tokio::test]
 async fn compute_drift_returns_empty_when_in_memory_matches_disk() {
     let (_tmp, path) = temp_config_path();
-    let cfg = clawcrew_config::schema::Config {
+    let cfg = galleon_config::schema::Config {
         config_path: path.clone(),
         ..Default::default()
     };
@@ -1248,7 +1248,7 @@ async fn compute_drift_returns_empty_when_in_memory_matches_disk() {
 #[tokio::test]
 async fn compute_drift_surfaces_mismatched_non_secret_field() {
     let (_tmp, path) = temp_config_path();
-    let mut cfg = clawcrew_config::schema::Config {
+    let mut cfg = galleon_config::schema::Config {
         config_path: path.clone(),
         ..Default::default()
     };
@@ -1271,7 +1271,7 @@ async fn compute_drift_surfaces_mismatched_non_secret_field() {
 #[tokio::test]
 async fn compute_drift_returns_empty_when_no_disk_file() {
     let (_tmp, path) = temp_config_path();
-    let cfg = clawcrew_config::schema::Config {
+    let cfg = galleon_config::schema::Config {
         config_path: path.clone(),
         ..Default::default()
     };
@@ -1283,14 +1283,14 @@ async fn compute_drift_returns_empty_when_no_disk_file() {
 #[tokio::test]
 async fn apply_comments_writes_decoration_to_existing_value() {
     let (_tmp, path) = temp_config_path();
-    let mut cfg = clawcrew_config::schema::Config {
+    let mut cfg = galleon_config::schema::Config {
         config_path: path.clone(),
         ..Default::default()
     };
     cfg.set_prop("gateway.host", "10.0.0.5").expect("set_prop");
     cfg.save().await.expect("save");
 
-    clawcrew_config::comment_writer::apply_comments(
+    galleon_config::comment_writer::apply_comments(
         &path,
         &[("gateway.host".into(), "raised after Q3 backlog".into())],
     )
@@ -1374,7 +1374,7 @@ async fn compute_drift_detects_external_edit_to_field() {
     // Persist initial state, externally edit the file, drift surfaces
     // the touched path. This is the substrate the PATCH 409 guard fires on.
     let (_tmp, path) = temp_config_path();
-    let mut cfg = clawcrew_config::schema::Config {
+    let mut cfg = galleon_config::schema::Config {
         config_path: path.clone(),
         ..Default::default()
     };
@@ -1428,7 +1428,7 @@ fn secret_response_only_carries_path_and_populated_flag() {
 
 #[test]
 fn lookup_prop_field_synthesizes_dynamic_http_request_secret_metadata() {
-    let cfg = clawcrew_config::schema::Config::default();
+    let cfg = galleon_config::schema::Config::default();
     let field = lookup_prop_field(&cfg, "http_request.secrets.api_token")
         .expect("dynamic http_request secret metadata");
 
@@ -1436,7 +1436,7 @@ fn lookup_prop_field_synthesizes_dynamic_http_request_secret_metadata() {
     assert!(field.is_secret);
     assert_eq!(
         field.credential_class,
-        Some(clawcrew_config::traits::CredentialSurfaceClass::EncryptedSecret)
+        Some(galleon_config::traits::CredentialSurfaceClass::EncryptedSecret)
     );
 }
 
@@ -1483,7 +1483,7 @@ fn gateway_paired_tokens_is_gateway_managed() {
 
     // Guard against the field being renamed or the derive changing its
     // naming convention out from under the matcher.
-    let cfg = clawcrew_config::schema::Config::default();
+    let cfg = galleon_config::schema::Config::default();
     assert!(
         cfg.prop_fields()
             .iter()
@@ -1495,7 +1495,7 @@ fn gateway_paired_tokens_is_gateway_managed() {
 #[tokio::test]
 async fn compute_drift_excludes_gateway_paired_tokens() {
     let (_tmp, path) = temp_config_path();
-    let mut cfg = clawcrew_config::schema::Config {
+    let mut cfg = galleon_config::schema::Config {
         config_path: path.clone(),
         ..Default::default()
     };
@@ -1515,7 +1515,7 @@ async fn compute_drift_excludes_gateway_paired_tokens() {
 #[tokio::test]
 async fn compute_drift_excludes_env_overridden_secret() {
     let (_tmp, path) = temp_config_path();
-    let mut cfg = clawcrew_config::schema::Config {
+    let mut cfg = galleon_config::schema::Config {
         config_path: path.clone(),
         ..Default::default()
     };
@@ -1535,7 +1535,7 @@ async fn compute_drift_excludes_env_overridden_secret() {
 fn every_gateway_secret_is_classified() {
     const OPERATOR_EDITED_GATEWAY_SECRETS: &[&str] = &["gateway.webhook_secret"];
 
-    let cfg = clawcrew_config::schema::Config::default();
+    let cfg = galleon_config::schema::Config::default();
     let unclassified: Vec<String> = cfg
         .prop_fields()
         .iter()
@@ -1583,20 +1583,20 @@ fn drift_entry_for_secret_omits_both_values() {
 #[tokio::test]
 async fn apply_comments_clears_existing_comment_when_passed_empty() {
     let (_tmp, path) = temp_config_path();
-    let mut cfg = clawcrew_config::schema::Config {
+    let mut cfg = galleon_config::schema::Config {
         config_path: path.clone(),
         ..Default::default()
     };
     cfg.set_prop("gateway.host", "10.0.0.5").expect("set_prop");
     cfg.save().await.expect("save");
 
-    clawcrew_config::comment_writer::apply_comments(
+    galleon_config::comment_writer::apply_comments(
         &path,
         &[("gateway.host".into(), "first reason".into())],
     )
     .await
     .expect("apply first comment");
-    clawcrew_config::comment_writer::apply_comments(
+    galleon_config::comment_writer::apply_comments(
         &path,
         &[("gateway.host".into(), String::new())],
     )
@@ -1615,7 +1615,7 @@ async fn agent_delete_leaves_owned_state_intact_when_persist_fails() {
     let tmp = tempfile::tempdir().unwrap();
     let cfg_dir = tmp.path().join("config.toml");
     std::fs::create_dir_all(&cfg_dir).unwrap();
-    let mut config = clawcrew_config::schema::Config {
+    let mut config = galleon_config::schema::Config {
         config_path: cfg_dir,
         data_dir: tmp.path().join("data"),
         ..Default::default()
@@ -1624,7 +1624,7 @@ async fn agent_delete_leaves_owned_state_intact_when_persist_fails() {
     // Real default-workspace dir for the agent so the archive step has
     // something to act on (and so a buggy pre-fix run would visibly move
     // it under `agents/_deleted/`).
-    let agent = clawcrew_config::schema::AliasedAgentConfig {
+    let agent = galleon_config::schema::AliasedAgentConfig {
         risk_profile: "default".into(),
         ..Default::default()
     };
@@ -1676,13 +1676,13 @@ async fn agent_delete_leaves_owned_state_intact_when_persist_fails() {
 #[tokio::test]
 async fn agent_delete_purges_owned_state_after_successful_persist() {
     let tmp = tempfile::tempdir().unwrap();
-    let mut config = clawcrew_config::schema::Config {
+    let mut config = galleon_config::schema::Config {
         config_path: tmp.path().join("config.toml"), // writable -> persist OK
         data_dir: tmp.path().join("data"),
         ..Default::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
-    let agent = clawcrew_config::schema::AliasedAgentConfig {
+    let agent = galleon_config::schema::AliasedAgentConfig {
         risk_profile: "default".into(),
         ..Default::default()
     };
@@ -1741,13 +1741,13 @@ async fn agent_delete_response_carries_partial_failure_warnings() {
     use axum::body::to_bytes;
 
     let tmp = tempfile::tempdir().unwrap();
-    let mut config = clawcrew_config::schema::Config {
+    let mut config = galleon_config::schema::Config {
         config_path: tmp.path().join("config.toml"),
         data_dir: tmp.path().join("data"),
         ..Default::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
-    let agent = clawcrew_config::schema::AliasedAgentConfig {
+    let agent = galleon_config::schema::AliasedAgentConfig {
         risk_profile: "default".into(),
         ..Default::default()
     };
@@ -1808,14 +1808,14 @@ async fn agent_delete_response_carries_partial_failure_warnings() {
 fn config_with_telegram_alias(
     tmp: &tempfile::TempDir,
     alias: &str,
-) -> clawcrew_config::schema::Config {
+) -> galleon_config::schema::Config {
     let mut config = temp_config(tmp);
     config.channels.telegram.insert(
         alias.to_string(),
-        clawcrew_config::schema::TelegramConfig {
+        galleon_config::schema::TelegramConfig {
             enabled: true,
             bot_token: "test-token".to_string(),
-            api_base_url: clawcrew_config::schema::TELEGRAM_OFFICIAL_API_BASE_URL.to_string(),
+            api_base_url: galleon_config::schema::TELEGRAM_OFFICIAL_API_BASE_URL.to_string(),
             ..Default::default()
         },
     );
@@ -1834,7 +1834,7 @@ async fn channel_bind_rejects_unauthenticated_request() {
     state.pairing = Arc::new(PairingGuard::new(
         true,
         &[],
-        clawcrew_config::pairing::PairingCodePolicy::default(),
+        galleon_config::pairing::PairingCodePolicy::default(),
     ));
 
     let (status, _json) = response_json(
@@ -1903,8 +1903,8 @@ async fn channel_bind_phantom_alias_is_404() {
 /// reported success on it.
 #[tokio::test]
 async fn channel_bind_refuses_an_identity_an_ignore_denies() {
-    use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-    use clawcrew_config::providers::ChannelRef;
+    use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+    use galleon_config::providers::ChannelRef;
 
     let tmp = tempfile::tempdir().unwrap();
     let mut config = config_with_telegram_alias(&tmp, "alerts");
@@ -1955,8 +1955,8 @@ async fn channel_bind_refuses_an_identity_an_ignore_denies() {
 /// requested channel's reader never sees.
 #[tokio::test]
 async fn channel_bind_refuses_a_group_key_bound_to_another_channel() {
-    use clawcrew_config::multi_agent::PeerGroupConfig;
-    use clawcrew_config::providers::ChannelRef;
+    use galleon_config::multi_agent::PeerGroupConfig;
+    use galleon_config::providers::ChannelRef;
 
     let tmp = tempfile::tempdir().unwrap();
     let mut config = config_with_telegram_alias(&tmp, "alerts");
@@ -2000,8 +2000,8 @@ async fn channel_bind_refuses_a_group_key_bound_to_another_channel() {
 /// the deny check would have turned the endpoint off.
 #[tokio::test]
 async fn channel_bind_still_binds_an_unignored_identity() {
-    use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-    use clawcrew_config::providers::ChannelRef;
+    use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+    use galleon_config::providers::ChannelRef;
 
     let tmp = tempfile::tempdir().unwrap();
     let mut config = config_with_telegram_alias(&tmp, "alerts");
@@ -2147,8 +2147,8 @@ async fn channel_bind_preserves_a_deny_saved_by_the_other_handle() {
 
 #[tokio::test]
 async fn channel_bind_reports_the_custom_group_it_actually_wrote() {
-    use clawcrew_config::multi_agent::PeerGroupConfig;
-    use clawcrew_config::providers::ChannelRef;
+    use galleon_config::multi_agent::PeerGroupConfig;
+    use galleon_config::providers::ChannelRef;
 
     // The writer selects its target by the group's `channel` field, so a
     // custom key is a legitimate destination. Reporting the conventional
@@ -2242,14 +2242,14 @@ async fn refresh_context_window_allows_slow_response_and_forwards_api_key() {
         .await;
 
     let (_tmp, path) = temp_config_path();
-    let mut cfg = clawcrew_config::schema::Config {
+    let mut cfg = galleon_config::schema::Config {
         config_path: path.clone(),
         ..Default::default()
     };
     cfg.providers.models.groq.insert(
         "test".to_string(),
-        clawcrew_config::schema::GroqModelProviderConfig {
-            base: clawcrew_config::schema::ModelProviderConfig {
+        galleon_config::schema::GroqModelProviderConfig {
+            base: galleon_config::schema::ModelProviderConfig {
                 model: Some("llama-3.1-70b".into()),
                 api_key: Some("test-api-key-123".into()),
                 uri: Some(mock.uri()),

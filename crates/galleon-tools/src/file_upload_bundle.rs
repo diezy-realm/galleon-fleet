@@ -5,8 +5,8 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::FileUploadBundleConfig;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::FileUploadBundleConfig;
 
 async fn read_response_bounded(response: reqwest::Response, limit: usize) -> (String, bool) {
     let mut stream = response.bytes_stream();
@@ -483,7 +483,7 @@ impl Tool for FileUploadBundleTool {
             form = form.text("project_id", pid);
         }
 
-        let client = clawcrew_config::schema::build_runtime_proxy_client_with_timeouts(
+        let client = galleon_config::schema::build_runtime_proxy_client_with_timeouts(
             "tool.file_upload_bundle",
             self.config.timeout_secs,
             10,
@@ -551,7 +551,7 @@ mod tests {
     use tempfile::TempDir;
     use wiremock::matchers::{header, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
-    use clawcrew_config::autonomy::AutonomyLevel;
+    use galleon_config::autonomy::AutonomyLevel;
 
     fn test_security(workspace: PathBuf, level: AutonomyLevel) -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy {

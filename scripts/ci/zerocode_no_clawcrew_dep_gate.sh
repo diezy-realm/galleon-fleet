@@ -73,8 +73,8 @@ assert find_offending({"dependencies": {"clawcrew-runtime": {"workspace": True}}
     "clawcrew-runtime"
 ]
 assert find_offending(
-    {"target": {"cfg(unix)": {"dependencies": {"backend": {"package": "clawcrew-config"}}}}}
-) == ["clawcrew-config"]
+    {"target": {"cfg(unix)": {"dependencies": {"backend": {"package": "galleon-config"}}}}}
+) == ["galleon-config"]
 
 for name in find_offending(manifest):
     print(name)

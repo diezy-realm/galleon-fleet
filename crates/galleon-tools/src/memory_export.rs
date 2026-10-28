@@ -137,7 +137,7 @@ impl Tool for MemoryExportTool {
 mod tests {
     use super::*;
     use tempfile::TempDir;
-    use clawcrew_config::schema::MemoryPolicyConfig;
+    use galleon_config::schema::MemoryPolicyConfig;
     use galleon_memory::{ScannedMemory, SqliteMemory};
 
     fn test_mem() -> (TempDir, Arc<dyn Memory>) {

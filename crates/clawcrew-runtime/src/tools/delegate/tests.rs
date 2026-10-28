@@ -10,8 +10,8 @@
     use std::path::{Path, PathBuf};
     use tempfile::TempDir;
     use tokio::time::{Instant, sleep};
-    use clawcrew_config::scattered_types::{ThinkingConfig, ThinkingLevel};
-    use clawcrew_config::schema::{
+    use galleon_config::scattered_types::{ThinkingConfig, ThinkingLevel};
+    use galleon_config::schema::{
         Config, CustomModelProviderConfig, DEFAULT_DELEGATE_AGENTIC_TIMEOUT_SECS,
         DEFAULT_DELEGATE_TIMEOUT_SECS, DelegateExecutionMode, DelegateTargetConfig,
         ModelProviderConfig, ModelRouteConfig,
@@ -1127,8 +1127,8 @@
 
     fn security_allowing() -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy {
-            delegation_policy: clawcrew_config::autonomy::DelegationPolicy {
-                mode: clawcrew_config::autonomy::DelegationMode::Allow,
+            delegation_policy: galleon_config::autonomy::DelegationPolicy {
+                mode: galleon_config::autonomy::DelegationMode::Allow,
             },
             ..SecurityPolicy::default()
         })
@@ -1723,7 +1723,7 @@
     }
 
     async fn delegate_memory_fixture(model_uri: Option<String>) -> DelegateMemoryFixture {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
 
         let tmp = TempDir::new().unwrap();
         let data_dir = tmp.path().join("data");
@@ -2302,8 +2302,8 @@
 
         // Caller on "alpha" with delegation allowed; it owns "alpha_self".
         let mut policy = SecurityPolicy {
-            delegation_policy: clawcrew_config::autonomy::DelegationPolicy {
-                mode: clawcrew_config::autonomy::DelegationMode::Allow,
+            delegation_policy: galleon_config::autonomy::DelegationPolicy {
+                mode: galleon_config::autonomy::DelegationMode::Allow,
             },
             ..SecurityPolicy::default()
         };
@@ -2350,9 +2350,9 @@
         assert!(desc.contains("none configured"));
     }
 
-    fn roster_schema_config() -> Arc<clawcrew_config::schema::Config> {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
+    fn roster_schema_config() -> Arc<galleon_config::schema::Config> {
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
         let root =
             std::env::temp_dir().join(format!("clawcrew-delegate-policy-{}", uuid::Uuid::new_v4()));
         let mut config = Config {
@@ -2389,7 +2389,7 @@
         Arc::new(config)
     }
 
-    fn roster_tool(config: Arc<clawcrew_config::schema::Config>) -> DelegateTool {
+    fn roster_tool(config: Arc<galleon_config::schema::Config>) -> DelegateTool {
         let caller_policy =
             Arc::new(SecurityPolicy::for_agent(&config, "aaa").expect("caller policy resolves"));
         DelegateTool::new(
@@ -3075,7 +3075,7 @@
         // delegate tool, then each child runs with its own target policy. This
         // guards the earlier bug where child-side policy blocked valid targets
         // before the independent mode switch could take effect.
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
 
         let server = start_final_chat_server(vec!["reviewer-ok", "sysadmin-ok"]).await;
         let tmp = TempDir::new().unwrap();
@@ -3186,7 +3186,7 @@
         // Background bounded admission happens before the task id is returned;
         // the detached worker must not reinterpret that request as a child-side
         // self-delegation decision after it starts.
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
 
         let server = start_final_chat_server(vec!["background-ok"]).await;
         let tmp = TempDir::new().unwrap();
@@ -4131,7 +4131,7 @@
         mode: DelegateExecutionMode,
         thinking: ThinkingConfig,
     ) -> (DelegateTool, AliasedAgentConfig) {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
 
         let tmp = TempDir::new().unwrap();
         let mut config = Config {
@@ -4201,7 +4201,7 @@
         let (tool, target) =
             thinking_delegate_fixture(DelegateExecutionMode::Independent, target_thinking);
         let provider = ThinkingRecordingModelProvider::default();
-        let parent = Some(clawcrew_config::scattered_types::NativeThinkingParams {
+        let parent = Some(galleon_config::scattered_types::NativeThinkingParams {
             budget_tokens: 10_000,
             display: None,
         });
@@ -4243,7 +4243,7 @@
     #[tokio::test]
     async fn independent_delegate_propagates_display_mode_to_target_request() {
         use clawcrew_api::model_provider::ThinkingDisplay;
-        use clawcrew_config::scattered_types::ThinkingDisplayMode;
+        use galleon_config::scattered_types::ThinkingDisplayMode;
 
         let target_thinking = ThinkingConfig {
             default_level: ThinkingLevel::Max,
@@ -4254,7 +4254,7 @@
         let (tool, target) =
             thinking_delegate_fixture(DelegateExecutionMode::Independent, target_thinking);
         let provider = ThinkingRecordingModelProvider::default();
-        let parent = Some(clawcrew_config::scattered_types::NativeThinkingParams {
+        let parent = Some(galleon_config::scattered_types::NativeThinkingParams {
             budget_tokens: 10_000,
             display: None,
         });
@@ -4295,7 +4295,7 @@
         let (tool, target) =
             thinking_delegate_fixture(DelegateExecutionMode::Independent, target_thinking);
         let provider = ThinkingRecordingModelProvider::default();
-        let parent = Some(clawcrew_config::scattered_types::NativeThinkingParams {
+        let parent = Some(galleon_config::scattered_types::NativeThinkingParams {
             budget_tokens: 10_000,
             display: None,
         });
@@ -4351,7 +4351,7 @@
         let (tool, target) =
             thinking_delegate_fixture(DelegateExecutionMode::Bounded, target_thinking);
         let provider = ThinkingRecordingModelProvider::default();
-        let parent = Some(clawcrew_config::scattered_types::NativeThinkingParams {
+        let parent = Some(galleon_config::scattered_types::NativeThinkingParams {
             budget_tokens: 10_000,
             display: None,
         });
@@ -4546,7 +4546,7 @@
                     .await
                     .unwrap(),
             ),
-            security: Arc::new(clawcrew_config::policy::SecurityPolicy::default()),
+            security: Arc::new(galleon_config::policy::SecurityPolicy::default()),
         };
         let handle = Arc::clone(&parent_tools);
         let tool_search = crate::tools::ToolSearchTool::new(deferred, Arc::clone(&activated))
@@ -4646,7 +4646,7 @@
     fn enriched_prompt_resolves_explicit_global_full_skill_mode() {
         let mut root_config = Config::default();
         root_config.skills.prompt_injection_mode =
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full;
+            galleon_config::schema::SkillsPromptInjectionMode::Full;
         root_config
             .agents
             .insert("alpha".into(), AliasedAgentConfig::default());
@@ -4674,7 +4674,7 @@
         assert_eq!(
             tool.resolve_loop_runtime("alpha", &config)
                 .prompt_injection_mode,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full
+            galleon_config::schema::SkillsPromptInjectionMode::Full
         );
         let prompt = tool
             .build_enriched_system_prompt(
@@ -4958,16 +4958,16 @@
 
     #[test]
     fn config_validation_accepts_minimal_agent() {
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         // model_provider must reference a real entry under
         // providers.models — the validator (correctly) rejects dangling refs.
         config.providers.models.ollama.insert(
             "default".into(),
-            clawcrew_config::schema::OllamaModelProviderConfig::default(),
+            galleon_config::schema::OllamaModelProviderConfig::default(),
         );
         config.risk_profiles.insert(
             "default".into(),
-            clawcrew_config::schema::RiskProfileConfig::default(),
+            galleon_config::schema::RiskProfileConfig::default(),
         );
         config.agents.insert(
             "ok".into(),
@@ -5879,9 +5879,9 @@
         caller_max_actions: u32,
         target_alias: &str,
         target_max_actions: u32,
-    ) -> Arc<clawcrew_config::schema::Config> {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+    ) -> Arc<galleon_config::schema::Config> {
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, RiskProfileConfig, RuntimeProfileConfig,
         };
         let root = std::env::temp_dir().join(format!(
@@ -5944,8 +5944,8 @@
     }
 
     fn config_with_always_ask_delegate(mode: DelegateExecutionMode) -> Arc<Config> {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{RiskProfileConfig, RuntimeProfileConfig};
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{RiskProfileConfig, RuntimeProfileConfig};
 
         let root = std::env::temp_dir().join(format!(
             "clawcrew-delegate-always-ask-{}",
@@ -6050,8 +6050,8 @@
 
     #[tokio::test]
     async fn token_cap_is_parent_subset() {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, RiskProfileConfig, RuntimeProfileConfig,
         };
 
@@ -6110,8 +6110,8 @@
         // caller cost value into a binding that is looser than the explicit
         // values. Asserted on the resolved policy directly: cost is declared
         // but not yet enforced on delegated runs.
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, RiskProfileConfig, RuntimeProfileConfig,
         };
 
@@ -6361,7 +6361,7 @@
         // Top-level delegation_policy remains the first gate. Its diagnostic
         // should point at the exact risk profile key to edit, before any target
         // reachability details are considered.
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
 
         let mut config = (*config_with_two_agents("caller", 5, "target", 5)).clone();
         config
@@ -6644,8 +6644,8 @@
         // Independent mode should not be confused with unrestricted mode. It
         // removes the caller ceiling, then applies the target's own policy
         // fields exactly as a fresh target-agent run would.
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
 
         let tmp = TempDir::new().unwrap();
         let target_extra_root = tmp.path().join("target-extra-root");
@@ -6730,8 +6730,8 @@
         // Target asks for `shell`, caller can delegate but only has EchoTool in
         // its registry. Bounded mode must not synthesize target-owned tools
         // just because the target risk profile names them.
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, RiskProfileConfig, RuntimeProfileConfig,
         };
 
@@ -6819,8 +6819,8 @@
 
     #[tokio::test]
     async fn bounded_agentic_tools_drop_deliver_file_without_acp_transport() {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, RiskProfileConfig, RuntimeProfileConfig,
         };
 
@@ -6948,8 +6948,8 @@
         // Stronger ceiling case: EchoTool is present in the parent registry but
         // the caller policy only admits `delegate`, so bounded child tools are
         // empty even though the target profile would allow EchoTool.
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, RiskProfileConfig, RuntimeProfileConfig,
         };
 
@@ -7233,8 +7233,8 @@
         delegate_auto_approved: bool,
         always_ask_delegate: bool,
     ) -> Arc<Config> {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, RiskProfileConfig, RuntimeProfileConfig,
         };
 
@@ -7327,7 +7327,7 @@
     fn bounded_agent_config(
         config: &Arc<Config>,
         alias: &str,
-    ) -> clawcrew_config::schema::AliasedAgentConfig {
+    ) -> galleon_config::schema::AliasedAgentConfig {
         config
             .agents
             .get(alias)
@@ -7568,8 +7568,8 @@
         agents: &[(&str, &[&str], &str)],
         runtime_profiles: &[(&str, u32, u32)],
     ) -> Arc<Config> {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, RiskProfileConfig, RuntimeProfileConfig,
         };
 
@@ -8409,8 +8409,8 @@
         // Parent registry intentionally contains only EchoTool. Independent
         // agentic delegation must ignore that parent ceiling and build the
         // child loop from the target agent's own allowed tool registry.
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, RiskProfileConfig, RuntimeProfileConfig,
         };
 
@@ -8500,8 +8500,8 @@
 
     #[tokio::test]
     async fn independent_delegate_receives_target_skill_tools() {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, RiskProfileConfig, RuntimeProfileConfig,
         };
 
@@ -8573,7 +8573,7 @@ command = "echo hi"
                 risk_profile: "target".into(),
                 runtime_profile: "agentic".into(),
                 model_provider: "ollama.target".into(),
-                workspace: clawcrew_config::multi_agent::AgentWorkspaceConfig {
+                workspace: galleon_config::multi_agent::AgentWorkspaceConfig {
                     path: Some(target_ws.clone()),
                     ..Default::default()
                 },
@@ -8731,8 +8731,8 @@ command = "echo hi"
         // prompt from that exact manager. A Full target with no `always_ask`
         // must see Full prompt wording (not generic Supervised guidance) and
         // directly execute an uncovered tool.
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, RiskProfileConfig, RuntimeProfileConfig,
         };
 
@@ -8757,7 +8757,7 @@ command = "echo hi"
         config.risk_profiles.insert(
             "target".to_string(),
             RiskProfileConfig {
-                level: clawcrew_config::autonomy::AutonomyLevel::Full,
+                level: galleon_config::autonomy::AutonomyLevel::Full,
                 allowed_tools: vec!["shell".to_string()],
                 ..RiskProfileConfig::default()
             },
@@ -8788,7 +8788,7 @@ command = "echo hi"
                 risk_profile: "target".into(),
                 runtime_profile: "agentic".into(),
                 model_provider: "ollama.target".into(),
-                workspace: clawcrew_config::multi_agent::AgentWorkspaceConfig {
+                workspace: galleon_config::multi_agent::AgentWorkspaceConfig {
                     path: Some(target_ws.clone()),
                     ..Default::default()
                 },
@@ -8864,8 +8864,8 @@ command = "echo hi"
     #[cfg(unix)]
     #[tokio::test]
     async fn independent_delegate_denies_prompt_required_skill_tools_without_approval_route() {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, RiskProfileConfig, RuntimeProfileConfig,
         };
 
@@ -8941,7 +8941,7 @@ command = "rm independent-delegate-marker"
                 risk_profile: "target".into(),
                 runtime_profile: "agentic".into(),
                 model_provider: "ollama.target".into(),
-                workspace: clawcrew_config::multi_agent::AgentWorkspaceConfig {
+                workspace: galleon_config::multi_agent::AgentWorkspaceConfig {
                     path: Some(target_ws.clone()),
                     ..Default::default()
                 },
@@ -9083,9 +9083,9 @@ command = "rm independent-delegate-marker"
     /// Build a config where `caller` (`broad` profile) can delegate, but
     /// `target` is a different-profile peer that is not in the explicit
     /// delegate roster. This exercises the reachable-set rejection path.
-    fn config_with_narrowed_target() -> Arc<clawcrew_config::schema::Config> {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
+    fn config_with_narrowed_target() -> Arc<galleon_config::schema::Config> {
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
         let mut config = Config::default();
         config.risk_profiles.insert(
             "broad".to_string(),
@@ -9173,8 +9173,8 @@ command = "rm independent-delegate-marker"
         primary_native_tools: Option<bool>,
         backup_native_tools: Option<bool>,
     ) -> (Arc<Config>, TempDir) {
-        use clawcrew_config::autonomy::{DelegationMode, DelegationPolicy};
-        use clawcrew_config::schema::{
+        use galleon_config::autonomy::{DelegationMode, DelegationPolicy};
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, CustomModelProviderConfig, ModelProviderConfig,
             RiskProfileConfig, RuntimeProfileConfig,
         };
@@ -9194,7 +9194,7 @@ command = "rm independent-delegate-marker"
                     uri: Some(primary_uri),
                     model: Some("primary-model".to_string()),
                     native_tools: primary_native_tools,
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "custom.backup",
                     )],
                     ..ModelProviderConfig::default()

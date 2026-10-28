@@ -28,7 +28,7 @@ pub fn register_cli_channel_fn(
 /// Peripheral tools factory type — takes owned config so the returned future is 'static.
 pub type PeripheralToolsFn = Box<
     dyn Fn(
-            clawcrew_config::schema::PeripheralsConfig,
+            galleon_config::schema::PeripheralsConfig,
         ) -> std::pin::Pin<
             Box<dyn std::future::Future<Output = anyhow::Result<Vec<Box<dyn Tool>>>> + Send>,
         > + Send
@@ -47,7 +47,7 @@ pub fn register_peripheral_tools_fn(f: PeripheralToolsFn) {
 /// peripheral tools through the registered factory. Returns empty vec
 /// when nothing is registered (hardware feature off or not yet wired).
 pub async fn load_peripheral_tools(
-    config: clawcrew_config::schema::PeripheralsConfig,
+    config: galleon_config::schema::PeripheralsConfig,
 ) -> Vec<Box<dyn Tool>> {
     if let Some(f) = PERIPHERAL_TOOLS_FN.get() {
         f(config).await.unwrap_or_default()
@@ -127,7 +127,7 @@ use crate::util::truncate_with_ellipsis;
 use anyhow::{Context, Result};
 use clawcrew_api::channel::Channel;
 use clawcrew_api::ingress::{IngressContext, TurnOrigin};
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 use galleon_memory::{self, Memory, MemoryCategory};
 #[cfg(test)]
 use galleon_providers::ChatRequest;
@@ -161,7 +161,7 @@ pub use super::history::{
 const AUTOSAVE_MIN_MESSAGE_CHARS: usize = 20;
 
 fn interactive_context_recovery_budget(
-    context_limits: clawcrew_config::schema::ResolvedContextLimits,
+    context_limits: galleon_config::schema::ResolvedContextLimits,
 ) -> usize {
     context_limits.model_context_window.saturating_mul(9) / 10
 }
@@ -261,7 +261,7 @@ fn glob_match(pattern: &str, name: &str) -> bool {
 
 pub fn apply_policy_tool_filter(
     tools: &mut Vec<Box<dyn Tool>>,
-    policy: Option<&clawcrew_config::policy::SecurityPolicy>,
+    policy: Option<&galleon_config::policy::SecurityPolicy>,
     caller_allowed: Option<&[String]>,
 ) {
     tools.retain(|t| {
@@ -309,11 +309,11 @@ pub fn append_pinned_mcp_section(deferred_section: &mut String, pinned_section: 
 pub(crate) fn preactivate_always_filter_groups(
     deferred: &crate::tools::DeferredMcpToolSet,
     activated: &Arc<Mutex<crate::tools::ActivatedToolSet>>,
-    groups: &[clawcrew_config::schema::ToolFilterGroup],
+    groups: &[galleon_config::schema::ToolFilterGroup],
     policy: Option<&galleon_tools::tool_search::ToolAccessPolicy>,
     delegate_handle: Option<&tools::DelegateParentToolsHandle>,
 ) -> HashSet<String> {
-    use clawcrew_config::schema::ToolFilterGroupMode;
+    use galleon_config::schema::ToolFilterGroupMode;
 
     let mut activated_names: HashSet<String> = HashSet::new();
     let always_patterns: Vec<&str> = groups
@@ -366,7 +366,7 @@ pub(crate) fn preactivate_always_filter_groups(
 
 pub fn filter_tool_specs_for_turn(
     tool_specs: Vec<crate::tools::ToolSpec>,
-    groups: &[clawcrew_config::schema::ToolFilterGroup],
+    groups: &[galleon_config::schema::ToolFilterGroup],
     user_message: &str,
     mcp_tool_names: &HashSet<String>,
 ) -> Vec<crate::tools::ToolSpec> {
@@ -389,10 +389,10 @@ pub fn filter_tool_specs_for_turn(
 
 fn mcp_tool_included_for_turn(
     name: &str,
-    groups: &[clawcrew_config::schema::ToolFilterGroup],
+    groups: &[galleon_config::schema::ToolFilterGroup],
     msg_lower: &str,
 ) -> bool {
-    use clawcrew_config::schema::ToolFilterGroupMode;
+    use galleon_config::schema::ToolFilterGroupMode;
 
     groups.iter().any(|group| {
         let pattern_matches = group.tools.iter().any(|pat| glob_match(pat, name));
@@ -450,7 +450,7 @@ pub use clawcrew_api::scope_session_key;
 
 pub(crate) fn compute_excluded_mcp_tools(
     tools_registry: &[Box<dyn Tool>],
-    groups: &[clawcrew_config::schema::ToolFilterGroup],
+    groups: &[galleon_config::schema::ToolFilterGroup],
     user_message: &str,
     mcp_tool_names: &HashSet<String>,
 ) -> Vec<String> {
@@ -570,15 +570,15 @@ pub(crate) fn build_system_prompt_for_turn(
     tool_descs: &[(&str, &str)],
     deferred_section: &str,
     skills: &[crate::skills::Skill],
-    identity_config: Option<&clawcrew_config::schema::IdentityConfig>,
+    identity_config: Option<&galleon_config::schema::IdentityConfig>,
     bootstrap_max_chars: Option<usize>,
-    risk_profile: &clawcrew_config::schema::RiskProfileConfig,
+    risk_profile: &galleon_config::schema::RiskProfileConfig,
     model_provider: &dyn ModelProvider,
     tools_registry: &[Box<dyn Tool>],
     excluded_tools: &[String],
     activated_tools: Option<&Arc<Mutex<crate::tools::ActivatedToolSet>>>,
     strict_tool_parsing: bool,
-    skills_prompt_mode: clawcrew_config::schema::SkillsPromptInjectionMode,
+    skills_prompt_mode: galleon_config::schema::SkillsPromptInjectionMode,
     compact_context: bool,
     max_system_prompt_chars: usize,
     inject_memory: bool,
@@ -753,7 +753,7 @@ pub use super::tool_execution::{ToolExecutionOutcome, should_execute_tools_in_pa
 /// retrieval) join the bracket; `None` self-mints.
 #[allow(clippy::too_many_arguments)]
 pub async fn agent_turn(
-    config: Option<&clawcrew_config::schema::Config>,
+    config: Option<&galleon_config::schema::Config>,
     model_provider: &dyn ModelProvider,
     history: &mut Vec<ChatMessage>,
     // Authoritative record that `history` carries the synthetic trim
@@ -774,7 +774,7 @@ pub async fn agent_turn(
     silent: bool,
     channel_name: &str,
     channel_reply_target: Option<&str>,
-    multimodal_config: &clawcrew_config::schema::MultimodalConfig,
+    multimodal_config: &galleon_config::schema::MultimodalConfig,
     max_tool_iterations: usize,
     approval: Option<&ApprovalManager>,
     excluded_tools: &[String],
@@ -828,7 +828,7 @@ pub async fn agent_turn(
 
 #[allow(clippy::too_many_arguments)]
 async fn agent_turn_with_sop_reassembly(
-    config: Option<&clawcrew_config::schema::Config>,
+    config: Option<&galleon_config::schema::Config>,
     model_provider: &dyn ModelProvider,
     history: &mut Vec<ChatMessage>,
     // Authoritative breadcrumb provenance for `history` — see `agent_turn`.
@@ -843,7 +843,7 @@ async fn agent_turn_with_sop_reassembly(
     silent: bool,
     channel_name: &str,
     channel_reply_target: Option<&str>,
-    multimodal_config: &clawcrew_config::schema::MultimodalConfig,
+    multimodal_config: &galleon_config::schema::MultimodalConfig,
     max_tool_iterations: usize,
     approval: Option<&ApprovalManager>,
     excluded_tools: &[String],
@@ -886,9 +886,9 @@ async fn agent_turn_with_sop_reassembly(
         Some(turn_id.clone()),
     );
     let resolved_capacity = config.map_or(
-        clawcrew_config::schema::ResolvedModelContextWindow {
-            tokens: clawcrew_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK,
-            source: clawcrew_config::schema::ModelContextWindowSource::CompatibilityFallback,
+        galleon_config::schema::ResolvedModelContextWindow {
+            tokens: galleon_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK,
+            source: galleon_config::schema::ModelContextWindowSource::CompatibilityFallback,
         },
         |config| config.resolved_model_context_window_for_route(provider_name, model),
     );
@@ -897,7 +897,7 @@ async fn agent_turn_with_sop_reassembly(
     } else {
         context_token_budget.min(resolved_capacity.tokens)
     };
-    let context_limits = clawcrew_config::schema::ResolvedContextLimits {
+    let context_limits = galleon_config::schema::ResolvedContextLimits {
         model_context_window: resolved_capacity.tokens,
         context_token_budget,
         model_context_window_source: resolved_capacity.source,
@@ -931,7 +931,7 @@ async fn agent_turn_with_sop_reassembly(
                 max_tool_iterations,
                 excluded_tools,
                 dedup_exempt_tools,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing,
                 parallel_tools,
                 max_tool_result_chars,
@@ -1102,7 +1102,7 @@ pub struct AgentRunOverrides {
 }
 
 fn agent_provider_composite(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     agent_alias: &str,
 ) -> Option<String> {
     config
@@ -1113,9 +1113,9 @@ fn agent_provider_composite(
 /// Return the owned agent config direct-turn setup needs, with runtime-profile
 /// values baked into `resolved`.
 fn resolved_agent_for_turn(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     agent_alias: &str,
-) -> Result<clawcrew_config::schema::AliasedAgentConfig> {
+) -> Result<galleon_config::schema::AliasedAgentConfig> {
     let agent = config
         .resolved_agent_config(agent_alias)
         .with_context(|| format!("agents.{agent_alias} is not configured"))?;
@@ -1147,9 +1147,9 @@ static AGENT_TURN_SOP_REASSEMBLY_TEST_HOOK: LazyLock<
 > = LazyLock::new(|| Mutex::new(None));
 
 fn api_key_and_uri_for_provider(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     provider_name: &str,
-    fallback: Option<&clawcrew_config::schema::ModelProviderConfig>,
+    fallback: Option<&galleon_config::schema::ModelProviderConfig>,
 ) -> (Option<String>, Option<String>) {
     if let Some((fam, al)) = provider_name.split_once('.')
         && let Some(entry) = config.providers.models.find(fam, al)
@@ -1213,7 +1213,7 @@ pub async fn run(
         })?
         .clone();
     let memory_composite = {
-        use clawcrew_config::multi_agent::MemoryBackendKind;
+        use galleon_config::multi_agent::MemoryBackendKind;
         match agent.memory.backend {
             MemoryBackendKind::Markdown => format!("markdown.{agent_alias}"),
             MemoryBackendKind::None => "none".to_string(),
@@ -1255,7 +1255,7 @@ pub async fn run(
         if interactive
             && matches!(
                 config.observability.backend,
-                clawcrew_config::schema::ObservabilityBackend::Prometheus
+                galleon_config::schema::ObservabilityBackend::Prometheus
             )
         {
             ::clawcrew_log::record!(
@@ -1585,7 +1585,7 @@ pub async fn run(
         ];
         if matches!(
             eff_prompt_injection_mode,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Compact
+            galleon_config::schema::SkillsPromptInjectionMode::Compact
         ) {
             tool_descs.push((
                 "read_skill",
@@ -2921,7 +2921,7 @@ pub(crate) async fn process_message_shared(
         })?
         .clone();
     let memory_composite = {
-        use clawcrew_config::multi_agent::MemoryBackendKind;
+        use galleon_config::multi_agent::MemoryBackendKind;
         match agent.memory.backend {
             MemoryBackendKind::Markdown => format!("markdown.{agent_alias}"),
             MemoryBackendKind::None => "none".to_string(),
@@ -3179,7 +3179,7 @@ pub(crate) async fn process_message_shared(
         ];
         if matches!(
             eff_prompt_injection_mode,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Compact
+            galleon_config::schema::SkillsPromptInjectionMode::Compact
         ) {
             tool_descs.push((
                 "read_skill",

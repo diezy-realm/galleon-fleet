@@ -154,8 +154,8 @@ fn expand_directives(
             "{{#model-provider-catalog-table" => render_model_provider_catalog_table(),
             "{{#model-provider-fields" => render_model_provider_fields(),
             "{{#channel-streaming-matrix" => {
-                let schema = schemars::schema_for!(clawcrew_config::schema::Config);
-                clawcrew_config::schema_markdown::channel_streaming_matrix(&schema.to_value())
+                let schema = schemars::schema_for!(galleon_config::schema::Config);
+                galleon_config::schema_markdown::channel_streaming_matrix(&schema.to_value())
             }
             "{{#env-var-bridge" => render_env_var_bridge(env_vars)?,
             "{{#env-var-name " => render_env_var_name(arg)?,
@@ -209,8 +209,8 @@ In the **Config** pane, under **{label}**.
 
 fn render_config_fields(arg: &str) -> anyhow::Result<String> {
     let path = arg.trim();
-    let schema = schemars::schema_for!(clawcrew_config::schema::Config);
-    clawcrew_config::schema_markdown::field_table_for_path(&schema.to_value(), path, false, None)
+    let schema = schemars::schema_for!(galleon_config::schema::Config);
+    galleon_config::schema_markdown::field_table_for_path(&schema.to_value(), path, false, None)
         .map_err(anyhow::Error::msg)
 }
 
@@ -322,7 +322,7 @@ fn render_sop_trigger(arg: &str) -> anyhow::Result<String> {
     if let Some(obj) = node.as_object_mut() {
         obj.insert("$defs".to_string(), defs);
     }
-    let fields = clawcrew_config::schema_markdown::field_table(&node, true, None, None);
+    let fields = galleon_config::schema_markdown::field_table(&node, true, None, None);
 
     Ok(format!(
         r#"{summary}
@@ -359,8 +359,8 @@ clawcrew sop show <name>
 }
 
 fn config_section_label(path: &str) -> anyhow::Result<String> {
-    use clawcrew_config::schema::Config;
-    if let Some(section) = clawcrew_config::sections::Section::from_key(path) {
+    use galleon_config::schema::Config;
+    if let Some(section) = galleon_config::sections::Section::from_key(path) {
         return Ok(section.label());
     }
     let prefix = format!("{path}.");
@@ -372,7 +372,7 @@ fn config_section_label(path: &str) -> anyhow::Result<String> {
     if !is_schema_section {
         anyhow::bail!("config-where section '{path}' is not a known config section");
     }
-    Ok(clawcrew_config::sections::humanize_section_key(path))
+    Ok(galleon_config::sections::humanize_section_key(path))
 }
 
 /// Render a secret-field setter widget. Secrets are stored encrypted; they must
@@ -727,7 +727,7 @@ fn load_params() -> anyhow::Result<Vec<PeerParams>> {
 }
 
 fn validate_keys(params: &[PeerParams]) -> anyhow::Result<()> {
-    let inventory = clawcrew_config::schema::ChannelsConfig::default();
+    let inventory = galleon_config::schema::ChannelsConfig::default();
     let known: Vec<&'static str> = inventory.channels().iter().map(|c| c.kind).collect();
     for p in params {
         if !known.contains(&p.key.as_str()) {
@@ -847,15 +847,15 @@ fn render_model_provider_fields() -> String {
         C::AiRouter => "AI Model Routers",
     };
     let providers = galleon_providers::list_model_providers();
-    let schema = schemars::schema_for!(clawcrew_config::schema::Config);
+    let schema = schemars::schema_for!(galleon_config::schema::Config);
     let schema = schema.to_value();
     let provider_defaults =
-        serde_json::to_value(clawcrew_config::schema::ModelProviderConfig::default()).ok();
+        serde_json::to_value(galleon_config::schema::ModelProviderConfig::default()).ok();
 
     let base: std::collections::BTreeSet<String> = providers
         .iter()
         .map(|p| {
-            clawcrew_config::schema_markdown::section_field_names(
+            galleon_config::schema_markdown::section_field_names(
                 &schema,
                 &format!("providers.models.{}", p.name),
             )
@@ -869,7 +869,7 @@ fn render_model_provider_fields() -> String {
     // empty set keeps the full base, and the base fields are identical across
     // slots so the choice of slot does not matter.
     if let Some(first) = providers.first() {
-        let base_table = clawcrew_config::schema_markdown::field_table_for_path(
+        let base_table = galleon_config::schema_markdown::field_table_for_path(
             &schema,
             &format!("providers.models.{}", first.name),
             false,
@@ -877,13 +877,13 @@ fn render_model_provider_fields() -> String {
         )
         .unwrap_or_default();
         // Trim base_table to only the shared fields by excluding everything else.
-        let extras_of_first = clawcrew_config::schema_markdown::section_field_names(
+        let extras_of_first = galleon_config::schema_markdown::section_field_names(
             &schema,
             &format!("providers.models.{}", first.name),
         );
         let non_base: std::collections::BTreeSet<String> =
             extras_of_first.difference(&base).cloned().collect();
-        let base_only = clawcrew_config::schema_markdown::field_table_for_path_excluding(
+        let base_only = galleon_config::schema_markdown::field_table_for_path_excluding(
             &schema,
             &format!("providers.models.{}", first.name),
             false,
@@ -914,7 +914,7 @@ fn render_model_provider_fields() -> String {
                 render_model_provider_endpoint(p.name, |url| format!("<code>{url}</code>"));
             let local = if p.local { " · local" } else { "" };
             let path = format!("providers.models.{}", p.name);
-            let extras = clawcrew_config::schema_markdown::field_table_for_path_excluding(
+            let extras = galleon_config::schema_markdown::field_table_for_path_excluding(
                 &schema,
                 &path,
                 false,
@@ -1025,7 +1025,7 @@ fn validate_env_var_paths(vars: &[EnvVarParams]) -> anyhow::Result<()> {
 }
 
 fn validate_env_var_path(path: &str) -> anyhow::Result<()> {
-    use clawcrew_config::schema::Config;
+    use galleon_config::schema::Config;
     let config = Config::default();
     let is_leaf = config.prop_fields().into_iter().any(|f| f.name == path);
     if is_leaf {

@@ -41,7 +41,7 @@ schemas. This crate knows how to run plugins, not what they do.
 - Concrete tool or channel implementations (those go in `galleon-tools` or
   `galleon-channels`, or in a WASM plugin)
 - Plugin business logic (that belongs in the plugin's own crate)
-- Config schema definitions (those go in `clawcrew-config`)
+- Config schema definitions (those go in `galleon-config`)
 - Plugin registry client or distribution (future separate crate)
 
 ## Related ADRs

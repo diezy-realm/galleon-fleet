@@ -6,7 +6,7 @@
 # affects the plugin backends or the feature-gated runtime coverage they
 # carry (the live-config plugin regression compiles clawcrew-runtime with
 # plugins-wasm-cranelift, so runtime-only changes must run the job too).
-# clawcrew-config is listed for the same reason: it is the canonical home of
+# galleon-config is listed for the same reason: it is the canonical home of
 # the operator-facing plugin config surface that galleon-plugins compiles
 # against, so a change there can break this job while nothing under
 # crates/galleon-plugins moves.
@@ -26,7 +26,7 @@ while IFS= read -r path; do
     case "$path" in
         crates/galleon-plugins/*|\
         crates/clawcrew-runtime/*|\
-        crates/clawcrew-config/*|\
+        crates/galleon-config/*|\
         tests/plugin_channel_runtime_e2e.rs|\
         tests/channel_egress_e2e.rs|\
         wit/*|\

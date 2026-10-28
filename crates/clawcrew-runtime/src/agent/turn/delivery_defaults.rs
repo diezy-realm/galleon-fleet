@@ -362,7 +362,7 @@ mod tests {
         // channels.iter().next(). Behavioural coverage of the routing itself
         // lives in galleon-tools::escalate tests.
         let tool = galleon_tools::escalate::EscalateToHumanTool::new(
-            std::sync::Arc::new(clawcrew_config::policy::SecurityPolicy::default()),
+            std::sync::Arc::new(galleon_config::policy::SecurityPolicy::default()),
             vec![],
             std::sync::Arc::new(parking_lot::RwLock::new(std::collections::HashMap::new())),
         );

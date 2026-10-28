@@ -49,7 +49,7 @@ Crate ini adalah **jantung arsitektur** menurut ADR 0001 (LLM SSOT di Rust) — 
 
 ### 2.2 Identity, Pairing & Vault — Lintas-Tier Credential Lifecycle (BELUM TERSENTUH)
 - `crates/clawcrew-runtime/src/enroll/` (`mod.rs`, `paircode_admin.rs`) — mekanisme pairing/QR code yang menghubungkan Tauri Desktop Shell ↔ Go Engine ↔ Rust Core. Ini jalur ONBOARDING pengguna baru — belum pernah diverifikasi keamanannya (apakah pairing code bisa di-brute-force, expiry, replay protection).
-- `crates/clawcrew-config/src/secrets.rs` (`SecretStore`) — SUDAH disinggung berulang di riset lain (BL-21 MCP, cron secrets) sebagai "pola yang lebih matang," tapi **belum pernah diaudit langsung** sebagai subjek utama. Apakah benar-benar matang, atau asumsi berulang yang belum diverifikasi?
+- `crates/galleon-config/src/secrets.rs` (`SecretStore`) — SUDAH disinggung berulang di riset lain (BL-21 MCP, cron secrets) sebagai "pola yang lebih matang," tapi **belum pernah diaudit langsung** sebagai subjek utama. Apakah benar-benar matang, atau asumsi berulang yang belum diverifikasi?
 - **Kenapa layak diriset**: pairing/vault adalah titik SATU-SATUNYA yang menghubungkan ke-4 tier (Tauri/Rust/Go/Web) secara otentikasi — kerentanan di sini = kompromi seluruh sistem. Sering diasumsikan "sudah matang" di riset lain tanpa pernah diverifikasi langsung.
 
 ### 2.3 Data Governance Memory — Retention, Privacy, Right-to-Delete (SEBAGIAN TERSENTUH, PERLU DIPERDALAM)

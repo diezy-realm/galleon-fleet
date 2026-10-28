@@ -32,7 +32,7 @@ pub struct Skill {
     #[serde(default)]
     pub slash_options: Vec<SkillSlashOption>,
     /// When `true`, this skill's full instructions stay inlined in the system
-    /// prompt even in [`clawcrew_config::schema::SkillsPromptInjectionMode::Compact`]
+    /// prompt even in [`galleon_config::schema::SkillsPromptInjectionMode::Compact`]
     /// mode, instead of being loaded on demand via `read_skill(name)`. Intended
     /// for policy/critical skills that must always be visible to the model.
     #[serde(default)]

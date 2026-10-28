@@ -9,8 +9,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::{ProxyConfig, ProxyScope};
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::{ProxyConfig, ProxyScope};
 
 const HTTP_REQUEST_PROXY_PINNING_ERROR: &str = "http_request requires direct transport so validated DNS answers remain pinned; set \
      proxy.scope = \"services\" and omit tool.http_request and tool.* from proxy.services, or disable the proxy; \
@@ -315,7 +315,7 @@ impl HttpRequestTool {
                 config_path.display()
             ))
         })?;
-        let config: clawcrew_config::schema::Config = toml::from_str(&contents).map_err(|e| {
+        let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
             anyhow::Error::msg(format!(
                 "Failed to parse config file {} for auth_secret '{secret_name}': {e}",
                 config_path.display()
@@ -329,10 +329,10 @@ impl HttpRequestTool {
             .filter(|secret| !secret.is_empty())
             .ok_or_else(|| anyhow::Error::msg(format!("auth_secret '{secret_name}' not found")))?;
 
-        let secret = if clawcrew_config::secrets::SecretStore::is_encrypted(raw_secret) {
+        let secret = if galleon_config::secrets::SecretStore::is_encrypted(raw_secret) {
             let clawcrew_dir = config_path.parent().unwrap_or_else(|| Path::new("."));
             let store =
-                clawcrew_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
+                galleon_config::secrets::SecretStore::new(clawcrew_dir, self.secrets_encrypt);
             let plaintext = store.decrypt(raw_secret)?;
             if plaintext.is_empty() {
                 anyhow::bail!("auth_secret '{secret_name}' is empty after decryption");
@@ -601,7 +601,7 @@ impl Tool for HttpRequestTool {
         // Rate limiting is applied by the RateLimitedTool wrapper at
         // registration time (see clawcrew-runtime::tools::mod).
 
-        let proxy_config = clawcrew_config::schema::runtime_proxy_config();
+        let proxy_config = galleon_config::schema::runtime_proxy_config();
         if proxy_conflicts_with_dns_pinning(&proxy_config) {
             ::clawcrew_log::record!(
                 WARN,
@@ -617,7 +617,7 @@ impl Tool for HttpRequestTool {
             });
         }
 
-        let ignored_environment_proxy = clawcrew_config::schema::environment_proxy_for_url(url);
+        let ignored_environment_proxy = galleon_config::schema::environment_proxy_for_url(url);
         if let Some(variable) = ignored_environment_proxy {
             ::clawcrew_log::record!(
                 WARN,
@@ -847,8 +847,8 @@ mod tests {
     use reqwest::header::AUTHORIZATION;
     use std::path::PathBuf;
     use tempfile::TempDir;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
 
     async fn chunked_response(chunks: &[&[u8]]) -> reqwest::Response {
         use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -1169,7 +1169,7 @@ api_token = "${CLAWCREW_TEST_HTTP_REQUEST_MISSING_SECRET}"
     fn auth_secret_decrypts_reloaded_config_value() {
         let tmp = TempDir::new().unwrap();
         let config_path = tmp.path().join("config.toml");
-        let store = clawcrew_config::secrets::SecretStore::new(tmp.path(), true);
+        let store = galleon_config::secrets::SecretStore::new(tmp.path(), true);
         let encrypted = store.encrypt("Bearer encrypted-secret").unwrap();
         std::fs::write(
             &config_path,
@@ -1215,7 +1215,7 @@ api_token = "{encrypted}"
     fn auth_secret_resolves_encrypted_env_backed_config_value() {
         let tmp = TempDir::new().unwrap();
         let config_path = tmp.path().join("config.toml");
-        let store = clawcrew_config::secrets::SecretStore::new(tmp.path(), true);
+        let store = galleon_config::secrets::SecretStore::new(tmp.path(), true);
         let encrypted = store
             .encrypt("${CLAWCREW_TEST_HTTP_REQUEST_ENCRYPTED_SECRET}")
             .unwrap();
@@ -2278,7 +2278,7 @@ api_token = "Bearer from-secret"
         let global_proxy = ProxyConfig {
             enabled: true,
             http_proxy: Some("http://proxy.example:8080".into()),
-            scope: clawcrew_config::schema::ProxyScope::Zeroclaw,
+            scope: galleon_config::schema::ProxyScope::Zeroclaw,
             ..ProxyConfig::default()
         };
         assert!(proxy_conflicts_with_dns_pinning(&global_proxy));
@@ -2288,7 +2288,7 @@ api_token = "Bearer from-secret"
         let environment_proxy = ProxyConfig {
             enabled: true,
             http_proxy: Some("http://proxy.example:8080".into()),
-            scope: clawcrew_config::schema::ProxyScope::Environment,
+            scope: galleon_config::schema::ProxyScope::Environment,
             ..ProxyConfig::default()
         };
         assert!(proxy_conflicts_with_dns_pinning(&environment_proxy));
@@ -2297,7 +2297,7 @@ api_token = "Bearer from-secret"
         let exact_service_proxy = ProxyConfig {
             enabled: true,
             http_proxy: Some("http://proxy.example:8080".into()),
-            scope: clawcrew_config::schema::ProxyScope::Services,
+            scope: galleon_config::schema::ProxyScope::Services,
             services: vec!["tool.http_request".into()],
             ..ProxyConfig::default()
         };
@@ -2306,7 +2306,7 @@ api_token = "Bearer from-secret"
         let other_service_proxy = ProxyConfig {
             enabled: true,
             http_proxy: Some("http://proxy.example:8080".into()),
-            scope: clawcrew_config::schema::ProxyScope::Services,
+            scope: galleon_config::schema::ProxyScope::Services,
             services: vec!["provider.openai".into()],
             ..ProxyConfig::default()
         };

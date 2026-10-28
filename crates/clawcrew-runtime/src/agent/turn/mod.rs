@@ -101,7 +101,7 @@ pub(crate) const MAX_MALFORMED_TOOL_PROTOCOL_RETRIES: usize = 2;
 /// resolver here prevents the loop from recomputing half the pair from a
 /// construction-time config snapshot.
 pub type ContextLimitsResolver =
-    Arc<dyn Fn(&str, &str) -> clawcrew_config::schema::ResolvedContextLimits + Send + Sync>;
+    Arc<dyn Fn(&str, &str) -> galleon_config::schema::ResolvedContextLimits + Send + Sync>;
 
 /// Default maximum agentic tool-use iterations per user message to prevent runaway loops.
 /// Used as a safe fallback when `max_tool_iterations` is unset or configured as zero.
@@ -314,7 +314,7 @@ pub struct ToolLoop<'a> {
 #[allow(clippy::too_many_arguments)]
 async fn projected_provider_facing_tokens(
     history: &[ChatMessage],
-    multimodal_config: &clawcrew_config::schema::MultimodalConfig,
+    multimodal_config: &galleon_config::schema::MultimodalConfig,
     degrade_strip_images: bool,
     image_cache: Option<&mut galleon_providers::multimodal::LocalImageCache>,
     tool_schema_tokens: usize,
@@ -496,7 +496,7 @@ async fn enforce_reported_budget(
     // large base64 provider payload, so selection and the recount must describe
     // the same provider-facing population actually sent next — not the raw
     // transcript the marker-only estimate sees.
-    multimodal_config: &clawcrew_config::schema::MultimodalConfig,
+    multimodal_config: &galleon_config::schema::MultimodalConfig,
     degrade_strip_images: bool,
     mut image_cache: Option<&mut galleon_providers::multimodal::LocalImageCache>,
     // The native-tool signal the NEXT iteration resolves to. The real iteration
@@ -845,12 +845,12 @@ async fn enforce_reported_budget(
 ///    configless (test) paths.
 fn resolve_context_limits_for_call(
     resolver: Option<&ContextLimitsResolver>,
-    config: Option<&clawcrew_config::schema::Config>,
+    config: Option<&galleon_config::schema::Config>,
     agent_alias: Option<&str>,
     provider_name: &str,
     model: &str,
-    fallback: clawcrew_config::schema::ResolvedContextLimits,
-) -> clawcrew_config::schema::ResolvedContextLimits {
+    fallback: galleon_config::schema::ResolvedContextLimits,
+) -> galleon_config::schema::ResolvedContextLimits {
     if let Some(resolver) = resolver {
         return resolver(provider_name, model);
     }
@@ -2655,7 +2655,7 @@ fn sop_step_excluded_tools(
 /// re-assembles correctly instead of inheriting the child's scope.
 #[derive(Clone, Copy)]
 pub struct SopStepReassembly<'a> {
-    pub config: &'a clawcrew_config::schema::Config,
+    pub config: &'a galleon_config::schema::Config,
 }
 
 /// The re-assembly gate: a step needs its own agent context re-assembled when
@@ -2696,10 +2696,10 @@ pub(crate) struct OwnedAgentExecution {
     /// knob baked in via `Config::resolved_agent_config`) — the one canonical
     /// per-agent knob surface, so the nested loop's runtime controls follow
     /// the effective agent instead of the delegating parent.
-    agent: clawcrew_config::schema::AliasedAgentConfig,
+    agent: galleon_config::schema::AliasedAgentConfig,
     /// The step agent's risk profile (also baked into `approval`); retained
     /// because system-prompt construction renders autonomy guidance from it.
-    risk_profile: clawcrew_config::schema::RiskProfileConfig,
+    risk_profile: galleon_config::schema::RiskProfileConfig,
     /// The step agent's own skills, for its system prompt.
     skills: Vec<crate::skills::Skill>,
     /// MCP-origin ground truth for the per-turn `tool_filter_groups` gate.
@@ -2725,7 +2725,7 @@ pub(crate) struct OwnedAgentExecution {
 /// connects MCP servers, so the driver memoizes the result per alias across a
 /// drain and re-assembles only on an alias change.
 pub(crate) async fn assemble_owned_execution(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     alias: &str,
     sop_engine: Arc<std::sync::Mutex<crate::sop::SopEngine>>,
     sop_audit: Option<Arc<crate::sop::SopAuditLogger>>,
@@ -2886,7 +2886,7 @@ pub(crate) async fn assemble_owned_execution(
 /// `tool_filter_groups` gate derives from the step context.
 fn build_owned_step_system_prompt(
     owned: &OwnedAgentExecution,
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     alias: &str,
     excluded_tools: &[String],
 ) -> Result<String> {
@@ -2940,10 +2940,10 @@ async fn drive_live_sop_actions(
     observer: &dyn crate::observability::Observer,
     silent: bool,
     approval: Option<&crate::approval::ApprovalManager>,
-    multimodal_config: &clawcrew_config::schema::MultimodalConfig,
+    multimodal_config: &galleon_config::schema::MultimodalConfig,
     // Full config so the live-SOP sub-turn's vision route resolves the configured
     // `vision_model_provider`'s alias options, exactly as the enclosing turn does.
-    config: Option<&clawcrew_config::schema::Config>,
+    config: Option<&galleon_config::schema::Config>,
     max_tool_iterations: usize,
     hooks: Option<&crate::hooks::HookRunner>,
     excluded_tools: &[String],
@@ -2960,11 +2960,11 @@ async fn drive_live_sop_actions(
     // its sibling per-round parameters and so tests can pass a distinct
     // `Arc` here and assert it is untouched after a nested step's switch.
     _model_switch_callback: Option<ModelSwitchCallback>,
-    pacing: &clawcrew_config::schema::PacingConfig,
+    pacing: &galleon_config::schema::PacingConfig,
     strict_tool_parsing: bool,
     parallel_tools: bool,
     max_tool_result_chars: usize,
-    context_limits: clawcrew_config::schema::ResolvedContextLimits,
+    context_limits: galleon_config::schema::ResolvedContextLimits,
     receipt_generator: Option<&crate::agent::tool_receipts::ReceiptGenerator>,
     knobs: &LoopKnobs,
     channel_name: &str,
@@ -3670,7 +3670,7 @@ mod reported_budget_tests {
             budget,
             None,
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -3706,7 +3706,7 @@ mod reported_budget_tests {
             estimated * 4,
             None,
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -3735,7 +3735,7 @@ mod reported_budget_tests {
             100,
             None,
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -3763,7 +3763,7 @@ mod reported_budget_tests {
             0,
             None,
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -3790,7 +3790,7 @@ mod reported_budget_tests {
             budget,
             Some(&tx),
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -3853,7 +3853,7 @@ mod reported_budget_tests {
             budget,
             Some(&tx),
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -3918,7 +3918,7 @@ mod reported_budget_tests {
             ChatMessage::user("turn3 short".to_string()),
             ChatMessage::assistant("final answer".to_string()),
         ];
-        let config = clawcrew_config::schema::MultimodalConfig::default();
+        let config = galleon_config::schema::MultimodalConfig::default();
         let mut image_cache = galleon_providers::multimodal::LocalImageCache::new();
         // The measured population is the PREPARED one, exactly as the runtime
         // measures it (`reported_population_estimated` from `prepared_messages`).
@@ -4032,7 +4032,7 @@ mod reported_budget_tests {
             budget,
             Some(&tx),
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -4106,7 +4106,7 @@ mod reported_budget_tests {
             budget,
             Some(&tx),
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -4174,7 +4174,7 @@ mod reported_budget_tests {
             budget,
             Some(&tx),
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -4256,7 +4256,7 @@ mod reported_budget_tests {
             budget,
             Some(&tx),
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -4373,7 +4373,7 @@ mod reported_budget_tests {
             budget,
             Some(&tx),
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -4484,7 +4484,7 @@ mod reported_budget_tests {
         // the growing hook is what pushes the actual next request over it.
         let pre_hook = prepare_messages_for_iteration(
             &history,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
         )
@@ -4520,7 +4520,7 @@ mod reported_budget_tests {
             budget,
             Some(&tx),
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -4559,7 +4559,7 @@ mod reported_budget_tests {
         // the dispatched population stays within budget.
         let retained_prepared = prepare_messages_for_iteration(
             &history,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
         )
@@ -4609,7 +4609,7 @@ mod reported_budget_tests {
             budget,
             Some(&tx),
             &NoopObserver,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
             false,
@@ -4648,7 +4648,7 @@ mod reported_budget_tests {
         );
         let prepared_taken = prepare_messages_for_iteration(
             &taken_snapshot,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             false,
             None,
         )
@@ -4726,7 +4726,7 @@ mod trim_budget_tests {
 mod active_route_context_tests {
     use super::*;
     use clawcrew_api::observability_traits::{ObserverEvent, ObserverMetric};
-    use clawcrew_config::schema::{
+    use galleon_config::schema::{
         AliasedAgentConfig, Config, CustomModelProviderConfig, ModelProviderConfig,
         RuntimeProfileConfig,
     };
@@ -4847,7 +4847,7 @@ mod active_route_context_tests {
         );
 
         let observer = RouteObserver::default();
-        let pacing = clawcrew_config::schema::PacingConfig::default();
+        let pacing = galleon_config::schema::PacingConfig::default();
         let dedup_exempt_tools = Vec::new();
         let (event_tx, mut event_rx) = tokio::sync::mpsc::channel(4);
         let base_ctx = TurnCtx {
@@ -4867,7 +4867,7 @@ mod active_route_context_tests {
             pacing: &pacing,
             strict_tool_parsing: false,
             channel: None,
-            draft_reasoning: clawcrew_config::schema::StreamReasoningMode::Status,
+            draft_reasoning: galleon_config::schema::StreamReasoningMode::Status,
             turn_id: "vision-route-context",
             agent_alias: Some("coder"),
             parent_agent_alias: None,
@@ -5178,7 +5178,7 @@ vision_model_provider = "custom.vision"
             )]);
         let observer = crate::observability::NoopObserver;
         let approval = crate::approval::ApprovalManager::for_non_interactive(
-            &clawcrew_config::schema::RiskProfileConfig {
+            &galleon_config::schema::RiskProfileConfig {
                 // Auto-approve so the image-injecting tool actually runs; without
                 // this the non-interactive gate denies the unknown tool and no
                 // image marker is produced, so the vision route never engages.
@@ -5186,7 +5186,7 @@ vision_model_provider = "custom.vision"
                 ..Default::default()
             },
         );
-        let pacing = clawcrew_config::schema::PacingConfig::default();
+        let pacing = galleon_config::schema::PacingConfig::default();
         let knobs = crate::agent::loop_::LoopKnobs::default();
         let multimodal = config.multimodal.clone();
 
@@ -5418,8 +5418,8 @@ mod sop_step_reassembly_tests {
     /// which tools the step can reach).
     #[tokio::test]
     async fn reassembly_yields_the_named_agents_own_scope() {
-        use clawcrew_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind};
-        use clawcrew_config::schema::{
+        use galleon_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind};
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, ModelProviderConfig, OllamaModelProviderConfig,
             RiskProfileConfig, SopConfig,
         };
@@ -5507,8 +5507,8 @@ mod sop_step_reassembly_tests {
     /// the CHILD's risk profile.
     #[tokio::test]
     async fn reassembly_preserves_parent_approval_backchannel() {
-        use clawcrew_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind};
-        use clawcrew_config::schema::{
+        use galleon_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind};
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, ModelProviderConfig, OllamaModelProviderConfig,
             RiskProfileConfig, SopConfig,
         };
@@ -5555,7 +5555,7 @@ mod sop_step_reassembly_tests {
         // Parent surface: non-interactive WITH an operator back-channel
         // (ACP / dashboard WS shape).
         let parent = crate::approval::ApprovalManager::for_non_interactive_backchannel(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
         );
         let owned = assemble_owned_execution(
             &config,
@@ -5577,10 +5577,10 @@ mod sop_step_reassembly_tests {
         );
         // The plain non-interactive parent keeps the auto-deny shape.
         let plain_parent = crate::approval::ApprovalManager::for_non_interactive(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
         );
         let plain_child = plain_parent
-            .derive_for_risk_profile(&clawcrew_config::schema::RiskProfileConfig::default());
+            .derive_for_risk_profile(&galleon_config::schema::RiskProfileConfig::default());
         assert_eq!(
             plain_child.approval_requirement("shell"),
             crate::approval::ApprovalRequirement::NotRequired,
@@ -5844,10 +5844,10 @@ mod sop_step_reassembly_tests {
         requests: Arc<std::sync::Mutex<Vec<CapturedRequest>>>,
         tools: Vec<Box<dyn crate::tools::Tool>>,
         mcp_tool_names: std::collections::HashSet<String>,
-        tool_filter_groups: Vec<clawcrew_config::schema::ToolFilterGroup>,
+        tool_filter_groups: Vec<galleon_config::schema::ToolFilterGroup>,
         temperature: Option<f64>,
     ) -> OwnedAgentExecution {
-        let mut agent = clawcrew_config::schema::AliasedAgentConfig::default();
+        let mut agent = galleon_config::schema::AliasedAgentConfig::default();
         agent.resolved.tool_filter_groups = tool_filter_groups;
         agent.resolved.max_tool_iterations = 3;
         OwnedAgentExecution {
@@ -5857,11 +5857,11 @@ mod sop_step_reassembly_tests {
             temperature,
             tools_registry: crate::tools::scoped::ScopedToolRegistry::from_raw_for_test(tools),
             approval: crate::approval::ApprovalManager::for_non_interactive(
-                &clawcrew_config::schema::RiskProfileConfig::default(),
+                &galleon_config::schema::RiskProfileConfig::default(),
             ),
             activated_tools: None,
             agent,
-            risk_profile: clawcrew_config::schema::RiskProfileConfig::default(),
+            risk_profile: galleon_config::schema::RiskProfileConfig::default(),
             skills: Vec::new(),
             mcp_tool_names,
             mcp_prompt_section: String::new(),
@@ -5883,7 +5883,7 @@ mod sop_step_reassembly_tests {
             Sop, SopEvent, SopExecutionMode, SopPriority, SopRunAction, SopStep, SopTrigger,
             SopTriggerSource,
         };
-        use clawcrew_config::schema::SopConfig;
+        use galleon_config::schema::SopConfig;
 
         let sop = Sop {
             name: "cross-agent".to_string(),
@@ -5973,7 +5973,7 @@ mod sop_step_reassembly_tests {
             observer,
             true,
             None,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             None,
             5,
             None,
@@ -5981,15 +5981,15 @@ mod sop_step_reassembly_tests {
             &[],
             None,
             model_switch_callback,
-            &clawcrew_config::schema::PacingConfig::default(),
+            &galleon_config::schema::PacingConfig::default(),
             false,
             false,
             30_000,
-            clawcrew_config::schema::ResolvedContextLimits {
+            galleon_config::schema::ResolvedContextLimits {
                 model_context_window: 100_000,
                 context_token_budget: 100_000,
                 model_context_window_source:
-                    clawcrew_config::schema::ModelContextWindowSource::Configured,
+                    galleon_config::schema::ModelContextWindowSource::Configured,
             },
             None,
             &LoopKnobs::default(),
@@ -6039,7 +6039,7 @@ mod sop_step_reassembly_tests {
     #[tokio::test]
     async fn cross_agent_step_never_sends_parent_history_to_child_provider() {
         let (engine, run_id, action) = start_single_cross_agent_step("stepper");
-        let config = clawcrew_config::schema::Config::default();
+        let config = galleon_config::schema::Config::default();
         let handle = SopStepReassembly { config: &config };
 
         let requests: Arc<std::sync::Mutex<Vec<CapturedRequest>>> =
@@ -6133,10 +6133,10 @@ mod sop_step_reassembly_tests {
     /// loop's final filters, not just at assembly.
     #[tokio::test]
     async fn cross_agent_step_offers_child_tools_filtered_by_child_profile() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         let (engine, run_id, action) = start_single_cross_agent_step("stepper");
-        let config = clawcrew_config::schema::Config::default();
+        let config = galleon_config::schema::Config::default();
         let handle = SopStepReassembly { config: &config };
 
         let requests: Arc<std::sync::Mutex<Vec<CapturedRequest>>> =
@@ -6229,7 +6229,7 @@ mod sop_step_reassembly_tests {
     #[tokio::test]
     async fn cross_agent_step_stamps_effective_identity_with_parent_correlation() {
         let (engine, run_id, action) = start_single_cross_agent_step("stepper");
-        let config = clawcrew_config::schema::Config::default();
+        let config = galleon_config::schema::Config::default();
         let handle = SopStepReassembly { config: &config };
 
         let requests: Arc<std::sync::Mutex<Vec<CapturedRequest>>> =
@@ -6288,7 +6288,7 @@ mod sop_step_reassembly_tests {
     #[tokio::test]
     async fn same_agent_step_keeps_shared_history_and_identity() {
         let (engine, run_id, action) = start_single_cross_agent_step("outer");
-        let config = clawcrew_config::schema::Config::default();
+        let config = galleon_config::schema::Config::default();
         let handle = SopStepReassembly { config: &config };
 
         let observer = IdentityCapture::default();
@@ -6339,7 +6339,7 @@ mod sop_step_reassembly_tests {
     #[tokio::test]
     async fn same_agent_step_output_reaches_parent_capture_once() {
         let (engine, _run_id, action) = start_single_cross_agent_step("outer");
-        let config = clawcrew_config::schema::Config::default();
+        let config = galleon_config::schema::Config::default();
         let handle = SopStepReassembly { config: &config };
 
         let observer = IdentityCapture::default();
@@ -6391,7 +6391,7 @@ mod sop_step_reassembly_tests {
     async fn unassemblable_cross_agent_step_fails_closed() {
         let (engine, run_id, action) = start_single_cross_agent_step("stepper");
         // Bare config: no "stepper" agent exists, so assembly must fail.
-        let config = clawcrew_config::schema::Config::default();
+        let config = galleon_config::schema::Config::default();
         let handle = SopStepReassembly { config: &config };
 
         let shell_calls = Arc::new(AtomicUsize::new(0));
@@ -6587,18 +6587,18 @@ mod sop_step_reassembly_tests {
     #[tokio::test]
     async fn cross_agent_step_model_switch_never_leaks_into_parent_loop() {
         let (engine, run_id, action) = start_single_cross_agent_step("stepper");
-        let config = clawcrew_config::schema::Config::default();
+        let config = galleon_config::schema::Config::default();
         let handle = SopStepReassembly { config: &config };
 
         let mut exec_cache = std::collections::HashMap::new();
-        let mut stepper_agent = clawcrew_config::schema::AliasedAgentConfig::default();
+        let mut stepper_agent = galleon_config::schema::AliasedAgentConfig::default();
         stepper_agent.resolved.max_tool_iterations = 3;
         // Full autonomy so the test tool call executes directly — approval
         // gating for an unrecognized tool name is an orthogonal concern this
         // regression does not exercise.
-        let stepper_risk_profile = clawcrew_config::schema::RiskProfileConfig {
-            level: clawcrew_config::autonomy::AutonomyLevel::Full,
-            ..clawcrew_config::schema::RiskProfileConfig::default()
+        let stepper_risk_profile = galleon_config::schema::RiskProfileConfig {
+            level: galleon_config::autonomy::AutonomyLevel::Full,
+            ..galleon_config::schema::RiskProfileConfig::default()
         };
         exec_cache.insert(
             "stepper".to_string(),
@@ -6692,7 +6692,7 @@ mod sop_step_reassembly_tests {
             Sop, SopEvent, SopExecutionMode, SopPriority, SopRunStatus, SopStep, SopStepKind,
             SopTrigger, SopTriggerSource,
         };
-        use clawcrew_config::schema::SopConfig;
+        use galleon_config::schema::SopConfig;
 
         // 1 -> 2 -> 1 -> ... : a two-node cycle of always-succeeding
         // capabilities, so nothing but the budget can end the run.
@@ -7052,7 +7052,7 @@ mod tool_lifecycle_abandonment_tests {
         tools_registry: &crate::tools::scoped::ScopedToolRegistry,
         observer: &NoopObserver,
         hooks: Option<&crate::hooks::HookRunner>,
-        pacing: &clawcrew_config::schema::PacingConfig,
+        pacing: &galleon_config::schema::PacingConfig,
         turn_id: &str,
         parallel_tools: bool,
         cancellation_token: Option<CancellationToken>,
@@ -7079,7 +7079,7 @@ mod tool_lifecycle_abandonment_tests {
         tools_registry: &crate::tools::scoped::ScopedToolRegistry,
         observer: &NoopObserver,
         hooks: Option<&crate::hooks::HookRunner>,
-        pacing: &clawcrew_config::schema::PacingConfig,
+        pacing: &galleon_config::schema::PacingConfig,
         turn_id: &str,
         parallel_tools: bool,
         cancellation_token: Option<CancellationToken>,
@@ -7103,7 +7103,7 @@ mod tool_lifecycle_abandonment_tests {
                 observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 3,
                 hooks,
@@ -7115,9 +7115,9 @@ mod tool_lifecycle_abandonment_tests {
                 strict_tool_parsing: false,
                 parallel_tools,
                 max_tool_result_chars: 0,
-                context_limits: clawcrew_config::schema::ResolvedContextLimits {
+                context_limits: galleon_config::schema::ResolvedContextLimits {
                     context_token_budget,
-                    ..clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0)
+                    ..galleon_config::schema::ResolvedContextLimits::legacy_fallback(0)
                 },
                 context_limits_resolver: None,
                 receipt_generator: None,
@@ -7211,7 +7211,7 @@ mod tool_lifecycle_abandonment_tests {
         };
         let registry = registry_with(Vec::new());
         let observer = NoopObserver;
-        let pacing = clawcrew_config::schema::PacingConfig::default();
+        let pacing = galleon_config::schema::PacingConfig::default();
 
         let result = run_scripted_loop_with_budget(
             &provider,
@@ -7240,7 +7240,7 @@ mod tool_lifecycle_abandonment_tests {
     #[tokio::test]
     async fn completed_batch_pairs_before_with_after_and_never_abandons() {
         let observer = NoopObserver;
-        let pacing = clawcrew_config::schema::PacingConfig::default();
+        let pacing = galleon_config::schema::PacingConfig::default();
         let events = Arc::new(Mutex::new(Vec::new()));
         let runner = lifecycle_runner(Arc::clone(&events), Vec::new());
         let provider = ScriptedProvider {
@@ -7293,7 +7293,7 @@ mod tool_lifecycle_abandonment_tests {
     #[tokio::test]
     async fn failed_tool_outcome_reaches_after_not_abandonment() {
         let observer = NoopObserver;
-        let pacing = clawcrew_config::schema::PacingConfig::default();
+        let pacing = galleon_config::schema::PacingConfig::default();
         let events = Arc::new(Mutex::new(Vec::new()));
         let runner = lifecycle_runner(Arc::clone(&events), Vec::new());
         let provider = ScriptedProvider {
@@ -7340,7 +7340,7 @@ mod tool_lifecycle_abandonment_tests {
     #[tokio::test]
     async fn mid_batch_interruption_abandons_every_unexecuted_context() {
         let observer = NoopObserver;
-        let pacing = clawcrew_config::schema::PacingConfig::default();
+        let pacing = galleon_config::schema::PacingConfig::default();
         let events = Arc::new(Mutex::new(Vec::new()));
         let runner = lifecycle_runner(Arc::clone(&events), Vec::new());
         let token = CancellationToken::new();
@@ -7504,7 +7504,7 @@ mod tool_lifecycle_abandonment_tests {
         // design for that (the webhook audit hook retains no arguments at
         // all, so a drop leaves nothing behind).
         let observer = NoopObserver;
-        let pacing = clawcrew_config::schema::PacingConfig::default();
+        let pacing = galleon_config::schema::PacingConfig::default();
         let events = Arc::new(Mutex::new(Vec::new()));
         let retained = Arc::new(Mutex::new(Vec::new()));
         let mut runner = crate::hooks::HookRunner::new();

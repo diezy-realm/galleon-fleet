@@ -41,7 +41,7 @@ impl WeComChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_runtime_proxy_client("channel.wecom")
+        galleon_config::schema::build_runtime_proxy_client("channel.wecom")
     }
 
     fn webhook_url(&self) -> String {
@@ -221,7 +221,7 @@ enabled = true
 webhook_key = "key-abc-123"
 allowed_users = ["user1", "*"]
 "#;
-        let cfg = clawcrew_config::migration::migrate_to_current(v2_toml)
+        let cfg = galleon_config::migration::migrate_to_current(v2_toml)
             .expect("V2 wecom config migrates to V3");
         let wecom = cfg
             .channels
@@ -249,7 +249,7 @@ schema_version = 2
 enabled = true
 webhook_key = "key"
 "#;
-        let cfg = clawcrew_config::migration::migrate_to_current(v2_toml)
+        let cfg = galleon_config::migration::migrate_to_current(v2_toml)
             .expect("V2 wecom config without allowed_users migrates");
         assert!(
             !cfg.peer_groups.contains_key("wecom_default"),

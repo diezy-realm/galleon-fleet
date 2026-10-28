@@ -7,7 +7,7 @@
 //!
 //! * **Allowlist policy.** Peer-policy allowlist checks call
 //!   [`galleon_channel_core::allowlist::is_user_allowed`] using the SSOT
-//!   peer-policy from `clawcrew_config::schema` without pulling `clawcrew-runtime`.
+//!   peer-policy from `galleon_config::schema` without pulling `clawcrew-runtime`.
 
 use async_trait::async_trait;
 use portable_atomic::{AtomicU64, Ordering};
@@ -1157,7 +1157,7 @@ mod tests {
 
     #[test]
     fn irc_config_serde_roundtrip() {
-        use clawcrew_config::schema::IrcConfig;
+        use galleon_config::schema::IrcConfig;
 
         let config = IrcConfig {
             enabled: true,
@@ -1190,7 +1190,7 @@ mod tests {
 
     #[test]
     fn irc_config_minimal_toml() {
-        use clawcrew_config::schema::IrcConfig;
+        use galleon_config::schema::IrcConfig;
 
         let toml_str = r#"
 server = "irc.example.com"
@@ -1211,7 +1211,7 @@ nickname = "bot"
 
     #[test]
     fn irc_config_default_port() {
-        use clawcrew_config::schema::IrcConfig;
+        use galleon_config::schema::IrcConfig;
 
         let json = r#"{"server":"irc.test","nickname":"bot"}"#;
         let parsed: IrcConfig = serde_json::from_str(json).unwrap();

@@ -17,9 +17,9 @@ use std::time::Duration;
 use tempfile::TempDir;
 use clawcrew_api::channel::SendMessage;
 use clawcrew_api::webhook::{PluginWebhookRegistry, RawWebhook, WebhookOutcome};
-use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-use clawcrew_config::providers::{ChannelRef, ModelProviderRef};
-use clawcrew_config::schema::{
+use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+use galleon_config::providers::{ChannelRef, ModelProviderRef};
+use galleon_config::schema::{
     AliasedAgentConfig, AnthropicModelProviderConfig, Config, PluginChannelConfig,
     PluginEntryConfig, RiskProfileConfig,
 };

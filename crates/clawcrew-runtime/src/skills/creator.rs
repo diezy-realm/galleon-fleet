@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use std::path::PathBuf;
 use clawcrew_api::model_provider::{ChatMessage, ChatRequest, ModelProvider};
-use clawcrew_config::schema::SkillCreationConfig;
+use galleon_config::schema::SkillCreationConfig;
 use galleon_memory::embeddings::EmbeddingProvider;
 use galleon_memory::vector::cosine_similarity;
 
@@ -1377,10 +1377,10 @@ tags = ["auto-generated"]
         let creator = SkillCreator::new(dir.path().to_path_buf(), reflect_config());
 
         let cost_dir = tempfile::tempdir().unwrap();
-        let cost_config = clawcrew_config::schema::CostConfig {
+        let cost_config = galleon_config::schema::CostConfig {
             enabled: true,
             daily_limit_usd: 0.001, // very low limit
-            ..clawcrew_config::schema::CostConfig::default()
+            ..galleon_config::schema::CostConfig::default()
         };
         let tracker = Arc::new(CostTracker::new(cost_config, cost_dir.path()).unwrap());
         // Pre-record usage that already exceeds the daily limit.

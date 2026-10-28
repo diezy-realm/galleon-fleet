@@ -11,7 +11,7 @@ trap 'rm -rf "$fixture_dir"' EXIT
 repo_root="${fixture_dir}/repo"
 mkdir -p "$repo_root/crates/galleon-channels" \
     "$repo_root/crates/clawcrew-api" \
-    "$repo_root/crates/clawcrew-config" \
+    "$repo_root/crates/galleon-config" \
     "$repo_root/crates/galleon-plugins" \
     "$repo_root/crates/clawcrew-runtime" \
     "$repo_root/crates/galleon-gateway" \
@@ -25,7 +25,7 @@ cat > "$metadata_file" <<EOF
     {"id": "path+file://${repo_root}#clawcrew 0.8.4", "name": "clawcrew", "manifest_path": "Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4", "name": "clawcrew-api", "manifest_path": "crates/clawcrew-api/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4", "name": "galleon-channels", "manifest_path": "crates/galleon-channels/Cargo.toml"},
-    {"id": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4", "name": "clawcrew-config", "manifest_path": "crates/clawcrew-config/Cargo.toml"},
+    {"id": "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4", "name": "galleon-config", "manifest_path": "crates/galleon-config/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "name": "galleon-plugins", "manifest_path": "crates/galleon-plugins/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "name": "clawcrew-runtime", "manifest_path": "crates/clawcrew-runtime/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4", "name": "galleon-gateway", "manifest_path": "crates/galleon-gateway/Cargo.toml"},
@@ -37,7 +37,7 @@ cat > "$metadata_file" <<EOF
     "path+file://${repo_root}#clawcrew 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4",
     "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4",
-    "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4",
+    "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4",
     "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4",
     "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4",
@@ -47,10 +47,10 @@ cat > "$metadata_file" <<EOF
   ],
   "resolve": {
     "nodes": [
-      {"id": "path+file://${repo_root}#clawcrew 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4"}]},
+      {"id": "path+file://${repo_root}#clawcrew 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4", "deps": []},
-      {"id": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4", "deps": []},
+      {"id": "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}]},
@@ -170,7 +170,7 @@ assert_selection "dynamically consumed plugin fixture" full '[]' 'Dynamically co
 for plugin_path in \
     'crates/galleon-plugins/src/lib.rs' \
     'crates/clawcrew-runtime/src/lib.rs' \
-    'crates/clawcrew-config/src/lib.rs' \
+    'crates/galleon-config/src/lib.rs' \
     'tests/plugin_channel_runtime_e2e.rs' \
     'Cargo.toml' \
     'Cargo.lock' \

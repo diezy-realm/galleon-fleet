@@ -1,1 +1,1 @@
-pub use clawcrew_config::secrets::*;
+pub use galleon_config::secrets::*;

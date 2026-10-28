@@ -13,7 +13,7 @@ publish = true
 clawcrew-api.workspace = true
 galleon-spawn.workspace = true
 galleon-infra = { workspace = true, features = ["schema-export"] }
-clawcrew-config.workspace = true
+galleon-config.workspace = true
 # RF-B: i18n body moved to galleon-i18n; runtime re-exports it as `i18n`.
 galleon-i18n.workspace = true
 galleon-security-scrub.workspace = true
@@ -102,7 +102,7 @@ default = ["observability-prometheus", "schema-export"]
 observability-prometheus = ["dep:prometheus"]
 observability-otel = ["dep:opentelemetry", "dep:opentelemetry_sdk", "dep:opentelemetry-otlp"]
 sandbox-landlock = ["dep:landlock"]
-schema-export = ["dep:schemars", "clawcrew-config/schema-export", "galleon-sop-graph/schema-export", "galleon-i18n/schema-export"]
+schema-export = ["dep:schemars", "galleon-config/schema-export", "galleon-sop-graph/schema-export", "galleon-i18n/schema-export"]
 
 
 browser-native = []
@@ -114,7 +114,7 @@ plugins-wasm = ["dep:galleon-plugins", "galleon-plugins/plugins-wasmtime"]
 # against a real component (`WasmTool::from_wasm` refuses to register a tool it
 # cannot load, so a runtime-only backend has no plugin tool to execute).
 plugins-wasm-cranelift = ["plugins-wasm", "galleon-plugins/plugins-wasm-cranelift"]
-webauthn = ["clawcrew-config/webauthn"]
+webauthn = ["galleon-config/webauthn"]
 sandbox-bubblewrap = []
 # Exposes test-only helpers (including `ScopedToolRegistry::from_raw_for_test`
 # and the deterministic Agent clock seam) to OTHER crates' test builds (e.g.
@@ -144,7 +144,7 @@ wiremock = "0.6"
 galleon-tools = { workspace = true, features = ["test-helpers"] }
 # Test-only config fault injection for the config/set post-rename sync
 # regression. Same pattern as galleon-tools above.
-clawcrew-config = { workspace = true, features = ["test-helpers"] }
+galleon-config = { workspace = true, features = ["test-helpers"] }
 
 # Channel features (forwarded to galleon-channels)
 

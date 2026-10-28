@@ -12,7 +12,7 @@ use sha2::{Digest, Sha256};
 use std::sync::{Arc, Mutex};
 use clawcrew_api::tool::ToolSpec;
 #[cfg(windows)]
-use clawcrew_config::platform::native::windows_std_cmd_shell_command;
+use galleon_config::platform::native::windows_std_cmd_shell_command;
 
 /// Hostname prefix for the Bedrock Runtime endpoint.
 const ENDPOINT_PREFIX: &str = "bedrock-runtime";
@@ -847,7 +847,7 @@ impl BedrockModelProvider {
     }
 
     fn http_client(&self) -> Client {
-        clawcrew_config::schema::build_runtime_proxy_client_with_timeouts(
+        galleon_config::schema::build_runtime_proxy_client_with_timeouts(
             "model_provider.bedrock",
             120,
             10,

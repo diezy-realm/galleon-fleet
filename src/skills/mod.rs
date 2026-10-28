@@ -68,7 +68,7 @@ pub async fn handle_command(
             if let Some(ref b) = bundle {
                 // A single bundle's on-disk skills.
                 let dir =
-                    clawcrew_config::skill_bundles::resolve_directory(config, &install_root, b)
+                    galleon_config::skill_bundles::resolve_directory(config, &install_root, b)
                         .map_err(anyhow::Error::msg)?;
                 rendered.push((
                     get_required_cli_string_with_args(
@@ -106,7 +106,7 @@ pub async fn handle_command(
                 // is the same loader the old `list` used, so those rows are
                 // preservedreview).
                 for alias in config.skill_bundles.keys() {
-                    if let Ok(dir) = clawcrew_config::skill_bundles::resolve_directory(
+                    if let Ok(dir) = galleon_config::skill_bundles::resolve_directory(
                         config,
                         &install_root,
                         alias,
@@ -534,7 +534,7 @@ pub async fn handle_command(
                     .skill_bundles
                     .keys()
                     .filter_map(|a| {
-                        clawcrew_config::skill_bundles::resolve_directory(config, &install_root, a)
+                        galleon_config::skill_bundles::resolve_directory(config, &install_root, a)
                             .ok()
                     })
                     .collect();
@@ -595,7 +595,7 @@ fn resolve_install_location(
                 get_required_cli_string_with_args("cli-bundle-not-configured", &[("alias", alias)])
             );
         }
-        let dir = clawcrew_config::skill_bundles::resolve_directory(config, &install_root, alias)
+        let dir = galleon_config::skill_bundles::resolve_directory(config, &install_root, alias)
             .map_err(anyhow::Error::msg)?;
         return Ok(SkillLocation::Bundle {
             alias: alias.to_string(),
@@ -616,7 +616,7 @@ fn resolve_install_location(
         match agent_cfg.skill_bundles.as_slice() {
             [one] => {
                 let dir =
-                    clawcrew_config::skill_bundles::resolve_directory(config, &install_root, one)
+                    galleon_config::skill_bundles::resolve_directory(config, &install_root, one)
                         .map_err(anyhow::Error::msg)?;
                 return Ok(SkillLocation::Bundle {
                     alias: one.clone(),
@@ -664,7 +664,7 @@ fn collect_skill_locations(
             continue;
         }
         if let Ok(dir) =
-            clawcrew_config::skill_bundles::resolve_directory(config, &install_root, alias)
+            galleon_config::skill_bundles::resolve_directory(config, &install_root, alias)
         {
             let candidate = dir.join(name);
             if candidate.is_dir() {
@@ -865,7 +865,7 @@ async fn handle_bundle_add(
     }
     working.mark_dirty(&format!("skill_bundles.{alias}"));
     let install_root = working.install_root_dir();
-    match clawcrew_config::skill_bundles::resolve_directory(&working, &install_root, &alias) {
+    match galleon_config::skill_bundles::resolve_directory(&working, &install_root, &alias) {
         Ok(dir) => {
             tokio::fs::create_dir_all(&dir).await.ok();
             let d = dir.display().to_string();
@@ -916,7 +916,7 @@ async fn handle_bundle_remove(
             )
         );
     }
-    let refs = clawcrew_config::alias_refs::find_bundle_refs(config, &alias);
+    let refs = galleon_config::alias_refs::find_bundle_refs(config, &alias);
     if !yes {
         let count = refs.len().to_string();
         println!(
@@ -944,13 +944,13 @@ async fn handle_bundle_remove(
     // Resolve the bundle directory while the entry still exists, so it can be
     // archived AFTER the config change is durable.
     let bundle_dir =
-        clawcrew_config::skill_bundles::resolve_directory(&working, &install_root, &alias)
+        galleon_config::skill_bundles::resolve_directory(&working, &install_root, &alias)
             .ok()
             .filter(|d| d.exists());
 
     // Mutate + PERSIST the config first, so a later archive failure can't leave
     // the config pointing at a directory already moved to _deleted/.
-    let mut dirty = clawcrew_config::alias_refs::scrub_bundle_refs(&mut working, &alias);
+    let mut dirty = galleon_config::alias_refs::scrub_bundle_refs(&mut working, &alias);
     working
         .delete_map_key("skill_bundles", &alias)
         .map_err(anyhow::Error::msg)?;
@@ -1023,7 +1023,7 @@ async fn handle_bundle_rename(
     let install_root = working.install_root_dir();
     // Resolve the OLD directory while the `from` entry still exists.
     let old_dir =
-        clawcrew_config::skill_bundles::resolve_directory(&working, &install_root, &from).ok();
+        galleon_config::skill_bundles::resolve_directory(&working, &install_root, &from).ok();
     match working.rename_map_key("skill_bundles", &from, &to) {
         Ok(true) => {}
         Ok(false) => anyhow::bail!(
@@ -1046,12 +1046,12 @@ async fn handle_bundle_rename(
             )
         }
     }
-    let mut dirty = clawcrew_config::alias_refs::rewrite_bundle_refs(&mut working, &from, &to);
+    let mut dirty = galleon_config::alias_refs::rewrite_bundle_refs(&mut working, &from, &to);
     dirty.push(format!("skill_bundles.{from}"));
     dirty.push(format!("skill_bundles.{to}"));
     // Resolve the NEW directory (the entry now lives under `to`) for the move.
     let new_dir =
-        clawcrew_config::skill_bundles::resolve_directory(&working, &install_root, &to).ok();
+        galleon_config::skill_bundles::resolve_directory(&working, &install_root, &to).ok();
     for p in &dirty {
         working.mark_dirty(p);
     }
@@ -1275,7 +1275,7 @@ fn fallback_editors() -> &'static [&'static str] {
 mod install_location_tests {
     use super::*;
     use crate::config::{AliasedAgentConfig, Config};
-    use clawcrew_config::schema::SkillBundleConfig;
+    use galleon_config::schema::SkillBundleConfig;
 
     fn config_with_bundles(aliases: &[&str]) -> Config {
         let mut c = Config::default();

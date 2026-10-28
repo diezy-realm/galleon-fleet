@@ -8,8 +8,8 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::policy::ToolOperation;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::policy::ToolOperation;
 
 const COMPOSIO_API_BASE_V3: &str = "https://backend.composio.dev/api/v3";
 const COMPOSIO_TOOL_VERSION_LATEST: &str = "latest";
@@ -48,7 +48,7 @@ impl ComposioTool {
     }
 
     fn client(&self) -> Client {
-        clawcrew_config::schema::build_runtime_proxy_client_with_timeouts("tool.composio", 60, 10)
+        galleon_config::schema::build_runtime_proxy_client_with_timeouts("tool.composio", 60, 10)
     }
 
     /// List available Composio apps/actions for the authenticated user.
@@ -1286,8 +1286,8 @@ pub struct ComposioAction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
 
     fn test_security() -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy::default())

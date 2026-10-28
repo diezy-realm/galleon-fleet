@@ -76,7 +76,7 @@ impl ToolAccessPolicy {
 /// (`allowed_tools` + `excluded_tools`) and an optional caller-supplied
 /// allowlist.
 pub fn mcp_tool_access_policy(
-    security: &clawcrew_config::policy::SecurityPolicy,
+    security: &galleon_config::policy::SecurityPolicy,
     caller_allowed: Option<&[String]>,
 ) -> Option<ToolAccessPolicy> {
     ToolAccessPolicy::from_security(
@@ -405,7 +405,7 @@ mod tests {
         DeferredMcpToolSet {
             stubs,
             registry,
-            security: Arc::new(clawcrew_config::policy::SecurityPolicy::default()),
+            security: Arc::new(galleon_config::policy::SecurityPolicy::default()),
         }
     }
 

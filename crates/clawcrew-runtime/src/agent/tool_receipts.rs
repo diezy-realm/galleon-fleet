@@ -124,7 +124,7 @@ impl ReceiptScope {
     /// Single source of truth for turning resolved receipt config into a live
     /// scope. Returns `None` when receipts are disabled so each turn entrypoint
     /// gates identically without duplicating the generator/collector glue.
-    pub fn from_config(config: &clawcrew_config::schema::ToolReceiptsConfig) -> Option<Self> {
+    pub fn from_config(config: &galleon_config::schema::ToolReceiptsConfig) -> Option<Self> {
         config
             .enabled
             .then(|| Self::with_generator(ReceiptGenerator::new()))

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 /// Canonical `(bundle-alias, skill-name)` identity for a skill on disk.
 /// Construct via [`resolve`]; never by literal field assignment.
@@ -87,7 +87,7 @@ pub fn resolve(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::SkillBundleConfig;
+    use galleon_config::schema::SkillBundleConfig;
 
     fn cfg_with_bundles(aliases: &[&str]) -> Config {
         let mut cfg = Config::default();

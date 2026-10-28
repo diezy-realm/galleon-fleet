@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use std::io::Write;
 use std::path::Path;
-use clawcrew_config::schema::{Config, UNCONFIGURED_CONTEXT_WINDOW_FALLBACK};
+use galleon_config::schema::{Config, UNCONFIGURED_CONTEXT_WINDOW_FALLBACK};
 
 const DAEMON_STALE_SECONDS: i64 = 30;
 const SCHEDULER_STALE_SECONDS: i64 = 120;
@@ -498,7 +498,7 @@ pub fn persist_model_cache(
     // Load existing cache, starting fresh only when the file is genuinely
     // absent. A malformed or unreadable existing file is left untouched and
     // reported rather than silently replaced with a single-provider cache.
-    let mut cache: clawcrew_config::schema::ModelCacheState =
+    let mut cache: galleon_config::schema::ModelCacheState =
         match std::fs::read_to_string(&cache_path) {
             Ok(raw) => serde_json::from_str(&raw).with_context(|| {
                 format!(
@@ -507,7 +507,7 @@ pub fn persist_model_cache(
                 )
             })?,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                clawcrew_config::schema::ModelCacheState::default()
+                galleon_config::schema::ModelCacheState::default()
             }
             Err(e) => {
                 return Err(e).with_context(|| {
@@ -524,7 +524,7 @@ pub fn persist_model_cache(
     cache.entries.retain(|e| e.model_provider != canonical);
     cache
         .entries
-        .push(clawcrew_config::schema::ModelCacheEntry {
+        .push(galleon_config::schema::ModelCacheEntry {
             model_provider: canonical,
             models: models.to_vec(),
         });
@@ -711,7 +711,7 @@ pub async fn run_models(
 type FetchContextWindowFn = Box<
     dyn for<'a> Fn(
             &'a str,
-            &'a clawcrew_config::schema::ModelProviderConfig,
+            &'a galleon_config::schema::ModelProviderConfig,
         ) -> std::pin::Pin<
             Box<dyn std::future::Future<Output = Option<usize>> + Send + 'a>,
         > + Send
@@ -721,7 +721,7 @@ type FetchContextWindowFn = Box<
 /// Update context_window in config.toml from provider /models endpoints.
 /// Returns the number of providers updated.
 pub async fn update_context_windows(
-    config: &mut clawcrew_config::schema::Config,
+    config: &mut galleon_config::schema::Config,
     provider_override: Option<&str>,
     dry_run: bool,
     fetch_fn: Option<FetchContextWindowFn>,
@@ -729,7 +729,7 @@ pub async fn update_context_windows(
     let fetch_fn = fetch_fn.unwrap_or_else(|| {
         Box::new(
             |provider_type: &str,
-             provider_config: &clawcrew_config::schema::ModelProviderConfig| {
+             provider_config: &galleon_config::schema::ModelProviderConfig| {
                 Box::pin(galleon_providers::fetch_context_window(
                     provider_type,
                     provider_config,
@@ -816,7 +816,7 @@ pub async fn update_context_windows(
         }
 
         // Fetch context window from provider
-        let provider_config = clawcrew_config::schema::ModelProviderConfig {
+        let provider_config = galleon_config::schema::ModelProviderConfig {
             model: Some(model.clone()),
             uri: uri.clone(),
             api_key,
@@ -1114,7 +1114,7 @@ pub fn run_traces(
 
 /// Surface config sections the resilient loader dropped at load time
 /// (`Config::degraded_sections` / `Config::degraded_security`, populated by
-/// `migrate_to_current_salvaged` in `clawcrew-config`) so `doctor` names the
+/// `migrate_to_current_salvaged` in `galleon-config`) so `doctor` names the
 /// actual malformed section instead of downstream checks reporting confusing
 /// secondary symptoms (e.g. "no channels configured").
 fn check_degraded_sections(config: &Config, items: &mut Vec<DiagItem>) {
@@ -1303,7 +1303,7 @@ fn check_config_semantics(config: &Config, items: &mut Vec<DiagItem>) {
     // no api_key concept (its optional `bearer_token` is a different field)
     // and is never checked here.
     {
-        use clawcrew_config::providers::TranscriptionProviderEntry;
+        use galleon_config::providers::TranscriptionProviderEntry;
 
         for (family, alias, entry) in config.providers.transcription.iter_entries() {
             let api_key = match entry {
@@ -1432,7 +1432,7 @@ fn check_config_semantics(config: &Config, items: &mut Vec<DiagItem>) {
     // reaches `degraded_sections` — doctor must name the unset field here
     // or the operator only finds out when the channel fails to start.
     for (alias, tg) in &cc.telegram {
-        if tg.enabled && clawcrew_config::traits::is_unset_display_value(&tg.bot_token) {
+        if tg.enabled && galleon_config::traits::is_unset_display_value(&tg.bot_token) {
             items.push(DiagItem::warn(
                 cat,
                 format!(
@@ -1442,7 +1442,7 @@ fn check_config_semantics(config: &Config, items: &mut Vec<DiagItem>) {
         }
     }
     for (alias, dc) in &cc.discord {
-        if dc.enabled && clawcrew_config::traits::is_unset_display_value(&dc.bot_token) {
+        if dc.enabled && galleon_config::traits::is_unset_display_value(&dc.bot_token) {
             items.push(DiagItem::warn(
                 cat,
                 format!(
@@ -1497,7 +1497,7 @@ fn check_config_semantics(config: &Config, items: &mut Vec<DiagItem>) {
 /// deprecation and was removed with that warning, so the withheld-capability
 /// notice is currently its only entry.
 fn localized_validation_warning_message(
-    warning: &clawcrew_config::validation_warnings::ValidationWarning,
+    warning: &galleon_config::validation_warnings::ValidationWarning,
 ) -> String {
     warning.message.clone()
 }
@@ -1984,8 +1984,8 @@ mod tests {
         let mut config = Config::default();
         config.providers.models.hailo_ollama.insert(
             "edge".to_string(),
-            clawcrew_config::schema::HailoOllamaModelProviderConfig {
-                base: clawcrew_config::schema::ModelProviderConfig {
+            galleon_config::schema::HailoOllamaModelProviderConfig {
+                base: galleon_config::schema::ModelProviderConfig {
                     model: Some("qwen3:1.7b".to_string()),
                     ..Default::default()
                 },
@@ -2008,8 +2008,8 @@ mod tests {
         let mut config = Config::default();
         config.providers.models.llamacpp.insert(
             "edge".to_string(),
-            clawcrew_config::schema::LlamacppModelProviderConfig {
-                base: clawcrew_config::schema::ModelProviderConfig {
+            galleon_config::schema::LlamacppModelProviderConfig {
+                base: galleon_config::schema::ModelProviderConfig {
                     model: Some("local-model".to_string()),
                     ..Default::default()
                 },
@@ -2167,8 +2167,8 @@ mod tests {
         let mut config = Config::default();
         config.providers.tts.openai.insert(
             "stoa".to_string(),
-            clawcrew_config::schema::OpenAITtsProviderConfig {
-                base: clawcrew_config::schema::TtsProviderConfig {
+            galleon_config::schema::OpenAITtsProviderConfig {
+                base: galleon_config::schema::TtsProviderConfig {
                     uri: Some("http://localhost:8880/v1/audio/speech".to_string()),
                     ..Default::default()
                 },
@@ -2193,8 +2193,8 @@ mod tests {
         let mut config = Config::default();
         config.providers.tts.openai.insert(
             "default".to_string(),
-            clawcrew_config::schema::OpenAITtsProviderConfig {
-                base: clawcrew_config::schema::TtsProviderConfig {
+            galleon_config::schema::OpenAITtsProviderConfig {
+                base: galleon_config::schema::TtsProviderConfig {
                     api_key: Some("sk-test".to_string()),
                     ..Default::default()
                 },
@@ -2214,11 +2214,11 @@ mod tests {
         let mut config = Config::default();
         config.providers.tts.edge.insert(
             "default".to_string(),
-            clawcrew_config::schema::EdgeTtsProviderConfig::default(),
+            galleon_config::schema::EdgeTtsProviderConfig::default(),
         );
         config.providers.tts.piper.insert(
             "default".to_string(),
-            clawcrew_config::schema::PiperTtsProviderConfig::default(),
+            galleon_config::schema::PiperTtsProviderConfig::default(),
         );
         let mut items = Vec::new();
         check_config_semantics(&config, &mut items);
@@ -2236,7 +2236,7 @@ mod tests {
         let mut config = Config::default();
         config.providers.transcription.groq.insert(
             "default".to_string(),
-            clawcrew_config::schema::GroqTranscriptionProviderConfig::default(),
+            galleon_config::schema::GroqTranscriptionProviderConfig::default(),
         );
         let mut items = Vec::new();
         check_config_semantics(&config, &mut items);
@@ -2257,8 +2257,8 @@ mod tests {
         let mut config = Config::default();
         config.providers.transcription.groq.insert(
             "default".to_string(),
-            clawcrew_config::schema::GroqTranscriptionProviderConfig {
-                base: clawcrew_config::schema::TranscriptionProviderConfig {
+            galleon_config::schema::GroqTranscriptionProviderConfig {
+                base: galleon_config::schema::TranscriptionProviderConfig {
                     api_key: Some("gsk-test".to_string()),
                     ..Default::default()
                 },
@@ -2279,7 +2279,7 @@ mod tests {
         let mut config = Config::default();
         config.providers.transcription.local_whisper.insert(
             "default".to_string(),
-            clawcrew_config::schema::LocalWhisperTranscriptionProviderConfig {
+            galleon_config::schema::LocalWhisperTranscriptionProviderConfig {
                 uri: "http://localhost:8001/inference".to_string(),
                 bearer_token: None,
                 language: None,
@@ -2562,7 +2562,7 @@ mod tests {
         });
 
         let raw = std::fs::read_to_string(tmp.path().join("state/models_cache.json")).unwrap();
-        let cache: clawcrew_config::schema::ModelCacheState = serde_json::from_str(&raw).unwrap();
+        let cache: galleon_config::schema::ModelCacheState = serde_json::from_str(&raw).unwrap();
         let mut cached: Vec<&str> = cache
             .entries
             .iter()
@@ -2590,7 +2590,7 @@ mod tests {
         persist_model_cache(&config, "openrouter", &["a2".to_string()]).unwrap();
 
         let raw = std::fs::read_to_string(tmp.path().join("state/models_cache.json")).unwrap();
-        let cache: clawcrew_config::schema::ModelCacheState = serde_json::from_str(&raw).unwrap();
+        let cache: galleon_config::schema::ModelCacheState = serde_json::from_str(&raw).unwrap();
         assert_eq!(cache.entries.len(), 2);
         let openrouter = cache
             .entries
@@ -2915,7 +2915,7 @@ mod tests {
         let mut config = Config::default();
         config.agents.insert(
             "broken".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 model_provider: "totally-fake.default".into(),
                 risk_profile: "default".into(),
                 ..Default::default()
@@ -2937,7 +2937,7 @@ mod tests {
     #[test]
     fn config_validation_warns_empty_model_route() {
         let config = Config {
-            model_routes: vec![clawcrew_config::schema::ModelRouteConfig {
+            model_routes: vec![galleon_config::schema::ModelRouteConfig {
                 hint: "fast".into(),
                 model_provider: "groq".into(),
                 model: String::new(),
@@ -2955,7 +2955,7 @@ mod tests {
     #[test]
     fn config_validation_warns_empty_embedding_route_model() {
         let config = Config {
-            embedding_routes: vec![clawcrew_config::schema::EmbeddingRouteConfig {
+            embedding_routes: vec![galleon_config::schema::EmbeddingRouteConfig {
                 hint: "semantic".into(),
                 model_provider: "openai".into(),
                 model: String::new(),
@@ -2978,7 +2978,7 @@ mod tests {
     #[test]
     fn config_validation_warns_invalid_embedding_route_provider() {
         let config = Config {
-            embedding_routes: vec![clawcrew_config::schema::EmbeddingRouteConfig {
+            embedding_routes: vec![galleon_config::schema::EmbeddingRouteConfig {
                 hint: "semantic".into(),
                 model_provider: "groq".into(),
                 model: "text-embedding-3-small".into(),
@@ -3000,7 +3000,7 @@ mod tests {
 
     #[test]
     fn config_validation_surfaces_dangling_fallback_ref() {
-        use clawcrew_config::schema::{ModelProviderConfig, NvidiaModelProviderConfig};
+        use galleon_config::schema::{ModelProviderConfig, NvidiaModelProviderConfig};
 
         let mut config = Config::default();
         config.providers.models.nvidia.insert(
@@ -3008,7 +3008,7 @@ mod tests {
             NvidiaModelProviderConfig {
                 base: ModelProviderConfig {
                     model: Some("stepfun-ai/step-3.5-flash".into()),
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "deepseek-ai/deepseek-v4-flash",
                     )],
                     ..Default::default()
@@ -3040,14 +3040,14 @@ mod tests {
         let mut config = Config::default();
         config.channels.telegram.insert(
             "default".to_string(),
-            clawcrew_config::schema::TelegramConfig {
+            galleon_config::schema::TelegramConfig {
                 enabled: true,
                 ..Default::default()
             },
         );
         config.channels.discord.insert(
             "default".to_string(),
-            clawcrew_config::schema::DiscordConfig {
+            galleon_config::schema::DiscordConfig {
                 enabled: true,
                 ..Default::default()
             },
@@ -3077,11 +3077,11 @@ mod tests {
         let mut config = Config::default();
         config.channels.telegram.insert(
             "default".to_string(),
-            clawcrew_config::schema::TelegramConfig::default(),
+            galleon_config::schema::TelegramConfig::default(),
         );
         config.channels.discord.insert(
             "default".to_string(),
-            clawcrew_config::schema::DiscordConfig::default(),
+            galleon_config::schema::DiscordConfig::default(),
         );
 
         let mut items = Vec::new();
@@ -3190,7 +3190,7 @@ mod tests {
     fn add_enabled_agent(config: &mut Config, alias: &str) {
         config.agents.insert(
             alias.to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 enabled: true,
                 ..Default::default()
             },
@@ -3251,7 +3251,7 @@ mod tests {
         let mut config = workspace_test_config(tmp.path());
         config.agents.insert(
             "dormant".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 enabled: false,
                 ..Default::default()
             },
@@ -3350,8 +3350,8 @@ mod tests {
         );
     }
 
-    fn openai_codex_slot() -> clawcrew_config::schema::OpenAIModelProviderConfig {
-        let mut slot = clawcrew_config::schema::OpenAIModelProviderConfig::default();
+    fn openai_codex_slot() -> galleon_config::schema::OpenAIModelProviderConfig {
+        let mut slot = galleon_config::schema::OpenAIModelProviderConfig::default();
         slot.base.requires_openai_auth = true;
         slot
     }
@@ -3428,14 +3428,14 @@ mod tests {
         let mut config = Config::default();
         config.agents.insert(
             "zeta".into(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 model_provider: "totally-fake.default".into(),
                 ..Default::default()
             },
         );
         config.agents.insert(
             "alpha".into(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 model_provider: "totally-fake.default".into(),
                 ..Default::default()
             },
@@ -3487,7 +3487,7 @@ mod tests {
         // Call update_context_windows for alias2 only
         // This should ONLY update alias2, leaving alias1 at 8192
         let mock_fetch: FetchContextWindowFn = Box::new(
-            |_type: &str, _config: &clawcrew_config::schema::ModelProviderConfig| {
+            |_type: &str, _config: &galleon_config::schema::ModelProviderConfig| {
                 Box::pin(async move { Some(4096usize) })
                     as std::pin::Pin<Box<dyn std::future::Future<Output = Option<usize>> + Send>>
             },

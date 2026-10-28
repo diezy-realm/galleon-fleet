@@ -13,7 +13,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 use crate::{AppState, api::require_auth, run_gateway_chat_with_tools};
 
@@ -212,7 +212,7 @@ fn agent_description(config: &Config, alias: &str) -> String {
 fn identity_description(config: &Config, alias: &str) -> Option<String> {
     let agent = config.agents.get(alias)?;
     let workspace_dir = config.agent_workspace_dir(alias);
-    let aieos = clawcrew_config::identity::load_aieos_identity(&agent.identity, &workspace_dir)
+    let aieos = galleon_config::identity::load_aieos_identity(&agent.identity, &workspace_dir)
         .ok()
         .flatten()?;
     let identity = aieos.identity?;
@@ -225,7 +225,7 @@ fn identity_description(config: &Config, alias: &str) -> Option<String> {
 }
 
 /// Build a name line from identity `names`, preferring the fullest form.
-fn identity_name_line(names: clawcrew_config::identity::Names) -> Option<String> {
+fn identity_name_line(names: galleon_config::identity::Names) -> Option<String> {
     if let Some(full) = names.full.filter(|s| !s.trim().is_empty()) {
         return Some(full);
     }
@@ -287,7 +287,7 @@ fn exposed_skills(config: &Config, alias: &str) -> Vec<AgentSkill> {
     let install_root = config.install_root_dir();
     let mut resolved = Vec::new();
     for bundle in &agent.skill_bundles {
-        let Ok(bundle_dir) = clawcrew_config::skill_bundles::resolve_directory(config, &install_root, bundle) else {
+        let Ok(bundle_dir) = galleon_config::skill_bundles::resolve_directory(config, &install_root, bundle) else {
             continue;
         };
         let Ok(entries) = std::fs::read_dir(&bundle_dir) else {
@@ -720,8 +720,8 @@ pub fn a2a_task_route() -> Router<AppState> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::multi_agent::AgentA2aConfig;
-    use clawcrew_config::schema::{AliasedAgentConfig, Config};
+    use galleon_config::multi_agent::AgentA2aConfig;
+    use galleon_config::schema::{AliasedAgentConfig, Config};
 
     fn config_with_published_alias(alias: &str, published: bool) -> Config {
         let mut config = Config::default();
@@ -907,7 +907,7 @@ mod tests {
 
         let mut config = config_with_published_alias("maker", true);
         config.config_path = tmp.path().join("config.toml");
-        let bundle = clawcrew_config::schema::SkillBundleConfig {
+        let bundle = galleon_config::schema::SkillBundleConfig {
             exclude: vec!["gadget".to_string()],
             ..Default::default()
         };

@@ -2,12 +2,12 @@ pub mod app_registry;
 pub mod backup;
 pub mod compat;
 
-pub use clawcrew_config::platform::*;
+pub use galleon_config::platform::*;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::{RuntimeConfig, RuntimeKind};
+    use galleon_config::schema::{RuntimeConfig, RuntimeKind};
 
     #[test]
     fn factory_native() {

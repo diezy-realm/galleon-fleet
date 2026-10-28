@@ -19,7 +19,7 @@ use clawcrew_api::jsonrpc::{
 };
 use clawcrew_api::model_provider::{ChatMessage, ConversationMessage, ToolCall};
 use clawcrew_api::plan::PlanEntry;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 use galleon_infra::acp_session_store::AcpSessionStore;
 use crate::agent::agent::{Agent, TurnEvent};
 use galleon_tools::canvas::CanvasStore;
@@ -4416,11 +4416,11 @@ mod tests {
         let mut config = Config {
             data_dir: cwd.path().to_path_buf(),
             providers: {
-                let mut p = clawcrew_config::providers::Providers::default();
+                let mut p = galleon_config::providers::Providers::default();
                 p.models.openrouter.insert(
                     "default".to_string(),
-                    clawcrew_config::schema::OpenRouterModelProviderConfig {
-                        base: clawcrew_config::schema::ModelProviderConfig {
+                    galleon_config::schema::OpenRouterModelProviderConfig {
+                        base: galleon_config::schema::ModelProviderConfig {
                             model: Some("test-model".to_string()),
                             ..Default::default()
                         },
@@ -4428,11 +4428,11 @@ mod tests {
                 );
                 p
             },
-            mcp: clawcrew_config::schema::McpConfig {
+            mcp: galleon_config::schema::McpConfig {
                 enabled: true,
-                servers: vec![clawcrew_config::schema::McpServerConfig {
+                servers: vec![galleon_config::schema::McpServerConfig {
                     name: "slow".to_string(),
-                    transport: clawcrew_config::schema::McpTransport::Stdio,
+                    transport: galleon_config::schema::McpTransport::Stdio,
                     command: "/bin/sh".to_string(),
                     args: vec![
                         "-c".to_string(),
@@ -4446,11 +4446,11 @@ mod tests {
         };
         config.risk_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RiskProfileConfig::default(),
+            galleon_config::schema::RiskProfileConfig::default(),
         );
         config.runtime_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RuntimeProfileConfig::default(),
+            galleon_config::schema::RuntimeProfileConfig::default(),
         );
         // Grant the slow server to the agent. Without a bundle grant,
         // `mcp_servers_for_agent` returns nothing and the assertions below hold
@@ -4459,7 +4459,7 @@ mod tests {
         // spawn the child and block on its 60s sleep.
         config.mcp_bundles.insert(
             "slow-bundle".to_string(),
-            clawcrew_config::schema::McpBundleConfig {
+            galleon_config::schema::McpBundleConfig {
                 servers: vec!["slow".to_string()],
                 exclude: Vec::new(),
             },
@@ -4502,11 +4502,11 @@ mod tests {
         let mut config = Config {
             data_dir: cwd.path().to_path_buf(),
             providers: {
-                let mut providers = clawcrew_config::providers::Providers::default();
+                let mut providers = galleon_config::providers::Providers::default();
                 providers.models.openrouter.insert(
                     "default".to_string(),
-                    clawcrew_config::schema::OpenRouterModelProviderConfig {
-                        base: clawcrew_config::schema::ModelProviderConfig {
+                    galleon_config::schema::OpenRouterModelProviderConfig {
+                        base: galleon_config::schema::ModelProviderConfig {
                             api_key: Some("sk-ant-clawcrew_test_credential".to_string()),
                             model: Some("test-model".to_string()),
                             ..Default::default()
@@ -4519,7 +4519,7 @@ mod tests {
         };
         config.risk_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RiskProfileConfig::default(),
+            galleon_config::schema::RiskProfileConfig::default(),
         );
         config.agents.insert(
             "test-agent".to_string(),
@@ -4657,7 +4657,7 @@ mod tests {
     /// `make_test_config` plus an MCP server (`remote`, HTTP transport at
     /// `mock_uri`) granted to `test-agent` through the `b1` mcp_bundle.
     fn make_mcp_granting_test_config(cwd: &std::path::Path, mock_uri: String) -> Config {
-        use clawcrew_config::schema::{McpBundleConfig, McpServerConfig, McpTransport};
+        use galleon_config::schema::{McpBundleConfig, McpServerConfig, McpTransport};
 
         let mut cfg = make_test_config(cwd);
         cfg.mcp.enabled = true;
@@ -4685,7 +4685,7 @@ mod tests {
     #[test]
     fn agent_acp_enable_mcp_defaults_off() {
         assert!(
-            !clawcrew_config::schema::AliasedAgentConfig::default().acp_enable_mcp,
+            !galleon_config::schema::AliasedAgentConfig::default().acp_enable_mcp,
             "MCP must stay opt-in per agent so session/new is prompt by default (#8193)"
         );
     }
@@ -4756,11 +4756,11 @@ mod tests {
         let mut config = Config {
             data_dir: cwd.path().to_path_buf(),
             providers: {
-                let mut p = clawcrew_config::providers::Providers::default();
+                let mut p = galleon_config::providers::Providers::default();
                 p.models.openrouter.insert(
                     "default".to_string(),
-                    clawcrew_config::schema::OpenRouterModelProviderConfig {
-                        base: clawcrew_config::schema::ModelProviderConfig {
+                    galleon_config::schema::OpenRouterModelProviderConfig {
+                        base: galleon_config::schema::ModelProviderConfig {
                             api_key: Some("test-key".to_string()),
                             model: Some("test-model".to_string()),
                             ..Default::default()
@@ -4773,11 +4773,11 @@ mod tests {
         };
         config.risk_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RiskProfileConfig::default(),
+            galleon_config::schema::RiskProfileConfig::default(),
         );
         config.runtime_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RuntimeProfileConfig::default(),
+            galleon_config::schema::RuntimeProfileConfig::default(),
         );
         config.agents.insert(
             "only-agent".to_string(),
@@ -4804,11 +4804,11 @@ mod tests {
         let mut config = Config::default();
         config.agents.insert(
             "agent-one".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig::default(),
+            galleon_config::schema::AliasedAgentConfig::default(),
         );
         config.agents.insert(
             "agent-two".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig::default(),
+            galleon_config::schema::AliasedAgentConfig::default(),
         );
         let server = AcpServer::new(config, AcpServerConfig::default());
 
@@ -4831,11 +4831,11 @@ mod tests {
         let mut config = Config {
             data_dir: cwd.path().to_path_buf(),
             providers: {
-                let mut p = clawcrew_config::providers::Providers::default();
+                let mut p = galleon_config::providers::Providers::default();
                 p.models.openrouter.insert(
                     "default".to_string(),
-                    clawcrew_config::schema::OpenRouterModelProviderConfig {
-                        base: clawcrew_config::schema::ModelProviderConfig {
+                    galleon_config::schema::OpenRouterModelProviderConfig {
+                        base: galleon_config::schema::ModelProviderConfig {
                             api_key: Some("test-key".to_string()),
                             model: Some("test-model".to_string()),
                             ..Default::default()
@@ -4848,11 +4848,11 @@ mod tests {
         };
         config.risk_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RiskProfileConfig::default(),
+            galleon_config::schema::RiskProfileConfig::default(),
         );
         config.runtime_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RuntimeProfileConfig::default(),
+            galleon_config::schema::RuntimeProfileConfig::default(),
         );
         config.agents.insert(
             "agent-alpha".to_string(),
@@ -4885,11 +4885,11 @@ mod tests {
         let mut config = Config {
             data_dir: cwd.path().to_path_buf(),
             providers: {
-                let mut p = clawcrew_config::providers::Providers::default();
+                let mut p = galleon_config::providers::Providers::default();
                 p.models.openrouter.insert(
                     "default".to_string(),
-                    clawcrew_config::schema::OpenRouterModelProviderConfig {
-                        base: clawcrew_config::schema::ModelProviderConfig {
+                    galleon_config::schema::OpenRouterModelProviderConfig {
+                        base: galleon_config::schema::ModelProviderConfig {
                             api_key: Some("test-key".to_string()),
                             model: Some("test-model".to_string()),
                             ..Default::default()
@@ -4902,11 +4902,11 @@ mod tests {
         };
         config.risk_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RiskProfileConfig::default(),
+            galleon_config::schema::RiskProfileConfig::default(),
         );
         config.runtime_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RuntimeProfileConfig::default(),
+            galleon_config::schema::RuntimeProfileConfig::default(),
         );
         config.agents.insert(
             "agent-alpha".to_string(),
@@ -4939,8 +4939,8 @@ mod tests {
     /// connection-default slot of the `session/new` alias precedence chain.
     fn dispatchable_test_agent(
         model_provider: &str,
-    ) -> clawcrew_config::schema::AliasedAgentConfig {
-        clawcrew_config::schema::AliasedAgentConfig {
+    ) -> galleon_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             model_provider: model_provider.into(),
             risk_profile: "default".into(),
             runtime_profile: "default".into(),
@@ -5743,7 +5743,7 @@ mod tests {
 
     #[test]
     fn handle_initialize_default_model_reflects_configured_provider() {
-        use clawcrew_config::schema::{ModelProviderConfig, OllamaModelProviderConfig};
+        use galleon_config::schema::{ModelProviderConfig, OllamaModelProviderConfig};
         let mut config = Config::default();
         config.providers.models.ollama.insert(
             "default".to_string(),
@@ -6464,8 +6464,8 @@ mod tests {
         };
         cfg.providers.models.anthropic.insert(
             "default".to_string(),
-            clawcrew_config::schema::AnthropicModelProviderConfig {
-                base: clawcrew_config::schema::ModelProviderConfig {
+            galleon_config::schema::AnthropicModelProviderConfig {
+                base: galleon_config::schema::ModelProviderConfig {
                     model: Some("claude-haiku-4-5".to_string()),
                     ..Default::default()
                 },
@@ -6474,11 +6474,11 @@ mod tests {
         );
         cfg.risk_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RiskProfileConfig::default(),
+            galleon_config::schema::RiskProfileConfig::default(),
         );
         cfg.runtime_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RuntimeProfileConfig::default(),
+            galleon_config::schema::RuntimeProfileConfig::default(),
         );
         cfg.agents.insert(
             "test-agent".to_string(),
@@ -9931,7 +9931,7 @@ mod tests {
         // Session owner: granted the bundle and opted into ACP MCP.
         cfg.agents.insert(
             "finance".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 model_provider: "anthropic.default".into(),
                 risk_profile: "default".into(),
                 runtime_profile: "default".into(),

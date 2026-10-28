@@ -132,7 +132,7 @@ pub async fn handle_api_audit(
         .collect();
     entries.reverse();
 
-    let verified = clawcrew_config::audit::verify_chain(&log_path).is_ok();
+    let verified = galleon_config::audit::verify_chain(&log_path).is_ok();
 
     Json(serde_json::json!({
         "enabled": true,

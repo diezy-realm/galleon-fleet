@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::Utc;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 use std::path::PathBuf;
 use tokio::task::JoinHandle;
 use tokio::time::Duration;
@@ -1333,7 +1333,7 @@ fn resolve_heartbeat_workspace_dir(config: &Config) -> Result<(String, PathBuf)>
 type HeartbeatMcpRegistryTestHook = std::sync::Arc<
     dyn Fn(
             &str,
-            &[clawcrew_config::schema::McpServerConfig],
+            &[galleon_config::schema::McpServerConfig],
         ) -> std::sync::Arc<crate::tools::McpRegistry>
         + Send
         + Sync,
@@ -1471,9 +1471,9 @@ fn current_heartbeat_mcp_registry_test_hook() -> Option<HeartbeatMcpRegistryTest
 /// and B down previously caused every tick to reconnect BOTH A and B via
 /// `McpRegistry::connect_all`, even though A never needed it).
 fn missing_or_dead_servers(
-    granted: Vec<clawcrew_config::schema::McpServerConfig>,
+    granted: Vec<galleon_config::schema::McpServerConfig>,
     current: Option<&std::sync::Arc<crate::tools::McpRegistry>>,
-) -> Vec<clawcrew_config::schema::McpServerConfig> {
+) -> Vec<galleon_config::schema::McpServerConfig> {
     let Some(cur) = current else {
         return granted;
     };
@@ -2527,7 +2527,7 @@ fn has_supervised_channels(config: &Config) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::MattermostListenMode;
+    use galleon_config::schema::MattermostListenMode;
     use tempfile::TempDir;
 
     const DAEMON_DEADLOCK_GUARD: Duration = Duration::from_secs(30);
@@ -2600,8 +2600,8 @@ mod tests {
     }
 
     fn add_agent_with_workspace(config: &mut Config, agent_alias: &str, workspace_dir: PathBuf) {
-        let agent = clawcrew_config::schema::AliasedAgentConfig {
-            workspace: clawcrew_config::multi_agent::AgentWorkspaceConfig {
+        let agent = galleon_config::schema::AliasedAgentConfig {
+            workspace: galleon_config::multi_agent::AgentWorkspaceConfig {
                 path: Some(workspace_dir),
                 ..Default::default()
             },
@@ -2786,7 +2786,7 @@ mod tests {
         assert!(!ready.contains("pairing code"));
 
         config.gateway.path_prefix = Some("/clawcrew".to_string());
-        config.gateway.tls = Some(clawcrew_config::schema::GatewayTlsConfig {
+        config.gateway.tls = Some(galleon_config::schema::GatewayTlsConfig {
             enabled: true,
             ..Default::default()
         });
@@ -3185,21 +3185,21 @@ mod tests {
         let mut config = Config::default();
         config.channels.discord.insert(
             "clamps".to_string(),
-            clawcrew_config::schema::DiscordConfig {
+            galleon_config::schema::DiscordConfig {
                 enabled: false,
                 bot_token: "token".into(),
                 guild_ids: vec![],
                 channel_ids: vec![],
                 listen_to_bots: false,
                 mention_only: true,
-                stream_mode: clawcrew_config::schema::StreamMode::default(),
+                stream_mode: galleon_config::schema::StreamMode::default(),
                 draft_update_interval_ms: 0,
                 multi_message_delay_ms: 0,
                 stall_timeout_secs: 0,
                 slash_commands: false,
-                slash_command_scope: clawcrew_config::schema::SlashCommandScope::default(),
+                slash_command_scope: galleon_config::schema::SlashCommandScope::default(),
                 intents_mask: None,
-                reaction_notifications: clawcrew_config::schema::DiscordReactionScope::Off,
+                reaction_notifications: galleon_config::schema::DiscordReactionScope::Off,
                 interrupt_on_new_message: false,
                 archive: false,
                 approval_timeout_secs: 0,
@@ -3211,21 +3211,21 @@ mod tests {
         );
         config.channels.discord.insert(
             "glados".to_string(),
-            clawcrew_config::schema::DiscordConfig {
+            galleon_config::schema::DiscordConfig {
                 enabled: false,
                 bot_token: "token2".into(),
                 guild_ids: vec![],
                 channel_ids: vec![],
                 listen_to_bots: false,
                 mention_only: true,
-                stream_mode: clawcrew_config::schema::StreamMode::default(),
+                stream_mode: galleon_config::schema::StreamMode::default(),
                 draft_update_interval_ms: 0,
                 multi_message_delay_ms: 0,
                 stall_timeout_secs: 0,
                 slash_commands: false,
-                slash_command_scope: clawcrew_config::schema::SlashCommandScope::default(),
+                slash_command_scope: galleon_config::schema::SlashCommandScope::default(),
                 intents_mask: None,
-                reaction_notifications: clawcrew_config::schema::DiscordReactionScope::Off,
+                reaction_notifications: galleon_config::schema::DiscordReactionScope::Off,
                 interrupt_on_new_message: false,
                 archive: false,
                 approval_timeout_secs: 0,
@@ -3243,11 +3243,11 @@ mod tests {
         let mut config = Config::default();
         config.channels.telegram.insert(
             "default".to_string(),
-            clawcrew_config::schema::TelegramConfig {
+            galleon_config::schema::TelegramConfig {
                 enabled: true,
                 bot_token: "token".into(),
-                api_base_url: clawcrew_config::schema::TELEGRAM_OFFICIAL_API_BASE_URL.to_string(),
-                stream_mode: clawcrew_config::schema::StreamMode::default(),
+                api_base_url: galleon_config::schema::TELEGRAM_OFFICIAL_API_BASE_URL.to_string(),
+                stream_mode: galleon_config::schema::StreamMode::default(),
                 draft_update_interval_ms: 1000,
                 multi_message_delay_ms: 800,
                 interrupt_on_new_message: false,
@@ -3271,7 +3271,7 @@ mod tests {
         let mut config = Config::default();
         config.channels.dingtalk.insert(
             "default".to_string(),
-            clawcrew_config::schema::DingTalkConfig {
+            galleon_config::schema::DingTalkConfig {
                 enabled: true,
                 client_id: "client_id".into(),
                 client_secret: "client_secret".into(),
@@ -3287,7 +3287,7 @@ mod tests {
         let mut config = Config::default();
         config.channels.mattermost.insert(
             "default".to_string(),
-            clawcrew_config::schema::MattermostConfig {
+            galleon_config::schema::MattermostConfig {
                 enabled: true,
                 url: "https://mattermost.example.com".into(),
                 bot_token: Some("token".into()),
@@ -3316,7 +3316,7 @@ mod tests {
         let mut config = Config::default();
         config.channels.qq.insert(
             "default".to_string(),
-            clawcrew_config::schema::QQConfig {
+            galleon_config::schema::QQConfig {
                 enabled: true,
                 app_id: "app-id".into(),
                 app_secret: "app-secret".into(),
@@ -3332,7 +3332,7 @@ mod tests {
         let mut config = Config::default();
         config.channels.nextcloud_talk.insert(
             "default".to_string(),
-            clawcrew_config::schema::NextcloudTalkConfig {
+            galleon_config::schema::NextcloudTalkConfig {
                 enabled: true,
                 base_url: "https://cloud.example.com".into(),
                 app_token: None,
@@ -3341,7 +3341,7 @@ mod tests {
                 proxy_url: None,
                 bot_name: None,
                 excluded_tools: vec![],
-                stream_mode: clawcrew_config::schema::StreamMode::default(),
+                stream_mode: galleon_config::schema::StreamMode::default(),
                 draft_update_interval_ms: 1000,
             },
         );
@@ -3353,7 +3353,7 @@ mod tests {
         let mut config = Config::default();
         config.channels.webhook.insert(
             "default".to_string(),
-            clawcrew_config::schema::WebhookConfig {
+            galleon_config::schema::WebhookConfig {
                 enabled: true,
                 port: 8080,
                 listen_path: None,
@@ -3549,11 +3549,11 @@ mod tests {
         config.heartbeat.to = Some("123456".into());
         config.channels.telegram.insert(
             "default".to_string(),
-            clawcrew_config::schema::TelegramConfig {
+            galleon_config::schema::TelegramConfig {
                 enabled: true,
                 bot_token: "bot-token".into(),
-                api_base_url: clawcrew_config::schema::TELEGRAM_OFFICIAL_API_BASE_URL.to_string(),
-                stream_mode: clawcrew_config::schema::StreamMode::default(),
+                api_base_url: galleon_config::schema::TELEGRAM_OFFICIAL_API_BASE_URL.to_string(),
+                stream_mode: galleon_config::schema::StreamMode::default(),
                 draft_update_interval_ms: 1000,
                 multi_message_delay_ms: 800,
                 interrupt_on_new_message: false,
@@ -3576,16 +3576,16 @@ mod tests {
 
     #[test]
     fn auto_detect_telegram_when_configured() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
 
         let mut config = Config::default();
         config.channels.telegram.insert(
             "default".to_string(),
-            clawcrew_config::schema::TelegramConfig {
+            galleon_config::schema::TelegramConfig {
                 enabled: true,
                 bot_token: "bot-token".into(),
-                api_base_url: clawcrew_config::schema::TELEGRAM_OFFICIAL_API_BASE_URL.to_string(),
-                stream_mode: clawcrew_config::schema::StreamMode::default(),
+                api_base_url: galleon_config::schema::TELEGRAM_OFFICIAL_API_BASE_URL.to_string(),
+                stream_mode: galleon_config::schema::StreamMode::default(),
                 draft_update_interval_ms: 1000,
                 multi_message_delay_ms: 800,
                 interrupt_on_new_message: false,
@@ -3629,7 +3629,7 @@ mod tests {
 
     #[test]
     fn auto_detect_skips_peers_that_are_not_addresses() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
 
         // The resolved peer list answers "who is authorized", so it carries a
         // wildcard and the deny markers for `ignore`. Neither is somewhere a
@@ -3637,11 +3637,11 @@ mod tests {
         let mut config = Config::default();
         config.channels.telegram.insert(
             "default".to_string(),
-            clawcrew_config::schema::TelegramConfig {
+            galleon_config::schema::TelegramConfig {
                 enabled: true,
                 bot_token: "bot-token".into(),
-                api_base_url: clawcrew_config::schema::TELEGRAM_OFFICIAL_API_BASE_URL.to_string(),
-                stream_mode: clawcrew_config::schema::StreamMode::default(),
+                api_base_url: galleon_config::schema::TELEGRAM_OFFICIAL_API_BASE_URL.to_string(),
+                stream_mode: galleon_config::schema::StreamMode::default(),
                 draft_update_interval_ms: 1000,
                 interrupt_on_new_message: false,
                 mention_only: false,
@@ -4295,7 +4295,7 @@ mod tests {
     #[test]
     fn gateway_health_probe_url_uses_https_when_tls_enabled() {
         let mut config = Config::default();
-        config.gateway.tls = Some(clawcrew_config::schema::GatewayTlsConfig {
+        config.gateway.tls = Some(galleon_config::schema::GatewayTlsConfig {
             enabled: true,
             ..Default::default()
         });
@@ -4556,7 +4556,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "spawns a real stdio MCP server via npx @modelcontextprotocol/server-filesystem; needs node/npx on PATH so it does not run in normal CI. Run: cargo test -p clawcrew-runtime --lib heartbeat_mcp_registry_reuses_one_stdio_child_across_ticks -- --ignored"]
     async fn heartbeat_mcp_registry_reuses_one_stdio_child_across_ticks() {
-        use clawcrew_config::schema::{AliasedAgentConfig, McpBundleConfig, McpServerConfig};
+        use galleon_config::schema::{AliasedAgentConfig, McpBundleConfig, McpServerConfig};
         use std::sync::Arc;
 
         let _test_state_lock = lock_heartbeat_mcp_registry_test_state().await;
@@ -4579,7 +4579,7 @@ mod tests {
         config.mcp.enabled = true;
         config.mcp.servers.push(McpServerConfig {
             name: "fs".to_string(),
-            transport: clawcrew_config::schema::McpTransport::Stdio,
+            transport: galleon_config::schema::McpTransport::Stdio,
             command: "npx".to_string(),
             args: vec![
                 "-y".to_string(),
@@ -5018,7 +5018,7 @@ mod tests {
     //    Helper: build a config with one granted MCP server so the
     //    retry check fires when the hook returns a sub-complete registry.
     fn config_with_one_granted_mcp_server(tmp: &TempDir) -> (Config, String) {
-        use clawcrew_config::schema::{AliasedAgentConfig, McpBundleConfig, McpServerConfig};
+        use galleon_config::schema::{AliasedAgentConfig, McpBundleConfig, McpServerConfig};
         let mut config = test_config(tmp);
         // Grant the heartbeat agent one server. The transport details
         // don't matter — the test hook short-circuits the real
@@ -5062,12 +5062,12 @@ mod tests {
 
     // ── missing_or_dead_servers / connect_heartbeat_mcp_registry partial-retry ──
 
-    fn test_server_config(name: &str) -> clawcrew_config::schema::McpServerConfig {
-        clawcrew_config::schema::McpServerConfig {
+    fn test_server_config(name: &str) -> galleon_config::schema::McpServerConfig {
+        galleon_config::schema::McpServerConfig {
             name: name.to_string(),
-            transport: clawcrew_config::schema::McpTransport::Stdio,
+            transport: galleon_config::schema::McpTransport::Stdio,
             command: "true".to_string(),
-            ..clawcrew_config::schema::McpServerConfig::default()
+            ..galleon_config::schema::McpServerConfig::default()
         }
     }
 
@@ -5129,7 +5129,7 @@ mod tests {
     /// not reach on its own.
     #[tokio::test]
     async fn retry_heartbeat_mcp_registry_never_resubmits_healthy_peer_across_ticks() {
-        use clawcrew_config::schema::{AliasedAgentConfig, McpBundleConfig};
+        use galleon_config::schema::{AliasedAgentConfig, McpBundleConfig};
 
         let a_handle = make_test_server_handle("server-a");
         let mut shared: Option<std::sync::Arc<crate::tools::McpRegistry>> = Some(
@@ -5215,7 +5215,7 @@ mod tests {
     /// filtered set was empty and the function short-circuited).
     #[tokio::test]
     async fn connect_heartbeat_mcp_registry_returns_none_when_all_healthy() {
-        use clawcrew_config::schema::{AliasedAgentConfig, McpBundleConfig};
+        use galleon_config::schema::{AliasedAgentConfig, McpBundleConfig};
 
         let _test_state_lock = lock_heartbeat_mcp_registry_test_state().await;
 
@@ -5474,7 +5474,7 @@ mod tests {
     #[cfg(unix)]
     #[tokio::test(flavor = "multi_thread")]
     async fn heartbeat_worker_reconnects_after_stdio_child_exits() {
-        use clawcrew_config::schema::{AliasedAgentConfig, McpBundleConfig, McpServerConfig};
+        use galleon_config::schema::{AliasedAgentConfig, McpBundleConfig, McpServerConfig};
 
         // This test must not observe a hook installed by a concurrent
         // heartbeat-registry regression test while it connects the real child.
@@ -5504,7 +5504,7 @@ mod tests {
             args: vec![pid_path.display().to_string()],
             env: std::collections::HashMap::new(),
             tool_timeout_secs: None,
-            transport: clawcrew_config::schema::McpTransport::Stdio,
+            transport: galleon_config::schema::McpTransport::Stdio,
             url: None,
             headers: std::collections::HashMap::new(),
             pinned_resources: vec![],
@@ -6014,20 +6014,20 @@ mod tests {
         config
             .mcp
             .servers
-            .push(clawcrew_config::schema::McpServerConfig {
+            .push(galleon_config::schema::McpServerConfig {
                 name: "server-a".to_string(),
-                ..clawcrew_config::schema::McpServerConfig::default()
+                ..galleon_config::schema::McpServerConfig::default()
             });
         config
             .mcp
             .servers
-            .push(clawcrew_config::schema::McpServerConfig {
+            .push(galleon_config::schema::McpServerConfig {
                 name: "server-b".to_string(),
-                ..clawcrew_config::schema::McpServerConfig::default()
+                ..galleon_config::schema::McpServerConfig::default()
             });
         config.mcp_bundles.insert(
             "ab-bundle".to_string(),
-            clawcrew_config::schema::McpBundleConfig {
+            galleon_config::schema::McpBundleConfig {
                 servers: vec!["server-a".to_string(), "server-b".to_string()],
                 exclude: vec![],
             },
@@ -6035,9 +6035,9 @@ mod tests {
         let agent_alias = "ops".to_string();
         config.agents.insert(
             agent_alias.clone(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 mcp_bundles: vec!["ab-bundle".to_string()],
-                ..clawcrew_config::schema::AliasedAgentConfig::default()
+                ..galleon_config::schema::AliasedAgentConfig::default()
             },
         );
 

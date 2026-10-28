@@ -294,7 +294,7 @@ mod tests {
     use super::*;
     use crate::sop::engine::SopEngine;
     use crate::sop::types::*;
-    use clawcrew_config::schema::SopConfig;
+    use galleon_config::schema::SopConfig;
     use galleon_memory::Memory;
 
     fn test_sop() -> Sop {
@@ -464,9 +464,9 @@ mod tests {
         // Use a run_id that doesn't exist — advance_step will fail
         let engine = Arc::new(Mutex::new(SopEngine::new(SopConfig::default())));
         let tmp = tempfile::tempdir().unwrap();
-        let mem_cfg = clawcrew_config::schema::MemoryConfig {
+        let mem_cfg = galleon_config::schema::MemoryConfig {
             backend: "sqlite".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> =
             Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
@@ -495,9 +495,9 @@ mod tests {
     async fn advance_success_writes_step_audit() {
         let (engine, run_id) = engine_with_active_run();
         let tmp = tempfile::tempdir().unwrap();
-        let mem_cfg = clawcrew_config::schema::MemoryConfig {
+        let mem_cfg = galleon_config::schema::MemoryConfig {
             backend: "sqlite".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> =
             Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());

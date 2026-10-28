@@ -10,7 +10,7 @@ use tokio::sync::{Mutex, mpsc};
 
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
-pub use clawcrew_config::scattered_types::{VoiceCallConfig, VoiceProvider};
+pub use galleon_config::scattered_types::{VoiceCallConfig, VoiceProvider};
 
 // ── Call state ────────────────────────────────────────────────────
 
@@ -105,7 +105,7 @@ impl VoiceCallChannel {
             config,
             alias: alias.into(),
             active_calls: Arc::new(Mutex::new(HashMap::new())),
-            client: clawcrew_config::schema::build_runtime_proxy_client("channel.voice_call"),
+            client: galleon_config::schema::build_runtime_proxy_client("channel.voice_call"),
         }
     }
 

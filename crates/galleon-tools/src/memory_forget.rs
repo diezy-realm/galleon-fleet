@@ -2,8 +2,8 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::policy::ToolOperation;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::policy::ToolOperation;
 use galleon_memory::Memory;
 
 /// Let the agent forget/delete a memory entry
@@ -88,8 +88,8 @@ impl Tool for MemoryForgetTool {
 mod tests {
     use super::*;
     use tempfile::TempDir;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
     use galleon_memory::{MemoryCategory, SqliteMemory};
 
     fn test_security() -> Arc<SecurityPolicy> {

@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 use super::leak_detector::{LeakDetector, LeakResult};
 use super::prompt_guard::{GuardAction, GuardResult, PromptGuard};
 use crate::sop::types::{SopEvent, SopTriggerSource};
-use clawcrew_config::schema::SopConfig;
+use galleon_config::schema::SopConfig;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ScanOutcome {

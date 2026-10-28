@@ -54,7 +54,7 @@ galleon-tls = { workspace = true, features = ["testing"] }
 # rather than a stub that could agree with a wrong implementation. Test-only:
 # none of this reaches the shipped relay binary.
 clawcrew-runtime = { workspace = true }
-clawcrew-config = { workspace = true }
+galleon-config = { workspace = true }
 tokio-util = "0.7"
 zeroize = "1.8"
 # `test-util` enables tokio's paused-clock test runtime so the refusal-write

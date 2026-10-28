@@ -14,7 +14,7 @@ use tokio_serial::{SerialPortBuilderExt, SerialStream};
 use clawcrew_api::attribution::ToolKind;
 use clawcrew_api::tool::{Tool, ToolResult};
 use clawcrew_api::tool_attribution;
-use clawcrew_config::schema::PeripheralBoardConfig;
+use galleon_config::schema::PeripheralBoardConfig;
 
 tool_attribution!(GpioReadTool, ToolKind::Plugin);
 tool_attribution!(GpioWriteTool, ToolKind::Plugin);

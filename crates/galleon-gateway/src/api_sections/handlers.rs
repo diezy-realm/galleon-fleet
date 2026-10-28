@@ -5,8 +5,8 @@ use axum::{
     http::HeaderMap,
     response::{IntoResponse, Response},
 };
-use clawcrew_config::api_error::{ConfigApiCode, ConfigApiError};
-use clawcrew_config::dto::{
+use galleon_config::api_error::{ConfigApiCode, ConfigApiError};
+use galleon_config::dto::{
     CatalogModelProvider, CatalogModelsResult, CatalogResponse, ConfigSectionEntry,
     ConfigSectionsResult, ConfigStatusResult, PickerItem, PickerResponse, SelectItemResponse,
 };
@@ -71,7 +71,7 @@ pub(crate) fn error_response(err: ConfigApiError) -> Response {
 // ── Section + picker (mirrors the TUI flow) ──────────────────────────
 
 #[must_use]
-pub fn derive_section_status(cfg: &clawcrew_config::schema::Config) -> ConfigStatusResult {
+pub fn derive_section_status(cfg: &galleon_config::schema::Config) -> ConfigStatusResult {
     let missing = quickstart_missing_requirements(cfg);
     let ready = missing.is_empty();
     let has_partial_state = !cfg.onboard_state.completed_sections.is_empty()
@@ -95,7 +95,7 @@ pub fn derive_section_status(cfg: &clawcrew_config::schema::Config) -> ConfigSta
 }
 
 pub(crate) fn quickstart_missing_requirements(
-    cfg: &clawcrew_config::schema::Config,
+    cfg: &galleon_config::schema::Config,
 ) -> Vec<String> {
     let mut missing = Vec::new();
     if cfg.providers.models.iter_entries().next().is_none() {
@@ -124,9 +124,9 @@ pub(crate) fn quickstart_missing_requirements(
 }
 
 pub(crate) fn quickstart_agent_missing_requirements(
-    cfg: &clawcrew_config::schema::Config,
+    cfg: &galleon_config::schema::Config,
     alias: &str,
-    agent: &clawcrew_config::schema::AliasedAgentConfig,
+    agent: &galleon_config::schema::AliasedAgentConfig,
 ) -> Vec<String> {
     let mut missing = Vec::new();
     if !agent.enabled {
@@ -186,8 +186,8 @@ pub async fn handle_section_status(State(state): State<AppState>, headers: Heade
     let cfg = state.config.read().clone();
     axum::Json(derive_section_status(&cfg)).into_response()
 }
-pub fn build_agent_options(cfg: &clawcrew_config::schema::Config) -> AgentOptionsResponse {
-    use clawcrew_config::traits::AliasSource;
+pub fn build_agent_options(cfg: &galleon_config::schema::Config) -> AgentOptionsResponse {
+    use galleon_config::traits::AliasSource;
 
     let channels = cfg.resolve_alias_source(AliasSource::Channels);
     let mut channel_types: Vec<String> = channels
@@ -246,7 +246,7 @@ pub async fn handle_sections(State(state): State<AppState>, headers: HeaderMap) 
         roots.remove(*hidden);
     }
 
-    let all_map_paths: Vec<&'static str> = clawcrew_config::schema::Config::map_key_sections()
+    let all_map_paths: Vec<&'static str> = galleon_config::schema::Config::map_key_sections()
         .iter()
         .map(|s| s.path)
         .collect();
@@ -275,7 +275,7 @@ pub async fn handle_sections(State(state): State<AppState>, headers: HeaderMap) 
     // but are part of the wizard flow (personality lives as markdown
     // files, not TOML). Inject so the canonical-order sort places them
     // correctly and frontends don't need to know which ones to splice.
-    for s in clawcrew_config::sections::QUICKSTART_SECTIONS {
+    for s in galleon_config::sections::QUICKSTART_SECTIONS {
         roots.insert(s.as_str().to_string());
     }
 
@@ -292,8 +292,8 @@ pub async fn handle_sections(State(state): State<AppState>, headers: HeaderMap) 
     let mut ordered: Vec<String> = roots.into_iter().collect();
     ordered.sort_by(|a, b| {
         match (
-            clawcrew_config::sections::section_index_for_key(a),
-            clawcrew_config::sections::section_index_for_key(b),
+            galleon_config::sections::section_index_for_key(a),
+            galleon_config::sections::section_index_for_key(b),
         ) {
             (Some(ai), Some(bi)) => ai.cmp(&bi),
             (Some(_), None) => std::cmp::Ordering::Less,
@@ -305,28 +305,28 @@ pub async fn handle_sections(State(state): State<AppState>, headers: HeaderMap) 
     let sections: Vec<ConfigSectionEntry> = ordered
         .into_iter()
         .map(|key| {
-            let wizard = clawcrew_config::sections::Section::from_key(&key);
+            let wizard = galleon_config::sections::Section::from_key(&key);
             let has_picker = match wizard {
                 Some(w) => !matches!(
                     w,
-                    clawcrew_config::sections::Section::Hardware
-                        | clawcrew_config::sections::Section::Mcp
-                        | clawcrew_config::sections::Section::Skills
+                    galleon_config::sections::Section::Hardware
+                        | galleon_config::sections::Section::Mcp
+                        | galleon_config::sections::Section::Skills
                 ),
                 None => section_has_picker_for_key(&key),
             };
-            let group = clawcrew_config::sections::section_group_for_key(&key);
+            let group = galleon_config::sections::section_group_for_key(&key);
             ConfigSectionEntry {
                 completed: completed.contains(&key),
                 ready: section_ready(&cfg, &key, completed.contains(&key)),
-                label: clawcrew_config::sections::humanize_section_key(&key),
+                label: galleon_config::sections::humanize_section_key(&key),
                 help: section_help(&key).to_string(),
                 has_picker,
                 group: group.label().to_string(),
                 group_key: group.key().to_string(),
                 is_quickstart: wizard.is_some(),
-                shape: wizard.map(clawcrew_config::sections::Section::shape),
-                cost_category: clawcrew_config::schema::cost_category_for_provider_section(&key)
+                shape: wizard.map(galleon_config::sections::Section::shape),
+                cost_category: galleon_config::schema::cost_category_for_provider_section(&key)
                     .unwrap_or_default()
                     .to_string(),
                 key,
@@ -338,11 +338,11 @@ pub async fn handle_sections(State(state): State<AppState>, headers: HeaderMap) 
 }
 
 pub(crate) fn section_ready(
-    cfg: &clawcrew_config::schema::Config,
+    cfg: &galleon_config::schema::Config,
     key: &str,
     completed_marker: bool,
 ) -> bool {
-    use clawcrew_config::sections::Section;
+    use galleon_config::sections::Section;
     match Section::from_key(key) {
         Some(Section::ModelProviders) => any_usable_model_provider(cfg),
         Some(Section::RiskProfiles) => !cfg.risk_profiles.is_empty(),
@@ -371,12 +371,12 @@ pub(crate) const HIDDEN_TOP_LEVEL: &[&str] = &[
     "pre_override_snapshots",
 ];
 
-/// Help text for a section. Delegates to `clawcrew_config::sections::section_help`
+/// Help text for a section. Delegates to `galleon_config::sections::section_help`
 /// so gateway, CLI, and TUI all read from one source — wizard variants
 /// pull from `Section::help`, everything else from the matching
 /// `#[nested]` field's `///` docstring on the `Config` struct.
 pub(crate) fn section_help(key: &str) -> &'static str {
-    clawcrew_config::sections::section_help(key)
+    galleon_config::sections::section_help(key)
 }
 
 pub async fn handle_section_picker(
@@ -389,7 +389,7 @@ pub async fn handle_section_picker(
     }
     let cfg = state.config.read().clone();
 
-    use clawcrew_config::sections::Section;
+    use galleon_config::sections::Section;
     let Some(section_enum) = Section::from_key(&section) else {
         return error_response(
             ConfigApiError::new(
@@ -436,10 +436,10 @@ pub(crate) enum PickerDispatch {
 /// variant fails to compile until it gets a routing arm. The DRY
 /// version of what the dashboard's per-section view boils down to.
 pub(crate) fn picker_items_for(
-    section: clawcrew_config::sections::Section,
-    cfg: &clawcrew_config::schema::Config,
+    section: galleon_config::sections::Section,
+    cfg: &galleon_config::schema::Config,
 ) -> PickerDispatch {
-    use clawcrew_config::sections::Section;
+    use galleon_config::sections::Section;
     match section {
         Section::ModelProviders => PickerDispatch::Items(providers_picker(cfg)),
         // TTS / transcription share the typed-family two-tier shape. Each
@@ -477,7 +477,7 @@ pub(crate) fn picker_items_for(
     }
 }
 
-pub(crate) fn providers_picker(cfg: &clawcrew_config::schema::Config) -> Vec<PickerItem> {
+pub(crate) fn providers_picker(cfg: &galleon_config::schema::Config) -> Vec<PickerItem> {
     galleon_providers::list_model_providers()
         .into_iter()
         .map(|p| PickerItem {
@@ -493,7 +493,7 @@ pub(crate) fn providers_picker(cfg: &clawcrew_config::schema::Config) -> Vec<Pic
         .collect()
 }
 
-pub(crate) fn any_usable_model_provider(cfg: &clawcrew_config::schema::Config) -> bool {
+pub(crate) fn any_usable_model_provider(cfg: &galleon_config::schema::Config) -> bool {
     cfg.providers
         .models
         .iter_entries()
@@ -503,7 +503,7 @@ pub(crate) fn any_usable_model_provider(cfg: &clawcrew_config::schema::Config) -
 }
 
 pub(crate) fn provider_type_badge(
-    cfg: &clawcrew_config::schema::Config,
+    cfg: &galleon_config::schema::Config,
     family: &str,
     local: bool,
 ) -> Option<String> {
@@ -528,7 +528,7 @@ pub(crate) fn provider_type_badge(
 }
 
 pub(crate) fn model_provider_alias_usable(
-    base: &clawcrew_config::schema::ModelProviderConfig,
+    base: &galleon_config::schema::ModelProviderConfig,
     local: bool,
 ) -> bool {
     let has_model = base
@@ -547,7 +547,7 @@ pub(crate) fn model_provider_alias_usable(
         || local
 }
 
-pub(crate) fn storage_picker(cfg: &clawcrew_config::schema::Config) -> Vec<PickerItem> {
+pub(crate) fn storage_picker(cfg: &galleon_config::schema::Config) -> Vec<PickerItem> {
     let mut items = schema_walk_picker(cfg, "storage");
     for item in &mut items {
         item.description = storage_description(&item.key).map(str::to_string);
@@ -591,7 +591,7 @@ pub(crate) fn storage_description(key: &str) -> Option<&'static str> {
     }
 }
 
-pub(crate) fn memory_picker(cfg: &clawcrew_config::schema::Config) -> Vec<PickerItem> {
+pub(crate) fn memory_picker(cfg: &galleon_config::schema::Config) -> Vec<PickerItem> {
     let current = cfg.memory.backend.clone();
     let memory_completed = cfg
         .onboard_state
@@ -614,7 +614,7 @@ pub(crate) fn memory_picker(cfg: &clawcrew_config::schema::Config) -> Vec<Picker
 }
 
 pub(crate) fn schema_walk_picker(
-    cfg: &clawcrew_config::schema::Config,
+    cfg: &galleon_config::schema::Config,
     section: &str,
 ) -> Vec<PickerItem> {
     let prefix_with_dot = format!("{section}.");
@@ -630,7 +630,7 @@ pub(crate) fn schema_walk_picker(
     // All known channel/section types from schema metadata — statically known,
     // no HashMap entries needed.
     let all: std::collections::BTreeSet<String> =
-        clawcrew_config::schema::Config::map_key_sections()
+        galleon_config::schema::Config::map_key_sections()
             .into_iter()
             .filter_map(|s| {
                 s.path
@@ -661,7 +661,7 @@ pub(crate) fn schema_walk_picker(
 }
 
 pub(crate) fn one_tier_alias_map_picker(
-    cfg: &clawcrew_config::schema::Config,
+    cfg: &galleon_config::schema::Config,
     section: &str,
 ) -> Vec<PickerItem> {
     let prefix_with_dot = format!("{section}.");
@@ -688,7 +688,7 @@ pub(crate) fn one_tier_alias_map_picker(
 
 /// Agents picker: walks `cfg.agents` and returns each alias with an activity badge.
 /// `active` = agent exists and `enabled = true`; `configured` = exists but disabled.
-pub(crate) fn agents_picker(cfg: &clawcrew_config::schema::Config) -> Vec<PickerItem> {
+pub(crate) fn agents_picker(cfg: &galleon_config::schema::Config) -> Vec<PickerItem> {
     let mut items: Vec<PickerItem> = cfg
         .agents
         .iter()
@@ -708,7 +708,7 @@ pub(crate) fn agents_picker(cfg: &clawcrew_config::schema::Config) -> Vec<Picker
 }
 
 pub(crate) fn apply_first_run_agent_defaults(
-    cfg: &mut clawcrew_config::schema::Config,
+    cfg: &mut galleon_config::schema::Config,
     alias: &str,
 ) {
     let model_provider = cfg
@@ -741,7 +741,7 @@ pub(crate) fn apply_first_run_agent_defaults(
 }
 
 pub(crate) fn mark_section_completed(
-    cfg: &mut clawcrew_config::schema::Config,
+    cfg: &mut galleon_config::schema::Config,
     section: &str,
 ) -> bool {
     if cfg
@@ -765,7 +765,7 @@ pub(crate) fn first_alias<'a>(aliases: impl Iterator<Item = &'a String>) -> Opti
     aliases.first().map(|alias| (*alias).clone())
 }
 
-pub(crate) fn tunnel_provider_picker(cfg: &clawcrew_config::schema::Config) -> Vec<PickerItem> {
+pub(crate) fn tunnel_provider_picker(cfg: &galleon_config::schema::Config) -> Vec<PickerItem> {
     // The canonical prop name uses an underscore (`tunnel_provider`); the
     // hyphenated form is unknown to get_prop and silently yields "" (no active
     // provider ever badged).
@@ -825,7 +825,7 @@ pub async fn handle_section_select(
         .await;
     let mut working = state.config.read().clone();
 
-    use clawcrew_config::sections::Section;
+    use galleon_config::sections::Section;
     let Some(section_enum) = Section::from_key(&section) else {
         return error_response(
             ConfigApiError::new(
@@ -902,13 +902,13 @@ pub async fn handle_section_select(
         | Section::ModelRoutes
         | Section::EmbeddingRoutes => {
             let section_key = section_enum.as_str();
-            let created = match clawcrew_config::alias_refs::create_map_key_checked(
+            let created = match galleon_config::alias_refs::create_map_key_checked(
                 &mut working,
                 section_key,
                 &key,
             ) {
                 Ok(c) => c,
-                Err(clawcrew_config::alias_refs::CreateError::Reserved(a)) => {
+                Err(galleon_config::alias_refs::CreateError::Reserved(a)) => {
                     return error_response(
                         ConfigApiError::new(
                             ConfigApiCode::ValidationFailed,
@@ -917,7 +917,7 @@ pub async fn handle_section_select(
                         .with_path(format!("{section_key}.{key}")),
                     );
                 }
-                Err(clawcrew_config::alias_refs::CreateError::Invalid(msg)) => {
+                Err(galleon_config::alias_refs::CreateError::Invalid(msg)) => {
                     return error_response(
                         ConfigApiError::new(
                             ConfigApiCode::PathNotFound,
@@ -946,7 +946,7 @@ pub async fn handle_section_select(
                     );
                 }
                 if let Some(runner) = &state.personality_runner {
-                    use clawcrew_config::multi_agent::MemoryBackendKind;
+                    use galleon_config::multi_agent::MemoryBackendKind;
                     let include_memory = working
                         .agents
                         .get(&key)

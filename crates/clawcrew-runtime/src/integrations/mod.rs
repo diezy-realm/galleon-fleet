@@ -3,9 +3,9 @@ pub mod registry;
 
 use crate::i18n::{get_required_cli_string, get_required_cli_string_with_args};
 use anyhow::Result;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
-pub use clawcrew_config::integrations::{IntegrationCategory, IntegrationEntry, IntegrationStatus};
+pub use galleon_config::integrations::{IntegrationCategory, IntegrationEntry, IntegrationStatus};
 
 /// Handle the `integrations` CLI command
 pub fn show_integration_info(config: &Config, name: &str) -> Result<()> {

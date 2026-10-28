@@ -6,7 +6,7 @@ mod tests {
     use crate::heartbeat::engine::HeartbeatEngine;
     use crate::observability::NoopObserver;
     use std::sync::Arc;
-    use clawcrew_config::schema::HeartbeatConfig;
+    use galleon_config::schema::HeartbeatConfig;
 
     #[test]
     fn heartbeat_engine_is_constructible_via_module_export() {

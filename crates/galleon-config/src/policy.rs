@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 use clawcrew_api::runtime_traits::ShellDialect;
 
-// Re-export from clawcrew-config.
+// Re-export from galleon-config.
 pub use crate::autonomy::AutonomyLevel;
 
 /// Risk score for shell command execution.

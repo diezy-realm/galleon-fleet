@@ -1,6 +1,6 @@
 use crate::conflict;
 use crate::traits::{MemoryCategory, MemoryEntry};
-use clawcrew_config::schema::{MemoryConfig, MemoryDedupAction};
+use galleon_config::schema::{MemoryConfig, MemoryDedupAction};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DedupAction {

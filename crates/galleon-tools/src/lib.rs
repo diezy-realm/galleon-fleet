@@ -118,7 +118,7 @@ pub const MEMORY_TOOL_NAMES: &[&str] = &[
 /// A reset alone would still race; production proxy state is untouched.
 #[cfg(test)]
 pub(crate) mod test_support {
-    use clawcrew_config::schema::{ProxyConfig, runtime_proxy_config, set_runtime_proxy_config};
+    use galleon_config::schema::{ProxyConfig, runtime_proxy_config, set_runtime_proxy_config};
     use tokio::sync::{Mutex, MutexGuard};
 
     static RUNTIME_PROXY_STATE_LOCK: Mutex<()> = Mutex::const_new(());
@@ -151,7 +151,7 @@ pub(crate) mod test_support {
 mod memory_tool_names_guard {
     use super::*;
     use clawcrew_api::tool::Tool;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::policy::SecurityPolicy;
     use galleon_memory::NoneMemory;
     use std::collections::BTreeSet;
     use std::sync::Arc;

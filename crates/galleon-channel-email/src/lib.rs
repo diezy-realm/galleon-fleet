@@ -33,7 +33,7 @@ use tokio_rustls::TlsConnector;
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_tools::email_imap::{ImapSession, TlsStreamTolerant};
 
-pub use clawcrew_config::scattered_types::EmailConfig;
+pub use galleon_config::scattered_types::EmailConfig;
 
 // `TlsStreamTolerant` (the rustls wrapper that turns Exchange's missing
 // `close_notify` into a graceful EOF) and the `ImapSession` alias live in

@@ -63,7 +63,7 @@ pub(crate) async fn try_recover_context_overflow(
     event_tx: Option<&tokio::sync::mpsc::Sender<clawcrew_api::agent::TurnEvent>>,
     on_delta: Option<&tokio::sync::mpsc::Sender<super::events::DraftEvent>>,
     observer: &dyn Observer,
-    context_limits: clawcrew_config::schema::ResolvedContextLimits,
+    context_limits: galleon_config::schema::ResolvedContextLimits,
     // Owner-tracked breadcrumb provenance for `history` (see
     // `history_trim::insert_breadcrumb_deduped`); set when this recovery
     // inserts a fresh crumb so classification never depends on text.
@@ -223,11 +223,11 @@ mod tests {
         h
     }
 
-    fn limits(context_token_budget: usize) -> clawcrew_config::schema::ResolvedContextLimits {
-        clawcrew_config::schema::ResolvedContextLimits {
+    fn limits(context_token_budget: usize) -> galleon_config::schema::ResolvedContextLimits {
+        galleon_config::schema::ResolvedContextLimits {
             model_context_window: context_token_budget.max(32_000),
             model_context_window_source:
-                clawcrew_config::schema::ModelContextWindowSource::Configured,
+                galleon_config::schema::ModelContextWindowSource::Configured,
             context_token_budget,
         }
     }

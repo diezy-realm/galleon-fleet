@@ -28,11 +28,11 @@ use clawcrew_api::a2a_wire::{
 };
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use clawcrew_api::tool_attribution;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 #[cfg(test)]
-use clawcrew_config::multi_agent::A2aClientPeerConfig;
-use clawcrew_config::policy::{SecurityPolicy, ToolOperation};
+use galleon_config::multi_agent::A2aClientPeerConfig;
+use galleon_config::policy::{SecurityPolicy, ToolOperation};
 
 use crate::helpers::domain_guard::{is_cloud_metadata_ip, is_private_or_local_host};
 
@@ -184,14 +184,14 @@ impl A2aHttpClient {
         }
         // Step 1: decrypt if the value is encrypted ciphertext (mirrors
         // http_request.rs:278-289).
-        let literal = if clawcrew_config::secrets::SecretStore::is_encrypted(raw) {
+        let literal = if galleon_config::secrets::SecretStore::is_encrypted(raw) {
             let Some(dir) = self.clawcrew_dir.as_deref() else {
                 anyhow::bail!(
                     "a2a client: peer token is encrypted but the client has no clawcrew dir \
                      (config path) to locate the SecretStore"
                 );
             };
-            let store = clawcrew_config::secrets::SecretStore::new(dir, self.secrets_encrypt);
+            let store = galleon_config::secrets::SecretStore::new(dir, self.secrets_encrypt);
             let plaintext = store.decrypt(raw)?;
             if plaintext.is_empty() {
                 anyhow::bail!("a2a client: peer token is empty after decryption");
@@ -408,7 +408,7 @@ impl A2aHttpClient {
 /// wrong peer or use the wrong credential. Called at client construction so a
 /// bad config fails before any call can route ambiguously.
 fn validate_peer_names_unique<'a>(
-    peers: impl Iterator<Item = &'a clawcrew_config::multi_agent::A2aClientPeerConfig>,
+    peers: impl Iterator<Item = &'a galleon_config::multi_agent::A2aClientPeerConfig>,
 ) -> anyhow::Result<()> {
     let mut seen = std::collections::HashSet::new();
     for p in peers {
@@ -445,7 +445,7 @@ fn validate_peer_names_unique<'a>(
 /// `NoProxy` match is not re-implemented here to avoid drifting from the
 /// connector's own semantics.
 fn runtime_proxy_active_for_a2a() -> bool {
-    let config = clawcrew_config::schema::runtime_proxy_config();
+    let config = galleon_config::schema::runtime_proxy_config();
     if !config.should_apply_to_service("tool.a2a") {
         return false;
     }
@@ -3241,7 +3241,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&tmp).unwrap();
-        let store = clawcrew_config::secrets::SecretStore::new(&tmp, true);
+        let store = galleon_config::secrets::SecretStore::new(&tmp, true);
         let encrypted = store.encrypt("plaintext-bearer-secret").unwrap();
 
         let mut config = Config::default();
@@ -3264,7 +3264,7 @@ mod tests {
     fn resolve_peer_token_fails_encrypted_without_clawcrew_dir() {
         // An encrypted token with no clawcrew dir (no config path) must fail
         // clearly rather than emit ciphertext as the Authorization header.
-        let store = clawcrew_config::secrets::SecretStore::new(&std::env::temp_dir(), true);
+        let store = galleon_config::secrets::SecretStore::new(&std::env::temp_dir(), true);
         let encrypted = store.encrypt("secret").unwrap();
         let mut config = Config::default();
         config.a2a.client.peers.push(A2aClientPeerConfig {
@@ -3360,7 +3360,7 @@ mod tests {
         // guard must fail closed on any active proxy and allow only direct
         // (non-proxied) connections.
         let _lock = with_global_proxy_lock();
-        use clawcrew_config::schema::{ProxyConfig, set_runtime_proxy_config};
+        use galleon_config::schema::{ProxyConfig, set_runtime_proxy_config};
 
         // No proxy → not active.
         set_runtime_proxy_config(ProxyConfig::default());
@@ -3415,7 +3415,7 @@ mod tests {
         set_runtime_proxy_config(ProxyConfig {
             enabled: true,
             all_proxy: Some("socks5h://proxy.example:1080".to_string()),
-            scope: clawcrew_config::schema::ProxyScope::Services,
+            scope: galleon_config::schema::ProxyScope::Services,
             services: vec!["tool.http_request".to_string()],
             ..Default::default()
         });
@@ -3435,7 +3435,7 @@ mod tests {
         // (no local pin can constrain the proxy-side destination). Covers the
         // HTTP/HTTPS CONNECT modes that the previous socks5h-only check missed.
         let _lock = with_global_proxy_lock();
-        use clawcrew_config::schema::{ProxyConfig, set_runtime_proxy_config};
+        use galleon_config::schema::{ProxyConfig, set_runtime_proxy_config};
 
         for (proxy_url, scheme) in [
             ("http://proxy.example:3128", "http"),
@@ -3481,8 +3481,8 @@ mod tests {
         // guard would have to reject.
         let _lock = with_global_proxy_lock();
         // Ensure runtime config has no proxy (env is the only possible source).
-        clawcrew_config::schema::set_runtime_proxy_config(
-            clawcrew_config::schema::ProxyConfig::default(),
+        galleon_config::schema::set_runtime_proxy_config(
+            galleon_config::schema::ProxyConfig::default(),
         );
         // SAFETY: test-only mutation of the process env; restored afterwards.
         unsafe {
@@ -3524,7 +3524,7 @@ mod tests {
         // with the hostname path); when no proxy is active it builds a direct
         // no-proxy client. The two branches below exercise both cases.
         let _lock = with_global_proxy_lock();
-        use clawcrew_config::schema::{ProxyConfig, set_runtime_proxy_config};
+        use galleon_config::schema::{ProxyConfig, set_runtime_proxy_config};
 
         // Proxy active → literal-IP must fail closed.
         set_runtime_proxy_config(ProxyConfig {
@@ -3594,7 +3594,7 @@ mod tests {
         // B5: duplicate or empty peer names would make the destination/credential
         // mapping ambiguous (resolve_peer uses .find(name)); construction must
         // fail closed so the operator learns before any call routes badly.
-        use clawcrew_config::multi_agent::A2aClientPeerConfig;
+        use galleon_config::multi_agent::A2aClientPeerConfig;
 
         // Duplicate names → construction fails.
         let mut config = Config::default();
@@ -3648,7 +3648,7 @@ mod tests {
         // validation passed with a valid peer list, a reload can introduce a
         // duplicate peer name; resolve_peer must fail closed then rather than
         // silently select the first matching entry (and its credential).
-        use clawcrew_config::multi_agent::A2aClientPeerConfig;
+        use galleon_config::multi_agent::A2aClientPeerConfig;
 
         let live = Arc::new(RwLock::new(Config::default()));
         {
@@ -3689,7 +3689,7 @@ mod tests {
     async fn a2a_send_denied_in_readonly_autonomy() {
         // B3: send is an Act operation; a read-only autonomy session must
         // deny it before any network I/O (no peer contact attempted).
-        use clawcrew_config::autonomy::AutonomyLevel;
+        use galleon_config::autonomy::AutonomyLevel;
         let config = Arc::new(RwLock::new(Config::default()));
         let client =
             Arc::new(A2aHttpClient::new(config, 30, None, false, test_route_cache()).unwrap());
@@ -3716,7 +3716,7 @@ mod tests {
         // (an Err, not a policy denial) — proving the Read classification
         // let it through the gate. A denial would have returned an Ok
         // ToolResult with success=false and a "read-only" error.
-        use clawcrew_config::autonomy::AutonomyLevel;
+        use galleon_config::autonomy::AutonomyLevel;
         let config = Arc::new(RwLock::new(Config::default()));
         let client =
             Arc::new(A2aHttpClient::new(config, 30, None, false, test_route_cache()).unwrap());
@@ -4127,7 +4127,7 @@ mod tests {
 
     use wiremock::matchers::{body_partial_json, body_string_contains, header, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
-    use clawcrew_config::autonomy::AutonomyLevel;
+    use galleon_config::autonomy::AutonomyLevel;
 
     /// Build a `Config` wired to `MockServer` with one peer (no auth).
     fn test_config(server: &MockServer) -> Config {

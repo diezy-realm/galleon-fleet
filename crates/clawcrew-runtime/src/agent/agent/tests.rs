@@ -32,7 +32,7 @@
 
     #[test]
     fn build_session_model_provider_returns_full_canonical_ref() {
-        use clawcrew_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
+        use galleon_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
 
         let mut config = Config::default();
         config.providers.models.openai.insert(
@@ -520,9 +520,9 @@
     const BLANK_TURN_ERROR: &str = "empty user message: refusing to dispatch a blank turn";
 
     fn blank_input_agent(model_provider: Box<dyn ModelProvider>) -> Agent {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -1502,9 +1502,9 @@
             0,
             0,
         );
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -1642,7 +1642,7 @@
             ))
             .memory(Arc::from(
                 galleon_memory::create_memory(
-                    &clawcrew_config::schema::MemoryConfig {
+                    &galleon_config::schema::MemoryConfig {
                         backend: "none".into(),
                         ..Default::default()
                     },
@@ -2456,9 +2456,9 @@
     #[tokio::test]
     #[ignore = "subprocess helper for stdout/stderr boundary regression"]
     async fn direct_agent_turn_stdout_boundary_helper_4721() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -2674,9 +2674,9 @@
             }]),
         });
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -2714,9 +2714,9 @@
             }]),
         });
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -2724,12 +2724,12 @@
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
         let calls = Arc::new(AtomicUsize::new(0));
-        let agent_config = clawcrew_config::schema::AliasedAgentConfig {
-            resolved: clawcrew_config::schema::ResolvedRuntime {
+        let agent_config = galleon_config::schema::AliasedAgentConfig {
+            resolved: galleon_config::schema::ResolvedRuntime {
                 strict_tool_parsing: true,
                 ..Default::default()
             },
-            ..clawcrew_config::schema::AliasedAgentConfig::default()
+            ..galleon_config::schema::AliasedAgentConfig::default()
         };
         let mut agent = Agent::builder()
             .model_provider(provider)
@@ -2766,9 +2766,9 @@
 
     #[test]
     fn native_agent_prompt_omits_duplicate_tools_section() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let workspace = tempfile::TempDir::new().expect("temp dir");
         let mem: Arc<dyn Memory> = Arc::from(
@@ -2816,15 +2816,15 @@
     #[test]
     fn approval_manager_policy_overrides_legacy_builder_autonomy() {
         let workspace = tempfile::TempDir::new().expect("temp dir");
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
                 .expect("memory creation should succeed"),
         );
-        let risk_profile = clawcrew_config::schema::RiskProfileConfig {
+        let risk_profile = galleon_config::schema::RiskProfileConfig {
             level: crate::security::AutonomyLevel::Full,
             always_ask: vec!["shell".into()],
             ..Default::default()
@@ -2988,7 +2988,7 @@
                 )],
                 "native-model".to_string(),
             );
-            let config = clawcrew_config::schema::AliasedAgentConfig::default();
+            let config = galleon_config::schema::AliasedAgentConfig::default();
 
             assert!(
                 tool_dispatcher_for_provider(&config, &router, "native-model")
@@ -3013,11 +3013,11 @@
             provider: Box<dyn ModelProvider>,
             tools: Vec<Box<dyn Tool>>,
             tool_dispatcher: Option<Box<dyn ToolDispatcher>>,
-            multimodal_config: Option<clawcrew_config::schema::MultimodalConfig>,
+            multimodal_config: Option<galleon_config::schema::MultimodalConfig>,
         ) -> Agent {
-            let memory_cfg = clawcrew_config::schema::MemoryConfig {
+            let memory_cfg = galleon_config::schema::MemoryConfig {
                 backend: "none".into(),
-                ..clawcrew_config::schema::MemoryConfig::default()
+                ..galleon_config::schema::MemoryConfig::default()
             };
             let workspace = tempfile::TempDir::new().expect("temp dir");
             let mem: Arc<dyn Memory> = Arc::from(
@@ -3057,9 +3057,9 @@
             std::fs::write(workspace.path().join("SOUL.md"), "SOUL_MD_CONTROL_9341")
                 .expect("write SOUL.md");
 
-            let memory_cfg = clawcrew_config::schema::MemoryConfig {
+            let memory_cfg = galleon_config::schema::MemoryConfig {
                 backend: "none".into(),
-                ..clawcrew_config::schema::MemoryConfig::default()
+                ..galleon_config::schema::MemoryConfig::default()
             };
             let mem: Arc<dyn Memory> = Arc::from(
                 galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
@@ -3160,9 +3160,9 @@
         #[test]
         fn build_system_prompt_with_dispatcher_reflects_dispatcher_mode() {
             let workspace = tempfile::TempDir::new().expect("temp dir");
-            let memory_cfg = clawcrew_config::schema::MemoryConfig {
+            let memory_cfg = galleon_config::schema::MemoryConfig {
                 backend: "none".into(),
-                ..clawcrew_config::schema::MemoryConfig::default()
+                ..galleon_config::schema::MemoryConfig::default()
             };
             let mem: Arc<dyn Memory> = Arc::from(
                 galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
@@ -3203,9 +3203,9 @@
         #[test]
         fn build_system_prompt_with_dispatcher_uses_assembled_skill_tool_names() {
             let workspace = tempfile::TempDir::new().expect("temp dir");
-            let memory_cfg = clawcrew_config::schema::MemoryConfig {
+            let memory_cfg = galleon_config::schema::MemoryConfig {
                 backend: "none".into(),
-                ..clawcrew_config::schema::MemoryConfig::default()
+                ..galleon_config::schema::MemoryConfig::default()
             };
             let mem: Arc<dyn Memory> = Arc::from(
                 galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
@@ -3301,9 +3301,9 @@
         #[test]
         fn streamed_provider_switch_refreshes_active_loop_skills_prompt() {
             let workspace = tempfile::TempDir::new().expect("temp dir");
-            let memory_cfg = clawcrew_config::schema::MemoryConfig {
+            let memory_cfg = galleon_config::schema::MemoryConfig {
                 backend: "none".into(),
-                ..clawcrew_config::schema::MemoryConfig::default()
+                ..galleon_config::schema::MemoryConfig::default()
             };
             let mem: Arc<dyn Memory> = Arc::from(
                 galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
@@ -3311,8 +3311,8 @@
             );
             let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
             let (provider, _) = capturing_provider(false);
-            let config = clawcrew_config::schema::AliasedAgentConfig {
-                resolved: clawcrew_config::schema::ResolvedRuntime {
+            let config = galleon_config::schema::AliasedAgentConfig {
+                resolved: galleon_config::schema::ResolvedRuntime {
                     strict_tool_parsing: true,
                     ..Default::default()
                 },
@@ -3341,7 +3341,7 @@
                 .tool_dispatcher(Box::new(NativeToolDispatcher))
                 .config(config)
                 .skills(skills)
-                .skills_prompt_mode(clawcrew_config::schema::SkillsPromptInjectionMode::Compact)
+                .skills_prompt_mode(galleon_config::schema::SkillsPromptInjectionMode::Compact)
                 .workspace_dir(workspace.path().to_path_buf())
                 .build()
                 .expect("agent builder should succeed");
@@ -3418,7 +3418,7 @@
             // vision provider is a custom OpenAI-compatible endpoint: it supports
             // vision but not native tools.
             let (base_provider, _captured) = capturing_provider(true);
-            let mm_config = clawcrew_config::schema::MultimodalConfig {
+            let mm_config = galleon_config::schema::MultimodalConfig {
                 vision_model_provider: Some("custom:http://127.0.0.1:9".into()),
                 ..Default::default()
             };
@@ -3466,7 +3466,7 @@
             // configured vision provider is an Anthropic-compatible endpoint:
             // it supports both vision and native tools.
             let (base_provider, _captured) = capturing_provider(false);
-            let mm_config = clawcrew_config::schema::MultimodalConfig {
+            let mm_config = galleon_config::schema::MultimodalConfig {
                 vision_model_provider: Some("anthropic-custom:http://127.0.0.1:9".into()),
                 ..Default::default()
             };
@@ -3531,9 +3531,9 @@
             ]),
         });
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -3581,9 +3581,9 @@
             seen_models: seen_models.clone(),
         });
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -3611,9 +3611,9 @@
             .observer(observer)
             .tool_dispatcher(Box::new(NativeToolDispatcher))
             .workspace_dir(std::path::PathBuf::from("/tmp"))
-            .classification_config(clawcrew_config::schema::QueryClassificationConfig {
+            .classification_config(galleon_config::schema::QueryClassificationConfig {
                 enabled: true,
-                rules: vec![clawcrew_config::schema::ClassificationRule {
+                rules: vec![galleon_config::schema::ClassificationRule {
                     hint: "fast".to_string(),
                     keywords: vec!["quick".to_string()],
                     patterns: vec![],
@@ -3631,11 +3631,11 @@
             resolved_routes_capture
                 .lock()
                 .push((provider.to_string(), model.to_string()));
-            clawcrew_config::schema::ResolvedContextLimits {
+            galleon_config::schema::ResolvedContextLimits {
                 model_context_window: 200_000,
                 context_token_budget: 160_000,
                 model_context_window_source:
-                    clawcrew_config::schema::ModelContextWindowSource::Configured,
+                    galleon_config::schema::ModelContextWindowSource::Configured,
             }
         }));
 
@@ -3711,9 +3711,9 @@
             "default".into(),
             "native-model".into(),
         ));
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let workspace = tempfile::tempdir().expect("temp workspace");
         let memory: Arc<dyn Memory> = Arc::from(
@@ -3731,9 +3731,9 @@
             ))
             .memory(memory)
             .observer(Arc::from(crate::observability::NoopObserver {}))
-            .classification_config(clawcrew_config::schema::QueryClassificationConfig {
+            .classification_config(galleon_config::schema::QueryClassificationConfig {
                 enabled: true,
-                rules: vec![clawcrew_config::schema::ClassificationRule {
+                rules: vec![galleon_config::schema::ClassificationRule {
                     hint: "text".into(),
                     keywords: vec!["quick".into()],
                     patterns: vec![],
@@ -3828,7 +3828,7 @@
         let workspace_dir = tmp.path().join("workspace");
         std::fs::create_dir_all(&workspace_dir).unwrap();
 
-        let mut config = clawcrew_config::schema::Config {
+        let mut config = galleon_config::schema::Config {
             data_dir: workspace_dir,
             config_path: tmp.path().join("config.toml"),
             ..Default::default()
@@ -3858,12 +3858,12 @@
         // Agent::from_config against it.
         config.risk_profiles.insert(
             "test-profile".to_string(),
-            clawcrew_config::schema::RiskProfileConfig::default(),
+            galleon_config::schema::RiskProfileConfig::default(),
         );
-        let agent_cfg = clawcrew_config::schema::AliasedAgentConfig {
+        let agent_cfg = galleon_config::schema::AliasedAgentConfig {
             model_provider: "custom.default".into(),
             risk_profile: "test-profile".into(),
-            ..clawcrew_config::schema::AliasedAgentConfig::default()
+            ..galleon_config::schema::AliasedAgentConfig::default()
         };
         config.agents.insert("test-agent".to_string(), agent_cfg);
 
@@ -3894,7 +3894,7 @@
     #[tokio::test]
     async fn from_config_accepts_openai_alias_with_requires_openai_auth() {
         use tempfile::TempDir;
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, ModelProviderConfig, OpenAIModelProviderConfig,
             RiskProfileConfig, WireApi,
         };
@@ -3945,7 +3945,7 @@
     #[tokio::test]
     async fn acp_agent_session_tools_receive_the_owned_store_view() {
         use tempfile::TempDir;
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, ModelProviderConfig, OpenAIModelProviderConfig,
             RiskProfileConfig,
         };
@@ -4049,7 +4049,7 @@
         };
         use crate::cost::CostTracker;
         use tempfile::TempDir;
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, ModelProviderConfig, OpenAIModelProviderConfig,
             RiskProfileConfig,
         };
@@ -4139,9 +4139,9 @@
             responses: Mutex::new(vec![]),
         });
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -4172,9 +4172,9 @@
             responses: Mutex::new(vec![]),
         });
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -4213,7 +4213,7 @@
         // is_resolved_path_allowed expects a canonicalized path (symlinks resolved).
         let skill_resolved = std::fs::canonicalize(&skill_file).unwrap_or(skill_file);
 
-        let risk_profile = clawcrew_config::schema::RiskProfileConfig::default();
+        let risk_profile = galleon_config::schema::RiskProfileConfig::default();
 
         // Policy WITH the fix: workspace pushed into allowed_roots.
         let mut policy = SecurityPolicy::from_risk_profile(&risk_profile, &session);
@@ -4238,9 +4238,9 @@
             responses: Mutex::new(vec![]),
         });
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -4287,9 +4287,9 @@
         let model_provider = Box::new(MockModelProvider {
             responses: Mutex::new(vec![]),
         });
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -4339,9 +4339,9 @@
             responses: Mutex::new(vec![]),
         });
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -4734,9 +4734,9 @@
             call_count: Arc::new(Mutex::new(0)),
         });
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -4835,16 +4835,16 @@
         );
     }
 
-    fn tool_receipts_enabled_config(enabled: bool) -> clawcrew_config::schema::AliasedAgentConfig {
-        clawcrew_config::schema::AliasedAgentConfig {
-            resolved: clawcrew_config::schema::ResolvedRuntime {
-                tool_receipts: clawcrew_config::schema::ToolReceiptsConfig {
+    fn tool_receipts_enabled_config(enabled: bool) -> galleon_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
+            resolved: galleon_config::schema::ResolvedRuntime {
+                tool_receipts: galleon_config::schema::ToolReceiptsConfig {
                     enabled,
                     ..Default::default()
                 },
                 ..Default::default()
             },
-            ..clawcrew_config::schema::AliasedAgentConfig::default()
+            ..galleon_config::schema::AliasedAgentConfig::default()
         }
     }
 
@@ -4853,9 +4853,9 @@
             tools_received: Arc::new(Mutex::new(Vec::new())),
             call_count: Arc::new(Mutex::new(0)),
         });
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -4918,28 +4918,28 @@
         );
     }
 
-    fn show_in_response_config(show: bool) -> clawcrew_config::schema::AliasedAgentConfig {
-        clawcrew_config::schema::AliasedAgentConfig {
-            resolved: clawcrew_config::schema::ResolvedRuntime {
-                tool_receipts: clawcrew_config::schema::ToolReceiptsConfig {
+    fn show_in_response_config(show: bool) -> galleon_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
+            resolved: galleon_config::schema::ResolvedRuntime {
+                tool_receipts: galleon_config::schema::ToolReceiptsConfig {
                     enabled: true,
                     show_in_response: show,
                     ..Default::default()
                 },
                 ..Default::default()
             },
-            ..clawcrew_config::schema::AliasedAgentConfig::default()
+            ..galleon_config::schema::AliasedAgentConfig::default()
         }
     }
 
-    fn streamed_agent_with_config(config: clawcrew_config::schema::AliasedAgentConfig) -> Agent {
+    fn streamed_agent_with_config(config: galleon_config::schema::AliasedAgentConfig) -> Agent {
         let model_provider = Box::new(StreamToolCaptureModelProvider {
             tools_received: Arc::new(Mutex::new(Vec::new())),
             call_count: Arc::new(Mutex::new(0)),
         });
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -5124,9 +5124,9 @@
             call_count: Arc::new(Mutex::new(0)),
         });
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -5279,9 +5279,9 @@
     async fn pre_executed_tool_results_keep_ids_when_calls_overlap() {
         let model_provider = Box::new(PreExecutedToolModelProvider);
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -5347,9 +5347,9 @@
         )
         .expect("write fixture");
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -5366,7 +5366,7 @@
             .observer(observer)
             .tool_dispatcher(Box::new(NativeToolDispatcher))
             .workspace_dir(std::path::PathBuf::from("/tmp"))
-            .multimodal_config(clawcrew_config::schema::MultimodalConfig::default())
+            .multimodal_config(galleon_config::schema::MultimodalConfig::default())
             .build()
             .expect("agent builder should succeed with valid config");
 
@@ -5402,9 +5402,9 @@
         )
         .expect("write fixture");
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -5421,7 +5421,7 @@
             .observer(observer)
             .tool_dispatcher(Box::new(NativeToolDispatcher))
             .workspace_dir(std::path::PathBuf::from("/tmp"))
-            .multimodal_config(clawcrew_config::schema::MultimodalConfig::default())
+            .multimodal_config(galleon_config::schema::MultimodalConfig::default())
             .build()
             .expect("agent builder should succeed with valid config");
 
@@ -5444,17 +5444,17 @@
     }
 
     fn trim_history_test_agent(max_history_messages: usize, observer: Arc<dyn Observer>) -> Agent {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
-        let agent_config = clawcrew_config::schema::AliasedAgentConfig {
-            resolved: clawcrew_config::schema::ResolvedRuntime::default(),
-            ..clawcrew_config::schema::AliasedAgentConfig::default()
+        let agent_config = galleon_config::schema::AliasedAgentConfig {
+            resolved: galleon_config::schema::ResolvedRuntime::default(),
+            ..galleon_config::schema::AliasedAgentConfig::default()
         };
 
         Agent::builder()
@@ -5651,9 +5651,9 @@
 
     #[tokio::test]
     async fn trim_history_runs_after_direct_tool_loop_provider_error() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -5661,8 +5661,8 @@
         );
         let capturing = Arc::new(CapturingObserver::default());
         let observer: Arc<dyn Observer> = capturing.clone();
-        let config = clawcrew_config::schema::AliasedAgentConfig {
-            resolved: clawcrew_config::schema::ResolvedRuntime::default(),
+        let config = galleon_config::schema::AliasedAgentConfig {
+            resolved: galleon_config::schema::ResolvedRuntime::default(),
             ..Default::default()
         };
         let mut agent = Agent::builder()
@@ -6022,9 +6022,9 @@
 
     #[tokio::test]
     async fn narration_with_tool_calls_produces_no_consecutive_assistant_entries() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -6178,9 +6178,9 @@
 
     #[tokio::test]
     async fn streaming_narration_with_tool_calls_produces_no_consecutive_assistant_entries() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -6231,9 +6231,9 @@
                 .expect("response cache should initialize"),
         );
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem_a: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -6325,9 +6325,9 @@
             galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
@@ -6473,9 +6473,9 @@
             }
         }
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
@@ -6610,9 +6610,9 @@
             )],
             "native-model".into(),
         );
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
@@ -6723,9 +6723,9 @@
             )],
             "native-model".into(),
         );
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
@@ -6736,12 +6736,12 @@
             model: "hint:mixed".into(),
             system_suffix: None,
         }));
-        let config = clawcrew_config::schema::AliasedAgentConfig {
-            resolved: clawcrew_config::schema::ResolvedRuntime {
+        let config = galleon_config::schema::AliasedAgentConfig {
+            resolved: galleon_config::schema::ResolvedRuntime {
                 strict_tool_parsing: true,
                 ..Default::default()
             },
-            ..clawcrew_config::schema::AliasedAgentConfig::default()
+            ..galleon_config::schema::AliasedAgentConfig::default()
         };
         let mut agent = Agent::builder()
             .model_provider(Box::new(router))
@@ -6777,9 +6777,9 @@
     #[tokio::test]
     async fn before_llm_hook_selected_model_attributes_provider_failure() {
         let tmp = tempfile::tempdir().expect("temp workspace");
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
@@ -6840,9 +6840,9 @@
             galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
@@ -6901,9 +6901,9 @@
     ) -> Agent {
         let memory: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(
-                &clawcrew_config::schema::MemoryConfig {
+                &galleon_config::schema::MemoryConfig {
                     backend: "none".into(),
-                    ..clawcrew_config::schema::MemoryConfig::default()
+                    ..galleon_config::schema::MemoryConfig::default()
                 },
                 workspace,
                 None,
@@ -7046,9 +7046,9 @@
         );
         let primary_calls = Arc::new(AtomicUsize::new(0));
         let fallback_calls = Arc::new(AtomicUsize::new(0));
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
@@ -7125,9 +7125,9 @@
         );
         let primary_calls = Arc::new(AtomicUsize::new(0));
         let fallback_calls = Arc::new(AtomicUsize::new(0));
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
@@ -7203,9 +7203,9 @@
                 .expect("response cache should initialize"),
         );
         let calls = Arc::new(AtomicUsize::new(0));
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
@@ -7270,9 +7270,9 @@
                 .expect("response cache should initialize"),
         );
         let calls = Arc::new(AtomicUsize::new(0));
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
@@ -7341,9 +7341,9 @@
             galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
@@ -7418,9 +7418,9 @@
             galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
@@ -7513,9 +7513,9 @@
             galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
@@ -7592,9 +7592,9 @@
             galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
@@ -7853,9 +7853,9 @@
             galleon_memory::response_cache::ResponseCache::new(ctrl_dir.path(), 60, 100)
                 .expect("response cache"),
         );
-        let none_cfg = clawcrew_config::schema::MemoryConfig {
+        let none_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let none_mem = || -> Arc<dyn Memory> {
             Arc::from(
@@ -7894,9 +7894,9 @@
             ))
             .memory(Arc::from(
                 galleon_memory::create_memory(
-                    &clawcrew_config::schema::MemoryConfig {
+                    &galleon_config::schema::MemoryConfig {
                         backend: "none".into(),
-                        ..clawcrew_config::schema::MemoryConfig::default()
+                        ..galleon_config::schema::MemoryConfig::default()
                     },
                     std::path::Path::new("/tmp"),
                     None,
@@ -7966,9 +7966,9 @@
 
     #[tokio::test]
     async fn turn_streamed_with_steering_commits_streamed_output_before_continuing() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -8095,9 +8095,9 @@
 
     #[tokio::test]
     async fn turn_streamed_with_steering_error_returns_committed_partial_output() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -8167,9 +8167,9 @@
 
     #[tokio::test]
     async fn turn_streamed_error_before_visible_output_falls_back_to_chat() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -8235,9 +8235,9 @@
 
     #[tokio::test]
     async fn turn_streamed_error_after_delta_preserves_visible_partial() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -8309,9 +8309,9 @@
 
     #[tokio::test]
     async fn turn_streamed_error_before_visible_output_fallback_can_be_cancelled() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -8374,9 +8374,9 @@
 
     #[tokio::test]
     async fn turn_streamed_cancel_before_output_returns_interruption_message() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -8432,9 +8432,9 @@
 
     #[tokio::test]
     async fn turn_streamed_stream_error_after_delta_emits_llm_response_failure() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -8537,9 +8537,9 @@
 
     #[tokio::test]
     async fn turn_streamed_cancel_during_stream_emits_llm_response_failure() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -8959,9 +8959,9 @@
 
     #[tokio::test]
     async fn turn_streamed_returns_new_messages_at_history_limit() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -8970,9 +8970,9 @@
 
         // Use a small limit so that pre-filling to the limit forces a trim on
         // the very first new turn.
-        let agent_config = clawcrew_config::schema::AliasedAgentConfig {
-            resolved: clawcrew_config::schema::ResolvedRuntime::default(),
-            ..clawcrew_config::schema::AliasedAgentConfig::default()
+        let agent_config = galleon_config::schema::AliasedAgentConfig {
+            resolved: galleon_config::schema::ResolvedRuntime::default(),
+            ..galleon_config::schema::AliasedAgentConfig::default()
         };
 
         // Simple streaming provider that returns plain text (no tool calls).
@@ -9249,9 +9249,9 @@
             galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem_a: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -9335,9 +9335,9 @@
 
     #[tokio::test]
     async fn turn_streamed_cancel_during_tool_execution_emits_agent_end_with_tokens() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -9424,9 +9424,9 @@
         use crate::cost::CostTracker;
         use std::collections::HashMap;
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -9435,10 +9435,10 @@
         let workspace = tempfile::TempDir::new().expect("temp dir");
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig {
+                galleon_config::schema::CostConfig {
                     enabled: true,
                     track_per_agent: true,
-                    ..clawcrew_config::schema::CostConfig::default()
+                    ..galleon_config::schema::CostConfig::default()
                 },
                 workspace.path(),
             )
@@ -9526,9 +9526,9 @@
         use crate::cost::CostTracker;
         use std::collections::HashMap;
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -9537,10 +9537,10 @@
         let workspace = tempfile::TempDir::new().expect("temp dir");
         let tracker = Arc::new(
             CostTracker::new(
-                clawcrew_config::schema::CostConfig {
+                galleon_config::schema::CostConfig {
                     enabled: true,
                     track_per_agent: true,
-                    ..clawcrew_config::schema::CostConfig::default()
+                    ..galleon_config::schema::CostConfig::default()
                 },
                 workspace.path(),
             )
@@ -9626,9 +9626,9 @@
 
     #[tokio::test]
     async fn turn_llm_error_emits_agent_end() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -9666,9 +9666,9 @@
 
     #[tokio::test]
     async fn turn_events_share_consistent_turn_id() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -9714,9 +9714,9 @@
 
     #[tokio::test]
     async fn streamed_turn_events_share_consistent_turn_id() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -9770,9 +9770,9 @@
     // instead of staying blank or stuck on an earlier snapshot.
     #[tokio::test]
     async fn streamed_turn_publishes_terminal_context_snapshot_without_usage() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -9829,7 +9829,7 @@
         // fallback budget, and the window is omitted (not configured truth).
         assert_eq!(
             budget,
-            Some(clawcrew_config::schema::LEGACY_DEFAULT_CONTEXT_BUDGET as u64)
+            Some(galleon_config::schema::LEGACY_DEFAULT_CONTEXT_BUDGET as u64)
         );
         assert_eq!(
             window, None,
@@ -9844,9 +9844,9 @@
     // on whether token counts were present.
     #[tokio::test]
     async fn no_terminal_snapshot_when_call_emits_usage_frame_without_token_counts() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -9897,9 +9897,9 @@
     // authoritative final-route window.
     #[tokio::test]
     async fn terminal_snapshot_fires_when_only_final_call_lacks_usage() {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -9949,11 +9949,11 @@
         // A resolver so the served route carries a configured window distinct
         // from the 32k compatibility fallback; the terminal frame must carry it.
         agent.context_limits_resolver = Some(Arc::new(|_provider, _model| {
-            clawcrew_config::schema::ResolvedContextLimits {
+            galleon_config::schema::ResolvedContextLimits {
                 model_context_window: 200_000,
                 context_token_budget: 180_000,
                 model_context_window_source:
-                    clawcrew_config::schema::ModelContextWindowSource::Configured,
+                    galleon_config::schema::ModelContextWindowSource::Configured,
             }
         }));
 
@@ -10035,7 +10035,7 @@
 
         // 200k text route (with usage) and an 8k vision route (no usage) served
         // by the mock endpoint.
-        let config: clawcrew_config::schema::Config = toml::from_str(&format!(
+        let config: galleon_config::schema::Config = toml::from_str(&format!(
             r#"
 schema_version = 3
 [providers.models.custom.text]
@@ -10147,9 +10147,9 @@ vision_model_provider = "custom.vision"
         }
 
         let calls = Arc::new(AtomicUsize::new(0));
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, temp.path(), None)
@@ -10184,7 +10184,7 @@ vision_model_provider = "custom.vision"
             // engages.
             .approval_manager(Some(Arc::new(
                 crate::approval::ApprovalManager::for_non_interactive(
-                    &clawcrew_config::schema::RiskProfileConfig {
+                    &galleon_config::schema::RiskProfileConfig {
                         auto_approve: vec!["*".to_string()],
                         ..Default::default()
                     },
@@ -10333,7 +10333,7 @@ vision_model_provider = "custom.vision"
         // Leaving it unpinned is what a fallback alias looks like in practice,
         // and it keeps this test asserting the thing under repair — capacity
         // keyed on the ACCEPTED alias — rather than model-pin mechanics.
-        let config: clawcrew_config::schema::Config = toml::from_str(
+        let config: galleon_config::schema::Config = toml::from_str(
             r#"
 schema_version = 3
 [providers.models.custom.primary]
@@ -10486,9 +10486,9 @@ model_provider = "custom.primary"
         );
 
         let temp = tempfile::tempdir().expect("tempdir");
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, temp.path(), None)
@@ -10592,7 +10592,7 @@ model_provider = "custom.primary"
         // One alias. `model` pins the primary and carries the only configured
         // capacity; `fallback_models` adds a second pinned entry under the very
         // same alias.
-        let config: clawcrew_config::schema::Config = toml::from_str(
+        let config: galleon_config::schema::Config = toml::from_str(
             r#"
 schema_version = 3
 [providers.models.custom.only]
@@ -10703,9 +10703,9 @@ model_provider = "custom.only"
         );
 
         let temp = tempfile::tempdir().expect("tempdir");
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, temp.path(), None)
@@ -10770,7 +10770,7 @@ model_provider = "custom.only"
         );
         assert_eq!(
             final_limits.model_context_window_source,
-            clawcrew_config::schema::ModelContextWindowSource::CompatibilityFallback,
+            galleon_config::schema::ModelContextWindowSource::CompatibilityFallback,
             "an unconfigured served model must be explicit compatibility fallback, \
              never borrowed metadata from the alias's configured model"
         );
@@ -10814,9 +10814,9 @@ model_provider = "custom.only"
         let provider = Box::new(MockModelProvider {
             responses: Mutex::new(vec![]),
         });
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -10843,18 +10843,18 @@ model_provider = "custom.only"
     /// Build a config whose `ollama.large` route carries `window` capacity, so a
     /// generation swap is observable in both dispatch (the route's model) and the
     /// resolved limits.
-    fn generation_config(window: usize, model: &str) -> clawcrew_config::schema::Config {
-        let mut cfg = clawcrew_config::schema::Config::default();
+    fn generation_config(window: usize, model: &str) -> galleon_config::schema::Config {
+        let mut cfg = galleon_config::schema::Config::default();
         cfg.providers.models.custom.insert(
             "large".to_string(),
-            clawcrew_config::schema::CustomModelProviderConfig {
-                base: clawcrew_config::schema::ModelProviderConfig {
+            galleon_config::schema::CustomModelProviderConfig {
+                base: galleon_config::schema::ModelProviderConfig {
                     // The custom slot has no family-default endpoint, so a
                     // provider rebuild fails without a uri.
                     uri: Some("http://127.0.0.1:1/v1".to_string()),
                     model: Some(model.to_string()),
                     context_window: Some(window),
-                    ..clawcrew_config::schema::ModelProviderConfig::default()
+                    ..galleon_config::schema::ModelProviderConfig::default()
                 },
             },
         );
@@ -10867,11 +10867,11 @@ model_provider = "custom.only"
         model: &str,
         window: usize,
         history_cap: usize,
-    ) -> clawcrew_config::schema::Config {
+    ) -> galleon_config::schema::Config {
         let provider_ref = format!("custom.{provider_alias}");
-        let mut cfg = clawcrew_config::schema::Config {
+        let mut cfg = galleon_config::schema::Config {
             data_dir: data_dir.to_path_buf(),
-            memory: clawcrew_config::schema::MemoryConfig {
+            memory: galleon_config::schema::MemoryConfig {
                 backend: "none".into(),
                 ..Default::default()
             },
@@ -10879,8 +10879,8 @@ model_provider = "custom.only"
         };
         cfg.providers.models.custom.insert(
             provider_alias.to_string(),
-            clawcrew_config::schema::CustomModelProviderConfig {
-                base: clawcrew_config::schema::ModelProviderConfig {
+            galleon_config::schema::CustomModelProviderConfig {
+                base: galleon_config::schema::ModelProviderConfig {
                     uri: Some("http://127.0.0.1:1/v1".to_string()),
                     model: Some(model.to_string()),
                     context_window: Some(window),
@@ -10890,11 +10890,11 @@ model_provider = "custom.only"
         );
         cfg.risk_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RiskProfileConfig::default(),
+            galleon_config::schema::RiskProfileConfig::default(),
         );
         cfg.runtime_profiles.insert(
             "default".to_string(),
-            clawcrew_config::schema::RuntimeProfileConfig {
+            galleon_config::schema::RuntimeProfileConfig {
                 context_compact_ratio: Some(0.5),
                 max_history_messages: Some(history_cap),
                 ..Default::default()
@@ -10902,14 +10902,14 @@ model_provider = "custom.only"
         );
         cfg.agents.insert(
             "direct".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 model_provider: provider_ref.clone().into(),
                 risk_profile: "default".into(),
                 runtime_profile: "default".into(),
                 ..Default::default()
             },
         );
-        cfg.model_routes = vec![clawcrew_config::schema::ModelRouteConfig {
+        cfg.model_routes = vec![galleon_config::schema::ModelRouteConfig {
             hint: "fast".to_string(),
             model_provider: provider_ref,
             model: model.to_string(),
@@ -11215,7 +11215,7 @@ model_provider = "custom.only"
     fn try_apply_model_switch_succeeds_with_switch_config() {
         let switch_cfg = ProviderSwitchConfig {
             config: Some(std::sync::Arc::new(
-                clawcrew_config::schema::Config::default(),
+                galleon_config::schema::Config::default(),
             )),
             live: None,
         };
@@ -11300,7 +11300,7 @@ model_provider = "custom.only"
     fn try_apply_model_switch_succeeds_on_provider_only_change() {
         let switch_cfg = ProviderSwitchConfig {
             config: Some(std::sync::Arc::new(
-                clawcrew_config::schema::Config::default(),
+                galleon_config::schema::Config::default(),
             )),
             live: None,
         };
@@ -11328,30 +11328,30 @@ model_provider = "custom.only"
     fn model_switch_re_resolves_context_limits_for_new_route() {
         let switch_cfg = ProviderSwitchConfig {
             config: Some(std::sync::Arc::new(
-                clawcrew_config::schema::Config::default(),
+                galleon_config::schema::Config::default(),
             )),
             live: None,
         };
         let mut agent = build_test_agent("ollama.large", "large", Some(switch_cfg));
         agent.context_limits_resolver = Some(Arc::new(|provider_ref, model| {
             match (provider_ref, model) {
-                ("ollama.large", "large") => clawcrew_config::schema::ResolvedContextLimits {
+                ("ollama.large", "large") => galleon_config::schema::ResolvedContextLimits {
                     model_context_window: 200_000,
                     context_token_budget: 180_000,
                     model_context_window_source:
-                        clawcrew_config::schema::ModelContextWindowSource::Configured,
+                        galleon_config::schema::ModelContextWindowSource::Configured,
                 },
-                ("ollama.small", "small") => clawcrew_config::schema::ResolvedContextLimits {
+                ("ollama.small", "small") => galleon_config::schema::ResolvedContextLimits {
                     model_context_window: 8_000,
                     context_token_budget: 7_200,
                     model_context_window_source:
-                        clawcrew_config::schema::ModelContextWindowSource::Configured,
+                        galleon_config::schema::ModelContextWindowSource::Configured,
                 },
-                _ => clawcrew_config::schema::ResolvedContextLimits {
+                _ => galleon_config::schema::ResolvedContextLimits {
                     model_context_window: 32_000,
                     context_token_budget: 32_000,
                     model_context_window_source:
-                        clawcrew_config::schema::ModelContextWindowSource::CompatibilityFallback,
+                        galleon_config::schema::ModelContextWindowSource::CompatibilityFallback,
                 },
             }
         }));
@@ -11366,11 +11366,11 @@ model_provider = "custom.only"
         assert_eq!(selected.model, "small");
         assert_eq!(
             agent.context_limits(),
-            clawcrew_config::schema::ResolvedContextLimits {
+            galleon_config::schema::ResolvedContextLimits {
                 model_context_window: 8_000,
                 context_token_budget: 7_200,
                 model_context_window_source:
-                    clawcrew_config::schema::ModelContextWindowSource::Configured,
+                    galleon_config::schema::ModelContextWindowSource::Configured,
             },
             "provider/model and their limits must change as one session state transition"
         );
@@ -11378,16 +11378,16 @@ model_provider = "custom.only"
 
     #[test]
     fn try_apply_model_switch_prefers_route_api_key() {
-        let route = clawcrew_config::schema::ModelRouteConfig {
+        let route = galleon_config::schema::ModelRouteConfig {
             model_provider: "ollama".to_string(),
             model: "tinyllama".to_string(),
             hint: "fast".to_string(),
             api_key: Some("route-specific-key".to_string()),
         };
 
-        let route_config = clawcrew_config::schema::Config {
+        let route_config = galleon_config::schema::Config {
             model_routes: vec![route],
-            ..clawcrew_config::schema::Config::default()
+            ..galleon_config::schema::Config::default()
         };
         let switch_cfg = ProviderSwitchConfig {
             config: Some(std::sync::Arc::new(route_config)),
@@ -11566,9 +11566,9 @@ model_provider = "custom.only"
             call_count: Arc::clone(&initial_calls),
         });
 
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -11578,18 +11578,18 @@ model_provider = "custom.only"
         let observer: Arc<dyn Observer> = capturing.clone();
 
         let switch_cfg = ProviderSwitchConfig {
-            config: Some(std::sync::Arc::new(clawcrew_config::schema::Config {
-                reliability: clawcrew_config::schema::ReliabilityConfig {
+            config: Some(std::sync::Arc::new(galleon_config::schema::Config {
+                reliability: galleon_config::schema::ReliabilityConfig {
                     provider_retries: 0,
                     provider_backoff_ms: 0,
-                    ..clawcrew_config::schema::ReliabilityConfig::default()
+                    ..galleon_config::schema::ReliabilityConfig::default()
                 },
-                ..clawcrew_config::schema::Config::default()
+                ..galleon_config::schema::Config::default()
             })),
             live: None,
         };
-        let agent_config = clawcrew_config::schema::AliasedAgentConfig {
-            resolved: clawcrew_config::schema::ResolvedRuntime {
+        let agent_config = galleon_config::schema::AliasedAgentConfig {
+            resolved: galleon_config::schema::ResolvedRuntime {
                 strict_tool_parsing: true,
                 ..Default::default()
             },
@@ -11622,7 +11622,7 @@ model_provider = "custom.only"
             .tool_dispatcher(Box::new(NativeToolDispatcher))
             .config(agent_config)
             .skills(skills)
-            .skills_prompt_mode(clawcrew_config::schema::SkillsPromptInjectionMode::Compact)
+            .skills_prompt_mode(galleon_config::schema::SkillsPromptInjectionMode::Compact)
             .workspace_dir(std::path::PathBuf::from("/tmp"))
             .model_provider_name("openai".to_string())
             .model_name("gpt-4o-mini".to_string())
@@ -11698,9 +11698,9 @@ model_provider = "custom.only"
         model_provider: Box<dyn ModelProvider>,
         fixed: chrono::DateTime<chrono::Local>,
     ) -> Agent {
-        let memory_cfg = clawcrew_config::schema::MemoryConfig {
+        let memory_cfg = galleon_config::schema::MemoryConfig {
             backend: "none".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
             galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
@@ -11808,7 +11808,7 @@ mod approval_route_tests {
     use parking_lot::RwLock;
     use std::collections::HashMap;
     use clawcrew_api::channel::{ChannelApprovalRequest, ChannelApprovalResponse};
-    use clawcrew_config::autonomy::{ApprovalRoute, OnNoApprover};
+    use galleon_config::autonomy::{ApprovalRoute, OnNoApprover};
 
     enum StubBehavior {
         Answer(ChannelApprovalResponse),

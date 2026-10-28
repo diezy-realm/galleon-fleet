@@ -35,7 +35,7 @@ use clawcrew_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, DraftProgress,
     DraftProgressKind, RoomCreationOptions, RoomVisibility, SendMessage,
 };
-use clawcrew_config::schema::{MatrixConfig, MatrixStreamMode};
+use galleon_config::schema::{MatrixConfig, MatrixStreamMode};
 
 /// Pluggable audio transcription backend for Matrix voice messages.
 #[async_trait]
@@ -1395,7 +1395,7 @@ mod client {
     use tokio::sync::RwLock;
 
     use super::session;
-    use clawcrew_config::schema::MatrixConfig;
+    use galleon_config::schema::MatrixConfig;
 
     const WHOAMI_ENDPOINT: &str = "_matrix/client/v3/account/whoami";
 
@@ -1859,7 +1859,7 @@ mod client {
             .as_deref()
             .context("matrix: whoami requires access_token")?;
         let url = matrix_client_api_url(homeserver, WHOAMI_ENDPOINT);
-        let response = clawcrew_config::schema::apply_runtime_proxy_to_builder(
+        let response = galleon_config::schema::apply_runtime_proxy_to_builder(
             reqwest::Client::builder().timeout(WHOAMI_TIMEOUT),
             "channel.matrix",
         )
@@ -2205,7 +2205,7 @@ mod inbound {
 
     use super::{allowlist, approval, context as ctx_mod, mention};
     use clawcrew_api::{channel::ChannelMessage, media::MediaAttachment};
-    use clawcrew_config::schema::MatrixConfig;
+    use galleon_config::schema::MatrixConfig;
 
     pub(super) const SYNC_LONGPOLL_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -3084,7 +3084,7 @@ pub type TranscriptionResolver =
 /// resolver; this exists to drive the inbound tests from a bare section.
 #[cfg(test)]
 pub(crate) fn legacy_transcription_resolver(
-    transcription: clawcrew_config::schema::TranscriptionConfig,
+    transcription: galleon_config::schema::TranscriptionConfig,
 ) -> TranscriptionResolver {
     let config = Arc::new(transcription);
     Arc::new(move || {
@@ -3546,7 +3546,7 @@ mod outbound {
                 }
                 attempt.follow()
             });
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(
+            galleon_config::schema::apply_runtime_proxy_to_builder(
                 reqwest::Client::builder()
                     .timeout(MARKER_HTTP_TIMEOUT)
                     .redirect(redirect_policy)

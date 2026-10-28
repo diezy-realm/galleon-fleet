@@ -6,7 +6,7 @@
 use std::path::{Path, PathBuf};
 
 use tempfile::tempdir;
-use clawcrew_config::comment_writer::apply_comments;
+use galleon_config::comment_writer::apply_comments;
 
 // ─────────────────────────────────────────────────────────────
 // Helpers

@@ -10,7 +10,7 @@ use std::collections::HashSet;
 #[cfg(unix)]
 use std::io::BufReader;
 use std::io::{self, BufRead, Write};
-use clawcrew_config::schema::RiskProfileConfig;
+use galleon_config::schema::RiskProfileConfig;
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -445,7 +445,7 @@ fn truncate_for_summary(input: &str, max_chars: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::RiskProfileConfig;
+    use galleon_config::schema::RiskProfileConfig;
 
     #[test]
     fn sanitize_replacement_strips_control_chars_keeps_whitespace() {

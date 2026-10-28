@@ -1215,9 +1215,9 @@ mod tests {
 
     #[tokio::test]
     async fn warm_start_roundtrip() {
-        let mem_cfg = clawcrew_config::schema::MemoryConfig {
+        let mem_cfg = galleon_config::schema::MemoryConfig {
             backend: "sqlite".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: std::sync::Arc<dyn Memory> = std::sync::Arc::from(
@@ -1265,9 +1265,9 @@ mod tests {
 
     #[tokio::test]
     async fn warm_start_skips_running_runs() {
-        let mem_cfg = clawcrew_config::schema::MemoryConfig {
+        let mem_cfg = galleon_config::schema::MemoryConfig {
             backend: "sqlite".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: std::sync::Arc<dyn Memory> = std::sync::Arc::from(
@@ -1307,9 +1307,9 @@ mod tests {
 
     #[tokio::test]
     async fn warm_start_empty_memory() {
-        let mem_cfg = clawcrew_config::schema::MemoryConfig {
+        let mem_cfg = galleon_config::schema::MemoryConfig {
             backend: "sqlite".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: std::sync::Arc<dyn Memory> = std::sync::Arc::from(
@@ -1329,9 +1329,9 @@ mod tests {
 
     #[tokio::test]
     async fn warm_start_approval_matching() {
-        let mem_cfg = clawcrew_config::schema::MemoryConfig {
+        let mem_cfg = galleon_config::schema::MemoryConfig {
             backend: "sqlite".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: std::sync::Arc<dyn Memory> = std::sync::Arc::from(
@@ -1376,9 +1376,9 @@ mod tests {
 
     #[tokio::test]
     async fn warm_start_preserves_pending_for_nonterminal_runs() {
-        let mem_cfg = clawcrew_config::schema::MemoryConfig {
+        let mem_cfg = galleon_config::schema::MemoryConfig {
             backend: "sqlite".into(),
-            ..clawcrew_config::schema::MemoryConfig::default()
+            ..galleon_config::schema::MemoryConfig::default()
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: std::sync::Arc<dyn Memory> = std::sync::Arc::from(

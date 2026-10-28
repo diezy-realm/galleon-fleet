@@ -3,8 +3,8 @@ use async_trait::async_trait;
 use base64::Engine as _;
 use cbc::cipher::{BlockDecryptMut, KeyIvInit, block_padding::Pkcs7};
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_config::pairing::constant_time_eq;
-use clawcrew_config::schema::StreamMode;
+use galleon_config::pairing::constant_time_eq;
+use galleon_config::schema::StreamMode;
 use futures_util::{SinkExt, StreamExt};
 use prost::Message as ProstMessage;
 use reqwest::multipart::{Form, Part};
@@ -809,7 +809,7 @@ pub struct LarkChannel {
     /// Platform variant: Lark (international) or Feishu (CN).
     platform: LarkPlatform,
     /// How to receive events: WebSocket long-connection or HTTP webhook.
-    receive_mode: clawcrew_config::schema::LarkReceiveMode,
+    receive_mode: galleon_config::schema::LarkReceiveMode,
     /// Cached tenant access token
     tenant_token: Arc<RwLock<Option<CachedTenantToken>>>,
     /// Dedup set: WS message_ids seen in last ~30 min to prevent double-dispatch
@@ -819,7 +819,7 @@ pub struct LarkChannel {
     /// Workspace root that bounds outbound media marker reads. Resolved by
     /// the orchestrator from `Config::channel_workspace_dir("lark.<alias>")`.
     workspace_dir: Option<PathBuf>,
-    transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
+    transcription: Option<galleon_config::schema::TranscriptionConfig>,
     transcription_manager: Option<Arc<dyn AudioTranscriber>>,
     /// In-flight approval requests keyed by `approval_id` (UUID v4).
     /// Populated by `request_approval`, drained by `handle_card_action_event`.
@@ -1204,7 +1204,7 @@ impl LarkChannel {
             resolved_bot_open_id: Arc::new(StdRwLock::new(None)),
             mention_only,
             platform,
-            receive_mode: clawcrew_config::schema::LarkReceiveMode::default(),
+            receive_mode: galleon_config::schema::LarkReceiveMode::default(),
             tenant_token: Arc::new(RwLock::new(None)),
             ws_seen_ids: Arc::new(RwLock::new(HashMap::new())),
             proxy_url: None,
@@ -1227,7 +1227,7 @@ impl LarkChannel {
     /// Build from `LarkConfig` using legacy compatibility:
     /// when `use_feishu=true`, this instance routes to Feishu endpoints.
     pub fn from_config(
-        config: &clawcrew_config::schema::LarkConfig,
+        config: &galleon_config::schema::LarkConfig,
         alias: impl Into<String>,
         peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
     ) -> Self {
@@ -1321,7 +1321,7 @@ impl LarkChannel {
     /// otherwise leaves the choice unbound (see
     /// `transcription::manager_from_snapshot`).
     /// Configure voice transcription from a `[transcription]` snapshot (no-op stub without provider manager).
-    pub fn with_transcription(self, _config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(self, _config: galleon_config::schema::TranscriptionConfig) -> Self {
         self
     }
 
@@ -1330,7 +1330,7 @@ impl LarkChannel {
     /// transcription it cannot perform.
     pub fn with_transcription_manager(
         mut self,
-        config: clawcrew_config::schema::TranscriptionConfig,
+        config: galleon_config::schema::TranscriptionConfig,
         manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
@@ -1350,7 +1350,7 @@ impl LarkChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_channel_proxy_client(
+        galleon_config::schema::build_channel_proxy_client(
             self.platform.proxy_service_key(),
             self.proxy_url.as_deref(),
         )
@@ -1514,7 +1514,7 @@ impl LarkChannel {
             "connecting to"
         );
 
-        let (ws_stream, _) = clawcrew_config::schema::ws_connect_with_proxy(
+        let (ws_stream, _) = galleon_config::schema::ws_connect_with_proxy(
             &wss_url,
             "channel.lark",
             self.proxy_url.as_deref(),
@@ -2999,7 +2999,7 @@ impl Channel for LarkChannel {
     }
 
     async fn listen(&self, tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
-        use clawcrew_config::schema::LarkReceiveMode;
+        use galleon_config::schema::LarkReceiveMode;
         match self.receive_mode {
             LarkReceiveMode::Websocket => self.listen_ws(tx).await,
             LarkReceiveMode::Webhook => self.listen_http(tx).await,
@@ -5272,7 +5272,7 @@ mod tests {
 
     #[test]
     fn lark_config_serde() {
-        use clawcrew_config::schema::{LarkConfig, LarkReceiveMode};
+        use galleon_config::schema::{LarkConfig, LarkReceiveMode};
         let lc = LarkConfig {
             enabled: true,
             app_id: "cli_app123".into(),
@@ -5300,7 +5300,7 @@ mod tests {
 
     #[test]
     fn lark_config_toml_roundtrip() {
-        use clawcrew_config::schema::{LarkConfig, LarkReceiveMode};
+        use galleon_config::schema::{LarkConfig, LarkReceiveMode};
         let lc = LarkConfig {
             enabled: true,
             app_id: "app".into(),
@@ -5327,7 +5327,7 @@ mod tests {
 
     #[test]
     fn lark_config_defaults_optional_fields() {
-        use clawcrew_config::schema::{LarkConfig, LarkReceiveMode};
+        use galleon_config::schema::{LarkConfig, LarkReceiveMode};
         let json = r#"{"app_id":"a","app_secret":"s"}"#;
         let parsed: LarkConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.verification_token.is_none());
@@ -5338,7 +5338,7 @@ mod tests {
 
     #[test]
     fn lark_from_config_preserves_mode_and_region() {
-        use clawcrew_config::schema::{LarkConfig, LarkReceiveMode};
+        use galleon_config::schema::{LarkConfig, LarkReceiveMode};
 
         let cfg = LarkConfig {
             enabled: true,
@@ -5370,7 +5370,7 @@ mod tests {
 
     #[test]
     fn lark_from_config_with_use_feishu_routes_to_feishu() {
-        use clawcrew_config::schema::{LarkConfig, LarkReceiveMode};
+        use galleon_config::schema::{LarkConfig, LarkReceiveMode};
 
         let cfg = LarkConfig {
             enabled: true,
@@ -5401,7 +5401,7 @@ mod tests {
 
     #[test]
     fn lark_with_approval_timeout_secs_propagates_value() {
-        use clawcrew_config::schema::{LarkConfig, LarkReceiveMode};
+        use galleon_config::schema::{LarkConfig, LarkReceiveMode};
 
         let cfg = LarkConfig {
             enabled: true,
@@ -5723,7 +5723,7 @@ mod tests {
             "https://open.larksuite.com/open-apis/im/v1/messages/om_test_message_id/reactions"
         );
 
-        let feishu_cfg = clawcrew_config::schema::LarkConfig {
+        let feishu_cfg = galleon_config::schema::LarkConfig {
             enabled: true,
             app_id: "cli_app123".into(),
             app_secret: "secret456".into(),
@@ -5731,7 +5731,7 @@ mod tests {
             verification_token: Some("vtoken789".into()),
             mention_only: false,
             use_feishu: true,
-            receive_mode: clawcrew_config::schema::LarkReceiveMode::Webhook,
+            receive_mode: galleon_config::schema::LarkReceiveMode::Webhook,
             port: Some(9898),
             proxy_url: None,
             excluded_tools: vec![],
@@ -5890,7 +5890,7 @@ mod tests {
 
     #[test]
     fn lark_manager_none_when_disabled() {
-        let tc = clawcrew_config::schema::TranscriptionConfig {
+        let tc = galleon_config::schema::TranscriptionConfig {
             enabled: false,
             ..Default::default()
         };
@@ -5904,7 +5904,7 @@ mod tests {
     /// channel could not perform, which is the drift this shared path removed.
     #[test]
     fn lark_manager_none_and_warn_on_init_failure() {
-        let tc = clawcrew_config::schema::TranscriptionConfig {
+        let tc = galleon_config::schema::TranscriptionConfig {
             enabled: true,
             api_key: Some(String::new()),
             ..Default::default()
@@ -6036,9 +6036,9 @@ mod tests {
     #[tokio::test]
     async fn lark_audio_file_key_missing_returns_none() {
         let ch = make_channel();
-        let tc = clawcrew_config::schema::TranscriptionConfig {
+        let tc = galleon_config::schema::TranscriptionConfig {
             enabled: true,
-            local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
+            local_whisper: Some(galleon_config::schema::LocalWhisperConfig {
                 url: "http://localhost:0/v1/transcribe".to_string(),
                 bearer_token: Some("unused".to_string()),
                 max_audio_bytes: 10 * 1024 * 1024,
@@ -6122,9 +6122,9 @@ mod tests {
             .mount(&whisper_server)
             .await;
 
-        let config = clawcrew_config::schema::TranscriptionConfig {
+        let config = galleon_config::schema::TranscriptionConfig {
             enabled: true,
-            local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
+            local_whisper: Some(galleon_config::schema::LocalWhisperConfig {
                 url: format!("{}/v1/transcribe", whisper_server.uri()),
                 bearer_token: Some("test-token".to_string()),
                 max_audio_bytes: 10 * 1024 * 1024,
@@ -7159,7 +7159,7 @@ mod tests {
         let mock_server = wiremock::MockServer::start().await;
         mount_lark_token_and_send_mocks(&mock_server, "chat_id").await;
 
-        let config = clawcrew_config::schema::LarkConfig {
+        let config = galleon_config::schema::LarkConfig {
             enabled: true,
             use_feishu: false,
             app_id: "cli_test_app_id".to_string(),
@@ -7195,7 +7195,7 @@ mod tests {
         let mock_server = wiremock::MockServer::start().await;
         mount_lark_token_and_send_mocks(&mock_server, "chat_id").await;
 
-        let config = clawcrew_config::schema::LarkConfig {
+        let config = galleon_config::schema::LarkConfig {
             enabled: true,
             use_feishu: true,
             app_id: "cli_test_app_id".to_string(),
@@ -7232,7 +7232,7 @@ mod tests {
         let mock_server = wiremock::MockServer::start().await;
         mount_lark_token_and_send_mocks(&mock_server, "open_id").await;
 
-        let config = clawcrew_config::schema::LarkConfig {
+        let config = galleon_config::schema::LarkConfig {
             enabled: true,
             use_feishu: false,
             app_id: "cli_test_app_id".to_string(),
@@ -7295,7 +7295,7 @@ mod tests {
         let workspace = tempfile::tempdir().expect("workspace");
         std::fs::write(workspace.path().join("photo.png"), b"\x89PNG\r\n\x1a\n")
             .expect("write image");
-        let config = clawcrew_config::schema::LarkConfig {
+        let config = galleon_config::schema::LarkConfig {
             enabled: true,
             use_feishu: false,
             app_id: "cli_test_app_id".to_string(),
@@ -7384,7 +7384,7 @@ mod tests {
 
         let workspace = tempfile::tempdir().expect("workspace");
         std::fs::write(workspace.path().join("brief.txt"), b"brief").expect("write document");
-        let config = clawcrew_config::schema::LarkConfig {
+        let config = galleon_config::schema::LarkConfig {
             enabled: true,
             use_feishu: false,
             app_id: "cli_test_app_id".to_string(),

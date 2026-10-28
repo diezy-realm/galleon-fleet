@@ -11,7 +11,7 @@ use tokio_tungstenite::{
         http::{HeaderValue, header},
     },
 };
-use clawcrew_config::schema::resolve_runtime_dirs;
+use galleon_config::schema::resolve_runtime_dirs;
 
 const CONFIG_NOT_FOUND_ERROR: &str = "ERROR: config.toml not found.  Are you sure the bridge and ClawCrew are running on the same host?  Tool use will not work remotely!";
 const PAIRING_TOKEN_NOT_FOUND_ERROR: &str = "ERROR: Gateway pairing is active but no ACP bridge token is cached. Run `clawcrew gateway get-paircode --new`, then run `clawcrew-acp-bridge --pair-code <code>`, or set CLAWCREW_ACP_BRIDGE_TOKEN.";
@@ -570,7 +570,7 @@ mod tests {
 
     #[test]
     fn cached_token_path_lives_next_to_config_without_using_config_toml() {
-        let dir = std::path::Path::new("/tmp/clawcrew-config");
+        let dir = std::path::Path::new("/tmp/galleon-config");
 
         assert_eq!(cached_token_path(dir), dir.join("acp-bridge-token"));
     }

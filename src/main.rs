@@ -117,7 +117,7 @@ fn discard_until_newline<R: std::io::BufRead>(reader: &mut R) -> std::io::Result
 }
 
 #[cfg(feature = "agent-runtime")]
-use clawcrew_config::api_error::{ConfigApiCode, ConfigApiError};
+use galleon_config::api_error::{ConfigApiCode, ConfigApiError};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -711,7 +711,7 @@ async fn apply_comment_inline(
     path: &str,
     comment: &str,
 ) -> Result<()> {
-    clawcrew_config::comment_writer::apply_comments(
+    galleon_config::comment_writer::apply_comments(
         config_path,
         &[(path.to_string(), comment.to_string())],
     )
@@ -737,7 +737,7 @@ fn json_value_to_setprop_string(
     json: bool,
 ) -> Result<String> {
     let kind = config_patch_prop_kind(config, path);
-    match clawcrew_config::typed_value::coerce_for_set_prop(value, kind) {
+    match galleon_config::typed_value::coerce_for_set_prop(value, kind) {
         Ok(value_str) => Ok(value_str),
         Err(err) => {
             ::clawcrew_log::record!(
@@ -1012,7 +1012,7 @@ async fn run_quickstart_cli(
     api_key: Option<String>,
     agent: Option<String>,
 ) -> anyhow::Result<()> {
-    use clawcrew_config::presets::{
+    use galleon_config::presets::{
         AgentIdentity, BuilderSubmission, ChannelQuickStart, MemoryChoice, ModelProviderChoice,
         RISK_PRESETS, SelectorChoice,
     };
@@ -1047,7 +1047,7 @@ async fn run_quickstart_cli(
         // `channels_visited == false` is *not* satisfied — the
         // selector still shows `[ ]`.
         channels_visited: bool,
-        peer_groups: Vec<clawcrew_config::presets::QuickstartPeerGroup>,
+        peer_groups: Vec<galleon_config::presets::QuickstartPeerGroup>,
         // Mirrors `channels_visited`: peer groups are optional, so an
         // empty `peer_groups` Vec only counts as satisfied once the
         // user has actually opened the selector and left it. Until
@@ -1088,7 +1088,7 @@ async fn run_quickstart_cli(
     struct AgentChoice {
         name: String,
         system_prompt: String,
-        personality_files: Vec<clawcrew_config::presets::QuickstartPersonalityFile>,
+        personality_files: Vec<galleon_config::presets::QuickstartPersonalityFile>,
     }
 
     impl Form {
@@ -1481,7 +1481,7 @@ async fn run_quickstart_cli(
                     .default("default".to_string())
                     .allow_empty(false)
                     .validate_with(|input: &String| {
-                        clawcrew_config::helpers::validate_alias_key(input)
+                        galleon_config::helpers::validate_alias_key(input)
                     })
                     .interact_text()
                 else {
@@ -1517,7 +1517,7 @@ async fn run_quickstart_cli(
                             clawcrew_runtime::quickstart::model_catalog(&chosen.kind).await;
                         if live && !models.is_empty() {
                             upgraded = clawcrew_runtime::quickstart::FieldDescriptor {
-                                kind: clawcrew_config::traits::PropKind::Enum,
+                                kind: galleon_config::traits::PropKind::Enum,
                                 enum_variants: Some(models),
                                 ..d.clone()
                             };
@@ -1539,7 +1539,7 @@ async fn run_quickstart_cli(
                     // its schema identifier — no cherry-picking.
                     if d.key.eq_ignore_ascii_case("model") {
                         model = value;
-                    } else if !value.is_empty() && value != clawcrew_config::traits::UNSET_DISPLAY {
+                    } else if !value.is_empty() && value != galleon_config::traits::UNSET_DISPLAY {
                         field_buf.insert(d.key.clone(), value);
                     }
                 }
@@ -1763,7 +1763,7 @@ async fn run_quickstart_cli(
                                 aborted = true;
                                 break;
                             };
-                            if !value.is_empty() && value != clawcrew_config::traits::UNSET_DISPLAY
+                            if !value.is_empty() && value != galleon_config::traits::UNSET_DISPLAY
                             {
                                 extras.insert(d.key.clone(), value);
                             }
@@ -1878,7 +1878,7 @@ async fn run_quickstart_cli(
                             .filter(|s| !s.is_empty())
                             .collect();
                         form.peer_groups
-                            .push(clawcrew_config::presets::QuickstartPeerGroup {
+                            .push(galleon_config::presets::QuickstartPeerGroup {
                                 name,
                                 channel,
                                 external_peers,
@@ -1909,7 +1909,7 @@ async fn run_quickstart_cli(
                     .with_prompt(t("cli-quickstart-agent-alias-prompt", "Agent alias"))
                     .allow_empty(false)
                     .validate_with(|input: &String| {
-                        clawcrew_config::helpers::validate_alias_key(input)
+                        galleon_config::helpers::validate_alias_key(input)
                     });
                 if !default_name.is_empty() {
                     input = input.default(default_name);
@@ -2092,12 +2092,12 @@ async fn run_quickstart_cli(
                     continue;
                 }
                 // Materialize in canonical file order; only files with content.
-                let personality_files: Vec<clawcrew_config::presets::QuickstartPersonalityFile> =
+                let personality_files: Vec<galleon_config::presets::QuickstartPersonalityFile> =
                     files
                         .iter()
                         .filter_map(|filename| {
                             personality_results.get(*filename).map(|content| {
-                                clawcrew_config::presets::QuickstartPersonalityFile {
+                                galleon_config::presets::QuickstartPersonalityFile {
                                     filename: (*filename).to_string(),
                                     content: content.clone(),
                                 }
@@ -2291,7 +2291,7 @@ fn alias_target_for_path<'a>(
 ) -> Option<(&'static str, &'a str)> {
     Config::map_key_sections()
         .into_iter()
-        .filter(|section| section.kind == clawcrew_config::traits::MapKeyKind::Map)
+        .filter(|section| section.kind == galleon_config::traits::MapKeyKind::Map)
         .filter(|section| !section.resource_key)
         .filter_map(|section| split(section.path, path).map(|key| (section.path, key)))
         .max_by_key(|(section_path, _)| section_path.len())
@@ -2309,7 +2309,7 @@ fn init_map_alias(config: &mut Config, section_arg: &str) -> Result<Option<Strin
     else {
         return Ok(None);
     };
-    match clawcrew_config::alias_refs::create_map_key_checked(config, section_path, alias) {
+    match galleon_config::alias_refs::create_map_key_checked(config, section_path, alias) {
         Ok(true) => Ok(Some(format!("{section_path}.{alias}"))),
         Ok(false) => Ok(None),
         Err(e) => Err(anyhow::Error::msg(e.to_string())),
@@ -2363,9 +2363,9 @@ fn ensure_map_key_for_prop_path(config: &mut Config, prop_path: &str) -> Result<
     // agents.default.enabled ...` auto-create the reserved runtime-fallback
     // agent alias, which the rename guard then refuses to ever rename.
     let created =
-        match clawcrew_config::alias_refs::create_map_key_checked(config, section_path, key) {
+        match galleon_config::alias_refs::create_map_key_checked(config, section_path, key) {
             Ok(created) => created,
-            Err(clawcrew_config::alias_refs::CreateError::Reserved(_)) => return Ok(false),
+            Err(galleon_config::alias_refs::CreateError::Reserved(_)) => return Ok(false),
             Err(e) => return Err(anyhow::Error::msg(e.to_string())),
         };
     if created {
@@ -2406,7 +2406,7 @@ fn prompt_for_field(
     desc: &clawcrew_runtime::quickstart::FieldDescriptor,
     seed: Option<&str>,
 ) -> anyhow::Result<Option<String>> {
-    use clawcrew_config::traits::PropKind;
+    use galleon_config::traits::PropKind;
     use dialoguer::{FuzzySelect, Input};
     if !desc.help.is_empty() {
         println!("  {}", desc.help);
@@ -2449,7 +2449,7 @@ fn prompt_for_field(
         input = input.default(s.to_string());
     } else if let Some(d) = desc.default.as_deref()
         && !d.is_empty()
-        && d != clawcrew_config::traits::UNSET_DISPLAY
+        && d != galleon_config::traits::UNSET_DISPLAY
     {
         // `<unset>` is a display placeholder for an unset Option, not a
         // real default. Seeding it pre-fills the prompt so a bare Enter
@@ -2874,7 +2874,7 @@ fn ca_key_protection_from_env() -> galleon_tls::CaKeyProtection {
 /// CA replaces the daemon-generated CA; certificate pins apply in either mode.
 #[cfg(all(test, feature = "agent-runtime"))]
 fn resolve_wss_client_auth(
-    client_auth: Option<&clawcrew_config::schema::WssClientAuthConfig>,
+    client_auth: Option<&galleon_config::schema::WssClientAuthConfig>,
 ) -> Result<(Option<String>, Vec<String>)> {
     if let Some(config) = client_auth
         && !config.ca_cert_path.is_empty()
@@ -2896,7 +2896,7 @@ fn resolve_wss_client_auth(
 }
 
 #[cfg(feature = "agent-runtime")]
-fn wss_server_sans(wss_cfg: &clawcrew_config::schema::WssConfig) -> Vec<String> {
+fn wss_server_sans(wss_cfg: &galleon_config::schema::WssConfig) -> Vec<String> {
     if wss_cfg.sans.is_empty() {
         return Vec::new();
     }
@@ -2918,7 +2918,7 @@ mod wss_client_auth_tests {
 
     #[test]
     fn auto_ca_honors_configured_client_certificate_pins() {
-        let auth = clawcrew_config::schema::WssClientAuthConfig {
+        let auth = galleon_config::schema::WssClientAuthConfig {
             pinned_certs: vec!["a".repeat(64)],
             ..Default::default()
         };
@@ -2933,7 +2933,7 @@ mod wss_client_auth_tests {
 
     #[test]
     fn disabled_byo_ca_is_rejected_before_listener_startup() {
-        let auth = clawcrew_config::schema::WssClientAuthConfig {
+        let auth = galleon_config::schema::WssClientAuthConfig {
             ca_cert_path: "/etc/clawcrew/client-ca.pem".into(),
             ..Default::default()
         };
@@ -2945,7 +2945,7 @@ mod wss_client_auth_tests {
 
     #[test]
     fn wss_server_sans_adds_local_and_configured_sans() {
-        let cfg = clawcrew_config::schema::WssConfig {
+        let cfg = galleon_config::schema::WssConfig {
             sans: vec!["relay.example.test".into(), " ".into()],
             ..Default::default()
         };
@@ -2958,7 +2958,7 @@ mod wss_client_auth_tests {
                 "relay.example.test".to_string(),
             ]
         );
-        assert!(wss_server_sans(&clawcrew_config::schema::WssConfig::default()).is_empty());
+        assert!(wss_server_sans(&galleon_config::schema::WssConfig::default()).is_empty());
     }
 }
 
@@ -3708,7 +3708,7 @@ async fn fetch_locales(locale: &str, catalog: Option<&str>) -> Result<()> {
     let locale = validated_locale(locale)?;
 
     let selected: Vec<&(&str, &str, &str)> = match catalog {
-        None => clawcrew_config::schema::FTL_CATALOGS.iter().collect(),
+        None => galleon_config::schema::FTL_CATALOGS.iter().collect(),
         Some(list) => {
             let names: Vec<&str> = list
                 .split(',')
@@ -3717,13 +3717,13 @@ async fn fetch_locales(locale: &str, catalog: Option<&str>) -> Result<()> {
                 .collect();
             let mut out = Vec::new();
             for name in &names {
-                match clawcrew_config::schema::FTL_CATALOGS
+                match galleon_config::schema::FTL_CATALOGS
                     .iter()
                     .find(|(n, _, _)| n == name)
                 {
                     Some(entry) => out.push(entry),
                     None => {
-                        let valid = clawcrew_config::schema::FTL_CATALOGS
+                        let valid = galleon_config::schema::FTL_CATALOGS
                             .iter()
                             .map(|(n, _, _)| *n)
                             .collect::<Vec<_>>()
@@ -3736,7 +3736,7 @@ async fn fetch_locales(locale: &str, catalog: Option<&str>) -> Result<()> {
         }
     };
 
-    let dest = clawcrew_config::schema::ftl_locale_dir(&locale)?;
+    let dest = galleon_config::schema::ftl_locale_dir(&locale)?;
     std::fs::create_dir_all(&dest).with_context(|| format!("creating {}", dest.display()))?;
     // Confinement check: the resolved dest must live under the data-dir FTL root.
     let ftl_root = dest
@@ -4400,7 +4400,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 let schema = schemars::schema_for!(config::Config);
                 print!(
                     "{}",
-                    clawcrew_config::schema_markdown::generate(&schema.to_value())
+                    galleon_config::schema_markdown::generate(&schema.to_value())
                 );
                 return Ok(());
             }
@@ -5129,7 +5129,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
 
             #[cfg(target_os = "linux")]
             {
-                use clawcrew_config::schema::SandboxBackend;
+                use galleon_config::schema::SandboxBackend;
                 // Any enabled agent whose risk_profile uses the docker
                 // sandbox triggers the warning — we just need to know
                 // *some* agent is using it.
@@ -5140,7 +5140,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     .filter_map(|(alias, _)| config.risk_profile_for_agent(alias))
                     .any(|p| matches!(p.sandbox_config().backend, SandboxBackend::Docker));
                 let runtime_docker_mem = config.runtime.kind
-                    == clawcrew_config::schema::RuntimeKind::Docker
+                    == galleon_config::schema::RuntimeKind::Docker
                     && config
                         .runtime
                         .docker
@@ -5597,7 +5597,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         // One-time pairing code gates enrollment. Print it AND the
                         // CA-bound short-auth-string so the operator reads both to
                         // the client out of band (no blind trust-on-first-use).
-                        let pairing = std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
+                        let pairing = std::sync::Arc::new(galleon_config::pairing::PairingGuard::new(
                             true,
                             &[],
                             startup_pairing_code_policy,
@@ -6964,7 +6964,7 @@ Add pricing to the active provider profile or supply a catalog entry."
             ConfigCommands::Get { path, json } => {
                 let known_paths: Vec<String> =
                     config.prop_fields().into_iter().map(|f| f.name).collect();
-                let path = clawcrew_config::helpers::resolve_field_path(&known_paths, &path);
+                let path = galleon_config::helpers::resolve_field_path(&known_paths, &path);
                 if Config::prop_is_secret(&path) {
                     let entries = config.prop_fields();
                     let populated = entries
@@ -7020,7 +7020,7 @@ Add pricing to the active provider profile or supply a catalog entry."
                             // Same single-source-of-truth helper the gateway
                             // uses; never hardcode a code at the call site.
                             let api_err =
-                                clawcrew_config::api_error::ConfigApiError::from_validation(
+                                galleon_config::api_error::ConfigApiError::from_validation(
                                     anyhow::Error::msg(e.to_string()),
                                 )
                                 .with_path(&path);
@@ -7044,11 +7044,11 @@ Add pricing to the active provider profile or supply a catalog entry."
                 crate::config::migration::ensure_disk_at_current_version(&config.config_path)?;
                 let known_paths: Vec<String> =
                     config.prop_fields().into_iter().map(|f| f.name).collect();
-                let mut path = clawcrew_config::helpers::resolve_field_path(&known_paths, &path);
+                let mut path = galleon_config::helpers::resolve_field_path(&known_paths, &path);
                 if ensure_map_key_for_prop_path(&mut config, &path)? {
                     let known_paths: Vec<String> =
                         config.prop_fields().into_iter().map(|f| f.name).collect();
-                    path = clawcrew_config::helpers::resolve_field_path(&known_paths, &path);
+                    path = galleon_config::helpers::resolve_field_path(&known_paths, &path);
                 }
                 if no_interactive {
                     let val = value.ok_or_else(|| {
@@ -7582,7 +7582,7 @@ Add pricing to the active provider profile or supply a catalog entry."
                                     config_patch_fail_json_or_human(json, api_err, human)?
                                 }
                             };
-                            let want_str = match clawcrew_config::typed_value::coerce_for_set_prop(
+                            let want_str = match galleon_config::typed_value::coerce_for_set_prop(
                                 want,
                                 config_patch_prop_kind(&config, &path),
                             ) {

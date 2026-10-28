@@ -8,7 +8,7 @@ use anyhow::Result;
 use rumqttc::{AsyncClient, Event, MqttOptions, Packet, QoS, Transport};
 
 use clawcrew_api::sop::{SopFanInDispatcher, SopTriggerSource};
-use clawcrew_config::schema::MqttConfig;
+use galleon_config::schema::MqttConfig;
 
 /// Run the MQTT SOP listener loop.
 /// Subscribes to configured topics and dispatches incoming publishes

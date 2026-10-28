@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use clawcrew_api::memory_traits::MemoryStrategy;
-use clawcrew_config::cost::tracker::CostTracker;
-use clawcrew_config::pairing::PairingGuard;
-use clawcrew_config::schema::Config;
+use galleon_config::cost::tracker::CostTracker;
+use galleon_config::pairing::PairingGuard;
+use galleon_config::schema::Config;
 use galleon_infra::session_backend::SessionBackend;
 use galleon_memory::{self, Memory};
 use galleon_providers::{self, ModelProvider};
@@ -73,9 +73,9 @@ pub struct AppState {
     pub tui_registry: Option<Arc<dyn clawcrew_api::runtime_traits::TuiConnectionRegistry>>,
     pub sop_runner: Option<Arc<dyn clawcrew_api::sop::SopRunner>>,
     pub diagnostics: Option<Arc<dyn clawcrew_api::doctor::DiagnosticsRunner>>,
-    pub quickstart: Option<Arc<dyn clawcrew_config::quickstart::QuickstartRunner>>,
+    pub quickstart: Option<Arc<dyn galleon_config::quickstart::QuickstartRunner>>,
     pub integration_catalog:
-        Option<Arc<dyn clawcrew_config::integrations::IntegrationCatalogProvider>>,
+        Option<Arc<dyn galleon_config::integrations::IntegrationCatalogProvider>>,
     pub personality_runner: Option<Arc<dyn clawcrew_api::personality::PersonalityRunner>>,
     pub skills_runner: Option<Arc<dyn clawcrew_api::skill::SkillsRunner>>,
     pub acp_runner: Option<Arc<dyn clawcrew_api::runtime_traits::AcpSessionRunner>>,
@@ -148,14 +148,14 @@ impl AppState {
             mem: memory.clone(),
             memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
                 memory,
-                clawcrew_config::schema::MemoryConfig::default(),
+                galleon_config::schema::MemoryConfig::default(),
                 std::path::PathBuf::new(),
             )),
             auto_save: false,
             pairing: Arc::new(PairingGuard::new(
                 false,
                 &[],
-                clawcrew_config::pairing::PairingCodePolicy::default(),
+                galleon_config::pairing::PairingCodePolicy::default(),
             )),
             trust_forwarded_headers: false,
             rate_limiter: Arc::new(crate::GatewayRateLimiter::new(100, 100, 100)),

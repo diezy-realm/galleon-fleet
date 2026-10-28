@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use clawcrew_api::memory_traits::Memory;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 use galleon_infra::acp_session_store::AcpSessionStore;
 use galleon_infra::cron_store::CronStore;
 use galleon_infra::session_backend::SessionBackend;

@@ -12,7 +12,7 @@ publish = true
 [dependencies]
 galleon-channel-core.workspace = true
 clawcrew-api.workspace = true
-clawcrew-config = { workspace = true, default-features = false }
+galleon-config = { workspace = true, default-features = false }
 clawcrew-log.workspace = true
 async-trait = "0.1"
 anyhow = "1.0"

@@ -2570,7 +2570,7 @@ data: {\"type\":\"message_stop\"}\n\n";
         use axum::{Json, Router, routing::post};
         use serde_json::json;
         use tokio::time::{Duration, Instant};
-        use clawcrew_config::schema::AnthropicModelProviderConfig;
+        use galleon_config::schema::AnthropicModelProviderConfig;
 
         async fn slow_messages() -> Json<serde_json::Value> {
             tokio::time::sleep(Duration::from_secs(3)).await;
@@ -4706,7 +4706,7 @@ data: {\"type\":\"message_stop\"}\n\n";
 
         let prepared = crate::multimodal::prepare_messages_for_provider(
             &messages,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
         )
         .await
         .expect("preparation should succeed for a local PNG");

@@ -1,1 +1,1 @@
-pub use clawcrew_config::policy::*;
+pub use galleon_config::policy::*;

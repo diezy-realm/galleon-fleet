@@ -29,7 +29,7 @@ impl LinqChannel {
             from_phone,
             alias: alias.into(),
             peer_resolver,
-            client: clawcrew_config::schema::build_runtime_proxy_client("channel.linq"),
+            client: galleon_config::schema::build_runtime_proxy_client("channel.linq"),
         }
     }
 

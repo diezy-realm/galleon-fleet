@@ -5,8 +5,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use clawcrew_api::channel::{Channel, SendMessage};
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::policy::ToolOperation;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::policy::ToolOperation;
 
 /// Shared handle giving tools late-bound access to the live channel map.
 pub type ChannelMapHandle = Arc<RwLock<HashMap<String, Arc<dyn Channel>>>>;

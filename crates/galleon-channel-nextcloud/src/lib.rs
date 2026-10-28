@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_config::schema::StreamMode;
+use galleon_config::schema::StreamMode;
 
 /// Maximum message length accepted by Nextcloud Talk (characters, not bytes).
 /// The OCS API rejects messages longer than 32 000 characters.
@@ -69,7 +69,7 @@ impl NextcloudTalkChannel {
             bot_name: bot_name.to_ascii_lowercase(),
             alias: alias.into(),
             peer_resolver,
-            client: clawcrew_config::schema::build_channel_proxy_client(
+            client: galleon_config::schema::build_channel_proxy_client(
                 "channel.nextcloud_talk",
                 proxy_url.as_deref(),
             ),

@@ -76,12 +76,12 @@
 
     fn test_context_limits(
         context_token_budget: usize,
-    ) -> clawcrew_config::schema::ResolvedContextLimits {
-        clawcrew_config::schema::ResolvedContextLimits {
-            model_context_window: clawcrew_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK,
+    ) -> galleon_config::schema::ResolvedContextLimits {
+        galleon_config::schema::ResolvedContextLimits {
+            model_context_window: galleon_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK,
             context_token_budget,
             model_context_window_source:
-                clawcrew_config::schema::ModelContextWindowSource::CompatibilityFallback,
+                galleon_config::schema::ModelContextWindowSource::CompatibilityFallback,
         }
     }
 
@@ -1787,7 +1787,7 @@
 
         let channel = SourcedDenyChannel { source };
         let approval_mgr = ApprovalManager::for_non_interactive_backchannel(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
         );
         let mut history = vec![
             ChatMessage::system("test-system"),
@@ -1811,7 +1811,7 @@
                 observer: &observer,
                 silent: true,
                 approval: Some(&approval_mgr),
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -1820,7 +1820,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -2226,7 +2226,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 3,
                 hooks: None,
@@ -2235,7 +2235,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -2288,7 +2288,7 @@
         let tools_registry =
             crate::tools::scoped::ScopedToolRegistry::from_raw_for_test(Vec::new());
         let observer = NoopObserver;
-        let multimodal = clawcrew_config::schema::MultimodalConfig {
+        let multimodal = galleon_config::schema::MultimodalConfig {
             max_images: 4,
             max_image_size_mb: 1,
             allow_remote_fetch: false,
@@ -2320,7 +2320,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -2417,7 +2417,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 3,
                 hooks: None,
@@ -2426,11 +2426,11 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
-                context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+                context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
                 context_limits_resolver: None,
                 receipt_generator: None,
                 knobs: &LoopKnobs::default(),
@@ -2498,7 +2498,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 3,
                 hooks: None,
@@ -2507,7 +2507,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -2595,7 +2595,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 3,
                 hooks: None,
@@ -2604,7 +2604,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -2677,7 +2677,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 3,
                 hooks: None,
@@ -2686,7 +2686,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -2740,7 +2740,7 @@
             crate::tools::scoped::ScopedToolRegistry::from_raw_for_test(Vec::new());
         let observer = NoopObserver;
 
-        let multimodal = clawcrew_config::schema::MultimodalConfig {
+        let multimodal = galleon_config::schema::MultimodalConfig {
             vision_model_provider: Some("nonexistent-provider-xyz".to_string()),
             vision_model: Some("some-model".to_string()),
             ..Default::default()
@@ -2771,7 +2771,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -2824,7 +2824,7 @@
             crate::tools::scoped::ScopedToolRegistry::from_raw_for_test(Vec::new());
         let observer = NoopObserver;
 
-        let multimodal = clawcrew_config::schema::MultimodalConfig {
+        let multimodal = galleon_config::schema::MultimodalConfig {
             vision_model_provider: Some("nonexistent-provider-xyz".to_string()),
             vision_model: Some("some-model".to_string()),
             ..Default::default()
@@ -2857,7 +2857,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -2921,7 +2921,7 @@
                     observer: &observer,
                     silent: true,
                     approval: None,
-                    multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                    multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                     config: None,
                     max_tool_iterations: 3,
                     hooks: None,
@@ -2930,7 +2930,7 @@
                     activated_tools: None,
                 app_registry: None,
                     model_switch_callback: None,
-                    pacing: &clawcrew_config::schema::PacingConfig::default(),
+                    pacing: &galleon_config::schema::PacingConfig::default(),
                     strict_tool_parsing: false,
                     parallel_tools: false,
                     max_tool_result_chars: 0,
@@ -3116,7 +3116,7 @@
                     observer: &observer,
                     silent: true,
                     approval: None,
-                    multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                    multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                     config: None,
                     max_tool_iterations: 3,
                     hooks: None,
@@ -3125,7 +3125,7 @@
                     activated_tools: None,
                 app_registry: None,
                     model_switch_callback: None,
-                    pacing: &clawcrew_config::schema::PacingConfig::default(),
+                    pacing: &galleon_config::schema::PacingConfig::default(),
                     strict_tool_parsing: false,
                     parallel_tools: false,
                     max_tool_result_chars: 0,
@@ -3227,7 +3227,7 @@
         // vision_model_provider set but vision_model is None — the code should
         // fall back to the default model. Since the model_provider name is invalid,
         // we just verify the error path references the correct model_provider.
-        let multimodal = clawcrew_config::schema::MultimodalConfig {
+        let multimodal = galleon_config::schema::MultimodalConfig {
             vision_model_provider: Some("nonexistent-provider-xyz".to_string()),
             vision_model: None,
             ..Default::default()
@@ -3258,7 +3258,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -3313,7 +3313,7 @@
             crate::tools::scoped::ScopedToolRegistry::from_raw_for_test(Vec::new());
         let observer = NoopObserver;
 
-        let multimodal = clawcrew_config::schema::MultimodalConfig {
+        let multimodal = galleon_config::schema::MultimodalConfig {
             vision_model_provider: Some("nonexistent-provider-xyz".to_string()),
             ..Default::default()
         };
@@ -3343,7 +3343,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -3396,7 +3396,7 @@
             crate::tools::scoped::ScopedToolRegistry::from_raw_for_test(Vec::new());
         let observer = NoopObserver;
 
-        let multimodal = clawcrew_config::schema::MultimodalConfig {
+        let multimodal = galleon_config::schema::MultimodalConfig {
             vision_model_provider: Some("nonexistent-provider-xyz".to_string()),
             vision_model: Some("llava:7b".to_string()),
             ..Default::default()
@@ -3427,7 +3427,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -3494,7 +3494,7 @@
                 tool_call_id: None,
             },
         ];
-        let approval_cfg = clawcrew_config::schema::RiskProfileConfig::default();
+        let approval_cfg = galleon_config::schema::RiskProfileConfig::default();
         let approval_mgr = ApprovalManager::from_risk_profile(&approval_cfg);
 
         assert!(!should_execute_tools_in_parallel(
@@ -3517,9 +3517,9 @@
                 tool_call_id: None,
             },
         ];
-        let approval_cfg = clawcrew_config::schema::RiskProfileConfig {
+        let approval_cfg = galleon_config::schema::RiskProfileConfig {
             level: crate::security::AutonomyLevel::Full,
-            ..clawcrew_config::schema::RiskProfileConfig::default()
+            ..galleon_config::schema::RiskProfileConfig::default()
         };
         let approval_mgr = ApprovalManager::from_risk_profile(&approval_cfg);
 
@@ -3559,9 +3559,9 @@
             )),
         ]);
 
-        let approval_cfg = clawcrew_config::schema::RiskProfileConfig {
+        let approval_cfg = galleon_config::schema::RiskProfileConfig {
             level: crate::security::AutonomyLevel::Full,
-            ..clawcrew_config::schema::RiskProfileConfig::default()
+            ..galleon_config::schema::RiskProfileConfig::default()
         };
         let approval_mgr = ApprovalManager::from_risk_profile(&approval_cfg);
 
@@ -3587,7 +3587,7 @@
                 observer: &observer,
                 silent: true,
                 approval: Some(&approval_mgr),
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -3596,7 +3596,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -3708,7 +3708,7 @@
             raci: None,
             constraints: Vec::new(),
         };
-        let mut engine = crate::sop::SopEngine::new(clawcrew_config::schema::SopConfig::default());
+        let mut engine = crate::sop::SopEngine::new(galleon_config::schema::SopConfig::default());
         engine.replace_sops_for_test(vec![sop]);
         let engine = Arc::new(Mutex::new(engine));
         let tools_registry =
@@ -3738,7 +3738,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 6,
                 hooks: None,
@@ -3747,7 +3747,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -3865,9 +3865,9 @@
             raci: None,
             constraints: Vec::new(),
         };
-        let mut engine = crate::sop::SopEngine::new(clawcrew_config::schema::SopConfig {
+        let mut engine = crate::sop::SopEngine::new(galleon_config::schema::SopConfig {
             step_scope_enforce: true,
-            ..clawcrew_config::schema::SopConfig::default()
+            ..galleon_config::schema::SopConfig::default()
         });
         engine.replace_sops_for_test(vec![sop]);
         let engine = Arc::new(Mutex::new(engine));
@@ -3908,7 +3908,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 6,
                 hooks: None,
@@ -3917,7 +3917,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -4005,9 +4005,9 @@
             )),
         ]);
 
-        let approval_cfg = clawcrew_config::schema::RiskProfileConfig {
+        let approval_cfg = galleon_config::schema::RiskProfileConfig {
             level: crate::security::AutonomyLevel::Full,
-            ..clawcrew_config::schema::RiskProfileConfig::default()
+            ..galleon_config::schema::RiskProfileConfig::default()
         };
         let approval_mgr = ApprovalManager::from_risk_profile(&approval_cfg);
 
@@ -4033,7 +4033,7 @@
                 observer: &observer,
                 silent: true,
                 approval: Some(&approval_mgr),
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -4042,7 +4042,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: true,
                 max_tool_result_chars: 0,
@@ -4183,9 +4183,9 @@
             }),
         ]);
 
-        let approval_cfg = clawcrew_config::schema::RiskProfileConfig {
+        let approval_cfg = galleon_config::schema::RiskProfileConfig {
             level: crate::security::AutonomyLevel::Full,
-            ..clawcrew_config::schema::RiskProfileConfig::default()
+            ..galleon_config::schema::RiskProfileConfig::default()
         };
         let approval_mgr = ApprovalManager::from_risk_profile(&approval_cfg);
 
@@ -4213,7 +4213,7 @@
                 observer: &observer,
                 silent: true,
                 approval: Some(&approval_mgr),
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -4222,7 +4222,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: true,
                 max_tool_result_chars: 0,
@@ -4329,7 +4329,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -4338,7 +4338,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -4429,7 +4429,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -4438,7 +4438,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -4521,7 +4521,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -4530,7 +4530,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -4621,7 +4621,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -4630,7 +4630,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -4724,7 +4724,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -4733,7 +4733,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -4814,7 +4814,7 @@
         ];
         let observer = NoopObserver;
         let approval_mgr = ApprovalManager::for_non_interactive(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
         );
 
         let result = run_tool_call_loop(ToolLoop {
@@ -4833,7 +4833,7 @@
                 observer: &observer,
                 silent: true,
                 approval: Some(&approval_mgr),
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -4842,7 +4842,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -4910,7 +4910,7 @@
             )]);
 
         let approval_mgr = ApprovalManager::for_non_interactive(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
         );
         let mut history = vec![
             ChatMessage::system("test-system"),
@@ -4934,7 +4934,7 @@
                 observer: &observer,
                 silent: true,
                 approval: Some(&approval_mgr),
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -4943,7 +4943,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -5033,7 +5033,7 @@
         let approval_requests = Arc::new(AtomicUsize::new(0));
         let channel = ApprovingChannel::new(Arc::clone(&approval_requests));
         let approval_mgr = ApprovalManager::for_non_interactive_backchannel(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
         );
         let mut history = vec![
             ChatMessage::system("test-system"),
@@ -5061,7 +5061,7 @@
                 observer: &observer,
                 silent: true,
                 approval: Some(&approval_mgr),
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -5070,7 +5070,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -5142,7 +5142,7 @@
         let approval_requests = Arc::new(AtomicUsize::new(0));
         let channel = ApprovingChannel::new(Arc::clone(&approval_requests));
         let approval_mgr = ApprovalManager::for_non_interactive_backchannel(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
         );
         let mut history = vec![
             ChatMessage::system("test-system"),
@@ -5166,7 +5166,7 @@
                 observer: &observer,
                 silent: true,
                 approval: Some(&approval_mgr),
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -5175,7 +5175,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -5251,7 +5251,7 @@
         let approval_requests = Arc::new(AtomicUsize::new(0));
         let channel = ApprovingChannel::new(Arc::clone(&approval_requests));
         let approval_mgr = ApprovalManager::for_non_interactive_backchannel(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
         );
         let mut history = vec![
             ChatMessage::system("test-system"),
@@ -5276,7 +5276,7 @@
                 observer: &observer,
                 silent: true,
                 approval: Some(&approval_mgr),
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -5285,7 +5285,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -5376,7 +5376,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -5385,7 +5385,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -5480,7 +5480,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -5489,7 +5489,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -5586,7 +5586,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -5595,7 +5595,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -5678,7 +5678,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -5687,7 +5687,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -5774,7 +5774,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -5783,7 +5783,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -5865,7 +5865,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -5874,7 +5874,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -5954,7 +5954,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -5963,7 +5963,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -6046,7 +6046,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 6,
                 hooks: None,
@@ -6055,7 +6055,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -6136,7 +6136,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -6145,7 +6145,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -6230,7 +6230,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -6239,11 +6239,11 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
-                context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+                context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
                 context_limits_resolver: None,
                 receipt_generator: None,
                 knobs: &LoopKnobs::default(),
@@ -6328,7 +6328,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -6337,7 +6337,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -6409,7 +6409,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -6418,7 +6418,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -6491,7 +6491,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -6500,7 +6500,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -6573,7 +6573,7 @@
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -6582,7 +6582,7 @@
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -6657,7 +6657,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -6666,7 +6666,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -6745,7 +6745,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -6754,7 +6754,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -6845,7 +6845,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -6854,7 +6854,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -6929,7 +6929,7 @@ Done."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -6938,7 +6938,7 @@ Done."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -7016,7 +7016,7 @@ Done."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -7025,7 +7025,7 @@ Done."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -7101,7 +7101,7 @@ Done."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -7110,7 +7110,7 @@ Done."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -7187,7 +7187,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -7196,7 +7196,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -7330,7 +7330,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -7339,7 +7339,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -7424,7 +7424,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -7433,7 +7433,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -7521,7 +7521,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -7530,7 +7530,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -7641,7 +7641,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -7650,7 +7650,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -7774,7 +7774,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -7783,7 +7783,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -7877,7 +7877,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 5,
                 hooks: None,
@@ -7886,7 +7886,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -7991,7 +7991,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 5,
                 hooks: None,
@@ -8000,7 +8000,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -8111,7 +8111,7 @@ This is an example, not an invocation."#;
             Some(&tx),
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should finish");
@@ -8198,7 +8198,7 @@ This is an example, not an invocation."#;
             Some(&tx),
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should finish");
@@ -8236,7 +8236,7 @@ This is an example, not an invocation."#;
             Some(&tx),
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should finish");
@@ -8277,7 +8277,7 @@ This is an example, not an invocation."#;
             Some(&tx),
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should finish");
@@ -8318,7 +8318,7 @@ This is an example, not an invocation."#;
             Some(&tx),
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should finish");
@@ -8403,7 +8403,7 @@ This is an example, not an invocation."#;
             Some(&tx),
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should finish");
@@ -8486,7 +8486,7 @@ This is an example, not an invocation."#;
             Some(&tx),
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should finish");
@@ -8572,7 +8572,7 @@ This is an example, not an invocation."#;
             Some(&tx),
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should finish");
@@ -8661,7 +8661,7 @@ This is an example, not an invocation."#;
             Some(&tx),
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should finish");
@@ -8745,7 +8745,7 @@ This is an example, not an invocation."#;
             Some(&tx),
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should finish");
@@ -8832,7 +8832,7 @@ This is an example, not an invocation."#;
             Some(&tx),
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should finish");
@@ -8892,7 +8892,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 5,
                 hooks: None,
@@ -8901,7 +8901,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -9008,7 +9008,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 5,
                 hooks: None,
@@ -9017,7 +9017,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -9119,7 +9119,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 5,
                 hooks: None,
@@ -9128,7 +9128,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -9230,7 +9230,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 5,
                 hooks: None,
@@ -9239,7 +9239,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -9324,7 +9324,7 @@ This is an example, not an invocation."#;
             Some(&tx),
             None, // event_tx
             true,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should finish");
@@ -9398,7 +9398,7 @@ This is an example, not an invocation."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -9407,7 +9407,7 @@ This is an example, not an invocation."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -9521,7 +9521,7 @@ This is an example, not an invocation."#;
                 true,
                 "daemon",
                 None,
-                &clawcrew_config::schema::MultimodalConfig::default(),
+                &galleon_config::schema::MultimodalConfig::default(),
                 4,
                 None,
                 &[],
@@ -9597,7 +9597,7 @@ This is an example, not an invocation."#;
                 true,
                 "daemon",
                 None,
-                &clawcrew_config::schema::MultimodalConfig::default(),
+                &galleon_config::schema::MultimodalConfig::default(),
                 4,
                 None,
                 &[],
@@ -9730,7 +9730,7 @@ This is an example, not an invocation."#;
                 true,
                 "daemon",
                 None,
-                &clawcrew_config::schema::MultimodalConfig::default(),
+                &galleon_config::schema::MultimodalConfig::default(),
                 4,
                 None,
                 &[],
@@ -9813,7 +9813,7 @@ This is an example, not an invocation."#;
                 true,
                 "daemon",
                 None,
-                &clawcrew_config::schema::MultimodalConfig::default(),
+                &galleon_config::schema::MultimodalConfig::default(),
                 4,
                 None,
                 &[],
@@ -9891,7 +9891,7 @@ This is an example, not an invocation."#;
     fn build_tool_instructions_includes_all_tools() {
         use crate::security::SecurityPolicy;
         let security = Arc::new(SecurityPolicy::from_risk_profile(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             std::path::Path::new("/tmp"),
         ));
         let tools = tools::default_tools(security);
@@ -9914,7 +9914,7 @@ This is an example, not an invocation."#;
         use crate::security::SecurityPolicy;
 
         let security = Arc::new(SecurityPolicy::from_risk_profile(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             std::path::Path::new("/tmp"),
         ));
         let tools = tools::default_tools(security);
@@ -9942,7 +9942,7 @@ This is an example, not an invocation."#;
     fn tools_to_openai_format_produces_valid_schema() {
         use crate::security::SecurityPolicy;
         let security = Arc::new(SecurityPolicy::from_risk_profile(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             std::path::Path::new("/tmp"),
         ));
         let tools = tools::default_tools(security);
@@ -10623,7 +10623,7 @@ Let me check the result."#;
             None, // no identity config
             None, // no bootstrap_max_chars
             true, // native_tool_specs_present
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
+            galleon_config::schema::SkillsPromptInjectionMode::Full,
             crate::security::AutonomyLevel::default(),
         );
 
@@ -10691,7 +10691,7 @@ Let me check the result."#;
             None,
             None,
             native_tool_specs_present,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
+            galleon_config::schema::SkillsPromptInjectionMode::Full,
             crate::security::AutonomyLevel::default(),
         );
 
@@ -10736,7 +10736,7 @@ Let me check the result."#;
             None,
             None,
             native_tool_specs_present,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
+            galleon_config::schema::SkillsPromptInjectionMode::Full,
             crate::security::AutonomyLevel::default(),
         );
 
@@ -10772,7 +10772,7 @@ Let me check the result."#;
 
     #[test]
     fn turn_prompt_budget_applies_after_deferred_and_thinking_sections() {
-        use clawcrew_config::schema::{RiskProfileConfig, SkillsPromptInjectionMode};
+        use galleon_config::schema::{RiskProfileConfig, SkillsPromptInjectionMode};
 
         let workspace = tempdir().expect("tempdir");
         let provider = ScriptedModelProvider::from_text_responses(vec!["ok"]);
@@ -10809,7 +10809,7 @@ Let me check the result."#;
     #[test]
     fn interactive_turn_system_prompt_uses_effective_dynamic_mcp_specs() {
         use crate::agent::system_prompt::{NATIVE_TOOLS_TASK_FRAMING, NO_TOOLS_TASK_FRAMING};
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             RiskProfileConfig, SkillsPromptInjectionMode, ToolFilterGroup, ToolFilterGroupMode,
         };
 
@@ -10930,10 +10930,10 @@ Let me check the result."#;
 
     #[tokio::test]
     async fn turn_prompt_skill_callable_names_follow_assembled_registry() {
-        use clawcrew_config::schema::{RiskProfileConfig, SkillsPromptInjectionMode};
+        use galleon_config::schema::{RiskProfileConfig, SkillsPromptInjectionMode};
 
         let workspace = tempdir().unwrap();
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.security.nat64_prefixes = vec!["not-a-prefix".into()];
         let security = Arc::new(TestPolicy {
             workspace_dir: workspace.path().to_path_buf(),
@@ -11096,7 +11096,7 @@ Let me check the result."#;
 
     #[test]
     fn compact_text_prompt_advertises_read_skill_and_omits_inlined_instructions() {
-        use clawcrew_config::schema::{RiskProfileConfig, SkillsPromptInjectionMode};
+        use galleon_config::schema::{RiskProfileConfig, SkillsPromptInjectionMode};
 
         let workspace = tempdir().unwrap();
         // A non-native provider exercises the text tool-use protocol path where
@@ -11190,7 +11190,7 @@ Let me check the result."#;
             None,
             None,
             false,
-            clawcrew_config::schema::SkillsPromptInjectionMode::Full,
+            galleon_config::schema::SkillsPromptInjectionMode::Full,
             crate::security::AutonomyLevel::default(),
         );
 
@@ -11419,7 +11419,7 @@ Let me check the result."#;
             None,
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should succeed");
@@ -11514,7 +11514,7 @@ Let me check the result."#;
             None,
             None, // event_tx
             false,
-            clawcrew_config::schema::StreamReasoningMode::Status,
+            galleon_config::schema::StreamReasoningMode::Status,
         )
         .await
         .expect("streaming should succeed");
@@ -11579,7 +11579,7 @@ Let me check the result."#;
 
     #[test]
     fn filter_tool_specs_always_group_includes_matching_mcp_tool() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         let specs = vec![
             make_spec("shell_exec"),
@@ -11606,7 +11606,7 @@ Let me check the result."#;
 
     #[test]
     fn filter_tool_specs_group_matching_nothing_excludes_all_mcp_tools() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         // The formerly-broken case the old prefix gate passed every
         // real `<server>__<tool>` name unfiltered. A group set matching none
@@ -11633,7 +11633,7 @@ Let me check the result."#;
 
     #[test]
     fn filter_tool_specs_skill_shaped_name_passes_through() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         // Skill tools are named `{skill}__{tool}` (skill_tool.rs) — the same
         // shape as MCP tools. Classification is by origin (set membership),
@@ -11654,7 +11654,7 @@ Let me check the result."#;
 
     #[test]
     fn filter_tool_specs_capability_tools_remain_excludable() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         let specs = vec![make_spec("mcp_resources"), make_spec("files__list")];
         let groups = vec![ToolFilterGroup {
@@ -11675,7 +11675,7 @@ Let me check the result."#;
 
     #[test]
     fn filter_tool_specs_dynamic_group_included_on_keyword_match() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         let specs = vec![make_spec("shell_exec"), make_spec("browser__navigate")];
         let groups = vec![ToolFilterGroup {
@@ -11696,7 +11696,7 @@ Let me check the result."#;
 
     #[test]
     fn filter_tool_specs_dynamic_group_excluded_on_no_keyword_match() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         let specs = vec![make_spec("shell_exec"), make_spec("browser__navigate")];
         let groups = vec![ToolFilterGroup {
@@ -11717,7 +11717,7 @@ Let me check the result."#;
 
     #[test]
     fn filter_tool_specs_dynamic_keyword_match_is_case_insensitive() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         let specs = vec![make_spec("browser__navigate")];
         let groups = vec![ToolFilterGroup {
@@ -11748,7 +11748,7 @@ Let me check the result."#;
 
     #[test]
     fn compute_excluded_mcp_tools_returns_real_prefixed_names() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         let tools_registry = counting_registry(&["shell_exec", "files__list", "browser__navigate"]);
         let groups = vec![ToolFilterGroup {
@@ -11768,7 +11768,7 @@ Let me check the result."#;
 
     #[test]
     fn compute_excluded_mcp_tools_skill_tool_never_excluded() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         let tools_registry = counting_registry(&["pdf_skill__extract", "files__list"]);
         let groups = vec![ToolFilterGroup {
@@ -11788,7 +11788,7 @@ Let me check the result."#;
 
     #[test]
     fn compute_excluded_mcp_tools_empty_origin_set_is_noop() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         // MCP disabled/unconfigured/failed: the origin set is empty, nothing
         // is classified MCP, and groups are inert by construction.
@@ -11809,7 +11809,7 @@ Let me check the result."#;
 
     #[test]
     fn compute_excluded_mcp_tools_deferred_stub_registry_baseline() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         let tools_registry = counting_registry(&["shell_exec", "tool_search"]);
         let groups = vec![ToolFilterGroup {
@@ -11850,12 +11850,12 @@ Let me check the result."#;
         crate::tools::DeferredMcpToolSet {
             stubs,
             registry,
-            security: Arc::new(clawcrew_config::policy::SecurityPolicy::default()),
+            security: Arc::new(galleon_config::policy::SecurityPolicy::default()),
         }
     }
 
-    fn always_group(patterns: &[&str]) -> Vec<clawcrew_config::schema::ToolFilterGroup> {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+    fn always_group(patterns: &[&str]) -> Vec<galleon_config::schema::ToolFilterGroup> {
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
         vec![ToolFilterGroup {
             mode: ToolFilterGroupMode::Always,
             tools: patterns.iter().map(|p| (*p).to_string()).collect(),
@@ -11884,7 +11884,7 @@ Let me check the result."#;
 
     #[tokio::test]
     async fn preactivate_skips_dynamic_groups() {
-        use clawcrew_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
+        use galleon_config::schema::{ToolFilterGroup, ToolFilterGroupMode};
 
         let deferred = make_deferred_set(&["files__list"]).await;
         let activated = Arc::new(Mutex::new(crate::tools::ActivatedToolSet::new()));
@@ -12007,10 +12007,10 @@ Let me check the result."#;
     fn cli_outer_recovery_uses_capacity_headroom_not_proactive_budget() {
         use crate::agent::history_trim::trim_to_recent_turns;
 
-        let context_limits = clawcrew_config::schema::ResolvedContextLimits {
+        let context_limits = galleon_config::schema::ResolvedContextLimits {
             model_context_window: 32_000,
             model_context_window_source:
-                clawcrew_config::schema::ModelContextWindowSource::Configured,
+                galleon_config::schema::ModelContextWindowSource::Configured,
             context_token_budget: 7_200,
         };
         let recovery_budget = interactive_context_recovery_budget(context_limits);
@@ -12094,7 +12094,7 @@ Let me check the result."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 4,
                 hooks: None,
@@ -12103,7 +12103,7 @@ Let me check the result."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -12254,9 +12254,9 @@ Let me check the result."#;
         };
         let observer = NoopObserver;
         let workspace = tempfile::TempDir::new().unwrap();
-        let cost_config = clawcrew_config::schema::CostConfig {
+        let cost_config = galleon_config::schema::CostConfig {
             enabled: true,
-            ..clawcrew_config::schema::CostConfig::default()
+            ..galleon_config::schema::CostConfig::default()
         };
         let tracker = Arc::new(CostTracker::new(cost_config.clone(), workspace.path()).unwrap());
         let mut model_pricing: HashMap<String, f64> = HashMap::new();
@@ -12287,7 +12287,7 @@ Let me check the result."#;
                         observer: &observer,
                         silent: true,
                         approval: None,
-                        multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                        multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                         config: None,
                         max_tool_iterations: 2,
                         hooks: None,
@@ -12296,7 +12296,7 @@ Let me check the result."#;
                         activated_tools: None,
                 app_registry: None,
                         model_switch_callback: None,
-                        pacing: &clawcrew_config::schema::PacingConfig::default(),
+                        pacing: &galleon_config::schema::PacingConfig::default(),
                         strict_tool_parsing: false,
                         parallel_tools: false,
                         max_tool_result_chars: 0,
@@ -12414,7 +12414,7 @@ Let me check the result."#;
                         observer: &observer,
                         silent: true,
                         approval: None,
-                        multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                        multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                         config: None,
                         max_tool_iterations: 2,
                         hooks: None,
@@ -12423,7 +12423,7 @@ Let me check the result."#;
                         activated_tools: None,
                 app_registry: None,
                         model_switch_callback: None,
-                        pacing: &clawcrew_config::schema::PacingConfig::default(),
+                        pacing: &galleon_config::schema::PacingConfig::default(),
                         strict_tool_parsing: false,
                         parallel_tools: false,
                         max_tool_result_chars: 0,
@@ -12436,7 +12436,7 @@ Let me check the result."#;
                         // context fill does not force a projection-driven trim;
                         // the `must not trim` contract below stays meaningful.
                         context_limits:
-                            clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(120),
+                            galleon_config::schema::ResolvedContextLimits::legacy_fallback(120),
                         context_limits_resolver: None,
                         receipt_generator: None,
                         knobs: &LoopKnobs::default(),
@@ -12632,7 +12632,7 @@ Let me check the result."#;
                         observer: &observer,
                         silent: true,
                         approval: None,
-                        multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                        multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                         config: None,
                         max_tool_iterations: 2,
                         hooks: None,
@@ -12641,15 +12641,15 @@ Let me check the result."#;
                         activated_tools: None,
                 app_registry: None,
                         model_switch_callback: None,
-                        pacing: &clawcrew_config::schema::PacingConfig::default(),
+                        pacing: &galleon_config::schema::PacingConfig::default(),
                         strict_tool_parsing: false,
                         parallel_tools: false,
                         max_tool_result_chars: 0,
-                        context_limits: clawcrew_config::schema::ResolvedContextLimits {
+                        context_limits: galleon_config::schema::ResolvedContextLimits {
                             model_context_window: 100,
                             context_token_budget: 100,
                             model_context_window_source:
-                                clawcrew_config::schema::ModelContextWindowSource::Configured,
+                                galleon_config::schema::ModelContextWindowSource::Configured,
                         },
                         context_limits_resolver: None,
                         receipt_generator: None,
@@ -12741,7 +12741,7 @@ Let me check the result."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 2,
                 hooks: None,
@@ -12750,7 +12750,7 @@ Let me check the result."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -12820,10 +12820,10 @@ Let me check the result."#;
             ScriptedModelProvider::from_text_responses(vec!["should not reach this"]);
         let observer = NoopObserver;
         let workspace = tempfile::TempDir::new().unwrap();
-        let cost_config = clawcrew_config::schema::CostConfig {
+        let cost_config = galleon_config::schema::CostConfig {
             enabled: true,
             daily_limit_usd: 0.001, // very low limit
-            ..clawcrew_config::schema::CostConfig::default()
+            ..galleon_config::schema::CostConfig::default()
         };
         let tracker = Arc::new(CostTracker::new(cost_config.clone(), workspace.path()).unwrap());
         // Record a usage that already exceeds the limit
@@ -12868,7 +12868,7 @@ Let me check the result."#;
                         observer: &observer,
                         silent: true,
                         approval: None,
-                        multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                        multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                         config: None,
                         max_tool_iterations: 2,
                         hooks: None,
@@ -12877,7 +12877,7 @@ Let me check the result."#;
                         activated_tools: None,
                 app_registry: None,
                         model_switch_callback: None,
-                        pacing: &clawcrew_config::schema::PacingConfig::default(),
+                        pacing: &galleon_config::schema::PacingConfig::default(),
                         strict_tool_parsing: false,
                         parallel_tools: false,
                         max_tool_result_chars: 0,
@@ -12970,7 +12970,7 @@ Let me check the result."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 2,
                 hooks: None,
@@ -12979,7 +12979,7 @@ Let me check the result."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -13068,7 +13068,7 @@ Let me check the result."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 1,
                 hooks: None,
@@ -13077,7 +13077,7 @@ Let me check the result."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -13193,15 +13193,15 @@ Let me check the result."#;
         };
         let observer = NoopObserver;
         let workspace = tempfile::TempDir::new().unwrap();
-        let cost_config = clawcrew_config::schema::CostConfig {
+        let cost_config = galleon_config::schema::CostConfig {
             enabled: true,
-            ..clawcrew_config::schema::CostConfig::default()
+            ..galleon_config::schema::CostConfig::default()
         };
         let tracker = Arc::new(CostTracker::new(cost_config, workspace.path()).unwrap());
         let ctx =
             ToolLoopCostTrackingContext::new(Arc::clone(&tracker), Arc::new(review_test_pricing()));
 
-        let review_config = clawcrew_config::schema::SkillImprovementConfig {
+        let review_config = galleon_config::schema::SkillImprovementConfig {
             enabled: true,
             cooldown_secs: 0,
             nudge_interval_iterations: 1,
@@ -13222,8 +13222,8 @@ Let me check the result."#;
                     "mock-provider",
                     "mock-model",
                     &observer,
-                    &clawcrew_config::schema::MultimodalConfig::default(),
-                    &clawcrew_config::schema::PacingConfig::default(),
+                    &galleon_config::schema::MultimodalConfig::default(),
+                    &galleon_config::schema::PacingConfig::default(),
                     0,
                     0,
                     None,
@@ -13265,10 +13265,10 @@ Let me check the result."#;
         };
         let observer = NoopObserver;
         let workspace = tempfile::TempDir::new().unwrap();
-        let cost_config = clawcrew_config::schema::CostConfig {
+        let cost_config = galleon_config::schema::CostConfig {
             enabled: true,
             daily_limit_usd: 0.001, // very low limit
-            ..clawcrew_config::schema::CostConfig::default()
+            ..galleon_config::schema::CostConfig::default()
         };
         let tracker = Arc::new(CostTracker::new(cost_config, workspace.path()).unwrap());
         // Record usage that already exceeds the daily limit.
@@ -13287,7 +13287,7 @@ Let me check the result."#;
 
         let ctx =
             ToolLoopCostTrackingContext::new(Arc::clone(&tracker), Arc::new(review_test_pricing()));
-        let review_config = clawcrew_config::schema::SkillImprovementConfig {
+        let review_config = galleon_config::schema::SkillImprovementConfig {
             enabled: true,
             cooldown_secs: 0,
             nudge_interval_iterations: 1,
@@ -13308,8 +13308,8 @@ Let me check the result."#;
                     "mock-provider",
                     "mock-model",
                     &observer,
-                    &clawcrew_config::schema::MultimodalConfig::default(),
-                    &clawcrew_config::schema::PacingConfig::default(),
+                    &galleon_config::schema::MultimodalConfig::default(),
+                    &galleon_config::schema::PacingConfig::default(),
                     0,
                     0,
                     None,
@@ -13398,7 +13398,7 @@ Let me check the result."#;
 
         let observer = NoopObserver;
         let workspace = tempfile::TempDir::new().unwrap();
-        let review_config = clawcrew_config::schema::SkillImprovementConfig {
+        let review_config = galleon_config::schema::SkillImprovementConfig {
             enabled: true,
             cooldown_secs: 0,
             nudge_interval_iterations: 1,
@@ -13416,8 +13416,8 @@ Let me check the result."#;
             "mock-provider",
             "mock-model",
             &observer,
-            &clawcrew_config::schema::MultimodalConfig::default(),
-            &clawcrew_config::schema::PacingConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::PacingConfig::default(),
             0,
             // max_context_tokens: tiny against the scripted 1_000_000
             // reported input tokens, so the tool round trips the
@@ -13459,10 +13459,10 @@ Let me check the result."#;
         let dir = tempfile::TempDir::new().unwrap();
         let creator = SkillCreator::new(
             dir.path().to_path_buf(),
-            clawcrew_config::schema::SkillCreationConfig {
+            galleon_config::schema::SkillCreationConfig {
                 enabled: true,
                 reflection_enabled: true,
-                ..clawcrew_config::schema::SkillCreationConfig::default()
+                ..galleon_config::schema::SkillCreationConfig::default()
             },
         );
         let tool_calls = vec![
@@ -13477,9 +13477,9 @@ Let me check the result."#;
         ];
 
         let workspace = tempfile::TempDir::new().unwrap();
-        let cost_config = clawcrew_config::schema::CostConfig {
+        let cost_config = galleon_config::schema::CostConfig {
             enabled: true,
-            ..clawcrew_config::schema::CostConfig::default()
+            ..galleon_config::schema::CostConfig::default()
         };
         let tracker = Arc::new(CostTracker::new(cost_config, workspace.path()).unwrap());
         let ctx =
@@ -13513,7 +13513,7 @@ Let me check the result."#;
     }
 
     use clawcrew_api::tool::Tool as TestTool;
-    use clawcrew_config::policy::SecurityPolicy as TestPolicy;
+    use galleon_config::policy::SecurityPolicy as TestPolicy;
 
     struct NamedMockTool {
         the_name: &'static str,
@@ -13930,14 +13930,14 @@ Let me check the result."#;
 
     #[test]
     fn agent_provider_composite_returns_dotted_ref_not_bare_family() {
-        use clawcrew_config::providers::ModelProviderRef;
-        use clawcrew_config::schema::{
+        use galleon_config::providers::ModelProviderRef;
+        use galleon_config::schema::{
             AliasedAgentConfig, ModelProviderConfig, OpenAIModelProviderConfig,
         };
 
         let alias = "qwertfoozp";
 
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.providers.models.openai.insert(
             alias.to_string(),
             OpenAIModelProviderConfig {
@@ -13975,10 +13975,10 @@ Let me check the result."#;
 
     #[test]
     fn direct_turn_agent_config_resolves_runtime_profile_tunables() {
-        use clawcrew_config::providers::RuntimeProfileRef;
-        use clawcrew_config::schema::{AliasedAgentConfig, RuntimeProfileConfig};
+        use galleon_config::providers::RuntimeProfileRef;
+        use galleon_config::schema::{AliasedAgentConfig, RuntimeProfileConfig};
 
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.runtime_profiles.insert(
             "long".to_string(),
             RuntimeProfileConfig {
@@ -14061,7 +14061,7 @@ Let me check the result."#;
         };
         use tempfile::TempDir;
         use tokio::net::TcpListener;
-        use clawcrew_config::schema::{AliasedAgentConfig, RiskProfileConfig};
+        use galleon_config::schema::{AliasedAgentConfig, RiskProfileConfig};
 
         let calls = Arc::new(AtomicUsize::new(0));
         let app = Router::new().route(
@@ -14107,7 +14107,7 @@ Let me check the result."#;
         let tmp = TempDir::new().expect("temp dir");
         let workspace_dir = tmp.path().join("workspace");
         std::fs::create_dir_all(&workspace_dir).expect("workspace directory");
-        let mut config = clawcrew_config::schema::Config {
+        let mut config = galleon_config::schema::Config {
             data_dir: workspace_dir,
             config_path: tmp.path().join("config.toml"),
             ..Default::default()
@@ -14164,10 +14164,10 @@ Let me check the result."#;
 
     #[tokio::test]
     async fn runtime_entrypoints_resolve_runtime_profile_tunables_before_provider_setup() {
-        use clawcrew_config::providers::RuntimeProfileRef;
-        use clawcrew_config::schema::{AliasedAgentConfig, RuntimeProfileConfig};
+        use galleon_config::providers::RuntimeProfileRef;
+        use galleon_config::schema::{AliasedAgentConfig, RuntimeProfileConfig};
 
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.runtime_profiles.insert(
             "entrypoint-profile".to_string(),
             RuntimeProfileConfig {
@@ -14245,11 +14245,11 @@ Let me check the result."#;
 
     #[tokio::test]
     async fn process_message_provides_sop_reassembly_to_agent_turn() {
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AliasedAgentConfig, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
         };
 
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.providers.models.ollama.insert(
             "default".to_string(),
             OllamaModelProviderConfig {
@@ -14314,12 +14314,12 @@ Let me check the result."#;
 
     #[tokio::test]
     async fn process_message_seam_narrows_safe_defaults_outside_allowed_tools() {
-        let config = clawcrew_config::schema::Config::default();
+        let config = galleon_config::schema::Config::default();
         let security = Arc::new(TestPolicy {
             workspace_dir: std::env::temp_dir(),
             ..TestPolicy::default()
         });
-        let risk = clawcrew_config::schema::RiskProfileConfig::default();
+        let risk = galleon_config::schema::RiskProfileConfig::default();
         let mem: Arc<dyn galleon_memory::Memory> =
             Arc::new(galleon_memory::NoneMemory::new("test"));
 
@@ -14558,7 +14558,7 @@ Let me check the result."#;
                 observer: observer.as_ref(),
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 10,
                 hooks: None,
@@ -14567,7 +14567,7 @@ Let me check the result."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -14748,7 +14748,7 @@ Let me check the result."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 2,
                 hooks: Some(&hooks),
@@ -14757,7 +14757,7 @@ Let me check the result."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -14957,7 +14957,7 @@ Let me check the result."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 3,
                 hooks: Some(&hooks),
@@ -14966,7 +14966,7 @@ Let me check the result."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -15066,7 +15066,7 @@ Let me check the result."#;
                 observer: &observer,
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 max_tool_iterations: 2,
                 hooks: Some(&hooks),
@@ -15075,7 +15075,7 @@ Let me check the result."#;
                 activated_tools: None,
                 app_registry: None,
                 model_switch_callback: None,
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 0,
@@ -15376,7 +15376,7 @@ Let me check the result."#;
                     observer: &NoopObserver,
                     silent: true,
                     approval: None,
-                    multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                    multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                     config: None,
                     max_tool_iterations: if summary { 1 } else { 3 },
                     hooks: Some(&hooks),
@@ -15385,7 +15385,7 @@ Let me check the result."#;
                     activated_tools: None,
                 app_registry: None,
                     model_switch_callback: None,
-                    pacing: &clawcrew_config::schema::PacingConfig::default(),
+                    pacing: &galleon_config::schema::PacingConfig::default(),
                     strict_tool_parsing: false,
                     parallel_tools: false,
                     max_tool_result_chars: 0,
@@ -15719,7 +15719,7 @@ Let me check the result."#;
                     observer: &observer,
                     silent: true,
                     approval: None,
-                    multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                    multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                     config: None,
                     max_tool_iterations: 3,
                     hooks: Some(&hooks),
@@ -15728,7 +15728,7 @@ Let me check the result."#;
                     activated_tools: None,
                 app_registry: None,
                     model_switch_callback: None,
-                    pacing: &clawcrew_config::schema::PacingConfig::default(),
+                    pacing: &galleon_config::schema::PacingConfig::default(),
                     strict_tool_parsing: false,
                     parallel_tools: false,
                     max_tool_result_chars: 0,
@@ -15834,7 +15834,7 @@ Let me check the result."#;
                     observer: &observer,
                     silent: true,
                     approval: None,
-                    multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                    multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                     config: None,
                     max_tool_iterations: 3,
                     hooks: None,
@@ -15843,7 +15843,7 @@ Let me check the result."#;
                     activated_tools: None,
                 app_registry: None,
                     model_switch_callback: None,
-                    pacing: &clawcrew_config::schema::PacingConfig::default(),
+                    pacing: &galleon_config::schema::PacingConfig::default(),
                     strict_tool_parsing: false,
                     parallel_tools: false,
                     max_tool_result_chars: 0,
@@ -16023,7 +16023,7 @@ Let me check the result."#;
                     observer: &observer,
                     silent: true,
                     approval: None,
-                    multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                    multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                     config: None,
                     max_tool_iterations: 3,
                     hooks: None,
@@ -16032,7 +16032,7 @@ Let me check the result."#;
                     activated_tools: None,
                 app_registry: None,
                     model_switch_callback: None,
-                    pacing: &clawcrew_config::schema::PacingConfig::default(),
+                    pacing: &galleon_config::schema::PacingConfig::default(),
                     strict_tool_parsing: false,
                     parallel_tools: false,
                     max_tool_result_chars: 0,
@@ -16142,7 +16142,7 @@ Let me check the result."#;
             true,
             "daemon",
             None,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             4,
             None,
             &[],
@@ -16198,7 +16198,7 @@ Let me check the result."#;
             true,
             "daemon",
             None,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             4,
             None,
             &[],
@@ -16271,7 +16271,7 @@ Let me check the result."#;
             true,
             "daemon",
             None,
-            &clawcrew_config::schema::MultimodalConfig::default(),
+            &galleon_config::schema::MultimodalConfig::default(),
             4,
             None,
             &[],
@@ -16485,7 +16485,7 @@ Let me check the result."#;
     async fn run_brackets_successful_turn_with_agent_start_and_agent_end() {
         use axum::{Router, routing::post};
         use tokio::net::TcpListener;
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AliasedAgentConfig, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
         };
 
@@ -16579,7 +16579,7 @@ Let me check the result."#;
     /// early-return path too.
     #[tokio::test]
     async fn run_still_closes_the_bracket_when_the_model_call_fails() {
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AliasedAgentConfig, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
         };
 
@@ -16684,7 +16684,7 @@ Let me check the result."#;
     async fn run_model_switch_emits_single_balanced_pair_for_the_switched_route() {
         use axum::{Json, Router, extract::State, routing::post};
         use tokio::net::TcpListener;
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AliasedAgentConfig, ModelProviderConfig, OllamaModelProviderConfig, RiskProfileConfig,
         };
 

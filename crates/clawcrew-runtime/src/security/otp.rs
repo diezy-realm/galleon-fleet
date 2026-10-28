@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
-use clawcrew_config::schema::OtpConfig;
+use galleon_config::schema::OtpConfig;
 
 const OTP_SECRET_FILE: &str = "otp-secret";
 const OTP_DIGITS: u32 = 6;

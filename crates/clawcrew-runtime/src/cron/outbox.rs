@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 use clawcrew_api::plugin_key::SecretPropertyRef;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 use galleon_plugins::instance::PluginInstanceId;
 
 use super::store::with_initialized_connection;

@@ -3,7 +3,7 @@ use serde_json::json;
 use std::fmt::Write;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
+use galleon_config::policy::SecurityPolicy;
 
 const MAX_IMAGE_BYTES: u64 = 20 * 1024 * 1024;
 
@@ -253,8 +253,8 @@ mod tests {
     use crate::wrappers::{PathGuardedTool, RateLimitedTool};
     use std::path::{Component, Path, PathBuf};
     use tempfile::TempDir;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
 
     const MINIMAL_PNG: &[u8] = &[
         0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44,

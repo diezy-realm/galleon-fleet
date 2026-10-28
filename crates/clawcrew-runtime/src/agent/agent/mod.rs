@@ -11,7 +11,7 @@ use crate::sop::{SopAuditLogger, SopEngine};
 use crate::tools::{self, Tool};
 use anyhow::{Context, Result};
 use chrono::{Datelike, Timelike};
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 use galleon_memory::{self, Memory, MemoryCategory};
 #[cfg(test)]
 use galleon_providers::ChatRequest;
@@ -105,7 +105,7 @@ pub fn build_session_model_provider(
 /// used by fresh agent construction.
 #[must_use]
 pub fn tool_dispatcher_for_provider(
-    agent_cfg: &clawcrew_config::schema::AliasedAgentConfig,
+    agent_cfg: &galleon_config::schema::AliasedAgentConfig,
     model_provider: &dyn ModelProvider,
     model: &str,
 ) -> Box<dyn ToolDispatcher> {
@@ -143,7 +143,7 @@ pub(crate) enum RoutedApproval {
 
 pub(crate) async fn resolve_routed_approval(
     handles: &tools::PerToolChannelHandle,
-    route: &clawcrew_config::autonomy::ApprovalRoute,
+    route: &galleon_config::autonomy::ApprovalRoute,
     recipient: &str,
     request: &clawcrew_api::channel::ChannelApprovalRequest,
 ) -> RoutedApproval {
@@ -194,7 +194,7 @@ pub(crate) async fn resolve_routed_approval(
         };
 
     match route.on_no_approver {
-        clawcrew_config::autonomy::OnNoApprover::Deny => {
+        galleon_config::autonomy::OnNoApprover::Deny => {
             ::clawcrew_log::record!(
                 WARN,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
@@ -216,7 +216,7 @@ pub(crate) async fn resolve_routed_approval(
                 source,
             }
         }
-        clawcrew_config::autonomy::OnNoApprover::InheritOriginator => {
+        galleon_config::autonomy::OnNoApprover::InheritOriginator => {
             ::clawcrew_log::record!(
                 WARN,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
@@ -236,13 +236,13 @@ pub(crate) async fn resolve_routed_approval(
 
 pub(crate) struct RoutedApprovalChannel {
     handles: tools::PerToolChannelHandle,
-    route: clawcrew_config::autonomy::ApprovalRoute,
+    route: galleon_config::autonomy::ApprovalRoute,
 }
 
 impl RoutedApprovalChannel {
     pub(crate) fn new(
         handles: tools::PerToolChannelHandle,
-        route: clawcrew_config::autonomy::ApprovalRoute,
+        route: galleon_config::autonomy::ApprovalRoute,
     ) -> Self {
         Self { handles, route }
     }
@@ -362,7 +362,7 @@ pub struct Agent {
     /// (recall limit, relevance floor, budgets). Threaded into `ToolLoop`
     /// as `TurnMemory.cfg` on every turn.
     memory_inject_cfg: crate::agent::memory_inject::MemoryInjectConfig,
-    config: clawcrew_config::schema::AliasedAgentConfig,
+    config: galleon_config::schema::AliasedAgentConfig,
     /// Resolves the structured-history cap from canonical config at use time.
     /// Daemon-backed sessions capture the shared live config handle so reloads
     /// affect existing sessions without duplicating config-derived state.
@@ -370,7 +370,7 @@ pub struct Agent {
     /// Resolves limits from canonical config for the provider/model route that
     /// is active when a turn starts. The route itself remains the source of truth.
     context_limits_resolver: Option<ContextLimitsResolver>,
-    multimodal_config: clawcrew_config::schema::MultimodalConfig,
+    multimodal_config: galleon_config::schema::MultimodalConfig,
     model_name: String,
     model_provider_name: String,
     temperature: Option<f64>,
@@ -380,10 +380,10 @@ pub struct Agent {
     /// `workspace_dir`, which is the security sandbox root and can be the
     /// session cwd for IDE-driven sessions (ACP, gateway WS).
     agent_workspace_dir: std::path::PathBuf,
-    identity_config: clawcrew_config::schema::IdentityConfig,
+    identity_config: galleon_config::schema::IdentityConfig,
     interaction_context: Option<InteractionContext>,
     skills: Vec<crate::skills::Skill>,
-    skills_prompt_mode: clawcrew_config::schema::SkillsPromptInjectionMode,
+    skills_prompt_mode: galleon_config::schema::SkillsPromptInjectionMode,
     auto_save: bool,
     memory_session_id: Option<String>,
     history: Vec<ConversationMessage>,
@@ -391,7 +391,7 @@ pub struct Agent {
     /// by this Agent. User text is never inferred to be synthetic by content.
     history_has_trim_breadcrumb: bool,
     history_trim_generation: u64,
-    classification_config: clawcrew_config::schema::QueryClassificationConfig,
+    classification_config: galleon_config::schema::QueryClassificationConfig,
     /// The exact immutable route table used by `model_provider` for hint
     /// dispatch. It is replaced atomically with the provider on model switch.
     model_route_resolver: Arc<galleon_providers::router::ModelRouteResolver>,
@@ -416,7 +416,7 @@ pub struct Agent {
     /// `approval_route`. When set, the per-turn approval bridge asks the named
     /// approver channel (bounded + fail-closed) instead of the originating
     /// fan-out. `None` ⇒ today's behavior. See EPIC B.
-    approval_route: Option<clawcrew_config::autonomy::ApprovalRoute>,
+    approval_route: Option<galleon_config::autonomy::ApprovalRoute>,
     /// Activated MCP tools for deferred loading mode.
     /// When MCP deferred loading is enabled, tools are activated via `tool_search`
     /// and stored here for lookup during tool execution.
@@ -497,7 +497,7 @@ pub struct StreamedTurnSuccess {
     /// vision switch is reflected here even when the provider returned no usage;
     /// consumers publish the terminal context snapshot from this pair. `None`
     /// only when no call was served (e.g. an immediate cache hit).
-    pub final_context_limits: Option<clawcrew_config::schema::ResolvedContextLimits>,
+    pub final_context_limits: Option<galleon_config::schema::ResolvedContextLimits>,
     /// Display-only accepted safeguard attribution. Callers choose the
     /// transport presentation; `new_messages` remains undecorated.
     pub safeguard_fallback: Option<galleon_providers::SafeguardFallbackNotice>,
@@ -517,15 +517,15 @@ pub struct StreamedTurnError {
 /// different generations. Callers with an acknowledged refresh transaction
 /// may republish it; direct ACP/WS agents pin it until reconnect.
 pub type ConfigGeneration =
-    std::sync::Arc<parking_lot::RwLock<std::sync::Arc<clawcrew_config::schema::Config>>>;
+    std::sync::Arc<parking_lot::RwLock<std::sync::Arc<galleon_config::schema::Config>>>;
 
 #[derive(Clone, Debug, Default)]
 pub struct ProviderSwitchConfig {
-    pub config: Option<std::sync::Arc<clawcrew_config::schema::Config>>,
+    pub config: Option<std::sync::Arc<galleon_config::schema::Config>>,
     /// Live shared config this snapshot is refreshed from when the caller owns
     /// an acknowledged model-generation refresh transaction. `None` for
     /// one-shot/test agents and direct ACP/WS agents pinned until reconnect.
-    pub live: Option<std::sync::Arc<parking_lot::RwLock<clawcrew_config::schema::Config>>>,
+    pub live: Option<std::sync::Arc<parking_lot::RwLock<galleon_config::schema::Config>>>,
 }
 
 /// Bundle of late-bound channel-map handles owned by an Agent.
@@ -539,29 +539,29 @@ pub struct AgentBuilder {
     prompt_builder: Option<SystemPromptBuilder>,
     tool_dispatcher: Option<Box<dyn ToolDispatcher>>,
     memory_inject_cfg: Option<crate::agent::memory_inject::MemoryInjectConfig>,
-    config: Option<clawcrew_config::schema::AliasedAgentConfig>,
+    config: Option<galleon_config::schema::AliasedAgentConfig>,
     structured_history_cap_resolver: Option<Arc<dyn Fn() -> usize + Send + Sync>>,
     context_limits_resolver: Option<ContextLimitsResolver>,
-    multimodal_config: Option<clawcrew_config::schema::MultimodalConfig>,
+    multimodal_config: Option<galleon_config::schema::MultimodalConfig>,
     model_name: Option<String>,
     model_provider_name: Option<String>,
     temperature: Option<f64>,
     workspace_dir: Option<std::path::PathBuf>,
     agent_workspace_dir: Option<std::path::PathBuf>,
-    identity_config: Option<clawcrew_config::schema::IdentityConfig>,
+    identity_config: Option<galleon_config::schema::IdentityConfig>,
     interaction_context: Option<InteractionContext>,
     skills: Option<Vec<crate::skills::Skill>>,
-    skills_prompt_mode: Option<clawcrew_config::schema::SkillsPromptInjectionMode>,
+    skills_prompt_mode: Option<galleon_config::schema::SkillsPromptInjectionMode>,
     auto_save: Option<bool>,
     memory_session_id: Option<String>,
-    classification_config: Option<clawcrew_config::schema::QueryClassificationConfig>,
+    classification_config: Option<galleon_config::schema::QueryClassificationConfig>,
     model_route_resolver: Option<Arc<galleon_providers::router::ModelRouteResolver>>,
     allowed_tools: Option<Vec<String>>,
     response_cache: Option<Arc<galleon_memory::response_cache::ResponseCache>>,
     security_summary: Option<String>,
     autonomy_level: Option<crate::security::AutonomyLevel>,
     shell_profile: Option<clawcrew_api::runtime_traits::ShellProfile>,
-    approval_route: Option<clawcrew_config::autonomy::ApprovalRoute>,
+    approval_route: Option<galleon_config::autonomy::ApprovalRoute>,
     activated_tools: Option<Arc<std::sync::Mutex<crate::tools::ActivatedToolSet>>>,
     app_registry: Option<Arc<std::sync::RwLock<crate::platform::app_registry::AppRegistry>>>,
     mcp_pinned_section: Option<String>,
@@ -685,7 +685,7 @@ impl AgentBuilder {
         self
     }
 
-    pub fn config(mut self, config: clawcrew_config::schema::AliasedAgentConfig) -> Self {
+    pub fn config(mut self, config: galleon_config::schema::AliasedAgentConfig) -> Self {
         self.config = Some(config);
         self
     }
@@ -710,7 +710,7 @@ impl AgentBuilder {
 
     pub fn multimodal_config(
         mut self,
-        multimodal_config: clawcrew_config::schema::MultimodalConfig,
+        multimodal_config: galleon_config::schema::MultimodalConfig,
     ) -> Self {
         self.multimodal_config = Some(multimodal_config);
         self
@@ -743,7 +743,7 @@ impl AgentBuilder {
 
     pub fn identity_config(
         mut self,
-        identity_config: clawcrew_config::schema::IdentityConfig,
+        identity_config: galleon_config::schema::IdentityConfig,
     ) -> Self {
         self.identity_config = Some(identity_config);
         self
@@ -761,7 +761,7 @@ impl AgentBuilder {
 
     pub fn skills_prompt_mode(
         mut self,
-        skills_prompt_mode: clawcrew_config::schema::SkillsPromptInjectionMode,
+        skills_prompt_mode: galleon_config::schema::SkillsPromptInjectionMode,
     ) -> Self {
         self.skills_prompt_mode = Some(skills_prompt_mode);
         self
@@ -779,7 +779,7 @@ impl AgentBuilder {
 
     pub fn classification_config(
         mut self,
-        classification_config: clawcrew_config::schema::QueryClassificationConfig,
+        classification_config: galleon_config::schema::QueryClassificationConfig,
     ) -> Self {
         self.classification_config = Some(classification_config);
         self
@@ -833,7 +833,7 @@ impl AgentBuilder {
 
     pub fn approval_route(
         mut self,
-        route: Option<clawcrew_config::autonomy::ApprovalRoute>,
+        route: Option<galleon_config::autonomy::ApprovalRoute>,
     ) -> Self {
         self.approval_route = route;
         self
@@ -1011,7 +1011,7 @@ impl AgentBuilder {
             })?,
             memory_inject_cfg: self.memory_inject_cfg.unwrap_or_else(|| {
                 crate::agent::memory_inject::MemoryInjectConfig::from_memory_config(
-                    &clawcrew_config::schema::MemoryConfig::default(),
+                    &galleon_config::schema::MemoryConfig::default(),
                     crate::agent::memory_inject::DEFAULT_RECALL_LIMIT,
                 )
             }),
@@ -1116,7 +1116,7 @@ impl Agent {
     /// (`from_config` / `from_config_with_tui_env`) populates it. Used by the
     /// vision route to resolve the configured `vision_model_provider`'s
     /// alias-specific options (the `vision` override, endpoint URI, credentials).
-    fn full_config(&self) -> Option<&clawcrew_config::schema::Config> {
+    fn full_config(&self) -> Option<&galleon_config::schema::Config> {
         self.provider_switch_config
             .as_ref()
             .and_then(|cfg| cfg.config.as_deref())
@@ -1278,7 +1278,7 @@ impl Agent {
     /// Capacity and proactive-trim budget for the currently selected route.
     /// This is resolved on demand so a model/provider switch cannot leave a
     /// stale snapshot in a long-lived session.
-    pub fn context_limits(&self) -> clawcrew_config::schema::ResolvedContextLimits {
+    pub fn context_limits(&self) -> galleon_config::schema::ResolvedContextLimits {
         self.context_limits_for_route(&self.model_provider_name, &self.model_name)
     }
 
@@ -1290,7 +1290,7 @@ impl Agent {
     pub fn context_generation_limits_resolver(
         generation: ConfigGeneration,
         agent_alias: String,
-    ) -> impl Fn(&str, &str) -> clawcrew_config::schema::ResolvedContextLimits + Send + Sync + 'static
+    ) -> impl Fn(&str, &str) -> galleon_config::schema::ResolvedContextLimits + Send + Sync + 'static
     {
         move |provider_ref, model| {
             let config = Arc::clone(&generation.read());
@@ -1333,7 +1333,7 @@ impl Agent {
         &self,
         provider_name: &str,
         model: &str,
-    ) -> clawcrew_config::schema::ResolvedContextLimits {
+    ) -> galleon_config::schema::ResolvedContextLimits {
         self.context_limits_resolver.as_ref().map_or_else(
             || self.config.resolved.context_limits(),
             |resolve| resolve(provider_name, model),
@@ -1534,7 +1534,7 @@ impl Agent {
     /// while `context_limits_for_route` reports the new config's capacity.
     pub fn set_config_generation(
         &mut self,
-        config_generation: Arc<clawcrew_config::schema::Config>,
+        config_generation: Arc<galleon_config::schema::Config>,
     ) {
         if let Some(generation) = self.config_generation.as_ref() {
             *generation.write() = Arc::clone(&config_generation);
@@ -3062,14 +3062,14 @@ impl Agent {
             dedup_enabled: false,
             max_iteration_behavior: crate::agent::loop_::MaxIterationBehavior::ErrorAtCap,
             detect_protocol_without_tools: false,
-            draft_reasoning: clawcrew_config::schema::StreamReasoningMode::Status,
+            draft_reasoning: galleon_config::schema::StreamReasoningMode::Status,
         };
         // E3 never had pattern-based loop detection; default pacing turns it
         // on. Keep the embedder contract (an N-step identical-args tool chain
         // completes) until the Agent surface grows a pacing config of its own.
-        let pacing = clawcrew_config::schema::PacingConfig {
+        let pacing = galleon_config::schema::PacingConfig {
             loop_detection_enabled: false,
-            ..clawcrew_config::schema::PacingConfig::default()
+            ..galleon_config::schema::PacingConfig::default()
         };
 
         // Keep the loop call as a plain `.await` on this task. Caller-scoped
@@ -3562,14 +3562,14 @@ impl Agent {
             dedup_enabled: false,
             max_iteration_behavior: crate::agent::loop_::MaxIterationBehavior::GracefulSummary,
             detect_protocol_without_tools: false,
-            draft_reasoning: clawcrew_config::schema::StreamReasoningMode::Status,
+            draft_reasoning: galleon_config::schema::StreamReasoningMode::Status,
         };
         // The streaming engine never had pattern-based loop detection; default
         // pacing turns it on. Keep the embedder contract until this surface
         // grows a pacing config of its own (matches `Agent::turn`).
-        let pacing = clawcrew_config::schema::PacingConfig {
+        let pacing = galleon_config::schema::PacingConfig {
             loop_detection_enabled: false,
-            ..clawcrew_config::schema::PacingConfig::default()
+            ..galleon_config::schema::PacingConfig::default()
         };
 
         let cost_context = self.tool_loop_cost_tracking_context();
@@ -4197,7 +4197,7 @@ impl clawcrew_api::agent::AgentSession for Agent {
                         context_token_budget: l.context_token_budget,
                         is_compatibility_fallback: matches!(
                             l.model_context_window_source,
-                            clawcrew_config::schema::ModelContextWindowSource::CompatibilityFallback
+                            galleon_config::schema::ModelContextWindowSource::CompatibilityFallback
                         ),
                     }
                 }),

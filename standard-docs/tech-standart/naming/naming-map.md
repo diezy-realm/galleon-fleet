@@ -22,7 +22,7 @@ Aturan: `clawcrew-X` → `galleon-X`. Crate yang sudah `galleon-*` tetap. Urutan
 | Lama | Baru | Catatan |
 |---|---|---|
 | `clawcrew-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | `galleon-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | rename langsung |
-| `clawcrew-config` `-memory` `-providers` `-tools` `-tool-call-parser` `-routing` `-eval` `-sop-graph` | `galleon-*` | `sop-graph` & `eval` menunggu hasil R-00 (mungkin dihapus/dipindah) |
+| `galleon-config` `-memory` `-providers` `-tools` `-tool-call-parser` `-routing` `-eval` `-sop-graph` | `galleon-*` | `sop-graph` & `eval` menunggu hasil R-00 (mungkin dihapus/dipindah) |
 | `galleon-channels` | `galleon-channels` | lalu dipecah per channel (R-15) menjadi `galleon-channel-<nama>` |
 | `clawcrew-runtime` | `galleon-runtime` | **rename ditunda sampai R-00/R-16** (isi akan menyusut/dipindah) |
 | `galleon-gateway` | `galleon-gateway` | setelah R-14 |
@@ -46,7 +46,7 @@ Identifier Rust: `clawcrew_*` → `galleon_*`; tipe `ClawCrew*` → `Galleon*`.
 | Lama | Baru | Strategi |
 |---|---|---|
 | `~/.clawcrew/` (+ `config`) | `~/.config/galleon/` (Windows: `%APPDATA%\galleon\`) | pada boot: bila baru kosong & lama ada → salin atomik + tanda `.migrated`; **tidak menghapus** lama; vault sudah di `~/.config/galleon/vault/` |
-| `.clawcrew_config`, `.clawcrew_plugin_channel`, `.clawcrew_plugin_memory`, `.clawcrew_pane` (nama file/dir internal/fixture) | `.galleon_*` | rename; cek apakah on-disk persisten (butuh migrasi) atau hanya test |
+| `.galleon_config`, `.clawcrew_plugin_channel`, `.clawcrew_plugin_memory`, `.clawcrew_pane` (nama file/dir internal/fixture) | `.galleon_*` | rename; cek apakah on-disk persisten (butuh migrasi) atau hanya test |
 | Socket/IPC (`CLAWCREW_SOCKET`) | `GALLEON_SOCKET` | rename + fallback |
 
 ## 5. Kontrak & identitas teknis

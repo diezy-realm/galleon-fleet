@@ -118,10 +118,10 @@ async fn start_daemon_enrollment() -> Daemon {
     let ledger = Arc::new(
         clawcrew_runtime::security::cert_ledger::CertLedger::open_in_memory(None).unwrap(),
     );
-    let pairing = Arc::new(clawcrew_config::pairing::PairingGuard::new(
+    let pairing = Arc::new(galleon_config::pairing::PairingGuard::new(
         true,
         &[],
-        clawcrew_config::pairing::PairingCodePolicy::default(),
+        galleon_config::pairing::PairingCodePolicy::default(),
     ));
     let pairing_code = pairing.pairing_code().expect("a pairing code");
 
@@ -134,7 +134,7 @@ async fn start_daemon_enrollment() -> Daemon {
         ca_key_pem: zeroize::Zeroizing::new(ca_key_pem),
         ledger: ledger.clone(),
         pairing,
-        pairing_code_policy: Arc::new(clawcrew_config::pairing::PairingCodePolicy::default),
+        pairing_code_policy: Arc::new(galleon_config::pairing::PairingCodePolicy::default),
         static_client_pins_configured: false,
         allow_unpaired_until: None,
         relay_profile: clawcrew_runtime::enroll::RelayProfile {

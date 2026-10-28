@@ -10,7 +10,7 @@ use super::require_auth;
 use crate::AppState;
 
 pub(crate) fn integration_entry_json(
-    entry: &clawcrew_config::integrations::IntegrationEntry,
+    entry: &galleon_config::integrations::IntegrationEntry,
 ) -> serde_json::Value {
     serde_json::json!({
         "name": &entry.name,
@@ -65,7 +65,7 @@ pub async fn handle_api_integrations_settings(
     for entry in &entries {
         let enabled = matches!(
             entry.status,
-            clawcrew_config::integrations::IntegrationStatus::Active
+            galleon_config::integrations::IntegrationStatus::Active
         );
         settings.insert(
             entry.name.clone(),

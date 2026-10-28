@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_config::pairing::PairingGuard;
-use clawcrew_config::schema::{Config, LineDmPolicy, LineGroupPolicy};
+use galleon_config::pairing::PairingGuard;
+use galleon_config::schema::{Config, LineDmPolicy, LineGroupPolicy};
 use galleon_i18n as i18n;
 use hmac::{Hmac, Mac};
 use parking_lot::RwLock;
@@ -804,7 +804,7 @@ impl LineChannel {
             let guard = PairingGuard::new(
                 true,
                 &[],
-                clawcrew_config::pairing::PairingCodePolicy::numeric_compat(),
+                galleon_config::pairing::PairingCodePolicy::numeric_compat(),
             );
             if let Some(code) = guard.pairing_code() {
                 // Mirror Telegram/WeChat: a backgrounded daemon discards
@@ -842,7 +842,7 @@ impl LineChannel {
             pairing,
             webhook_port,
             pending_tokens: Arc::new(RwLock::new(HashMap::new())),
-            client: clawcrew_config::schema::build_channel_proxy_client("channel.line", None),
+            client: galleon_config::schema::build_channel_proxy_client("channel.line", None),
             api_base_url: "https://api.line.me".to_string(),
             content_api_base_url: "https://api-data.line.me".to_string(),
             sender_name_resolver: Arc::new(|| None),
@@ -861,7 +861,7 @@ impl LineChannel {
     }
 
     pub fn from_config(
-        config: &clawcrew_config::schema::LineConfig,
+        config: &galleon_config::schema::LineConfig,
         alias: impl Into<String>,
         peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
         sender_name_resolver: Arc<dyn Fn() -> Option<String> + Send + Sync>,
@@ -891,7 +891,7 @@ impl LineChannel {
 
     /// Override the proxy URL for outbound HTTP calls.
     pub fn with_proxy_url(mut self, proxy_url: Option<String>) -> Self {
-        self.client = clawcrew_config::schema::build_channel_proxy_client(
+        self.client = galleon_config::schema::build_channel_proxy_client(
             "channel.line",
             proxy_url.as_deref(),
         );
@@ -899,14 +899,14 @@ impl LineChannel {
     }
 
     /// Configure voice transcription from a `[transcription]` snapshot (no-op stub without provider manager).
-    pub fn with_transcription(self, _config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(self, _config: galleon_config::schema::TranscriptionConfig) -> Self {
         self
     }
 
     /// Store an already-built transcription manager, or nothing.
     pub fn with_transcription_manager(
         mut self,
-        _config: clawcrew_config::schema::TranscriptionConfig,
+        _config: galleon_config::schema::TranscriptionConfig,
         manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
@@ -2188,7 +2188,7 @@ mod tests {
             empty_resolver(),
             0,
         )
-        .with_transcription(clawcrew_config::schema::TranscriptionConfig {
+        .with_transcription(galleon_config::schema::TranscriptionConfig {
             enabled: false,
             ..Default::default()
         });
@@ -2682,8 +2682,8 @@ mod tests {
 
     #[tokio::test]
     async fn webhook_bind_keeps_the_one_time_code_when_an_ignore_denies_the_sender() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -2713,7 +2713,7 @@ mod tests {
         };
         config.channels.line.insert(
             "line_test_alias".to_string(),
-            clawcrew_config::schema::LineConfig {
+            galleon_config::schema::LineConfig {
                 enabled: true,
                 ..Default::default()
             },
@@ -2778,8 +2778,8 @@ mod tests {
 
     #[tokio::test]
     async fn webhook_bind_rolls_back_when_the_writer_rejects_a_group_collision() {
-        use clawcrew_config::multi_agent::PeerGroupConfig;
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::PeerGroupConfig;
+        use galleon_config::providers::ChannelRef;
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -2808,7 +2808,7 @@ mod tests {
         };
         config.channels.line.insert(
             "line_test_alias".to_string(),
-            clawcrew_config::schema::LineConfig {
+            galleon_config::schema::LineConfig {
                 enabled: true,
                 ..Default::default()
             },

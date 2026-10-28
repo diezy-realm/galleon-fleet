@@ -12,7 +12,7 @@ publish = true
 [dependencies]
 galleon-channel-core.workspace = true
 clawcrew-api.workspace = true
-clawcrew-config.workspace = true
+galleon-config.workspace = true
 clawcrew-log.workspace = true
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 reqwest = { version = "0.12", default-features = false, features = [

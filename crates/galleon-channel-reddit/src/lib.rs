@@ -100,7 +100,7 @@ impl RedditChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_runtime_proxy_client("channel.reddit")
+        galleon_config::schema::build_runtime_proxy_client("channel.reddit")
     }
 
     /// Strip the `u/` prefix an operator is likely to paste, so a peer entry
@@ -685,7 +685,7 @@ mod tests {
     /// Resolve peers the way the daemon does, from config, so the test covers
     /// the config-to-adapter boundary rather than a hand-built vector.
     fn peers_from_config(toml_src: &str, alias: &str) -> Vec<String> {
-        let config: clawcrew_config::schema::Config =
+        let config: galleon_config::schema::Config =
             toml::from_str(toml_src).expect("peer-group config should parse");
 
         config.channel_external_peers("reddit", alias)

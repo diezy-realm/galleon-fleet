@@ -3,8 +3,8 @@ use async_trait::async_trait;
 use clawcrew_api::channel::{
     Channel, ChannelMessage, ChannelModelPickerRequest, ListenerHealth, ProgressEvent, SendMessage,
 };
-use clawcrew_config::pairing::PairingGuard;
-use clawcrew_config::schema::{
+use galleon_config::pairing::PairingGuard;
+use galleon_config::schema::{
     Config, DEFAULT_MULTI_MESSAGE_DELAY_MS, StreamMode, TELEGRAM_OFFICIAL_API_BASE_URL,
 };
 use galleon_channel_core::allowlist;
@@ -1200,7 +1200,7 @@ pub struct TelegramChannel {
     /// Base URL for the Telegram Bot API. Defaults to `https://api.telegram.org`.
     /// Override for local Bot API servers or testing.
     api_base: String,
-    transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
+    transcription: Option<galleon_config::schema::TranscriptionConfig>,
     transcription_manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     voice_transcriptions: Mutex<std::collections::HashMap<String, String>>,
     workspace_dir: Option<std::path::PathBuf>,
@@ -1539,7 +1539,7 @@ impl TelegramChannel {
         {
             return Some(ModelPickerExclusion::UnsafeField);
         }
-        let is_selected_route = |route: &clawcrew_config::schema::ModelRouteConfig| {
+        let is_selected_route = |route: &galleon_config::schema::ModelRouteConfig| {
             route.hint == selected.hint
                 && route.model_provider == selected.model_provider
                 && route.model == selected.model
@@ -2767,7 +2767,7 @@ impl TelegramChannel {
             let guard = PairingGuard::new(
                 true,
                 &[],
-                clawcrew_config::pairing::PairingCodePolicy::numeric_compat(),
+                galleon_config::pairing::PairingCodePolicy::numeric_compat(),
             );
             if let Some(code) = guard.pairing_code() {
                 // Surface the one-time bind code through the structured log,
@@ -3385,7 +3385,7 @@ impl TelegramChannel {
         self
     }
 
-    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(mut self, config: galleon_config::schema::TranscriptionConfig) -> Self {
         #[cfg(test)]
         {
             if config.enabled {
@@ -3404,7 +3404,7 @@ impl TelegramChannel {
 
     pub fn with_transcription_manager(
         mut self,
-        config: clawcrew_config::schema::TranscriptionConfig,
+        config: galleon_config::schema::TranscriptionConfig,
         manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
@@ -3423,7 +3423,7 @@ impl TelegramChannel {
     }
 
     #[cfg(test)]
-    pub fn with_tts(mut self, config: &clawcrew_config::schema::Config) -> Self {
+    pub fn with_tts(mut self, config: &galleon_config::schema::Config) -> Self {
         if config.tts.enabled {
             for provider in config.providers.tts.openai.values() {
                 if let Some(uri) = &provider.base.uri {
@@ -3881,7 +3881,7 @@ impl TelegramChannel {
             return client.clone();
         }
 
-        clawcrew_config::schema::build_channel_proxy_client(
+        galleon_config::schema::build_channel_proxy_client(
             "channel.telegram",
             self.proxy_url.as_deref(),
         )
@@ -4352,7 +4352,7 @@ impl TelegramChannel {
         // The same per-channel proxy every other Telegram request uses; the
         // global proxy alone dropped a configured `proxy_url` for voice uploads.
         let client =
-            clawcrew_config::schema::build_channel_proxy_client("channel.telegram", proxy_url);
+            galleon_config::schema::build_channel_proxy_client("channel.telegram", proxy_url);
 
         let mut form = reqwest::multipart::Form::new()
             .text("chat_id", chat_id.to_string())

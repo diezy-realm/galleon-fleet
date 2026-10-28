@@ -1,9 +1,9 @@
 //! Thinking/Reasoning Level Control
 //!
-//! Re-exported from `clawcrew_config::thinking` (PR-34 / R-13).
+//! Re-exported from `galleon_config::thinking` (PR-34 / R-13).
 
-pub use clawcrew_config::scattered_types::{ThinkingConfig, ThinkingDisplayMode, ThinkingLevel};
-pub use clawcrew_config::thinking::*;
+pub use galleon_config::scattered_types::{ThinkingConfig, ThinkingDisplayMode, ThinkingLevel};
+pub use galleon_config::thinking::*;
 
 #[cfg(test)]
 mod tests {
@@ -302,7 +302,7 @@ mod tests {
     #[test]
     fn budget_tokens_clamped_to_min_when_below() {
         use std::collections::HashMap;
-        use clawcrew_config::scattered_types::MIN_BUDGET_TOKENS;
+        use galleon_config::scattered_types::MIN_BUDGET_TOKENS;
         let mut overrides = HashMap::new();
         overrides.insert("high".to_string(), 100);
         let config = ThinkingConfig {
@@ -339,7 +339,7 @@ mod tests {
     #[test]
     fn display_mode_propagates_into_native_params() {
         use clawcrew_api::model_provider::ThinkingDisplay;
-        use clawcrew_config::scattered_types::ThinkingDisplayMode;
+        use galleon_config::scattered_types::ThinkingDisplayMode;
 
         let config = ThinkingConfig {
             default_level: ThinkingLevel::High,
@@ -369,7 +369,7 @@ mod tests {
     #[test]
     fn budget_tokens_clamped_to_max_when_above() {
         use std::collections::HashMap;
-        use clawcrew_config::scattered_types::MAX_BUDGET_TOKENS;
+        use galleon_config::scattered_types::MAX_BUDGET_TOKENS;
         let mut overrides = HashMap::new();
         overrides.insert("high".to_string(), MAX_BUDGET_TOKENS + 1_000);
         let config = ThinkingConfig {
@@ -431,7 +431,7 @@ display = "updates"
 
     #[tokio::test]
     async fn native_thinking_override_round_trips_through_scope() {
-        use clawcrew_config::scattered_types::NativeThinkingParams;
+        use galleon_config::scattered_types::NativeThinkingParams;
         let installed = Some(NativeThinkingParams {
             budget_tokens: 32_000,
             display: None,

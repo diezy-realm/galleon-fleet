@@ -66,12 +66,12 @@
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
-use clawcrew_config::presets::{
+use galleon_config::presets::{
     AgentIdentity, BuilderSubmission, ChannelQuickStart, MemoryChoice, ModelProviderChoice,
     SelectorChoice,
 };
-use clawcrew_config::schema::{Config, DEFAULT_WEBHOOK_CHANNEL_PORT};
-use clawcrew_config::secrets::SecretStore;
+use galleon_config::schema::{Config, DEFAULT_WEBHOOK_CHANNEL_PORT};
+use galleon_config::secrets::SecretStore;
 use clawcrew_runtime::quickstart::{self, FieldSection, Surface};
 use tempfile::TempDir;
 
@@ -115,7 +115,7 @@ impl FirstRun {
         // The daemon's loader (`Config::load_or_init`) parses through the
         // migration chain rather than plain serde; use the same entry point so
         // this test sees what a real second launch would see.
-        let reloaded = clawcrew_config::migration::migrate_to_current(&raw_text)
+        let reloaded = galleon_config::migration::migrate_to_current(&raw_text)
             .expect("persisted config must load through the normal loader");
         let raw: toml::Value = toml::from_str(&raw_text).expect("persisted config must be TOML");
 
@@ -170,7 +170,7 @@ impl FirstRun {
         let raw_text = toml::to_string(&doc).expect("corrupted config must re-serialize");
         std::fs::write(self.dir.path().join("config.toml"), &raw_text)
             .expect("corrupted config must be writable");
-        self.reloaded = clawcrew_config::migration::migrate_to_current(&raw_text)
+        self.reloaded = galleon_config::migration::migrate_to_current(&raw_text)
             .expect("corrupted config must still parse");
         self.raw = toml::Value::Table(doc);
         self

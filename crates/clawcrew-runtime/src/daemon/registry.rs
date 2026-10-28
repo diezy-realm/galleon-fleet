@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clawcrew_config::schema::{Config, MqttConfig};
+use galleon_config::schema::{Config, MqttConfig};
 use serde_json::Value;
 use std::future::Future;
 use std::pin::Pin;

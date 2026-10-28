@@ -3,7 +3,7 @@
 use async_trait::async_trait;
 use clawcrew_api::attribution::{Attributable, Role, ToolProvenance};
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
+use galleon_config::policy::SecurityPolicy;
 use std::sync::Arc;
 
 /// Type alias for a path-extraction closure used by [`PathGuardedTool`].
@@ -195,8 +195,8 @@ impl<T: Tool> Tool for PathGuardedTool<T> {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use tokio::sync::Notify;
 

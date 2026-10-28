@@ -1,7 +1,7 @@
 //! Per-family construction dispatch for model providers.
 //!
 //! Each `<Family>ModelProviderConfig` typed slot from
-//! `clawcrew-config::providers::ModelProviders` declares its own construction
+//! `galleon-config::providers::ModelProviders` declares its own construction
 //! via one of two traits:
 //!
 //! - `CompatFamilySpec` for OpenAI-compatible families. Declare
@@ -20,7 +20,7 @@
 //! lives. Adding a family is one slot row plus one trait impl; missing the
 //! impl fails to compile when the dispatch is generated.
 //!
-//! [`for_each_model_provider_slot!`]: clawcrew_config::for_each_model_provider_slot
+//! [`for_each_model_provider_slot!`]: galleon_config::for_each_model_provider_slot
 
 use crate::ModelProviderRuntimeOptions;
 use crate::compatible::{AuthStyle, OpenAiCompatibleModelProvider};
@@ -88,7 +88,7 @@ pub(crate) trait FamilyProviderFactory {
     /// Declared per family rather than in a hand-maintained list elsewhere,
     /// because the list was the original bug: a provider added without also
     /// being written into it silently kept the unconfigured 32,000-token
-    /// fallback ([`clawcrew_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK`]),
+    /// fallback ([`galleon_config::schema::UNCONFIGURED_CONTEXT_WINDOW_FALLBACK`]),
     /// and nothing failed to compile to say so.
     const MODEL_CONTEXT_CATALOG_AUTH: Option<AuthStyle> = None;
 
@@ -155,7 +155,7 @@ pub(crate) trait CompatFamilySpec {
     /// (e.g. Sambanova, Hyperbolic — no public catalog at all without a key).
     const OPENROUTER_VENDOR_PREFIX: Option<&'static str> = None;
 
-    fn wire_api(&self) -> Option<clawcrew_config::schema::WireApi> {
+    fn wire_api(&self) -> Option<galleon_config::schema::WireApi> {
         None
     }
 
@@ -375,13 +375,13 @@ pub fn apply_compat_options(
 }
 
 fn build_responses_provider_if_requested(
-    wire_api: Option<clawcrew_config::schema::WireApi>,
+    wire_api: Option<galleon_config::schema::WireApi>,
     alias: &str,
     base_url: Option<&str>,
     key: Option<&str>,
     opts: &ModelProviderRuntimeOptions,
 ) -> Option<Box<dyn ModelProvider>> {
-    if wire_api != Some(clawcrew_config::schema::WireApi::Responses) {
+    if wire_api != Some(galleon_config::schema::WireApi::Responses) {
         return None;
     }
     let mut builder = crate::openai::OpenAiResponsesModelProvider::builder(alias).credential(key);
@@ -419,7 +419,7 @@ pub(crate) fn build_kimi_code_compat(
 }
 
 pub fn dispatch_family_factory(
-    config: Option<&clawcrew_config::schema::Config>,
+    config: Option<&galleon_config::schema::Config>,
     family: &str,
     alias: &str,
     key: Option<&str>,
@@ -441,7 +441,7 @@ pub fn dispatch_family_factory(
         ($(($field:ident, $type_str:literal, $cfg_ty:ty)),+ $(,)?) => {
             match family {
                 "openai-compatible" | "openai_compatible" => {
-                    let default_cfg = clawcrew_config::schema::ModelProviderConfig::default();
+                    let default_cfg = galleon_config::schema::ModelProviderConfig::default();
                     let cfg = config
                         .and_then(|c| c.providers.models.find("openai", alias))
                         .unwrap_or(&default_cfg);
@@ -478,11 +478,11 @@ pub fn dispatch_family_factory(
             }
         }
     }
-    clawcrew_config::for_each_model_provider_slot!(emit_dispatch)
+    galleon_config::for_each_model_provider_slot!(emit_dispatch)
 }
 
 pub(crate) fn fallback_auth_ready_for_alias(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     family: &str,
     alias: &str,
     key: Option<&str>,
@@ -514,7 +514,7 @@ pub(crate) fn fallback_auth_ready_for_alias(
         ($(($field:ident, $type_str:literal, $cfg_ty:ty)),+ $(,)?) => {
             match provider_kind {
                 "openai-compatible" | "openai_compatible" => {
-                    let default_cfg = clawcrew_config::schema::ModelProviderConfig::default();
+                    let default_cfg = galleon_config::schema::ModelProviderConfig::default();
                     let cfg = config
                         .providers
                         .models
@@ -539,10 +539,10 @@ pub(crate) fn fallback_auth_ready_for_alias(
             }
         }
     }
-    clawcrew_config::for_each_model_provider_slot!(emit_auth_ready)
+    galleon_config::for_each_model_provider_slot!(emit_auth_ready)
 }
 
-use clawcrew_config::schema::{
+use galleon_config::schema::{
     Ai21ModelProviderConfig, AihubmixModelProviderConfig, AnthropicModelProviderConfig,
     AnyscaleModelProviderConfig, ArceeModelProviderConfig, AstraiModelProviderConfig,
     AtlasCloudModelProviderConfig, AtomicChatModelProviderConfig, AuthMode,
@@ -584,7 +584,7 @@ pub fn endpoint_for_family(provider_type: &str) -> Option<ProviderEndpoint> {
             }
         };
     }
-    clawcrew_config::for_each_model_provider_slot!(emit_endpoint)
+    galleon_config::for_each_model_provider_slot!(emit_endpoint)
 }
 
 /// Get the fixed default API URL for a canonical provider family.
@@ -605,7 +605,7 @@ pub fn get_default_url(provider_type: &str) -> Option<&'static str> {
 /// and is classified the moment its slot exists, which is the property the
 /// previous hand-written list in [`crate::fetch_context_window`] did not have.
 ///
-/// [`for_each_model_provider_slot!`]: clawcrew_config::for_each_model_provider_slot
+/// [`for_each_model_provider_slot!`]: galleon_config::for_each_model_provider_slot
 #[must_use]
 pub fn family_model_context_catalog_auth(provider_type: &str) -> Option<AuthStyle> {
     macro_rules! emit_context_catalog_auth {
@@ -620,7 +620,7 @@ pub fn family_model_context_catalog_auth(provider_type: &str) -> Option<AuthStyl
             }
         };
     }
-    clawcrew_config::for_each_model_provider_slot!(emit_context_catalog_auth)
+    galleon_config::for_each_model_provider_slot!(emit_context_catalog_auth)
 }
 
 // ── Pure-compat families ───────────────────────────────────────────────
@@ -648,7 +648,7 @@ impl CompatFamilySpec for AtlasCloudModelProviderConfig {
 }
 impl CompatFamilySpec for ZerorouterModelProviderConfig {
     const DISPLAY: &'static str = "ZeroRouter";
-    const DEFAULT_URL: &'static str = clawcrew_config::schema::ZEROROUTER_DEFAULT_URL;
+    const DEFAULT_URL: &'static str = galleon_config::schema::ZEROROUTER_DEFAULT_URL;
     const AUTH: AuthStyle = AuthStyle::Bearer;
     const PUBLIC_MODEL_LISTING: bool = true;
 }
@@ -664,7 +664,7 @@ impl CompatFamilySpec for OpencodeModelProviderConfig {
     const AUTH: AuthStyle = AuthStyle::Bearer;
     const MODELS_DEV_KEY: Option<&'static str> = Some("opencode");
 
-    fn wire_api(&self) -> Option<clawcrew_config::schema::WireApi> {
+    fn wire_api(&self) -> Option<galleon_config::schema::WireApi> {
         self.base.wire_api
     }
 }
@@ -695,7 +695,7 @@ impl CompatFamilySpec for TogetherModelProviderConfig {
 }
 impl CompatFamilySpec for CrusoeModelProviderConfig {
     const DISPLAY: &'static str = "Crusoe Managed Inference";
-    const DEFAULT_URL: &'static str = clawcrew_config::schema::CrusoeEndpoint::DEFAULT_URI;
+    const DEFAULT_URL: &'static str = galleon_config::schema::CrusoeEndpoint::DEFAULT_URI;
     const AUTH: AuthStyle = AuthStyle::Bearer;
     const MODELS_DEV_KEY: Option<&'static str> = None;
     const SERVES_MODEL_CONTEXT_CATALOG: bool = true;
@@ -1240,9 +1240,9 @@ impl FamilyProviderFactory for AnthropicModelProviderConfig {
 /// this helper — they keep whatever `wire_api` they stored.
 fn openai_missing_entry_fallback_config() -> OpenAIModelProviderConfig {
     OpenAIModelProviderConfig {
-        base: clawcrew_config::schema::ModelProviderConfig {
+        base: galleon_config::schema::ModelProviderConfig {
             wire_api: None,
-            ..clawcrew_config::schema::ModelProviderConfig::default()
+            ..galleon_config::schema::ModelProviderConfig::default()
         },
     }
 }
@@ -1365,7 +1365,7 @@ impl FamilyProviderFactory for HailoOllamaModelProviderConfig {
         api_url: Option<&str>,
         opts: &ModelProviderRuntimeOptions,
     ) -> Result<Box<dyn ModelProvider>> {
-        use clawcrew_config::schema::ModelEndpoint;
+        use galleon_config::schema::ModelEndpoint;
 
         if opts.tls_ca_cert_path.is_some() {
             anyhow::bail!("Hailo-Ollama does not support tls_ca_cert_path");
@@ -1808,7 +1808,7 @@ impl CompatFamilySpec for KiloModelProviderConfig {
     const DISPLAY: &'static str = "Kilo";
     // Canonical gateway host per https://kilo.ai/docs/gateway (api.kilo.ai;
     // app.kilo.ai is the web-app sign-in). Must stay in lockstep with
-    // `KiloEndpoint::Gateway` in clawcrew-config — see the
+    // `KiloEndpoint::Gateway` in galleon-config — see the
     // `kilo_gateway_default_url_matches_schema_endpoint` regression test.
     const DEFAULT_URL: &'static str = "https://api.kilo.ai/api/gateway";
     const AUTH: AuthStyle = AuthStyle::Bearer;
@@ -1990,7 +1990,7 @@ impl FamilyProviderFactory for CustomModelProviderConfig {
     }
 }
 
-impl FamilyProviderFactory for clawcrew_config::schema::ModelProviderConfig {
+impl FamilyProviderFactory for galleon_config::schema::ModelProviderConfig {
     const ENDPOINT: ProviderEndpoint = ProviderEndpoint::OperatorRequired;
 
     fn create_provider(
@@ -2027,7 +2027,7 @@ impl FamilyProviderFactory for clawcrew_config::schema::ModelProviderConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::{ModelProviderConfig, WireApi};
+    use galleon_config::schema::{ModelProviderConfig, WireApi};
 
     #[test]
     fn cache_passthrough_runtime_option_reaches_provider_capability() {
@@ -2069,7 +2069,7 @@ mod tests {
     async fn cache_ttl_runtime_option_reaches_both_builders() {
         use crate::traits::{ChatMessage, ChatRequest};
         use clawcrew_api::tool::ToolSpec;
-        use clawcrew_config::schema::{AnthropicModelProviderConfig, CacheTtl};
+        use galleon_config::schema::{AnthropicModelProviderConfig, CacheTtl};
 
         fn collect_cache_controls(value: &serde_json::Value, out: &mut Vec<serde_json::Value>) {
             match value {
@@ -2278,7 +2278,7 @@ mod tests {
                 [$($type_str),+]
             };
         }
-        let families = clawcrew_config::for_each_model_provider_slot!(collect_names);
+        let families = galleon_config::for_each_model_provider_slot!(collect_names);
 
         for family in families {
             assert!(
@@ -2320,7 +2320,7 @@ mod tests {
             }};
         }
 
-        clawcrew_config::for_each_model_provider_slot!(assert_fixed_construction);
+        galleon_config::for_each_model_provider_slot!(assert_fixed_construction);
     }
 
     #[test]
@@ -2363,7 +2363,7 @@ mod tests {
 
     #[test]
     fn kilo_gateway_default_url_matches_schema_endpoint() {
-        use clawcrew_config::schema::{KiloEndpoint, ModelEndpoint};
+        use galleon_config::schema::{KiloEndpoint, ModelEndpoint};
         assert_eq!(
             <KiloModelProviderConfig as CompatFamilySpec>::DEFAULT_URL,
             KiloEndpoint::default().uri(),
@@ -2439,7 +2439,7 @@ mod tests {
     #[test]
     #[allow(deprecated)]
     fn atlascloud_default_url_matches_schema_endpoint() {
-        use clawcrew_config::schema::{AtlasCloudEndpoint, ModelEndpoint};
+        use galleon_config::schema::{AtlasCloudEndpoint, ModelEndpoint};
         assert_eq!(
             <AtlasCloudModelProviderConfig as CompatFamilySpec>::DEFAULT_URL,
             AtlasCloudEndpoint::default().uri(),
@@ -2517,7 +2517,7 @@ mod tests {
 
     #[test]
     fn zerorouter_default_url_matches_schema_endpoint() {
-        use clawcrew_config::schema::{ModelEndpoint, ZerorouterEndpoint};
+        use galleon_config::schema::{ModelEndpoint, ZerorouterEndpoint};
         assert_eq!(
             <ZerorouterModelProviderConfig as CompatFamilySpec>::DEFAULT_URL,
             ZerorouterEndpoint::default().uri(),
@@ -2697,7 +2697,7 @@ mod tests {
         // The counterpart to the missing-entry test: a persisted openai slot that
         // stored wire_api = responses (as create_map_key now writes) still routes
         // through the responses provider when dispatched.
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.providers.models.openai.insert(
             "default".to_string(),
             OpenAIModelProviderConfig {
@@ -2921,7 +2921,7 @@ mod tests {
 
     #[test]
     fn llamacpp_factory_routes_to_responses_provider_when_wire_api_responses() {
-        use clawcrew_config::schema::{LlamacppModelProviderConfig, ModelProviderConfig, WireApi};
+        use galleon_config::schema::{LlamacppModelProviderConfig, ModelProviderConfig, WireApi};
         let cfg = LlamacppModelProviderConfig {
             base: ModelProviderConfig {
                 wire_api: Some(WireApi::Responses),
@@ -2941,7 +2941,7 @@ mod tests {
 
     #[test]
     fn llamacpp_factory_defaults_to_chat_completions_without_wire_api() {
-        use clawcrew_config::schema::LlamacppModelProviderConfig;
+        use galleon_config::schema::LlamacppModelProviderConfig;
         let cfg = LlamacppModelProviderConfig::default();
         let provider = cfg
             .create_provider(
@@ -2956,7 +2956,7 @@ mod tests {
 
     #[test]
     fn custom_factory_routes_to_responses_provider_when_wire_api_responses() {
-        use clawcrew_config::schema::{CustomModelProviderConfig, ModelProviderConfig, WireApi};
+        use galleon_config::schema::{CustomModelProviderConfig, ModelProviderConfig, WireApi};
         let cfg = CustomModelProviderConfig {
             base: ModelProviderConfig {
                 uri: Some("http://10.0.0.15:8000/v1".to_string()),
@@ -2977,7 +2977,7 @@ mod tests {
 
     #[test]
     fn custom_factory_defaults_to_chat_completions_without_wire_api() {
-        use clawcrew_config::schema::{CustomModelProviderConfig, ModelProviderConfig};
+        use galleon_config::schema::{CustomModelProviderConfig, ModelProviderConfig};
         let cfg = CustomModelProviderConfig {
             base: ModelProviderConfig {
                 uri: Some("http://10.0.0.15:8000/v1".to_string()),
@@ -3000,7 +3000,7 @@ mod tests {
         use axum::{Json, Router, routing::post};
         use serde_json::json;
         use tokio::time::{Duration, Instant};
-        use clawcrew_config::schema::{CustomModelProviderConfig, ModelProviderConfig, WireApi};
+        use galleon_config::schema::{CustomModelProviderConfig, ModelProviderConfig, WireApi};
 
         async fn slow_responses() -> Json<serde_json::Value> {
             tokio::time::sleep(Duration::from_secs(3)).await;
@@ -3076,7 +3076,7 @@ mod tests {
         use serde_json::json;
         use std::collections::HashMap;
         use std::sync::{Arc, Mutex};
-        use clawcrew_config::schema::{CustomModelProviderConfig, ModelProviderConfig, WireApi};
+        use galleon_config::schema::{CustomModelProviderConfig, ModelProviderConfig, WireApi};
 
         let captured: Arc<Mutex<Option<HeaderMap>>> = Arc::new(Mutex::new(None));
 
@@ -3188,7 +3188,7 @@ mod tests {
 
     #[test]
     fn custom_factory_disables_native_tools_by_default() {
-        use clawcrew_config::schema::{CustomModelProviderConfig, ModelProviderConfig};
+        use galleon_config::schema::{CustomModelProviderConfig, ModelProviderConfig};
         let cfg = CustomModelProviderConfig {
             base: ModelProviderConfig {
                 uri: Some("http://10.0.0.15:8000/v1".to_string()),
@@ -3211,7 +3211,7 @@ mod tests {
 
     #[test]
     fn custom_factory_honors_native_tools_override_true() {
-        use clawcrew_config::schema::{CustomModelProviderConfig, ModelProviderConfig};
+        use galleon_config::schema::{CustomModelProviderConfig, ModelProviderConfig};
         let cfg = CustomModelProviderConfig {
             base: ModelProviderConfig {
                 uri: Some("http://10.0.0.15:8000/v1".to_string()),
@@ -3233,7 +3233,7 @@ mod tests {
 
     #[test]
     fn openai_compatible_factory_routes_to_responses_when_wire_api_responses() {
-        use clawcrew_config::schema::{ModelProviderConfig, WireApi};
+        use galleon_config::schema::{ModelProviderConfig, WireApi};
         let cfg = ModelProviderConfig {
             uri: Some("http://10.0.0.15:8000/v1".to_string()),
             wire_api: Some(WireApi::Responses),
@@ -3252,7 +3252,7 @@ mod tests {
 
     #[test]
     fn compat_family_factory_routes_to_responses_when_wire_api_responses() {
-        use clawcrew_config::schema::{ModelProviderConfig, WireApi};
+        use galleon_config::schema::{ModelProviderConfig, WireApi};
         let cfg = OpencodeModelProviderConfig {
             base: ModelProviderConfig {
                 wire_api: Some(WireApi::Responses),
@@ -3294,7 +3294,7 @@ mod tests {
         // responses route. A compat family that does not override it (Doubao
         // here) must keep chat_completions even if the entry sets
         // `wire_api = "responses"`, so this fix stays scoped per family.
-        use clawcrew_config::schema::{ModelProviderConfig, WireApi};
+        use galleon_config::schema::{ModelProviderConfig, WireApi};
         let cfg = DoubaoModelProviderConfig {
             base: ModelProviderConfig {
                 wire_api: Some(WireApi::Responses),
@@ -3317,7 +3317,7 @@ mod tests {
         use axum::{Json, Router, extract::State, http::Uri, routing::post};
         use serde_json::{Value, json};
         use std::sync::{Arc, Mutex};
-        use clawcrew_config::schema::{ModelProviderConfig, WireApi};
+        use galleon_config::schema::{ModelProviderConfig, WireApi};
 
         type Capture = Arc<Mutex<Vec<String>>>;
 
@@ -3450,7 +3450,7 @@ mod tests {
     /// starts at `None` and shows up here the moment someone opts it in.
     #[test]
     fn no_family_outside_the_probeable_set_is_eligible() {
-        let mut eligible: Vec<&str> = clawcrew_config::providers::ModelProviders::slot_names()
+        let mut eligible: Vec<&str> = galleon_config::providers::ModelProviders::slot_names()
             .iter()
             .copied()
             .filter(|family| family_model_context_catalog_auth(family).is_some())
@@ -3473,7 +3473,7 @@ mod tests {
     fn every_probeable_family_resolves_a_default_catalog_url() {
         // Walk the registry, not the list above: a family opted in later must
         // be caught here even though no test names it.
-        for family in clawcrew_config::providers::ModelProviders::slot_names() {
+        for family in galleon_config::providers::ModelProviders::slot_names() {
             if family_model_context_catalog_auth(family).is_none() {
                 continue;
             }
@@ -3513,7 +3513,7 @@ mod tests {
         }
         // Stated over the registry rather than the two names above, so a
         // third JWT family cannot be opted in without this failing.
-        for family in clawcrew_config::providers::ModelProviders::slot_names() {
+        for family in galleon_config::providers::ModelProviders::slot_names() {
             assert!(
                 !matches!(
                     family_model_context_catalog_auth(family),

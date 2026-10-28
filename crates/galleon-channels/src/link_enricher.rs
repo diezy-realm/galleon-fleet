@@ -80,7 +80,7 @@ fn http_client_builder(timeout_secs: u64) -> reqwest::ClientBuilder {
     // The SSRF redirect policy and identity stay as they are; only the
     // deployment's runtime proxy is applied on top, like every other
     // outbound client in this crate.
-    clawcrew_config::schema::apply_runtime_proxy_to_builder(
+    galleon_config::schema::apply_runtime_proxy_to_builder(
         reqwest::Client::builder()
             .timeout(Duration::from_secs(timeout_secs))
             .connect_timeout(Duration::from_secs(5))

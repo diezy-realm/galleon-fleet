@@ -7,8 +7,8 @@ use std::sync::{
 };
 use std::time::Duration;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::{FirecrawlConfig, ProxyConfig, ProxyScope};
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::{FirecrawlConfig, ProxyConfig, ProxyScope};
 
 /// Minimum body length to consider a standard fetch successful.
 /// Bodies shorter than this are treated as JS-only pages that need Firecrawl.
@@ -467,7 +467,7 @@ impl Tool for WebFetchTool {
         // Rate limiting is applied by the RateLimitedTool wrapper at
         // registration time (see clawcrew-runtime::tools::mod).
 
-        let proxy_config = clawcrew_config::schema::runtime_proxy_config();
+        let proxy_config = galleon_config::schema::runtime_proxy_config();
         if proxy_conflicts_with_dns_pinning(&proxy_config) {
             ::clawcrew_log::record!(
                 WARN,
@@ -483,7 +483,7 @@ impl Tool for WebFetchTool {
             });
         }
 
-        let ignored_environment_proxy = clawcrew_config::schema::environment_proxy_for_url(url);
+        let ignored_environment_proxy = galleon_config::schema::environment_proxy_for_url(url);
         if let Some(variable) = ignored_environment_proxy {
             ::clawcrew_log::record!(
                 WARN,
@@ -923,9 +923,9 @@ fn validate_resolved_ips_for_ssrf(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
-    use clawcrew_config::schema::FirecrawlConfig;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
+    use galleon_config::schema::FirecrawlConfig;
 
     fn test_tool(allowed_domains: Vec<&str>) -> WebFetchTool {
         test_tool_with_blocklist(allowed_domains, vec![])
@@ -1266,7 +1266,7 @@ mod tests {
         let global_proxy = ProxyConfig {
             enabled: true,
             http_proxy: Some("http://proxy.example:8080".into()),
-            scope: clawcrew_config::schema::ProxyScope::Zeroclaw,
+            scope: galleon_config::schema::ProxyScope::Zeroclaw,
             ..ProxyConfig::default()
         };
         assert!(proxy_conflicts_with_dns_pinning(&global_proxy));
@@ -1276,7 +1276,7 @@ mod tests {
         let environment_proxy = ProxyConfig {
             enabled: true,
             http_proxy: Some("http://proxy.example:8080".into()),
-            scope: clawcrew_config::schema::ProxyScope::Environment,
+            scope: galleon_config::schema::ProxyScope::Environment,
             ..ProxyConfig::default()
         };
         assert!(proxy_conflicts_with_dns_pinning(&environment_proxy));
@@ -1285,7 +1285,7 @@ mod tests {
         let other_service_proxy = ProxyConfig {
             enabled: true,
             http_proxy: Some("http://proxy.example:8080".into()),
-            scope: clawcrew_config::schema::ProxyScope::Services,
+            scope: galleon_config::schema::ProxyScope::Services,
             services: vec!["provider.openai".into()],
             ..ProxyConfig::default()
         };
@@ -2251,7 +2251,7 @@ mod tests {
         assert!(!cfg.enabled);
         assert_eq!(cfg.api_key_env, "FIRECRAWL_API_KEY");
         assert_eq!(cfg.api_url, "https://api.firecrawl.dev/v1");
-        assert_eq!(cfg.mode, clawcrew_config::schema::FirecrawlMode::Scrape);
+        assert_eq!(cfg.mode, galleon_config::schema::FirecrawlMode::Scrape);
     }
 
     #[test]
@@ -2266,7 +2266,7 @@ mod tests {
         assert!(cfg.enabled);
         assert_eq!(cfg.api_key_env, "MY_FC_KEY");
         assert_eq!(cfg.api_url, "https://custom.firecrawl.io/v2");
-        assert_eq!(cfg.mode, clawcrew_config::schema::FirecrawlMode::Crawl);
+        assert_eq!(cfg.mode, galleon_config::schema::FirecrawlMode::Crawl);
     }
 
     #[test]
@@ -2278,7 +2278,7 @@ mod tests {
 
     #[test]
     fn web_fetch_config_with_firecrawl_section() {
-        use clawcrew_config::schema::WebFetchConfig;
+        use galleon_config::schema::WebFetchConfig;
         let toml_str = r#"
             enabled = true
             [firecrawl]

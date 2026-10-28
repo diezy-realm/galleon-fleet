@@ -4,8 +4,8 @@ use serde_json::json;
 use std::path::PathBuf;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::{LinkedInContentConfig, LinkedInImageConfig};
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::{LinkedInContentConfig, LinkedInImageConfig};
 
 pub struct LinkedInTool {
     security: Arc<SecurityPolicy>,
@@ -463,7 +463,7 @@ impl Tool for LinkedInTool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::autonomy::AutonomyLevel;
+    use galleon_config::autonomy::AutonomyLevel;
 
     fn test_security(level: AutonomyLevel, max_actions_per_hour: u32) -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy {

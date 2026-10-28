@@ -31,7 +31,7 @@ use crate::traits::{
     ExportFilter, Memory, MemoryCategory, MemoryEntry, MemoryStats, ProceduralMessage, StoreOptions,
 };
 use async_trait::async_trait;
-use clawcrew_config::schema::MemoryPolicyConfig;
+use galleon_config::schema::MemoryPolicyConfig;
 
 /// Read-time over-fetch factor. Filtered recalls ask the backend for
 /// `limit * READ_REFILL_MULTIPLIER` candidates so that entries withheld by

@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 /// Minimal observability config shape used by the writer + tool-io
 /// capturer. Mirrors the relevant `[observability]` fields of
-/// `clawcrew_config::schema::ObservabilityConfig`.
+/// `galleon_config::schema::ObservabilityConfig`.
 #[derive(Debug, Clone)]
 pub struct LogConfig {
     pub log_persistence: String,

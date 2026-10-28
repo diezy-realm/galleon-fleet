@@ -713,7 +713,7 @@ mod tests {
             .ensure("openrouter", "test-agent")
             .expect("known family");
         config.agents.entry("test-agent".to_string()).or_insert(
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 model_provider: "openrouter.test-agent".into(),
                 risk_profile: "test-agent".into(),
                 runtime_profile: "test-agent".into(),

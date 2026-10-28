@@ -5,7 +5,7 @@ use std::sync::Arc;
 use axum::{Router, extract::State, routing::post};
 use tempfile::TempDir;
 use tokio::sync::Mutex as AsyncMutex;
-use clawcrew_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
+use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
 use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
 
 // Unique sentinel that exists ONLY in the planted Conversation entry: it must
@@ -66,7 +66,7 @@ async fn scheduled_run_does_not_leak_conversation_memory_into_provider_request()
         .unwrap();
     }
 
-    let mut providers = clawcrew_config::providers::Providers::default();
+    let mut providers = galleon_config::providers::Providers::default();
     {
         let base = providers
             .models

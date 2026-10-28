@@ -10,7 +10,7 @@ use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio_util::sync::CancellationToken;
 use clawcrew_api::agent::TurnEvent;
-use clawcrew_config::schema::{MultimodalConfig, PacingConfig};
+use galleon_config::schema::{MultimodalConfig, PacingConfig};
 use galleon_providers::{ChatMessage, ModelProvider};
 use galleon_tool_call_parser::{strip_think_tags, strip_trailing_terminal_markers};
 
@@ -389,7 +389,7 @@ mod graceful_summary_metering_tests {
     use clawcrew_api::model_provider::{
         ChatRequest, ChatResponse, ProviderCapabilities, SemanticEmptyTerminalCompletion,
     };
-    use clawcrew_config::schema::{CostConfig, MultimodalConfig, PacingConfig};
+    use galleon_config::schema::{CostConfig, MultimodalConfig, PacingConfig};
     use galleon_providers::traits::TokenUsage;
     use galleon_providers::{ChatMessage, ModelProvider};
 

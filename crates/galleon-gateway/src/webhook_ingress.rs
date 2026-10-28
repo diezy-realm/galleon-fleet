@@ -1198,7 +1198,7 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "channel-whatsapp-cloud")]
     async fn whatsapp_http_rejects_missing_signature_with_401() {
-        let mut state = crate::api_config::tests::test_state(clawcrew_config::schema::Config::default());
+        let mut state = crate::api_config::tests::test_state(galleon_config::schema::Config::default());
         state.whatsapp.insert("work".to_string(), whatsapp_test_channel("work", "tok"));
         state.whatsapp_app_secret.insert("work".to_string(), Arc::<str>::from("test-secret"));
 
@@ -1216,7 +1216,7 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "channel-whatsapp-cloud")]
     async fn whatsapp_http_rejects_invalid_signature_with_401() {
-        let mut state = crate::api_config::tests::test_state(clawcrew_config::schema::Config::default());
+        let mut state = crate::api_config::tests::test_state(galleon_config::schema::Config::default());
         state.whatsapp.insert("work".to_string(), whatsapp_test_channel("work", "tok"));
         state.whatsapp_app_secret.insert("work".to_string(), Arc::<str>::from("test-secret"));
 
@@ -1240,7 +1240,7 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "channel-whatsapp-cloud")]
     async fn whatsapp_http_rejects_when_no_app_secret_configured_with_401() {
-        let mut state = crate::api_config::tests::test_state(clawcrew_config::schema::Config::default());
+        let mut state = crate::api_config::tests::test_state(galleon_config::schema::Config::default());
         state.whatsapp.insert("work".to_string(), whatsapp_test_channel("work", "tok"));
         // no entry in whatsapp_app_secret -> fail closed
 
@@ -1258,7 +1258,7 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "channel-whatsapp-cloud")]
     async fn whatsapp_http_unknown_alias_returns_404() {
-        let state = crate::api_config::tests::test_state(clawcrew_config::schema::Config::default());
+        let state = crate::api_config::tests::test_state(galleon_config::schema::Config::default());
 
         let resp = crate::handle_whatsapp_message_alias(
             axum::extract::State(state),
@@ -1274,7 +1274,7 @@ mod tests {
     #[tokio::test]
     #[cfg(feature = "channel-whatsapp-cloud")]
     async fn whatsapp_http_accepts_valid_signature_with_200() {
-        let mut state = crate::api_config::tests::test_state(clawcrew_config::schema::Config::default());
+        let mut state = crate::api_config::tests::test_state(galleon_config::schema::Config::default());
         state.whatsapp.insert("work".to_string(), whatsapp_test_channel("work", "tok"));
         state.whatsapp_app_secret.insert("work".to_string(), Arc::<str>::from("test-secret"));
 

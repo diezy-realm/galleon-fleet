@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration as StdDuration, SystemTime};
-use clawcrew_config::schema::MemoryConfig;
+use galleon_config::schema::MemoryConfig;
 
 const HYGIENE_INTERVAL_HOURS: i64 = 12;
 const STATE_FILE: &str = "memory_hygiene_state.json";

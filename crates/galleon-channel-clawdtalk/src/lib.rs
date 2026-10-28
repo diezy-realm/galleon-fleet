@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
-pub use clawcrew_config::scattered_types::ClawdTalkConfig;
+pub use galleon_config::scattered_types::ClawdTalkConfig;
 
 /// ClawdTalk channel configuration
 pub struct ClawdTalkChannel {
@@ -38,7 +38,7 @@ impl ClawdTalkChannel {
             from_number: config.from_number,
             allowed_destinations: config.allowed_destinations,
             alias: alias.into(),
-            client: clawcrew_config::schema::apply_runtime_proxy_to_builder(
+            client: galleon_config::schema::apply_runtime_proxy_to_builder(
                 Client::builder().timeout(std::time::Duration::from_secs(30)),
                 "channel.clawdtalk",
             )

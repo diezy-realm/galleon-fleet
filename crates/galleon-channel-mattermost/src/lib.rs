@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
 use clawcrew_api::channel::{Channel, ChannelApprovalResponse, ChannelMessage, SendMessage};
-pub use clawcrew_config::schema::MattermostListenMode;
+pub use galleon_config::schema::MattermostListenMode;
 use futures_util::{SinkExt, StreamExt, stream::SplitSink, stream::SplitStream};
 use parking_lot::Mutex;
 use std::collections::{HashMap, HashSet};
@@ -409,7 +409,7 @@ pub struct MattermostChannel {
     typing_handle: Mutex<Option<tokio::task::JoinHandle<()>>>,
     /// Per-channel proxy URL override.
     proxy_url: Option<String>,
-    transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
+    transcription: Option<galleon_config::schema::TranscriptionConfig>,
     transcription_manager: Option<Arc<dyn AudioTranscriber>>,
     /// How this channel receives inbound messages. Defaults to `Polling`.
     listen_mode: MattermostListenMode,
@@ -475,7 +475,7 @@ impl MattermostChannel {
             // Sourced from the config type so the in-Rust default cannot drift
             // from the serde one. `0` here would be an already-elapsed
             // deadline that denies every approval.
-            approval_timeout_secs: clawcrew_config::schema::MattermostConfig::default()
+            approval_timeout_secs: galleon_config::schema::MattermostConfig::default()
                 .approval_timeout_secs,
             purpose_as_instructions: false,
             room_purposes: Arc::new(Mutex::new(HashMap::new())),
@@ -736,7 +736,7 @@ impl MattermostChannel {
     /// otherwise leaves the choice unbound (see
     /// `transcription::manager_from_snapshot`).
     /// Configure voice transcription from a `[transcription]` snapshot (no-op stub without provider manager).
-    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(mut self, config: galleon_config::schema::TranscriptionConfig) -> Self {
         self.transcription = Some(config);
         self
     }
@@ -746,7 +746,7 @@ impl MattermostChannel {
     /// transcription it cannot perform.
     pub fn with_transcription_manager(
         mut self,
-        config: clawcrew_config::schema::TranscriptionConfig,
+        config: galleon_config::schema::TranscriptionConfig,
         manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
@@ -772,7 +772,7 @@ impl MattermostChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_channel_proxy_client_with_timeouts(
+        galleon_config::schema::build_channel_proxy_client_with_timeouts(
             "channel.mattermost",
             self.proxy_url.as_deref(),
             30,
@@ -1389,7 +1389,7 @@ impl Channel for MattermostChannel {
         // Reactions reach us as `reaction_added` WebSocket events; the polling
         // listener reads posts and never sees them, so seeding the emoji there
         // would put two buttons on the prompt that silently do nothing.
-        if self.listen_mode == clawcrew_config::schema::MattermostListenMode::Websocket
+        if self.listen_mode == galleon_config::schema::MattermostListenMode::Websocket
             && !post_id.is_empty()
         {
             // `create_post` awaited, so confirm this registration still owns the
@@ -1570,7 +1570,7 @@ impl MattermostChannel {
         );
 
         let ws_url = self.ws_url();
-        let (ws_stream, _) = clawcrew_config::schema::ws_connect_with_proxy(
+        let (ws_stream, _) = galleon_config::schema::ws_connect_with_proxy(
             &ws_url,
             "channel.mattermost",
             self.proxy_url.as_deref(),

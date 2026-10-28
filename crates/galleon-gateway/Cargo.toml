@@ -13,7 +13,7 @@ publish = true
 # Internal workspace crates
 clawcrew-api.workspace = true
 galleon-spawn.workspace = true
-clawcrew-config.workspace = true
+galleon-config.workspace = true
 galleon-tls.workspace = true
 galleon-infra = { workspace = true, features = ["schema-export"] }
 clawcrew-log.workspace = true
@@ -58,7 +58,7 @@ base64 = "0.22"
 include_dir = { version = "0.7", optional = true }
 
 # Schemars JSON Schema generation for OPTIONS responses; matches the version
-# clawcrew-config already pulls.
+# galleon-config already pulls.
 schemars = { version = "1.2", optional = true }
 
 # Async runtime
@@ -128,7 +128,7 @@ default = ["schema-export", "a2a"]
 # no a2a-rs/protobuf footprint.
 a2a = []
 plugins-wasm = ["dep:galleon-plugins"]
-webauthn = ["clawcrew-config/webauthn"]
+webauthn = ["galleon-config/webauthn"]
 observability-prometheus = ["clawcrew-runtime/observability-prometheus"]
 channel-acp-server = ["galleon-channels/channel-acp-server"]
 channel-email = ["galleon-channels/channel-email"]
@@ -142,6 +142,6 @@ gateway-voice-duplex = []
 # Enables OPTIONS /api/config* responses with the schemars-generated
 # JSON Schema body and the serde-side schemars derives transitively. Defaults
 # on; turning it off omits OPTIONS schema bodies (returns a small placeholder)
-# and saves a bit of build time. Mirrors clawcrew-config's `schema-export`.
-schema-export = ["clawcrew-config/schema-export", "clawcrew-runtime/schema-export", "dep:schemars"]
+# and saves a bit of build time. Mirrors galleon-config's `schema-export`.
+schema-export = ["galleon-config/schema-export", "clawcrew-runtime/schema-export", "dep:schemars"]
 embedded-web = ["dep:include_dir"]

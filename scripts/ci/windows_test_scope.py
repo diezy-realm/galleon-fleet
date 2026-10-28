@@ -31,7 +31,7 @@ FULL_PATH_PREFIXES = (".github/actions/", "wit/")
 PLUGIN_HOST_PATH_PREFIXES = (
     "crates/galleon-plugins/",
     "crates/clawcrew-runtime/",
-    "crates/clawcrew-config/",
+    "crates/galleon-config/",
     "wit/",
 )
 PLUGIN_HOST_EXACT_PATHS = {

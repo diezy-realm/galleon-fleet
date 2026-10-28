@@ -11,8 +11,8 @@ use std::collections::HashSet;
 use std::sync::Arc;
 
 use clawcrew_api::runtime_traits::RuntimeAdapter;
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::Config;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::Config;
 
 use crate::agent::loop_::{
     append_pinned_mcp_section, apply_policy_tool_filter, eager_mcp_tool_allowed,
@@ -1288,7 +1288,7 @@ mod tests {
 
     #[tokio::test]
     async fn assemble_grants_no_mcp_to_agent_without_bundles() {
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AliasedAgentConfig, McpServerConfig, McpTransport, RiskProfileConfig,
         };
 
@@ -1418,7 +1418,7 @@ mod tests {
     }
 
     fn config_with_bundled_mcp(server_uri: String, server2_uri: String) -> Config {
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AliasedAgentConfig, McpBundleConfig, McpServerConfig, McpTransport, RiskProfileConfig,
         };
 
@@ -1667,7 +1667,7 @@ mod tests {
         ])
         .await;
 
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AliasedAgentConfig, McpBundleConfig, McpServerConfig, McpTransport, RiskProfileConfig,
         };
 

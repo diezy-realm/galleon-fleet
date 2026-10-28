@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, bail};
-use clawcrew_config::schema::{Config, resolve_runtime_dirs};
+use galleon_config::schema::{Config, resolve_runtime_dirs};
 #[cfg(windows)]
 use process_wrap::tokio::{ChildWrapper, CommandWrap, CommandWrapper, JobObject, KillOnDrop};
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]

@@ -9,7 +9,7 @@ use crate::security::playbook::{
 };
 use crate::security::vulnerability::{generate_summary, parse_vulnerability_json};
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::schema::SecurityOpsConfig;
+use galleon_config::schema::SecurityOpsConfig;
 
 /// Security operations tool — triage alerts, run playbooks, parse vulns, generate reports.
 pub struct SecurityOpsTool {

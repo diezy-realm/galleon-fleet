@@ -13,7 +13,7 @@ use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
 use clawcrew_api::agent::TurnEvent;
 use clawcrew_api::model_provider::StreamEvent;
-use clawcrew_config::schema::StreamReasoningMode;
+use galleon_config::schema::StreamReasoningMode;
 use galleon_providers::{ChatMessage, ChatRequest, ModelProvider, ProviderDispatch, ToolCall};
 
 #[derive(Debug, Default)]

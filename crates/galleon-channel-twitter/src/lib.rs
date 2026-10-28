@@ -59,7 +59,7 @@ impl TwitterChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_runtime_proxy_client("channel.twitter")
+        galleon_config::schema::build_runtime_proxy_client("channel.twitter")
     }
 
     /// Single-identifier convenience kept for the unit tests; the polling
@@ -605,7 +605,7 @@ mod tests {
         let toml_str = r#"
 bearer_token = "AAAA"
 "#;
-        let config: clawcrew_config::schema::TwitterConfig = toml::from_str(toml_str).unwrap();
+        let config: galleon_config::schema::TwitterConfig = toml::from_str(toml_str).unwrap();
         assert_eq!(config.bearer_token, "AAAA");
     }
 
@@ -614,7 +614,7 @@ bearer_token = "AAAA"
         let toml_str = r#"
 bearer_token = "tok"
 "#;
-        let config: clawcrew_config::schema::TwitterConfig = toml::from_str(toml_str).unwrap();
+        let config: galleon_config::schema::TwitterConfig = toml::from_str(toml_str).unwrap();
         assert_eq!(config.bearer_token, "tok");
     }
 }

@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 /// Compact-mode helper for loading a skill's source file on demand.
 /// Supports workspace skills, open-skills, agent-bound skill bundles, and plugin skills.
@@ -122,7 +122,7 @@ mod tests {
     use super::*;
     use std::sync::Arc;
     use tempfile::TempDir;
-    use clawcrew_config::schema::{Config, SkillsConfig};
+    use galleon_config::schema::{Config, SkillsConfig};
 
     fn config_for_tmp(tmp: &TempDir) -> Config {
         Config {
@@ -240,7 +240,7 @@ description = "Ship safely"
     #[tokio::test]
     async fn reads_skill_from_agent_bundle() {
         use tempfile::TempDir;
-        use clawcrew_config::schema::{AliasedAgentConfig, SkillBundleConfig};
+        use galleon_config::schema::{AliasedAgentConfig, SkillBundleConfig};
 
         let tmp = TempDir::new().unwrap();
 
@@ -289,7 +289,7 @@ description = "Ship safely"
     #[tokio::test]
     async fn workspace_skill_overrides_bundle_skill() {
         use tempfile::TempDir;
-        use clawcrew_config::schema::{AliasedAgentConfig, SkillBundleConfig};
+        use galleon_config::schema::{AliasedAgentConfig, SkillBundleConfig};
 
         let tmp = TempDir::new().unwrap();
 

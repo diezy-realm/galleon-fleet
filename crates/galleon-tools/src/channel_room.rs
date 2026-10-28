@@ -9,7 +9,7 @@ use std::{
 };
 use clawcrew_api::channel::{Channel, RoomCreationOptions, RoomVisibility};
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::{SecurityPolicy, ToolOperation};
+use galleon_config::policy::{SecurityPolicy, ToolOperation};
 
 const TOOL_DESCRIPTION_KEY: &str = "tool-channel-room";
 static TOOL_DESCRIPTION: OnceLock<String> = OnceLock::new();

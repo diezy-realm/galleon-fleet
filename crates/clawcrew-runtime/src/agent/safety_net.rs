@@ -37,9 +37,9 @@ fn test_workspace() -> tempfile::TempDir {
 }
 
 fn mem_none(workspace: &Path) -> Arc<dyn Memory> {
-    let cfg = clawcrew_config::schema::MemoryConfig {
+    let cfg = galleon_config::schema::MemoryConfig {
         backend: "none".into(),
-        ..clawcrew_config::schema::MemoryConfig::default()
+        ..galleon_config::schema::MemoryConfig::default()
     };
     Arc::from(
         galleon_memory::create_memory(&cfg, workspace, None)
@@ -103,7 +103,7 @@ pub(super) fn build_cost_context(
     let tmpdir = tempfile::TempDir::new().unwrap();
     let tracker = Arc::new(
         CostTracker::new(
-            clawcrew_config::schema::CostConfig::default(),
+            galleon_config::schema::CostConfig::default(),
             tmpdir.path(),
         )
         .expect("CostTracker::new"),
@@ -223,7 +223,7 @@ fn build_agent(provider: Box<dyn ModelProvider>, tools_vec: Vec<Box<dyn Tool>>) 
 fn build_agent_with_runtime(
     provider: Box<dyn ModelProvider>,
     tools_vec: Vec<Box<dyn Tool>>,
-    resolved: clawcrew_config::schema::ResolvedRuntime,
+    resolved: galleon_config::schema::ResolvedRuntime,
 ) -> TestAgent {
     let workspace = test_workspace();
     let agent = Agent::builder()
@@ -235,9 +235,9 @@ fn build_agent_with_runtime(
         .observer(Arc::from(observability::NoopObserver {}))
         .tool_dispatcher(Box::new(NativeToolDispatcher))
         .workspace_dir(workspace.path().to_path_buf())
-        .config(clawcrew_config::schema::AliasedAgentConfig {
+        .config(galleon_config::schema::AliasedAgentConfig {
             resolved,
-            ..clawcrew_config::schema::AliasedAgentConfig::default()
+            ..galleon_config::schema::AliasedAgentConfig::default()
         })
         .build()
         .expect("agent builder should succeed");
@@ -375,9 +375,9 @@ async fn safety_net_agent_turn_errors_at_iteration_cap() {
             name: "echo",
             calls,
         })],
-        clawcrew_config::schema::ResolvedRuntime {
+        galleon_config::schema::ResolvedRuntime {
             max_tool_iterations: 3,
-            ..clawcrew_config::schema::ResolvedRuntime::default()
+            ..galleon_config::schema::ResolvedRuntime::default()
         },
     );
     let err = agent
@@ -593,7 +593,7 @@ async fn safety_net_thinking_never_leaks_into_draft_or_chunks() {
                 observer: &observability::NoopObserver {},
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 hooks: None,
                 activated_tools: None,
@@ -604,15 +604,15 @@ async fn safety_net_thinking_never_leaks_into_draft_or_chunks() {
                 max_tool_iterations: 5,
                 excluded_tools: &[],
                 dedup_exempt_tools: &[],
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 30_000,
-                context_limits: clawcrew_config::schema::ResolvedContextLimits {
+                context_limits: galleon_config::schema::ResolvedContextLimits {
                     model_context_window: 100_000,
                     context_token_budget: 100_000,
                     model_context_window_source:
-                        clawcrew_config::schema::ModelContextWindowSource::Configured,
+                        galleon_config::schema::ModelContextWindowSource::Configured,
                 },
                 context_limits_resolver: None,
                 knobs: &crate::agent::loop_::LoopKnobs::default(),
@@ -760,9 +760,9 @@ async fn safety_net_streaming_approval_deny_with_edit_round_trip() {
     let exec_count = Arc::new(AtomicUsize::new(0));
     let requests = Arc::new(AtomicUsize::new(0));
     let seen_summary = Arc::new(parking_lot::Mutex::new(None));
-    let risk = clawcrew_config::schema::RiskProfileConfig {
+    let risk = galleon_config::schema::RiskProfileConfig {
         always_ask: vec!["echo".into()],
-        ..clawcrew_config::schema::RiskProfileConfig::default()
+        ..galleon_config::schema::RiskProfileConfig::default()
     };
     let approval_mgr = Arc::new(ApprovalManager::for_non_interactive(&risk));
     let workspace = test_workspace();
@@ -1008,7 +1008,7 @@ async fn safety_net_task_locals_probe_per_entry_path() {
                         observer: &observability::NoopObserver {},
                         silent: true,
                         approval: None,
-                        multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                        multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                         config: None,
                         hooks: None,
                         activated_tools: None,
@@ -1019,15 +1019,15 @@ async fn safety_net_task_locals_probe_per_entry_path() {
                         max_tool_iterations: 5,
                         excluded_tools: &[],
                         dedup_exempt_tools: &[],
-                        pacing: &clawcrew_config::schema::PacingConfig::default(),
+                        pacing: &galleon_config::schema::PacingConfig::default(),
                         strict_tool_parsing: false,
                         parallel_tools: false,
                         max_tool_result_chars: 30_000,
-                        context_limits: clawcrew_config::schema::ResolvedContextLimits {
+                        context_limits: galleon_config::schema::ResolvedContextLimits {
                             model_context_window: 100_000,
                             context_token_budget: 100_000,
                             model_context_window_source:
-                                clawcrew_config::schema::ModelContextWindowSource::Configured,
+                                galleon_config::schema::ModelContextWindowSource::Configured,
                         },
                         context_limits_resolver: None,
                         knobs: &crate::agent::loop_::LoopKnobs::default(),
@@ -1300,11 +1300,11 @@ async fn safety_net_agent_turn_agent_end_reports_token_totals() {
 #[tokio::test]
 async fn safety_net_turn_survives_in_loop_history_pruning() {
     let filler = "x".repeat(400);
-    let runtime = clawcrew_config::schema::ResolvedRuntime {
+    let runtime = galleon_config::schema::ResolvedRuntime {
         // ~40 seeded messages × (100 tokens content + 4 framing) ≫ 500.
         // Explicit absolute budget keeps proactive trimming at 500.
         max_context_tokens: Some(500),
-        ..clawcrew_config::schema::ResolvedRuntime::default()
+        ..galleon_config::schema::ResolvedRuntime::default()
     };
 
     // Agent::turn (new_messages_out path)
@@ -1767,9 +1767,9 @@ async fn safety_net_graceful_summary_persists_assistant_summary() {
             name: "echo",
             calls,
         })],
-        clawcrew_config::schema::ResolvedRuntime {
+        galleon_config::schema::ResolvedRuntime {
             max_tool_iterations: 2,
-            ..clawcrew_config::schema::ResolvedRuntime::default()
+            ..galleon_config::schema::ResolvedRuntime::default()
         },
     );
     let (tx, _rx) = mpsc::channel(256);
@@ -1815,9 +1815,9 @@ async fn safety_net_graceful_summary_emits_turn_event_chunk() {
             name: "echo",
             calls,
         })],
-        clawcrew_config::schema::ResolvedRuntime {
+        galleon_config::schema::ResolvedRuntime {
             max_tool_iterations: 2,
-            ..clawcrew_config::schema::ResolvedRuntime::default()
+            ..galleon_config::schema::ResolvedRuntime::default()
         },
     );
     let (tx, mut rx) = mpsc::channel(256);
@@ -1863,9 +1863,9 @@ async fn safety_net_failed_graceful_summary_does_not_persist_prompt() {
             name: "echo",
             calls,
         })],
-        clawcrew_config::schema::ResolvedRuntime {
+        galleon_config::schema::ResolvedRuntime {
             max_tool_iterations: 2,
-            ..clawcrew_config::schema::ResolvedRuntime::default()
+            ..galleon_config::schema::ResolvedRuntime::default()
         },
     );
     let (tx, _rx) = mpsc::channel(256);
@@ -2016,9 +2016,9 @@ fn approval_agent(
 async fn safety_net_loop_approval_requested_then_executed_on_approve() {
     let exec = Arc::new(AtomicUsize::new(0));
     let requests = Arc::new(AtomicUsize::new(0));
-    let risk = clawcrew_config::schema::RiskProfileConfig {
+    let risk = galleon_config::schema::RiskProfileConfig {
         always_ask: vec!["echo".into()],
-        ..clawcrew_config::schema::RiskProfileConfig::default()
+        ..galleon_config::schema::RiskProfileConfig::default()
     };
     let mut agent = approval_agent(
         Box::new(ScriptedProvider::new(vec![tool_response(vec![tool_call(
@@ -2051,9 +2051,9 @@ async fn safety_net_loop_approval_requested_then_executed_on_approve() {
 async fn safety_net_loop_approval_denied_blocks_execution() {
     let exec = Arc::new(AtomicUsize::new(0));
     let requests = Arc::new(AtomicUsize::new(0));
-    let risk = clawcrew_config::schema::RiskProfileConfig {
+    let risk = galleon_config::schema::RiskProfileConfig {
         always_ask: vec!["echo".into()],
-        ..clawcrew_config::schema::RiskProfileConfig::default()
+        ..galleon_config::schema::RiskProfileConfig::default()
     };
     let mut agent = approval_agent(
         Box::new(ScriptedProvider::new(vec![tool_response(vec![tool_call(
@@ -2106,7 +2106,7 @@ async fn safety_net_loop_shell_does_not_trust_model_supplied_approved_arg() {
             last_args: Arc::clone(&captured),
         })],
         Some(Arc::new(ApprovalManager::for_non_interactive_backchannel(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
         ))),
         Some(Arc::new(RecordingApprovalChannel {
             response: clawcrew_api::channel::ChannelApprovalResponse::Deny,
@@ -2154,7 +2154,7 @@ async fn safety_net_loop_shell_marks_args_approved_after_backchannel_approval() 
             last_args: Arc::clone(&captured),
         })],
         Some(Arc::new(ApprovalManager::for_non_interactive_backchannel(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
         ))),
         Some(Arc::new(RecordingApprovalChannel {
             response: clawcrew_api::channel::ChannelApprovalResponse::Approve,
@@ -2200,7 +2200,7 @@ async fn safety_net_loop_shell_keeps_runtime_approval_from_always_allowlist() {
             last_args: Arc::clone(&captured),
         })],
         Some(Arc::new(ApprovalManager::for_non_interactive_backchannel(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
         ))),
         Some(Arc::new(RecordingApprovalChannel {
             response: clawcrew_api::channel::ChannelApprovalResponse::AlwaysApprove,
@@ -2661,7 +2661,7 @@ async fn safety_net_narration_reaches_both_draft_and_event_channels_once() {
                 observer: &observability::NoopObserver {},
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 hooks: None,
                 activated_tools: None,
@@ -2672,13 +2672,13 @@ async fn safety_net_narration_reaches_both_draft_and_event_channels_once() {
                 max_tool_iterations: 5,
                 excluded_tools: &[],
                 dedup_exempt_tools: &[],
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 30_000,
-                context_limits: clawcrew_config::schema::ResolvedContextLimits {
+                context_limits: galleon_config::schema::ResolvedContextLimits {
                     context_token_budget: 100_000,
-                    ..clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0)
+                    ..galleon_config::schema::ResolvedContextLimits::legacy_fallback(0)
                 },
                 context_limits_resolver: None,
                 knobs: &crate::agent::loop_::LoopKnobs::default(),
@@ -2890,7 +2890,7 @@ async fn usage_event_coherent_tuple_vision_route() {
     use crate::agent::cost::TOOL_LOOP_COST_TRACKING_CONTEXT;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
-    use clawcrew_config::schema::MultimodalConfig;
+    use galleon_config::schema::MultimodalConfig;
 
     // Two cells: vision provider with and without an explicit context_window.
     // Vision routing must emit Usage with the vision provider's ref + model,
@@ -3130,7 +3130,7 @@ async fn usage_event_coherent_tuple_in_turn_model_switch() {
         // The model route forces credential resolution to look up provider B's
         // config entry (api_key/uri) instead of falling back to the primary's.
         cfg.model_routes
-            .push(clawcrew_config::schema::ModelRouteConfig {
+            .push(galleon_config::schema::ModelRouteConfig {
                 hint: "matrix-switch".into(),
                 model_provider: "anthropic.provider-b".into(),
                 model: "claude-3-opus".into(),
@@ -3312,7 +3312,7 @@ async fn usage_by_provider_breakdown_after_in_turn_model_switch() {
         .insert("claude-3-opus.cached_input".into(), 0.0);
 
     cfg.model_routes
-        .push(clawcrew_config::schema::ModelRouteConfig {
+        .push(galleon_config::schema::ModelRouteConfig {
             hint: "req-b2-switch".into(),
             model_provider: "anthropic.provider-b".into(),
             model: "claude-3-opus".into(),
@@ -3347,7 +3347,7 @@ async fn usage_by_provider_breakdown_after_in_turn_model_switch() {
     let tmpdir = tempfile::TempDir::new().unwrap();
     let tracker = Arc::new(
         crate::cost::CostTracker::new(
-            clawcrew_config::schema::CostConfig::default(),
+            galleon_config::schema::CostConfig::default(),
             tmpdir.path(),
         )
         .expect("CostTracker::new"),
@@ -3862,7 +3862,7 @@ async fn poisoned_model_switch_callback_still_raises_model_switch_requested() {
                 observer: &observability::NoopObserver {},
                 silent: true,
                 approval: None,
-                multimodal_config: &clawcrew_config::schema::MultimodalConfig::default(),
+                multimodal_config: &galleon_config::schema::MultimodalConfig::default(),
                 config: None,
                 hooks: None,
                 activated_tools: None,
@@ -3873,11 +3873,11 @@ async fn poisoned_model_switch_callback_still_raises_model_switch_requested() {
                 max_tool_iterations: 5,
                 excluded_tools: &[],
                 dedup_exempt_tools: &[],
-                pacing: &clawcrew_config::schema::PacingConfig::default(),
+                pacing: &galleon_config::schema::PacingConfig::default(),
                 strict_tool_parsing: false,
                 parallel_tools: false,
                 max_tool_result_chars: 30_000,
-                context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(
+                context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(
                     100_000,
                 ),
                 context_limits_resolver: None,

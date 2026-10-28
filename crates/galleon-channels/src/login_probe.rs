@@ -14,7 +14,7 @@
 //! lifecycle-only.
 
 use crate::listing::QrPairingChannel;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 /// Result of a persisted-login probe for one channel alias.
 ///
@@ -91,7 +91,7 @@ mod tests {
     #[cfg(any(feature = "channel-wechat", feature = "whatsapp-web"))]
     use crate::listing::QrPairingChannel;
     #[cfg(any(feature = "channel-wechat", feature = "whatsapp-web"))]
-    use clawcrew_config::schema::Config;
+    use galleon_config::schema::Config;
 
     #[test]
     fn channels_without_a_probe_resolve_to_no_qr_pairing_key() {
@@ -112,7 +112,7 @@ mod tests {
         let mut config = Config::default();
         config.channels.wechat.insert(
             "admin".to_string(),
-            clawcrew_config::schema::WeChatConfig {
+            galleon_config::schema::WeChatConfig {
                 enabled: true,
                 state_dir: Some(temp.path().to_string_lossy().into_owned()),
                 ..Default::default()
@@ -146,7 +146,7 @@ mod tests {
         let mut config = Config::default();
         config.channels.whatsapp.insert(
             "admin".to_string(),
-            clawcrew_config::schema::WhatsAppConfig {
+            galleon_config::schema::WhatsAppConfig {
                 enabled: true,
                 session_path: Some(session_path.to_string_lossy().into_owned()),
                 ..Default::default()

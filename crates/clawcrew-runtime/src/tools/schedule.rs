@@ -7,7 +7,7 @@ use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::runtime_traits::RuntimeAdapter;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 /// Tool that lets the agent manage recurring and one-shot scheduled tasks.
 pub struct ScheduleTool {
@@ -594,8 +594,8 @@ mod tests {
         let config = config_with_test_agent_profiles(
             tmp.path().join("workspace"),
             tmp.path().join("config.toml"),
-            clawcrew_config::schema::RiskProfileConfig::default(),
-            clawcrew_config::schema::RuntimeProfileConfig::default(),
+            galleon_config::schema::RiskProfileConfig::default(),
+            galleon_config::schema::RuntimeProfileConfig::default(),
         );
         tokio::fs::create_dir_all(&config.data_dir).await.unwrap();
         let security = Arc::new(SecurityPolicy::for_agent(&config, TEST_AGENT).unwrap());
@@ -701,8 +701,8 @@ mod tests {
     fn config_with_test_agent_profiles(
         workspace: std::path::PathBuf,
         config_path: std::path::PathBuf,
-        risk: clawcrew_config::schema::RiskProfileConfig,
-        runtime: clawcrew_config::schema::RuntimeProfileConfig,
+        risk: galleon_config::schema::RiskProfileConfig,
+        runtime: galleon_config::schema::RuntimeProfileConfig,
     ) -> Config {
         let mut config = Config {
             data_dir: workspace,
@@ -730,7 +730,7 @@ mod tests {
             .ensure("openrouter", TEST_AGENT)
             .expect("known family");
         config.agents.entry(TEST_AGENT.to_string()).or_insert(
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 model_provider: format!("openrouter.{TEST_AGENT}").into(),
                 risk_profile: TEST_AGENT.into(),
                 runtime_profile: TEST_AGENT.into(),
@@ -745,11 +745,11 @@ mod tests {
         let config = config_with_test_agent_profiles(
             tmp.path().join("workspace"),
             tmp.path().join("config.toml"),
-            clawcrew_config::schema::RiskProfileConfig {
+            galleon_config::schema::RiskProfileConfig {
                 level: AutonomyLevel::ReadOnly,
                 ..Default::default()
             },
-            clawcrew_config::schema::RuntimeProfileConfig::default(),
+            galleon_config::schema::RuntimeProfileConfig::default(),
         );
         tokio::fs::create_dir_all(&config.data_dir).await.unwrap();
         let security = Arc::new(SecurityPolicy::for_agent(&config, TEST_AGENT).unwrap());
@@ -777,11 +777,11 @@ mod tests {
         let config = config_with_test_agent_profiles(
             tmp.path().join("workspace"),
             tmp.path().join("config.toml"),
-            clawcrew_config::schema::RiskProfileConfig {
+            galleon_config::schema::RiskProfileConfig {
                 level: AutonomyLevel::Full,
                 ..Default::default()
             },
-            clawcrew_config::schema::RuntimeProfileConfig {
+            galleon_config::schema::RuntimeProfileConfig {
                 max_actions_per_hour: 0,
                 ..Default::default()
             },
@@ -818,11 +818,11 @@ mod tests {
         let config = config_with_test_agent_profiles(
             tmp.path().join("workspace"),
             tmp.path().join("config.toml"),
-            clawcrew_config::schema::RiskProfileConfig {
+            galleon_config::schema::RiskProfileConfig {
                 level: AutonomyLevel::Full,
                 ..Default::default()
             },
-            clawcrew_config::schema::RuntimeProfileConfig {
+            galleon_config::schema::RuntimeProfileConfig {
                 max_actions_per_hour: 1,
                 ..Default::default()
             },

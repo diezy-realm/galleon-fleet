@@ -34,7 +34,7 @@ Terdapat kebutuhan untuk mendefinisikan batas arsitektural, perbandingan keamana
 2. **MCP sebagai Bridge Integrasi Eksternal Fleksibel**:
    - Digunakan untuk memanfaatkan ekosistem open-source MCP yang sudah ada (alat CLI, bridge database, integrasi sistem operasi).
    - Seluruh eksekusi MCP stdio **wajib** melalui `apply_default_mcp_sandbox` dan dianjurkan menggunakan `McpCommandBoundary` pada lingkungan produksi terisolasi.
-   - Rahasia wajib dimediasi melalui config vault (`clawcrew-config::secrets`).
+   - Rahasia wajib dimediasi melalui config vault (`galleon-config::secrets`).
 
 ## Konsekuensi
 

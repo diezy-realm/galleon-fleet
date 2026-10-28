@@ -1,6 +1,6 @@
 //! Gateway cron adapter: fully decoupled from `clawcrew-runtime`.
 //!
-//! Uses leaf crates `galleon-infra`, `clawcrew-config`, and `clawcrew-api`
+//! Uses leaf crates `galleon-infra`, `galleon-config`, and `clawcrew-api`
 //! for all cron state persistence, validation, and execution.
 #![allow(dead_code)]
 
@@ -9,7 +9,7 @@ use std::sync::OnceLock;
 
 use anyhow::Context;
 use clawcrew_api::runtime_traits::CronRunner;
-use clawcrew_config::schema::{Config, CronJobDecl, CronScheduleDecl, CronShellOutputFormat};
+use galleon_config::schema::{Config, CronJobDecl, CronScheduleDecl, CronShellOutputFormat};
 use galleon_infra::cron_schedule::{next_run_for_schedule, schedule_cron_expression};
 use galleon_infra::cron_store::CronStore;
 use galleon_infra::cron_types::{
@@ -109,7 +109,7 @@ pub fn add_shell_job_with_approval_and_format(
     approved: bool,
     shell_output_format: CronShellOutputFormat,
 ) -> anyhow::Result<CronJob> {
-    let security = clawcrew_config::policy::SecurityPolicy::for_agent(config, agent_alias)?;
+    let security = galleon_config::policy::SecurityPolicy::for_agent(config, agent_alias)?;
     #[cfg(windows)]
     let dialect = clawcrew_api::runtime_traits::ShellDialect::WindowsCmd;
     #[cfg(not(windows))]
@@ -163,7 +163,7 @@ pub fn update_shell_job_with_approval(
         patch.prompt = patch.command.take().or(patch.prompt);
     }
     if let Some(command) = patch.command.as_deref() {
-        let security = clawcrew_config::policy::SecurityPolicy::for_agent(config, agent_alias)?;
+        let security = galleon_config::policy::SecurityPolicy::for_agent(config, agent_alias)?;
         #[cfg(windows)]
         let dialect = clawcrew_api::runtime_traits::ShellDialect::WindowsCmd;
         #[cfg(not(windows))]

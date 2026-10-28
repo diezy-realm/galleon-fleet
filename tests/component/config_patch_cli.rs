@@ -10,7 +10,7 @@ use axum::{Router, routing::patch};
 use clawcrew::gateway::{self, AppState};
 #[cfg(feature = "gateway")]
 use clawcrew_api::attribution::Attributable;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 #[cfg(feature = "gateway")]
 use galleon_memory::NoneMemory;
 #[cfg(feature = "gateway")]
@@ -74,7 +74,7 @@ fn test_state(config: Config) -> AppState {
         memory_strategy: Arc::new(
             clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
                 memory,
-                clawcrew_config::schema::MemoryConfig::default(),
+                galleon_config::schema::MemoryConfig::default(),
                 std::path::PathBuf::new(),
             ),
         ),
@@ -82,7 +82,7 @@ fn test_state(config: Config) -> AppState {
         pairing: Arc::new(PairingGuard::new(
             false,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         )),
         trust_forwarded_headers: false,
         rate_limiter: Arc::new(gateway::GatewayRateLimiter::new(100, 100, 100)),
@@ -760,7 +760,7 @@ fn config_patch_add_does_not_materialize_resource_keyed_rate_alias() {
 #[test]
 fn config_patch_replace_on_dotted_resource_id_does_not_plant_phantom_sibling() {
     let config_dir = tempfile::tempdir().expect("temp config dir");
-    let version = clawcrew_config::migration::CURRENT_SCHEMA_VERSION;
+    let version = galleon_config::migration::CURRENT_SCHEMA_VERSION;
     std::fs::write(
         config_dir.path().join("config.toml"),
         format!(

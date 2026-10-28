@@ -310,7 +310,7 @@ impl CopilotModelProvider {
         }
     }
     fn http_client(&self) -> Client {
-        clawcrew_config::schema::build_runtime_proxy_client_with_timeouts(
+        galleon_config::schema::build_runtime_proxy_client_with_timeouts(
             "model_provider.copilot",
             120,
             10,

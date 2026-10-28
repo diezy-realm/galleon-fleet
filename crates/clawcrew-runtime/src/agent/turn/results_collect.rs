@@ -13,7 +13,7 @@ use std::collections::HashSet;
 use std::fmt::Write;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
-use clawcrew_config::schema::PacingConfig;
+use galleon_config::schema::PacingConfig;
 use galleon_providers::ChatMessage;
 use galleon_tool_call_parser::ParsedToolCall;
 

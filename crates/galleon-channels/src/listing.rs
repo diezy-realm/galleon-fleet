@@ -1,7 +1,7 @@
 //! Enumerate the channel types compiled into this binary.
 
-use clawcrew_config::schema::ChannelsConfig;
-use clawcrew_config::traits::ChannelInfo;
+use galleon_config::schema::ChannelsConfig;
+use galleon_config::traits::ChannelInfo;
 
 struct ChannelCompileSpec {
     /// Display name from `ChannelsConfig::channels()`, when the channel lives
@@ -354,11 +354,11 @@ mod tests {
         let mut cfg = ChannelsConfig::default();
         cfg.slack.insert(
             "default".to_string(),
-            clawcrew_config::schema::SlackConfig::default(),
+            galleon_config::schema::SlackConfig::default(),
         );
         cfg.plugin.insert(
             "mail".to_string(),
-            clawcrew_config::schema::PluginChannelConfig {
+            galleon_config::schema::PluginChannelConfig {
                 package: "email-plugin".to_string(),
                 enabled: true,
             },
@@ -452,7 +452,7 @@ mod tests {
             "voice_duplex",
         ]);
 
-        for channel_type in clawcrew_config::schema::v2::V3_CHANNEL_TYPES {
+        for channel_type in galleon_config::schema::v2::V3_CHANNEL_TYPES {
             if out_of_scope.contains(channel_type) {
                 continue;
             }

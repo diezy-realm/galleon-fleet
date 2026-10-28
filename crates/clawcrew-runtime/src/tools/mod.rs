@@ -170,7 +170,7 @@ use crate::security::{Sandbox, SecurityPolicy, create_sandbox};
 use crate::sop::audit::SopAuditLogger;
 use crate::sop::engine::SopEngine;
 use async_trait::async_trait;
-use clawcrew_config::schema::{AliasedAgentConfig, Config};
+use galleon_config::schema::{AliasedAgentConfig, Config};
 use galleon_memory::Memory;
 use parking_lot::RwLock;
 use std::collections::HashMap;
@@ -455,7 +455,7 @@ pub(crate) fn register_skill_tools_with_context_and_runtime_optional_nat64(
 
 pub async fn collect_mcp_elevation_arcs(
     registry: &Arc<McpRegistry>,
-    security: &Arc<clawcrew_config::policy::SecurityPolicy>,
+    security: &Arc<galleon_config::policy::SecurityPolicy>,
 ) -> Vec<Arc<dyn Tool>> {
     let mut arcs: Vec<Arc<dyn Tool>> = Vec::new();
     for name in registry.tool_names() {
@@ -576,18 +576,18 @@ impl AllToolsResult {
 pub fn all_tools(
     config: Arc<Config>,
     security: &Arc<SecurityPolicy>,
-    risk_profile: &clawcrew_config::schema::RiskProfileConfig,
+    risk_profile: &galleon_config::schema::RiskProfileConfig,
     agent_alias: &str,
     memory: Arc<dyn Memory>,
     composio_key: Option<&str>,
     composio_entity_id: Option<&str>,
-    browser_config: &clawcrew_config::schema::BrowserConfig,
-    http_config: &clawcrew_config::schema::HttpRequestConfig,
-    web_fetch_config: &clawcrew_config::schema::WebFetchConfig,
+    browser_config: &galleon_config::schema::BrowserConfig,
+    http_config: &galleon_config::schema::HttpRequestConfig,
+    web_fetch_config: &galleon_config::schema::WebFetchConfig,
     workspace_dir: &std::path::Path,
     agents: &HashMap<String, AliasedAgentConfig>,
     fallback_api_key: Option<&str>,
-    root_config: &clawcrew_config::schema::Config,
+    root_config: &galleon_config::schema::Config,
     canvas_store: Option<CanvasStore>,
     is_subagent_caller: bool,
     tui_env: Option<HashMap<String, String>>,
@@ -622,7 +622,7 @@ pub fn all_tools(
 fn filter_agent_peer_groups(
     config: &Config,
     agent_alias: &str,
-) -> HashMap<String, clawcrew_config::multi_agent::PeerGroupConfig> {
+) -> HashMap<String, galleon_config::multi_agent::PeerGroupConfig> {
     config
         .peer_groups
         .iter()
@@ -640,12 +640,12 @@ struct RuntimeShellAssembly {
 /// making the lower-level tools crate depend on the runtime crate.
 struct RuntimeGitCommandBoundary {
     sandbox: Arc<dyn Sandbox>,
-    runtime_kind: clawcrew_config::schema::RuntimeKind,
+    runtime_kind: galleon_config::schema::RuntimeKind,
 }
 
 impl GitCommandBoundary for RuntimeGitCommandBoundary {
     fn wrap_command(&self, command: &mut std::process::Command) -> anyhow::Result<()> {
-        if self.runtime_kind == clawcrew_config::schema::RuntimeKind::Docker {
+        if self.runtime_kind == galleon_config::schema::RuntimeKind::Docker {
             anyhow::bail!(crate::i18n::get_required_cli_string(
                 "tool-git-operations-error-docker-runtime-write-unsupported"
             ));
@@ -671,7 +671,7 @@ impl McpCommandBoundary for RuntimeMcpCommandBoundary {
     fn wrap_command(
         &self,
         command: &mut std::process::Command,
-        config: &clawcrew_config::schema::McpServerConfig,
+        config: &galleon_config::schema::McpServerConfig,
     ) -> anyhow::Result<()> {
         if !config.is_sandboxed() {
             return Ok(());
@@ -687,7 +687,7 @@ impl McpCommandBoundary for RuntimeMcpCommandBoundary {
 fn runtime_shell_assembly(
     security: Arc<SecurityPolicy>,
     runtime: Arc<dyn RuntimeAdapter>,
-    risk_profile: &clawcrew_config::schema::RiskProfileConfig,
+    risk_profile: &galleon_config::schema::RiskProfileConfig,
     root_config: &Config,
 ) -> RuntimeShellAssembly {
     let sandbox_cfg = risk_profile.sandbox_config();
@@ -719,7 +719,7 @@ fn runtime_shell_assembly(
 pub fn shell_tool_for_runtime(
     security: Arc<SecurityPolicy>,
     runtime: Arc<dyn RuntimeAdapter>,
-    risk_profile: &clawcrew_config::schema::RiskProfileConfig,
+    risk_profile: &galleon_config::schema::RiskProfileConfig,
     root_config: &Config,
 ) -> ShellTool {
     runtime_shell_assembly(security, runtime, risk_profile, root_config).shell_tool
@@ -891,25 +891,25 @@ fn warm_lazy_regexes() {
 pub fn all_tools_with_runtime(
     config: Arc<Config>,
     security: &Arc<SecurityPolicy>,
-    risk_profile: &clawcrew_config::schema::RiskProfileConfig,
+    risk_profile: &galleon_config::schema::RiskProfileConfig,
     agent_alias: &str,
     runtime: Arc<dyn RuntimeAdapter>,
     memory: Arc<dyn Memory>,
     composio_key: Option<&str>,
     composio_entity_id: Option<&str>,
-    browser_config: &clawcrew_config::schema::BrowserConfig,
-    http_config: &clawcrew_config::schema::HttpRequestConfig,
-    web_fetch_config: &clawcrew_config::schema::WebFetchConfig,
+    browser_config: &galleon_config::schema::BrowserConfig,
+    http_config: &galleon_config::schema::HttpRequestConfig,
+    web_fetch_config: &galleon_config::schema::WebFetchConfig,
     workspace_dir: &std::path::Path,
     agents: &HashMap<String, AliasedAgentConfig>,
     fallback_api_key: Option<&str>,
-    root_config: &clawcrew_config::schema::Config,
+    root_config: &galleon_config::schema::Config,
     canvas_store: Option<CanvasStore>,
     is_subagent_caller: bool,
     tui_env: Option<HashMap<String, String>>,
     sop_engine: Option<Arc<Mutex<SopEngine>>>,
     sop_audit: Option<Arc<SopAuditLogger>>,
-    live_config: Option<Arc<parking_lot::RwLock<clawcrew_config::schema::Config>>>,
+    live_config: Option<Arc<parking_lot::RwLock<galleon_config::schema::Config>>>,
 ) -> anyhow::Result<AllToolsResult> {
     all_tools_with_runtime_and_acp_sessions(
         config,
@@ -946,19 +946,19 @@ pub fn all_tools_with_runtime(
 pub fn all_tools_with_runtime_and_acp_sessions(
     config: Arc<Config>,
     security: &Arc<SecurityPolicy>,
-    risk_profile: &clawcrew_config::schema::RiskProfileConfig,
+    risk_profile: &galleon_config::schema::RiskProfileConfig,
     agent_alias: &str,
     runtime: Arc<dyn RuntimeAdapter>,
     memory: Arc<dyn Memory>,
     composio_key: Option<&str>,
     composio_entity_id: Option<&str>,
-    browser_config: &clawcrew_config::schema::BrowserConfig,
-    http_config: &clawcrew_config::schema::HttpRequestConfig,
-    web_fetch_config: &clawcrew_config::schema::WebFetchConfig,
+    browser_config: &galleon_config::schema::BrowserConfig,
+    http_config: &galleon_config::schema::HttpRequestConfig,
+    web_fetch_config: &galleon_config::schema::WebFetchConfig,
     workspace_dir: &std::path::Path,
     agents: &HashMap<String, AliasedAgentConfig>,
     fallback_api_key: Option<&str>,
-    root_config: &clawcrew_config::schema::Config,
+    root_config: &galleon_config::schema::Config,
     canvas_store: Option<CanvasStore>,
     is_subagent_caller: bool,
     tui_env: Option<HashMap<String, String>>,
@@ -967,7 +967,7 @@ pub fn all_tools_with_runtime_and_acp_sessions(
     // Live config handle for `send_via` peer-group authority. `Some` from the
     // channel daemon (so reloads take effect); `None` for one-shot / non-channel
     // callers, which fall back to a snapshot of `root_config`.
-    live_config: Option<Arc<parking_lot::RwLock<clawcrew_config::schema::Config>>>,
+    live_config: Option<Arc<parking_lot::RwLock<galleon_config::schema::Config>>>,
     acp_sessions: Option<AcpSessionReadView>,
 ) -> anyhow::Result<AllToolsResult> {
     let builder = move || {
@@ -1034,19 +1034,19 @@ pub fn all_tools_with_runtime_and_acp_sessions(
 fn all_tools_with_runtime_on_thread(
     config: Arc<Config>,
     security: &Arc<SecurityPolicy>,
-    risk_profile: &clawcrew_config::schema::RiskProfileConfig,
+    risk_profile: &galleon_config::schema::RiskProfileConfig,
     agent_alias: &str,
     runtime: Arc<dyn RuntimeAdapter>,
     memory: Arc<dyn Memory>,
     composio_key: Option<&str>,
     composio_entity_id: Option<&str>,
-    browser_config: &clawcrew_config::schema::BrowserConfig,
-    http_config: &clawcrew_config::schema::HttpRequestConfig,
-    web_fetch_config: &clawcrew_config::schema::WebFetchConfig,
+    browser_config: &galleon_config::schema::BrowserConfig,
+    http_config: &galleon_config::schema::HttpRequestConfig,
+    web_fetch_config: &galleon_config::schema::WebFetchConfig,
     workspace_dir: &std::path::Path,
     agents: &HashMap<String, AliasedAgentConfig>,
     fallback_api_key: Option<&str>,
-    root_config: &clawcrew_config::schema::Config,
+    root_config: &galleon_config::schema::Config,
     canvas_store: Option<CanvasStore>,
     is_subagent_caller: bool,
     tui_env: Option<HashMap<String, String>>,
@@ -1055,7 +1055,7 @@ fn all_tools_with_runtime_on_thread(
     // Live config handle for `send_via` peer-group authority. `Some` from the
     // channel daemon (so reloads take effect); `None` for one-shot / non-channel
     // callers, which fall back to a snapshot of `root_config`.
-    live_config: Option<Arc<parking_lot::RwLock<clawcrew_config::schema::Config>>>,
+    live_config: Option<Arc<parking_lot::RwLock<galleon_config::schema::Config>>>,
     acp_sessions: Option<AcpSessionReadView>,
 ) -> AllToolsResult {
     let has_shell_access = runtime.has_shell_access();
@@ -1068,7 +1068,7 @@ fn all_tools_with_runtime_on_thread(
     let coding_cli_executor = coding_cli_executor::RuntimeCodingCliExecutor::shared(
         runtime.clone(),
         sandbox.clone(),
-        root_config.runtime.kind == clawcrew_config::schema::RuntimeKind::Native,
+        root_config.runtime.kind == galleon_config::schema::RuntimeKind::Native,
     );
     // Keep a shared runtime adapter available after constructing ShellTool.
     // Independent agentic delegates use it later to build the target-owned tool
@@ -1226,7 +1226,7 @@ fn all_tools_with_runtime_on_thread(
     {
         let email_configs: std::collections::HashMap<
             String,
-            clawcrew_config::scattered_types::EmailConfig,
+            galleon_config::scattered_types::EmailConfig,
         > = root_config
             .channels
             .email
@@ -1280,7 +1280,7 @@ fn all_tools_with_runtime_on_thread(
 
     if matches!(
         root_config.effective_skills_prompt_mode(agent_alias),
-        clawcrew_config::schema::SkillsPromptInjectionMode::Compact
+        galleon_config::schema::SkillsPromptInjectionMode::Compact
     ) {
         // ReadSkillTool holds full config to support workspace skills,
         // open-skills, agent-bound bundles, and plugin skills.
@@ -2109,7 +2109,7 @@ fn all_tools_with_runtime_on_thread(
         .with_providers_models({
             let mut m: std::collections::HashMap<
                 String,
-                std::collections::HashMap<String, clawcrew_config::schema::ModelProviderConfig>,
+                std::collections::HashMap<String, galleon_config::schema::ModelProviderConfig>,
             > = std::collections::HashMap::new();
             for (t, a, base) in root_config.providers.models.iter_entries() {
                 m.entry(t.to_string())
@@ -2214,7 +2214,7 @@ fn all_tools_with_runtime_on_thread(
         // Surface plugins stranded in a legacy install dir so they aren't
         // silently ignored — the user can relocate them with `plugin migrate`.
         if config.plugins.enabled {
-            for legacy in clawcrew_config::schema::legacy_plugin_dirs_with_entries(&config) {
+            for legacy in galleon_config::schema::legacy_plugin_dirs_with_entries(&config) {
                 ::clawcrew_log::record!(
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
@@ -2388,7 +2388,7 @@ fn register_plugin_tools(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::{
+    use galleon_config::schema::{
         ApprovalGroupConfig, ApprovalPolicyConfig, BrowserConfig, Config, MemoryConfig,
         SopApprovalConfig,
     };
@@ -2400,7 +2400,7 @@ mod tests {
         const ENGLISH: &str = "Git write commands are unavailable with the Docker runtime because they cannot be confined to its container.";
         let boundary = RuntimeGitCommandBoundary {
             sandbox: Arc::new(crate::security::NoopSandbox),
-            runtime_kind: clawcrew_config::schema::RuntimeKind::Docker,
+            runtime_kind: galleon_config::schema::RuntimeKind::Docker,
         };
         let mut command = std::process::Command::new("git");
 
@@ -2495,26 +2495,26 @@ mod tests {
         let mem: Arc<dyn Memory> =
             Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
         let mut cfg = test_config(&tmp);
-        cfg.runtime.kind = clawcrew_config::schema::RuntimeKind::Docker;
-        let risk = clawcrew_config::schema::RiskProfileConfig {
+        cfg.runtime.kind = galleon_config::schema::RuntimeKind::Docker;
+        let risk = galleon_config::schema::RiskProfileConfig {
             sandbox_enabled: Some(true),
             sandbox_backend: Some("docker".to_string()),
-            ..clawcrew_config::schema::RiskProfileConfig::default()
+            ..galleon_config::schema::RiskProfileConfig::default()
         };
         let tools = all_tools_with_runtime(
             Arc::new(cfg.clone()),
             &security,
             &risk,
             "test-agent",
-            Arc::new(clawcrew_config::platform::DockerRuntime::new(
+            Arc::new(galleon_config::platform::DockerRuntime::new(
                 cfg.runtime.docker.clone(),
             )),
             mem,
             None,
             None,
             &BrowserConfig::default(),
-            &clawcrew_config::schema::HttpRequestConfig::default(),
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::HttpRequestConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             repository.as_path(),
             &HashMap::new(),
             None,
@@ -2581,7 +2581,7 @@ mod tests {
     fn git_write_boundary_preserves_native_none_mode() {
         let boundary = RuntimeGitCommandBoundary {
             sandbox: Arc::new(crate::security::NoopSandbox),
-            runtime_kind: clawcrew_config::schema::RuntimeKind::Native,
+            runtime_kind: galleon_config::schema::RuntimeKind::Native,
         };
         let mut command = std::process::Command::new("git");
 
@@ -2694,7 +2694,7 @@ const = true
         .unwrap();
         let instance_key = scope.id().config_entry_key().unwrap();
         let backup_instance_key = backup_scope.id().config_entry_key().unwrap();
-        let entry = |name: &str, enabled: &str| clawcrew_config::schema::PluginEntryConfig {
+        let entry = |name: &str, enabled: &str| galleon_config::schema::PluginEntryConfig {
             name: name.to_string(),
             config: HashMap::from([("enabled".to_string(), enabled.to_string())]),
             egress_hosts: Vec::new(),
@@ -2787,7 +2787,7 @@ permissions = ["http_client"]
             "the canonical entry key must not coincide with the binding, or this test proves nothing"
         );
 
-        let entry = |name: &str| clawcrew_config::schema::PluginEntryConfig {
+        let entry = |name: &str| galleon_config::schema::PluginEntryConfig {
             name: name.to_string(),
             config: HashMap::new(),
             egress_hosts: vec!["api.example.com".to_string()],
@@ -3061,7 +3061,7 @@ permissions = ["http_client"]
         let mut config = plugin_activation_config(plugins.path());
         config.channels.plugin = HashMap::from([(
             "ops".to_string(),
-            clawcrew_config::schema::PluginChannelConfig {
+            galleon_config::schema::PluginChannelConfig {
                 package: "alpha".to_string(),
                 enabled: true,
             },
@@ -3069,7 +3069,7 @@ permissions = ["http_client"]
         config.agents = HashMap::from([(
             "operator".to_string(),
             AliasedAgentConfig {
-                channels: vec![clawcrew_config::providers::ChannelRef::new("plugin.ops")],
+                channels: vec![galleon_config::providers::ChannelRef::new("plugin.ops")],
                 ..AliasedAgentConfig::default()
             },
         )]);
@@ -3249,14 +3249,14 @@ permissions = ["http_client"]
         let tools = all_tools(
             Arc::new(config.clone()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             memory,
             None,
             None,
             &browser,
-            &clawcrew_config::schema::HttpRequestConfig::default(),
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::HttpRequestConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -3307,7 +3307,7 @@ permissions = ["http_client"]
             enabled: false,
             ..BrowserConfig::default()
         };
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
 
         let mut cfg = test_config(&tmp);
         cfg.web_search.enabled = true;
@@ -3319,14 +3319,14 @@ permissions = ["http_client"]
         let tools = all_tools(
             Arc::new(Config::default()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -3379,20 +3379,20 @@ permissions = ["http_client"]
             session_name: None,
             ..BrowserConfig::default()
         };
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let cfg = test_config(&tmp);
 
         let tools = all_tools(
             Arc::new(Config::default()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -3441,13 +3441,13 @@ permissions = ["http_client"]
             session_name: None,
             ..BrowserConfig::default()
         };
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let cfg = test_config(&tmp);
 
         let tools = all_tools_with_runtime(
             Arc::new(Config::default()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             Arc::new(NativeRuntime::new()),
             mem,
@@ -3455,7 +3455,7 @@ permissions = ["http_client"]
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -3498,18 +3498,18 @@ permissions = ["http_client"]
             session_name: None,
             ..BrowserConfig::default()
         };
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let cfg = test_config(&tmp);
 
         // Build a minimal SOP engine — no sops_dir needed for this test.
         let engine = Arc::new(Mutex::new(SopEngine::new(
-            clawcrew_config::schema::SopConfig::default(),
+            galleon_config::schema::SopConfig::default(),
         )));
 
         let tools = all_tools_with_runtime(
             Arc::new(Config::default()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             Arc::new(NativeRuntime::new()),
             mem,
@@ -3517,7 +3517,7 @@ permissions = ["http_client"]
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -3638,16 +3638,16 @@ permissions = ["http_client"]
                 ..BrowserConfig::default()
             };
             let mut cfg = test_config(&tmp);
-            cfg.runtime.kind = clawcrew_config::schema::RuntimeKind::Docker;
+            cfg.runtime.kind = galleon_config::schema::RuntimeKind::Docker;
             cfg.claude_code.enabled = false;
             cfg.codex_cli.enabled = false;
             cfg.gemini_cli.enabled = false;
             cfg.opencode_cli.enabled = false;
             enable(&mut cfg);
-            let risk = clawcrew_config::schema::RiskProfileConfig {
+            let risk = galleon_config::schema::RiskProfileConfig {
                 sandbox_enabled: Some(false),
                 sandbox_backend: Some("none".to_string()),
-                ..clawcrew_config::schema::RiskProfileConfig::default()
+                ..galleon_config::schema::RiskProfileConfig::default()
             };
             let seen_command = Arc::new(Mutex::new(None));
 
@@ -3664,8 +3664,8 @@ permissions = ["http_client"]
                 None,
                 None,
                 &browser,
-                &clawcrew_config::schema::HttpRequestConfig::default(),
-                &clawcrew_config::schema::WebFetchConfig::default(),
+                &galleon_config::schema::HttpRequestConfig::default(),
+                &galleon_config::schema::WebFetchConfig::default(),
                 tmp.path(),
                 &HashMap::new(),
                 None,
@@ -3730,16 +3730,16 @@ permissions = ["http_client"]
             ..BrowserConfig::default()
         };
         let mut cfg = test_config(&tmp);
-        cfg.runtime.kind = clawcrew_config::schema::RuntimeKind::Docker;
+        cfg.runtime.kind = galleon_config::schema::RuntimeKind::Docker;
         cfg.runtime.docker.mount_workspace = false;
         cfg.claude_code.enabled = true;
         cfg.codex_cli.enabled = true;
         cfg.gemini_cli.enabled = true;
         cfg.opencode_cli.enabled = true;
-        let risk = clawcrew_config::schema::RiskProfileConfig {
+        let risk = galleon_config::schema::RiskProfileConfig {
             sandbox_enabled: Some(false),
             sandbox_backend: Some("none".to_string()),
-            ..clawcrew_config::schema::RiskProfileConfig::default()
+            ..galleon_config::schema::RiskProfileConfig::default()
         };
 
         let tools = all_tools_with_runtime(
@@ -3747,15 +3747,15 @@ permissions = ["http_client"]
             &security,
             &risk,
             "test-agent",
-            Arc::new(clawcrew_config::platform::DockerRuntime::new(
+            Arc::new(galleon_config::platform::DockerRuntime::new(
                 cfg.runtime.docker.clone(),
             )),
             mem,
             None,
             None,
             &browser,
-            &clawcrew_config::schema::HttpRequestConfig::default(),
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::HttpRequestConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -3800,18 +3800,18 @@ permissions = ["http_client"]
             session_name: None,
             ..BrowserConfig::default()
         };
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let mut cfg = test_config(&tmp);
         cfg.sop.procedural_memory_enabled = true;
 
         let engine = Arc::new(Mutex::new(SopEngine::new(
-            clawcrew_config::schema::SopConfig::default(),
+            galleon_config::schema::SopConfig::default(),
         )));
 
         let tools = all_tools_with_runtime(
             Arc::new(Config::default()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             Arc::new(NativeRuntime::new()),
             mem,
@@ -3819,7 +3819,7 @@ permissions = ["http_client"]
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -3854,12 +3854,12 @@ permissions = ["http_client"]
 
         let cfg = test_config(&tmp);
         let browser = BrowserConfig::default();
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
-        let web = clawcrew_config::schema::WebFetchConfig::default();
-        let risk = clawcrew_config::schema::RiskProfileConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
+        let web = galleon_config::schema::WebFetchConfig::default();
+        let risk = galleon_config::schema::RiskProfileConfig::default();
 
         let shared_engine = Arc::new(Mutex::new(SopEngine::new(
-            clawcrew_config::schema::SopConfig::default(),
+            galleon_config::schema::SopConfig::default(),
         )));
         let shared_audit = Arc::new(crate::sop::SopAuditLogger::new(mem.clone()));
 
@@ -3958,7 +3958,7 @@ permissions = ["http_client"]
                 escalation_route: None,
             },
         );
-        let mut engine = SopEngine::new(clawcrew_config::schema::SopConfig {
+        let mut engine = SopEngine::new(galleon_config::schema::SopConfig {
             approval: SopApprovalConfig { groups, policies },
             ..Default::default()
         })
@@ -4014,9 +4014,9 @@ permissions = ["http_client"]
         let shared_engine = Arc::new(Mutex::new(engine));
         let cfg = test_config(&tmp);
         let browser = BrowserConfig::default();
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
-        let web = clawcrew_config::schema::WebFetchConfig::default();
-        let risk = clawcrew_config::schema::RiskProfileConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
+        let web = galleon_config::schema::WebFetchConfig::default();
+        let risk = galleon_config::schema::RiskProfileConfig::default();
 
         let build = |agent_alias: &str, memory: Arc<dyn Memory>| {
             all_tools_with_runtime(
@@ -4093,9 +4093,9 @@ permissions = ["http_client"]
         let mem: Arc<dyn Memory> =
             Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
         let browser = BrowserConfig::default();
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
-        let web = clawcrew_config::schema::WebFetchConfig::default();
-        let risk = clawcrew_config::schema::RiskProfileConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
+        let web = galleon_config::schema::WebFetchConfig::default();
+        let risk = galleon_config::schema::RiskProfileConfig::default();
 
         // root_config: shared data_dir + a Discord alias that archives (this is
         // what gates discord_search registration).
@@ -4103,7 +4103,7 @@ permissions = ["http_client"]
         root_config.data_dir = data_dir.clone();
         root_config.channels.discord.insert(
             "oracle".to_string(),
-            clawcrew_config::schema::DiscordConfig {
+            galleon_config::schema::DiscordConfig {
                 archive: true,
                 ..Default::default()
             },
@@ -4182,9 +4182,9 @@ permissions = ["http_client"]
         let config = Config {
             data_dir: tmp.path().join("data"),
             config_path: tmp.path().join("config.toml"),
-            sop: clawcrew_config::schema::SopConfig {
+            sop: galleon_config::schema::SopConfig {
                 sops_dir: Some(sops_dir.to_string_lossy().into_owned()),
-                ..clawcrew_config::schema::SopConfig::default()
+                ..galleon_config::schema::SopConfig::default()
             },
             agents: agents.clone(),
             ..Config::default()
@@ -4324,20 +4324,20 @@ permissions = ["http_client"]
             session_name: None,
             ..BrowserConfig::default()
         };
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let cfg = test_config(&tmp);
 
         let tools = all_tools(
             Arc::new(Config::default()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -4371,7 +4371,7 @@ permissions = ["http_client"]
             enabled: false,
             ..BrowserConfig::default()
         };
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
 
         // A `~` that is not a home shortcut, as in a Windows 8.3 short name.
         let mut cfg = test_config(&tmp);
@@ -4386,14 +4386,14 @@ permissions = ["http_client"]
         let tools = all_tools(
             Arc::new(Config::default()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -4428,20 +4428,20 @@ permissions = ["http_client"]
             session_name: None,
             ..BrowserConfig::default()
         };
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let cfg = test_config(&tmp);
 
         let tools = all_tools(
             Arc::new(Config::default()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -4485,20 +4485,20 @@ permissions = ["http_client"]
             session_name: None,
             ..BrowserConfig::default()
         };
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let cfg = test_config(&tmp);
 
         let tools = all_tools(
             Arc::new(Config::default()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -4535,20 +4535,20 @@ permissions = ["http_client"]
             session_name: None,
             ..BrowserConfig::default()
         };
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let cfg = test_config(&tmp);
 
         let tools = all_tools(
             Arc::new(Config::default()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -4600,15 +4600,15 @@ permissions = ["http_client"]
             all_tools_with_runtime(
                 Arc::new(Config::default()),
                 &security,
-                &clawcrew_config::schema::RiskProfileConfig::default(),
+                &galleon_config::schema::RiskProfileConfig::default(),
                 "test-agent",
                 Arc::new(NativeRuntime::new()),
                 mem.clone(),
                 None,
                 None,
                 &BrowserConfig::default(),
-                &clawcrew_config::schema::HttpRequestConfig::default(),
-                &clawcrew_config::schema::WebFetchConfig::default(),
+                &galleon_config::schema::HttpRequestConfig::default(),
+                &galleon_config::schema::WebFetchConfig::default(),
                 tmp.path(),
                 &HashMap::new(),
                 None,
@@ -4748,7 +4748,7 @@ permissions = ["http_client"]
             Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig::default();
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let cfg = test_config(&tmp);
 
         let mut agents = HashMap::new();
@@ -4763,14 +4763,14 @@ permissions = ["http_client"]
         let tools = all_tools(
             Arc::new(Config::default()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &agents,
             Some("delegate-test-credential"),
@@ -4797,20 +4797,20 @@ permissions = ["http_client"]
             Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig::default();
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let cfg = test_config(&tmp);
 
         let tools = all_tools(
             Arc::new(Config::default()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -4837,22 +4837,22 @@ permissions = ["http_client"]
             Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig::default();
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let mut cfg = test_config(&tmp);
         cfg.skills.prompt_injection_mode =
-            clawcrew_config::schema::SkillsPromptInjectionMode::Compact;
+            galleon_config::schema::SkillsPromptInjectionMode::Compact;
 
         let tools = all_tools(
             Arc::new(cfg.clone()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -4879,21 +4879,21 @@ permissions = ["http_client"]
             Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig::default();
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let mut cfg = test_config(&tmp);
-        cfg.skills.prompt_injection_mode = clawcrew_config::schema::SkillsPromptInjectionMode::Full;
+        cfg.skills.prompt_injection_mode = galleon_config::schema::SkillsPromptInjectionMode::Full;
 
         let tools = all_tools(
             Arc::new(cfg.clone()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -4921,14 +4921,14 @@ permissions = ["http_client"]
         all_tools(
             Arc::new(cfg.clone()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &BrowserConfig::default(),
-            &clawcrew_config::schema::HttpRequestConfig::default(),
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::HttpRequestConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -4978,14 +4978,14 @@ permissions = ["http_client"]
             all_tools(
                 Arc::new(cfg.clone()),
                 &security,
-                &clawcrew_config::schema::RiskProfileConfig::default(),
+                &galleon_config::schema::RiskProfileConfig::default(),
                 "test-agent",
                 Arc::clone(&mem),
                 None,
                 None,
                 &BrowserConfig::default(),
-                &clawcrew_config::schema::HttpRequestConfig::default(),
-                &clawcrew_config::schema::WebFetchConfig::default(),
+                &galleon_config::schema::HttpRequestConfig::default(),
+                &galleon_config::schema::WebFetchConfig::default(),
                 tmp.path(),
                 &HashMap::new(),
                 None,
@@ -5030,23 +5030,23 @@ permissions = ["http_client"]
             Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig::default();
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let mut cfg = test_config(&tmp);
         // Global stays Full; a runtime profile flips this agent to Compact and
         // the agent selects it via `runtime_profile`.
-        cfg.skills.prompt_injection_mode = clawcrew_config::schema::SkillsPromptInjectionMode::Full;
+        cfg.skills.prompt_injection_mode = galleon_config::schema::SkillsPromptInjectionMode::Full;
         cfg.runtime_profiles.insert(
             "compact_profile".to_string(),
-            clawcrew_config::schema::RuntimeProfileConfig {
+            galleon_config::schema::RuntimeProfileConfig {
                 prompt_injection_mode: Some(
-                    clawcrew_config::schema::SkillsPromptInjectionMode::Compact,
+                    galleon_config::schema::SkillsPromptInjectionMode::Compact,
                 ),
                 ..Default::default()
             },
         );
         cfg.agents.insert(
             "test-agent".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 runtime_profile: "compact_profile".into(),
                 ..Default::default()
             },
@@ -5055,14 +5055,14 @@ permissions = ["http_client"]
         let tools = all_tools(
             Arc::new(cfg.clone()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -5092,25 +5092,25 @@ permissions = ["http_client"]
             Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig::default();
-        let http = clawcrew_config::schema::HttpRequestConfig::default();
+        let http = galleon_config::schema::HttpRequestConfig::default();
         let mut cfg = test_config(&tmp);
         // Global is Compact; a runtime profile pins this agent to Full and the
         // agent selects it via `runtime_profile`. The Full pin inlines skills
         // eagerly, so read_skill must be omitted.
         cfg.skills.prompt_injection_mode =
-            clawcrew_config::schema::SkillsPromptInjectionMode::Compact;
+            galleon_config::schema::SkillsPromptInjectionMode::Compact;
         cfg.runtime_profiles.insert(
             "full_profile".to_string(),
-            clawcrew_config::schema::RuntimeProfileConfig {
+            galleon_config::schema::RuntimeProfileConfig {
                 prompt_injection_mode: Some(
-                    clawcrew_config::schema::SkillsPromptInjectionMode::Full,
+                    galleon_config::schema::SkillsPromptInjectionMode::Full,
                 ),
                 ..Default::default()
             },
         );
         cfg.agents.insert(
             "test-agent".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 runtime_profile: "full_profile".into(),
                 ..Default::default()
             },
@@ -5119,14 +5119,14 @@ permissions = ["http_client"]
         let tools = all_tools(
             Arc::new(cfg.clone()),
             &security,
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             "test-agent",
             mem,
             None,
             None,
             &browser,
             &http,
-            &clawcrew_config::schema::WebFetchConfig::default(),
+            &galleon_config::schema::WebFetchConfig::default(),
             tmp.path(),
             &HashMap::new(),
             None,
@@ -5169,7 +5169,7 @@ permissions = ["http_client"]
     ///   resolution with an error mentioning "openai-codex".
     #[tokio::test]
     async fn llm_task_uses_alias_aware_provider_for_alias_config() {
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AliasedAgentConfig, BrowserConfig, Config, HttpRequestConfig, MemoryConfig,
             ModelProviderConfig, OpenAIModelProviderConfig, RiskProfileConfig, WebFetchConfig,
         };

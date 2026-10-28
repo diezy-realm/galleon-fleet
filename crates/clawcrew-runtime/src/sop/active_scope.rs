@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use super::types::SopStep;
-use clawcrew_config::schema::SopConfig;
+use galleon_config::schema::SopConfig;
 
 /// The active SOP step's additional tool exclusions for the agent turn loop.
 #[derive(Debug, Clone, PartialEq, Eq)]

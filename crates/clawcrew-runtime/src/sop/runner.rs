@@ -8,7 +8,7 @@ use clawcrew_api::sop::{
     ApprovalDecision, ApprovalPrincipal, BrokerOutcome, ResolveOutcome, Sop, SopRunSummary,
     SopRunner,
 };
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 use super::audit::SopAuditLogger;
 use super::engine::SopEngine;

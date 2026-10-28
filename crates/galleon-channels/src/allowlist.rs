@@ -16,8 +16,8 @@ pub enum Match {
 /// applies none of them itself, because only the channel knows whether two
 /// spellings name the same account. Re-exported from the producing crate so the
 /// two halves of the contract cannot drift.
-pub use clawcrew_config::schema::PEER_DENY_PREFIX as DENY_PREFIX;
-use clawcrew_config::schema::{
+pub use galleon_config::schema::PEER_DENY_PREFIX as DENY_PREFIX;
+use galleon_config::schema::{
     peer_deny_identity, peer_deny_names, peer_grant_identity, peer_is_wildcard, peer_policy_admits,
     peer_policy_denies,
 };
@@ -280,7 +280,7 @@ mod tests {
     /// makes it true suppresses the recovery code for every one of them.
     #[test]
     fn a_blank_configured_grant_still_offers_pairing() {
-        let config: clawcrew_config::schema::Config = toml::from_str(
+        let config: galleon_config::schema::Config = toml::from_str(
             r#"
             [peer_groups.telegram_ops]
             channel = "telegram"
@@ -300,7 +300,7 @@ mod tests {
         );
 
         // Control: a real grant in the same shape does suppress it.
-        let granted: clawcrew_config::schema::Config = toml::from_str(
+        let granted: galleon_config::schema::Config = toml::from_str(
             r#"
             [peer_groups.telegram_ops]
             channel = "telegram"

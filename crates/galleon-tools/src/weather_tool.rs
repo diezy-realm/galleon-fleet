@@ -151,7 +151,7 @@ impl WeatherTool {
             .user_agent("clawcrew-weather/1.0");
 
         let builder =
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(builder, "tool.weather");
+            galleon_config::schema::apply_runtime_proxy_to_builder(builder, "tool.weather");
         let client = builder.build()?;
 
         let response = client.get(&url).send().await?;

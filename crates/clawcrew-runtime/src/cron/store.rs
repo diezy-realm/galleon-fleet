@@ -4,7 +4,7 @@ use crate::cron::{
 };
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
-use clawcrew_config::schema::{Config, CronShellOutputFormat};
+use galleon_config::schema::{Config, CronShellOutputFormat};
 use rusqlite::types::{FromSqlResult, ValueRef};
 use rusqlite::{Connection, OpenFlags, params};
 use std::collections::HashSet;
@@ -1499,9 +1499,9 @@ fn decode_allowed_tools(raw: Option<&str>) -> Result<Option<Vec<String>>> {
 
 pub fn sync_declarative_jobs(
     config: &Config,
-    decls: &std::collections::HashMap<String, clawcrew_config::schema::CronJobDecl>,
+    decls: &std::collections::HashMap<String, galleon_config::schema::CronJobDecl>,
 ) -> Result<()> {
-    use clawcrew_config::schema::CronScheduleDecl;
+    use galleon_config::schema::CronScheduleDecl;
 
     if decls.is_empty() {
         // If no declarative jobs are defined, clean up previously synced
@@ -1726,7 +1726,7 @@ pub fn sync_declarative_jobs(
 }
 
 /// Validate a declarative cron job definition.
-fn validate_decl(id: &str, decl: &clawcrew_config::schema::CronJobDecl) -> Result<()> {
+fn validate_decl(id: &str, decl: &galleon_config::schema::CronJobDecl) -> Result<()> {
     if id.trim().is_empty() {
         anyhow::bail!("Declarative cron job has empty id");
     }
@@ -1745,7 +1745,7 @@ fn validate_decl(id: &str, decl: &clawcrew_config::schema::CronJobDecl) -> Resul
                     "Declarative cron job '{id}': agent job requires a non-empty 'prompt'"
                 );
             }
-            if decl.shell_output_format != clawcrew_config::schema::CronShellOutputFormat::default()
+            if decl.shell_output_format != galleon_config::schema::CronShellOutputFormat::default()
             {
                 anyhow::bail!(
                     "Declarative cron job '{id}': shell_output_format is shell-only and cannot be set on an agent job"
@@ -1768,8 +1768,8 @@ fn validate_decl(id: &str, decl: &clawcrew_config::schema::CronJobDecl) -> Resul
 }
 
 /// Convert a `CronScheduleDecl` to the runtime `Schedule` type.
-fn convert_schedule_decl(decl: &clawcrew_config::schema::CronScheduleDecl) -> Result<Schedule> {
-    use clawcrew_config::schema::CronScheduleDecl;
+fn convert_schedule_decl(decl: &galleon_config::schema::CronScheduleDecl) -> Result<Schedule> {
+    use galleon_config::schema::CronScheduleDecl;
     match decl {
         CronScheduleDecl::Cron { expr, tz } => Ok(Schedule::Cron {
             expr: expr.clone(),
@@ -1790,7 +1790,7 @@ fn convert_schedule_decl(decl: &clawcrew_config::schema::CronScheduleDecl) -> Re
 }
 
 /// Convert a `DeliveryConfigDecl` to the runtime `DeliveryConfig`.
-fn convert_delivery_decl(decl: &clawcrew_config::schema::DeliveryConfigDecl) -> DeliveryConfig {
+fn convert_delivery_decl(decl: &galleon_config::schema::DeliveryConfigDecl) -> DeliveryConfig {
     DeliveryConfig {
         mode: decl.mode.clone(),
         channel: decl.channel.clone(),
@@ -2052,7 +2052,7 @@ fn initialize_schema(conn: &Connection) -> Result<()> {
 mod tests {
     use super::*;
     use chrono::Duration as ChronoDuration;
-    use clawcrew_config::schema::Config;
+    use galleon_config::schema::Config;
     use tempfile::TempDir;
 
     fn test_config(tmp: &TempDir) -> Config {
@@ -3252,10 +3252,10 @@ mod tests {
         }
 
         // config.cron owns the canonical shell_output_format for this job.
-        let decl = clawcrew_config::schema::CronJobDecl {
+        let decl = galleon_config::schema::CronJobDecl {
             name: Some("raw-shadow".to_string()),
             job_type: "shell".to_string(),
-            schedule: clawcrew_config::schema::CronScheduleDecl::Cron {
+            schedule: galleon_config::schema::CronScheduleDecl::Cron {
                 expr: "0 2 * * *".to_string(),
                 tz: None,
             },
@@ -3267,7 +3267,7 @@ mod tests {
             uses_memory: true,
             session_target: None,
             delivery: None,
-            shell_output_format: clawcrew_config::schema::CronShellOutputFormat::Raw,
+            shell_output_format: galleon_config::schema::CronShellOutputFormat::Raw,
         };
         config.cron.insert("raw-shadow".to_string(), decl);
 
@@ -3276,7 +3276,7 @@ mod tests {
         let job = get_job(&config, "raw-shadow").unwrap();
         assert_eq!(
             job.shell_output_format,
-            clawcrew_config::schema::CronShellOutputFormat::Raw,
+            galleon_config::schema::CronShellOutputFormat::Raw,
             "get_job must resolve config value when DB shadow is NULL"
         );
         assert_eq!(job.source, "declarative");
@@ -3293,7 +3293,7 @@ mod tests {
         let job = get_job(&config, "raw-shadow").unwrap();
         assert_eq!(
             job.shell_output_format,
-            clawcrew_config::schema::CronShellOutputFormat::Raw,
+            galleon_config::schema::CronShellOutputFormat::Raw,
             "get_job must resolve config value when DB shadow is garbage"
         );
 
@@ -3314,13 +3314,13 @@ mod tests {
         let due = due_jobs(&config, now).unwrap();
         assert!(
             due.iter().any(|j| j.id == "raw-shadow"
-                && j.shell_output_format == clawcrew_config::schema::CronShellOutputFormat::Raw),
+                && j.shell_output_format == galleon_config::schema::CronShellOutputFormat::Raw),
             "due_jobs must include declarative job despite NULL DB shadow"
         );
         let overdue = all_overdue_jobs(&config, now).unwrap();
         assert!(
             overdue.iter().any(|j| j.id == "raw-shadow"
-                && j.shell_output_format == clawcrew_config::schema::CronShellOutputFormat::Raw),
+                && j.shell_output_format == galleon_config::schema::CronShellOutputFormat::Raw),
             "all_overdue_jobs must include declarative job despite NULL DB shadow"
         );
     }
@@ -3384,10 +3384,10 @@ mod tests {
             .unwrap();
         }
 
-        let decl = clawcrew_config::schema::CronJobDecl {
+        let decl = galleon_config::schema::CronJobDecl {
             name: Some("blob-shadow".to_string()),
             job_type: "shell".to_string(),
-            schedule: clawcrew_config::schema::CronScheduleDecl::Cron {
+            schedule: galleon_config::schema::CronScheduleDecl::Cron {
                 expr: "0 2 * * *".to_string(),
                 tz: None,
             },
@@ -3399,7 +3399,7 @@ mod tests {
             uses_memory: true,
             session_target: None,
             delivery: None,
-            shell_output_format: clawcrew_config::schema::CronShellOutputFormat::Raw,
+            shell_output_format: galleon_config::schema::CronShellOutputFormat::Raw,
         };
         config.cron.insert("blob-shadow".to_string(), decl);
 
@@ -3408,7 +3408,7 @@ mod tests {
         let job = get_job(&config, "blob-shadow").unwrap();
         assert_eq!(
             job.shell_output_format,
-            clawcrew_config::schema::CronShellOutputFormat::Raw,
+            galleon_config::schema::CronShellOutputFormat::Raw,
             "get_job must resolve config value when DB shadow is a BLOB"
         );
         assert_eq!(job.source, "declarative");
@@ -3418,7 +3418,7 @@ mod tests {
         let due = due_jobs(&config, now).unwrap();
         assert!(
             due.iter().any(|j| j.id == "blob-shadow"
-                && j.shell_output_format == clawcrew_config::schema::CronShellOutputFormat::Raw),
+                && j.shell_output_format == galleon_config::schema::CronShellOutputFormat::Raw),
             "due_jobs must include declarative job despite BLOB DB shadow"
         );
     }
@@ -3588,13 +3588,13 @@ mod tests {
         id: &str,
         expr: &str,
         cmd: &str,
-    ) -> (String, clawcrew_config::schema::CronJobDecl) {
+    ) -> (String, galleon_config::schema::CronJobDecl) {
         (
             id.to_string(),
-            clawcrew_config::schema::CronJobDecl {
+            galleon_config::schema::CronJobDecl {
                 name: Some(format!("decl-{id}")),
                 job_type: "shell".to_string(),
-                schedule: clawcrew_config::schema::CronScheduleDecl::Cron {
+                schedule: galleon_config::schema::CronScheduleDecl::Cron {
                     expr: expr.to_string(),
                     tz: None,
                 },
@@ -3615,13 +3615,13 @@ mod tests {
         id: &str,
         expr: &str,
         prompt: &str,
-    ) -> (String, clawcrew_config::schema::CronJobDecl) {
+    ) -> (String, galleon_config::schema::CronJobDecl) {
         (
             id.to_string(),
-            clawcrew_config::schema::CronJobDecl {
+            galleon_config::schema::CronJobDecl {
                 name: Some(format!("decl-{id}")),
                 job_type: "agent".to_string(),
-                schedule: clawcrew_config::schema::CronScheduleDecl::Cron {
+                schedule: galleon_config::schema::CronScheduleDecl::Cron {
                     expr: expr.to_string(),
                     tz: None,
                 },
@@ -3639,8 +3639,8 @@ mod tests {
     }
 
     fn decls_map(
-        items: Vec<(String, clawcrew_config::schema::CronJobDecl)>,
-    ) -> std::collections::HashMap<String, clawcrew_config::schema::CronJobDecl> {
+        items: Vec<(String, galleon_config::schema::CronJobDecl)>,
+    ) -> std::collections::HashMap<String, galleon_config::schema::CronJobDecl> {
         items.into_iter().collect()
     }
 
@@ -3649,7 +3649,7 @@ mod tests {
     fn seed_claiming_agent(config: &mut Config, ids: &[&str]) {
         config.agents.insert(
             "test-agent".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 enabled: true,
                 cron_jobs: ids.iter().map(|s| (*s).to_string()).collect(),
                 ..Default::default()
@@ -3790,7 +3790,7 @@ mod tests {
         let config = test_config(&tmp);
 
         let (id, mut decl) = make_agent_decl("bad-agent-format", "0 2 * * *", "do stuff");
-        decl.shell_output_format = clawcrew_config::schema::CronShellOutputFormat::Raw;
+        decl.shell_output_format = galleon_config::schema::CronShellOutputFormat::Raw;
 
         let decls = decls_map(vec![(id, decl)]);
         let result = sync_declarative_jobs(&config, &decls);
@@ -3902,10 +3902,10 @@ mod tests {
         let mut config = test_config(&tmp);
         seed_claiming_agent(&mut config, &["interval-job"]);
 
-        let decl = clawcrew_config::schema::CronJobDecl {
+        let decl = galleon_config::schema::CronJobDecl {
             name: None,
             job_type: "shell".to_string(),
-            schedule: clawcrew_config::schema::CronScheduleDecl::Every { every_ms: 60000 },
+            schedule: galleon_config::schema::CronScheduleDecl::Every { every_ms: 60000 },
             command: Some("echo interval".to_string()),
             prompt: None,
             enabled: true,
@@ -3944,7 +3944,7 @@ schedule = { kind = "every", every_ms = 300000 }
 
         #[derive(serde::Deserialize)]
         struct Wrap {
-            cron: std::collections::HashMap<String, clawcrew_config::schema::CronJobDecl>,
+            cron: std::collections::HashMap<String, galleon_config::schema::CronJobDecl>,
         }
         let parsed: Wrap = toml::from_str(toml_str).unwrap();
         assert_eq!(parsed.cron.len(), 2);
@@ -3953,7 +3953,7 @@ schedule = { kind = "every", every_ms = 300000 }
         assert_eq!(report.command.as_deref(), Some("echo report"));
         assert!(matches!(
             report.schedule,
-            clawcrew_config::schema::CronScheduleDecl::Cron { ref expr, .. } if expr == "0 9 * * *"
+            galleon_config::schema::CronScheduleDecl::Cron { ref expr, .. } if expr == "0 9 * * *"
         ));
 
         let health = parsed.cron.get("health-check").unwrap();
@@ -3961,7 +3961,7 @@ schedule = { kind = "every", every_ms = 300000 }
         assert_eq!(health.prompt.as_deref(), Some("Check server health"));
         assert!(matches!(
             health.schedule,
-            clawcrew_config::schema::CronScheduleDecl::Every { every_ms: 300_000 }
+            galleon_config::schema::CronScheduleDecl::Every { every_ms: 300_000 }
         ));
     }
 
@@ -4244,10 +4244,10 @@ schedule = { kind = "every", every_ms = 300000 }
         let mut config = test_config(&tmp);
         seed_claiming_agent(&mut config, &["raw-decl"]);
 
-        let decl = clawcrew_config::schema::CronJobDecl {
+        let decl = galleon_config::schema::CronJobDecl {
             name: Some("raw-decl".to_string()),
             job_type: "shell".to_string(),
-            schedule: clawcrew_config::schema::CronScheduleDecl::Cron {
+            schedule: galleon_config::schema::CronScheduleDecl::Cron {
                 expr: "0 2 * * *".to_string(),
                 tz: None,
             },
@@ -4259,7 +4259,7 @@ schedule = { kind = "every", every_ms = 300000 }
             uses_memory: true,
             session_target: None,
             delivery: None,
-            shell_output_format: clawcrew_config::schema::CronShellOutputFormat::Raw,
+            shell_output_format: galleon_config::schema::CronShellOutputFormat::Raw,
         };
         let decls = decls_map(vec![("raw-decl".to_string(), decl.clone())]);
         // Populate config.cron so resolution finds the canonical source.
@@ -4269,7 +4269,7 @@ schedule = { kind = "every", every_ms = 300000 }
         let job = get_job(&config, "raw-decl").unwrap();
         assert_eq!(
             job.shell_output_format,
-            clawcrew_config::schema::CronShellOutputFormat::Raw,
+            galleon_config::schema::CronShellOutputFormat::Raw,
             "get_job must return raw format resolved from config for a declarative raw shell job"
         );
         assert_eq!(job.source, "declarative");
@@ -4281,7 +4281,7 @@ schedule = { kind = "every", every_ms = 300000 }
             .expect("job in list");
         assert_eq!(
             listed.shell_output_format,
-            clawcrew_config::schema::CronShellOutputFormat::Raw,
+            galleon_config::schema::CronShellOutputFormat::Raw,
             "list_jobs must return raw format resolved from config for a declarative raw shell job"
         );
     }
@@ -4298,10 +4298,10 @@ schedule = { kind = "every", every_ms = 300000 }
         let mut config = test_config(&tmp);
         seed_claiming_agent(&mut config, &["raw-decl"]);
 
-        let mut decl = clawcrew_config::schema::CronJobDecl {
+        let mut decl = galleon_config::schema::CronJobDecl {
             name: Some("raw-decl".to_string()),
             job_type: "shell".to_string(),
-            schedule: clawcrew_config::schema::CronScheduleDecl::Cron {
+            schedule: galleon_config::schema::CronScheduleDecl::Cron {
                 expr: "0 2 * * *".to_string(),
                 tz: None,
             },
@@ -4313,7 +4313,7 @@ schedule = { kind = "every", every_ms = 300000 }
             uses_memory: true,
             session_target: None,
             delivery: None,
-            shell_output_format: clawcrew_config::schema::CronShellOutputFormat::Raw,
+            shell_output_format: galleon_config::schema::CronShellOutputFormat::Raw,
         };
         let decls = decls_map(vec![("raw-decl".to_string(), decl.clone())]);
         config.cron.insert("raw-decl".to_string(), decl.clone());
@@ -4384,7 +4384,7 @@ schedule = { kind = "every", every_ms = 300000 }
         // Config changes after the update — if the update had snapshotted
         // a value into the DB column, every read path below would still
         // report the old value instead of following this change.
-        decl.shell_output_format = clawcrew_config::schema::CronShellOutputFormat::Wrapped;
+        decl.shell_output_format = galleon_config::schema::CronShellOutputFormat::Wrapped;
         config.cron.insert("raw-decl".to_string(), decl);
 
         let far_future = Utc::now() + ChronoDuration::days(365);
@@ -4392,7 +4392,7 @@ schedule = { kind = "every", every_ms = 300000 }
         let job = get_job(&config, "raw-decl").unwrap();
         assert_eq!(
             job.shell_output_format,
-            clawcrew_config::schema::CronShellOutputFormat::Wrapped,
+            galleon_config::schema::CronShellOutputFormat::Wrapped,
             "get_job must follow the current config value, not a value snapshotted by an unrelated update"
         );
         assert!(
@@ -4404,7 +4404,7 @@ schedule = { kind = "every", every_ms = 300000 }
         let due_job = due.iter().find(|j| j.id == "raw-decl").expect("job is due");
         assert_eq!(
             due_job.shell_output_format,
-            clawcrew_config::schema::CronShellOutputFormat::Wrapped,
+            galleon_config::schema::CronShellOutputFormat::Wrapped,
             "due_jobs must follow the current config value, not a stored snapshot"
         );
 
@@ -4415,7 +4415,7 @@ schedule = { kind = "every", every_ms = 300000 }
             .expect("job is overdue");
         assert_eq!(
             overdue_job.shell_output_format,
-            clawcrew_config::schema::CronShellOutputFormat::Wrapped,
+            galleon_config::schema::CronShellOutputFormat::Wrapped,
             "all_overdue_jobs must follow the current config value, not a stored snapshot"
         );
     }
@@ -4426,10 +4426,10 @@ schedule = { kind = "every", every_ms = 300000 }
         let mut config = test_config(&tmp);
         seed_claiming_agent(&mut config, &["decl-job"]);
 
-        let decl = clawcrew_config::schema::CronJobDecl {
+        let decl = galleon_config::schema::CronJobDecl {
             name: Some("decl-job".to_string()),
             job_type: "shell".to_string(),
-            schedule: clawcrew_config::schema::CronScheduleDecl::Cron {
+            schedule: galleon_config::schema::CronScheduleDecl::Cron {
                 expr: "0 2 * * *".to_string(),
                 tz: None,
             },
@@ -4441,7 +4441,7 @@ schedule = { kind = "every", every_ms = 300000 }
             uses_memory: true,
             session_target: None,
             delivery: None,
-            shell_output_format: clawcrew_config::schema::CronShellOutputFormat::Wrapped,
+            shell_output_format: galleon_config::schema::CronShellOutputFormat::Wrapped,
         };
         let decls = decls_map(vec![("decl-job".to_string(), decl.clone())]);
         config.cron.insert("decl-job".to_string(), decl);
@@ -4451,7 +4451,7 @@ schedule = { kind = "every", every_ms = 300000 }
             &config,
             "decl-job",
             CronJobPatch {
-                shell_output_format: Some(clawcrew_config::schema::CronShellOutputFormat::Raw),
+                shell_output_format: Some(galleon_config::schema::CronShellOutputFormat::Raw),
                 ..CronJobPatch::default()
             },
         )
@@ -4474,10 +4474,10 @@ schedule = { kind = "every", every_ms = 300000 }
         let mut config = test_config(&tmp);
         seed_claiming_agent(&mut config, &["decl-job"]);
 
-        let decl = clawcrew_config::schema::CronJobDecl {
+        let decl = galleon_config::schema::CronJobDecl {
             name: Some("decl-job".to_string()),
             job_type: "shell".to_string(),
-            schedule: clawcrew_config::schema::CronScheduleDecl::Cron {
+            schedule: galleon_config::schema::CronScheduleDecl::Cron {
                 expr: "0 2 * * *".to_string(),
                 tz: None,
             },
@@ -4489,7 +4489,7 @@ schedule = { kind = "every", every_ms = 300000 }
             uses_memory: true,
             session_target: None,
             delivery: None,
-            shell_output_format: clawcrew_config::schema::CronShellOutputFormat::Wrapped,
+            shell_output_format: galleon_config::schema::CronShellOutputFormat::Wrapped,
         };
         let decls = decls_map(vec![("decl-job".to_string(), decl.clone())]);
         config.cron.insert("decl-job".to_string(), decl);
@@ -4559,7 +4559,7 @@ schedule = { kind = "every", every_ms = 300000 }
             &config,
             &job.id,
             CronJobPatch {
-                shell_output_format: Some(clawcrew_config::schema::CronShellOutputFormat::Raw),
+                shell_output_format: Some(galleon_config::schema::CronShellOutputFormat::Raw),
                 ..CronJobPatch::default()
             },
         )
@@ -4582,10 +4582,10 @@ schedule = { kind = "every", every_ms = 300000 }
         let mut config = test_config(&tmp);
         seed_claiming_agent(&mut config, &["orphan-decl"]);
 
-        let decl = clawcrew_config::schema::CronJobDecl {
+        let decl = galleon_config::schema::CronJobDecl {
             name: Some("orphan-decl".to_string()),
             job_type: "shell".to_string(),
-            schedule: clawcrew_config::schema::CronScheduleDecl::Cron {
+            schedule: galleon_config::schema::CronScheduleDecl::Cron {
                 expr: "0 2 * * *".to_string(),
                 tz: None,
             },
@@ -4597,7 +4597,7 @@ schedule = { kind = "every", every_ms = 300000 }
             uses_memory: true,
             session_target: None,
             delivery: None,
-            shell_output_format: clawcrew_config::schema::CronShellOutputFormat::Wrapped,
+            shell_output_format: galleon_config::schema::CronShellOutputFormat::Wrapped,
         };
         let decls = decls_map(vec![("orphan-decl".to_string(), decl.clone())]);
         config.cron.insert("orphan-decl".to_string(), decl.clone());

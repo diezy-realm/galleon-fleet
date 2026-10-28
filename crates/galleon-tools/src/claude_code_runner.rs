@@ -6,9 +6,9 @@ use std::process::Output;
 use std::sync::Arc;
 use tokio::process::Command;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::policy::ToolOperation;
-use clawcrew_config::schema::ClaudeCodeRunnerConfig;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::policy::ToolOperation;
+use galleon_config::schema::ClaudeCodeRunnerConfig;
 
 const SAFE_ENV_VARS: &[&str] = &[
     "PATH", "HOME", "TERM", "LANG", "LC_ALL", "LC_CTYPE", "USER", "SHELL", "TMPDIR",
@@ -424,9 +424,9 @@ fn shell_escape(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
-    use clawcrew_config::schema::ClaudeCodeRunnerConfig;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
+    use galleon_config::schema::ClaudeCodeRunnerConfig;
 
     fn test_config() -> ClaudeCodeRunnerConfig {
         ClaudeCodeRunnerConfig {

@@ -6,10 +6,10 @@ use axum::{
     http::{HeaderMap, HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
 };
-use clawcrew_config::api_error::{ConfigApiCode, ConfigApiError};
-use clawcrew_config::field_visibility;
-use clawcrew_config::sections::section_for_path;
-use clawcrew_config::traits::MaskSecrets;
+use galleon_config::api_error::{ConfigApiCode, ConfigApiError};
+use galleon_config::field_visibility;
+use galleon_config::sections::section_for_path;
+use galleon_config::traits::MaskSecrets;
 use std::sync::Arc;
 
 use super::{
@@ -37,8 +37,8 @@ pub async fn handle_config_get(State(state): State<AppState>, headers: HeaderMap
 
 /// Stable wire-form name for a `PropKind` variant. Matches the lower-kebab
 /// convention the rest of the API uses for stable string IDs.
-fn prop_kind_wire(kind: clawcrew_config::traits::PropKind) -> &'static str {
-    use clawcrew_config::traits::PropKind;
+fn prop_kind_wire(kind: galleon_config::traits::PropKind) -> &'static str {
+    use galleon_config::traits::PropKind;
     match kind {
         PropKind::String => "string",
         PropKind::Bool => "bool",
@@ -72,38 +72,38 @@ pub(crate) fn map_prop_error(err: anyhow::Error, path: &str) -> ConfigApiError {
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
-// Typed-value coercion lives in `clawcrew_config::typed_value` — both the
+// Typed-value coercion lives in `galleon_config::typed_value` — both the
 // gateway PATCH/PUT handlers and the CLI `config patch` flow consume it.
 // Single source of truth for the "JSON in, set_prop string out, validated
 // against the declared PropKind" contract.
-use clawcrew_config::typed_value::coerce_for_set_prop as json_to_setprop_string;
+use galleon_config::typed_value::coerce_for_set_prop as json_to_setprop_string;
 
 /// Look up the prop_field metadata for a path. Used by the per-prop GET / PUT
 /// handlers to decide whether the field is a secret.
 pub(crate) fn lookup_prop_field(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     path: &str,
-) -> Option<clawcrew_config::traits::PropFieldInfo> {
+) -> Option<galleon_config::traits::PropFieldInfo> {
     config
         .prop_fields()
         .into_iter()
         .find(|info| info.name == path)
         .or_else(|| {
-            clawcrew_config::schema::Config::prop_is_secret(path).then(|| {
-                clawcrew_config::traits::PropFieldInfo {
+            galleon_config::schema::Config::prop_is_secret(path).then(|| {
+                galleon_config::traits::PropFieldInfo {
                     name: path.to_string(),
                     category: "Secrets",
-                    display_value: clawcrew_config::traits::UNSET_DISPLAY.to_string(),
+                    display_value: galleon_config::traits::UNSET_DISPLAY.to_string(),
                     type_hint: "String",
-                    kind: clawcrew_config::traits::PropKind::String,
+                    kind: galleon_config::traits::PropKind::String,
                     is_secret: true,
                     enum_variants: None,
                     description: "",
                     derived_from_secret: false,
                     credential_class: Some(
-                        clawcrew_config::traits::CredentialSurfaceClass::EncryptedSecret,
+                        galleon_config::traits::CredentialSurfaceClass::EncryptedSecret,
                     ),
-                    tab: clawcrew_config::traits::ConfigTab::None,
+                    tab: galleon_config::traits::ConfigTab::None,
                     alias_source: None,
                     multiline: false,
                 }
@@ -112,8 +112,8 @@ pub(crate) fn lookup_prop_field(
 }
 
 pub(crate) fn scoped_validate(
-    working: &clawcrew_config::schema::Config,
-) -> Result<Vec<clawcrew_config::validation_warnings::ValidationWarning>, ConfigApiError> {
+    working: &galleon_config::schema::Config,
+) -> Result<Vec<galleon_config::validation_warnings::ValidationWarning>, ConfigApiError> {
     if let Err(e) = working.validate() {
         let api_err = ConfigApiError::from_validation(e);
         let err_path = api_err.path.as_deref().unwrap_or("");
@@ -138,7 +138,7 @@ pub(crate) fn scoped_validate(
             )
         );
         return Ok(vec![
-            clawcrew_config::validation_warnings::ValidationWarning::new(
+            galleon_config::validation_warnings::ValidationWarning::new(
                 "pre_existing_validation_error",
                 api_err.message,
                 err_path.to_string(),
@@ -189,7 +189,7 @@ pub async fn handle_api_channel_bind(
     // `peer_groups` can be older than what another writer has already saved.
     // Without the refresh, an `ignore` persisted concurrently is both invisible
     // to the bind check below and overwritten by the save.
-    match clawcrew_config::schema::persisted_peer_groups(&working.config_path).await {
+    match galleon_config::schema::persisted_peer_groups(&working.config_path).await {
         Ok(Some(persisted)) => working.peer_groups = persisted,
         Ok(None) => {}
         Err(e) => {
@@ -295,7 +295,7 @@ pub async fn handle_prop_get(
     };
 
     if info.is_secret || info.derived_from_secret {
-        let populated = info.display_value != clawcrew_config::traits::UNSET_DISPLAY;
+        let populated = info.display_value != galleon_config::traits::UNSET_DISPLAY;
         return axum::Json(SecretResponse {
             path: q.path,
             populated,
@@ -376,7 +376,7 @@ pub async fn handle_prop_put(
     if let Some(comment) = body.comment.as_ref() {
         let annotations = [(body.path.clone(), comment.clone())];
         if let Err(e) =
-            clawcrew_config::comment_writer::apply_comments(&config_path, &annotations).await
+            galleon_config::comment_writer::apply_comments(&config_path, &annotations).await
         {
             ::clawcrew_log::record!(
                 WARN,
@@ -477,7 +477,7 @@ pub async fn handle_list(
         })
         .filter(|info| !field_visibility::is_excluded(&info.name, &excluded))
         .map(|info| {
-            let populated = info.display_value != clawcrew_config::traits::UNSET_DISPLAY;
+            let populated = info.display_value != galleon_config::traits::UNSET_DISPLAY;
             let is_sensitive = info.is_secret || info.derived_from_secret;
             let value = if is_sensitive {
                 None
@@ -537,13 +537,13 @@ pub async fn handle_templates(State(state): State<AppState>, headers: HeaderMap)
     }
     let _ = state; // templates are static per build, but auth-gated for consistency
 
-    let templates: Vec<TemplateEntry> = clawcrew_config::schema::Config::map_key_sections()
+    let templates: Vec<TemplateEntry> = galleon_config::schema::Config::map_key_sections()
         .into_iter()
         .map(|s| TemplateEntry {
             path: s.path,
             kind: match s.kind {
-                clawcrew_config::traits::MapKeyKind::Map => "map",
-                clawcrew_config::traits::MapKeyKind::List => "list",
+                galleon_config::traits::MapKeyKind::Map => "map",
+                galleon_config::traits::MapKeyKind::List => "list",
             },
             value_type: s.value_type,
             description: s.description,
@@ -610,8 +610,8 @@ pub async fn handle_delete_map_key(
     // helpers below, and held through whichever branch's swap runs.
     let _cfg_guard = Arc::clone(&state.config_write_lock).lock_owned().await;
     let working = state.config.read().clone();
-    match clawcrew_config::alias_refs::alias_kind_for_map_path(&q.path) {
-        Some(clawcrew_config::alias_refs::AliasKind::Agent) => {
+    match galleon_config::alias_refs::alias_kind_for_map_path(&q.path) {
+        Some(galleon_config::alias_refs::AliasKind::Agent) => {
             // Agent deletion is special: it must scrub config references
             // (heartbeat, peer-groups, delegates, workspace.access, …) via
             // `delete_with_cascade` and cascade owned non-config state (memory /
@@ -654,11 +654,11 @@ pub async fn handle_delete_map_key(
 /// (export-then-delete memory/cron/acp + clear session attribution), and persist.
 pub(crate) async fn delete_agent_cascade(
     state: &AppState,
-    mut working: clawcrew_config::schema::Config,
+    mut working: galleon_config::schema::Config,
     alias: &str,
     guard: ConfigWriteGuard,
 ) -> Response {
-    use clawcrew_config::alias_refs::{self, AliasKind, CascadePolicy};
+    use galleon_config::alias_refs::{self, AliasKind, CascadePolicy};
 
     if !working.agents.contains_key(alias) {
         return error_response(
@@ -808,17 +808,17 @@ pub(crate) async fn delete_agent_cascade(
 /// on hard refs, scrub soft refs, mark every touched path dirty, persist.
 pub(crate) async fn delete_config_cascade(
     state: &AppState,
-    mut working: clawcrew_config::schema::Config,
-    kind: &clawcrew_config::alias_refs::AliasKind,
+    mut working: galleon_config::schema::Config,
+    kind: &galleon_config::alias_refs::AliasKind,
     path: &str,
     key: &str,
     guard: &ConfigWriteGuard,
 ) -> Response {
-    let report = match clawcrew_config::alias_refs::delete_with_cascade(
+    let report = match galleon_config::alias_refs::delete_with_cascade(
         &mut working,
         kind,
         key,
-        clawcrew_config::alias_refs::CascadePolicy::RefuseOnHard,
+        galleon_config::alias_refs::CascadePolicy::RefuseOnHard,
     ) {
         Ok(r) => r,
         Err(e) => return delete_error_response(path, key, e),
@@ -865,9 +865,9 @@ pub async fn handle_map_key(
     // 400 (validation_failed), symmetric with the rename guard; an unknown
     // section or invalid key stays 404 (path_not_found) as before.
     let created =
-        match clawcrew_config::alias_refs::create_map_key_checked(&mut working, &path, &key) {
+        match galleon_config::alias_refs::create_map_key_checked(&mut working, &path, &key) {
             Ok(b) => b,
-            Err(clawcrew_config::alias_refs::CreateError::Reserved(a)) => {
+            Err(galleon_config::alias_refs::CreateError::Reserved(a)) => {
                 return error_response(
                     ConfigApiError::new(
                         ConfigApiCode::ValidationFailed,
@@ -876,7 +876,7 @@ pub async fn handle_map_key(
                     .with_path(format!("{path}.{key}")),
                 );
             }
-            Err(clawcrew_config::alias_refs::CreateError::Invalid(msg)) => {
+            Err(galleon_config::alias_refs::CreateError::Invalid(msg)) => {
                 return error_response(
                     ConfigApiError::new(ConfigApiCode::PathNotFound, msg).with_path(&path),
                 );
@@ -890,7 +890,7 @@ pub async fn handle_map_key(
         if path == "skill_bundles" {
             let install_root = working.install_root_dir();
             if let Ok(dir) =
-                clawcrew_config::skill_bundles::resolve_directory(&working, &install_root, &key)
+                galleon_config::skill_bundles::resolve_directory(&working, &install_root, &key)
                 && let Err(e) = tokio::fs::create_dir_all(&dir).await
             {
                 ::clawcrew_log::record!(
@@ -931,11 +931,11 @@ pub async fn handle_delete_plan(
         return e.into_response();
     }
     let config = state.config.read().clone();
-    let to_dto = |s: &clawcrew_config::alias_refs::RefSite| RefSiteDto {
+    let to_dto = |s: &galleon_config::alias_refs::RefSite| RefSiteDto {
         path: s.path.clone(),
         raw_value: s.raw_value.clone(),
     };
-    let Some(kind) = clawcrew_config::alias_refs::alias_kind_for_map_path(&q.path) else {
+    let Some(kind) = galleon_config::alias_refs::alias_kind_for_map_path(&q.path) else {
         // Non-aliased section (e.g. `mcp.servers`): generic key removal with no
         // reference cascade — nothing to preview.
         return axum::Json(DeletePlanResponse {
@@ -955,8 +955,8 @@ pub async fn handle_delete_plan(
                 .with_path(format!("{}.{}", q.path, q.key)),
         );
     }
-    let plan = clawcrew_config::alias_refs::plan_delete(&config, &kind, &q.key);
-    let is_agent = matches!(kind, clawcrew_config::alias_refs::AliasKind::Agent);
+    let plan = galleon_config::alias_refs::plan_delete(&config, &kind, &q.key);
+    let is_agent = matches!(kind, galleon_config::alias_refs::AliasKind::Agent);
     // For agents the live-ACP gate also blocks; it fails closed (an error
     // counting sessions ⇒ "not allowed"), matching the real delete.
     let live_acp = if is_agent {
@@ -978,9 +978,9 @@ pub async fn handle_delete_plan(
 }
 
 fn unsupported_delete_cascade_message(
-    kind: &clawcrew_config::alias_refs::AliasKind,
+    kind: &galleon_config::alias_refs::AliasKind,
 ) -> Option<&'static str> {
-    use clawcrew_config::alias_refs::{AliasKind, ProviderCategory};
+    use galleon_config::alias_refs::{AliasKind, ProviderCategory};
     match kind {
         AliasKind::Provider {
             category: ProviderCategory::Tts | ProviderCategory::Transcription,
@@ -990,14 +990,14 @@ fn unsupported_delete_cascade_message(
     }
 }
 
-/// Map a [`RenameError`](clawcrew_config::alias_refs::RenameError) to the HTTP
+/// Map a [`RenameError`](galleon_config::alias_refs::RenameError) to the HTTP
 /// error response (NotFound→404, InvalidName/Reserved→400, PostCondition→500).
 fn rename_error_response(
     path: &str,
     from: &str,
-    err: clawcrew_config::alias_refs::RenameError,
+    err: galleon_config::alias_refs::RenameError,
 ) -> Response {
-    use clawcrew_config::alias_refs::RenameError;
+    use galleon_config::alias_refs::RenameError;
     let (code, msg) = match err {
         RenameError::NotFound(p) => (
             ConfigApiCode::PathNotFound,
@@ -1016,16 +1016,16 @@ fn rename_error_response(
     error_response(ConfigApiError::new(code, msg).with_path(format!("{path}.{from}")))
 }
 
-/// Map a [`CascadeError`](clawcrew_config::alias_refs::CascadeError) to the
+/// Map a [`CascadeError`](galleon_config::alias_refs::CascadeError) to the
 /// HTTP error response for config-only alias deletes. `Refused` and
 /// `NotImplemented` are expected operator-facing outcomes, while
 /// `PostCondition` is an internal guard failure and must not be persisted.
 fn delete_error_response(
     path: &str,
     key: &str,
-    err: clawcrew_config::alias_refs::CascadeError,
+    err: galleon_config::alias_refs::CascadeError,
 ) -> Response {
-    use clawcrew_config::alias_refs::CascadeError;
+    use galleon_config::alias_refs::CascadeError;
     let (code, msg) = match err {
         CascadeError::Refused(report) => {
             let blockers: Vec<_> = report.blockers.iter().map(|b| b.path.as_str()).collect();
@@ -1066,8 +1066,8 @@ pub async fn handle_rename_map_key(
     let _cfg_guard = Arc::clone(&state.config_write_lock).lock_owned().await;
     let working = state.config.read().clone();
 
-    match clawcrew_config::alias_refs::alias_kind_for_map_path(&body.path) {
-        Some(clawcrew_config::alias_refs::AliasKind::Agent) => {
+    match galleon_config::alias_refs::alias_kind_for_map_path(&body.path) {
+        Some(galleon_config::alias_refs::AliasKind::Agent) => {
             rename_agent_cascade(&state, working, &body, _cfg_guard).await
         }
         Some(kind) => rename_config_cascade(&state, working, &kind, &body, &_cfg_guard).await,
@@ -1106,12 +1106,12 @@ pub async fn handle_rename_map_key(
 /// references, mark every touched path dirty, persist.
 pub(crate) async fn rename_config_cascade(
     state: &AppState,
-    mut working: clawcrew_config::schema::Config,
-    kind: &clawcrew_config::alias_refs::AliasKind,
+    mut working: galleon_config::schema::Config,
+    kind: &galleon_config::alias_refs::AliasKind,
     body: &RenameMapKeyBody,
     guard: &ConfigWriteGuard,
 ) -> Response {
-    let report = match clawcrew_config::alias_refs::rename_with_cascade(
+    let report = match galleon_config::alias_refs::rename_with_cascade(
         &mut working,
         kind,
         &body.from,
@@ -1172,7 +1172,7 @@ pub(crate) async fn move_renamed_workspace(
 
 async fn rename_residue_exists(
     state: &AppState,
-    working: &clawcrew_config::schema::Config,
+    working: &galleon_config::schema::Config,
     from: &str,
 ) -> bool {
     // Workspace: the default per-alias dir for `from`. A custom/alias-independent
@@ -1222,11 +1222,11 @@ async fn rename_residue_exists(
 
 pub(crate) async fn rename_agent_cascade(
     state: &AppState,
-    mut working: clawcrew_config::schema::Config,
+    mut working: galleon_config::schema::Config,
     body: &RenameMapKeyBody,
     guard: ConfigWriteGuard,
 ) -> Response {
-    use clawcrew_config::alias_refs::{self, AliasKind};
+    use galleon_config::alias_refs::{self, AliasKind};
     let (from, to) = (&body.from, &body.to);
 
     // Capture the OLD workspace path while the entry still lives under `from`
@@ -1350,7 +1350,7 @@ pub async fn handle_refresh_context_window(
                     .filter(|s| !s.is_empty() && *s != "<unset>")
                     .map(String::from)
             });
-        clawcrew_config::schema::ModelProviderConfig {
+        galleon_config::schema::ModelProviderConfig {
             model: Some(model),
             uri,
             api_key,
@@ -1480,7 +1480,7 @@ pub async fn handle_migrate(State(state): State<AppState>, headers: HeaderMap) -
         }
     };
 
-    let migrated = match clawcrew_config::migration::migrate_file(&raw) {
+    let migrated = match galleon_config::migration::migrate_file(&raw) {
         Ok(out) => out,
         Err(e) => {
             return error_response(ConfigApiError::new(
@@ -1496,7 +1496,7 @@ pub async fn handle_migrate(State(state): State<AppState>, headers: HeaderMap) -
             // file. `config_path` and `data_dir` are runtime-selected and
             // skipped by serde, so restore them explicitly on the parsed live
             // snapshot.
-            let mut new_cfg: clawcrew_config::schema::Config = match toml::from_str(&new_content) {
+            let mut new_cfg: galleon_config::schema::Config = match toml::from_str(&new_content) {
                 Ok(c) => c,
                 Err(e) => {
                     return error_response(ConfigApiError::new(
@@ -1602,14 +1602,14 @@ pub async fn handle_migrate(State(state): State<AppState>, headers: HeaderMap) -
             axum::Json(MigrateResponse {
                 migrated: true,
                 backup_path: Some(backup_path.display().to_string()),
-                schema_version: clawcrew_config::migration::CURRENT_SCHEMA_VERSION,
+                schema_version: galleon_config::migration::CURRENT_SCHEMA_VERSION,
             })
             .into_response()
         }
         None => axum::Json(MigrateResponse {
             migrated: false,
             backup_path: None,
-            schema_version: clawcrew_config::migration::CURRENT_SCHEMA_VERSION,
+            schema_version: galleon_config::migration::CURRENT_SCHEMA_VERSION,
         })
         .into_response(),
     }
@@ -1719,7 +1719,7 @@ pub(crate) fn cached_schema() -> (&'static serde_json::Value, &'static str) {
 
 #[cfg(feature = "schema-export")]
 pub(crate) fn schema_body_value() -> serde_json::Value {
-    let schema = schemars::schema_for!(clawcrew_config::schema::Config);
+    let schema = schemars::schema_for!(galleon_config::schema::Config);
     serde_json::to_value(schema).unwrap_or(serde_json::Value::Null)
 }
 

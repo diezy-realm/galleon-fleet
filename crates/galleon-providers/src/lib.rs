@@ -107,8 +107,8 @@ pub(crate) struct RuntimeProxyTestGuard {
 impl RuntimeProxyTestGuard {
     pub(crate) async fn acquire() -> Self {
         let guard = RUNTIME_PROXY_TEST_LOCK.lock().await;
-        clawcrew_config::schema::set_runtime_proxy_config(
-            clawcrew_config::schema::ProxyConfig::default(),
+        galleon_config::schema::set_runtime_proxy_config(
+            galleon_config::schema::ProxyConfig::default(),
         );
         Self { _guard: guard }
     }
@@ -117,8 +117,8 @@ impl RuntimeProxyTestGuard {
 #[cfg(test)]
 impl Drop for RuntimeProxyTestGuard {
     fn drop(&mut self) {
-        clawcrew_config::schema::set_runtime_proxy_config(
-            clawcrew_config::schema::ProxyConfig::default(),
+        galleon_config::schema::set_runtime_proxy_config(
+            galleon_config::schema::ProxyConfig::default(),
         );
     }
 }
@@ -547,7 +547,7 @@ struct MinimaxOauthBaseResponse {
 pub(crate) fn refresh_minimax_oauth_access_token(
     refresh_token: &str,
     client_id: &str,
-    region: clawcrew_config::schema::MinimaxEndpoint,
+    region: galleon_config::schema::MinimaxEndpoint,
 ) -> anyhow::Result<String> {
     let endpoint = region.oauth_token_endpoint();
     let client = reqwest::blocking::Client::builder()
@@ -727,7 +727,7 @@ pub struct ModelProviderRuntimeOptions {
     /// cache markers (native Anthropic; compatible ones behind
     /// `cache_passthrough`). `None` keeps the 5-minute default.
     /// Propagated from `ModelProviderConfig::cache_ttl`.
-    pub cache_ttl: Option<clawcrew_config::schema::CacheTtl>,
+    pub cache_ttl: Option<galleon_config::schema::CacheTtl>,
     /// When set, the provider is asked to use its native tool-calling
     /// schema instead of OpenAI-compat tool calls. Generic across families.
     pub native_tools: Option<bool>,
@@ -753,7 +753,7 @@ pub struct ModelProviderRuntimeOptions {
     pub tls_ca_cert_path: Option<String>,
     /// How compatible chat-completions providers handle image markers in
     /// native role=`tool` results.
-    pub tool_result_image_policy: clawcrew_config::schema::ToolResultImagePolicy,
+    pub tool_result_image_policy: galleon_config::schema::ToolResultImagePolicy,
     /// Root `[multimodal]` policy applied when a provider expands
     /// `[IMAGE:...]` markers into inline data URIs.
     ///
@@ -762,7 +762,7 @@ pub struct ModelProviderRuntimeOptions {
     /// an operator's `max_images` / `max_image_size_mb` / `max_image_turns`
     /// never reach the request that actually carries the images. Root-scoped,
     /// not per-entry: every alias resolves the same section.
-    pub multimodal: clawcrew_config::schema::MultimodalConfig,
+    pub multimodal: galleon_config::schema::MultimodalConfig,
 }
 
 impl Default for ModelProviderRuntimeOptions {
@@ -797,8 +797,8 @@ impl Default for ModelProviderRuntimeOptions {
 }
 
 pub fn model_provider_runtime_options_from_model_provider_entry(
-    config: &clawcrew_config::schema::Config,
-    entry: Option<&clawcrew_config::schema::ModelProviderConfig>,
+    config: &galleon_config::schema::Config,
+    entry: Option<&galleon_config::schema::ModelProviderConfig>,
 ) -> ModelProviderRuntimeOptions {
     // Resolve merge_system_into_user from the active model model_provider profile
     // by matching api_url — providers.models retains all profiles. We keep
@@ -868,7 +868,7 @@ pub fn model_provider_runtime_options_from_model_provider_entry(
 /// (`"<type>.<alias>"`). Returns safe defaults when the agent alias doesn't
 /// exist, doesn't have a `model_provider` set, or names a non-existent entry.
 pub fn provider_runtime_options_for_agent(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     agent_alias: &str,
 ) -> ModelProviderRuntimeOptions {
     let entry = config.model_provider_for_agent(agent_alias);
@@ -891,7 +891,7 @@ pub fn provider_runtime_options_for_agent(
     options
 }
 pub fn provider_runtime_options_for_alias(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     family: &str,
     alias: &str,
 ) -> ModelProviderRuntimeOptions {
@@ -910,7 +910,7 @@ pub fn provider_runtime_options_for_alias(
 /// options; bare names inherit only provider-agnostic settings from
 /// `fallback`.
 pub fn options_for_provider_ref(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     name: &str,
     fallback: &ModelProviderRuntimeOptions,
 ) -> ModelProviderRuntimeOptions {
@@ -957,7 +957,7 @@ pub fn options_for_provider_ref(
 /// This path is reached in production by `resolve_vision_provider` for a
 /// configured `multimodal.vision_model_provider`.
 fn bare_family_runtime_options(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
 ) -> ModelProviderRuntimeOptions {
     ModelProviderRuntimeOptions {
         multimodal: config.multimodal.clone(),
@@ -1428,7 +1428,7 @@ pub fn create_model_provider_with_url(
 }
 
 pub fn create_model_provider_for_alias(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     family: &str,
     alias: &str,
     api_key: Option<&str>,
@@ -1439,7 +1439,7 @@ pub fn create_model_provider_for_alias(
 
 /// Factory: create model_provider with alias context AND custom base URL.
 pub fn create_model_provider_for_alias_with_url(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     family: &str,
     alias: &str,
     api_key: Option<&str>,
@@ -1547,8 +1547,8 @@ fn split_v2_colon_url(name: &str) -> (&str, Option<&str>) {
 }
 
 pub(crate) fn moonshot_code_base_url() -> &'static str {
-    <clawcrew_config::schema::MoonshotEndpoint as clawcrew_config::schema::ModelEndpoint>::uri(
-        &clawcrew_config::schema::MoonshotEndpoint::Code,
+    <galleon_config::schema::MoonshotEndpoint as galleon_config::schema::ModelEndpoint>::uri(
+        &galleon_config::schema::MoonshotEndpoint::Code,
     )
 }
 
@@ -1571,7 +1571,7 @@ fn apply_factory_leaf_metadata(
 /// Factory: create model_provider with optional base URL and runtime options.
 #[allow(clippy::too_many_lines)]
 fn create_model_provider_inner(
-    config: Option<&clawcrew_config::schema::Config>,
+    config: Option<&galleon_config::schema::Config>,
     raw_name: &str,
     alias: &str,
     api_key: Option<&str>,
@@ -1675,7 +1675,7 @@ pub fn create_resilient_model_provider_with_options(
     primary_name: &str,
     api_key: Option<&str>,
     api_url: Option<&str>,
-    reliability: &clawcrew_config::schema::ReliabilityConfig,
+    reliability: &galleon_config::schema::ReliabilityConfig,
     options: &ModelProviderRuntimeOptions,
 ) -> anyhow::Result<Box<dyn ModelProvider>> {
     let primary_model_provider =
@@ -1697,12 +1697,12 @@ pub fn create_resilient_model_provider_with_options(
 /// the dispatch sees the typed alias config and routes Azure/Codex/Gemini
 /// extras correctly.
 pub fn create_resilient_model_provider_for_alias(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     family: &str,
     alias: &str,
     api_key: Option<&str>,
     api_url: Option<&str>,
-    reliability: &clawcrew_config::schema::ReliabilityConfig,
+    reliability: &galleon_config::schema::ReliabilityConfig,
     options: &ModelProviderRuntimeOptions,
 ) -> anyhow::Result<Box<dyn ModelProvider>> {
     create_resilient_model_provider_for_alias_with_model_override(
@@ -1718,12 +1718,12 @@ pub fn create_resilient_model_provider_for_alias(
 }
 
 fn create_resilient_model_provider_for_alias_with_model_override(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     family: &str,
     alias: &str,
     api_key: Option<&str>,
     api_url: Option<&str>,
-    reliability: &clawcrew_config::schema::ReliabilityConfig,
+    reliability: &galleon_config::schema::ReliabilityConfig,
     options: &ModelProviderRuntimeOptions,
     primary_model_override: Option<&str>,
 ) -> anyhow::Result<Box<dyn ModelProvider>> {
@@ -1764,7 +1764,7 @@ fn create_resilient_model_provider_for_alias_with_model_override(
 
 fn push_pinned_entries(
     out: &mut Vec<ReliableModelProviderEntry>,
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     family: &str,
     alias: &str,
     built: Box<dyn ModelProvider>,
@@ -1814,18 +1814,18 @@ fn push_pinned_entries(
 
 fn append_fallback_chain(
     out: &mut Vec<ReliableModelProviderEntry>,
-    config: &clawcrew_config::schema::Config,
-    refs: &[clawcrew_config::providers::ModelProviderRef],
+    config: &galleon_config::schema::Config,
+    refs: &[galleon_config::providers::ModelProviderRef],
     visited: &mut Vec<String>,
     depth: usize,
 ) -> anyhow::Result<()> {
-    if depth > clawcrew_config::providers::MAX_FALLBACK_DEPTH {
+    if depth > galleon_config::providers::MAX_FALLBACK_DEPTH {
         ::clawcrew_log::record!(
             WARN,
             ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
                 .with_outcome(::clawcrew_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
-                        "max_depth": clawcrew_config::providers::MAX_FALLBACK_DEPTH
+                        "max_depth": galleon_config::providers::MAX_FALLBACK_DEPTH
                 })),
             "fallback chain exceeds max depth; pruning"
         );
@@ -1900,11 +1900,11 @@ fn append_fallback_chain(
 }
 
 pub fn create_resilient_model_provider_from_ref(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     name: &str,
     api_key: Option<&str>,
     api_url: Option<&str>,
-    reliability: &clawcrew_config::schema::ReliabilityConfig,
+    reliability: &galleon_config::schema::ReliabilityConfig,
     options: &ModelProviderRuntimeOptions,
 ) -> anyhow::Result<Box<dyn ModelProvider>> {
     create_resilient_model_provider_from_ref_with_model_override(
@@ -1939,7 +1939,7 @@ pub struct ResolvedModelProviderRef {
 /// vision route needs so its configured `[multimodal] vision_model_provider`
 /// respects a per-alias `vision = true/false`.
 pub fn create_model_provider_from_ref(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     name: &str,
 ) -> anyhow::Result<Box<dyn ModelProvider>> {
     create_model_provider_from_ref_with_model(config, name).map(|resolved| resolved.provider)
@@ -1949,7 +1949,7 @@ pub fn create_model_provider_from_ref(
 /// view. Callers may apply their own explicit model override after resolution;
 /// when the reference is bare or URL-based, `model` is `None`.
 pub fn create_model_provider_from_ref_with_model(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     name: &str,
 ) -> anyhow::Result<ResolvedModelProviderRef> {
     // A dotted `<family>.<alias>` that names a REAL configured entry resolves
@@ -2002,11 +2002,11 @@ pub fn create_model_provider_from_ref_with_model(
 }
 
 fn create_resilient_model_provider_from_ref_with_model_override(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     name: &str,
     api_key: Option<&str>,
     api_url: Option<&str>,
-    reliability: &clawcrew_config::schema::ReliabilityConfig,
+    reliability: &galleon_config::schema::ReliabilityConfig,
     options: &ModelProviderRuntimeOptions,
     primary_model_override: Option<&str>,
 ) -> anyhow::Result<Box<dyn ModelProvider>> {
@@ -2029,12 +2029,12 @@ fn create_resilient_model_provider_from_ref_with_model_override(
 }
 
 pub fn create_routed_model_provider_with_options(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     primary_name: &str,
     api_key: Option<&str>,
     api_url: Option<&str>,
-    reliability: &clawcrew_config::schema::ReliabilityConfig,
-    model_routes: &[clawcrew_config::schema::ModelRouteConfig],
+    reliability: &galleon_config::schema::ReliabilityConfig,
+    model_routes: &[galleon_config::schema::ModelRouteConfig],
     default_model: &str,
     options: &ModelProviderRuntimeOptions,
 ) -> anyhow::Result<Box<dyn ModelProvider>> {
@@ -2055,12 +2055,12 @@ pub fn create_routed_model_provider_with_options(
 /// it uses. Agent turn metadata can therefore resolve the serving profile and
 /// model without maintaining a second hint table.
 pub fn create_routed_model_provider_with_options_and_resolver(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     primary_name: &str,
     api_key: Option<&str>,
     api_url: Option<&str>,
-    reliability: &clawcrew_config::schema::ReliabilityConfig,
-    model_routes: &[clawcrew_config::schema::ModelRouteConfig],
+    reliability: &galleon_config::schema::ReliabilityConfig,
+    model_routes: &[galleon_config::schema::ModelRouteConfig],
     default_model: &str,
     options: &ModelProviderRuntimeOptions,
 ) -> anyhow::Result<(Box<dyn ModelProvider>, Arc<router::ModelRouteResolver>)> {
@@ -2285,7 +2285,7 @@ fn push_family(
 pub fn recommended_runtime_profile(name: &str) -> Option<&'static str> {
     match name {
         "lmstudio" | "llamacpp" | "sglang" | "vllm" | "osaurus" => {
-            Some(clawcrew_config::presets::LOCAL_SMALL_RUNTIME_PRESET_NAME)
+            Some(galleon_config::presets::LOCAL_SMALL_RUNTIME_PRESET_NAME)
         }
         _ => None,
     }
@@ -2297,7 +2297,7 @@ pub fn recommended_runtime_profile(name: &str) -> Option<&'static str> {
 /// (display concern vs. construction concern).
 ///
 /// This handwritten list and the `for_each_model_provider_slot!` macro in
-/// `clawcrew-config` are a dual-maintenance surface: the macro carries the
+/// `galleon-config` are a dual-maintenance surface: the macro carries the
 /// canonical slot set, this list adds display-only fields (`display_name`,
 /// `local`). The `listed_model_providers_match_canonical_slots` test enforces
 /// that the two cover exactly the same slots, so a provider added to the macro
@@ -2454,7 +2454,7 @@ pub fn canonical_model_provider_slots() -> Vec<&'static str> {
             vec![$($type_str),+]
         };
     }
-    clawcrew_config::for_each_model_provider_slot!(collect_slot_names)
+    galleon_config::for_each_model_provider_slot!(collect_slot_names)
 }
 
 #[cfg(test)]
@@ -2522,7 +2522,7 @@ mod tests {
 
         assert_eq!(
             recommendation("lmstudio"),
-            Some(clawcrew_config::presets::LOCAL_SMALL_RUNTIME_PRESET_NAME),
+            Some(galleon_config::presets::LOCAL_SMALL_RUNTIME_PRESET_NAME),
         );
         assert_eq!(recommendation("ollama"), None);
         assert_eq!(recommendation("atomic_chat"), None);
@@ -2828,7 +2828,7 @@ mod tests {
 
     #[test]
     fn moonshot_code_endpoint_supports_vision() {
-        use clawcrew_config::schema::{Config, MoonshotEndpoint, MoonshotModelProviderConfig};
+        use galleon_config::schema::{Config, MoonshotEndpoint, MoonshotModelProviderConfig};
 
         let mut config = Config::default();
         config.providers.models.moonshot.insert(
@@ -3002,7 +3002,7 @@ mod tests {
 
     #[test]
     fn vision_config_field_maps_into_runtime_options() {
-        use clawcrew_config::schema::{Config, ModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig};
         let entry = ModelProviderConfig {
             vision: Some(false),
             ..Default::default()
@@ -3016,7 +3016,7 @@ mod tests {
 
     #[test]
     fn tool_result_image_policy_config_field_maps_into_runtime_options() {
-        use clawcrew_config::schema::{Config, ModelProviderConfig, ToolResultImagePolicy};
+        use galleon_config::schema::{Config, ModelProviderConfig, ToolResultImagePolicy};
         let entry = ModelProviderConfig {
             tool_result_image_policy: ToolResultImagePolicy::Omit,
             ..Default::default()
@@ -3030,7 +3030,7 @@ mod tests {
 
     #[test]
     fn cache_passthrough_config_field_maps_into_runtime_options() {
-        use clawcrew_config::schema::{Config, ModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig};
         let entry = ModelProviderConfig {
             cache_passthrough: true,
             ..Default::default()
@@ -3047,7 +3047,7 @@ mod tests {
 
     #[test]
     fn root_multimodal_section_maps_into_runtime_options() {
-        use clawcrew_config::schema::{Config, ModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig};
         let mut config = Config::default();
         config.multimodal.max_images = 1;
         config.multimodal.max_image_size_mb = 2;
@@ -3067,7 +3067,7 @@ mod tests {
 
     #[test]
     fn bare_family_provider_ref_inherits_root_multimodal_policy() {
-        use clawcrew_config::schema::Config;
+        use galleon_config::schema::Config;
         let mut config = Config::default();
         config.multimodal.max_images = 1;
 
@@ -3081,7 +3081,7 @@ mod tests {
 
     #[test]
     fn cache_ttl_config_field_maps_into_runtime_options() {
-        use clawcrew_config::schema::{CacheTtl, Config, ModelProviderConfig};
+        use galleon_config::schema::{CacheTtl, Config, ModelProviderConfig};
         let entry = ModelProviderConfig {
             cache_ttl: Some(CacheTtl::OneHour),
             ..Default::default()
@@ -3098,7 +3098,7 @@ mod tests {
 
     #[test]
     fn bare_family_provider_ref_does_not_inherit_cache_settings() {
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AnthropicModelProviderConfig, CacheTtl, Config, ModelProviderConfig,
         };
         let mut config = Config::default();
@@ -3141,7 +3141,7 @@ mod tests {
 
     #[test]
     fn openai_responses_alias_honors_configured_vision_capability() {
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             Config, ModelProviderConfig, OpenAIModelProviderConfig, WireApi,
         };
 
@@ -3180,7 +3180,7 @@ mod tests {
 
     #[test]
     fn options_for_bare_provider_ref_does_not_inherit_fallback_vision() {
-        use clawcrew_config::schema::Config;
+        use galleon_config::schema::Config;
         // A bare family ref (no alias) must not inherit the fallback provider's
         // `vision` flag — otherwise a `-p llamacpp` override would carry the
         // agent provider's capability. Falls back to the family default.
@@ -3340,8 +3340,8 @@ mod tests {
 
     #[test]
     fn provider_runtime_options_from_config_propagates_native_tools() {
-        use clawcrew_config::schema::{GroqModelProviderConfig, ModelProviderConfig};
-        let mut config = clawcrew_config::schema::Config::default();
+        use galleon_config::schema::{GroqModelProviderConfig, ModelProviderConfig};
+        let mut config = galleon_config::schema::Config::default();
         config.providers.models.groq.insert(
             "default".to_string(),
             GroqModelProviderConfig {
@@ -3367,8 +3367,8 @@ mod tests {
         // Regression guard: tls_ca_cert_path on a ModelProviderConfig entry must
         // reach ModelProviderRuntimeOptions so apply_compat_options can call
         // with_tls_ca_cert_path on the provider. Same pattern as native_tools above.
-        use clawcrew_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
-        let mut config = clawcrew_config::schema::Config::default();
+        use galleon_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
+        let mut config = galleon_config::schema::Config::default();
         config.providers.models.openai.insert(
             "corp".to_string(),
             OpenAIModelProviderConfig {
@@ -3390,8 +3390,8 @@ mod tests {
 
     #[test]
     fn provider_runtime_options_from_config_propagates_provider_kind() {
-        use clawcrew_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
-        let mut config = clawcrew_config::schema::Config::default();
+        use galleon_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
+        let mut config = galleon_config::schema::Config::default();
         config.providers.models.openai.insert(
             "primary".to_string(),
             OpenAIModelProviderConfig {
@@ -3414,7 +3414,7 @@ mod tests {
     #[tokio::test]
     async fn routed_alias_uses_call_model_instead_of_configured_pin() {
         use axum::{Json, Router, extract::State, http::StatusCode, routing::post};
-        use clawcrew_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
+        use galleon_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
         use serde_json::{Value, json};
         use std::sync::{Arc, Mutex};
 
@@ -3450,7 +3450,7 @@ mod tests {
             axum::serve(listener, app).await.expect("serve test server");
         });
 
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.providers.models.openai.insert(
             "primary".to_string(),
             OpenAIModelProviderConfig {
@@ -3500,10 +3500,10 @@ mod tests {
         let inherited = ModelProviderRuntimeOptions {
             provider_kind: Some("openai-compatible".to_string()),
             provider_api_url: Some("http://primary.example/v1".to_string()),
-            tool_result_image_policy: clawcrew_config::schema::ToolResultImagePolicy::Omit,
+            tool_result_image_policy: galleon_config::schema::ToolResultImagePolicy::Omit,
             ..Default::default()
         };
-        let config = clawcrew_config::schema::Config::default();
+        let config = galleon_config::schema::Config::default();
 
         let route_options = options_for_provider_ref(&config, "openrouter", &inherited);
 
@@ -3511,14 +3511,14 @@ mod tests {
         assert_eq!(route_options.provider_api_url, None);
         assert_eq!(
             route_options.tool_result_image_policy,
-            clawcrew_config::schema::ToolResultImagePolicy::ImageUrl
+            galleon_config::schema::ToolResultImagePolicy::ImageUrl
         );
     }
 
     #[test]
     fn routed_bare_provider_does_not_inherit_primary_endpoint() {
-        use clawcrew_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
-        let mut config = clawcrew_config::schema::Config::default();
+        use galleon_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
+        let mut config = galleon_config::schema::Config::default();
         config.providers.models.openai.insert(
             "primary".to_string(),
             OpenAIModelProviderConfig {
@@ -3543,12 +3543,12 @@ mod tests {
 
     #[test]
     fn routed_primary_alias_kind_does_not_leak_to_canonical_route_provider() {
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             ModelProviderConfig, ModelRouteConfig, OpenAIModelProviderConfig,
             OpenRouterModelProviderConfig,
         };
 
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.providers.models.openai.insert(
             "primary".to_string(),
             OpenAIModelProviderConfig {
@@ -3799,7 +3799,7 @@ mod tests {
     #[test]
     fn openrouter_context_window_url_uses_the_shared_default() {
         for uri in [None, Some(""), Some("<unset>")] {
-            let config = clawcrew_config::schema::ModelProviderConfig {
+            let config = galleon_config::schema::ModelProviderConfig {
                 uri: uri.map(str::to_string),
                 ..Default::default()
             };
@@ -3812,7 +3812,7 @@ mod tests {
 
     #[test]
     fn openrouter_context_window_url_preserves_the_configured_uri() {
-        let config = clawcrew_config::schema::ModelProviderConfig {
+        let config = galleon_config::schema::ModelProviderConfig {
             uri: Some("https://proxy.example.test/openrouter/models".to_string()),
             ..Default::default()
         };
@@ -3825,15 +3825,15 @@ mod tests {
     #[test]
     fn crusoe_default_url_matches_endpoint_enum() {
         use crate::factory::CompatFamilySpec;
-        use clawcrew_config::schema::CrusoeModelProviderConfig;
+        use galleon_config::schema::CrusoeModelProviderConfig;
         // Cross-surface drift guard: the factory default URL must equal the
         // config-owned `CrusoeEndpoint` URI. Both reference
         // `CrusoeEndpoint::DEFAULT_URI`, so this asserts the single-source-of-
         // truth wiring stays intact if either surface is edited independently.
         assert_eq!(
             <CrusoeModelProviderConfig as CompatFamilySpec>::DEFAULT_URL,
-            <clawcrew_config::schema::CrusoeEndpoint as clawcrew_config::schema::ModelEndpoint>::uri(
-                &clawcrew_config::schema::CrusoeEndpoint::Default,
+            <galleon_config::schema::CrusoeEndpoint as galleon_config::schema::ModelEndpoint>::uri(
+                &galleon_config::schema::CrusoeEndpoint::Default,
             ),
         );
     }
@@ -3870,7 +3870,7 @@ mod tests {
         // and count the images that actually leave.
         use axum::{Json, Router, extract::State, http::StatusCode, routing::post};
         use clawcrew_api::model_provider::ChatRequest;
-        use clawcrew_config::schema::Config;
+        use galleon_config::schema::Config;
         use serde_json::{Value, json};
         use std::sync::{Arc, Mutex};
 
@@ -3963,7 +3963,7 @@ mod tests {
     #[test]
     fn create_model_provider_from_ref_preserves_custom_url_with_dotted_host() {
         use clawcrew_api::attribution::Attributable;
-        use clawcrew_config::schema::Config;
+        use galleon_config::schema::Config;
         // A `custom:<url>` vision route whose host contains dots (e.g. 127.0.0.1)
         // must NOT be split on '.' into a bogus `<family>.<alias>` - the whole ref
         // must reach the factory intact, exactly as the legacy
@@ -3985,7 +3985,7 @@ mod tests {
 
     #[test]
     fn create_model_provider_from_ref_fails_closed_on_nonexistent_dotted_alias() {
-        use clawcrew_config::schema::Config;
+        use galleon_config::schema::Config;
         // A dotted `vision_model_provider` that names no configured alias (e.g. a
         // typo) must fail CLOSED - an error the operator sees - not silently fall
         // open to a family-default provider. `llamacpp` builds a default endpoint
@@ -4703,8 +4703,8 @@ mod tests {
     /// Build a `Config` with two `anthropic` aliases at different base_urls
     /// so the test can prove `provider_runtime_options_for_agent` selects
     /// the alias-specific entry via explicit `<type>.<alias>` resolution.
-    fn config_with_two_anthropic_aliases() -> clawcrew_config::schema::Config {
-        use clawcrew_config::schema::{
+    fn config_with_two_anthropic_aliases() -> galleon_config::schema::Config {
+        use galleon_config::schema::{
             AliasedAgentConfig, AnthropicModelProviderConfig, Config, ModelProviderConfig,
         };
         let mut config = Config::default();
@@ -4782,11 +4782,11 @@ mod tests {
 
     #[test]
     fn ollama_alias_tuning_fields_populate_tuning_struct() {
-        let alias = clawcrew_config::schema::OllamaModelProviderConfig {
+        let alias = galleon_config::schema::OllamaModelProviderConfig {
             num_ctx: Some(16384),
             num_predict: Some(4096),
             temperature_override: Some(0.5),
-            ..clawcrew_config::schema::OllamaModelProviderConfig::default()
+            ..galleon_config::schema::OllamaModelProviderConfig::default()
         };
 
         let tuning = ollama::OllamaTuning::from_runtime_overrides(
@@ -4806,7 +4806,7 @@ mod tests {
 
     #[test]
     fn ollama_alias_tuning_defaults_leave_temperature_override_unset() {
-        let alias = clawcrew_config::schema::OllamaModelProviderConfig::default();
+        let alias = galleon_config::schema::OllamaModelProviderConfig::default();
         let tuning = ollama::OllamaTuning::from_runtime_overrides(
             alias.num_ctx,
             alias.num_predict,
@@ -4817,8 +4817,8 @@ mod tests {
         assert_eq!(tuning.num_predict, ollama::OLLAMA_DEFAULT_NUM_PREDICT);
     }
 
-    fn config_with_openai_alias() -> clawcrew_config::schema::Config {
-        use clawcrew_config::schema::{
+    fn config_with_openai_alias() -> galleon_config::schema::Config {
+        use galleon_config::schema::{
             AliasedAgentConfig, Config, ModelProviderConfig, OpenAIModelProviderConfig,
         };
         let mut config = Config::default();
@@ -4845,15 +4845,15 @@ mod tests {
     #[test]
     fn routed_model_provider_omits_incomplete_staged_routes() {
         let config = config_with_openai_alias();
-        let reliability = clawcrew_config::schema::ReliabilityConfig::default();
+        let reliability = galleon_config::schema::ReliabilityConfig::default();
         let routes = [
-            clawcrew_config::schema::ModelRouteConfig {
+            galleon_config::schema::ModelRouteConfig {
                 hint: "staged".into(),
                 model_provider: String::new(),
                 model: String::new(),
                 api_key: None,
             },
-            clawcrew_config::schema::ModelRouteConfig {
+            galleon_config::schema::ModelRouteConfig {
                 hint: "ready".into(),
                 model_provider: "openai.alias".into(),
                 model: "gpt-4o".into(),
@@ -4880,8 +4880,8 @@ mod tests {
     #[test]
     fn routed_model_provider_credential_precedence_uses_route_key_first() {
         let config = config_with_openai_alias();
-        let reliability = clawcrew_config::schema::ReliabilityConfig::default();
-        let routes = [clawcrew_config::schema::ModelRouteConfig {
+        let reliability = galleon_config::schema::ReliabilityConfig::default();
+        let routes = [galleon_config::schema::ModelRouteConfig {
             hint: "test".into(),
             model_provider: "openai.alias".into(),
             model: "gpt-4o".into(),
@@ -4909,9 +4909,9 @@ mod tests {
     #[test]
     fn routed_model_provider_credential_precedence_uses_config_entry_key() {
         let config = config_with_openai_alias();
-        let reliability = clawcrew_config::schema::ReliabilityConfig::default();
+        let reliability = galleon_config::schema::ReliabilityConfig::default();
         // Route has no api_key — should fall back to config entry key "openai-alias-key"
-        let routes = [clawcrew_config::schema::ModelRouteConfig {
+        let routes = [galleon_config::schema::ModelRouteConfig {
             hint: "test".into(),
             model_provider: "openai.alias".into(),
             model: "gpt-4o".into(),
@@ -4938,10 +4938,10 @@ mod tests {
 
     #[test]
     fn routed_model_provider_credential_precedence_falls_back_to_api_key_param() {
-        let config = clawcrew_config::schema::Config::default(); // no entry in config.models
-        let reliability = clawcrew_config::schema::ReliabilityConfig::default();
+        let config = galleon_config::schema::Config::default(); // no entry in config.models
+        let reliability = galleon_config::schema::ReliabilityConfig::default();
         // Neither route nor config entry has api_key — should use the param "fallback-key"
-        let routes = [clawcrew_config::schema::ModelRouteConfig {
+        let routes = [galleon_config::schema::ModelRouteConfig {
             hint: "test".into(),
             model_provider: "openai".into(),
             model: "gpt-4o".into(),
@@ -4968,11 +4968,11 @@ mod tests {
 
     #[test]
     fn routed_model_provider_credential_skips_config_entry_for_non_dotted_name() {
-        let config = clawcrew_config::schema::Config::default();
-        let reliability = clawcrew_config::schema::ReliabilityConfig::default();
+        let config = galleon_config::schema::Config::default();
+        let reliability = galleon_config::schema::ReliabilityConfig::default();
         // Non-dotted name "openai" — split_once('.') returns None, so config entry
         // lookup is skipped entirely. Falls back to api_key param.
-        let routes = [clawcrew_config::schema::ModelRouteConfig {
+        let routes = [galleon_config::schema::ModelRouteConfig {
             hint: "test".into(),
             model_provider: "openai".into(),
             model: "gpt-4o".into(),
@@ -4999,7 +4999,7 @@ mod tests {
 
     #[test]
     fn routed_model_provider_fails_when_routed_provider_fallback_lacks_profile_credential() {
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             Config, ModelProviderConfig, ModelRouteConfig, OpenAIModelProviderConfig,
             ReliabilityConfig,
         };
@@ -5021,7 +5021,7 @@ mod tests {
                 base: ModelProviderConfig {
                     model: Some("gpt-4.1".to_string()),
                     api_key: Some("route-key".to_string()),
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "openai.bad",
                     )],
                     ..Default::default()
@@ -5072,12 +5072,12 @@ mod tests {
 
     #[test]
     fn dotted_alias_routes_openai_codex_via_requires_openai_auth() {
-        use clawcrew_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
+        use galleon_config::schema::{ModelProviderConfig, OpenAIModelProviderConfig};
 
         // Use an intentionally arbitrary alias to prove the routing is alias-agnostic.
         let arbitrary_alias = "qwertfoozp";
 
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.providers.models.openai.insert(
             arbitrary_alias.to_string(),
             OpenAIModelProviderConfig {
@@ -5114,7 +5114,7 @@ mod tests {
 
     #[test]
     fn resilient_alias_builds_with_fallback_chain() {
-        use clawcrew_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
 
         let mut config = Config::default();
         config.providers.models.openai.insert(
@@ -5124,7 +5124,7 @@ mod tests {
                     model: Some("gpt-4o".to_string()),
                     api_key: Some("primary-key".to_string()),
                     fallback_models: vec!["gpt-4o-mini".to_string()],
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "openai.backup",
                     )],
                     ..Default::default()
@@ -5142,7 +5142,7 @@ mod tests {
             },
         );
 
-        let reliability = clawcrew_config::schema::ReliabilityConfig::default();
+        let reliability = galleon_config::schema::ReliabilityConfig::default();
         let result = create_resilient_model_provider_for_alias(
             &config,
             "openai",
@@ -5161,7 +5161,7 @@ mod tests {
 
     #[test]
     fn resilient_alias_fails_when_resolved_fallback_lacks_profile_credential() {
-        use clawcrew_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
 
         let mut config = Config::default();
         config.providers.models.openai.insert(
@@ -5170,7 +5170,7 @@ mod tests {
                 base: ModelProviderConfig {
                     model: Some("gpt-4o".to_string()),
                     api_key: Some("primary-key".to_string()),
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "openai.backup",
                     )],
                     ..Default::default()
@@ -5193,7 +5193,7 @@ mod tests {
             "primary",
             Some("primary-key"),
             None,
-            &clawcrew_config::schema::ReliabilityConfig::default(),
+            &galleon_config::schema::ReliabilityConfig::default(),
             &ModelProviderRuntimeOptions::default(),
         );
         assert!(
@@ -5218,7 +5218,7 @@ mod tests {
 
     #[test]
     fn resilient_alias_fails_when_resolved_fallback_uri_lacks_profile_credential() {
-        use clawcrew_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
 
         let mut config = Config::default();
         config.providers.models.openai.insert(
@@ -5227,7 +5227,7 @@ mod tests {
                 base: ModelProviderConfig {
                     model: Some("gpt-4o".to_string()),
                     api_key: Some("primary-key".to_string()),
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "openai.backup",
                     )],
                     ..Default::default()
@@ -5252,7 +5252,7 @@ mod tests {
             "primary",
             Some("primary-key"),
             None,
-            &clawcrew_config::schema::ReliabilityConfig::default(),
+            &galleon_config::schema::ReliabilityConfig::default(),
             &ModelProviderRuntimeOptions::default(),
         );
         assert!(
@@ -5276,7 +5276,7 @@ mod tests {
 
     #[test]
     fn resilient_alias_fails_when_minimax_fallback_lacks_auth_source() {
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             Config, MinimaxModelProviderConfig, ModelProviderConfig, OpenAIModelProviderConfig,
         };
 
@@ -5287,7 +5287,7 @@ mod tests {
                 base: ModelProviderConfig {
                     model: Some("gpt-4o".to_string()),
                     api_key: Some("primary-key".to_string()),
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "minimax.backup",
                     )],
                     ..Default::default()
@@ -5311,7 +5311,7 @@ mod tests {
             "primary",
             Some("primary-key"),
             None,
-            &clawcrew_config::schema::ReliabilityConfig::default(),
+            &galleon_config::schema::ReliabilityConfig::default(),
             &ModelProviderRuntimeOptions::default(),
         );
         assert!(
@@ -5331,16 +5331,16 @@ mod tests {
 
     #[test]
     fn resilient_alias_fails_when_resolved_fallback_factory_fails() {
-        use clawcrew_config::schema::{Config, CustomModelProviderConfig, ModelProviderConfig};
+        use galleon_config::schema::{Config, CustomModelProviderConfig, ModelProviderConfig};
 
         let mut config = Config::default();
         config.providers.models.openai.insert(
             "primary".to_string(),
-            clawcrew_config::schema::OpenAIModelProviderConfig {
+            galleon_config::schema::OpenAIModelProviderConfig {
                 base: ModelProviderConfig {
                     model: Some("gpt-4o".to_string()),
                     api_key: Some("primary-key".to_string()),
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "custom.backup",
                     )],
                     ..Default::default()
@@ -5363,7 +5363,7 @@ mod tests {
             "primary",
             Some("primary-key"),
             None,
-            &clawcrew_config::schema::ReliabilityConfig::default(),
+            &galleon_config::schema::ReliabilityConfig::default(),
             &ModelProviderRuntimeOptions::default(),
         );
         assert!(
@@ -5388,7 +5388,7 @@ mod tests {
 
     #[test]
     fn resilient_alias_allows_openai_external_auth_fallback_without_api_key() {
-        use clawcrew_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
 
         let mut config = Config::default();
         config.providers.models.openai.insert(
@@ -5397,7 +5397,7 @@ mod tests {
                 base: ModelProviderConfig {
                     model: Some("gpt-4o".to_string()),
                     api_key: Some("primary-key".to_string()),
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "openai.codex",
                     )],
                     ..Default::default()
@@ -5421,7 +5421,7 @@ mod tests {
             "primary",
             Some("primary-key"),
             None,
-            &clawcrew_config::schema::ReliabilityConfig::default(),
+            &galleon_config::schema::ReliabilityConfig::default(),
             &ModelProviderRuntimeOptions::default(),
         );
         assert!(
@@ -5433,7 +5433,7 @@ mod tests {
 
     #[test]
     fn resilient_alias_allows_xai_oauth_fallback_without_api_key() {
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             Config, ModelProviderConfig, OpenAIModelProviderConfig, XaiModelProviderConfig,
         };
 
@@ -5444,7 +5444,7 @@ mod tests {
                 base: ModelProviderConfig {
                     model: Some("gpt-4o".to_string()),
                     api_key: Some("primary-key".to_string()),
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "xai.oauth",
                     )],
                     ..Default::default()
@@ -5468,7 +5468,7 @@ mod tests {
             "primary",
             Some("primary-key"),
             None,
-            &clawcrew_config::schema::ReliabilityConfig::default(),
+            &galleon_config::schema::ReliabilityConfig::default(),
             &ModelProviderRuntimeOptions {
                 clawcrew_dir: Some(temp.path().to_path_buf()),
                 ..Default::default()
@@ -5483,16 +5483,16 @@ mod tests {
 
     #[test]
     fn resilient_alias_allows_local_fallback_without_profile_api_key() {
-        use clawcrew_config::schema::{Config, ModelProviderConfig, OllamaModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig, OllamaModelProviderConfig};
 
         let mut config = Config::default();
         config.providers.models.openai.insert(
             "primary".to_string(),
-            clawcrew_config::schema::OpenAIModelProviderConfig {
+            galleon_config::schema::OpenAIModelProviderConfig {
                 base: ModelProviderConfig {
                     model: Some("gpt-4o".to_string()),
                     api_key: Some("primary-key".to_string()),
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "ollama.local",
                     )],
                     ..Default::default()
@@ -5516,7 +5516,7 @@ mod tests {
             "primary",
             Some("primary-key"),
             None,
-            &clawcrew_config::schema::ReliabilityConfig::default(),
+            &galleon_config::schema::ReliabilityConfig::default(),
             &ModelProviderRuntimeOptions::default(),
         );
         assert!(
@@ -5528,7 +5528,7 @@ mod tests {
 
     #[test]
     fn resilient_alias_dangling_fallback_does_not_abort_build() {
-        use clawcrew_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
 
         let mut config = Config::default();
         config.providers.models.openai.insert(
@@ -5536,7 +5536,7 @@ mod tests {
             OpenAIModelProviderConfig {
                 base: ModelProviderConfig {
                     model: Some("gpt-4o".to_string()),
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "openai.ghost",
                     )],
                     ..Default::default()
@@ -5550,7 +5550,7 @@ mod tests {
             "primary",
             None,
             None,
-            &clawcrew_config::schema::ReliabilityConfig::default(),
+            &galleon_config::schema::ReliabilityConfig::default(),
             &ModelProviderRuntimeOptions::default(),
         );
         assert!(
@@ -5561,7 +5561,7 @@ mod tests {
 
     #[test]
     fn resilient_alias_cyclic_fallback_does_not_loop_or_abort() {
-        use clawcrew_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
 
         let mut config = Config::default();
         config.providers.models.openai.insert(
@@ -5570,7 +5570,7 @@ mod tests {
                 base: ModelProviderConfig {
                     model: Some("gpt-4o".to_string()),
                     api_key: Some("a-key".to_string()),
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "openai.b",
                     )],
                     ..Default::default()
@@ -5583,7 +5583,7 @@ mod tests {
                 base: ModelProviderConfig {
                     model: Some("gpt-4.1".to_string()),
                     api_key: Some("b-key".to_string()),
-                    fallback: vec![clawcrew_config::providers::ModelProviderRef::new(
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
                         "openai.a",
                     )],
                     ..Default::default()
@@ -5597,7 +5597,7 @@ mod tests {
             "a",
             None,
             None,
-            &clawcrew_config::schema::ReliabilityConfig::default(),
+            &galleon_config::schema::ReliabilityConfig::default(),
             &ModelProviderRuntimeOptions::default(),
         );
         assert!(
@@ -5612,7 +5612,7 @@ mod tests {
         // distinct max_tokens. Each agent resolves only its own provider's
         // options, so a different provider's max_tokens cannot leak across
         // agent boundaries.
-        use clawcrew_config::schema::{
+        use galleon_config::schema::{
             AliasedAgentConfig, AnthropicModelProviderConfig, Config, ModelProviderConfig,
             OpenAIModelProviderConfig,
         };
@@ -5678,13 +5678,13 @@ mod tests {
 
     #[test]
     fn resilient_alias_deep_acyclic_fallback_does_not_overflow() {
-        use clawcrew_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig, OpenAIModelProviderConfig};
 
         let mut config = Config::default();
-        let n = clawcrew_config::providers::MAX_FALLBACK_DEPTH + 50;
+        let n = galleon_config::providers::MAX_FALLBACK_DEPTH + 50;
         for i in 0..n {
             let fallback = if i + 1 < n {
-                vec![clawcrew_config::providers::ModelProviderRef::new(format!(
+                vec![galleon_config::providers::ModelProviderRef::new(format!(
                     "openai.a{}",
                     i + 1
                 ))]
@@ -5710,7 +5710,7 @@ mod tests {
             "a0",
             None,
             None,
-            &clawcrew_config::schema::ReliabilityConfig::default(),
+            &galleon_config::schema::ReliabilityConfig::default(),
             &ModelProviderRuntimeOptions::default(),
         );
         assert!(
@@ -5870,7 +5870,7 @@ mod tests {
         let (base_url, captured_auth, _server) =
             spawn_crusoe_models_mock(CRUSOE_MODELS_FIXTURE).await;
 
-        let config = clawcrew_config::schema::ModelProviderConfig {
+        let config = galleon_config::schema::ModelProviderConfig {
             model: Some("deepseek-ai/DeepSeek-V4-Flash".to_string()),
             api_key: Some("cr_test-key".to_string()),
             uri: Some(base_url),
@@ -5903,7 +5903,7 @@ mod tests {
         let (base_url, _captured_auth, _server) =
             spawn_crusoe_models_mock(CRUSOE_MODELS_FIXTURE).await;
 
-        let config = clawcrew_config::schema::ModelProviderConfig {
+        let config = galleon_config::schema::ModelProviderConfig {
             model: Some("nonexistent/model".to_string()),
             api_key: Some("cr_test-key".to_string()),
             uri: Some(base_url),
@@ -5934,7 +5934,7 @@ mod tests {
         }"#;
         let (base_url, _captured_auth, _server) = spawn_crusoe_models_mock(fixture).await;
 
-        let config = clawcrew_config::schema::ModelProviderConfig {
+        let config = galleon_config::schema::ModelProviderConfig {
             model: Some("deepseek-ai/DeepSeek-V4-Flash".to_string()),
             api_key: Some("cr_test-key".to_string()),
             uri: Some(base_url),
@@ -5975,7 +5975,7 @@ mod tests {
 /// are different states and must stay distinguishable downstream.
 pub async fn fetch_context_window(
     provider_type: &str,
-    config: &clawcrew_config::schema::ModelProviderConfig,
+    config: &galleon_config::schema::ModelProviderConfig,
 ) -> Option<usize> {
     // OpenRouter keeps a dedicated path: it publishes a different catalog at a
     // different shape, so it is not the OpenAI-compatible `/models` reader.
@@ -5986,7 +5986,7 @@ pub async fn fetch_context_window(
 }
 
 async fn fetch_openrouter_context_window(
-    config: &clawcrew_config::schema::ModelProviderConfig,
+    config: &galleon_config::schema::ModelProviderConfig,
 ) -> Option<usize> {
     let client = reqwest::Client::new();
     let url = openrouter_context_window_url(config);
@@ -6008,7 +6008,7 @@ async fn fetch_openrouter_context_window(
 }
 
 fn openrouter_context_window_url(
-    config: &clawcrew_config::schema::ModelProviderConfig,
+    config: &galleon_config::schema::ModelProviderConfig,
 ) -> std::borrow::Cow<'_, str> {
     config
         .uri
@@ -6061,7 +6061,7 @@ fn context_catalog_request(
 /// credential is never read.
 async fn fetch_openai_compatible_context_window(
     provider_type: &str,
-    config: &clawcrew_config::schema::ModelProviderConfig,
+    config: &galleon_config::schema::ModelProviderConfig,
 ) -> Option<usize> {
     let auth = crate::factory::family_model_context_catalog_auth(provider_type)?;
     let client = reqwest::Client::new();
@@ -6102,7 +6102,7 @@ async fn fetch_openai_compatible_context_window(
 mod context_window_discovery_tests {
     use super::*;
     use axum::{Router, extract::State, http::HeaderMap, routing::get};
-    use clawcrew_config::schema::ModelProviderConfig;
+    use galleon_config::schema::ModelProviderConfig;
     use std::sync::{Arc, Mutex};
 
     /// Every `GET /models` request the discovery path made, as
@@ -6289,7 +6289,7 @@ mod context_window_discovery_tests {
     async fn a_zhipu_jwt_probe_would_send_a_minted_jwt_not_the_stored_secret() {
         use crate::factory::CompatFamilySpec;
         use base64::engine::{Engine, general_purpose::URL_SAFE_NO_PAD};
-        use clawcrew_config::schema::{GlmModelProviderConfig, ZaiModelProviderConfig};
+        use galleon_config::schema::{GlmModelProviderConfig, ZaiModelProviderConfig};
 
         const STORED: &str = "keyid.longlivedsecret";
 

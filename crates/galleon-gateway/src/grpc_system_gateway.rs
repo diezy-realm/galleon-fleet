@@ -27,7 +27,7 @@ pub struct SystemGatewayService {
     /// Vault directory for persistent secret storage (AES-256 / ChaCha20-Poly1305)
     vault_dir: Option<PathBuf>,
     /// SecretStore instance for authenticated decryption
-    secret_store: std::sync::Arc<clawcrew_config::secrets::SecretStore>,
+    secret_store: std::sync::Arc<galleon_config::secrets::SecretStore>,
     /// ModelProvider instance for LLM streaming turn execution (Rust LLM SSOT)
     model_provider: Option<std::sync::Arc<dyn galleon_providers::ModelProvider>>,
     /// Optional authorization token required for privileged RPCs like GetDecryptedSecret
@@ -37,7 +37,7 @@ pub struct SystemGatewayService {
     /// Device registry backed by SQLite for SSOT device pairing (BG-C2 / T-08)
     device_registry: Option<std::sync::Arc<crate::api_pairing::DeviceRegistry>>,
     /// Optional ClawCrew configuration for resolving agent aliases (BL-001 / SPEC-001)
-    config: Option<std::sync::Arc<clawcrew_config::schema::Config>>,
+    config: Option<std::sync::Arc<galleon_config::schema::Config>>,
 }
 
 impl std::fmt::Debug for SystemGatewayService {
@@ -63,7 +63,7 @@ impl SystemGatewayService {
             .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
         let vault_dir = root.join(".vault");
         let secret_store =
-            std::sync::Arc::new(clawcrew_config::secrets::SecretStore::new(&root, true));
+            std::sync::Arc::new(galleon_config::secrets::SecretStore::new(&root, true));
         let memory = galleon_memory::sqlite::SqliteMemory::new("gateway", &root)
             .ok()
             .map(|m| {
@@ -85,7 +85,7 @@ impl SystemGatewayService {
     }
 
     /// Configure a custom configuration for agent alias resolution (BL-001 / SPEC-001)
-    pub fn with_config(mut self, config: std::sync::Arc<clawcrew_config::schema::Config>) -> Self {
+    pub fn with_config(mut self, config: std::sync::Arc<galleon_config::schema::Config>) -> Self {
         self.config = Some(config);
         self
     }
@@ -127,7 +127,7 @@ impl SystemGatewayService {
     pub fn with_vault(
         mut self,
         vault_dir: PathBuf,
-        secret_store: clawcrew_config::secrets::SecretStore,
+        secret_store: galleon_config::secrets::SecretStore,
     ) -> Self {
         self.vault_dir = Some(vault_dir);
         self.secret_store = std::sync::Arc::new(secret_store);
@@ -135,7 +135,7 @@ impl SystemGatewayService {
     }
 
     /// Access the underlying SecretStore
-    pub fn secret_store(&self) -> std::sync::Arc<clawcrew_config::secrets::SecretStore> {
+    pub fn secret_store(&self) -> std::sync::Arc<galleon_config::secrets::SecretStore> {
         std::sync::Arc::clone(&self.secret_store)
     }
 
@@ -1504,8 +1504,8 @@ mod tests {
     #[tokio::test]
     async fn test_execute_turn_with_valid_agent_alias() -> Result<(), Box<dyn std::error::Error>> {
         use futures_util::StreamExt;
-        let mut config = clawcrew_config::schema::Config::default();
-        let mut agent = clawcrew_config::schema::AliasedAgentConfig::default();
+        let mut config = galleon_config::schema::Config::default();
+        let mut agent = galleon_config::schema::AliasedAgentConfig::default();
         agent.model_provider = "anthropic.claude-3-5-sonnet".into();
         config.agents.insert("navigator".to_string(), agent);
 
@@ -1550,7 +1550,7 @@ mod tests {
     async fn test_execute_turn_with_unknown_agent_alias_fallback()
     -> Result<(), Box<dyn std::error::Error>> {
         use futures_util::StreamExt;
-        let config = clawcrew_config::schema::Config::default();
+        let config = galleon_config::schema::Config::default();
         let svc = SystemGatewayService::new(None).with_config(std::sync::Arc::new(config));
 
         let req = ExecuteTurnRequest {

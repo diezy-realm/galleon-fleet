@@ -5,9 +5,9 @@ use anyhow::Context;
 use async_trait::async_trait;
 use base64::Engine;
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_config::pairing::PairingGuard;
-use clawcrew_config::paths::{normalize_lexical, resolve_under};
-use clawcrew_config::schema::Config;
+use galleon_config::pairing::PairingGuard;
+use galleon_config::paths::{normalize_lexical, resolve_under};
+use galleon_config::schema::Config;
 use galleon_i18n as i18n;
 use parking_lot::Mutex;
 use sha2::{Digest, Sha256};
@@ -1010,7 +1010,7 @@ impl WeChatChannel {
             let guard = PairingGuard::new(
                 true,
                 &[],
-                clawcrew_config::pairing::PairingCodePolicy::numeric_compat(),
+                galleon_config::pairing::PairingCodePolicy::numeric_compat(),
             );
             if let Some(code) = guard.pairing_code() {
                 // Mirror Telegram: a backgrounded daemon discards stdout, so
@@ -1054,7 +1054,7 @@ impl WeChatChannel {
             peer_resolver,
             persist: None,
             pairing,
-            client: clawcrew_config::schema::build_runtime_proxy_client("channel.wechat"),
+            client: galleon_config::schema::build_runtime_proxy_client("channel.wechat"),
             context_tokens: Mutex::new(HashMap::new()),
             typing_tickets: Mutex::new(HashMap::new()),
             cursor: Mutex::new(String::new()),
@@ -4019,13 +4019,13 @@ mod tests {
     /// write the runtime needs and the paired user stays unrecognized.
     #[test]
     fn wechat_pairing_writes_a_grant_a_case_distinct_one_does_not_cover() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
 
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.channels.wechat.insert(
             "admin".to_string(),
-            clawcrew_config::schema::WeChatConfig {
+            galleon_config::schema::WeChatConfig {
                 enabled: true,
                 ..Default::default()
             },
@@ -4039,7 +4039,7 @@ mod tests {
             },
         );
 
-        let channel_over = |cfg: &clawcrew_config::schema::Config| {
+        let channel_over = |cfg: &galleon_config::schema::Config| {
             let peers = cfg.channel_external_peers("wechat", "admin");
             WeChatChannel::new(
                 "admin",
@@ -4076,8 +4076,8 @@ mod tests {
 
     #[tokio::test]
     async fn wechat_bind_keeps_the_one_time_code_when_an_ignore_denies_the_sender() {
-        use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+        use galleon_config::providers::ChannelRef;
         use wiremock::matchers::method;
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -4096,13 +4096,13 @@ mod tests {
             // `~/.clawcrew/config.toml`, and a bind that persists would read and
             // rewrite the operator's own file.
             let cfg_dir = tempfile::tempdir().expect("tempdir");
-            let mut config = clawcrew_config::schema::Config {
+            let mut config = galleon_config::schema::Config {
                 config_path: cfg_dir.path().join("config.toml"),
                 ..Default::default()
             };
             config.channels.wechat.insert(
                 "admin".to_string(),
-                clawcrew_config::schema::WeChatConfig {
+                galleon_config::schema::WeChatConfig {
                     enabled: true,
                     ..Default::default()
                 },
@@ -4170,8 +4170,8 @@ mod tests {
 
     #[tokio::test]
     async fn wechat_bind_rolls_back_when_the_writer_rejects_a_group_collision() {
-        use clawcrew_config::multi_agent::PeerGroupConfig;
-        use clawcrew_config::providers::ChannelRef;
+        use galleon_config::multi_agent::PeerGroupConfig;
+        use galleon_config::providers::ChannelRef;
         use wiremock::matchers::method;
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -4189,13 +4189,13 @@ mod tests {
         // `~/.clawcrew/config.toml`, and a bind that persists would read and
         // rewrite the operator's own file.
         let cfg_dir = tempfile::tempdir().expect("tempdir");
-        let mut config = clawcrew_config::schema::Config {
+        let mut config = galleon_config::schema::Config {
             config_path: cfg_dir.path().join("config.toml"),
             ..Default::default()
         };
         config.channels.wechat.insert(
             "admin".to_string(),
-            clawcrew_config::schema::WeChatConfig {
+            galleon_config::schema::WeChatConfig {
                 enabled: true,
                 ..Default::default()
             },
@@ -4886,7 +4886,7 @@ mod tests {
         };
         config.channels.wechat.insert(
             alias.to_string(),
-            clawcrew_config::schema::WeChatConfig {
+            galleon_config::schema::WeChatConfig {
                 enabled: true,
                 ..Default::default()
             },

@@ -68,7 +68,7 @@ mod tests {
 
     fn probe_tools() -> Vec<Box<dyn Tool>> {
         let security = std::sync::Arc::new(SecurityPolicy::from_risk_profile(
-            &clawcrew_config::schema::RiskProfileConfig::default(),
+            &galleon_config::schema::RiskProfileConfig::default(),
             std::path::Path::new("/tmp"),
         ));
         default_tools(security)

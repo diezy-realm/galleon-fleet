@@ -11,7 +11,7 @@ use clawcrew_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage,
     ChannelModelPickerRequest, DraftProgress, ProgressEvent, RoomCreationOptions, SendMessage,
 };
-use clawcrew_config::schema::{DEFAULT_REPLY_QUEUE_DEPTH, HasReplyPacing, PACING_RECIPIENT_CAP};
+use galleon_config::schema::{DEFAULT_REPLY_QUEUE_DEPTH, HasReplyPacing, PACING_RECIPIENT_CAP};
 use tokio::sync::{Mutex, oneshot};
 
 enum PacedOp {

@@ -114,7 +114,7 @@ pub fn hydrate_from_snapshot(workspace_dir: &Path) -> Result<usize> {
     if existing_count != 0 {
         return Ok(0);
     }
-    let default_agent_id = clawcrew_config::schema::v2::sqlite_ensure_default_agent_uuid(&tx)?;
+    let default_agent_id = galleon_config::schema::v2::sqlite_ensure_default_agent_uuid(&tx)?;
 
     let now = Local::now().to_rfc3339();
     let mut hydrated = 0usize;
@@ -591,7 +591,7 @@ Rule 3: Protect the user.
 
         let conn = SqliteMemory::open_and_initialize(&db_path, None).unwrap();
         let default_agent_id =
-            clawcrew_config::schema::v2::sqlite_ensure_default_agent_uuid(&conn).unwrap();
+            galleon_config::schema::v2::sqlite_ensure_default_agent_uuid(&conn).unwrap();
         let now = Local::now().to_rfc3339();
         conn.execute(
             "INSERT INTO memories (

@@ -272,7 +272,7 @@ pub(crate) mod tests {
         );
     }
 
-    use clawcrew_config::pairing::PairingGuard;
+    use galleon_config::pairing::PairingGuard;
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
 
@@ -466,14 +466,14 @@ pub(crate) mod tests {
             member_hash: hash,
         });
 
-        let mut config = clawcrew_config::schema::Config::default();
+        let mut config = galleon_config::schema::Config::default();
         config.gateway.allow_remote_admin = true;
         let mut state = crate::api::test_state(config);
         state.sop_runner = Some(runner);
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[token.to_string()],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         (state, run_id)
     }
@@ -510,10 +510,10 @@ pub(crate) mod tests {
         // gate is left waiting.
         let other = "some-other-paired-token";
         let mut state_other = state.clone();
-        state_other.pairing = std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
+        state_other.pairing = std::sync::Arc::new(galleon_config::pairing::PairingGuard::new(
             true,
             &[token.to_string(), other.to_string()],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         let resp = handle_sop_approve(
             State(state_other),
@@ -643,10 +643,10 @@ pub(crate) mod tests {
         // Pairing is now OFF - `is_authenticated` accepts any token, so the SAME
         // token string that legitimately satisfied membership when paired must NOT
         // grant an authenticated identity anymore.
-        state.pairing = std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
+        state.pairing = std::sync::Arc::new(galleon_config::pairing::PairingGuard::new(
             false,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         let loopback: SocketAddr = "127.0.0.1:9".parse().unwrap();
 

@@ -5,8 +5,8 @@ use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::model_provider::ModelProvider;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::policy::ToolOperation;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::policy::ToolOperation;
 use galleon_providers::ProviderDispatch;
 
 /// Tool that runs a single prompt through an LLM and optionally validates
@@ -17,7 +17,7 @@ pub struct LlmTaskTool {
     /// Root config snapshot for alias-aware provider construction.
     /// Required so that `create_model_provider_for_alias` can look up
     /// typed alias-specific fields (e.g. `requires_openai_auth`).
-    config: Arc<clawcrew_config::schema::Config>,
+    config: Arc<galleon_config::schema::Config>,
     /// Provider family name (e.g. "openai", "openrouter").
     family: String,
     /// Provider alias within the family (e.g. "codex", "primary").
@@ -38,7 +38,7 @@ pub struct LlmTaskTool {
 impl LlmTaskTool {
     pub fn new(
         security: Arc<SecurityPolicy>,
-        config: Arc<clawcrew_config::schema::Config>,
+        config: Arc<galleon_config::schema::Config>,
         family: String,
         alias: String,
         default_model: String,
@@ -462,7 +462,7 @@ mod tests {
     fn default_tool() -> LlmTaskTool {
         LlmTaskTool::new(
             Arc::new(SecurityPolicy::default()),
-            Arc::new(clawcrew_config::schema::Config::default()),
+            Arc::new(galleon_config::schema::Config::default()),
             "openrouter".to_string(),
             "default".to_string(),
             "test-model".to_string(),
@@ -513,7 +513,7 @@ mod tests {
     async fn execute_with_invalid_provider_returns_error() {
         let tool = LlmTaskTool::new(
             Arc::new(SecurityPolicy::default()),
-            Arc::new(clawcrew_config::schema::Config::default()),
+            Arc::new(galleon_config::schema::Config::default()),
             "nonexistent_provider_xyz".to_string(),
             "default".to_string(),
             "test-model".to_string(),
@@ -537,7 +537,7 @@ mod tests {
     /// and after the fix.
     #[test]
     fn llm_task_normal_provider_unaffected() {
-        use clawcrew_config::schema::Config;
+        use galleon_config::schema::Config;
 
         let config = Config::default();
         let default_opts = galleon_providers::ModelProviderRuntimeOptions::default();
@@ -607,7 +607,7 @@ mod tests {
         use std::collections::HashMap;
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
-        use clawcrew_config::schema::{Config, ModelProviderConfig, QwenModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig, QwenModelProviderConfig};
 
         let _lock = OAUTH_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
 
@@ -746,7 +746,7 @@ mod tests {
         use std::collections::HashMap;
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
-        use clawcrew_config::schema::{Config, ModelProviderConfig, QwenModelProviderConfig};
+        use galleon_config::schema::{Config, ModelProviderConfig, QwenModelProviderConfig};
 
         let _lock = OAUTH_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
 

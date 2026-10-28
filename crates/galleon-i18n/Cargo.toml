@@ -13,9 +13,9 @@ publish = true
 # RF-B: the body moved verbatim from clawcrew-runtime::i18n. Its real deps are
 # the Fluent engine, config (for ftl_locale_dir disk-override resolution + the
 # config.toml locale read) and the structured-log macro — all light, and
-# clawcrew-config/clawcrew-log do NOT pull clawcrew-runtime, which is the whole
+# galleon-config/clawcrew-log do NOT pull clawcrew-runtime, which is the whole
 # point of the extraction.
-clawcrew-config.workspace = true
+galleon-config.workspace = true
 clawcrew-log.workspace = true
 fluent = "0.16"
 directories = "6.0"
@@ -26,8 +26,8 @@ serde_json = { version = "1.0", default-features = false, features = ["std"] }
 
 [features]
 # Mirror the runtime crate's schema-export forwarding so a workspace build with
-# that feature still type-checks clawcrew-config's JsonSchema derives.
-schema-export = ["clawcrew-config/schema-export"]
+# that feature still type-checks galleon-config's JsonSchema derives.
+schema-export = ["galleon-config/schema-export"]
 
 [dev-dependencies]
-clawcrew-config = { workspace = true, features = ["test-helpers"] }
+galleon-config = { workspace = true, features = ["test-helpers"] }

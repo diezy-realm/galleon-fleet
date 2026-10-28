@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
+use galleon_config::policy::SecurityPolicy;
 
 const MAX_RESULTS: usize = 1000;
 
@@ -177,8 +177,8 @@ mod tests {
     use super::*;
     use std::path::PathBuf;
     use tempfile::TempDir;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
 
     fn test_security(workspace: PathBuf) -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy {

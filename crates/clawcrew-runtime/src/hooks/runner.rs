@@ -49,7 +49,7 @@ impl HookRunner {
         self.handlers.is_empty()
     }
 
-    pub fn from_config(hooks: &clawcrew_config::schema::HooksConfig) -> Self {
+    pub fn from_config(hooks: &galleon_config::schema::HooksConfig) -> Self {
         let mut runner = Self::new();
         if hooks.builtin.command_logger {
             runner.register(Box::new(super::builtin::CommandLoggerHook::new()));
@@ -1491,11 +1491,11 @@ mod tests {
 
     #[test]
     fn from_config_disabled_builtins_produces_empty_runner() {
-        let config = clawcrew_config::schema::HooksConfig {
+        let config = galleon_config::schema::HooksConfig {
             enabled: true,
-            builtin: clawcrew_config::schema::BuiltinHooksConfig {
+            builtin: galleon_config::schema::BuiltinHooksConfig {
                 command_logger: false,
-                webhook_audit: clawcrew_config::schema::WebhookAuditConfig::default(),
+                webhook_audit: galleon_config::schema::WebhookAuditConfig::default(),
             },
         };
         let runner = HookRunner::from_config(&config);
@@ -1507,11 +1507,11 @@ mod tests {
 
     #[test]
     fn from_config_registers_command_logger_when_enabled() {
-        let config = clawcrew_config::schema::HooksConfig {
+        let config = galleon_config::schema::HooksConfig {
             enabled: true,
-            builtin: clawcrew_config::schema::BuiltinHooksConfig {
+            builtin: galleon_config::schema::BuiltinHooksConfig {
                 command_logger: true,
-                webhook_audit: clawcrew_config::schema::WebhookAuditConfig::default(),
+                webhook_audit: galleon_config::schema::WebhookAuditConfig::default(),
             },
         };
         let runner = HookRunner::from_config(&config);
@@ -1524,11 +1524,11 @@ mod tests {
 
     #[test]
     fn from_config_skips_invalid_webhook_and_keeps_valid_builtins() {
-        let config = clawcrew_config::schema::HooksConfig {
+        let config = galleon_config::schema::HooksConfig {
             enabled: true,
-            builtin: clawcrew_config::schema::BuiltinHooksConfig {
+            builtin: galleon_config::schema::BuiltinHooksConfig {
                 command_logger: true,
-                webhook_audit: clawcrew_config::schema::WebhookAuditConfig {
+                webhook_audit: galleon_config::schema::WebhookAuditConfig {
                     enabled: true,
                     url: "http://example.com/audit".to_string(),
                     ..Default::default()

@@ -11,8 +11,8 @@ use crate::security::SecurityPolicy;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use clawcrew_api::runtime_traits::RuntimeAdapter;
-use clawcrew_config::schema::Config;
-use clawcrew_config::schema::{CronJobDecl, CronScheduleDecl, CronShellOutputFormat};
+use galleon_config::schema::Config;
+use galleon_config::schema::{CronJobDecl, CronScheduleDecl, CronShellOutputFormat};
 use clawcrew_log::Instrument;
 use futures_util::{StreamExt, stream};
 use std::process::Stdio;
@@ -1387,7 +1387,7 @@ mod tests {
     use crate::cron::{self, DeliveryConfig};
     use crate::security::SecurityPolicy;
     use chrono::{Duration as ChronoDuration, Utc};
-    use clawcrew_config::schema::{Config, RuntimeKind};
+    use galleon_config::schema::{Config, RuntimeKind};
     use tempfile::TempDir;
 
     const TEST_AGENT: &str = "test-agent";
@@ -1463,19 +1463,19 @@ mod tests {
         };
         config.risk_profiles.insert(
             TEST_AGENT.to_string(),
-            clawcrew_config::schema::RiskProfileConfig::default(),
+            galleon_config::schema::RiskProfileConfig::default(),
         );
         config.runtime_profiles.insert(
             TEST_AGENT.to_string(),
-            clawcrew_config::schema::RuntimeProfileConfig::default(),
+            galleon_config::schema::RuntimeProfileConfig::default(),
         );
         config.providers.models.openrouter.insert(
             TEST_AGENT.to_string(),
-            clawcrew_config::schema::OpenRouterModelProviderConfig::default(),
+            galleon_config::schema::OpenRouterModelProviderConfig::default(),
         );
         config.agents.insert(
             TEST_AGENT.to_string(),
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 model_provider: format!("openrouter.{TEST_AGENT}").into(),
                 risk_profile: TEST_AGENT.into(),
                 runtime_profile: TEST_AGENT.into(),
@@ -1600,7 +1600,7 @@ mod tests {
         let tmp = TempDir::new().unwrap();
         let config = test_config(&tmp).await;
         let security = SecurityPolicy {
-            autonomy: clawcrew_config::policy::AutonomyLevel::Full,
+            autonomy: galleon_config::policy::AutonomyLevel::Full,
             workspace_dir: config.data_dir.clone(),
             allowed_commands: vec!["*".into()],
             block_high_risk_commands: true,
@@ -1839,7 +1839,7 @@ mod tests {
         // overridden.
         config.cron.insert(
             "test-job".into(),
-            clawcrew_config::schema::CronJobDecl {
+            galleon_config::schema::CronJobDecl {
                 command: Some("echo collision-ok".into()),
                 shell_output_format: CronShellOutputFormat::Raw,
                 ..Default::default()
@@ -2275,7 +2275,7 @@ mod tests {
     #[tokio::test]
     async fn agent_cron_run_keeps_workspace_through_shell_on_retry_and_concurrency() {
         use axum::{Json, Router, http::StatusCode, response::IntoResponse, routing::post};
-        use clawcrew_config::schema::{ModelProviderConfig, OllamaModelProviderConfig};
+        use galleon_config::schema::{ModelProviderConfig, OllamaModelProviderConfig};
         use tokio::net::TcpListener;
 
         let requests = Arc::new(std::sync::Mutex::new(Vec::<serde_json::Value>::new()));

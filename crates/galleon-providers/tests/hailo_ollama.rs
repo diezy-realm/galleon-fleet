@@ -11,7 +11,7 @@ use axum::{
 use serde_json::{Value, json};
 use tokio::io::AsyncReadExt;
 use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
-use clawcrew_config::schema::{Config, HailoOllamaModelProviderConfig, ModelProviderConfig};
+use galleon_config::schema::{Config, HailoOllamaModelProviderConfig, ModelProviderConfig};
 use galleon_providers::hailo_ollama::HailoOllamaModelProvider;
 use galleon_providers::ollama::{OllamaModelProvider, OllamaTuning};
 use galleon_providers::traits::{

@@ -532,8 +532,8 @@ async fn egress_sandbox_blocks_invalid_port_destination() {
 #[cfg(feature = "plugins-wasm-cranelift")]
 mod wasm_cranelift_e2e {
     use super::*;
-    use clawcrew_config::providers::{ChannelRef, ModelProviderRef};
-    use clawcrew_config::schema::{
+    use galleon_config::providers::{ChannelRef, ModelProviderRef};
+    use galleon_config::schema::{
         AliasedAgentConfig, AnthropicModelProviderConfig, Config, PluginChannelConfig,
         PluginEntryConfig, RiskProfileConfig,
     };

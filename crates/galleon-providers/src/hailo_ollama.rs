@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 use tokio::sync::Semaphore;
 use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
-use clawcrew_config::schema::{HailoOllamaEndpoint, ModelEndpoint};
+use galleon_config::schema::{HailoOllamaEndpoint, ModelEndpoint};
 
 use crate::multimodal;
 use crate::ollama::OllamaTuning;
@@ -343,7 +343,7 @@ impl HailoOllamaModelProvider {
             .timeout(std::time::Duration::from_secs(self.request_timeout_secs))
             .connect_timeout(std::time::Duration::from_secs(10))
             .redirect(reqwest::redirect::Policy::none());
-        let builder = clawcrew_config::schema::try_apply_runtime_proxy_to_builder(
+        let builder = galleon_config::schema::try_apply_runtime_proxy_to_builder(
             builder,
             "model_provider.hailo_ollama",
         )?;

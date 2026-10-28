@@ -142,7 +142,7 @@ fn format_ftl_message(
 }
 
 fn load_ftl_from_disk(locale: &str) -> Option<String> {
-    let path = clawcrew_config::schema::ftl_locale_dir(locale)
+    let path = galleon_config::schema::ftl_locale_dir(locale)
         .ok()
         .map(|d| d.join("tools.ftl"))?;
     std::fs::read_to_string(path).ok()

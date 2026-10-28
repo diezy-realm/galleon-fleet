@@ -1082,7 +1082,7 @@ pub struct ModelProviderConfig {
 // - Family with computed-endpoint template: see `AzureModelProviderConfig`
 // - Multi-region family with a required `endpoint` field: see `MoonshotModelProviderConfig`
 //
-// The `ModelProviders` container in `crates/clawcrew-config/src/model_providers.rs`
+// The `ModelProviders` container in `crates/galleon-config/src/model_providers.rs`
 // holds a typed slot per family; the runtime impls in galleon-providers
 // consume the typed configs directly.
 

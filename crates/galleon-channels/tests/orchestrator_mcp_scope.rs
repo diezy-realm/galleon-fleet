@@ -4,14 +4,14 @@
 
 use std::collections::HashMap;
 
-use clawcrew_config::schema::{
+use galleon_config::schema::{
     AliasedAgentConfig, Config, McpBundleConfig, McpServerConfig, McpTransport, RiskProfileConfig,
 };
 
 /// Build a two-agent config: `granted` (has bundle `b1`), `unscoped`
 /// (no bundles). The server `remote` is configured globally.
 fn make_two_agent_config() -> Config {
-    let mut providers = clawcrew_config::providers::Providers::default();
+    let mut providers = galleon_config::providers::Providers::default();
     {
         let base = providers
             .models

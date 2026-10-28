@@ -1,4 +1,4 @@
-use clawcrew_config::schema::{Config, MdnsConfig, NodesConfig};
+use galleon_config::schema::{Config, MdnsConfig, NodesConfig};
 
 #[test]
 fn mdns_config_defaults_to_disabled_without_gateway_port_copy() {

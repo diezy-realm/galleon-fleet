@@ -30,7 +30,7 @@
 | `crates/galleon-tools` | 88 | 2,101 | `rename` / `delete` |
 | `crates/galleon-gateway` | 53 | 1,758 | `rename` / `delete` |
 | `src` | 125 | 1,508 | `rename` / `delete` |
-| `crates/clawcrew-config` | 34 | 1,290 | `rename` / `delete` |
+| `crates/galleon-config` | 34 | 1,290 | `rename` / `delete` |
 | `root` | 42 | 1,222 | `rename` / `delete` |
 | `apps/zerocode` | 33 | 1,067 | `rename` / `delete` |
 | `crates/galleon-i18n` | 12 | 785 | `rename` / `delete` |

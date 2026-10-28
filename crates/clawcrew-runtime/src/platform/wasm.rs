@@ -1,7 +1,7 @@
 //! WASM sandbox runtime — in-process tool isolation via `wasmi`.
 
 use super::traits::{RuntimeAdapter, ShellDialect};
-use clawcrew_config::schema::WasmRuntimeConfig;
+use galleon_config::schema::WasmRuntimeConfig;
 use anyhow::{bail, Context, Result};
 use std::path::{Path, PathBuf};
 

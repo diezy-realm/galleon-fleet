@@ -42,7 +42,7 @@ impl QdrantMemory {
         mem.ensure_collection().await?;
         if mem.embedder.read().dimensions() > 0 {
             mem.migrate_session_ids_to_sanitized().await?;
-            clawcrew_config::schema::v2::migrate_qdrant_collection_to_v3(
+            galleon_config::schema::v2::migrate_qdrant_collection_to_v3(
                 &mem.client,
                 &mem.base_url,
                 &mem.collection,
@@ -66,7 +66,7 @@ impl QdrantMemory {
         embedder: Arc<dyn EmbeddingProvider>,
     ) -> Self {
         let base_url = url.trim_end_matches('/').to_string();
-        let client = clawcrew_config::schema::build_runtime_proxy_client("memory.qdrant");
+        let client = galleon_config::schema::build_runtime_proxy_client("memory.qdrant");
 
         Self {
             alias: alias.to_string(),
@@ -100,7 +100,7 @@ impl QdrantMemory {
                 self.ensure_collection().await?;
                 if self.embedder.read().dimensions() > 0 {
                     self.migrate_session_ids_to_sanitized().await?;
-                    clawcrew_config::schema::v2::migrate_qdrant_collection_to_v3(
+                    galleon_config::schema::v2::migrate_qdrant_collection_to_v3(
                         &self.client,
                         &self.base_url,
                         &self.collection,

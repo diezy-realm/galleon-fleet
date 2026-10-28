@@ -89,7 +89,7 @@ pub fn parse_approval_route(route: &str) -> Option<(&str, &str)> {
 /// A route must have non-empty `channel:recipient` halves; malformed values are also
 /// surfaced at startup. Returns one [`ApprovalRouteIssue`] per invalid route.
 pub fn unresolvable_approval_routes(
-    approval: &clawcrew_config::schema::SopApprovalConfig,
+    approval: &galleon_config::schema::SopApprovalConfig,
     channel_keys: &std::collections::HashSet<String>,
 ) -> Vec<ApprovalRouteIssue> {
     let mut unresolvable = Vec::new();
@@ -589,7 +589,7 @@ mod tests {
         // send-only adapter lacks is surfaced; a route naming a present channel is not;
         // a malformed route is surfaced before a gate can discover it at delivery time.
         use std::collections::{HashMap, HashSet};
-        use clawcrew_config::schema::{ApprovalPolicyConfig, SopApprovalConfig};
+        use galleon_config::schema::{ApprovalPolicyConfig, SopApprovalConfig};
 
         let mut policies = HashMap::new();
         policies.insert(

@@ -16,7 +16,7 @@ use lapin::{
 };
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 use clawcrew_api::sop::{SopFanInDispatcher, SopTriggerSource};
-use clawcrew_config::schema::SopDispatch;
+use galleon_config::schema::SopDispatch;
 
 static MSG_SEQ: AtomicU64 = AtomicU64::new(0);
 

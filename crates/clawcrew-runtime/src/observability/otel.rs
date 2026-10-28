@@ -12,7 +12,7 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 use std::time::SystemTime;
-use clawcrew_config::schema::OtelContentPolicy;
+use galleon_config::schema::OtelContentPolicy;
 
 struct ActiveAgentSpan {
     span: global::BoxedSpan,
@@ -2027,7 +2027,7 @@ mod tests {
 
     #[test]
     fn content_config_normalizes_zero_max_chars_to_off() {
-        use clawcrew_config::schema::{ObservabilityConfig, OtelContentPolicy};
+        use galleon_config::schema::{ObservabilityConfig, OtelContentPolicy};
 
         let cfg = ObservabilityConfig {
             otel_genai_content: OtelContentPolicy::Full,
@@ -2044,7 +2044,7 @@ mod tests {
 
     #[test]
     fn content_config_preserves_nonzero_max_chars_policy() {
-        use clawcrew_config::schema::{ObservabilityConfig, OtelContentPolicy};
+        use galleon_config::schema::{ObservabilityConfig, OtelContentPolicy};
 
         let cfg = ObservabilityConfig {
             otel_genai_content: OtelContentPolicy::Redacted,

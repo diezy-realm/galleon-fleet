@@ -121,14 +121,14 @@ fn is_integration_test_matches_tests_component_regardless_of_separator() {
 
     let crate_tests = manifest_dir
         .join("crates")
-        .join("clawcrew-config")
+        .join("galleon-config")
         .join("tests")
         .join("x.rs");
     assert!(is_integration_test(&crate_tests));
 
     let crate_src = manifest_dir
         .join("crates")
-        .join("clawcrew-config")
+        .join("galleon-config")
         .join("src")
         .join("schema.rs");
     assert!(!is_integration_test(&crate_src));

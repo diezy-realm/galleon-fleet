@@ -141,7 +141,7 @@ mod tests {
     use {
         crate::security::SecurityPolicy, crate::security::traits::Sandbox, serde_json::json,
         std::sync::Mutex, clawcrew_api::runtime_traits::RuntimeAdapter, clawcrew_api::tool::Tool,
-        clawcrew_config::autonomy::AutonomyLevel, clawcrew_config::schema::CodexCliConfig,
+        galleon_config::autonomy::AutonomyLevel, galleon_config::schema::CodexCliConfig,
         galleon_tools::codex_cli::CodexCliTool,
     };
 

@@ -4,8 +4,8 @@ use serde_json::{Value, json};
 use std::fs;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::{
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::{
     Config, ProxyConfig, ProxyScope, runtime_proxy_config, set_runtime_proxy_config,
 };
 
@@ -176,7 +176,7 @@ impl ProxyConfigTool {
 
     fn dns_pinned_tool_warnings(
         config: &Config,
-    ) -> Vec<clawcrew_config::validation_warnings::ValidationWarning> {
+    ) -> Vec<galleon_config::validation_warnings::ValidationWarning> {
         config
             .collect_warnings()
             .into_iter()
@@ -524,8 +524,8 @@ impl Tool for ProxyConfigTool {
 mod tests {
     use super::*;
     use tempfile::TempDir;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
 
     fn test_security() -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy {

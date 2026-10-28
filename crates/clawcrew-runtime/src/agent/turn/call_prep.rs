@@ -413,7 +413,7 @@ mod tests {
     use crate::tools::{Tool, ToolResult};
     use async_trait::async_trait;
     use clawcrew_api::attribution::{Attributable, ToolProvenance};
-    use clawcrew_config::schema::{PacingConfig, StreamReasoningMode};
+    use galleon_config::schema::{PacingConfig, StreamReasoningMode};
     use galleon_tool_call_parser::ParsedToolCall;
     use std::collections::{HashMap, HashSet};
     use std::sync::Arc;
@@ -471,7 +471,7 @@ mod tests {
             observer,
             provider_name: "test",
             model: "test-model",
-            context_limits: clawcrew_config::schema::ResolvedContextLimits::legacy_fallback(0),
+            context_limits: galleon_config::schema::ResolvedContextLimits::legacy_fallback(0),
             temperature: None,
             approval: None,
             channel_name: "test",
@@ -869,7 +869,7 @@ mod tests {
             events: Arc::clone(&events),
             cancel_before_for: Vec::new(),
         }));
-        let profile = clawcrew_config::schema::RiskProfileConfig {
+        let profile = galleon_config::schema::RiskProfileConfig {
             auto_approve: vec!["normal_tool".to_string()],
             always_ask: vec!["guarded_tool".to_string()],
             ..Default::default()
@@ -943,9 +943,9 @@ mod tests {
             events: Arc::clone(&events),
             cancel_before_for: Vec::new(),
         }));
-        let risk_profile = clawcrew_config::schema::RiskProfileConfig {
+        let risk_profile = galleon_config::schema::RiskProfileConfig {
             always_ask: vec!["guarded_tool".to_string()],
-            ..clawcrew_config::schema::RiskProfileConfig::default()
+            ..galleon_config::schema::RiskProfileConfig::default()
         };
         let approval = crate::approval::ApprovalManager::for_non_interactive(&risk_profile);
         let ctx = lifecycle_ctx(&observer, &pacing, &tx, Some(&approval), Some(&runner));
@@ -1044,9 +1044,9 @@ mod tests {
             events: Arc::clone(&events),
             cancel_before_for: Vec::new(),
         }));
-        let risk_profile = clawcrew_config::schema::RiskProfileConfig {
+        let risk_profile = galleon_config::schema::RiskProfileConfig {
             always_ask: vec!["guarded_tool".to_string()],
-            ..clawcrew_config::schema::RiskProfileConfig::default()
+            ..galleon_config::schema::RiskProfileConfig::default()
         };
         let approval = crate::approval::ApprovalManager::for_non_interactive(&risk_profile);
         let channel = ReplacingChannel;
@@ -1106,10 +1106,10 @@ mod tests {
             events: Arc::clone(&events),
             cancel_before_for: Vec::new(),
         }));
-        let risk_profile = clawcrew_config::schema::RiskProfileConfig {
+        let risk_profile = galleon_config::schema::RiskProfileConfig {
             always_ask: vec!["shell".to_string()],
             auto_approve: vec!["normal_tool".to_string()],
-            ..clawcrew_config::schema::RiskProfileConfig::default()
+            ..galleon_config::schema::RiskProfileConfig::default()
         };
         let approval = crate::approval::ApprovalManager::for_non_interactive(&risk_profile);
         let ctx = lifecycle_ctx(&observer, &pacing, &tx, Some(&approval), Some(&runner));

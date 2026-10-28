@@ -13,7 +13,7 @@ use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use tokio::net::TcpStream;
 use tokio_rustls::TlsConnector;
 use tokio_rustls::client::TlsStream;
-use clawcrew_config::scattered_types::EmailConfig;
+use galleon_config::scattered_types::EmailConfig;
 
 /// Tolerates TLS streams from servers that omit `close_notify` (e.g. Exchange).
 pub struct TlsStreamTolerant(pub TlsStream<TcpStream>);

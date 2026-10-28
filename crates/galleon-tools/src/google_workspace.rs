@@ -3,15 +3,15 @@ use serde_json::json;
 use std::sync::Arc;
 use std::time::Duration;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_config::policy::SecurityPolicy;
-use clawcrew_config::schema::GoogleWorkspaceAllowedOperation;
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::GoogleWorkspaceAllowedOperation;
 
 #[cfg(test)]
 const DEFAULT_GWS_TIMEOUT_SECS: u64 = 30;
 /// Maximum output size in bytes (1MB).
 const MAX_OUTPUT_BYTES: usize = 1_048_576;
 
-use clawcrew_config::schema::DEFAULT_GWS_SERVICES;
+use galleon_config::schema::DEFAULT_GWS_SERVICES;
 
 pub struct GoogleWorkspaceTool {
     security: Arc<SecurityPolicy>,
@@ -489,8 +489,8 @@ impl Tool for GoogleWorkspaceTool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::autonomy::AutonomyLevel;
-    use clawcrew_config::policy::SecurityPolicy;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
 
     fn test_security() -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy {

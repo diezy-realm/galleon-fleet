@@ -28,7 +28,7 @@ pub use verbose::VerboseObserver;
 
 use std::sync::Arc;
 
-use clawcrew_config::schema::{ObservabilityBackend, ObservabilityConfig};
+use galleon_config::schema::{ObservabilityBackend, ObservabilityConfig};
 
 /// Drop-safe lifecycle bracket for one logical agent turn.
 ///
@@ -94,7 +94,7 @@ impl Drop for FlushGuard {
 /// I/O policy surfaces a privacy reminder at observer construction time.
 #[cfg(feature = "observability-otel")]
 fn warn_otel_content_policy(config: OtelContentConfig) {
-    use clawcrew_config::schema::OtelContentPolicy;
+    use galleon_config::schema::OtelContentPolicy;
 
     if config.genai_policy != OtelContentPolicy::Off {
         let msg = match config.genai_policy {

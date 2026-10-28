@@ -15,7 +15,7 @@ use tower::ServiceExt;
 
 #[test]
 fn default_agent_alias_picks_smallest_enabled_and_is_deterministic() {
-    use clawcrew_config::schema::AliasedAgentConfig;
+    use galleon_config::schema::AliasedAgentConfig;
 
     let enabled = || AliasedAgentConfig {
         enabled: true,
@@ -132,7 +132,7 @@ fn security_timeout_default_is_30_seconds() {
 
 #[test]
 fn gateway_timeout_uses_typed_config_default() {
-    let cfg = clawcrew_config::schema::GatewayConfig::default();
+    let cfg = galleon_config::schema::GatewayConfig::default();
     assert_eq!(gateway_request_timeout_secs(&cfg), 30);
 }
 
@@ -399,7 +399,7 @@ pub(super) fn admin_paircode_state(
         mem: Arc::new(MockMemory),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::new(MockMemory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -693,7 +693,7 @@ async fn admin_paircode_new_without_rotate_keeps_existing_tokens() {
 /// instance mints, with no restart and no reconstruction.
 #[tokio::test]
 async fn admin_paircode_new_mints_under_live_policy_after_a_config_swap() {
-    use clawcrew_config::pairing::{PairingCodeCharset, PairingCodePolicy};
+    use galleon_config::pairing::{PairingCodeCharset, PairingCodePolicy};
 
     let tmp = tempfile::TempDir::new().unwrap();
     let state = admin_paircode_state(&tmp, true, true);
@@ -900,7 +900,7 @@ fn long_running_request_timeout_default_is_ten_minutes() {
 
 #[test]
 fn long_running_request_timeout_uses_typed_config_default() {
-    let cfg = clawcrew_config::schema::GatewayConfig::default();
+    let cfg = galleon_config::schema::GatewayConfig::default();
     assert_eq!(gateway_long_running_request_timeout_secs(&cfg), 600);
 }
 
@@ -1086,10 +1086,10 @@ async fn run_gateway_starts_with_zero_agents() {
     // Isolate data_dir so parallel nextest runs don't race on the
     // real ~/.clawcrew/data
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
 
@@ -1147,15 +1147,15 @@ async fn run_gateway_starts_with_zero_agents() {
 
 #[tokio::test]
 async fn run_gateway_starts_with_unresolved_agent_risk_profile() {
-    use clawcrew_config::schema::AliasedAgentConfig;
+    use galleon_config::schema::AliasedAgentConfig;
 
     // Isolate data_dir so parallel nextest runs don't race on the
     // real ~/.clawcrew/data
     let tmp = tempfile::TempDir::new().unwrap();
-    let mut config = clawcrew_config::schema::Config {
+    let mut config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
 
@@ -1212,8 +1212,8 @@ async fn run_gateway_starts_with_mismatched_provider_api_key() {
     let mut config = Config::default();
     config.providers.models.anthropic.insert(
         "default".to_string(),
-        clawcrew_config::schema::AnthropicModelProviderConfig {
-            base: clawcrew_config::schema::ModelProviderConfig {
+        galleon_config::schema::AnthropicModelProviderConfig {
+            base: galleon_config::schema::ModelProviderConfig {
                 model: Some("anthropic/claude-sonnet-4-6".to_string()),
                 api_key: Some("sk-test-openai-shaped-key".to_string()),
                 ..Default::default()
@@ -1269,10 +1269,10 @@ async fn daemon_startup_gateway_reports_ready_and_uses_external_shutdown_sender(
     drop(port_probe);
 
     let tmp = tempfile::TempDir::new().unwrap();
-    let config = clawcrew_config::schema::Config {
+    let config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
     std::fs::create_dir_all(&config.data_dir).unwrap();
 
@@ -1340,12 +1340,12 @@ async fn daemon_startup_gateway_reports_ready_and_uses_external_shutdown_sender(
 #[tokio::test]
 async fn daemon_startup_gateway_does_not_report_ready_when_tls_setup_fails() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let mut config = clawcrew_config::schema::Config {
+    let mut config = galleon_config::schema::Config {
         data_dir: tmp.path().join("workspace"),
         config_path: tmp.path().join("config.toml"),
-        ..clawcrew_config::schema::Config::default()
+        ..galleon_config::schema::Config::default()
     };
-    config.gateway.tls = Some(clawcrew_config::schema::GatewayTlsConfig {
+    config.gateway.tls = Some(galleon_config::schema::GatewayTlsConfig {
         enabled: true,
         cert_path: tmp.path().join("missing-cert.pem").display().to_string(),
         key_path: tmp.path().join("missing-key.pem").display().to_string(),
@@ -1392,7 +1392,7 @@ async fn metrics_endpoint_returns_hint_when_prometheus_is_disabled() {
         mem: Arc::new(MockMemory),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::new(MockMemory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -1477,7 +1477,7 @@ async fn metrics_endpoint_renders_prometheus_output() {
         mem: Arc::new(MockMemory),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::new(MockMemory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -1713,7 +1713,7 @@ async fn persist_pairing_tokens_writes_config_tokens() {
     assert_eq!(raw_parsed.gateway.paired_tokens.len(), 1);
     let on_disk = &raw_parsed.gateway.paired_tokens[0];
     assert!(
-        clawcrew_config::secrets::SecretStore::is_encrypted(on_disk),
+        galleon_config::secrets::SecretStore::is_encrypted(on_disk),
         "paired_token should be encrypted on disk"
     );
 }
@@ -2141,7 +2141,7 @@ fn sse_test_state(model_provider: Arc<dyn ModelProvider>) -> AppState {
         mem: memory.clone(),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::clone(&memory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -2588,10 +2588,10 @@ fn production_sse_state(
     daily_limit_usd: f64,
     response_cache_enabled: bool,
 ) -> (AppState, Arc<CostTracker>) {
-    use clawcrew_config::multi_agent::{
+    use galleon_config::multi_agent::{
         AgentMemoryConfig, AgentWorkspaceConfig, MemoryBackendKind,
     };
-    use clawcrew_config::schema::{
+    use galleon_config::schema::{
         AliasedAgentConfig, CustomModelProviderConfig, ModelProviderConfig, RiskProfileConfig,
         RuntimeProfileConfig,
     };
@@ -2788,7 +2788,7 @@ async fn webhook_sse_production_budget_exhaustion_skips_provider_request() {
     let (state, tracker) = production_sse_state(&tmp, &fixture.base_url(), 0.01, false);
     tracker
         .record_usage_with_agent(
-            clawcrew_config::cost::types::TokenUsage::new(
+            galleon_config::cost::types::TokenUsage::new(
                 "fixture-model",
                 1_000_000,
                 0,
@@ -2869,7 +2869,7 @@ async fn webhook_sse_production_cache_hit_reconciles_no_chunk_final_response() {
 
 #[tokio::test]
 async fn webhook_sse_production_receipt_suffix_reconciles_before_done() {
-    use clawcrew_config::schema::ToolReceiptsConfig;
+    use galleon_config::schema::ToolReceiptsConfig;
 
     let fixture = spawn_chat_completion_fixture_sequence(vec![
         PRODUCTION_FIXTURE_TOOL_STREAM.to_string(),
@@ -3721,7 +3721,7 @@ async fn webhook_idempotency_skips_duplicate_provider_calls() {
         mem: memory.clone(),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::clone(&memory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -4633,7 +4633,7 @@ async fn webhook_unknown_agent_rejected_before_dispatch() {
         mem: memory.clone(),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::clone(&memory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -4726,8 +4726,8 @@ async fn webhook_explicit_agent_reports_model_without_owning_lifecycle() {
     let mut config = Config::default();
     config.providers.models.anthropic.insert(
         "default".into(),
-        clawcrew_config::schema::AnthropicModelProviderConfig {
-            base: clawcrew_config::schema::ModelProviderConfig {
+        galleon_config::schema::AnthropicModelProviderConfig {
+            base: galleon_config::schema::ModelProviderConfig {
                 model: Some("agent-model".into()),
                 ..Default::default()
             },
@@ -4737,7 +4737,7 @@ async fn webhook_explicit_agent_reports_model_without_owning_lifecycle() {
     let expected_provider = "anthropic.default".to_string();
     config.agents.insert(
         "nova".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             enabled: true,
             model_provider: expected_provider.clone().into(),
             ..Default::default()
@@ -4753,7 +4753,7 @@ async fn webhook_explicit_agent_reports_model_without_owning_lifecycle() {
         mem: memory,
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::new(MockMemory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -4852,7 +4852,7 @@ async fn webhook_autosave_stores_distinct_keys_per_request() {
         mem: memory,
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::new(MockMemory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: true,
@@ -4963,7 +4963,7 @@ fn gateway_webhook_secret_uses_one_live_config_owner() {
         let mut config = state.config.write();
         config.channels.webhook.insert(
             "enabled-a".into(),
-            clawcrew_config::schema::WebhookConfig {
+            galleon_config::schema::WebhookConfig {
                 enabled: true,
                 secret: Some("channel-secret-a".into()),
                 ..Default::default()
@@ -4971,7 +4971,7 @@ fn gateway_webhook_secret_uses_one_live_config_owner() {
         );
         config.channels.webhook.insert(
             "enabled-b".into(),
-            clawcrew_config::schema::WebhookConfig {
+            galleon_config::schema::WebhookConfig {
                 enabled: true,
                 secret: Some("channel-secret-b".into()),
                 ..Default::default()
@@ -4979,7 +4979,7 @@ fn gateway_webhook_secret_uses_one_live_config_owner() {
         );
         config.channels.webhook.insert(
             "disabled".into(),
-            clawcrew_config::schema::WebhookConfig {
+            galleon_config::schema::WebhookConfig {
                 enabled: false,
                 secret: Some("disabled-channel-secret".into()),
                 ..Default::default()
@@ -5058,7 +5058,7 @@ async fn webhook_secret_hash_rejects_missing_header() {
         mem: memory.clone(),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::clone(&memory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -5144,7 +5144,7 @@ async fn webhook_secret_hash_rejects_invalid_header() {
         mem: memory.clone(),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::clone(&memory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -5235,7 +5235,7 @@ async fn webhook_secret_hash_accepts_valid_header() {
         mem: memory.clone(),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::clone(&memory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -5331,7 +5331,7 @@ async fn nextcloud_talk_webhook_returns_not_found_when_not_configured() {
         mem: memory.clone(),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::clone(&memory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -5424,7 +5424,7 @@ async fn nextcloud_talk_webhook_rejects_invalid_signature() {
         mem: memory.clone(),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::clone(&memory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -5523,7 +5523,7 @@ async fn nextcloud_talk_webhook_rejects_when_no_secret_is_configured() {
         mem: memory.clone(),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::clone(&memory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -5662,7 +5662,7 @@ async fn nextcloud_talk_webhook_returns_before_llm_call_completes() {
         mem: memory.clone(),
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::clone(&memory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -6272,7 +6272,7 @@ fn admin_reload_gate_remote_opt_in_without_pairing_is_rejected() {
 #[test]
 fn allow_remote_admin_defaults_off() {
     // Security default: remote admin reload is disabled until opted in.
-    assert!(!clawcrew_config::schema::GatewayConfig::default().allow_remote_admin);
+    assert!(!galleon_config::schema::GatewayConfig::default().allow_remote_admin);
 }
 
 /// Build an `AppState` for `handle_admin_reload`: controls
@@ -6549,7 +6549,7 @@ fn linq_test_state_with_config(
         mem: memory,
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::new(MockMemory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -6633,7 +6633,7 @@ async fn linq_webhook_returns_not_found_when_no_channels_configured() {
         mem: memory,
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::new(MockMemory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,
@@ -7103,8 +7103,8 @@ async fn verified_webhook_dispatch_sends_quickstart_fallback_when_unconfigured()
 #[cfg(feature = "channel-linq")]
 #[tokio::test]
 async fn linq_webhook_alias_dispatches_to_configured_channel_agent() {
-    use clawcrew_config::providers::ChannelRef;
-    use clawcrew_config::schema::AliasedAgentConfig;
+    use galleon_config::providers::ChannelRef;
+    use galleon_config::schema::AliasedAgentConfig;
 
     let _capture_guard = lock_gateway_chat_dispatch_capture_for_test().await;
     clear_gateway_chat_dispatch_captures_for_test();
@@ -7169,8 +7169,8 @@ async fn linq_webhook_alias_dispatches_to_configured_channel_agent() {
 #[cfg(feature = "channel-linq")]
 #[tokio::test]
 async fn linq_webhook_alias_without_enabled_owner_does_not_use_default_agent() {
-    use clawcrew_config::providers::ChannelRef;
-    use clawcrew_config::schema::AliasedAgentConfig;
+    use galleon_config::providers::ChannelRef;
+    use galleon_config::schema::AliasedAgentConfig;
 
     let _capture_guard = lock_gateway_chat_dispatch_capture_for_test().await;
     clear_gateway_chat_dispatch_captures_for_test();
@@ -7242,7 +7242,7 @@ fn webhook_baseline_state() -> AppState {
         mem,
         memory_strategy: Arc::new(DefaultMemoryStrategy::with_config(
             Arc::new(MockMemory),
-            clawcrew_config::schema::MemoryConfig::default(),
+            galleon_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
         )),
         auto_save: false,

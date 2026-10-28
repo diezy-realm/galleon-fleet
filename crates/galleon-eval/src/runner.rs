@@ -4,7 +4,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use clawcrew_api::model_provider::ModelProvider;
-use clawcrew_config::schema::MemoryConfig;
+use galleon_config::schema::MemoryConfig;
 use galleon_memory::{Memory, create_memory};
 use clawcrew_runtime::agent::agent::Agent;
 use clawcrew_runtime::agent::dispatcher::NativeToolDispatcher;
@@ -103,8 +103,8 @@ impl MockGoEngineTurnClient {
         // through it with a permissive default policy so `assemble` is an identity
         // over `default_tools()` (nothing added, nothing dropped): the eval agent
         // sees exactly the same tools as before the seal.
-        let eval_config = clawcrew_config::schema::Config::default();
-        let eval_security = Arc::new(clawcrew_config::policy::SecurityPolicy::default());
+        let eval_config = galleon_config::schema::Config::default();
+        let eval_security = Arc::new(galleon_config::policy::SecurityPolicy::default());
         let eval_registry =
             clawcrew_runtime::tools::scoped::ScopedToolRegistry::assemble(
                 clawcrew_runtime::tools::scoped::ScopedAssembly {

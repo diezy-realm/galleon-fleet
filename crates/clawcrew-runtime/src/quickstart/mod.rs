@@ -1,17 +1,17 @@
 //! Quickstart apply path.
 
 
-use clawcrew_config::helpers::kebab_to_snake;
-use clawcrew_config::presets::{
+use galleon_config::helpers::kebab_to_snake;
+use galleon_config::presets::{
     AgentIdentity, BuilderSubmission, ChannelQuickStart, MemoryChoice, ModelProviderChoice,
     SelectorChoice, recommended_runtime_preset, risk_preset, runtime_preset,
 };
-use clawcrew_config::schema::{Config, WireApi};
-use clawcrew_config::traits::AliasSource;
+use galleon_config::schema::{Config, WireApi};
+use galleon_config::traits::AliasSource;
 
 /// Which surface invoked the Quickstart. Stamped on every event in
 /// the apply path so SSE/dashboard consumers can filter by origin
-pub use clawcrew_config::quickstart::{AppliedAgent, QuickstartStep, Surface};
+pub use galleon_config::quickstart::{AppliedAgent, QuickstartStep, Surface};
 
 /// Per-run attribution carried through the apply path so every emitted
 /// event lands with the same correlation id. Constructed by `apply`
@@ -54,7 +54,7 @@ fn merge_attrs(base: serde_json::Value, extra: serde_json::Value) -> serde_json:
     serde_json::Value::Object(base_map)
 }
 
-pub use clawcrew_config::quickstart::QuickstartError;
+pub use galleon_config::quickstart::QuickstartError;
 
 pub(crate) trait QuickstartErrorExt {
     fn for_surface(
@@ -338,7 +338,7 @@ pub fn record_dismissed(run_id: &str, surface: Surface, last_step: Option<Quicks
 pub struct RuntimeQuickstartRunner;
 
 #[async_trait::async_trait]
-impl clawcrew_config::quickstart::QuickstartRunner for RuntimeQuickstartRunner {
+impl galleon_config::quickstart::QuickstartRunner for RuntimeQuickstartRunner {
     fn snapshot_state(&self, config: &Config) -> serde_json::Value {
         serde_json::to_value(snapshot_state(config)).unwrap_or_default()
     }
@@ -401,10 +401,10 @@ pub struct QuickstartState {
     pub storage: Vec<String>,
     pub model_provider_types: Vec<QuickstartTypeOption>,
     pub channel_types: Vec<QuickstartTypeOption>,
-    /// Risk presets from `clawcrew_config::presets::RISK_PRESETS`.
-    pub risk_presets: &'static [clawcrew_config::presets::RiskPreset],
-    /// Runtime presets from `clawcrew_config::presets::RUNTIME_PRESETS`.
-    pub runtime_presets: &'static [clawcrew_config::presets::RuntimePreset],
+    /// Risk presets from `galleon_config::presets::RISK_PRESETS`.
+    pub risk_presets: &'static [galleon_config::presets::RiskPreset],
+    /// Runtime presets from `galleon_config::presets::RUNTIME_PRESETS`.
+    pub runtime_presets: &'static [galleon_config::presets::RuntimePreset],
     /// Memory backend snake-case kinds from `MemoryBackendKind`.
     pub memory_kinds: Vec<String>,
     /// Canonical personality filenames the Quickstart will accept.
@@ -496,8 +496,8 @@ pub fn snapshot_state(cfg: &Config) -> QuickstartState {
         storage: collect_aliased_refs(&cfg.storage),
         model_provider_types,
         channel_types,
-        risk_presets: clawcrew_config::presets::RISK_PRESETS,
-        runtime_presets: clawcrew_config::presets::RUNTIME_PRESETS,
+        risk_presets: galleon_config::presets::RISK_PRESETS,
+        runtime_presets: galleon_config::presets::RUNTIME_PRESETS,
         memory_kinds: memory_kind_keys(),
         personality_files: crate::agent::personality::EDITABLE_PERSONALITY_FILES,
     }
@@ -507,7 +507,7 @@ pub fn snapshot_state(cfg: &Config) -> QuickstartState {
 /// match probe catches missing variants at compile time; serde produces
 /// the wire key so there's no parallel mapping.
 fn memory_kind_keys() -> Vec<String> {
-    use clawcrew_config::multi_agent::MemoryBackendKind as M;
+    use galleon_config::multi_agent::MemoryBackendKind as M;
     [
         M::Sqlite,
         M::Markdown,
@@ -533,7 +533,7 @@ fn memory_kind_keys() -> Vec<String> {
 }
 
 fn build_channel_type_options(
-    channels_cfg: &clawcrew_config::schema::ChannelsConfig,
+    channels_cfg: &galleon_config::schema::ChannelsConfig,
 ) -> Vec<QuickstartTypeOption> {
     channels_cfg
         .channels()
@@ -592,9 +592,9 @@ fn collect_aliased_refs<T: serde::Serialize>(value: &T) -> Vec<String> {
     out
 }
 
-pub use clawcrew_config::quickstart::FieldSection;
+pub use galleon_config::quickstart::FieldSection;
 
-pub use clawcrew_config::quickstart::FieldDescriptor;
+pub use galleon_config::quickstart::FieldDescriptor;
 
 /// Return the renderable field shape for a single section + type
 /// combination. Walks `prop_fields()` against a synthetic config with
@@ -647,12 +647,12 @@ pub fn field_shape(section: FieldSection, type_key: &str) -> Vec<FieldDescriptor
             continue;
         }
         let default = if section_path == "channels.webhook" && field_path == "port" {
-            Some(clawcrew_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT.to_string())
+            Some(galleon_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT.to_string())
         } else if info.is_secret {
             None
         } else {
             let raw = info.display_value.trim();
-            if raw.is_empty() || raw == clawcrew_config::traits::UNSET_DISPLAY {
+            if raw.is_empty() || raw == galleon_config::traits::UNSET_DISPLAY {
                 None
             } else {
                 Some(raw.to_string())
@@ -756,7 +756,7 @@ fn auth_mode_descriptor(
         key: QUICKSTART_AUTH_MODE_FIELD.to_string(),
         label: crate::i18n::get_required_cli_string(label_key),
         help: crate::i18n::get_required_cli_string(help_key),
-        kind: clawcrew_config::traits::PropKind::Enum,
+        kind: galleon_config::traits::PropKind::Enum,
         is_secret: false,
         enum_variants: Some(modes.iter().map(|mode| (*mode).to_string()).collect()),
         required: true,
@@ -968,7 +968,7 @@ const CONTEXT_WINDOW_FETCH_TIMEOUT: std::time::Duration = std::time::Duration::f
 
 async fn fetch_quickstart_context_window(
     provider_type: &str,
-    provider_config: &clawcrew_config::schema::ModelProviderConfig,
+    provider_config: &galleon_config::schema::ModelProviderConfig,
 ) -> Option<usize> {
     tokio::time::timeout(
         CONTEXT_WINDOW_FETCH_TIMEOUT,
@@ -1169,7 +1169,7 @@ fn apply_model_provider(
                 if let Err(err) = config.set_prop_persistent(&format!("{prefix}.{key}"), value) {
                     errors.push(QuickstartError::new(
                         QuickstartStep::ModelProvider,
-                        clawcrew_config::helpers::kebab_to_snake(key),
+                        galleon_config::helpers::kebab_to_snake(key),
                         err.to_string(),
                     ));
                     return None;
@@ -1178,7 +1178,7 @@ fn apply_model_provider(
             // Auto-populate context_window from provider's /models endpoint if supported.
             // Silently ignores failures (falls back to config default).
             // Only runs on multi-threaded Tokio runtime (actual CLI), not single-threaded test runtime.
-            let provider_config = clawcrew_config::schema::ModelProviderConfig {
+            let provider_config = galleon_config::schema::ModelProviderConfig {
                 model: Some(choice.model.clone()),
                 uri: config.get_prop(&format!("{prefix}.uri")).ok(),
                 api_key: choice
@@ -1383,7 +1383,7 @@ fn apply_memory(
 
 fn usable_quickstart_value(value: &str) -> Option<&str> {
     let value = value.trim();
-    (!clawcrew_config::traits::is_unset_display_value(value)).then_some(value)
+    (!galleon_config::traits::is_unset_display_value(value)).then_some(value)
 }
 
 fn apply_channels(
@@ -1525,7 +1525,7 @@ fn apply_channels(
                         .is_none()
                     && let Err(err) = staged.set_prop_persistent(
                         &format!("{prefix}.port"),
-                        &clawcrew_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT.to_string(),
+                        &galleon_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT.to_string(),
                     )
                 {
                     errors.push(QuickstartError::new(
@@ -1593,7 +1593,7 @@ fn apply_channels(
                     && let Err(err) = telegram.validate_bot_token(alias)
                 {
                     let structured =
-                        clawcrew_config::api_error::ConfigApiError::from_validation(err);
+                        galleon_config::api_error::ConfigApiError::from_validation(err);
                     let terminal = structured
                         .path
                         .as_deref()
@@ -1615,7 +1615,7 @@ fn apply_channels(
                     && let Err(err) = discord.validate_bot_token(alias)
                 {
                     let structured =
-                        clawcrew_config::api_error::ConfigApiError::from_validation(err);
+                        galleon_config::api_error::ConfigApiError::from_validation(err);
                     let terminal = structured
                         .path
                         .as_deref()
@@ -1717,7 +1717,7 @@ fn conflicting_enabled_webhook_alias<'a>(
 
 fn apply_peer_groups(
     config: &mut Config,
-    peer_groups: &[clawcrew_config::presets::QuickstartPeerGroup],
+    peer_groups: &[galleon_config::presets::QuickstartPeerGroup],
     staged_channel_refs: &[String],
     errors: &mut Vec<QuickstartError>,
     ctx: Option<&RunCtx>,
@@ -1860,7 +1860,7 @@ struct StagedPersonalityWrite {
 fn apply_personality_files(
     config: &Config,
     agent_alias: &str,
-    files: &[clawcrew_config::presets::QuickstartPersonalityFile],
+    files: &[galleon_config::presets::QuickstartPersonalityFile],
     staged: &mut Vec<StagedPersonalityWrite>,
     errors: &mut Vec<QuickstartError>,
     ctx: Option<&RunCtx>,
@@ -2027,7 +2027,7 @@ fn apply_agent(
     // symmetric with the create/RPC/CLI surfaces. Non-`default` names create as
     // before.
     if let Err(err) =
-        clawcrew_config::alias_refs::create_map_key_checked(config, "agents", &identity.name)
+        galleon_config::alias_refs::create_map_key_checked(config, "agents", &identity.name)
     {
         errors.push(QuickstartError::new(
             QuickstartStep::Agent,
@@ -2124,11 +2124,11 @@ pub fn model_provider_is_local(model_provider: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::presets::{
+    use galleon_config::presets::{
         AgentIdentity, BuilderSubmission, ChannelQuickStart, MemoryChoice, ModelProviderChoice,
         SelectorChoice,
     };
-    use clawcrew_config::schema::Config;
+    use galleon_config::schema::Config;
 
     #[test]
     fn channel_type_options_cover_every_schema_channel() {
@@ -2298,7 +2298,7 @@ mod tests {
         let mut cfg = Config::default();
         cfg.storage.postgres.insert(
             "default".into(),
-            clawcrew_config::schema::PostgresStorageConfig::default(),
+            galleon_config::schema::PostgresStorageConfig::default(),
         );
         let choice = SelectorChoice::Existing("postgres.default".to_string());
         let mut errors = Vec::new();
@@ -2315,7 +2315,7 @@ mod tests {
         let mut cfg = Config::default();
         cfg.storage.postgres.insert(
             "default".into(),
-            clawcrew_config::schema::PostgresStorageConfig::default(),
+            galleon_config::schema::PostgresStorageConfig::default(),
         );
         let snapshot = snapshot_state(&cfg);
 
@@ -2539,7 +2539,7 @@ mod tests {
         let mut cfg = Config::default();
         cfg.agents.insert(
             "bot".into(),
-            clawcrew_config::schema::AliasedAgentConfig::default(),
+            galleon_config::schema::AliasedAgentConfig::default(),
         );
         let submission = fresh_submission("bot");
         let errors = validate_only(&submission, &cfg).unwrap_err();
@@ -2604,7 +2604,7 @@ mod tests {
     #[test]
     fn validate_only_accepts_every_builtin_risk_preset() {
         let cfg = Config::default();
-        for p in clawcrew_config::presets::RISK_PRESETS {
+        for p in galleon_config::presets::RISK_PRESETS {
             let mut submission = fresh_submission("bot");
             submission.risk_profile = SelectorChoice::Fresh(p.preset_name.into());
             validate_only(&submission, &cfg).unwrap_or_else(|e| {
@@ -2662,7 +2662,7 @@ mod tests {
         for row in &rows {
             assert_ne!(
                 row.default.as_deref(),
-                Some(clawcrew_config::traits::UNSET_DISPLAY),
+                Some(galleon_config::traits::UNSET_DISPLAY),
                 "`{}` must not default to the <unset> placeholder",
                 row.key
             );
@@ -2808,7 +2808,7 @@ mod tests {
         };
         config.runtime_profiles.insert(
             "small-laptop".into(),
-            clawcrew_config::schema::RuntimeProfileConfig {
+            galleon_config::schema::RuntimeProfileConfig {
                 max_tool_iterations: 2,
                 ..Default::default()
             },
@@ -2863,7 +2863,7 @@ mod tests {
             "second channel must also be bound; got {bound:?}"
         );
         assert_eq!(bound.len(), 2, "both channels bound, not just the last");
-        let store = clawcrew_config::secrets::SecretStore::new(dir.path(), true);
+        let store = galleon_config::secrets::SecretStore::new(dir.path(), true);
         assert_eq!(
             store
                 .decrypt(&reloaded.channels.telegram["tg"].bot_token)
@@ -2891,7 +2891,7 @@ mod tests {
 
         let (dir, _) = apply_to_temp(submission).await;
         let reloaded = reload(&dir);
-        let store = clawcrew_config::secrets::SecretStore::new(dir.path(), true);
+        let store = galleon_config::secrets::SecretStore::new(dir.path(), true);
         assert_eq!(
             store
                 .decrypt(&reloaded.channels.telegram["ops"].bot_token)
@@ -2917,10 +2917,10 @@ mod tests {
         assert!(webhook.enabled);
 
         let stored_secret = webhook.secret.as_deref().expect("persisted webhook secret");
-        assert!(clawcrew_config::secrets::SecretStore::is_encrypted(
+        assert!(galleon_config::secrets::SecretStore::is_encrypted(
             stored_secret
         ));
-        let store = clawcrew_config::secrets::SecretStore::new(dir.path(), true);
+        let store = galleon_config::secrets::SecretStore::new(dir.path(), true);
         assert_eq!(store.decrypt(stored_secret).unwrap(), "shared-secret");
     }
 
@@ -2930,7 +2930,7 @@ mod tests {
             None,
             Some(""),
             Some("   "),
-            Some(clawcrew_config::traits::UNSET_DISPLAY),
+            Some(galleon_config::traits::UNSET_DISPLAY),
         ] {
             let mut cfg = Config::default();
             let fields = value.map_or_else(Vec::new, |value| vec![("secret", value)]);
@@ -2962,7 +2962,7 @@ mod tests {
         assert_eq!(refs, ["webhook.inbound"]);
         assert_eq!(
             cfg.channels.webhook["inbound"].port,
-            clawcrew_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT
+            galleon_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT
         );
     }
 
@@ -3011,9 +3011,9 @@ mod tests {
         let mut cfg = Config::default();
         cfg.channels.webhook.insert(
             "existing".into(),
-            clawcrew_config::schema::WebhookConfig {
+            galleon_config::schema::WebhookConfig {
                 enabled: true,
-                port: clawcrew_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT,
+                port: galleon_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT,
                 ..Default::default()
             },
         );
@@ -3042,9 +3042,9 @@ mod tests {
         for alias in ["already-active", "selected"] {
             cfg.channels.webhook.insert(
                 alias.into(),
-                clawcrew_config::schema::WebhookConfig {
+                galleon_config::schema::WebhookConfig {
                     enabled: true,
-                    port: clawcrew_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT,
+                    port: galleon_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT,
                     ..Default::default()
                 },
             );
@@ -3067,7 +3067,7 @@ mod tests {
         assert_eq!(cfg.dirty_paths, before_dirty_paths);
         assert_eq!(cfg.channels.webhook.len(), 2);
         assert!(cfg.channels.webhook.values().all(|webhook| {
-            webhook.enabled && webhook.port == clawcrew_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT
+            webhook.enabled && webhook.port == galleon_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT
         }));
     }
 
@@ -3082,9 +3082,9 @@ mod tests {
         for alias in ["already-active", "selected"] {
             config.channels.webhook.insert(
                 alias.into(),
-                clawcrew_config::schema::WebhookConfig {
+                galleon_config::schema::WebhookConfig {
                     enabled: true,
-                    port: clawcrew_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT,
+                    port: galleon_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT,
                     ..Default::default()
                 },
             );
@@ -3124,9 +3124,9 @@ mod tests {
         let mut cfg = Config::default();
         cfg.channels.webhook.insert(
             "parked".into(),
-            clawcrew_config::schema::WebhookConfig {
+            galleon_config::schema::WebhookConfig {
                 enabled: false,
-                port: clawcrew_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT,
+                port: galleon_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT,
                 ..Default::default()
             },
         );
@@ -3143,7 +3143,7 @@ mod tests {
         assert_eq!(refs, ["webhook.inbound"]);
         assert_eq!(
             cfg.channels.webhook["inbound"].port,
-            clawcrew_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT
+            galleon_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT
         );
     }
 
@@ -3167,7 +3167,7 @@ mod tests {
         assert_eq!(refs, ["webhook.first", "webhook.second"]);
         assert_eq!(
             cfg.channels.webhook["first"].port,
-            clawcrew_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT
+            galleon_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT
         );
         assert_eq!(cfg.channels.webhook["second"].port, 9191);
     }
@@ -3177,9 +3177,9 @@ mod tests {
         let mut cfg = Config::default();
         cfg.channels.webhook.insert(
             "existing".into(),
-            clawcrew_config::schema::WebhookConfig {
+            galleon_config::schema::WebhookConfig {
                 enabled: true,
-                port: clawcrew_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT,
+                port: galleon_config::schema::DEFAULT_WEBHOOK_CHANNEL_PORT,
                 ..Default::default()
             },
         );
@@ -3233,7 +3233,7 @@ mod tests {
             None,
             Some(""),
             Some("   "),
-            Some(clawcrew_config::traits::UNSET_DISPLAY),
+            Some(galleon_config::traits::UNSET_DISPLAY),
         ] {
             let cfg = Config::default();
             let mut submission = fresh_submission("bot");
@@ -3259,7 +3259,7 @@ mod tests {
             None,
             Some(""),
             Some("   "),
-            Some(clawcrew_config::traits::UNSET_DISPLAY),
+            Some(galleon_config::traits::UNSET_DISPLAY),
         ] {
             let cfg = Config::default();
             let mut submission = fresh_submission("bot");
@@ -3361,7 +3361,7 @@ mod tests {
                 "personal",
                 &[],
             ))];
-            submission.peer_groups = vec![clawcrew_config::presets::QuickstartPeerGroup {
+            submission.peer_groups = vec![galleon_config::presets::QuickstartPeerGroup {
                 name: "self_chat".into(),
                 channel: format!("{submitted_type}.personal"),
                 external_peers: vec!["*".into()],
@@ -3424,7 +3424,7 @@ mod tests {
             "tg",
             &[("bot_token", "tok-a")],
         ))];
-        submission.peer_groups = vec![clawcrew_config::presets::QuickstartPeerGroup {
+        submission.peer_groups = vec![galleon_config::presets::QuickstartPeerGroup {
             name: "team".into(),
             channel: "telegram.tg".into(),
             external_peers: vec!["*".into()],
@@ -3473,8 +3473,8 @@ mod tests {
         let mut config = Config::default();
         config.providers.models.xai.insert(
             "default".to_string(),
-            clawcrew_config::schema::XaiModelProviderConfig {
-                base: clawcrew_config::schema::ModelProviderConfig {
+            galleon_config::schema::XaiModelProviderConfig {
+                base: galleon_config::schema::ModelProviderConfig {
                     api_key: Some("xai-test-key".to_string()),
                     uri: Some(server.uri()),
                     ..Default::default()
@@ -3511,8 +3511,8 @@ mod tests {
         // Non-default alias name to prove the dotted ref targets it precisely.
         config.providers.models.xai.insert(
             "prod".to_string(),
-            clawcrew_config::schema::XaiModelProviderConfig {
-                base: clawcrew_config::schema::ModelProviderConfig {
+            galleon_config::schema::XaiModelProviderConfig {
+                base: galleon_config::schema::ModelProviderConfig {
                     api_key: Some("xai-test-key".to_string()),
                     uri: Some(server.uri()),
                     ..Default::default()
@@ -3550,7 +3550,7 @@ mod tests {
             )
             .mount(&server)
             .await;
-        let provider_config = clawcrew_config::schema::ModelProviderConfig {
+        let provider_config = galleon_config::schema::ModelProviderConfig {
             model: Some("slow-model".into()),
             uri: Some(server.uri()),
             ..Default::default()

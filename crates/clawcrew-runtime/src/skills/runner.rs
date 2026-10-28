@@ -9,7 +9,7 @@ use clawcrew_api::skill::{
     ServiceError, ShadowedSkillEntry, SkillBundleEntry, SkillDocument, SkillFrontmatter,
     SkillListEntry, SkillsReadResult, SkillsRunner,
 };
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 use super::service::{EffectiveSkill, SkillsService, ServiceError as RuntimeServiceError};
 use super::{DroppedSkill, SkillDropReason, SkillOrigin};

@@ -9,7 +9,7 @@
 
 use anyhow::Result;
 use tokio_rustls::TlsAcceptor;
-use clawcrew_config::schema::GatewayTlsConfig;
+use galleon_config::schema::GatewayTlsConfig;
 use galleon_tls::{ClientAuthParams, ServerConfigParams};
 
 /// Build a [`TlsAcceptor`] from the gateway TLS configuration.
@@ -50,7 +50,7 @@ fn to_params(config: &GatewayTlsConfig) -> ServerConfigParams {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::{GatewayClientAuthConfig, GatewayTlsConfig};
+    use galleon_config::schema::{GatewayClientAuthConfig, GatewayTlsConfig};
 
     /// Ensure the rustls `CryptoProvider` is installed (idempotent).
     fn ensure_crypto_provider() {

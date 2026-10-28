@@ -1,6 +1,6 @@
 use anyhow::Result;
 use rusqlite::{Connection, params};
-use clawcrew_config::schema::{MemoryConfig, MemoryEvictOrder};
+use galleon_config::schema::{MemoryConfig, MemoryEvictOrder};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct EvictionReport {
@@ -101,7 +101,7 @@ pub fn compact_category_to_budget(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::MemoryEvictOrder;
+    use galleon_config::schema::MemoryEvictOrder;
 
     struct Row<'a> {
         id: &'a str,

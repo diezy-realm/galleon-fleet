@@ -10,7 +10,7 @@ use tokio::sync::mpsc;
 
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 use clawcrew_api::sop::{FilesystemEventKind, SopFanInDispatcher, SopTriggerSource};
-use clawcrew_config::schema::FilesystemConfig;
+use galleon_config::schema::FilesystemConfig;
 
 /// Filesystem change source as a `Channel`.
 ///

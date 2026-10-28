@@ -240,10 +240,10 @@ async fn enrollment_post_round_trips_through_relay_route() {
         client_auth: None,
     })
     .unwrap();
-    let pairing = clawcrew_config::pairing::PairingGuard::new(
+    let pairing = galleon_config::pairing::PairingGuard::new(
         true,
         &[],
-        clawcrew_config::pairing::PairingCodePolicy::default(),
+        galleon_config::pairing::PairingCodePolicy::default(),
     );
     let pairing_code = pairing.pairing_code().unwrap();
     let enroll_listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -258,7 +258,7 @@ async fn enrollment_post_round_trips_through_relay_route() {
             clawcrew_runtime::security::cert_ledger::CertLedger::open_in_memory(None).unwrap(),
         ),
         pairing: Arc::new(pairing),
-        pairing_code_policy: Arc::new(clawcrew_config::pairing::PairingCodePolicy::default),
+        pairing_code_policy: Arc::new(galleon_config::pairing::PairingCodePolicy::default),
         static_client_pins_configured: false,
         allow_unpaired_until: None,
         relay_profile: clawcrew_runtime::enroll::RelayProfile::default(),

@@ -5,7 +5,7 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Json},
 };
-use clawcrew_config::schema::{ChannelAliasInfo, Config};
+use galleon_config::schema::{ChannelAliasInfo, Config};
 use serde::Serialize;
 
 use super::require_auth;
@@ -199,8 +199,8 @@ pub(crate) struct ChannelReadiness {
 }
 
 pub(crate) fn channel_readiness(
-    config: &clawcrew_config::schema::Config,
-    info: &clawcrew_config::schema::ChannelAliasInfo,
+    config: &galleon_config::schema::Config,
+    info: &galleon_config::schema::ChannelAliasInfo,
     health: &galleon_infra::health::HealthSnapshot,
     state: &AppState,
 ) -> ChannelReadiness {
@@ -253,8 +253,8 @@ pub(crate) fn channel_readiness(
 /// key (no probe, or feature not compiled) keep `authenticated: unknown`
 /// and the existing "not checked yet" note.
 fn apply_persisted_login_readiness(
-    config: &clawcrew_config::schema::Config,
-    info: &clawcrew_config::schema::ChannelAliasInfo,
+    config: &galleon_config::schema::Config,
+    info: &galleon_config::schema::ChannelAliasInfo,
     readiness: &mut ChannelReadiness,
 ) {
     use galleon_channels::login_probe::PersistedLogin;
@@ -314,7 +314,7 @@ pub(crate) fn channel_readiness_summary(
 }
 
 fn apply_webhook_readiness(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     alias: &str,
     health: &galleon_infra::health::HealthSnapshot,
     state: &AppState,

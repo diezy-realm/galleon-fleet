@@ -8,7 +8,7 @@ use super::constants::{SKILL_MANIFEST_FILENAME, SKILL_SCAFFOLD_SUBDIRS};
 use super::document::SkillDocument;
 use super::frontmatter::SkillFrontmatter;
 use super::reference::SkillRef;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 #[derive(Debug, Clone)]
 pub struct ScaffoldOptions {
@@ -117,7 +117,7 @@ fn title_from_name(name: &str) -> String {
 mod tests {
     use super::*;
     use tempfile::TempDir;
-    use clawcrew_config::schema::SkillBundleConfig;
+    use galleon_config::schema::SkillBundleConfig;
 
     fn fixture() -> (TempDir, Config) {
         let dir = tempfile::tempdir().unwrap();

@@ -637,7 +637,7 @@ mod tests {
     use axum::extract::{Path, State};
     use axum::http::{HeaderValue, header};
     use clawcrew_api::sop::{BrokerOutcome, ResolveOutcome, SopRunner};
-    use clawcrew_config::pairing::PairingGuard;
+    use galleon_config::pairing::PairingGuard;
     use http_body_util::BodyExt;
 
     #[derive(Default)]
@@ -923,9 +923,9 @@ mod tests {
             approved_voters: Mutex::new(Vec::new()),
         });
 
-        let mut config = clawcrew_config::schema::Config {
+        let mut config = galleon_config::schema::Config {
             config_path: tmp.path().join("config.toml"),
-            ..clawcrew_config::schema::Config::default()
+            ..galleon_config::schema::Config::default()
         };
         config.gateway.allow_remote_admin = true;
         let mut state = crate::api::test_state(config);
@@ -933,7 +933,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[member_token.to_string(), other_token.to_string()],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         (tmp, state, run_id)
     }
@@ -958,9 +958,9 @@ mod tests {
             approved_voters: Mutex::new(Vec::new()),
         });
 
-        let mut config = clawcrew_config::schema::Config {
+        let mut config = galleon_config::schema::Config {
             config_path: tmp.path().join("config.toml"),
-            ..clawcrew_config::schema::Config::default()
+            ..galleon_config::schema::Config::default()
         };
         config.gateway.allow_remote_admin = true;
         let mut state = crate::api::test_state(config);
@@ -968,7 +968,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[first_member.to_string(), second_member.to_string()],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         (tmp, state, run_id)
     }
@@ -996,9 +996,9 @@ mod tests {
             approved_voters: Mutex::new(Vec::new()),
         });
 
-        let mut config = clawcrew_config::schema::Config {
+        let mut config = galleon_config::schema::Config {
             config_path: tmp.path().join("config.toml"),
-            ..clawcrew_config::schema::Config::default()
+            ..galleon_config::schema::Config::default()
         };
         config.gateway.allow_remote_admin = true;
         let mut state = crate::api::test_state(config);
@@ -1006,7 +1006,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             true,
             &[token.to_string()],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         (tmp, state, run_id)
     }
@@ -1199,7 +1199,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             false,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
 
         let remote = handle_sop_cancel(
@@ -1239,7 +1239,7 @@ mod tests {
         state.pairing = Arc::new(PairingGuard::new(
             false,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         ));
         state.trust_forwarded_headers = true;
         let mut headers = HeaderMap::new();

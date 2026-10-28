@@ -14,7 +14,7 @@
 //! without cross-crate coupling. No `a2a-rs`/protobuf footprint.
 //!
 //! `JsonSchema` derives are gated behind the `schema-export` feature (mirrors
-//! `clawcrew-config`), so consuming crates can generate OpenAPI/OPTIONS
+//! `galleon-config`), so consuming crates can generate OpenAPI/OPTIONS
 //! schemas from these types directly.
 
 #[cfg(feature = "schema-export")]

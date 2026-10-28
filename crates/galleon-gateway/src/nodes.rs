@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot};
-use clawcrew_config::pairing::{PairingGuard, constant_time_eq};
+use galleon_config::pairing::{PairingGuard, constant_time_eq};
 
 pub mod mdns;
 
@@ -211,7 +211,7 @@ fn extract_node_ws_token<'a>(
 }
 
 pub(crate) fn check_node_auth(
-    nodes_config: &clawcrew_config::schema::NodesConfig,
+    nodes_config: &galleon_config::schema::NodesConfig,
     pairing: &PairingGuard,
     headers: &HeaderMap,
     query_token: Option<&str>,
@@ -237,7 +237,7 @@ pub(crate) fn check_node_auth(
         // a remote timing attack that could leak `nodes.auth_token` one
         // byte at a time. Both sides are `.trim()`-normalized to match
         // the canonical pattern at
-        // `crates/clawcrew-config/src/pairing.rs:139`.
+        // `crates/galleon-config/src/pairing.rs:139`.
         if !constant_time_eq(token.trim(), expected_token.trim()) {
             return Some((
                 axum::http::StatusCode::UNAUTHORIZED,
@@ -423,8 +423,8 @@ async fn handle_node_socket(socket: WebSocket, registry: Arc<NodeRegistry>) {
 mod tests {
     use super::*;
     use axum::http::{HeaderMap, StatusCode};
-    use clawcrew_config::schema::NodesConfig;
-    use clawcrew_config::pairing::PairingGuard;
+    use galleon_config::schema::NodesConfig;
+    use galleon_config::pairing::PairingGuard;
 
     // ── Auth matrix tests (via check_node_auth — no WS handshake required) ──
 
@@ -442,7 +442,7 @@ mod tests {
         PairingGuard::new(
             require,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         )
     }
 
@@ -775,9 +775,9 @@ mod tests {
     /// The old code used `if token != expected_token`, which short-circuits
     /// on the first differing byte and leaks the configured `nodes.auth_token`
     /// one byte at a time via response timing. The fix routes through
-    /// `constant_time_eq` (from `clawcrew_config::pairing`) and trims both
+    /// `constant_time_eq` (from `galleon_config::pairing`) and trims both
     /// sides — matching the canonical pairing pattern at
-    /// `crates/clawcrew-config/src/pairing.rs:139`.
+    /// `crates/galleon-config/src/pairing.rs:139`.
     ///
     /// We can't measure wall-clock timing in a unit test, but we can lock
     /// in the behavior contract: trim-normalized inputs match, wrong

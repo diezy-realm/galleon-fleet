@@ -3,10 +3,10 @@
 
 use anyhow::{Context, Result, bail};
 use clawcrew::{AgentsCommands, ChannelsCommands, ProvidersCommands};
-use clawcrew_config::alias_refs::{
+use galleon_config::alias_refs::{
     self, AliasKind, CascadeError, CascadePolicy, ProviderCategory, RenameError,
 };
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 /// Resolve a `cli-*` Fluent key for alias-CRUD CLI output. Under `agent-runtime`
 /// (default + what CI/release build) this routes through Fluent; without it the
@@ -736,7 +736,7 @@ pub async fn handle_channels(cmd: ChannelsCommands, config: &mut Config) -> Resu
             // no filter we walk the canonical channel-type list.
             let types: Vec<String> = match channel_type {
                 Some(t) => vec![t],
-                None => clawcrew_config::schema::v2::V3_CHANNEL_TYPES
+                None => galleon_config::schema::v2::V3_CHANNEL_TYPES
                     .iter()
                     .map(|s| (*s).to_string())
                     .collect(),

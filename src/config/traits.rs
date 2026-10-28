@@ -1,1 +1,1 @@
-pub use clawcrew_config::traits::*;
+pub use galleon_config::traits::*;

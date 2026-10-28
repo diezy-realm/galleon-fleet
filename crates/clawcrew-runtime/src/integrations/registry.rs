@@ -3,7 +3,7 @@
 use super::platform::PLATFORMS;
 use super::{IntegrationCategory, IntegrationEntry, IntegrationStatus};
 use crate::tools::BUILTIN_TOOL_INTEGRATIONS;
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 fn bool_to_status(active: bool) -> IntegrationStatus {
     if active {
@@ -112,7 +112,7 @@ pub fn all_integrations(config: &Config) -> Vec<IntegrationEntry> {
 
 pub struct RuntimeIntegrationCatalog;
 
-impl clawcrew_config::integrations::IntegrationCatalogProvider for RuntimeIntegrationCatalog {
+impl galleon_config::integrations::IntegrationCatalogProvider for RuntimeIntegrationCatalog {
     fn all_integrations(&self, config: &Config) -> Vec<IntegrationEntry> {
         all_integrations(config)
     }
@@ -121,11 +121,11 @@ impl clawcrew_config::integrations::IntegrationCatalogProvider for RuntimeIntegr
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::Config;
-    use clawcrew_config::schema::{
+    use galleon_config::schema::Config;
+    use galleon_config::schema::{
         IMessageConfig, MatrixConfig, MatrixStreamMode, StreamMode, TelegramConfig,
     };
-    use clawcrew_config::traits::ChannelConfig;
+    use galleon_config::traits::ChannelConfig;
 
     #[test]
     fn registry_has_entries() {
@@ -288,7 +288,7 @@ mod tests {
             TelegramConfig {
                 enabled: true,
                 bot_token: "123:ABC".into(),
-                api_base_url: clawcrew_config::schema::TELEGRAM_OFFICIAL_API_BASE_URL.to_string(),
+                api_base_url: galleon_config::schema::TELEGRAM_OFFICIAL_API_BASE_URL.to_string(),
                 stream_mode: StreamMode::default(),
                 draft_update_interval_ms: 1000,
                 multi_message_delay_ms: 800,
@@ -366,7 +366,7 @@ mod tests {
                 stream_draft_lines: 10,
                 message_max_bytes: 48_000,
                 stream_draft_delete: true,
-                stream_reasoning: clawcrew_config::schema::StreamReasoningMode::Status,
+                stream_reasoning: galleon_config::schema::StreamReasoningMode::Status,
                 stream_tool_arguments: Vec::new(),
                 recovery_key: None,
                 password: None,
@@ -524,7 +524,7 @@ mod tests {
         let mut config = Config::default();
         config.cron.insert(
             "daily-digest".to_string(),
-            clawcrew_config::schema::CronJobDecl::default(),
+            galleon_config::schema::CronJobDecl::default(),
         );
         assert!(matches!(
             toggle_status(&config, |n| n == "Cron"),

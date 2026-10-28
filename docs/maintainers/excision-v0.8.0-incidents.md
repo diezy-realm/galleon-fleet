@@ -45,7 +45,7 @@ Out of scope for the excision pass; the right fix is either (a) extend `QuickUi`
 
 ## Phase 4 — Stale `#[serde(alias)]`
 
-Three `#[serde(alias = ...)]` annotations in `crates/clawcrew-config/src/schema.rs`. Reviewed; all kept:
+Three `#[serde(alias = ...)]` annotations in `crates/galleon-config/src/schema.rs`. Reviewed; all kept:
 
 - `:3646` `alias = "api_url"` on `TtsProviderConfig.uri` — the V1/V2-era field rename. The `migration.rs` walker doesn't currently rewrite this for TTS configs (only for `ModelProviderConfig`), so the serde alias is the operator-facing migration path for old TOMLs. **Kept** until the migration walker is extended.
 - `:7718` `alias = "dbURL", "database_url", "databaseUrl"` on `PostgresStorageConfig.db_url` — same pattern. Multiple legacy/camelCase forms accepted; migration doesn't rewrite. **Kept**.
@@ -53,7 +53,7 @@ Three `#[serde(alias = ...)]` annotations in `crates/clawcrew-config/src/schema.
 
 ## Phase 5 — `channels_except_webhook` + `channels` hand-rolled lists
 
-`crates/clawcrew-config/src/schema.rs:9509-9628` — 120 lines of `(Box::new(ConfigWrapper::new(self.<field>.get("default"))), !self.<field>.is_empty())` per channel field.
+`crates/galleon-config/src/schema.rs:9509-9628` — 120 lines of `(Box::new(ConfigWrapper::new(self.<field>.get("default"))), !self.<field>.is_empty())` per channel field.
 
 Investigated for collapse but **kept**:
 
@@ -68,7 +68,7 @@ Defer to v0.9.0 along with the broader trait/macro consolidation of orchestrator
 
 Followed the DiscordHistory fold pattern:
 
-1. New V2→V3 migration step (split into `strip_feishu_block` pre-wrap + `inject_feishu_as_lark_alias` post-wrap) in `crates/clawcrew-config/src/schema/v2.rs`. The V2 `[channels.feishu]` block lands as **`[channels.lark.feishu]`** (alias `feishu`, not `default`) with `use_feishu = true`. Two-bot V2 deployments with both `[channels.lark]` and `[channels.feishu]` survive as two distinct V3 aliases — `lark.default` and `lark.feishu` — without any merge, drop, or operator intervention. Three migration tests cover feishu-only, two-bot, and same-app_id scenarios.
+1. New V2→V3 migration step (split into `strip_feishu_block` pre-wrap + `inject_feishu_as_lark_alias` post-wrap) in `crates/galleon-config/src/schema/v2.rs`. The V2 `[channels.feishu]` block lands as **`[channels.lark.feishu]`** (alias `feishu`, not `default`) with `use_feishu = true`. Two-bot V2 deployments with both `[channels.lark]` and `[channels.feishu]` survive as two distinct V3 aliases — `lark.default` and `lark.feishu` — without any merge, drop, or operator intervention. Three migration tests cover feishu-only, two-bot, and same-app_id scenarios.
 2. `FeishuConfig` struct + `impl ChannelConfig for FeishuConfig` deleted from schema.
 3. `pub feishu: HashMap<String, FeishuConfig>` field deleted from `ChannelsConfig`.
 4. `"feishu"` removed from the V3_CHANNEL_TYPES alias-wrap list (the fold has already run by then).

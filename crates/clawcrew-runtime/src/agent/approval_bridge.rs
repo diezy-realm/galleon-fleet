@@ -12,13 +12,13 @@ use clawcrew_api::channel::{
 
 pub(crate) struct AskUserApprovalBridge {
     handles: PerToolChannelHandle,
-    route: Option<clawcrew_config::autonomy::ApprovalRoute>,
+    route: Option<galleon_config::autonomy::ApprovalRoute>,
 }
 
 impl AskUserApprovalBridge {
     pub(crate) fn new(
         handles: PerToolChannelHandle,
-        route: Option<clawcrew_config::autonomy::ApprovalRoute>,
+        route: Option<galleon_config::autonomy::ApprovalRoute>,
     ) -> Self {
         Self { handles, route }
     }

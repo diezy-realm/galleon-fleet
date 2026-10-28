@@ -132,7 +132,7 @@ impl PostgresMemory {
                     .context("failed to connect to PostgreSQL memory backend")?;
 
                 Self::init_schema(&mut client, &schema_ident, &qualified_table)?;
-                clawcrew_config::schema::v2::migrate_postgres_memory_to_v3(
+                galleon_config::schema::v2::migrate_postgres_memory_to_v3(
                     &mut client,
                     &schema_ident,
                     &qualified_table,

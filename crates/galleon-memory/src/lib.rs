@@ -87,8 +87,8 @@ pub use wal_migration::{
 };
 
 use anyhow::Context;
-use clawcrew_config::providers::ModelProviders;
-use clawcrew_config::schema::{
+use galleon_config::providers::ModelProviders;
+use galleon_config::schema::{
     ActiveStorage, Config, EmbeddingRouteConfig, MemoryConfig, MemoryPolicyConfig,
     PostgresStorageConfig,
 };
@@ -1010,11 +1010,11 @@ fn wrap_in_retrieval_pipeline(memory: Arc<dyn Memory>, config: &MemoryConfig) ->
 /// `agents.<alias>.workspace.read_memory_from` is guaranteed to point
 /// at a sibling on the same backend kind.
 pub async fn create_memory_for_agent(
-    config: &clawcrew_config::schema::Config,
+    config: &galleon_config::schema::Config,
     agent_alias: &str,
     api_key: Option<&str>,
 ) -> anyhow::Result<Arc<dyn Memory>> {
-    use clawcrew_config::multi_agent::MemoryBackendKind as ConfigBackend;
+    use galleon_config::multi_agent::MemoryBackendKind as ConfigBackend;
     let agent_cfg = config
         .agents
         .get(agent_alias)
@@ -1184,8 +1184,8 @@ pub fn create_response_cache(config: &MemoryConfig, workspace_dir: &Path) -> Opt
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_config::schema::Config;
-    use clawcrew_config::schema::EmbeddingRouteConfig;
+    use galleon_config::schema::Config;
+    use galleon_config::schema::EmbeddingRouteConfig;
     #[cfg(unix)]
     use std::fs;
     #[cfg(unix)]
@@ -1205,10 +1205,10 @@ mod tests {
 
     #[tokio::test]
     async fn per_agent_markdown_factory_applies_memory_policy() {
-        use clawcrew_config::multi_agent::{
+        use galleon_config::multi_agent::{
             AgentAlias, AgentMemoryConfig, MemoryBackendKind, MemoryGrant,
         };
-        use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use galleon_config::schema::{AliasedAgentConfig, Config};
 
         let tmp = TempDir::new().unwrap();
         let alpha_dir = tmp.path().join("alpha");
@@ -1279,10 +1279,10 @@ mod tests {
 
     #[tokio::test]
     async fn per_agent_markdown_factory_rejects_scoped_grant() {
-        use clawcrew_config::multi_agent::{
+        use galleon_config::multi_agent::{
             AgentAlias, AgentMemoryConfig, MemoryBackendKind, MemoryGrant,
         };
-        use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use galleon_config::schema::{AliasedAgentConfig, Config};
 
         let tmp = TempDir::new().unwrap();
         let alpha_dir = tmp.path().join("alpha");
@@ -1346,7 +1346,7 @@ mod tests {
             0.3,
             1000,
             None,
-            clawcrew_config::schema::SearchMode::default(),
+            galleon_config::schema::SearchMode::default(),
         )
         .unwrap()
     }
@@ -1608,8 +1608,8 @@ mod tests {
     /// returned the wrapper directly, skipping the audit decision entirely.
     #[tokio::test]
     async fn create_memory_for_agent_markdown_wraps_audit_when_enabled() {
-        use clawcrew_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind as ConfigBackend};
-        use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use galleon_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind as ConfigBackend};
+        use galleon_config::schema::{AliasedAgentConfig, Config};
 
         let tmp = TempDir::new().unwrap();
         let install_root = tmp.path();
@@ -1675,8 +1675,8 @@ mod tests {
     /// path: no wrapper, no `memory/audit.db` written.
     #[tokio::test]
     async fn create_memory_for_agent_markdown_audit_off_writes_no_db() {
-        use clawcrew_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind as ConfigBackend};
-        use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use galleon_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind as ConfigBackend};
+        use galleon_config::schema::{AliasedAgentConfig, Config};
 
         let tmp = TempDir::new().unwrap();
         let install_root = tmp.path();
@@ -1712,8 +1712,8 @@ mod tests {
     /// attempt before delegating, so the audit row must still exist.
     #[tokio::test]
     async fn create_memory_for_agent_none_wraps_audit_when_enabled() {
-        use clawcrew_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind as ConfigBackend};
-        use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use galleon_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind as ConfigBackend};
+        use galleon_config::schema::{AliasedAgentConfig, Config};
 
         let tmp = TempDir::new().unwrap();
         let install_root = tmp.path();
@@ -1759,8 +1759,8 @@ mod tests {
     /// typed writes into a backend that rejects them.
     #[tokio::test]
     async fn create_memory_for_agent_rejects_typed_flags_on_non_sqlite_backend() {
-        use clawcrew_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind as ConfigBackend};
-        use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use galleon_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind as ConfigBackend};
+        use galleon_config::schema::{AliasedAgentConfig, Config};
 
         let tmp = TempDir::new().unwrap();
         let install_root = tmp.path();
@@ -1792,8 +1792,8 @@ mod tests {
 
     #[tokio::test]
     async fn create_memory_for_agent_allows_typed_flags_on_sqlite() {
-        use clawcrew_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind as ConfigBackend};
-        use clawcrew_config::schema::{AliasedAgentConfig, Config};
+        use galleon_config::multi_agent::{AgentMemoryConfig, MemoryBackendKind as ConfigBackend};
+        use galleon_config::schema::{AliasedAgentConfig, Config};
 
         let tmp = TempDir::new().unwrap();
         let install_root = tmp.path();
@@ -2124,7 +2124,7 @@ store_timeout_ms = 40000
     #[cfg(not(feature = "memory-postgres"))]
     #[test]
     fn factory_postgres_without_feature_gives_clear_error() {
-        use clawcrew_config::schema::PostgresStorageConfig;
+        use galleon_config::schema::PostgresStorageConfig;
         let tmp = TempDir::new().unwrap();
         let cfg = MemoryConfig {
             backend: "postgres.default".into(),
@@ -2227,7 +2227,7 @@ store_timeout_ms = 40000
     /// lazy; no server contact happens here).
     #[test]
     fn storage_aware_factory_still_builds_qdrant_with_storage_config() {
-        use clawcrew_config::schema::QdrantStorageConfig;
+        use galleon_config::schema::QdrantStorageConfig;
         let tmp = TempDir::new().unwrap();
         let cfg = MemoryConfig {
             backend: "qdrant.default".into(),
@@ -2863,17 +2863,17 @@ store_timeout_ms = 40000
 
     // -- create_memory_for_agent x retrieval pipeline --------------
 
-    fn agent_config(tmp: &TempDir) -> clawcrew_config::schema::Config {
+    fn agent_config(tmp: &TempDir) -> galleon_config::schema::Config {
         let mut agents = std::collections::HashMap::new();
         agents.insert(
             "ops".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig::default(),
+            galleon_config::schema::AliasedAgentConfig::default(),
         );
-        clawcrew_config::schema::Config {
+        galleon_config::schema::Config {
             data_dir: tmp.path().join("data"),
             config_path: tmp.path().join("config.toml"),
             agents,
-            ..clawcrew_config::schema::Config::default()
+            ..galleon_config::schema::Config::default()
         }
     }
 
@@ -2920,14 +2920,14 @@ store_timeout_ms = 40000
         let mut config = agent_config(&tmp);
         config.agents.insert(
             "beta".to_string(),
-            clawcrew_config::schema::AliasedAgentConfig::default(),
+            galleon_config::schema::AliasedAgentConfig::default(),
         );
-        let scoped = clawcrew_config::multi_agent::MemoryGrant::Scoped {
-            agent: clawcrew_config::multi_agent::AgentAlias::new("beta"),
+        let scoped = galleon_config::multi_agent::MemoryGrant::Scoped {
+            agent: galleon_config::multi_agent::AgentAlias::new("beta"),
             categories: Some(vec!["core".to_string()]),
         };
-        let unrestricted = clawcrew_config::multi_agent::MemoryGrant::Agent(
-            clawcrew_config::multi_agent::AgentAlias::new("beta"),
+        let unrestricted = galleon_config::multi_agent::MemoryGrant::Agent(
+            galleon_config::multi_agent::AgentAlias::new("beta"),
         );
 
         for grants in [

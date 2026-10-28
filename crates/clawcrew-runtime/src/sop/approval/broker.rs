@@ -16,7 +16,7 @@
 use std::sync::Arc;
 
 use sha2::{Digest, Sha256};
-use clawcrew_config::schema::{ApprovalPolicyConfig, SopApprovalConfig};
+use galleon_config::schema::{ApprovalPolicyConfig, SopApprovalConfig};
 
 use super::decision::{ApprovalDecision, ResolveOutcome};
 use super::identity::{ApprovalIdentityResolver, LocalConfigApprovalIdentityResolver};
@@ -644,7 +644,7 @@ mod tests {
         SopTriggerSource,
     };
     use std::collections::HashMap;
-    use clawcrew_config::schema::{ApprovalGroupConfig, ApprovalPolicyConfig, SopConfig};
+    use galleon_config::schema::{ApprovalGroupConfig, ApprovalPolicyConfig, SopConfig};
 
     fn manual() -> SopEvent {
         SopEvent {
@@ -2022,7 +2022,7 @@ mod tests {
         // check must be what blocks this, not group authorization.
         let sop_config = SopConfig {
             approval: approval_cfg(&["bot", "ClawCrewOperator"], 2),
-            approval_mode: clawcrew_config::schema::ApprovalMode::OutOfBandRequired,
+            approval_mode: galleon_config::schema::ApprovalMode::OutOfBandRequired,
             ..SopConfig::default()
         };
         let mut e = SopEngine::new(sop_config).with_approval_broker(broker);

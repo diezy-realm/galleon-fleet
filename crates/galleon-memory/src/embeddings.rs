@@ -83,7 +83,7 @@ impl OpenAiEmbedding {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_runtime_proxy_client("memory.embeddings")
+        galleon_config::schema::build_runtime_proxy_client("memory.embeddings")
     }
 
     fn has_explicit_api_path(&self) -> bool {

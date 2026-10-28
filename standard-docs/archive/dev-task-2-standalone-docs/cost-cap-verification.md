@@ -4,7 +4,7 @@
 **Tanggal**: 2026-10-07  
 **Area**: Sprint 3 — Area D: Execution Model  
 **Referensi**:
-- `crates/clawcrew-config/src/policy.rs:349-350`
+- `crates/galleon-config/src/policy.rs:349-350`
 - `crates/clawcrew-runtime/src/agent/cost.rs`
 - `crates/clawcrew-runtime/src/tools/delegate/mod.rs`
 - `standard-docs/decisions/finalize/dev-task-2/sprint-3-sop-constraint-and-raci.md`
@@ -27,7 +27,7 @@ Tujuan:
 Berdasarkan audit faktual codebase pada repositori:
 
 ### 2.1. `max_actions_per_hour` (Rate & Frequency Cap)
-- **Definisi**: Dideklarasikan pada `crates/clawcrew-config/src/policy.rs:349`:
+- **Definisi**: Dideklarasikan pada `crates/galleon-config/src/policy.rs:349`:
   ```rust
   pub max_actions_per_hour: u32,
   pub max_cost_per_day_cents: u32,

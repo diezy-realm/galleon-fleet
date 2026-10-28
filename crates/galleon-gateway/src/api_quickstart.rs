@@ -7,8 +7,8 @@ use axum::{
     response::IntoResponse,
 };
 use serde::{Deserialize, Serialize};
-use clawcrew_config::presets::BuilderSubmission;
-use clawcrew_config::quickstart::{
+use galleon_config::presets::BuilderSubmission;
+use galleon_config::quickstart::{
     AppliedAgent, FieldDescriptor, FieldSection, QuickstartError, QuickstartStep, Surface,
 };
 
@@ -205,5 +205,5 @@ fn signal_daemon_reload(state: &AppState) -> bool {
 }
 
 // Per-family alias collection lives in
-// `clawcrew_config::quickstart::QuickstartRunner::snapshot_state` so both transports
+// `galleon_config::quickstart::QuickstartRunner::snapshot_state` so both transports
 // share one implementation.

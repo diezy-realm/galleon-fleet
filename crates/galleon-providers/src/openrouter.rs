@@ -551,7 +551,7 @@ impl OpenRouterModelProvider {
     }
 
     fn http_client(&self) -> Client {
-        clawcrew_config::schema::build_runtime_proxy_client_with_timeouts(
+        galleon_config::schema::build_runtime_proxy_client_with_timeouts(
             "model_provider.openrouter",
             self.timeout_secs,
             OPENROUTER_CONNECT_TIMEOUT_SECS,
@@ -566,7 +566,7 @@ impl OpenRouterModelProvider {
     }
 
     fn streaming_http_client_with_idle_timeout(&self, idle_timeout: Duration) -> Client {
-        clawcrew_config::schema::build_runtime_proxy_client_with_read_timeout(
+        galleon_config::schema::build_runtime_proxy_client_with_read_timeout(
             "model_provider.openrouter",
             idle_timeout.as_secs(),
             OPENROUTER_CONNECT_TIMEOUT_SECS,

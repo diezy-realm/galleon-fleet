@@ -10,8 +10,8 @@ use serde_json::json;
 use tempfile::TempDir;
 use tokio::sync::{Mutex, MutexGuard};
 use clawcrew_api::tool::Tool;
-use clawcrew_config::platform::DockerRuntime;
-use clawcrew_config::schema::{Config, RuntimeKind};
+use galleon_config::platform::DockerRuntime;
+use galleon_config::schema::{Config, RuntimeKind};
 use clawcrew_runtime::security::{AutonomyLevel, SecurityPolicy, sandbox_posture};
 use clawcrew_runtime::tools::shell_tool_for_runtime;
 
