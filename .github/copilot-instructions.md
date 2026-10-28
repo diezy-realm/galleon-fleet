@@ -17,23 +17,23 @@ For every query involving architecture, symbols, call sites, dependencies, or pa
 
 ---
 
-## 2. 4-Tier Layering & Strict Boundary Policy (`standard-docs/tech-standart/architecture/01-boundary-policy.md`)
+## 2. 3-Tier Layering & Strict Boundary Policy (`standard-docs/tech-standart/architecture/01-boundary-policy.md`)
 
-All changes MUST preserve the separation of concerns:
+All changes MUST preserve the separation of concerns (penulisan kode Go/engine Go dilarang; seluruh arsitektur backend dikonsolidasikan ke Rust sesuai [ADR-0018](../standard-docs/decisions/0018-rust-single-language-architecture.md) dan [`01-boundary-policy.md` v2](../standard-docs/tech-standart/architecture/01-boundary-policy.md)):
 
 | Tier | Runtime & Port | Tanggung Jawab Resmi (Owns) | Hal Dilarang Keras (Forbidden) |
 |---|---|---|---|
 | **Tier 1: Desktop Shell** (`apps/tauri/`) | Tauri v2 (Rust IPC) | OS window lifecycle, system tray, native file dialogs, desktop bundling (`.exe`, `.dmg`). | **NO business logic**, NO API handlers, NO direct persistence, NO fake metrics (ADR 0003). |
-| **Tier 2: System Core** (`crates/`) | Rust 2024 (gRPC :50052 `SystemGateway`) | Security microkernel (sandbox, vault AES-256-GCM), native tools (fs/shell), **LLM execution SSOT (ADR 0001)**, WASI plugin host, channels. | **NO fleet governance**, NO crew turn orchestration, NO RAG memory. Rust is a **leaf service** (does not call Go/Tauri). |
-| **Tier 3: AI Orchestrator** (`engine/`) | Go 1.27+ (gRPC :50051 & HTTP :9090) | Agent brain (`StartTurn`), fleet governance, policies (risk-tiers, approvals), vector memory RAG, SQLite/Postgres persistence. | **NO direct LLM vendor API calls** (delegated to Rust ADR 0001), NO direct shell/fs tool exec (delegated to Rust). |
-| **Tier 4: UI Layer** (`web/`) | React 19 + TS 5.7+ (Vite + Tailwind 4) | View rendering, Tailwind components, view-models, client-bridge (`apiClient.ts`). | **Zero backend logic (ADR 0002)**, NO QR code/OS telemetry generation in UI server, **NEVER bypass Go to call Rust gRPC directly**. |
+| **Tier 2: System Core** (`crates/`, `src/`) | Rust 2024 (HTTP/WS :42617 `galleon-gateway`) | Gateway HTTP/WS, security microkernel (sandbox, vault AES-256-GCM), native tools (fs/shell), **LLM execution SSOT (ADR 0001)**, agent runtime, WASI plugin host, channels, fleet dashboard domain (`galleon-fleet-core`). | **NO gRPC/protobuf internal**, handler HTTP tanpa auth (kecuali rute publik). |
+| **Tier 3: UI Layer** (`web/`) | React 19 + TS 5.7+ (Vite + Tailwind 4) | View rendering, Tailwind components, view-models, client-bridge (`apiClient.ts`). | **Zero backend logic (ADR 0002)**, NO QR code/OS telemetry generation in UI server, memanggil LLM langsung (ODR-08). |
 
 ### Data Flow Invariants:
-1. **Flow Hierarchy:** `Frontend (web / Tauri) → Go HTTP (:9090) → Rust gRPC (:50052)`. Direct Frontend $\rightarrow$ Rust is forbidden.
-2. **LLM SSOT (ADR 0001):** All LLM vendor calls (OpenAI, Gemini, Bedrock, Anthropic) live in Rust `galleon-providers`. Go purely orchestrates turn context and streams via gRPC.
-3. **Secrets SSOT:** Stored in Rust Vault (`~/.config/galleon/vault/` AES-256-GCM). Retrieved via gRPC `GetSecret`/`SetSecret`.
-4. **Policy SSOT:** Rules for auto-approval and risk-tiers exist ONLY in Go (`fleet/policies.go`). Tauri and UI must query Go, never hardcode policies.
-5. **No Shared Database:** Each tier strictly isolates storage (Tauri: `window.json`, Rust: `vault/`, Go: `engine/data/*.db`).
+1. **Flow Hierarchy:** `Frontend (web / Tauri) → Rust Gateway HTTP/WS (:42617)`. Direct frontend bypass ke internal crate dilarang.
+2. **LLM SSOT (ADR 0001):** All LLM vendor calls (OpenAI, Gemini, Bedrock, Anthropic) live in Rust `galleon-providers`.
+3. **Secrets SSOT:** Stored in Rust Vault (`~/.config/galleon/vault/` AES-256-GCM).
+4. **Policy SSOT:** Rules for auto-approval and risk-tiers exist in Rust (`galleon-runtime` / `galleon-gateway`).
+5. **No Shared Database:** Each tier strictly isolates storage (Tauri: `window.json`, Rust: `vault/`, `DeviceRegistry` SQLite, `galleon-fleet-core` JSON).
+6. **Larangan Go Engine:** Penulisan kode Go / engine Go dilarang di core repository ini; arsitektur backend dikonsolidasikan penuh ke Rust sesuai [ADR-0018](../standard-docs/decisions/0018-rust-single-language-architecture.md) dan [`01-boundary-policy.md` v2](../standard-docs/tech-standart/architecture/01-boundary-policy.md).
 
 ---
 
@@ -52,19 +52,14 @@ All changes MUST preserve the separation of concerns:
 
 ---
 
-## 4. Go Engine Standards (`standard-docs/tech-standart/tech-stack/go-conventions.md`)
-- **Version:** Go 1.27+.
-- **Package Layout:** Clean architecture (`handlers.go` $\rightarrow$ `services.go` $\rightarrow$ `store.go`). Never circular import.
-- **Dependency Injection:** Compile-time DI using Google Wire (`wire.go` $\rightarrow$ `wire_gen.go`).
-- **gRPC Integration:** Go acts as gRPC client to Rust `SystemGatewayClient` (:50052) for LLM (`ExecuteTurn`) and Tools (`ExecuteTool`).
-- **HTTP Routing:** Gorilla Mux on `:9090`. All routes accept `context.Context` and propagate downstream.
-- **Error Handling & Logging:** Wrap errors with `fmt.Errorf("...: %w", err)`. Structured logging with `go.uber.org/zap`.
+## 4. Larangan Go Engine (`standard-docs/tech-standart/architecture/01-boundary-policy.md`)
+Penulisan kode Go / engine Go dilarang di core repository ini; arsitektur backend dikonsolidasikan penuh ke Rust sesuai [ADR-0018](../standard-docs/decisions/0018-rust-single-language-architecture.md) dan [`01-boundary-policy.md` v2](../standard-docs/tech-standart/architecture/01-boundary-policy.md).
 
 ---
 
 ## 5. Desktop Shell Standards (`standard-docs/tech-standart/tech-stack/tauri-conventions.md`)
 - **Tauri Version:** Tauri v2.
-- **IPC Commands:** All commands are `async fn`, return `Result<T, String>`, and proxy to Go HTTP `:9090`.
+- **IPC Commands:** All commands are `async fn`, return `Result<T, String>`, and communicate with Rust Gateway HTTP (`http://127.0.0.1:42617`).
 - **Security:** Deny-by-default allowlist in `tauri.conf.json`. Scoped filesystem to `$APPDATA/galleon/*`.
 - **Platform Separation:** Use `#[cfg(target_os = "...")]` for OS-specific shell commands or file operations.
 
@@ -72,6 +67,6 @@ All changes MUST preserve the separation of concerns:
 
 ## 6. Web & UI Standards (`standard-docs/tech-standart/tech-stack/web-conventions.md`)
 - **Stack:** React 19, TypeScript 5.7+ (Strict mode: no `any`), Vite 6, Tailwind CSS 4.
-- **API Client:** Use typed `apiClient.ts` pointing to `http://localhost:9090`.
+- **API Client:** Use typed `apiClient.ts` pointing to Rust Gateway (`http://localhost:42617` / Vite proxy `/api`).
 - **Zero Backend Logic:** No express API business logic in `web/`. View rendering and view-models only.
 - **Styling & Components:** Tailwind utilities (no inline `style` objects). Custom theme values from design system.
