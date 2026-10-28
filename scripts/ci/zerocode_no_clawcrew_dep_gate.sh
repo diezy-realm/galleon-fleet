@@ -45,7 +45,10 @@ def find_offending(candidate):
 
     def flag(label):
         if (
-            label.startswith("clawcrew-") or label.startswith("clawcrew_")
+            label.startswith("clawcrew-")
+            or label.startswith("clawcrew_")
+            or label.startswith("galleon-")
+            or label.startswith("galleon_")
         ) and label not in allowed:
             found.add(label)
 
