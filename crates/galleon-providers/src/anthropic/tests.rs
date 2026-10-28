@@ -796,8 +796,8 @@ data: {\"type\":\"message_stop\"}\n\n";
                             // `file!()` uses the host separator, so normalize
                             // before matching the `/`-spelled module path.
                             let norm = file.replace('\\', "/");
-                            norm.ends_with("clawcrew-providers/src/anthropic.rs")
-                                || norm.ends_with("clawcrew-providers/src/anthropic/mod.rs")
+                            norm.ends_with("galleon-providers/src/anthropic.rs")
+                                || norm.ends_with("galleon-providers/src/anthropic/mod.rs")
                         });
                     let matches_auth = event.get("attributes").is_some_and(|attributes| {
                         attributes.get("header").and_then(|value| value.as_str())

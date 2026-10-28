@@ -16,7 +16,7 @@ clawcrew-infra.workspace = true
 clawcrew-config = { workspace = true, default-features = false }
 clawcrew-log.workspace = true
 galleon-memory.workspace = true
-clawcrew-providers.workspace = true
+galleon-providers.workspace = true
 galleon-tool-call-parser.workspace = true
 galleon-tools.workspace = true
 galleon-i18n.workspace = true
@@ -386,5 +386,5 @@ wiremock = "0.6"
 # `test-util` is what `#[tokio::test(start_paused = true)]` needs, so a
 # duration-sensitive regression can assert the deadline the channel actually
 # waits without the suite sleeping for it. Dev-only, and the same feature
-# clawcrew-providers already carries for the same reason.
+# galleon-providers already carries for the same reason.
 tokio = { version = "1.50", features = ["macros", "rt-multi-thread", "test-util"] }

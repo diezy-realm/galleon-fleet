@@ -192,7 +192,7 @@ impl ModelSwitchTool {
         {
             Ok(model_provider) => model_provider,
             Err(error) => {
-                let known_model_providers = clawcrew_providers::list_model_providers();
+                let known_model_providers = galleon_providers::list_model_providers();
                 let configured_profiles = configured_model_provider_profiles(&self.config);
                 return Ok(ToolResult {
                     success: false,
@@ -236,7 +236,7 @@ impl ModelSwitchTool {
     }
 
     fn handle_list_providers(&self) -> anyhow::Result<ToolResult> {
-        let providers_list = clawcrew_providers::list_model_providers();
+        let providers_list = galleon_providers::list_model_providers();
         let configured_profiles = configured_model_provider_profiles(&self.config);
         let configured_count = configured_profiles.len();
 
@@ -270,7 +270,7 @@ impl ModelSwitchTool {
         if let Some(resolver) = &self.catalog_resolver {
             return resolver(family.to_string()).await;
         }
-        clawcrew_providers::catalog::list_models_for_family(family).await
+        galleon_providers::catalog::list_models_for_family(family).await
     }
 
     async fn handle_list_models(&self, args: &serde_json::Value) -> anyhow::Result<ToolResult> {
@@ -635,7 +635,7 @@ mod tests {
 
     #[tokio::test]
     async fn list_models_prefers_live_catalog_when_reachable() {
-        let live = match clawcrew_providers::catalog::list_models_for_family("openai").await {
+        let live = match galleon_providers::catalog::list_models_for_family("openai").await {
             Ok(live) if !live.is_empty() => live,
             _ => {
                 eprintln!("skipping: models.dev catalog unreachable (offline)");

@@ -15,7 +15,7 @@ mkdir -p "$repo_root/crates/clawcrew-channels" \
     "$repo_root/crates/galleon-plugins" \
     "$repo_root/crates/clawcrew-runtime" \
     "$repo_root/crates/clawcrew-gateway" \
-    "$repo_root/crates/clawcrew-providers" \
+    "$repo_root/crates/galleon-providers" \
     "$repo_root/crates/galleon-plugins/tests/fixtures/channel-fixture" \
     "$repo_root/apps/tauri"
 metadata_file="${fixture_dir}/metadata.json"
@@ -29,7 +29,7 @@ cat > "$metadata_file" <<EOF
     {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "name": "galleon-plugins", "manifest_path": "crates/galleon-plugins/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "name": "clawcrew-runtime", "manifest_path": "crates/clawcrew-runtime/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4", "name": "clawcrew-gateway", "manifest_path": "crates/clawcrew-gateway/Cargo.toml"},
-    {"id": "path+file://${repo_root}/crates/clawcrew-providers#clawcrew-providers 0.8.4", "name": "clawcrew-providers", "manifest_path": "crates/clawcrew-providers/Cargo.toml"},
+    {"id": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4", "name": "galleon-providers", "manifest_path": "crates/galleon-providers/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "name": "clawcrew-channel-plugin-fixture", "manifest_path": "crates/galleon-plugins/tests/fixtures/channel-fixture/Cargo.toml"},
     {"id": "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4", "name": "clawcrew-desktop", "manifest_path": "apps/tauri/Cargo.toml"}
   ],
@@ -41,20 +41,20 @@ cat > "$metadata_file" <<EOF
     "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4",
-    "path+file://${repo_root}/crates/clawcrew-providers#clawcrew-providers 0.8.4",
+    "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4",
     "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0",
     "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4"
   ],
   "resolve": {
     "nodes": [
-      {"id": "path+file://${repo_root}#clawcrew 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-providers#clawcrew-providers 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4"}]},
+      {"id": "path+file://${repo_root}#clawcrew 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "deps": []},
-      {"id": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-providers#clawcrew-providers 0.8.4"}]},
-      {"id": "path+file://${repo_root}/crates/clawcrew-providers#clawcrew-providers 0.8.4", "deps": []},
+      {"id": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}]},
+      {"id": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "deps": []},
       {"id": "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4"}]}
     ]
@@ -119,11 +119,11 @@ assert_selection "one package and reverse dependent" scoped '["clawcrew","clawcr
 printf '%s\n' 'crates/clawcrew-api/src/lib.rs' > "$paths_file"
 assert_selection "plugin host from reverse-dependent closure" scoped '["clawcrew","clawcrew-api","galleon-plugins"]' '' "$paths_file" true
 
-printf '%s\n' 'crates/clawcrew-providers/src/lib.rs' 'crates/clawcrew-channels/src/lib.rs' > "$paths_file"
-assert_selection "multiple packages" scoped '["clawcrew","clawcrew-channels","clawcrew-gateway","clawcrew-providers"]' '' "$paths_file" true
+printf '%s\n' 'crates/galleon-providers/src/lib.rs' 'crates/clawcrew-channels/src/lib.rs' > "$paths_file"
+assert_selection "multiple packages" scoped '["clawcrew","clawcrew-channels","clawcrew-gateway","galleon-providers"]' '' "$paths_file" true
 
-printf '%s\n' 'crates/clawcrew-providers/src/lib.rs' > "$paths_file"
-assert_selection "provider feature owner" scoped '["clawcrew","clawcrew-gateway","clawcrew-providers"]' '' "$paths_file" true
+printf '%s\n' 'crates/galleon-providers/src/lib.rs' > "$paths_file"
+assert_selection "provider feature owner" scoped '["clawcrew","clawcrew-gateway","galleon-providers"]' '' "$paths_file" true
 
 printf '%s\n' 'src/lib.rs' 'tests/integration.rs' > "$paths_file"
 assert_selection "root feature owner" scoped '["clawcrew"]' '' "$paths_file" true
@@ -200,7 +200,7 @@ assert_selection "lockfile only" full '[]' 'Cargo.lock changes require the full 
 printf '%s\n' 'Cargo.lock' 'crates/clawcrew-channels/Cargo.toml' > "$paths_file"
 assert_selection "manifest plus lockfile" full '[]' 'Cargo.lock changes require the full suite.' "$paths_file" true
 
-printf '%s\n' 'Cargo.lock' 'crates/clawcrew-channels/Cargo.toml' 'crates/clawcrew-providers/src/lib.rs' > "$paths_file"
+printf '%s\n' 'Cargo.lock' 'crates/clawcrew-channels/Cargo.toml' 'crates/galleon-providers/src/lib.rs' > "$paths_file"
 assert_selection "lockfile with multiple packages" full '[]' 'Cargo.lock changes require the full suite.' "$paths_file" true
 
 printf '%s\n' 'Cargo.lock' 'crates/clawcrew-channels/src/lib.rs' > "$paths_file"

@@ -46,8 +46,8 @@ pub use clawcrew_api::agent::{ToolLoopCancelled, is_tool_loop_cancelled};
 pub(crate) struct StreamInterruptedAfterOutput {
     pub(crate) partial_text: String,
     pub(crate) message: String,
-    pub(crate) usage: Option<clawcrew_providers::traits::TokenUsage>,
-    pub(crate) cause: clawcrew_providers::ReliableProviderTerminalFailure,
+    pub(crate) usage: Option<galleon_providers::traits::TokenUsage>,
+    pub(crate) cause: galleon_providers::ReliableProviderTerminalFailure,
 }
 
 impl std::fmt::Display for StreamInterruptedAfterOutput {
@@ -68,7 +68,7 @@ impl std::error::Error for StreamInterruptedAfterOutput {
 #[derive(Debug)]
 pub(crate) struct StreamErrorWithUsage {
     pub(crate) message: String,
-    pub(crate) usage: Option<clawcrew_providers::traits::TokenUsage>,
+    pub(crate) usage: Option<galleon_providers::traits::TokenUsage>,
     pub(crate) source: clawcrew_api::model_provider::StreamError,
 }
 
@@ -89,7 +89,7 @@ impl std::error::Error for StreamErrorWithUsage {
 /// side effects, so this bypasses the normal non-streaming fallback.
 #[derive(Debug)]
 pub(crate) struct StreamPreExecutedToolsWithoutFinalResponse {
-    pub(crate) usage: Option<clawcrew_providers::traits::TokenUsage>,
+    pub(crate) usage: Option<galleon_providers::traits::TokenUsage>,
 }
 
 impl std::fmt::Display for StreamPreExecutedToolsWithoutFinalResponse {
@@ -105,7 +105,7 @@ impl std::error::Error for StreamPreExecutedToolsWithoutFinalResponse {}
 /// not hide already-billed provider work from turn cost accounting.
 #[derive(Debug)]
 pub(crate) struct StreamSemanticEmptyCompletion {
-    pub(crate) usage: Option<clawcrew_providers::traits::TokenUsage>,
+    pub(crate) usage: Option<galleon_providers::traits::TokenUsage>,
 }
 
 impl std::fmt::Display for StreamSemanticEmptyCompletion {
@@ -116,11 +116,11 @@ impl std::fmt::Display for StreamSemanticEmptyCompletion {
 
 impl std::error::Error for StreamSemanticEmptyCompletion {}
 
-pub use clawcrew_providers::terminal_error::is_semantic_empty_terminal_completion;
+pub use galleon_providers::terminal_error::is_semantic_empty_terminal_completion;
 
 /// Render the canonical user-facing failure at a delivery boundary.
 pub fn semantic_empty_terminal_completion_message(agent_name: Option<&str>) -> String {
-    clawcrew_providers::terminal_error::semantic_empty_terminal_completion_message_with_renderer(
+    galleon_providers::terminal_error::semantic_empty_terminal_completion_message_with_renderer(
         agent_name,
         render_cli_string,
     )
@@ -139,7 +139,7 @@ pub fn terminal_completion_error_message(
     err: &anyhow::Error,
     agent_name: Option<&str>,
 ) -> Option<String> {
-    clawcrew_providers::terminal_error::terminal_completion_error_message_with_renderer(
+    galleon_providers::terminal_error::terminal_completion_error_message_with_renderer(
         err,
         agent_name,
         render_cli_string,
@@ -151,7 +151,7 @@ fn terminal_completion_error_message_in_english(
     err: &anyhow::Error,
     agent_name: Option<&str>,
 ) -> Option<String> {
-    clawcrew_providers::terminal_error::terminal_completion_error_message_with_renderer(
+    galleon_providers::terminal_error::terminal_completion_error_message_with_renderer(
         err,
         agent_name,
         crate::i18n::get_english_cli_string_with_args,
@@ -164,19 +164,19 @@ fn terminal_completion_error_message_in_english(
 /// text surface (direct Agent, CLI, RPC, or ACP).
 pub fn append_safeguard_fallback_notice(
     mut response: String,
-    notice: Option<&clawcrew_providers::SafeguardFallbackNotice>,
+    notice: Option<&galleon_providers::SafeguardFallbackNotice>,
 ) -> String {
     let Some(notice) = notice else {
         return response;
     };
     let key = match notice.kind {
-        clawcrew_providers::SafeguardFallbackKind::ServerSide => {
+        galleon_providers::SafeguardFallbackKind::ServerSide => {
             "channel-runtime-safeguard-footer-server"
         }
-        clawcrew_providers::SafeguardFallbackKind::ClientSide => {
+        galleon_providers::SafeguardFallbackKind::ClientSide => {
             "channel-runtime-safeguard-footer-client"
         }
-        clawcrew_providers::SafeguardFallbackKind::ClientAndServer => {
+        galleon_providers::SafeguardFallbackKind::ClientAndServer => {
             "channel-runtime-safeguard-footer-client-server"
         }
     };
@@ -194,14 +194,14 @@ pub fn append_safeguard_fallback_notice(
 #[derive(Debug)]
 pub(crate) struct StreamCancelledAfterOutput {
     pub(crate) partial_text: String,
-    pub(crate) usage: Option<clawcrew_providers::traits::TokenUsage>,
+    pub(crate) usage: Option<galleon_providers::traits::TokenUsage>,
     cause: ToolLoopCancelled,
 }
 
 impl StreamCancelledAfterOutput {
     pub(crate) fn with_usage(
         partial_text: String,
-        usage: Option<clawcrew_providers::traits::TokenUsage>,
+        usage: Option<galleon_providers::traits::TokenUsage>,
     ) -> Self {
         Self {
             partial_text,
@@ -227,12 +227,12 @@ impl std::error::Error for StreamCancelledAfterOutput {
 /// tool-loop cancellation while usage survives for rejected accounting.
 #[derive(Debug)]
 pub(crate) struct StreamCancelledWithUsage {
-    pub(crate) usage: Option<clawcrew_providers::traits::TokenUsage>,
+    pub(crate) usage: Option<galleon_providers::traits::TokenUsage>,
     cause: ToolLoopCancelled,
 }
 
 impl StreamCancelledWithUsage {
-    pub(crate) fn new(usage: Option<clawcrew_providers::traits::TokenUsage>) -> Self {
+    pub(crate) fn new(usage: Option<galleon_providers::traits::TokenUsage>) -> Self {
         Self {
             usage,
             cause: ToolLoopCancelled,
@@ -309,7 +309,7 @@ mod tests {
 
     #[test]
     fn reliable_provider_cause_uses_localized_delivery_without_retry_envelope() {
-        use clawcrew_providers::{
+        use galleon_providers::{
             ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
         };
 
@@ -339,7 +339,7 @@ mod tests {
 
     #[test]
     fn reliable_provider_cause_distinguishes_remote_endpoint_guidance() {
-        use clawcrew_providers::{
+        use galleon_providers::{
             ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
         };
 
@@ -361,7 +361,7 @@ mod tests {
 
     #[test]
     fn reliable_context_window_cause_uses_concise_delivery_message() {
-        use clawcrew_providers::{
+        use galleon_providers::{
             ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
         };
 
@@ -383,7 +383,7 @@ mod tests {
 
     #[test]
     fn reliable_provider_failure_kinds_use_their_fluent_messages() {
-        use clawcrew_providers::{
+        use galleon_providers::{
             ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
         };
 
@@ -447,7 +447,7 @@ mod tests {
 
     #[test]
     fn reliable_provider_credentials_messages_include_configured_provider() {
-        use clawcrew_providers::{
+        use galleon_providers::{
             ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
         };
 
@@ -544,7 +544,7 @@ mod tests {
 
     #[test]
     fn refusal_final_cause_projects_safety_guidance_beneath_reliable_envelopes() {
-        use clawcrew_providers::{
+        use galleon_providers::{
             ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
         };
 
@@ -567,7 +567,7 @@ mod tests {
 
     #[test]
     fn later_non_refusal_final_cause_keeps_generic_projection() {
-        use clawcrew_providers::{
+        use galleon_providers::{
             ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
         };
 

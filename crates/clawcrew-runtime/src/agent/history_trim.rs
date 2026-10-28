@@ -3,7 +3,7 @@
 
 use crate::agent::history::estimate_history_tokens;
 use clawcrew_api::model_provider::ConversationMessage;
-use clawcrew_providers::ChatMessage;
+use galleon_providers::ChatMessage;
 
 /// Prefix the tool loop puts on the user-role message that carries prompt-mode
 /// tool results (see `history_append::append_tool_round_to_history`). Typed
@@ -399,7 +399,7 @@ pub(crate) fn insert_conversation_breadcrumb(history: &mut Vec<ConversationMessa
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clawcrew_providers::{ToolCall, ToolResultMessage};
+    use galleon_providers::{ToolCall, ToolResultMessage};
 
     fn sys(c: &str) -> ChatMessage {
         ChatMessage::system(c)

@@ -27,7 +27,7 @@ use clawcrew_config::schema::{
 };
 use clawcrew_log::Instrument as _;
 use galleon_memory::Memory;
-use clawcrew_providers::{self, ChatMessage, ModelProvider, ProviderDispatch};
+use galleon_providers::{self, ChatMessage, ModelProvider, ProviderDispatch};
 use galleon_tools::memory_export::MemoryExportTool;
 use galleon_tools::memory_forget::MemoryForgetTool;
 use galleon_tools::memory_purge::MemoryPurgeTool;
@@ -45,7 +45,7 @@ fn invalid_semantic_completion_error(agent_name: &str) -> String {
 fn delegate_failure_error(agent_name: &str, error: &anyhow::Error) -> String {
     if error
         .chain()
-        .any(|source| source.is::<clawcrew_providers::ReliableProviderTerminalFailure>())
+        .any(|source| source.is::<galleon_providers::ReliableProviderTerminalFailure>())
     {
         // Reliable's aggregate is the durable retry diagnostic for delegated
         // task records; other typed terminal failures use the delivery projection.
@@ -179,7 +179,7 @@ pub struct DelegateTool {
     /// Global credential (from config.api_key) used when an agent has none set.
     global_credential: Option<String>,
     /// ModelProvider runtime options inherited from root config.
-    provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions,
+    provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions,
     /// Depth at which this tool instance lives in the delegation chain.
     depth: u32,
     /// Binding delegation-depth ceiling for this tool's owner and its whole
@@ -339,7 +339,7 @@ impl DelegateTool {
             agents,
             global_credential,
             security,
-            clawcrew_providers::ModelProviderRuntimeOptions::default(),
+            galleon_providers::ModelProviderRuntimeOptions::default(),
         )
     }
 
@@ -347,7 +347,7 @@ impl DelegateTool {
         agents: HashMap<String, AliasedAgentConfig>,
         global_credential: Option<String>,
         security: Arc<SecurityPolicy>,
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions,
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions,
     ) -> Self {
         Self {
             agents: Arc::new(agents),
@@ -390,7 +390,7 @@ impl DelegateTool {
             global_credential,
             security,
             depth,
-            clawcrew_providers::ModelProviderRuntimeOptions::default(),
+            galleon_providers::ModelProviderRuntimeOptions::default(),
         )
     }
 
@@ -399,7 +399,7 @@ impl DelegateTool {
         global_credential: Option<String>,
         security: Arc<SecurityPolicy>,
         depth: u32,
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions,
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions,
     ) -> Self {
         Self {
             agents: Arc::new(agents),
@@ -939,7 +939,7 @@ impl DelegateTool {
                 crate::agent::agent::build_session_model_provider(config, model_provider, None)?;
             return Ok((provider, provider_name, model_name));
         }
-        let provider = clawcrew_providers::create_model_provider_with_options(
+        let provider = galleon_providers::create_model_provider_with_options(
             provider_type,
             credential,
             &self.provider_runtime_options,
@@ -2051,11 +2051,11 @@ impl DelegateTool {
         admission: DelegateAdmission,
     ) -> anyhow::Result<ToolResult> {
         // Keep target recovery metadata local: the parent channel scope belongs to its own model call.
-        let (result, fallback) = clawcrew_providers::reliable::scope_provider_fallback(async {
+        let (result, fallback) = galleon_providers::reliable::scope_provider_fallback(async {
             let result = self
                 .execute_sync_with_admission_inner(agent_name, prompt, args, admission)
                 .await;
-            let fallback = clawcrew_providers::reliable::take_last_provider_fallback_attribution();
+            let fallback = galleon_providers::reliable::take_last_provider_fallback_attribution();
             (result, fallback)
         })
         .await;
@@ -2120,7 +2120,7 @@ impl DelegateTool {
     /// task, when one exists. No-op for the synchronous path (no task row).
     async fn record_provider_fallback_metadata(
         &self,
-        fallback: &clawcrew_providers::reliable::ProviderFallbackAttribution,
+        fallback: &galleon_providers::reliable::ProviderFallbackAttribution,
     ) {
         // Session metadata projection (P1.5): independent of any task row.
         if let Some(session_key) = current_tool_loop_session_key() {

@@ -72,7 +72,7 @@ expect "docs-only changes" "false" \
     "docs/book/src/contributing/testing.md"
 expect "web-only changes" "false" "web/src/pages/AgentChat.tsx"
 expect "unrelated crate changes" "false" \
-    "crates/clawcrew-providers/src/openai.rs"
+    "crates/galleon-providers/src/openai.rs"
 expect "other workflow changes" "false" \
     ".github/workflows/release.yml"
 # The activation e2e is matched by exact path, not by a `tests/*` wildcard, so

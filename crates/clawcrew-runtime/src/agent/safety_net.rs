@@ -9,7 +9,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use tokio::sync::mpsc;
 use clawcrew_api::ingress::IngressContext;
 use clawcrew_api::model_provider::TokenUsage;
-use clawcrew_providers::{ChatResponse, ToolCall};
+use galleon_providers::{ChatResponse, ToolCall};
 
 // ── shared fixtures ─────────────────────────────────────────────────────
 
@@ -511,13 +511,13 @@ async fn safety_net_thinking_never_leaks_into_draft_or_chunks() {
             _: ChatRequest<'_>,
             _: &str,
             _: Option<f64>,
-            _: clawcrew_providers::traits::StreamOptions,
+            _: galleon_providers::traits::StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<clawcrew_providers::traits::StreamEvent>,
+            galleon_providers::traits::StreamResult<galleon_providers::traits::StreamEvent>,
         > {
             use futures_util::StreamExt as _;
-            use clawcrew_providers::traits::{StreamChunk, StreamEvent};
+            use galleon_providers::traits::{StreamChunk, StreamEvent};
             let call = self.calls.fetch_add(1, Ordering::SeqCst);
             let events: Vec<_> = if call == 0 {
                 vec![
@@ -1605,7 +1605,7 @@ impl ModelProvider for StreamThenHangProvider {
         _: ChatRequest<'_>,
         _: &str,
         _: Option<f64>,
-        _: clawcrew_providers::traits::StreamOptions,
+        _: galleon_providers::traits::StreamOptions,
     ) -> futures_util::stream::BoxStream<
         'static,
         clawcrew_api::model_provider::StreamResult<clawcrew_api::model_provider::StreamEvent>,
@@ -2311,7 +2311,7 @@ impl ModelProvider for ScriptedStreamProvider {
         _: ChatRequest<'_>,
         _: &str,
         _: Option<f64>,
-        _: clawcrew_providers::traits::StreamOptions,
+        _: galleon_providers::traits::StreamOptions,
     ) -> futures_util::stream::BoxStream<'static, StreamScriptItem> {
         use futures_util::StreamExt as _;
         let script = self
@@ -3687,7 +3687,7 @@ async fn usage_identity_updates_on_subsequent_calls_without_usage() {
 /// identity and ceiling reflect B, not A. This exercises REQ-B2 boundary.
 #[tokio::test]
 async fn usage_identity_crosses_provider_boundary_without_usage() {
-    use clawcrew_providers::reliable::ReliableModelProvider;
+    use galleon_providers::reliable::ReliableModelProvider;
 
     // Provider A: fails on first call (simulating rejection)
     struct FailingProvider;

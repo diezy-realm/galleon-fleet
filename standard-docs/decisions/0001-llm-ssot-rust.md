@@ -11,7 +11,7 @@
 Galleon-fleet codebase has **two independent LLM provider implementations**:
 
 1. **Go `engine/src/llm/`** — OpenAI streaming client with retry+fallback (`multi_provider.go`), used by `crew.StartTurn` (Go orchestrator)
-2. **Rust `clawcrew-providers`** — Multi-vendor native (OpenAI, Gemini, Bedrock, Anthropic) with `Router`+`Dispatch` resilience, used by Rust `runtime/agent/turn.rs`
+2. **Rust `galleon-providers`** — Multi-vendor native (OpenAI, Gemini, Bedrock, Anthropic) with `Router`+`Dispatch` resilience, used by Rust `runtime/agent/turn.rs`
 
 Both are **production-active** (Go: 15 matches in 7 files, Rust: 895 matches in 76 files). This violates Single Source of Truth (SSOT) principle and creates:
 
@@ -23,7 +23,7 @@ Both are **production-active** (Go: 15 matches in 7 files, Rust: 895 matches in 
 
 ## Decision
 
-**Rust `clawcrew-providers` is the SSOT for all LLM vendor API calling.**
+**Rust `galleon-providers` is the SSOT for all LLM vendor API calling.**
 
 Go `engine/src/llm/` will be **removed**. Go `crew.StartTurn` will **delegate to Rust** via gRPC `SystemGateway.ExecuteTurn` for all provider execution.
 

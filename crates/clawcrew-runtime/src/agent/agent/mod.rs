@@ -14,8 +14,8 @@ use chrono::{Datelike, Timelike};
 use clawcrew_config::schema::Config;
 use galleon_memory::{self, Memory, MemoryCategory};
 #[cfg(test)]
-use clawcrew_providers::ChatRequest;
-use clawcrew_providers::{
+use galleon_providers::ChatRequest;
+use galleon_providers::{
     self, ChatMessage, ConversationMessage, ModelProvider, ToolResultMessage,
 };
 use std::path::Path;
@@ -36,7 +36,7 @@ type SessionModelProvider = (
     Box<dyn ModelProvider>,
     String,
     String,
-    Arc<clawcrew_providers::router::ModelRouteResolver>,
+    Arc<galleon_providers::router::ModelRouteResolver>,
 );
 
 pub fn build_session_model_provider(
@@ -75,14 +75,14 @@ pub fn build_session_model_provider(
             ))
         })?;
 
-    let model_provider_runtime_options = clawcrew_providers::provider_runtime_options_for_alias(
+    let model_provider_runtime_options = galleon_providers::provider_runtime_options_for_alias(
         config,
         &model_provider_name,
         &model_provider_alias,
     );
 
     let (model_provider, model_route_resolver) =
-        clawcrew_providers::create_routed_model_provider_with_options_and_resolver(
+        galleon_providers::create_routed_model_provider_with_options_and_resolver(
             config,
             model_provider_ref,
             entry.and_then(|e| e.api_key.as_deref()),
@@ -394,7 +394,7 @@ pub struct Agent {
     classification_config: clawcrew_config::schema::QueryClassificationConfig,
     /// The exact immutable route table used by `model_provider` for hint
     /// dispatch. It is replaced atomically with the provider on model switch.
-    model_route_resolver: Arc<clawcrew_providers::router::ModelRouteResolver>,
+    model_route_resolver: Arc<galleon_providers::router::ModelRouteResolver>,
     response_cache: Option<Arc<galleon_memory::response_cache::ResponseCache>>,
     /// Pre-rendered security policy summary injected into the system prompt
     /// so the LLM knows the concrete constraints before making tool calls.
@@ -440,7 +440,7 @@ pub struct Agent {
     /// the turn loop so each unique local image file is read + base64-encoded
     /// at most once per session even though the multimodal pipeline re-walks
     /// the full conversation history on every turn and tool iteration.
-    image_cache: clawcrew_providers::multimodal::LocalImageCache,
+    image_cache: galleon_providers::multimodal::LocalImageCache,
     provider_switch_config: Option<ProviderSwitchConfig>,
     /// The generation cell the context-limits resolver reads. Direct ACP/WS
     /// agents retain their construction generation until reconnect; callers
@@ -500,7 +500,7 @@ pub struct StreamedTurnSuccess {
     pub final_context_limits: Option<clawcrew_config::schema::ResolvedContextLimits>,
     /// Display-only accepted safeguard attribution. Callers choose the
     /// transport presentation; `new_messages` remains undecorated.
-    pub safeguard_fallback: Option<clawcrew_providers::SafeguardFallbackNotice>,
+    pub safeguard_fallback: Option<galleon_providers::SafeguardFallbackNotice>,
 }
 
 #[derive(Debug)]
@@ -555,7 +555,7 @@ pub struct AgentBuilder {
     auto_save: Option<bool>,
     memory_session_id: Option<String>,
     classification_config: Option<clawcrew_config::schema::QueryClassificationConfig>,
-    model_route_resolver: Option<Arc<clawcrew_providers::router::ModelRouteResolver>>,
+    model_route_resolver: Option<Arc<galleon_providers::router::ModelRouteResolver>>,
     allowed_tools: Option<Vec<String>>,
     response_cache: Option<Arc<galleon_memory::response_cache::ResponseCache>>,
     security_summary: Option<String>,
@@ -787,7 +787,7 @@ impl AgentBuilder {
 
     pub fn model_route_resolver(
         mut self,
-        model_route_resolver: Arc<clawcrew_providers::router::ModelRouteResolver>,
+        model_route_resolver: Arc<galleon_providers::router::ModelRouteResolver>,
     ) -> Self {
         self.model_route_resolver = Some(model_route_resolver);
         self
@@ -966,7 +966,7 @@ impl AgentBuilder {
             .model_provider_name
             .unwrap_or_else(|| "<unconfigured>".into());
         let model_route_resolver = self.model_route_resolver.unwrap_or_else(|| {
-            Arc::new(clawcrew_providers::router::ModelRouteResolver::new(
+            Arc::new(galleon_providers::router::ModelRouteResolver::new(
                 Vec::new(),
                 model_provider_name.clone(),
                 model_name.clone(),
@@ -1066,7 +1066,7 @@ impl AgentBuilder {
             approval_manager: self.approval_manager,
             agent_alias: self.agent_alias.unwrap_or_default(),
             channel_handles: AgentChannelHandles::default(),
-            image_cache: clawcrew_providers::multimodal::LocalImageCache::new(),
+            image_cache: galleon_providers::multimodal::LocalImageCache::new(),
             config_generation: self.config_generation,
             provider_switch_config: self.provider_switch_config,
             channel_name: self.channel_name.unwrap_or_else(|| "agent".to_string()),
@@ -1520,7 +1520,7 @@ impl Agent {
     /// the previous provider's table while the new provider serves the call.
     pub fn set_model_route_resolver(
         &mut self,
-        model_route_resolver: Arc<clawcrew_providers::router::ModelRouteResolver>,
+        model_route_resolver: Arc<galleon_providers::router::ModelRouteResolver>,
     ) {
         self.model_route_resolver = model_route_resolver;
     }
@@ -1559,7 +1559,7 @@ impl Agent {
     pub(crate) fn resolved_route_for_test(
         &self,
         selector: &str,
-    ) -> clawcrew_providers::router::ResolvedModelRoute {
+    ) -> galleon_providers::router::ResolvedModelRoute {
         self.model_route_resolver.resolve(selector)
     }
 
@@ -2169,14 +2169,14 @@ impl Agent {
         };
 
         let provider_ref = format!("{provider_name}.{provider_alias}");
-        let provider_runtime_options = clawcrew_providers::provider_runtime_options_for_alias(
+        let provider_runtime_options = galleon_providers::provider_runtime_options_for_alias(
             config,
             provider_name,
             provider_alias,
         );
 
         let (model_provider, model_route_resolver) =
-            clawcrew_providers::create_routed_model_provider_with_options_and_resolver(
+            galleon_providers::create_routed_model_provider_with_options_and_resolver(
                 config,
                 &provider_ref,
                 agent_model_provider.and_then(|e| e.api_key.as_deref()),
@@ -2453,7 +2453,7 @@ impl Agent {
     /// Append a user-visible notice when the resilient provider wrapper served
     /// this turn with a different model or provider than requested (silent
     /// model downgrade, e.g. a `fallback_models` entry kicking in). The record
-    /// is consumed from the `clawcrew_providers::reliable` task-local (single
+    /// is consumed from the `galleon_providers::reliable` task-local (single
     /// source of truth); nothing is stored.
     ///
     /// The notice is BOTH appended to the returned response (rendered by
@@ -2468,11 +2468,11 @@ impl Agent {
     /// preceded it. The safeguard notice itself is rendered by the caller.
     async fn append_model_fallback_notice(
         response: String,
-        fallback: Option<&clawcrew_providers::reliable::ProviderFallbackInfo>,
-        safeguard: Option<&clawcrew_providers::SafeguardFallbackNotice>,
+        fallback: Option<&galleon_providers::reliable::ProviderFallbackInfo>,
+        safeguard: Option<&galleon_providers::SafeguardFallbackNotice>,
         event_tx: &tokio::sync::mpsc::Sender<TurnEvent>,
     ) -> String {
-        let fallback = clawcrew_providers::visible_provider_fallback(fallback, safeguard);
+        let fallback = galleon_providers::visible_provider_fallback(fallback, safeguard);
         let with_notice = Self::format_model_fallback_notice(response.clone(), fallback);
         if with_notice == response {
             return response;
@@ -2487,7 +2487,7 @@ impl Agent {
 
     fn format_model_fallback_notice(
         response: String,
-        fallback: Option<&clawcrew_providers::reliable::ProviderFallbackInfo>,
+        fallback: Option<&galleon_providers::reliable::ProviderFallbackInfo>,
     ) -> String {
         let Some(fallback) = fallback else {
             return response;
@@ -2648,7 +2648,7 @@ impl Agent {
 
         let switch_outcome: anyhow::Result<(
             Box<dyn ModelProvider>,
-            Arc<clawcrew_providers::router::ModelRouteResolver>,
+            Arc<galleon_providers::router::ModelRouteResolver>,
         )> = match self
             .provider_switch_config
             .as_ref()
@@ -2677,7 +2677,7 @@ impl Agent {
                 let runtime_options = new_model_provider
                     .split_once('.')
                     .map(|(family, alias)| {
-                        clawcrew_providers::provider_runtime_options_for_alias(
+                        galleon_providers::provider_runtime_options_for_alias(
                             full_config.as_ref(),
                             family,
                             alias,
@@ -2685,7 +2685,7 @@ impl Agent {
                     })
                     .unwrap_or_default();
 
-                clawcrew_providers::create_routed_model_provider_with_options_and_resolver(
+                galleon_providers::create_routed_model_provider_with_options_and_resolver(
                     full_config.as_ref(),
                     &new_model_provider,
                     api_key,
@@ -2812,7 +2812,7 @@ impl Agent {
             {
                 let tool_calls = calls
                     .iter()
-                    .map(|c| clawcrew_providers::ToolCall {
+                    .map(|c| galleon_providers::ToolCall {
                         id: c
                             .get("id")
                             .and_then(|v| v.as_str())
@@ -3185,9 +3185,9 @@ impl Agent {
             turn_provider_recovery,
             turn_provider_context_truncated,
             turn_safeguard_fallback,
-        ) = clawcrew_providers::scope_safeguard_fallback(async {
+        ) = galleon_providers::scope_safeguard_fallback(async {
             let (result, recovery, context_truncated) =
-                clawcrew_providers::reliable::scope_provider_fallback(async {
+                galleon_providers::reliable::scope_provider_fallback(async {
                     let result = crate::agent::turn::scope_tool_protocol_prompts(
                         Arc::clone(&tool_protocol_prompts),
                         turn_loop,
@@ -3195,8 +3195,8 @@ impl Agent {
                     .await;
                     (
                         result,
-                        clawcrew_providers::reliable::take_last_provider_fallback(),
-                        clawcrew_providers::reliable::take_last_provider_context_truncation(),
+                        galleon_providers::reliable::take_last_provider_fallback(),
+                        galleon_providers::reliable::take_last_provider_context_truncation(),
                     )
                 })
                 .await;
@@ -3204,7 +3204,7 @@ impl Agent {
                 result,
                 recovery,
                 context_truncated,
-                clawcrew_providers::take_last_safeguard_fallback(),
+                galleon_providers::take_last_safeguard_fallback(),
             )
         })
         .await;
@@ -3285,7 +3285,7 @@ impl Agent {
         // accepted attempt itself went through.
         let response = Self::format_model_fallback_notice(
             response,
-            clawcrew_providers::visible_provider_fallback(
+            galleon_providers::visible_provider_fallback(
                 turn_provider_recovery.as_ref(),
                 turn_safeguard_fallback.as_ref(),
             ),
@@ -3427,11 +3427,11 @@ impl Agent {
         let turn_id = Self::new_turn_id();
         let mut committed_response = String::new();
         // Requested-vs-served divergence for THIS turn. Source of truth is the
-        // task-local record inside `clawcrew_providers::reliable`, consumed
+        // task-local record inside `galleon_providers::reliable`, consumed
         // once per round below; this is a per-turn transient resolved at
         // use-time, never stored on the agent.
-        let mut turn_provider_recovery: Option<clawcrew_providers::reliable::ProviderFallbackInfo>;
-        let mut turn_safeguard_fallback: Option<clawcrew_providers::SafeguardFallbackNotice>;
+        let mut turn_provider_recovery: Option<galleon_providers::reliable::ProviderFallbackInfo>;
+        let mut turn_safeguard_fallback: Option<galleon_providers::SafeguardFallbackNotice>;
         let mut turn_provider_context_truncated = false;
         let turn_observer = Arc::clone(&self.observer);
         let mut guard = crate::observability::AgentTurnGuard::start(
@@ -3761,9 +3761,9 @@ impl Agent {
             // the worker stack in debug builds.
             let round_loop = Box::pin(round_loop);
             let (loop_result, round_fallback, round_context_truncated, round_safeguard) =
-                clawcrew_providers::scope_safeguard_fallback(async {
+                galleon_providers::scope_safeguard_fallback(async {
                     let (result, fallback, context_truncated) =
-                        clawcrew_providers::reliable::scope_provider_fallback(async {
+                        galleon_providers::reliable::scope_provider_fallback(async {
                             let result = crate::agent::turn::scope_tool_protocol_prompts(
                                 Arc::clone(&tool_protocol_prompts),
                                 round_loop,
@@ -3771,8 +3771,8 @@ impl Agent {
                             .await;
                             (
                                 result,
-                                clawcrew_providers::reliable::take_last_provider_fallback(),
-                                clawcrew_providers::reliable::take_last_provider_context_truncation(
+                                galleon_providers::reliable::take_last_provider_fallback(),
+                                galleon_providers::reliable::take_last_provider_context_truncation(
                                 ),
                             )
                         })
@@ -3781,7 +3781,7 @@ impl Agent {
                         result,
                         fallback,
                         context_truncated,
-                        clawcrew_providers::take_last_safeguard_fallback(),
+                        galleon_providers::take_last_safeguard_fallback(),
                     )
                 })
                 .await;
@@ -4204,13 +4204,13 @@ impl clawcrew_api::agent::AgentSession for Agent {
                 safeguard_fallback: success.safeguard_fallback.map(|s| {
                     clawcrew_api::agent::AgentSafeguardFallback {
                         kind: match s.kind {
-                            clawcrew_providers::SafeguardFallbackKind::ServerSide => {
+                            galleon_providers::SafeguardFallbackKind::ServerSide => {
                                 clawcrew_api::agent::AgentSafeguardKind::ServerSide
                             }
-                            clawcrew_providers::SafeguardFallbackKind::ClientSide => {
+                            galleon_providers::SafeguardFallbackKind::ClientSide => {
                                 clawcrew_api::agent::AgentSafeguardKind::ClientSide
                             }
-                            clawcrew_providers::SafeguardFallbackKind::ClientAndServer => {
+                            galleon_providers::SafeguardFallbackKind::ClientAndServer => {
                                 clawcrew_api::agent::AgentSafeguardKind::ClientAndServer
                             }
                         },

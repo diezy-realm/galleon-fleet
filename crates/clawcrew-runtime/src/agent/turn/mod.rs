@@ -82,7 +82,7 @@ use anyhow::Result;
 use clawcrew_api::agent::TurnEvent;
 use clawcrew_api::channel::Channel;
 use clawcrew_api::ingress::{IngressContext, IngressDecision};
-use clawcrew_providers::{ChatMessage, ModelProvider};
+use galleon_providers::{ChatMessage, ModelProvider};
 use std::collections::HashSet;
 use std::io::Write as _;
 use std::sync::Arc;
@@ -268,7 +268,7 @@ pub struct ToolLoop<'a> {
     pub event_tx: Option<tokio::sync::mpsc::Sender<TurnEvent>>,
     pub steering: Option<&'a mut tokio::sync::mpsc::Receiver<String>>,
     pub new_messages_out: Option<&'a mut Vec<ChatMessage>>,
-    pub image_cache: Option<&'a mut clawcrew_providers::multimodal::LocalImageCache>,
+    pub image_cache: Option<&'a mut galleon_providers::multimodal::LocalImageCache>,
     pub ingress: IngressContext,
     /// The per-turn memory half for unified memory-context injection: the
     /// handle, raw recall query, session scopes, and spawn-site suppression.
@@ -316,7 +316,7 @@ async fn projected_provider_facing_tokens(
     history: &[ChatMessage],
     multimodal_config: &clawcrew_config::schema::MultimodalConfig,
     degrade_strip_images: bool,
-    image_cache: Option<&mut clawcrew_providers::multimodal::LocalImageCache>,
+    image_cache: Option<&mut galleon_providers::multimodal::LocalImageCache>,
     tool_schema_tokens: usize,
     ratio: f64,
 ) -> usize {
@@ -498,7 +498,7 @@ async fn enforce_reported_budget(
     // transcript the marker-only estimate sees.
     multimodal_config: &clawcrew_config::schema::MultimodalConfig,
     degrade_strip_images: bool,
-    mut image_cache: Option<&mut clawcrew_providers::multimodal::LocalImageCache>,
+    mut image_cache: Option<&mut galleon_providers::multimodal::LocalImageCache>,
     // The native-tool signal the NEXT iteration resolves to. The real iteration
     // applies `refresh_prompt_anchor` with this signal before preparing its
     // request, so the projection must apply the same anchor swap before it
@@ -931,7 +931,7 @@ impl<'a> TurnState<'a> {
     fn append_tool_round(
         &mut self,
         assistant_history_content: String,
-        native_tool_calls: &[clawcrew_providers::ToolCall],
+        native_tool_calls: &[galleon_providers::ToolCall],
         individual_results: &[(Option<String>, String)],
         tool_results: &str,
         use_native_tools: bool,
@@ -960,7 +960,7 @@ impl<'a> TurnState<'a> {
 /// `call_provider`, so projecting here cannot double-emit.
 async fn emit_rejected_attempt_usage(
     event_tx: Option<&tokio::sync::mpsc::Sender<TurnEvent>>,
-    attempts: &[clawcrew_providers::dispatch::AccountedAttempt],
+    attempts: &[galleon_providers::dispatch::AccountedAttempt],
 ) {
     if let Some(tx) = event_tx {
         for billable in crate::agent::cost::billable_provider_attempts(attempts) {
@@ -1021,7 +1021,7 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
     let mut image_cache = Some(match image_cache {
         Some(cache) => cache,
         None => {
-            loop_local_image_cache.insert(clawcrew_providers::multimodal::LocalImageCache::new())
+            loop_local_image_cache.insert(galleon_providers::multimodal::LocalImageCache::new())
         }
     });
     let ResolvedAgentExecution {
@@ -1743,7 +1743,7 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
             && !tool_specs.is_empty()
             && active_model_provider.has_mixed_native_tool_support_for_model(protocol_model)
         {
-            return Err(clawcrew_providers::ProviderCapabilityError {
+            return Err(galleon_providers::ProviderCapabilityError {
                 model_provider: active_model_provider_name.to_string(),
                 capability: "tool_protocol".to_string(),
                 message: crate::i18n::get_required_cli_string(
@@ -2123,7 +2123,7 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
         // A provider transport success is only a candidate. Commit (or clear)
         // presentation state after parsing has accepted the response, so a
         // malformed fallback completion cannot leak a stale recovery notice.
-        clawcrew_providers::dispatch::commit_accepted_provider_route(accepted_route);
+        galleon_providers::dispatch::commit_accepted_provider_route(accepted_route);
 
         if tool_calls.is_empty() {
             ::clawcrew_log::record!(
@@ -2976,7 +2976,7 @@ async fn drive_live_sop_actions(
     collected_receipts: Option<&std::sync::Mutex<Vec<String>>>,
     event_tx: Option<tokio::sync::mpsc::Sender<TurnEvent>>,
     mut new_messages_out: Option<&mut Vec<ChatMessage>>,
-    mut image_cache: Option<&mut clawcrew_providers::multimodal::LocalImageCache>,
+    mut image_cache: Option<&mut galleon_providers::multimodal::LocalImageCache>,
     agent_alias: Option<&str>,
     parent_agent_alias: Option<&str>,
     sop_reassembly: Option<SopStepReassembly<'_>>,
@@ -3919,7 +3919,7 @@ mod reported_budget_tests {
             ChatMessage::assistant("final answer".to_string()),
         ];
         let config = clawcrew_config::schema::MultimodalConfig::default();
-        let mut image_cache = clawcrew_providers::multimodal::LocalImageCache::new();
+        let mut image_cache = galleon_providers::multimodal::LocalImageCache::new();
         // The measured population is the PREPARED one, exactly as the runtime
         // measures it (`reported_population_estimated` from `prepared_messages`).
         let prepared =
@@ -4730,7 +4730,7 @@ mod active_route_context_tests {
         AliasedAgentConfig, Config, CustomModelProviderConfig, ModelProviderConfig,
         RuntimeProfileConfig,
     };
-    use clawcrew_providers::{ChatResponse, traits::TokenUsage};
+    use galleon_providers::{ChatResponse, traits::TokenUsage};
     use std::collections::{HashMap, HashSet};
     use std::sync::Mutex;
 
@@ -5017,7 +5017,7 @@ mod active_route_context_tests {
         };
         use axum::{Json, Router, routing::post};
         use clawcrew_api::tool::{Tool, ToolResult};
-        use clawcrew_providers::ToolCall;
+        use galleon_providers::ToolCall;
         use std::sync::atomic::{AtomicUsize, Ordering};
 
         // Mock vision endpoint: always replies with a small plain-text answer.
@@ -5211,7 +5211,7 @@ vision_model_provider = "custom.vision"
         );
 
         let (event_tx, mut event_rx) = tokio::sync::mpsc::channel(16);
-        let mut image_cache = clawcrew_providers::multimodal::LocalImageCache::new();
+        let mut image_cache = galleon_providers::multimodal::LocalImageCache::new();
         let turn_id = "b3-two-iteration";
 
         let _ = run_tool_call_loop(ToolLoop {
@@ -5359,7 +5359,7 @@ mod shared_iteration_budget_tests {
 #[cfg(test)]
 mod sop_step_reassembly_tests {
     use super::*;
-    use clawcrew_providers::{ChatResponse, ToolCall};
+    use galleon_providers::{ChatResponse, ToolCall};
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     // ── Gate: pure decision properties ───────────────────────────────────────
@@ -6802,7 +6802,7 @@ mod tool_lifecycle_abandonment_tests {
     use super::*;
     use crate::observability::NoopObserver;
     use clawcrew_api::hook::ToolCallHookContext;
-    use clawcrew_providers::{ChatResponse, ToolCall};
+    use galleon_providers::{ChatResponse, ToolCall};
     use std::sync::Mutex;
     use std::time::Duration;
 

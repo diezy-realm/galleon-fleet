@@ -16,13 +16,13 @@ clawcrew_api::tool_attribution!(EmailReadTool, ToolKind::Plugin);
 /// Fetch the full body of a specific email by UID. Never sets \Seen.
 pub struct EmailReadTool {
     email_configs: Arc<HashMap<String, EmailConfig>>,
-    auth_service: Option<Arc<clawcrew_providers::auth::AuthService>>,
+    auth_service: Option<Arc<galleon_providers::auth::AuthService>>,
 }
 
 impl EmailReadTool {
     pub fn new(
         email_configs: Arc<HashMap<String, EmailConfig>>,
-        auth_service: Option<Arc<clawcrew_providers::auth::AuthService>>,
+        auth_service: Option<Arc<galleon_providers::auth::AuthService>>,
     ) -> Self {
         Self {
             email_configs,

@@ -9,7 +9,7 @@ use axum::{
 };
 use clawcrew_config::api_error::ConfigApiCode;
 use clawcrew_config::pairing::PairingGuard;
-use clawcrew_providers::ModelProvider;
+use galleon_providers::ModelProvider;
 use http_body_util::BodyExt;
 use parking_lot::RwLock;
 use std::sync::Arc;

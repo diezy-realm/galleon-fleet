@@ -63,7 +63,7 @@
    ↓ builds turn context (messages, tools, memory)
    ↓ gRPC call → Rust SystemGatewayService.ExecuteTurn (ADR 0001)
 4. Rust turn executor (crates/clawcrew-runtime/src/agent/turn.rs)
-   ↓ calls clawcrew-providers (OpenAI/Gemini/Bedrock/Anthropic)
+   ↓ calls galleon-providers (OpenAI/Gemini/Bedrock/Anthropic)
    ↓ streams tokens back to Go
 5. Go receives completion
    ↓ saves to memory (vector + SQLite)
@@ -108,7 +108,7 @@ See `docs/book/src/architecture/crates.md` (archived KiroCrew upstream) for deta
 
 - `clawcrew-gateway`: gRPC server, vault, secret management
 - `clawcrew-runtime`: Agent turn execution, tool dispatch, message streaming
-- `clawcrew-providers`: LLM vendor APIs (OpenAI, Gemini, Bedrock, Anthropic) — **SSOT (ADR 0001)**
+- `galleon-providers`: LLM vendor APIs (OpenAI, Gemini, Bedrock, Anthropic) — **SSOT (ADR 0001)**
 - `clawcrew-channel-*`: Channel plugins (Discord, Telegram, Slack, etc.)
 - `clawcrew-tools-*`: Native tool implementations (filesystem, shell, network)
 
@@ -236,7 +236,7 @@ Galleon forked from `clawcrew` (KiroCrew upstream). Key differences:
 | Aspect | KiroCrew | Galleon |
 |--------|----------|---------|
 | Branding | ClawCrew | **Galleon** (ship metaphor, fleet = teams) |
-| LLM SSOT | Go `engine/src/llm/` | **Rust `clawcrew-providers`** (ADR 0001) |
+| LLM SSOT | Go `engine/src/llm/` | **Rust `galleon-providers`** (ADR 0001) |
 | Frontend | Single-page dashboard | **Tauri desktop app** + web dashboard |
 | Persistence | Postgres-only | **SQLite (dev) + Postgres (prod)** |
 

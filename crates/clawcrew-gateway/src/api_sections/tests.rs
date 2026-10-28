@@ -468,7 +468,7 @@ fn channels_select_initializes_subsection_so_set_prop_works() {
 
 #[test]
 fn providers_picker_sources_from_list_providers() {
-    // Single source of truth: clawcrew_providers::list_model_providers().
+    // Single source of truth: galleon_providers::list_model_providers().
     // Anthropic / OpenAI / OpenRouter must surface in the picker.
     let cfg = empty_cfg();
     let items = providers_picker(&cfg);

@@ -138,7 +138,7 @@ fn check_result_is_error(result: &serde_json::Value, op: &str, server_name: &str
         })
         .filter(|s: &String| !s.is_empty())
         .unwrap_or_else(|| "(no error detail returned by server)".to_string());
-    let detail = clawcrew_providers::sanitize_api_error(&detail);
+    let detail = galleon_providers::sanitize_api_error(&detail);
     ::clawcrew_log::record!(
         WARN,
         ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)

@@ -25,7 +25,7 @@ use std::time::Duration;
 use anyhow::Result;
 use serde_json::{Map, Value, json};
 use clawcrew_api::model_provider::{ChatResponse, ModelProvider};
-use clawcrew_providers::ProviderDispatch;
+use galleon_providers::ProviderDispatch;
 
 use super::types::{CapabilityContext, CapabilityInfo, CapabilityResult, SopCapability};
 

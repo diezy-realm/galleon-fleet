@@ -96,13 +96,13 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 
 ### 2.3 Phase 4 — ADR 0001 / 0002 / 0003
 
-#### ADR 0001 — LLM SSOT: Rust `clawcrew-providers`
+#### ADR 0001 — LLM SSOT: Rust `galleon-providers`
 | Kondisi Dokumen | Kondisi Kode Aktual |
 |---|---|
 | Diterima — Go mendelegasikan LLM ke Rust gRPC | **BELUM diimplementasikan sama sekali** |
 | `ExecuteTurn` RPC harus ditambahkan ke proto | `proto/agent_service.proto` hanya punya `ExecuteNativeTool`, `GetDecryptedSecret`, `ExecuteTask` — **`ExecuteTurn` belum ada** |
 | Go `engine/src/llm/` harus dihapus | File masih lengkap: `provider.go`, `multi_provider.go`, `dispatcher.go`, `mock_provider.go`, dll. |
-| Rust `clawcrew-providers/` SSOT | Crate sangat lengkap (~40+ file vendor), tapi belum ada handler gRPC untuk melayani Go |
+| Rust `galleon-providers/` SSOT | Crate sangat lengkap (~40+ file vendor), tapi belum ada handler gRPC untuk melayani Go |
 
 **Ini adalah item implementasi terbesar dan paling fundamental** karena menyentuh path eksekusi utama (`crew.StartTurn`).
 

@@ -50,13 +50,13 @@ Galleon beroperasi dalam **4 tier ketat** dengan batas tanggung jawab tegas ([`0
 | Tier | Path Aktif | Port / Protokol | Tanggung Jawab Resmi (Owned) | Hal Terlarang (FORBIDDEN) |
 |---|---|---|---|---|
 | **Tier 1: Desktop Shell** | `apps/tauri/` | Tauri IPC (`invoke`) | Window lifecycle, tray icon, dialog native OS, bundling installer (`.exe`/`.dmg`). | ❌ Business logic, eksekusi terminal langsung (ODR-07), data palsu (ADR 0003). |
-| **Tier 2: System Core** | `crates/` | gRPC Server `:50052` (`SystemGateway`) | Security microkernel, sandbox (Landlock/Seatbelt), **LLM Execution SSOT** (`clawcrew-providers`), secrets Vault (AES-256-GCM), native tools, WASI host, channel adapters. | ❌ Fleet governance, turn orchestration, RAG vector memory (milik Go). Rust = leaf service. |
+| **Tier 2: System Core** | `crates/` | gRPC Server `:50052` (`SystemGateway`) | Security microkernel, sandbox (Landlock/Seatbelt), **LLM Execution SSOT** (`galleon-providers`), secrets Vault (AES-256-GCM), native tools, WASI host, channel adapters. | ❌ Fleet governance, turn orchestration, RAG vector memory (milik Go). Rust = leaf service. |
 | **Tier 3: AI Orchestrator** | `engine/` | gRPC Server `:50051`, HTTP `:9090` | **Agent Brain**: turn state machine (`StartTurn`), task graph, fleet policies & approval gate, memori persisten (SQLite/Postgres), pairing/QR gateway. | ❌ Eksekusi shell/fs lokal tanpa Rust (wajib fail-closed), direct vendor LLM call (wajib delegasi ke Rust via gRPC). |
 | **Tier 4: UI Layer** | `web/` | HTTP proxy ke Go `:9090` | Rendering komponen, view model Zustand, client routing. | ❌ Backend logic di Express (`server.ts` harus dibersihkan, ADR 0002), direct LLM SDK (`@google/genai` dilarang, ODR-08). |
 
 ### Invarian Keras (Hard Invariants):
 1. **Frontend → Go → Rust (Dilarang Frontend → Rust):** Go engine adalah satu-satunya gerbang kebijakan (*governance & anti-injection*). Frontend dilarang memanggil Rust gRPC `:50052` langsung.
-2. **LLM SSOT = Rust `clawcrew-providers` (ADR 0001):** Semua vendor LLM dijalankan di Rust. Go engine menyusun konteks pesan dan mendelegasikan inferensi ke Rust via gRPC `ExecuteTurn`.
+2. **LLM SSOT = Rust `galleon-providers` (ADR 0001):** Semua vendor LLM dijalankan di Rust. Go engine menyusun konteks pesan dan mendelegasikan inferensi ke Rust via gRPC `ExecuteTurn`.
 3. **Eksekusi Terminal Terproteksi (ODR-07):** Alur terminal wajib: `Tauri/Web` $\rightarrow$ `Go Engine (Policy & Approval)` $\rightarrow$ `Rust SystemGateway (Sandbox)`.
 4. **Secrets SSOT = Rust Vault:** API key dan kredensial tersimpan di `~/.config/galleon/vault/` (AES-256-GCM terenkripsi). Wajib credential scrubbing di log.
 5. **No Shared Database:** Tiap tier mengisolasi storage-nya sendiri. Komunikasi lintas tier hanya via API.

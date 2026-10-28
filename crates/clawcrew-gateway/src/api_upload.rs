@@ -5,7 +5,7 @@
 //! `<agent workspace>/webui_uploads/`. The response carries the saved path and
 //! the `[IMAGE:<path>]` marker the dashboard embeds in the next chat message,
 //! which the multimodal provider path resolves into image content at
-//! request time (`clawcrew_providers::multimodal`).
+//! request time (`galleon_providers::multimodal`).
 //!
 //! Acceptance is decided by [`clawcrew_api::media::image_mime_from_magic`]
 //! filtered through [`clawcrew_api::media::is_provider_image_mime`] — the same

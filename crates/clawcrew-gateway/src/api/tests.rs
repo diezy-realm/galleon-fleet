@@ -14,7 +14,7 @@ use clawcrew_infra::session_backend::SessionBackend;
 use clawcrew_infra::session_sqlite::SqliteSessionBackend;
 use clawcrew_infra::session_store::SessionStore;
 use galleon_memory::{Memory, MemoryCategory, MemoryEntry};
-use clawcrew_providers::ModelProvider;
+use galleon_providers::ModelProvider;
 #[cfg(any(
     feature = "channel-linq",
     feature = "channel-nextcloud",
@@ -1266,7 +1266,7 @@ async fn session_message_post_persists_and_broadcasts_to_session() {
     backend
         .append(
             "gw_operator-1",
-            &clawcrew_providers::ChatMessage::assistant("existing"),
+            &galleon_providers::ChatMessage::assistant("existing"),
         )
         .unwrap();
     let state = test_state_with_session_backend(config, backend.clone());
@@ -1391,7 +1391,7 @@ async fn session_message_post_waits_for_session_queue_before_append() {
     backend
         .append(
             "gw_operator-1",
-            &clawcrew_providers::ChatMessage::assistant("existing"),
+            &galleon_providers::ChatMessage::assistant("existing"),
         )
         .unwrap();
     let state = test_state_with_session_backend(config, backend.clone());
@@ -1722,7 +1722,7 @@ async fn session_delete_cancels_full_dotted_session_key() {
     backend
         .append(
             "gw_team.alpha",
-            &clawcrew_providers::ChatMessage::assistant("existing"),
+            &galleon_providers::ChatMessage::assistant("existing"),
         )
         .unwrap();
     let state = test_state_with_session_backend(config, backend.clone());
@@ -1765,7 +1765,7 @@ async fn session_delete_cancels_raw_dotted_turn_for_sanitized_persistence_key() 
     backend
         .append(
             "gw_team_alpha",
-            &clawcrew_providers::ChatMessage::assistant("existing"),
+            &galleon_providers::ChatMessage::assistant("existing"),
         )
         .unwrap();
     let state = test_state_with_session_backend(config, backend.clone());
@@ -1805,7 +1805,7 @@ async fn session_message_post_accepts_full_session_key() {
     backend
         .append(
             "gw_operator-1",
-            &clawcrew_providers::ChatMessage::assistant("existing"),
+            &galleon_providers::ChatMessage::assistant("existing"),
         )
         .unwrap();
     let state = test_state_with_session_backend(config, backend.clone());
@@ -1861,7 +1861,7 @@ async fn session_message_post_accepts_underscore_display_session_id() {
     backend
         .append(
             "gw_team_alpha",
-            &clawcrew_providers::ChatMessage::assistant("existing"),
+            &galleon_providers::ChatMessage::assistant("existing"),
         )
         .unwrap();
     let state = test_state_with_session_backend(config, backend.clone());
@@ -1906,7 +1906,7 @@ async fn session_rename_accepts_full_session_key() {
     backend
         .append(
             "gw_operator-1",
-            &clawcrew_providers::ChatMessage::assistant("existing"),
+            &galleon_providers::ChatMessage::assistant("existing"),
         )
         .unwrap();
     let state = test_state_with_session_backend(config, backend.clone());
@@ -1943,7 +1943,7 @@ async fn session_rename_accepts_underscore_display_session_id() {
     backend
         .append(
             "gw_team_alpha",
-            &clawcrew_providers::ChatMessage::assistant("existing"),
+            &galleon_providers::ChatMessage::assistant("existing"),
         )
         .unwrap();
     let state = test_state_with_session_backend(config, backend);
@@ -1976,7 +1976,7 @@ async fn session_state_accepts_full_session_key_and_underscore_display_id() {
     backend
         .append(
             "gw_team_alpha",
-            &clawcrew_providers::ChatMessage::assistant("existing"),
+            &galleon_providers::ChatMessage::assistant("existing"),
         )
         .unwrap();
     backend

@@ -36,7 +36,7 @@ Ini bukan rekomendasi menyalin Kiro Crew atau bergantung pada `kiro-cli`.
 ## Gap yang masih relevan (prioritas)
 
 1. **Route selection live (P1.5)** — `select_route`/`ProviderHealthRecord` ada
-   di `clawcrew-runtime`, tetapi dispatch provider live (di `clawcrew-providers`)
+   di `clawcrew-runtime`, tetapi dispatch provider live (di `galleon-providers`)
    belum membacanya (arah dependency runtime→providers). Solusi: pindahkan
    kontrak reliability ke crate bawah (`clawcrew-api`/`clawcrew-config`) dan
    teruskan health ke `ReliableModelProvider` saat membangun kandidat.

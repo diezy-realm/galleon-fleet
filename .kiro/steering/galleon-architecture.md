@@ -16,7 +16,7 @@ Workspace steering untuk repo `galleon-fleet` (monorepo 4-tier: Tauri shell + Ru
 | Tier | Lokasi | Runtime | Tugas | Komunikasi |
 |---|---|---|---|---|
 | Desktop Shell | `apps/tauri/` | Rust (Tauri v2) | window, tray, dialog OS, packaging desktop | Tauri IPC (`invoke`) |
-| System Core | `crates/` | Rust 2024 (27 crates) | security microkernel, sandbox (Landlock), native tools, LLM SSOT (`clawcrew-providers`), vault, WASI | gRPC `SystemGateway` :50052 |
+| System Core | `crates/` | Rust 2024 (27 crates) | security microkernel, sandbox (Landlock), native tools, LLM SSOT (`galleon-providers`), vault, WASI | gRPC `SystemGateway` :50052 |
 | AI Orchestrator | `engine/` | Go 1.27 | otak agen tunggal (`StartTurn`), fleet governance, memori persisten (SQLite/Postgres), pairing/QR | gRPC `AgentEngine` :50051 + HTTP :9090 |
 | Interface / UI | `web/` | TS, React 19 + Tailwind 4 | rendering, view-model, `apiClient.ts`. **Zero backend logic.** | HTTP ke Go :9090 |
 

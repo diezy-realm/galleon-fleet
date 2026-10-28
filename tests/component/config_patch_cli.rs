@@ -14,7 +14,7 @@ use clawcrew_config::schema::Config;
 #[cfg(feature = "gateway")]
 use galleon_memory::NoneMemory;
 #[cfg(feature = "gateway")]
-use clawcrew_providers::ModelProvider;
+use galleon_providers::ModelProvider;
 #[cfg(feature = "gateway")]
 use clawcrew_runtime::security::PairingGuard;
 #[cfg(feature = "gateway")]

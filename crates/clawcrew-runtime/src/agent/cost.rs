@@ -1,5 +1,5 @@
 use crate::cost::types::TokenUsage as CostTokenUsage;
-use clawcrew_providers::pricing::ModelRates;
+use galleon_providers::pricing::ModelRates;
 use parking_lot::Mutex;
 use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
@@ -34,7 +34,7 @@ fn resolve_rates_opt(pricing: &HashMap<String, f64>, model: &str) -> ModelRates 
     // entry may contain only the write rate while the suffix entry carries
     // the other dimensions; stopping at the first non-empty entry would lose
     // those fallback rates.
-    clawcrew_providers::pricing::model_id_candidates(model)
+    galleon_providers::pricing::model_id_candidates(model)
         .map(try_lookup)
         .fold(ModelRates::default(), |resolved, candidate| {
             resolved.or(candidate)
@@ -42,8 +42,8 @@ fn resolve_rates_opt(pricing: &HashMap<String, f64>, model: &str) -> ModelRates 
 }
 
 fn live_pricing_for(model_provider_name: &str, model: &str) -> Option<ModelRates> {
-    let snapshot = clawcrew_providers::pricing::current_snapshot();
-    clawcrew_providers::pricing::lookup(&snapshot, model_provider_name, model).copied()
+    let snapshot = galleon_providers::pricing::current_snapshot();
+    galleon_providers::pricing::lookup(&snapshot, model_provider_name, model).copied()
 }
 
 /// Merge configured rates with the live-price fallback without discarding
@@ -149,7 +149,7 @@ pub fn unpriced_models_in_summary(
 pub fn record_rejected_tool_loop_cost_usage(
     model_provider_name: &str,
     model: &str,
-    usage: &clawcrew_providers::traits::TokenUsage,
+    usage: &galleon_providers::traits::TokenUsage,
 ) -> Option<(u64, f64)> {
     record_tool_loop_cost_usage_inner(model_provider_name, model, usage, false)
 }
@@ -160,7 +160,7 @@ pub fn record_rejected_tool_loop_cost_usage(
 pub fn record_tool_loop_cost_usage(
     model_provider_name: &str,
     model: &str,
-    usage: &clawcrew_providers::traits::TokenUsage,
+    usage: &galleon_providers::traits::TokenUsage,
 ) -> Option<(u64, f64)> {
     record_tool_loop_cost_usage_inner(model_provider_name, model, usage, true)
 }
@@ -174,7 +174,7 @@ pub fn record_tool_loop_cost_usage(
 pub fn compute_cost_usd(
     model_provider_name: &str,
     model: &str,
-    usage: &clawcrew_providers::traits::TokenUsage,
+    usage: &galleon_providers::traits::TokenUsage,
 ) -> Option<f64> {
     price_usage(model_provider_name, model, usage, None).map(|(cost_usage, _)| cost_usage.cost_usd)
 }
@@ -188,7 +188,7 @@ pub fn compute_cost_usd(
 fn price_usage(
     model_provider_name: &str,
     model: &str,
-    usage: &clawcrew_providers::traits::TokenUsage,
+    usage: &galleon_providers::traits::TokenUsage,
     live_override: Option<ModelRates>,
 ) -> Option<(CostTokenUsage, UnpricedUsage)> {
     let input_tokens = usage.input_tokens.unwrap_or(0);
@@ -270,17 +270,17 @@ fn price_usage(
 /// final leaf rather than the aggregate.
 pub(crate) struct BillableProviderAttempt<'a> {
     pub index: usize,
-    pub attempt: &'a clawcrew_providers::dispatch::AccountedAttempt,
-    pub usage: &'a clawcrew_providers::traits::TokenUsage,
+    pub attempt: &'a galleon_providers::dispatch::AccountedAttempt,
+    pub usage: &'a galleon_providers::traits::TokenUsage,
 }
 
 /// Pure, ordered projection for current BestEffort settlement and the future
 /// task-attributed persistence caller. Invalid and missing observations never
 /// appear in this view.
 pub(crate) fn billable_provider_attempts(
-    attempts: &[clawcrew_providers::dispatch::AccountedAttempt],
+    attempts: &[galleon_providers::dispatch::AccountedAttempt],
 ) -> impl Iterator<Item = BillableProviderAttempt<'_>> {
-    use clawcrew_providers::dispatch::AttemptUsageOutcome;
+    use galleon_providers::dispatch::AttemptUsageOutcome;
 
     attempts.iter().enumerate().filter_map(|(index, attempt)| {
         let usage = match attempt.outcome() {
@@ -301,7 +301,7 @@ pub(crate) fn billable_provider_attempts(
 }
 
 pub(crate) fn settle_provider_attempts(
-    attempts: &[clawcrew_providers::dispatch::AccountedAttempt],
+    attempts: &[galleon_providers::dispatch::AccountedAttempt],
     accepted_attempt: Option<usize>,
 ) {
     for event in billable_provider_attempts(attempts) {
@@ -318,7 +318,7 @@ pub(crate) fn settle_provider_attempts(
 fn record_tool_loop_cost_usage_inner(
     model_provider_name: &str,
     model: &str,
-    usage: &clawcrew_providers::traits::TokenUsage,
+    usage: &galleon_providers::traits::TokenUsage,
     updates_context_window_fill: bool,
 ) -> Option<(u64, f64)> {
     record_tool_loop_cost_usage_inner_with_live(
@@ -333,7 +333,7 @@ fn record_tool_loop_cost_usage_inner(
 fn record_tool_loop_cost_usage_inner_with_live(
     model_provider_name: &str,
     model: &str,
-    usage: &clawcrew_providers::traits::TokenUsage,
+    usage: &galleon_providers::traits::TokenUsage,
     updates_context_window_fill: bool,
     live_override: Option<ModelRates>,
 ) -> Option<(u64, f64)> {
@@ -473,8 +473,8 @@ mod tests {
     use clawcrew_api::model_provider::{ChatMessage, ChatRequest, ChatResponse, ModelProvider};
     use clawcrew_config::cost::tracker::CostTracker;
     use clawcrew_config::schema::{Config, DeepseekModelProviderConfig, ModelProviderConfig};
-    use clawcrew_providers::ProviderDispatch;
-    use clawcrew_providers::dispatch::{AccountedChatScope, with_exact_dispatch_route};
+    use galleon_providers::ProviderDispatch;
+    use galleon_providers::dispatch::{AccountedChatScope, with_exact_dispatch_route};
     use std::sync::Arc;
 
     struct ResetGlobalPricingCatalog;
@@ -607,7 +607,7 @@ mod tests {
                 HashMap::from([("partial-catalog-model.input".to_string(), 2.0)]),
             )])),
         );
-        let usage = clawcrew_providers::traits::TokenUsage {
+        let usage = galleon_providers::traits::TokenUsage {
             input_tokens: Some(100),
             output_tokens: Some(20),
             cached_input_tokens: Some(0),
@@ -847,7 +847,7 @@ mod tests {
             Ok(ChatResponse {
                 text: Some("ok".to_string()),
                 tool_calls: Vec::new(),
-                usage: Some(clawcrew_providers::traits::TokenUsage {
+                usage: Some(galleon_providers::traits::TokenUsage {
                     input_tokens: Some(1_000_000),
                     output_tokens: Some(0),
                     cached_input_tokens: None,
@@ -893,7 +893,7 @@ mod tests {
             Ok(ChatResponse {
                 text: Some("fail".to_string()),
                 tool_calls: Vec::new(),
-                usage: Some(clawcrew_providers::traits::TokenUsage {
+                usage: Some(galleon_providers::traits::TokenUsage {
                     input_tokens: Some(1_000_000),
                     output_tokens: Some(0),
                     cached_input_tokens: None,
@@ -1448,7 +1448,7 @@ mod tests {
                 pricing_with_cache("deepseek-chat", 0.27, 0.027, 1.10),
             )])),
         );
-        let usage = clawcrew_providers::traits::TokenUsage {
+        let usage = galleon_providers::traits::TokenUsage {
             input_tokens: Some(5_000),
             output_tokens: Some(200),
             cached_input_tokens: Some(4_000),
@@ -1493,7 +1493,7 @@ mod tests {
                 pricing_with_cache("deepseek-chat", 0.27, 0.027, 1.10),
             )])),
         );
-        let usage = clawcrew_providers::traits::TokenUsage {
+        let usage = galleon_providers::traits::TokenUsage {
             input_tokens: Some(5_000),
             output_tokens: Some(200),
             cached_input_tokens: Some(4_000),
@@ -1548,7 +1548,7 @@ mod tests {
                 pricing_with_cache_write("deepseek-chat", 0.27, 0.027, 0.54, 1.10),
             )])),
         );
-        let usage = clawcrew_providers::traits::TokenUsage {
+        let usage = galleon_providers::traits::TokenUsage {
             input_tokens: Some(5_000),
             output_tokens: Some(200),
             cached_input_tokens: Some(4_000),
@@ -1594,7 +1594,7 @@ mod tests {
                 pricing_with_cache_write("deepseek-chat", 0.27, 0.027, 0.54, 1.10),
             )])),
         );
-        let usage = clawcrew_providers::traits::TokenUsage {
+        let usage = galleon_providers::traits::TokenUsage {
             input_tokens: Some(5_000),
             output_tokens: Some(200),
             cached_input_tokens: Some(4_000),
@@ -1664,7 +1664,7 @@ mod tests {
             Arc::clone(&tracker),
             Arc::new(HashMap::from([("configured".to_string(), pricing)])),
         );
-        let usage = clawcrew_providers::traits::TokenUsage {
+        let usage = galleon_providers::traits::TokenUsage {
             input_tokens: Some(1_200),
             output_tokens: Some(500),
             cached_input_tokens: Some(200),
@@ -1707,7 +1707,7 @@ mod tests {
             Arc::clone(&tracker),
             Arc::new(HashMap::from([("configured".to_string(), configured)])),
         );
-        let usage = clawcrew_providers::traits::TokenUsage {
+        let usage = galleon_providers::traits::TokenUsage {
             input_tokens: Some(1_200),
             output_tokens: Some(500),
             cached_input_tokens: Some(200),
@@ -1758,7 +1758,7 @@ mod tests {
                 pricing_with_cache("free-model", 0.0, 0.0, 0.0),
             )])),
         );
-        let usage = clawcrew_providers::traits::TokenUsage {
+        let usage = galleon_providers::traits::TokenUsage {
             input_tokens: Some(100),
             output_tokens: Some(50),
             cached_input_tokens: Some(0),
@@ -1834,7 +1834,7 @@ mod tests {
             HashMap::from([("partial-model.input".to_string(), 2.0)]),
         );
         let ctx = ToolLoopCostTrackingContext::new(Arc::clone(&tracker), Arc::new(pricing));
-        let usage = clawcrew_providers::traits::TokenUsage {
+        let usage = galleon_providers::traits::TokenUsage {
             input_tokens: Some(100),
             output_tokens: Some(20),
             cached_input_tokens: Some(0),
@@ -1888,7 +1888,7 @@ mod tests {
                 pricing_with_cache("overflow-model", f64::MAX, 0.0, 0.0),
             )])),
         );
-        let usage = clawcrew_providers::traits::TokenUsage {
+        let usage = galleon_providers::traits::TokenUsage {
             input_tokens: Some(10_000_000),
             output_tokens: Some(0),
             cached_input_tokens: Some(0),
@@ -1938,7 +1938,7 @@ mod tests {
             )])),
         );
         let turn_usage = Arc::new(Mutex::new(TurnUsage::default()));
-        let usage = clawcrew_providers::traits::TokenUsage {
+        let usage = galleon_providers::traits::TokenUsage {
             input_tokens: Some(5_000),
             output_tokens: Some(200),
             cached_input_tokens: Some(4_000),
@@ -1970,13 +1970,13 @@ mod tests {
     #[test]
     fn rejected_usage_accumulates_cost_without_replacing_context_window_fill() {
         let turn_usage = Arc::new(Mutex::new(TurnUsage::default()));
-        let rejected = clawcrew_providers::traits::TokenUsage {
+        let rejected = galleon_providers::traits::TokenUsage {
             input_tokens: Some(80),
             output_tokens: Some(5),
             cached_input_tokens: Some(0),
             cache_creation_input_tokens: None,
         };
-        let accepted = clawcrew_providers::traits::TokenUsage {
+        let accepted = galleon_providers::traits::TokenUsage {
             input_tokens: Some(80),
             output_tokens: Some(7),
             cached_input_tokens: Some(0),

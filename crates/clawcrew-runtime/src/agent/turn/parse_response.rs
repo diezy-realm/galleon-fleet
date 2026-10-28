@@ -14,7 +14,7 @@ use crate::agent::loop_::capture_llm_messages;
 use crate::observability::ObserverEvent;
 use std::time::Instant;
 use clawcrew_api::agent::TurnEvent;
-use clawcrew_providers::{ChatMessage, ChatResponse, ToolCall};
+use galleon_providers::{ChatMessage, ChatResponse, ToolCall};
 use galleon_tool_call_parser::{
     ParsedToolCall, build_native_assistant_history_from_parsed_calls,
     looks_like_tool_protocol_example, parse_tool_calls, strip_think_tags,
@@ -121,7 +121,7 @@ pub(crate) struct InterpretedResponse {
     pub(crate) input_tokens: Option<u64>,
     /// Full cumulative provider usage.  The caller records this as rejected
     /// when protocol classification rejects the response.
-    pub(crate) usage: Option<clawcrew_providers::traits::TokenUsage>,
+    pub(crate) usage: Option<galleon_providers::traits::TokenUsage>,
 }
 
 /// Recover double-encoded structured arguments without interpreting free text.
@@ -334,7 +334,7 @@ pub(crate) async fn interpret_chat_response(
     }
 }
 
-use clawcrew_providers::dispatch::AcceptedRoute;
+use galleon_providers::dispatch::AcceptedRoute;
 
 /// Emit effects which are valid only after the turn loop accepts the parsed
 /// response. Keeping this separate from interpretation prevents a malformed
@@ -347,7 +347,7 @@ pub(crate) async fn record_accepted_chat_response(
     response_text: &str,
     native_tool_calls: &[ToolCall],
     parsed_tool_calls: usize,
-    usage: Option<&clawcrew_providers::traits::TokenUsage>,
+    usage: Option<&galleon_providers::traits::TokenUsage>,
     history: &[ChatMessage],
     llm_started_at: Instant,
     iteration: usize,
@@ -442,7 +442,7 @@ pub(crate) async fn record_accepted_chat_response(
 #[cfg(test)]
 mod tests {
     use super::{build_native_assistant_history, unforwarded_narration};
-    use clawcrew_providers::ToolCall;
+    use galleon_providers::ToolCall;
 
     #[test]
     fn native_assistant_history_preserves_tool_call_extra_content() {
@@ -757,7 +757,7 @@ mod cost_usd_regression_tests {
     use super::*;
     use std::collections::{HashMap, HashSet};
     use std::sync::Arc;
-    use clawcrew_providers::traits::TokenUsage;
+    use galleon_providers::traits::TokenUsage;
 
     #[allow(clippy::await_holding_lock)]
     #[tokio::test]

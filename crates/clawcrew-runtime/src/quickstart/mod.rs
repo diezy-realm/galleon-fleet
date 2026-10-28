@@ -439,7 +439,7 @@ pub struct QuickstartTypeOption {
 #[must_use]
 pub fn resolve_model_provider_type(type_key: &str) -> Option<(&'static str, bool)> {
     let trimmed = type_key.trim();
-    if let Some(info) = clawcrew_providers::list_model_providers()
+    if let Some(info) = galleon_providers::list_model_providers()
         .into_iter()
         .find(|info| info.name.eq_ignore_ascii_case(trimmed))
     {
@@ -447,33 +447,33 @@ pub fn resolve_model_provider_type(type_key: &str) -> Option<(&'static str, bool
     }
 
     let provider = trimmed
-        .parse::<clawcrew_providers::auth::AuthProvider>()
+        .parse::<galleon_providers::auth::AuthProvider>()
         .ok()?;
     Some(match provider {
-        clawcrew_providers::auth::AuthProvider::OpenaiCodex => ("openai", true),
-        clawcrew_providers::auth::AuthProvider::Anthropic => ("anthropic", false),
-        clawcrew_providers::auth::AuthProvider::Gemini => ("gemini", false),
-        clawcrew_providers::auth::AuthProvider::Xai => ("xai", false),
+        galleon_providers::auth::AuthProvider::OpenaiCodex => ("openai", true),
+        galleon_providers::auth::AuthProvider::Anthropic => ("anthropic", false),
+        galleon_providers::auth::AuthProvider::Gemini => ("gemini", false),
+        galleon_providers::auth::AuthProvider::Xai => ("xai", false),
     })
 }
 
 /// Build a [`QuickstartState`] snapshot from the live config.
 ///
 /// The two `*_types` lists are populated from the canonical sources
-/// (`clawcrew_providers::list_model_providers()` for providers,
+/// (`galleon_providers::list_model_providers()` for providers,
 /// `cfg.channels.channels()` for channel kinds). Adding a new entry in
 /// either source automatically lights up here — no Quickstart code
 /// change required. This is the DRY contract the plan calls out under
 /// "Reads the per-provider field map at render time so adding a
 /// provider in the schema doesn't require Quickstart code changes."
 pub fn snapshot_state(cfg: &Config) -> QuickstartState {
-    let model_provider_types = clawcrew_providers::list_model_providers()
+    let model_provider_types = galleon_providers::list_model_providers()
         .into_iter()
         .map(|info| QuickstartTypeOption {
             kind: info.name.to_string(),
             display_name: info.display_name.to_string(),
             local: info.local,
-            default_runtime_profile: clawcrew_providers::recommended_runtime_profile(info.name)
+            default_runtime_profile: galleon_providers::recommended_runtime_profile(info.name)
                 .and_then(runtime_preset)
                 .map(|preset| preset.preset_name.to_string()),
         })
@@ -972,7 +972,7 @@ async fn fetch_quickstart_context_window(
 ) -> Option<usize> {
     tokio::time::timeout(
         CONTEXT_WINDOW_FETCH_TIMEOUT,
-        clawcrew_providers::fetch_context_window(provider_type, provider_config),
+        galleon_providers::fetch_context_window(provider_type, provider_config),
     )
     .await
     .ok()
@@ -2112,13 +2112,13 @@ pub async fn model_catalog_with_config(
     Option<std::collections::HashMap<String, clawcrew_api::model_provider::ModelPricing>>,
     bool,
 ) {
-    clawcrew_providers::catalog::model_catalog_with_config(config, model_provider).await
+    galleon_providers::catalog::model_catalog_with_config(config, model_provider).await
 }
 
 /// `true` for model_provider families that need no remote credential.
 #[must_use]
 pub fn model_provider_is_local(model_provider: &str) -> bool {
-    clawcrew_providers::model_provider_is_local(model_provider)
+    galleon_providers::model_provider_is_local(model_provider)
 }
 
 #[cfg(test)]

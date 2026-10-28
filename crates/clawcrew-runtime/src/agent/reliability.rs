@@ -7,7 +7,7 @@
 
 use serde::{Deserialize, Serialize};
 
-pub use clawcrew_providers::reliability::ProviderHealthRecord;
+pub use galleon_providers::reliability::ProviderHealthRecord;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CapabilityMatrix {
@@ -114,7 +114,7 @@ pub fn select_route(
     })
 }
 
-pub use clawcrew_providers::reliability::{provider_snapshot, record_provider_outcome};
+pub use galleon_providers::reliability::{provider_snapshot, record_provider_outcome};
 
 #[cfg(test)]
 mod tests {

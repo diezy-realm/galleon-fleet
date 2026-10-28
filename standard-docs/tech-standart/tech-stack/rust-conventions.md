@@ -13,7 +13,7 @@
 crates/
 ├── clawcrew-gateway/         # gRPC server, vault, secret management
 ├── clawcrew-runtime/         # Agent turn execution, tool dispatch
-├── clawcrew-providers/       # LLM vendor APIs (SSOT ADR 0001)
+├── galleon-providers/       # LLM vendor APIs (SSOT ADR 0001)
 ├── clawcrew-channel-*/       # Channel plugins (Discord, Telegram, etc.)
 ├── clawcrew-tools-*/         # Native tools (filesystem, shell, network)
 └── [33 core workspace crates + fixtures & tools; limit: <50]
@@ -25,7 +25,7 @@ crates/
 members = [
     "crates/clawcrew-gateway",
     "crates/clawcrew-runtime",
-    "crates/clawcrew-providers",
+    "crates/galleon-providers",
     "crates/clawcrew-channel-*",
     "crates/galleon-tools-*",
 ]
@@ -74,7 +74,7 @@ pub trait VaultService {
 ```toml
 [dependencies]
 clawcrew-runtime.workspace = true
-clawcrew-providers.workspace = true
+galleon-providers.workspace = true
 tonic.workspace = true
 tokio.workspace = true
 ```
@@ -105,7 +105,7 @@ pub trait ToolExecutor {
 **Dependencies:**
 ```toml
 [dependencies]
-clawcrew-providers.workspace = true
+galleon-providers.workspace = true
 clawcrew-tools-shell.workspace = true
 clawcrew-tools-filesystem.workspace = true
 tokio.workspace = true
@@ -114,7 +114,7 @@ serde_json.workspace = true
 
 ---
 
-### Providers Crate (`clawcrew-providers`)
+### Providers Crate (`galleon-providers`)
 
 **Owns:**
 - LLM vendor APIs (OpenAI, Gemini, Bedrock, Anthropic) — **SSOT (ADR 0001)**
@@ -220,7 +220,7 @@ impl ToolExecutor for ShellTool {
 ### Example: Provider Trait
 
 ```rust
-// clawcrew-providers/src/lib.rs
+// galleon-providers/src/lib.rs
 #[async_trait]
 pub trait Provider: Send + Sync {
     async fn stream_chat(
@@ -233,7 +233,7 @@ pub trait Provider: Send + Sync {
     fn supports_tools(&self) -> bool { true }
 }
 
-// clawcrew-providers/src/openai.rs
+// galleon-providers/src/openai.rs
 pub struct OpenAIProvider {
     api_key: String,
     client: reqwest::Client,
@@ -551,7 +551,7 @@ async fn test_turn_execution_e2e() {
 
 | Type | Pattern | Example |
 |------|---------|---------|
-| Crate | `snake_case` | `clawcrew_gateway`, `clawcrew_providers` |
+| Crate | `snake_case` | `clawcrew_gateway`, `galleon_providers` |
 | Module | `snake_case` | `mod grpc_server;`, `mod vault;` |
 | Struct | `PascalCase` | `Gateway`, `OpenAIProvider` |
 | Trait | `PascalCase` | `Provider`, `ToolExecutor` |

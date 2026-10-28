@@ -16,7 +16,7 @@ use clawcrew_config::schema::{AliasedAgentConfig, MemoryConfig, RiskProfileConfi
 use galleon_memory::{self, Memory};
 
 clawcrew_api::mock_tool_attribution!(CountingTool, EchoTool, FailingTool, PanickingTool);
-use clawcrew_providers::{
+use galleon_providers::{
     ChatMessage, ChatRequest, ChatResponse, ConversationMessage, ModelProvider, ToolCall,
     ToolResultMessage,
 };
@@ -939,7 +939,7 @@ async fn turn_rejects_think_tag_only_response_and_records_usage() {
     let model_provider = Box::new(ScriptedModelProvider::new(vec![ChatResponse {
         text: Some("<think>internal reasoning</think>".to_string()),
         tool_calls: vec![],
-        usage: Some(clawcrew_providers::traits::TokenUsage {
+        usage: Some(galleon_providers::traits::TokenUsage {
             input_tokens: Some(10),
             output_tokens: Some(5),
             cached_input_tokens: None,

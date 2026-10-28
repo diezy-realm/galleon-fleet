@@ -15,13 +15,13 @@ clawcrew_api::tool_attribution!(EmailSearchTool, ToolKind::Plugin);
 /// Search an IMAP mailbox without touching the \Seen flag on any message.
 pub struct EmailSearchTool {
     email_configs: Arc<HashMap<String, EmailConfig>>,
-    auth_service: Option<Arc<clawcrew_providers::auth::AuthService>>,
+    auth_service: Option<Arc<galleon_providers::auth::AuthService>>,
 }
 
 impl EmailSearchTool {
     pub fn new(
         email_configs: Arc<HashMap<String, EmailConfig>>,
-        auth_service: Option<Arc<clawcrew_providers::auth::AuthService>>,
+        auth_service: Option<Arc<galleon_providers::auth::AuthService>>,
     ) -> Self {
         Self {
             email_configs,

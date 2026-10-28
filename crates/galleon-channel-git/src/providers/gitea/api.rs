@@ -93,7 +93,7 @@ impl GiteaApi {
         GitChannelError::Api {
             endpoint: endpoint.to_string(),
             status: status.as_u16(),
-            body: clawcrew_providers::sanitize_api_error(&body),
+            body: galleon_providers::sanitize_api_error(&body),
         }
     }
 

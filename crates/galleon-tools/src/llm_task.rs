@@ -7,7 +7,7 @@ use clawcrew_api::model_provider::ModelProvider;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use clawcrew_config::policy::SecurityPolicy;
 use clawcrew_config::policy::ToolOperation;
-use clawcrew_providers::ProviderDispatch;
+use galleon_providers::ProviderDispatch;
 
 /// Tool that runs a single prompt through an LLM and optionally validates
 /// the response against a JSON Schema. No tools are provided to the LLM —
@@ -32,7 +32,7 @@ pub struct LlmTaskTool {
     /// API key for model_provider authentication.
     api_key: Option<String>,
     /// ModelProvider runtime options inherited from root config.
-    provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions,
+    provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions,
 }
 
 impl LlmTaskTool {
@@ -44,7 +44,7 @@ impl LlmTaskTool {
         default_model: String,
         default_temperature: Option<f64>,
         api_key: Option<String>,
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions,
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions,
     ) -> Self {
         Self {
             security,
@@ -75,7 +75,7 @@ impl LlmTaskTool {
         let options = self.provider_runtime_options.clone();
 
         let result = tokio::task::spawn_blocking(move || {
-            clawcrew_providers::create_model_provider_for_alias(
+            galleon_providers::create_model_provider_for_alias(
                 &config,
                 &family,
                 &alias,
@@ -468,7 +468,7 @@ mod tests {
             "test-model".to_string(),
             Some(0.7),
             None,
-            clawcrew_providers::ModelProviderRuntimeOptions::default(),
+            galleon_providers::ModelProviderRuntimeOptions::default(),
         )
     }
 
@@ -519,7 +519,7 @@ mod tests {
             "test-model".to_string(),
             Some(0.7),
             None,
-            clawcrew_providers::ModelProviderRuntimeOptions::default(),
+            galleon_providers::ModelProviderRuntimeOptions::default(),
         );
 
         let result = tool
@@ -540,11 +540,11 @@ mod tests {
         use clawcrew_config::schema::Config;
 
         let config = Config::default();
-        let default_opts = clawcrew_providers::ModelProviderRuntimeOptions::default();
+        let default_opts = galleon_providers::ModelProviderRuntimeOptions::default();
 
         // Both factories should produce equivalent providers for a
         // normal (non-alias-specific) provider like "openrouter".
-        let alias_aware = clawcrew_providers::create_model_provider_for_alias(
+        let alias_aware = galleon_providers::create_model_provider_for_alias(
             &config,
             "openrouter",
             "default",
@@ -553,7 +553,7 @@ mod tests {
         )
         .expect("alias-aware construction must succeed");
 
-        let legacy = clawcrew_providers::create_model_provider_with_options(
+        let legacy = galleon_providers::create_model_provider_with_options(
             "openrouter",
             None,
             &default_opts,
@@ -655,9 +655,9 @@ mod tests {
         // Point the Qwen OAuth refresh function at the controlled mock.
         // Guard ensures the override is removed even on panic.
         let _endpoint_guard = scopeguard::guard((), |_| {
-            clawcrew_providers::set_qwen_oauth_endpoint_for_test(None);
+            galleon_providers::set_qwen_oauth_endpoint_for_test(None);
         });
-        clawcrew_providers::set_qwen_oauth_endpoint_for_test(Some(mock_endpoint));
+        galleon_providers::set_qwen_oauth_endpoint_for_test(Some(mock_endpoint));
 
         // ── 2. Config with Qwen alias carrying oauth_refresh_token ─
         let mut config = Config::default();
@@ -684,7 +684,7 @@ mod tests {
             "qwen-test-model".to_string(),
             Some(0.7),
             None,
-            clawcrew_providers::ModelProviderRuntimeOptions::default(),
+            galleon_providers::ModelProviderRuntimeOptions::default(),
         );
 
         // ── 4. Execute on the async runtime ────────────────────────
@@ -764,9 +764,9 @@ mod tests {
         let mock_endpoint = format!("{}/oauth2/token", mock_server.uri());
 
         let _endpoint_guard = scopeguard::guard((), |_| {
-            clawcrew_providers::set_qwen_oauth_endpoint_for_test(None);
+            galleon_providers::set_qwen_oauth_endpoint_for_test(None);
         });
-        clawcrew_providers::set_qwen_oauth_endpoint_for_test(Some(mock_endpoint));
+        galleon_providers::set_qwen_oauth_endpoint_for_test(Some(mock_endpoint));
 
         let mut config = Config::default();
         let mut qwen_map = HashMap::new();
@@ -791,7 +791,7 @@ mod tests {
             "qwen-test-model".to_string(),
             Some(0.7),
             None,
-            clawcrew_providers::ModelProviderRuntimeOptions::default(),
+            galleon_providers::ModelProviderRuntimeOptions::default(),
         );
 
         let result = tool

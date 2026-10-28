@@ -11,7 +11,7 @@ use clawcrew_api::model_provider::{
     ChatMessage, ChatRequest, ChatResponse, ModelInfo, ModelProvider, StreamChunk, StreamEvent,
     StreamOptions, StreamResult,
 };
-use clawcrew_providers::ProviderDispatch;
+use galleon_providers::ProviderDispatch;
 
 struct EverythingFake {
     alias: String,

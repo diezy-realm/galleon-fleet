@@ -12,12 +12,12 @@ use serde_json::{Value, json};
 use tokio::io::AsyncReadExt;
 use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
 use clawcrew_config::schema::{Config, HailoOllamaModelProviderConfig, ModelProviderConfig};
-use clawcrew_providers::hailo_ollama::HailoOllamaModelProvider;
-use clawcrew_providers::ollama::{OllamaModelProvider, OllamaTuning};
-use clawcrew_providers::traits::{
+use galleon_providers::hailo_ollama::HailoOllamaModelProvider;
+use galleon_providers::ollama::{OllamaModelProvider, OllamaTuning};
+use galleon_providers::traits::{
     ChatMessage, ChatRequest, ModelProvider, NonRetryableProviderError,
 };
-use clawcrew_providers::{ModelProviderRuntimeOptions, create_model_provider_for_alias_with_url};
+use galleon_providers::{ModelProviderRuntimeOptions, create_model_provider_for_alias_with_url};
 
 type Capture = Arc<Mutex<Option<Value>>>;
 type RawCapture = Arc<Mutex<Option<Vec<u8>>>>;
@@ -2478,7 +2478,7 @@ fn typed_hailo_factory_rejects_unsupported_capabilities() {
         .err()
         .expect("unsupported Hailo capability must be rejected");
         let typed = error
-            .downcast_ref::<clawcrew_providers::ProviderCapabilityError>()
+            .downcast_ref::<galleon_providers::ProviderCapabilityError>()
             .unwrap_or_else(|| panic!("{capability} rejection must remain typed: {error:#}"));
         assert_eq!(typed.model_provider, "unsupported_capability");
         assert_eq!(typed.capability, capability);
@@ -2630,12 +2630,12 @@ fn production_factory_rejects_hailo_vision_override() {
     .expect("text-only Hailo family factory must reject vision=true");
     assert!(
         direct_error
-            .downcast_ref::<clawcrew_providers::ProviderCapabilityError>()
+            .downcast_ref::<galleon_providers::ProviderCapabilityError>()
             .is_some(),
         "family factory must return a typed capability error: {direct_error:?}"
     );
 
-    let error = match clawcrew_providers::create_model_provider_with_options(
+    let error = match galleon_providers::create_model_provider_with_options(
         "hailo_ollama",
         None,
         &options,
@@ -2649,7 +2649,7 @@ fn production_factory_rejects_hailo_vision_override() {
         "vision missing from error: {error}"
     );
     let capability = error
-        .downcast_ref::<clawcrew_providers::ProviderCapabilityError>()
+        .downcast_ref::<galleon_providers::ProviderCapabilityError>()
         .expect("vision override rejection must remain a typed capability error");
     assert_eq!(capability.model_provider, "default");
     assert_eq!(capability.capability, "vision");

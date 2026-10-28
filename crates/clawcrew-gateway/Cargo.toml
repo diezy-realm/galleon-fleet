@@ -18,7 +18,7 @@ galleon-tls.workspace = true
 clawcrew-infra = { workspace = true, features = ["schema-export"] }
 clawcrew-log.workspace = true
 galleon-memory.workspace = true
-clawcrew-providers.workspace = true
+galleon-providers.workspace = true
 clawcrew-channels = { workspace = true, default-features = false }
 clawcrew-runtime.workspace = true
 galleon-sop-graph = { workspace = true, features = ["schema-export"] }

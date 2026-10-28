@@ -97,14 +97,14 @@ cd web; npm run lint; npm run build; cd ..
 ## Gate G5: ADR 0001 — LLM SSOT Rust (T-5.1 – T-5.6) — Implementasi Terbesar
 
 - [ ] **T-5.1 (Proto):** `ExecuteTurn` RPC + pesan `ExecuteTurnRequest`/`TurnToken` (oneof `TokenChunk | ToolCall | TurnComplete | TurnError`) ada di `proto/agent_service.proto`; `cargo build -p clawcrew-gateway` DAN regenerasi Go pb (`go generate ./engine/pkg/pb`) dua-duanya hijau.
-- [ ] **T-5.2 (Rust handler):** `execute_turn` mendelegasikan ke `clawcrew-providers` (bukan reimplement vendor call baru di gateway); test `test_execute_turn_success` dengan mock provider lolos, meliputi urutan event streaming (`TokenChunk` → `TurnComplete`).
+- [ ] **T-5.2 (Rust handler):** `execute_turn` mendelegasikan ke `galleon-providers` (bukan reimplement vendor call baru di gateway); test `test_execute_turn_success` dengan mock provider lolos, meliputi urutan event streaming (`TokenChunk` → `TurnComplete`).
 - [ ] **T-5.3:** Integration test Go client memanggil `ExecuteTurn` dan menerima stream token — dijalankan, bukan hanya ditulis sebagai TODO.
 - [ ] **T-5.4 (Go delegation):** `grep "llmProvider llm.Provider" engine/src/crew/services.go` = **0 match** pasca-PR. `StartTurn` memanggil `systemGateway.ExecuteTurn()`, bukan `llmProvider.StreamChat()`.
 - [ ] **T-5.5:** Test crew tidak lagi menggunakan `mock_provider.go` Go — diganti mock/test-server gRPC Rust.
 - [ ] **T-5.6 (Cleanup):** Setelah T-5.4/T-5.5 hijau, file `engine/src/llm/{provider,multi_provider,mock_provider,interfaces,wire,dispatcher}.go` benar-benar **terhapus** (bukan dikosongkan isinya/di-comment). `go build ./...` dan `go test ./...` tetap hijau setelah penghapusan.
 - [ ] **API key tidak pernah di-log** di Go maupun Rust pada seluruh alur `ExecuteTurn` — Principle grep log statement di sekitar kode yang menyentuh token/secret.
 
-**Reject jika:** Phase Cleanup (T-5.6) dieksekusi SEBELUM Phase 2 (T-5.4/T-5.5) terverifikasi hijau di CI — urutan dependency wajib dihormati, jangan hapus Go LLM code duluan lalu "perbaiki nanti". Juga reject jika `ExecuteTurn` di Rust mengimplementasikan ulang HTTP call vendor sendiri alih-alih reuse `clawcrew-providers` (duplikasi SSOT yang baru).
+**Reject jika:** Phase Cleanup (T-5.6) dieksekusi SEBELUM Phase 2 (T-5.4/T-5.5) terverifikasi hijau di CI — urutan dependency wajib dihormati, jangan hapus Go LLM code duluan lalu "perbaiki nanti". Juga reject jika `ExecuteTurn` di Rust mengimplementasikan ulang HTTP call vendor sendiri alih-alih reuse `galleon-providers` (duplikasi SSOT yang baru).
 
 ---
 

@@ -5,7 +5,7 @@ use tokio::sync::mpsc;
 use clawcrew_api::ingress::IngressContext;
 use clawcrew_config::policy::SecurityPolicy;
 use clawcrew_config::schema::Config;
-use clawcrew_providers::ChatMessage;
+use galleon_providers::ChatMessage;
 
 use super::safety_net::{CountingTool, ScriptedProvider, text_response, tool_call, tool_response};
 use crate::agent::loop_::{

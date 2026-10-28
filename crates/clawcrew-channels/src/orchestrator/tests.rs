@@ -71,7 +71,7 @@ fn shared_room_history_keeps_the_speaker_for_any_channel() {
 // seam applies it internally now); two tests below still exercise it directly to
 // pin the built-in filter's own behavior.
 use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
-use clawcrew_providers::{ChatMessage, ModelProvider};
+use galleon_providers::{ChatMessage, ModelProvider};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -258,7 +258,7 @@ impl Observer for CountingObserver {
 
 #[test]
 fn accepted_provider_fallback_footer_is_rendered_once_and_primary_has_none() {
-    let fallback = clawcrew_providers::reliable::ProviderFallbackInfo {
+    let fallback = galleon_providers::reliable::ProviderFallbackInfo {
         requested_provider: "openai.primary".to_string(),
         requested_model: "model-a".to_string(),
         actual_provider: "anthropic.backup".to_string(),
@@ -1805,7 +1805,7 @@ fn router_test_ctx() -> Arc<ChannelRuntimeContext> {
         transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
         agent_transcription_provider: String::new(),
         hooks: None,
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -2739,7 +2739,7 @@ fn channel_runtime_context_for_defaults_test(
         transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
         agent_transcription_provider: String::new(),
         hooks: None,
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions {
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions {
             clawcrew_dir: Some(clawcrew_dir.to_path_buf()),
             ..Default::default()
         },
@@ -3207,7 +3207,7 @@ fn compact_sender_history_keeps_recent_truncated_messages() {
         transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
         agent_transcription_provider: String::new(),
         hooks: None,
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -3296,7 +3296,7 @@ fn append_sender_turn_stores_single_turn_per_call() {
         transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
         agent_transcription_provider: String::new(),
         hooks: None,
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -3404,7 +3404,7 @@ fn rollback_orphan_user_turn_removes_only_latest_matching_user_turn() {
         transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
         agent_transcription_provider: String::new(),
         hooks: None,
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -3516,7 +3516,7 @@ fn rollback_orphan_user_turn_also_removes_from_session_store() {
         transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
         agent_transcription_provider: String::new(),
         hooks: None,
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -5447,7 +5447,7 @@ fn test_runtime_ctx_with_observer_and_tools(
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(prompt_config),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -5540,7 +5540,7 @@ fn test_runtime_ctx_with_observer(
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(prompt_config),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -6620,14 +6620,14 @@ impl ModelProvider for NarratingNativeToolProvider {
 
     async fn chat(
         &self,
-        _request: clawcrew_providers::ChatRequest<'_>,
+        _request: galleon_providers::ChatRequest<'_>,
         _model: &str,
         _temperature: Option<f64>,
-    ) -> anyhow::Result<clawcrew_providers::ChatResponse> {
+    ) -> anyhow::Result<galleon_providers::ChatResponse> {
         if self.calls.fetch_add(1, Ordering::SeqCst) == 0 {
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some("Понял, запускаю инструмент".to_string()),
-                tool_calls: vec![clawcrew_providers::ToolCall {
+                tool_calls: vec![galleon_providers::ToolCall {
                     id: "call-1".to_string(),
                     name: "mock_price".to_string(),
                     arguments: r#"{"symbol":"BTC"}"#.to_string(),
@@ -6637,7 +6637,7 @@ impl ModelProvider for NarratingNativeToolProvider {
                 reasoning_content: None,
             })
         } else {
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some("Инструмент отклонён, завершаю ход.".to_string()),
                 tool_calls: Vec::new(),
                 usage: None,
@@ -6705,16 +6705,16 @@ impl ModelProvider for LeakingNarratingToolProvider {
 
     async fn chat(
         &self,
-        _request: clawcrew_providers::ChatRequest<'_>,
+        _request: galleon_providers::ChatRequest<'_>,
         _model: &str,
         _temperature: Option<f64>,
-    ) -> anyhow::Result<clawcrew_providers::ChatResponse> {
+    ) -> anyhow::Result<galleon_providers::ChatResponse> {
         if self.calls.fetch_add(1, Ordering::SeqCst) == 0 {
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some(format!(
                     "Ключ {LEAKING_NARRATION_SECRET}, запускаю инструмент"
                 )),
-                tool_calls: vec![clawcrew_providers::ToolCall {
+                tool_calls: vec![galleon_providers::ToolCall {
                     id: "call-1".to_string(),
                     name: "mock_price".to_string(),
                     arguments: r#"{"symbol":"BTC"}"#.to_string(),
@@ -6724,7 +6724,7 @@ impl ModelProvider for LeakingNarratingToolProvider {
                 reasoning_content: None,
             })
         } else {
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some("Инструмент отклонён, завершаю ход.".to_string()),
                 tool_calls: Vec::new(),
                 usage: None,
@@ -7457,15 +7457,15 @@ impl ModelProvider for ModelSwitchRequestProvider {
 
     async fn chat(
         &self,
-        _request: clawcrew_providers::ChatRequest<'_>,
+        _request: galleon_providers::ChatRequest<'_>,
         _model: &str,
         _temperature: Option<f64>,
-    ) -> anyhow::Result<clawcrew_providers::ChatResponse> {
+    ) -> anyhow::Result<galleon_providers::ChatResponse> {
         let call_index = self.call_count.fetch_add(1, Ordering::SeqCst);
         if call_index == 0 {
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some(String::new()),
-                tool_calls: vec![clawcrew_providers::ToolCall {
+                tool_calls: vec![galleon_providers::ToolCall {
                     id: "switch-call".to_string(),
                     name: "model_switch".to_string(),
                     arguments: serde_json::json!({
@@ -7480,7 +7480,7 @@ impl ModelProvider for ModelSwitchRequestProvider {
                 reasoning_content: None,
             })
         } else {
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some("original-provider-should-not-be-reused".to_string()),
                 tool_calls: vec![],
                 usage: None,
@@ -7667,7 +7667,7 @@ fn peer_prompt_test_context(
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config,
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -7745,7 +7745,7 @@ async fn process_channel_message_executes_tool_calls_instead_of_sending_raw_json
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -7903,7 +7903,7 @@ async fn multi_message_narration_reaches_telegram_before_approval_prompt() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -8089,7 +8089,7 @@ async fn multi_message_narration_applies_leak_detection_before_send() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(prompt_config),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -8260,7 +8260,7 @@ async fn multi_message_narration_applies_send_hook_before_send() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -8440,7 +8440,7 @@ async fn multi_message_approval_narration_crosses_outbound_hook_once() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -8994,7 +8994,7 @@ async fn multi_message_cancelled_narration_is_not_resurrected_by_a_later_flush()
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -9126,7 +9126,7 @@ async fn process_channel_message_scopes_sender_session_key_for_sessions_current_
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -9231,7 +9231,7 @@ async fn process_channel_message_renders_trailing_tool_receipts_block_when_enabl
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -9510,7 +9510,7 @@ async fn process_channel_message_omits_receipts_block_when_disabled() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -9620,7 +9620,7 @@ async fn process_channel_message_disabled_receipt_generator_emits_no_receipts_an
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -9754,7 +9754,7 @@ async fn process_channel_message_telegram_does_not_persist_tool_summary_prefix()
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -9875,7 +9875,7 @@ async fn process_channel_message_strips_unexecuted_tool_json_artifacts_from_repl
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -9981,7 +9981,7 @@ async fn process_channel_message_executes_tool_calls_with_alias_tags() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -10107,7 +10107,7 @@ async fn process_channel_message_handles_models_command_without_llm_call() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(prompt_config),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -10257,7 +10257,7 @@ async fn process_channel_message_uses_route_override_provider_and_model() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -10423,7 +10423,7 @@ async fn process_channel_message_persists_model_switch_with_route_credential() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::clone(&prompt_config),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -10899,7 +10899,7 @@ async fn process_channel_message_prefers_cached_default_provider_instance() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -11000,7 +11000,7 @@ async fn process_channel_message_respects_configured_max_tool_iterations_above_d
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -11111,7 +11111,7 @@ async fn process_channel_message_reports_configured_max_tool_iterations_limit() 
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -12566,7 +12566,7 @@ async fn message_dispatch_processes_messages_in_parallel() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -12703,7 +12703,7 @@ async fn message_dispatch_interrupts_in_flight_telegram_request_and_preserves_co
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -12855,7 +12855,7 @@ async fn passive_stop_command_does_not_cancel_another_participants_turn() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -13000,7 +13000,7 @@ async fn active_batch_is_not_swallowed_by_later_passive_chatter() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new({
             let mut cfg = clawcrew_config::schema::Config::default();
@@ -13150,7 +13150,7 @@ async fn message_dispatch_interrupts_in_flight_slack_request_and_preserves_conte
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -13347,7 +13347,7 @@ async fn message_dispatch_preserves_interrupt_on_new_message_policy_per_whatsapp
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config,
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -13563,7 +13563,7 @@ async fn message_dispatch_interrupt_scope_is_same_sender_same_chat() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -13690,7 +13690,7 @@ async fn process_channel_message_cancels_scoped_typing_task() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -14205,7 +14205,7 @@ async fn process_channel_message_adds_and_swaps_reactions() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -14325,7 +14325,7 @@ async fn process_channel_message_no_reply_clears_early_ack() {
         route_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -14449,7 +14449,7 @@ async fn process_channel_message_no_reply_refused_sends_notice() {
         route_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -14565,7 +14565,7 @@ async fn process_channel_message_no_reply_failed_sends_notice() {
         route_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -14681,7 +14681,7 @@ async fn process_channel_message_no_reply_notice_sent_when_reactions_disabled() 
         route_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -15075,7 +15075,7 @@ async fn process_channel_message_acks_before_slow_model_completes() {
         route_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -15838,7 +15838,7 @@ async fn shared_session_new_message_interrupts_only_same_sender() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(prompt_config),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -16923,7 +16923,7 @@ fn test_runtime_ctx_with_turn_runner(
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(prompt_config),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -21978,7 +21978,7 @@ async fn process_channel_message_restores_per_sender_history_on_follow_ups() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -22285,7 +22285,7 @@ fn cache_stability_test_context(
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -22761,7 +22761,7 @@ async fn process_channel_message_persists_image_payload_verbatim() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -22911,7 +22911,7 @@ async fn process_channel_message_telegram_keeps_system_instruction_at_top_only()
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -26262,7 +26262,7 @@ async fn e2e_photo_attachment_rejected_by_non_vision_provider() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -26370,7 +26370,7 @@ async fn e2e_failed_vision_turn_does_not_poison_follow_up_text_turn() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -26525,7 +26525,7 @@ async fn e2e_failed_non_retryable_turn_does_not_poison_follow_up_text_turn() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -26822,7 +26822,7 @@ async fn process_channel_message_applies_query_classification_route() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -26968,7 +26968,7 @@ async fn process_channel_message_classification_disabled_uses_default_route() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -27106,7 +27106,7 @@ async fn process_channel_message_classification_no_match_uses_default_route() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -27264,7 +27264,7 @@ async fn process_channel_message_classification_priority_selects_highest() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -28195,7 +28195,7 @@ async fn message_dispatch_different_threads_do_not_cancel_each_other() {
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         scope_overrides: Arc::new(Mutex::new(HashMap::new())),
         reliability: Arc::new(clawcrew_config::schema::ReliabilityConfig::default()),
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,

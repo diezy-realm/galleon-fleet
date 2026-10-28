@@ -117,8 +117,8 @@ use clawcrew_config::policy::SecurityPolicy;
 use clawcrew_config::scattered_types::{ThinkingConfig, ThinkingLevel};
 use clawcrew_config::schema::Config;
 use galleon_memory::{self, MEMORY_CONTEXT_CLOSE, MEMORY_CONTEXT_OPEN, Memory};
-use clawcrew_providers::reliable::ProviderFallbackInfo;
-use clawcrew_providers::{
+use galleon_providers::reliable::ProviderFallbackInfo;
+use galleon_providers::{
     self, ChatMessage, ModelProvider, ProviderDispatch, SafeguardFallbackKind,
     SafeguardFallbackNotice,
 };
@@ -341,7 +341,7 @@ fn append_provider_fallback_footer(
     // order: the provider fallback, then the safeguard switch the accepted
     // attempt itself went through.
     match (
-        clawcrew_providers::visible_provider_fallback(fallback, safeguard),
+        galleon_providers::visible_provider_fallback(fallback, safeguard),
         safeguard,
     ) {
         // A server-side safeguard notice names the client-fallback model as
@@ -696,7 +696,7 @@ impl clawcrew_api::channel::ChannelTurnRunner for StandardChannelTurnRunner {
             }
 
             let provider_fut = ctx.model_provider.chat(
-                clawcrew_providers::ChatRequest {
+                galleon_providers::ChatRequest {
                     messages: history.as_slice(),
                     tools: None,
                     thinking: None,
@@ -990,7 +990,7 @@ struct ChannelRuntimeContext {
     /// [`get_route_selection`]; never persisted.
     scope_overrides: ScopedRouteMap,
     reliability: Arc<clawcrew_config::schema::ReliabilityConfig>,
-    provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions,
+    provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions,
     workspace_dir: Arc<PathBuf>,
     message_timeout_secs: u64,
     interrupt_on_new_message: InterruptOnNewMessageConfig,
@@ -2745,7 +2745,7 @@ fn collapse_inline_image_payloads(turns: &mut [ChatMessage]) {
         if turn.role != "user" || !turn.content.contains("[IMAGE:data:") {
             continue;
         }
-        let (_, refs) = clawcrew_providers::multimodal::parse_image_markers(&turn.content);
+        let (_, refs) = galleon_providers::multimodal::parse_image_markers(&turn.content);
         if refs.iter().any(|r| r.starts_with("data:")) {
             turn.content = strip_inline_data_image_markers(&turn.content);
         }
@@ -3018,7 +3018,7 @@ fn canonical_model_provider_name(name: &str) -> Option<String> {
         return None;
     }
 
-    clawcrew_providers::list_model_providers()
+    galleon_providers::list_model_providers()
         .into_iter()
         .find(|model_provider| model_provider.name.eq_ignore_ascii_case(candidate))
         .map(|model_provider| model_provider.name.to_string())
@@ -3270,12 +3270,12 @@ async fn maybe_apply_runtime_config_update(ctx: &ChannelRuntimeContext) -> Resul
     let (next_config, next_defaults) =
         load_runtime_config_and_defaults(&config_path, ctx.agent_alias.as_str()).await?;
     let next_config = Arc::new(next_config);
-    let next_options = clawcrew_providers::options_for_provider_ref(
+    let next_options = galleon_providers::options_for_provider_ref(
         next_config.as_ref(),
         &next_defaults.default_model_provider,
         &ctx.provider_runtime_options,
     );
-    let model_provider_instance = clawcrew_providers::create_resilient_model_provider_from_ref(
+    let model_provider_instance = galleon_providers::create_resilient_model_provider_from_ref(
         next_config.as_ref(),
         &next_defaults.default_model_provider,
         next_defaults.api_key.as_deref(),
@@ -3289,7 +3289,7 @@ async fn maybe_apply_runtime_config_update(ctx: &ChannelRuntimeContext) -> Resul
         .warmup()
         .await
     {
-        if clawcrew_providers::reliable::is_non_retryable(&err) {
+        if galleon_providers::reliable::is_non_retryable(&err) {
             ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": next_defaults.default_model_provider, "model": next_defaults.model, "err": err.to_string()})), "Rejecting config reload: model not available (non-retryable)");
             return Ok(());
         }
@@ -4450,13 +4450,13 @@ fn rollback_orphan_user_turn(
 
 fn should_rollback_failed_user_turn(error: &anyhow::Error) -> bool {
     if error
-        .downcast_ref::<clawcrew_providers::ProviderCapabilityError>()
+        .downcast_ref::<galleon_providers::ProviderCapabilityError>()
         .is_some_and(|capability| capability.capability.eq_ignore_ascii_case("vision"))
     {
         return true;
     }
 
-    clawcrew_providers::reliable::is_non_retryable(error)
+    galleon_providers::reliable::is_non_retryable(error)
 }
 
 /// Select the user-facing channel failure after preserving the typed terminal
@@ -4474,7 +4474,7 @@ fn channel_user_error_message(error: &anyhow::Error, safe_error: &str) -> String
             return format!("⚠️ Error: {msg}");
         }
     }
-    clawcrew_providers::reliable::transient_error_hint(error)
+    galleon_providers::reliable::transient_error_hint(error)
         .map(|hint| format!("⚠️ Error: {hint}"))
         .unwrap_or_else(|| format!("⚠️ Error: {safe_error}"))
 }
@@ -4644,16 +4644,16 @@ async fn create_resilient_model_provider_nonblocking(
     api_key: Option<String>,
     api_url: Option<String>,
     reliability: clawcrew_config::schema::ReliabilityConfig,
-    provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions,
+    provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions,
 ) -> anyhow::Result<Box<dyn ModelProvider>> {
     let provider_name = provider_name.to_string();
     tokio::task::spawn_blocking(move || {
-        let options = clawcrew_providers::options_for_provider_ref(
+        let options = galleon_providers::options_for_provider_ref(
             &config,
             &provider_name,
             &provider_runtime_options,
         );
-        clawcrew_providers::create_resilient_model_provider_from_ref(
+        galleon_providers::create_resilient_model_provider_from_ref(
             &config,
             &provider_name,
             api_key.as_deref(),
@@ -4747,7 +4747,7 @@ fn build_providers_help_response(current: &ChannelRouteSelection) -> String {
         "channel-runtime-available-providers-header",
     ));
     response.push('\n');
-    for model_provider in clawcrew_providers::list_model_providers() {
+    for model_provider in galleon_providers::list_model_providers() {
         let _ = writeln!(response, "- {}", model_provider.name);
     }
     response
@@ -4773,7 +4773,7 @@ fn build_config_text_response(
         "channel-runtime-available-providers-header",
     ));
     resp.push('\n');
-    for p in clawcrew_providers::list_model_providers() {
+    for p in galleon_providers::list_model_providers() {
         let _ = writeln!(resp, "- `{}`", p.name);
     }
     if !model_routes.is_empty() {
@@ -4804,7 +4804,7 @@ fn build_config_block_kit(
     agent_workspace_dir: &Path,
     model_routes: &[clawcrew_config::schema::ModelRouteConfig],
 ) -> String {
-    let provider_options: Vec<serde_json::Value> = clawcrew_providers::list_model_providers()
+    let provider_options: Vec<serde_json::Value> = galleon_providers::list_model_providers()
         .iter()
         .map(|p| {
             serde_json::json!({
@@ -5113,7 +5113,7 @@ async fn handle_runtime_command_for_delivery(
                             )
                         }
                         Err(err) => {
-                            let safe_err = clawcrew_providers::sanitize_api_error(&err.to_string());
+                            let safe_err = galleon_providers::sanitize_api_error(&err.to_string());
                             channel_runtime_cli_string_with_args(
                                 "channel-runtime-set-provider-init-failed",
                                 &[
@@ -5591,7 +5591,7 @@ async fn classify_channel_reply_intent(
         // Strip media markers — auxiliary classifier does not need image
         // content, and forwarding `[IMAGE:/local/path]` would reach the
         // provider as a malformed `image_url.url` and trigger 400 errors.
-        let safe_content = clawcrew_providers::multimodal::strip_media_markers(&msg.content);
+        let safe_content = galleon_providers::multimodal::strip_media_markers(&msg.content);
         let _ = writeln!(convo, "[{role}] {safe_content}");
     }
 
@@ -5705,7 +5705,7 @@ async fn resolve_classifier_route(
     {
         Ok(p) => p,
         Err(e) => {
-            let safe_err = clawcrew_providers::sanitize_api_error(&e.to_string());
+            let safe_err = galleon_providers::sanitize_api_error(&e.to_string());
             ::clawcrew_log::record!(
                 WARN,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
@@ -7355,7 +7355,7 @@ fn is_non_retryable_channel_listener_error(channel_name: &str, error: &anyhow::E
             {
                 return true;
             }
-            clawcrew_providers::reliable::is_non_retryable(error)
+            galleon_providers::reliable::is_non_retryable(error)
         }
         _ => false,
     }
@@ -9054,7 +9054,7 @@ async fn process_channel_message_body(
     {
         Ok(model_provider) => model_provider,
         Err(err) => {
-            let safe_err = clawcrew_providers::sanitize_api_error(&err.to_string());
+            let safe_err = galleon_providers::sanitize_api_error(&err.to_string());
             let message = channel_runtime_cli_string_with_args(
                 "channel-runtime-provider-turn-init-failed",
                 &[
@@ -9484,7 +9484,7 @@ async fn process_channel_message_body(
                         outcome
                     }
                     Ok(Err(e)) => {
-                        let safe_err = clawcrew_providers::sanitize_api_error(&e.to_string());
+                        let safe_err = galleon_providers::sanitize_api_error(&e.to_string());
                         ::clawcrew_log::record!(
                             WARN,
                             ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
@@ -9613,7 +9613,7 @@ async fn process_channel_message_body(
         let history_response = match &notice_outcome {
             Some((notice_text, Ok(()))) => notice_text.clone(),
             Some((_, Err(e))) => {
-                let safe_error = clawcrew_providers::sanitize_api_error(&e.to_string());
+                let safe_error = galleon_providers::sanitize_api_error(&e.to_string());
                 ::clawcrew_log::record!(
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
@@ -9923,7 +9923,7 @@ async fn process_channel_message_body(
                 .vision_model
                 .clone()
                 .unwrap_or_else(|| route.model.clone());
-            match clawcrew_providers::create_model_provider_from_ref(&ctx.prompt_config, vp) {
+            match galleon_providers::create_model_provider_from_ref(&ctx.prompt_config, vp) {
                 Ok(p) => (Arc::from(p), vision_model, vp.clone()),
                 Err(_) => (
                     Arc::clone(&active_model_provider),
@@ -10604,7 +10604,7 @@ async fn process_channel_message_body(
                         .await;
                 }
             } else {
-                let safe_error = clawcrew_providers::sanitize_api_error(&e.to_string());
+                let safe_error = galleon_providers::sanitize_api_error(&e.to_string());
                 eprintln!(
                     "  ❌ LLM error after {}ms: {safe_error}",
                     started_at.elapsed().as_millis(),
@@ -10612,7 +10612,7 @@ async fn process_channel_message_body(
 
                 // Evict cached model_provider on auth errors so the next request
                 // re-creates it with fresh OAuth credentials.
-                if clawcrew_providers::reliable::is_auth_error(&e) {
+                if galleon_providers::reliable::is_auth_error(&e) {
                     let cache_key = provider_cache_key(
                         &route.model_provider,
                         route.api_key.as_deref(),
@@ -14114,7 +14114,7 @@ fn collect_configured_channels(
     #[cfg(feature = "channel-email")]
     {
         // Construct once and share across all email channel instances.
-        let auth_service = Arc::new(clawcrew_providers::auth::AuthService::from_config(&config));
+        let auth_service = Arc::new(galleon_providers::auth::AuthService::from_config(&config));
 
         for (alias, email_cfg) in &config.channels.email {
             if !active_channel_aliases.contains(&format!("email.{alias}")) {
@@ -15523,7 +15523,7 @@ pub async fn start_channels_with_plugin_webhooks(
         return Ok(());
     }
 
-    clawcrew_providers::pricing::spawn_refresher(config_arc.clone());
+    galleon_providers::pricing::spawn_refresher(config_arc.clone());
 
     let enabled_agents = enabled_agent_aliases(&config);
     if enabled_agents.is_empty() {
@@ -15614,7 +15614,7 @@ pub async fn start_channels_with_plugin_webhooks(
         let provider_api_url = runtime_defaults.api_url.clone();
         let provider_reliability = runtime_defaults.reliability.clone();
         let provider_runtime_options =
-            clawcrew_providers::provider_runtime_options_for_agent(&config, agent_alias);
+            galleon_providers::provider_runtime_options_for_agent(&config, agent_alias);
         let model_provider: Arc<dyn ModelProvider> = Arc::from(
             create_resilient_model_provider_nonblocking(
                 Arc::new(config.clone()),
@@ -16349,7 +16349,7 @@ pub async fn deliver_announcement(
 fn concurrent_persist_lock_serialization() {
     use clawcrew_api::observability_traits::NoopObserver;
     use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
     use std::sync::Barrier;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::time::Duration;
@@ -16437,7 +16437,7 @@ fn concurrent_persist_lock_serialization() {
         transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
         agent_transcription_provider: String::new(),
         hooks: None,
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -16513,7 +16513,7 @@ fn concurrent_persist_lock_serialization() {
 #[cfg(test)]
 #[test]
 fn strip_volatile_preamble_before_persist_restores_clean_content() {
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
 
     let old_turn = ChatMessage::user("older turn that survives the trim");
     let enriched_current_turn = ChatMessage::user(
@@ -16537,7 +16537,7 @@ fn strip_volatile_preamble_before_persist_restores_clean_content() {
 #[cfg(test)]
 #[test]
 fn strip_volatile_preamble_before_persist_is_a_no_op_without_raw_content() {
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
 
     let retained = vec![ChatMessage::user("no preamble was injected this turn")];
     let cleaned = strip_volatile_preamble_before_persist(&retained, None);
@@ -16601,7 +16601,7 @@ fn test_channel_ctx_with_backend(
         transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
         agent_transcription_provider: String::new(),
         hooks: None,
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(clawcrew_config::schema::Config::default()),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -16704,7 +16704,7 @@ fn test_channel_ctx_with_backend_channel_and_provider(
         transcription_config: clawcrew_config::schema::TranscriptionConfig::default(),
         agent_transcription_provider: String::new(),
         hooks: None,
-        provider_runtime_options: clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        provider_runtime_options: galleon_providers::ModelProviderRuntimeOptions::default(),
         workspace_dir: Arc::new(std::env::temp_dir()),
         prompt_config: Arc::new(prompt_config),
         message_timeout_secs: CHANNEL_MESSAGE_TIMEOUT_SECS,
@@ -16731,7 +16731,7 @@ fn test_channel_ctx_with_backend_channel_and_provider(
 #[test]
 fn channel_trim_resync_survives_restart() {
     use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
     use std::sync::Mutex as StdMutex;
 
     // A durable backend that supports `rewrite_messages`, mirroring the
@@ -16914,7 +16914,7 @@ fn channel_trim_resync_survives_restart() {
 #[test]
 fn channel_trim_resync_does_not_record_breadcrumb_when_transcript_write_fails() {
     use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
     use std::sync::Mutex as StdMutex;
 
     #[derive(Default)]
@@ -17046,7 +17046,7 @@ fn channel_trim_resync_does_not_record_breadcrumb_when_transcript_write_fails() 
 #[test]
 fn channel_trim_resync_does_not_guess_breadcrumb_when_provenance_read_fails() {
     use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
     use std::sync::Mutex as StdMutex;
 
     #[derive(Default)]
@@ -17166,7 +17166,7 @@ fn channel_trim_resync_does_not_guess_breadcrumb_when_provenance_read_fails() {
 #[test]
 fn caller_evicts_cache_and_does_not_guess_flag_when_trim_resync_fails() {
     use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
     use std::sync::Mutex as StdMutex;
 
     #[derive(Default)]
@@ -17281,7 +17281,7 @@ fn caller_evicts_cache_and_does_not_guess_flag_when_trim_resync_fails() {
 #[test]
 fn cold_crumb_provenance_fails_closed_on_provenance_read_error() {
     use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
 
     fn crumb_text() -> String {
         clawcrew_api::agent::HISTORY_TRIM_BREADCRUMB_CANONICAL.to_string()
@@ -17377,7 +17377,7 @@ fn cold_crumb_provenance_fails_closed_on_provenance_read_error() {
 fn stale_no_trim_completion_does_not_overwrite_a_newer_trims_flag() {
     use clawcrew_infra::session_backend::SessionBackend;
     use clawcrew_infra::session_store::SessionStore;
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
     use tempfile::TempDir;
 
     fn same(a: &ChatMessage, b: &ChatMessage) -> bool {
@@ -17482,7 +17482,7 @@ fn stale_no_trim_completion_does_not_overwrite_a_newer_trims_flag() {
 fn evicted_cache_reloads_durable_transcript_on_next_append() {
     use clawcrew_infra::session_backend::SessionBackend;
     use clawcrew_infra::session_store::SessionStore;
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
     use tempfile::TempDir;
 
     let tmp = TempDir::new().expect("tempdir");
@@ -17564,7 +17564,7 @@ fn evicted_cache_reloads_durable_transcript_on_next_append() {
 fn channel_trim_resync_preserves_a_concurrent_workers_later_turn() {
     use clawcrew_infra::session_backend::SessionBackend;
     use clawcrew_infra::session_store::SessionStore;
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
     use tempfile::TempDir;
 
     fn same(a: &ChatMessage, b: &ChatMessage) -> bool {
@@ -17662,7 +17662,7 @@ fn channel_trim_resync_preserves_a_concurrent_workers_later_turn() {
 fn channel_trim_resync_preserves_a_concurrent_workers_later_turn_across_eviction() {
     use clawcrew_infra::session_backend::SessionBackend;
     use clawcrew_infra::session_store::SessionStore;
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
     use tempfile::TempDir;
 
     fn same(a: &ChatMessage, b: &ChatMessage) -> bool {

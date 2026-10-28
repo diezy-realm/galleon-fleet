@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use clawcrew_config::schema::{Config, MultimodalConfig};
-use clawcrew_providers::{ChatMessage, ModelProvider, ProviderCapabilityError, multimodal};
+use galleon_providers::{ChatMessage, ModelProvider, ProviderCapabilityError, multimodal};
 
 pub(crate) struct ResolvedVisionProvider {
     pub(crate) provider: Box<dyn ModelProvider>,
@@ -37,10 +37,10 @@ pub(crate) fn resolve_vision_provider(
             // threads `Some`; that fallback keeps the prior legacy behavior.
             let (vp_instance, alias_model) = match config {
                 Some(config) => {
-                    clawcrew_providers::create_model_provider_from_ref_with_model(config, vp)
+                    galleon_providers::create_model_provider_from_ref_with_model(config, vp)
                         .map(|resolved| (resolved.provider, resolved.model))
                 }
-                None => clawcrew_providers::create_model_provider(vp, None)
+                None => galleon_providers::create_model_provider(vp, None)
                     .map(|provider| (provider, None)),
             }
             .map_err(|error| {
@@ -614,9 +614,9 @@ model = "vision-model"
             "a live vision route must not degrade/strip images"
         );
         let dispatch_messages = vec![ChatMessage::user("look")];
-        clawcrew_providers::ProviderDispatch::from_ref(vision_provider.provider.as_ref())
+        galleon_providers::ProviderDispatch::from_ref(vision_provider.provider.as_ref())
             .chat(
-                clawcrew_providers::ChatRequest {
+                galleon_providers::ChatRequest {
                     messages: &dispatch_messages,
                     tools: None,
                     thinking: None,

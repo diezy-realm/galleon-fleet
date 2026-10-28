@@ -7,7 +7,7 @@ use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use clawcrew_config::policy::SecurityPolicy;
 use clawcrew_config::schema::{ClassificationRule, Config, DelegateTargetConfig, ModelRouteConfig};
-use clawcrew_providers::ProviderDispatch;
+use galleon_providers::ProviderDispatch;
 
 const DEFAULT_AGENT_MAX_DEPTH: u32 = 3;
 const DEFAULT_AGENT_MAX_ITERATIONS: usize = 10;
@@ -628,7 +628,7 @@ impl ModelRoutingConfigTool {
         if let Some(model_name) = current_model
             && let Err(probe_err) = self.probe_model(&provider_name, &model_name).await
         {
-            if clawcrew_providers::reliable::is_non_retryable(&probe_err) {
+            if galleon_providers::reliable::is_non_retryable(&probe_err) {
                 let reverted_model = previous_provider_entry
                     .as_ref()
                     .and_then(|e| e.model.as_deref())
@@ -682,7 +682,7 @@ impl ModelRoutingConfigTool {
             return Ok(());
         }
 
-        let model_provider = match clawcrew_providers::create_model_provider_with_url(
+        let model_provider = match galleon_providers::create_model_provider_with_url(
             provider_name,
             api_key,
             entry.and_then(|e| e.uri.as_deref()),

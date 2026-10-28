@@ -4,11 +4,11 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::sync::LazyLock;
-use clawcrew_providers::ChatMessage;
-use clawcrew_providers::multimodal::IMAGE_MARKER_PREFIX;
-use clawcrew_providers::multimodal::ImageMarkerDisposition;
-use clawcrew_providers::multimodal::image_marker_dispositions;
-use clawcrew_providers::multimodal::image_marker_summary;
+use galleon_providers::ChatMessage;
+use galleon_providers::multimodal::IMAGE_MARKER_PREFIX;
+use galleon_providers::multimodal::ImageMarkerDisposition;
+use galleon_providers::multimodal::image_marker_dispositions;
+use galleon_providers::multimodal::image_marker_summary;
 
 /// Default trigger for auto-compaction when non-system message count exceeds this threshold.
 /// Prefer passing the config-driven value via `run_tool_call_loop`; this constant is only
@@ -737,7 +737,7 @@ mod tests {
         let content = "see [IMAGE:/a.png] and [IMAGE:/b.png] ok";
         let message = ChatMessage::user(content);
 
-        let (text, refs) = clawcrew_providers::multimodal::parse_image_markers(content);
+        let (text, refs) = galleon_providers::multimodal::parse_image_markers(content);
         assert_eq!(refs.len(), 2);
         assert_eq!(text, "see  and  ok");
 

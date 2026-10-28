@@ -17,7 +17,7 @@
         ModelProviderConfig, ModelRouteConfig,
     };
     use galleon_memory::{AgentScopedMemory, SqliteMemory};
-    use clawcrew_providers::{
+    use galleon_providers::{
         ChatRequest, ChatResponse, ReliableProviderTerminalFailure,
         ReliableProviderTerminalFailureKind, ToolCall,
     };
@@ -9311,12 +9311,12 @@ command = "rm independent-delegate-marker"
         let tool = fallback_delegate_tool(config, None);
 
         let (result, outer_fallback) =
-            clawcrew_providers::reliable::scope_provider_fallback(async {
+            galleon_providers::reliable::scope_provider_fallback(async {
                 let result = tool
                     .execute(json!({"agent": "target", "prompt": "respond"}))
                     .await
                     .expect("delegate call completes");
-                let outer_fallback = clawcrew_providers::reliable::take_last_provider_fallback();
+                let outer_fallback = galleon_providers::reliable::take_last_provider_fallback();
                 (result, outer_fallback)
             })
             .await;
@@ -9576,12 +9576,12 @@ command = "rm independent-delegate-marker"
         let tool = fallback_delegate_tool(config, None);
 
         let (result, outer_fallback) =
-            clawcrew_providers::reliable::scope_provider_fallback(async {
+            galleon_providers::reliable::scope_provider_fallback(async {
                 let result = tool
                     .execute(json!({"agent": "target", "prompt": "respond"}))
                     .await
                     .expect("delegate call completes");
-                let outer_fallback = clawcrew_providers::reliable::take_last_provider_fallback();
+                let outer_fallback = galleon_providers::reliable::take_last_provider_fallback();
                 (result, outer_fallback)
             })
             .await;
@@ -9615,7 +9615,7 @@ command = "rm independent-delegate-marker"
         let tool = fallback_delegate_tool(config, Some(workspace.path().to_path_buf()));
 
         let (start, outer_fallback) =
-            clawcrew_providers::reliable::scope_provider_fallback(async {
+            galleon_providers::reliable::scope_provider_fallback(async {
                 let start = tool
                     .execute(json!({
                         "agent": "target",
@@ -9624,7 +9624,7 @@ command = "rm independent-delegate-marker"
                     }))
                     .await
                     .expect("background delegate starts");
-                let outer_fallback = clawcrew_providers::reliable::take_last_provider_fallback();
+                let outer_fallback = galleon_providers::reliable::take_last_provider_fallback();
                 (start, outer_fallback)
             })
             .await;
@@ -9663,12 +9663,12 @@ command = "rm independent-delegate-marker"
         let tool = fallback_delegate_tool(config, None);
 
         let (result, outer_fallback) =
-            clawcrew_providers::reliable::scope_provider_fallback(async {
+            galleon_providers::reliable::scope_provider_fallback(async {
                 let result = tool
                     .execute(json!({"parallel": ["target"], "prompt": "respond"}))
                     .await
                     .expect("parallel delegate completes");
-                let outer_fallback = clawcrew_providers::reliable::take_last_provider_fallback();
+                let outer_fallback = galleon_providers::reliable::take_last_provider_fallback();
                 (result, outer_fallback)
             })
             .await;
@@ -9703,12 +9703,12 @@ command = "rm independent-delegate-marker"
         let tool = fallback_delegate_tool(config, None);
 
         let (result, outer_fallback) =
-            clawcrew_providers::reliable::scope_provider_fallback(async {
+            galleon_providers::reliable::scope_provider_fallback(async {
                 let result = tool
                     .execute(json!({"agent": "target", "prompt": "respond"}))
                     .await
                     .expect("delegate call completes");
-                let outer_fallback = clawcrew_providers::reliable::take_last_provider_fallback();
+                let outer_fallback = galleon_providers::reliable::take_last_provider_fallback();
                 (result, outer_fallback)
             })
             .await;

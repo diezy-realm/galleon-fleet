@@ -2278,7 +2278,7 @@ fn resolve_heartbeat_delivery(config: &Config) -> Result<Option<(String, String)
 const HEARTBEAT_SESSION_CONTEXT_MESSAGES: usize = 20;
 
 fn load_heartbeat_session_context(config: &Config) -> Option<String> {
-    use clawcrew_providers::traits::ChatMessage;
+    use galleon_providers::traits::ChatMessage;
 
     let channel = config
         .heartbeat
@@ -2435,7 +2435,7 @@ fn load_heartbeat_session_context(config: &Config) -> Option<String> {
 /// Read the last `HEARTBEAT_SESSION_CONTEXT_MESSAGES` `ChatMessage` lines from
 /// a JSONL session file using a bounded rolling window so we never hold the
 /// entire file in memory.
-fn load_jsonl_messages(path: &std::path::Path) -> Vec<clawcrew_providers::traits::ChatMessage> {
+fn load_jsonl_messages(path: &std::path::Path) -> Vec<galleon_providers::traits::ChatMessage> {
     use std::collections::VecDeque;
     use std::io::BufRead;
 
@@ -2444,7 +2444,7 @@ fn load_jsonl_messages(path: &std::path::Path) -> Vec<clawcrew_providers::traits
         Err(_) => return Vec::new(),
     };
     let reader = std::io::BufReader::new(file);
-    let mut window: VecDeque<clawcrew_providers::traits::ChatMessage> =
+    let mut window: VecDeque<galleon_providers::traits::ChatMessage> =
         VecDeque::with_capacity(HEARTBEAT_SESSION_CONTEXT_MESSAGES + 1);
     for line in reader.lines() {
         let Ok(line) = line else { continue };
@@ -2452,7 +2452,7 @@ fn load_jsonl_messages(path: &std::path::Path) -> Vec<clawcrew_providers::traits
         if trimmed.is_empty() {
             continue;
         }
-        if let Ok(msg) = serde_json::from_str::<clawcrew_providers::traits::ChatMessage>(trimmed) {
+        if let Ok(msg) = serde_json::from_str::<galleon_providers::traits::ChatMessage>(trimmed) {
             window.push_back(msg);
             if window.len() > HEARTBEAT_SESSION_CONTEXT_MESSAGES {
                 window.pop_front();

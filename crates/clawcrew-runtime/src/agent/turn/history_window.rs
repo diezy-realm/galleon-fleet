@@ -4,7 +4,7 @@
 //! `trim_to_recent_turns`).
 
 use crate::agent::history::normalize_system_messages;
-use clawcrew_providers::ChatMessage;
+use galleon_providers::ChatMessage;
 
 pub(crate) fn preflight_history_maintenance(history: &mut Vec<ChatMessage>) {
     // Remove orphaned tool-role messages whose assistant (tool_calls)

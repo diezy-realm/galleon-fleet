@@ -1,7 +1,7 @@
 //! Failed-turn media degradation, shared by the ACP restore and live-session paths.
 
 use clawcrew_api::model_provider::ConversationMessage;
-use clawcrew_providers::multimodal;
+use galleon_providers::multimodal;
 
 /// Whether this typed message opens a turn for failed-turn span purposes: a
 /// user message that is not the runtime's prompt-mode `[Tool results]` result

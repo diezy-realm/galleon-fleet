@@ -253,7 +253,7 @@
     );
 
     struct MockModelProvider {
-        responses: Mutex<Vec<clawcrew_providers::ChatResponse>>,
+        responses: Mutex<Vec<galleon_providers::ChatResponse>>,
     }
 
     #[async_trait]
@@ -277,10 +277,10 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             let mut guard = self.responses.lock();
             if guard.is_empty() {
-                return Ok(clawcrew_providers::ChatResponse {
+                return Ok(galleon_providers::ChatResponse {
                     text: Some("done".into()),
                     tool_calls: vec![],
                     usage: None,
@@ -314,9 +314,9 @@
             _model: &str,
             _temperature: Option<f64>,
         ) -> Result<String> {
-            clawcrew_providers::commit_safeguard_fallback(Some(
-                clawcrew_providers::SafeguardFallbackNotice {
-                    kind: clawcrew_providers::SafeguardFallbackKind::ClientAndServer,
+            galleon_providers::commit_safeguard_fallback(Some(
+                galleon_providers::SafeguardFallbackNotice {
+                    kind: galleon_providers::SafeguardFallbackKind::ClientAndServer,
                     requested_model: "requested-model".into(),
                     served_model: "served-model".into(),
                     category: Some("private-category".into()),
@@ -330,16 +330,16 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
-            clawcrew_providers::commit_safeguard_fallback(Some(
-                clawcrew_providers::SafeguardFallbackNotice {
-                    kind: clawcrew_providers::SafeguardFallbackKind::ClientAndServer,
+        ) -> Result<galleon_providers::ChatResponse> {
+            galleon_providers::commit_safeguard_fallback(Some(
+                galleon_providers::SafeguardFallbackNotice {
+                    kind: galleon_providers::SafeguardFallbackKind::ClientAndServer,
                     requested_model: "requested-model".into(),
                     served_model: "served-model".into(),
                     category: Some("private-category".into()),
                 },
             ));
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some("accepted response".into()),
                 tool_calls: Vec::new(),
                 usage: None,
@@ -364,12 +364,12 @@
 
     struct RefusingCandidateProvider {
         /// Usage billed by the refusing attempt, when the provider reports it.
-        usage: Option<clawcrew_providers::traits::TokenUsage>,
+        usage: Option<galleon_providers::traits::TokenUsage>,
     }
 
     impl RefusingCandidateProvider {
         fn refusal(&self, model: &str) -> anyhow::Error {
-            anyhow::Error::new(clawcrew_providers::AnthropicRefusalError {
+            anyhow::Error::new(galleon_providers::AnthropicRefusalError {
                 requested_model: model.into(),
                 category: Some("private-category".into()),
                 usage: self.usage.clone().map(Box::new),
@@ -396,7 +396,7 @@
             _request: ChatRequest<'_>,
             model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             Err(self.refusal(model))
         }
     }
@@ -421,7 +421,7 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             anyhow::bail!("503 service unavailable")
         }
     }
@@ -457,7 +457,7 @@
     /// Keep the real Anthropic non-streaming implementation while making the
     /// runtime test enter the non-streaming turn path deterministically.
     struct NonStreamingAnthropicProvider {
-        inner: clawcrew_providers::anthropic::AnthropicModelProvider,
+        inner: galleon_providers::anthropic::AnthropicModelProvider,
     }
 
     #[async_trait]
@@ -479,7 +479,7 @@
             request: ChatRequest<'_>,
             model: &str,
             temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             self.inner.chat(request, model, temperature).await
         }
     }
@@ -572,8 +572,8 @@
         requested_model: &str,
         actual_provider: &str,
         actual_model: &str,
-    ) -> clawcrew_providers::reliable::ProviderFallbackInfo {
-        clawcrew_providers::reliable::ProviderFallbackInfo {
+    ) -> galleon_providers::reliable::ProviderFallbackInfo {
+        galleon_providers::reliable::ProviderFallbackInfo {
             requested_provider: requested_provider.into(),
             requested_model: requested_model.into(),
             actual_provider: actual_provider.into(),
@@ -634,8 +634,8 @@
     async fn safeguard_notice_suppresses_generic_model_fallback_notice() {
         let (tx, mut rx) = tokio::sync::mpsc::channel(8);
         let info = fallback_info("anthropic", "requested-model", "openai", "served-model");
-        let safeguard = clawcrew_providers::SafeguardFallbackNotice {
-            kind: clawcrew_providers::SafeguardFallbackKind::ClientSide,
+        let safeguard = galleon_providers::SafeguardFallbackNotice {
+            kind: galleon_providers::SafeguardFallbackKind::ClientSide,
             requested_model: "requested-model".into(),
             served_model: "served-model".into(),
             category: None,
@@ -658,8 +658,8 @@
         // Anthropic then served B's request with C. The safeguard notice
         // covers only B to C, so the generic A to B leg must stay visible.
         let info = fallback_info("anthropic", "model-a", "anthropic", "model-b");
-        let safeguard = clawcrew_providers::SafeguardFallbackNotice {
-            kind: clawcrew_providers::SafeguardFallbackKind::ServerSide,
+        let safeguard = galleon_providers::SafeguardFallbackNotice {
+            kind: galleon_providers::SafeguardFallbackKind::ServerSide,
             requested_model: "model-b".into(),
             served_model: "model-c".into(),
             category: None,
@@ -783,12 +783,12 @@
             .mount(&server)
             .await;
         let anthropic =
-            clawcrew_providers::anthropic::AnthropicModelProvider::builder("candidate-b")
+            galleon_providers::anthropic::AnthropicModelProvider::builder("candidate-b")
                 .credential(Some("synthetic-key"))
                 .base_url(&server.uri())
                 .server_fallback_models(vec!["served-c".into()])
                 .build();
-        let reliable = clawcrew_providers::reliable::ReliableModelProvider::new(
+        let reliable = galleon_providers::reliable::ReliableModelProvider::new(
             "test",
             vec![
                 (
@@ -820,7 +820,7 @@
             .expect("composed accepted-route attribution");
         assert_eq!(
             notice.kind,
-            clawcrew_providers::SafeguardFallbackKind::ClientAndServer
+            galleon_providers::SafeguardFallbackKind::ClientAndServer
         );
         assert_eq!(notice.requested_model, "requested-a");
         assert_eq!(notice.served_model, "served-c");
@@ -879,12 +879,12 @@
             .mount(&server)
             .await;
         let anthropic =
-            clawcrew_providers::anthropic::AnthropicModelProvider::builder("candidate-b")
+            galleon_providers::anthropic::AnthropicModelProvider::builder("candidate-b")
                 .credential(Some("synthetic-key"))
                 .base_url(&server.uri())
                 .server_fallback_models(vec!["served-c".into()])
                 .build();
-        let reliable = clawcrew_providers::reliable::ReliableModelProvider::new(
+        let reliable = galleon_providers::reliable::ReliableModelProvider::new(
             "test",
             vec![(
                 "candidate-b".into(),
@@ -946,14 +946,14 @@
     /// B (the real Anthropic client), and Anthropic serves B's request with C.
     fn ordinary_failure_then_server_fallback_reliable(
         server_uri: &str,
-    ) -> clawcrew_providers::reliable::ReliableModelProvider {
+    ) -> galleon_providers::reliable::ReliableModelProvider {
         let anthropic =
-            clawcrew_providers::anthropic::AnthropicModelProvider::builder("candidate-b")
+            galleon_providers::anthropic::AnthropicModelProvider::builder("candidate-b")
                 .credential(Some("synthetic-key"))
                 .base_url(server_uri)
                 .server_fallback_models(vec!["served-c".into()])
                 .build();
-        clawcrew_providers::reliable::ReliableModelProvider::new(
+        galleon_providers::reliable::ReliableModelProvider::new(
             "test",
             vec![
                 (
@@ -1000,7 +1000,7 @@
             .expect("server-side attribution for the accepted attempt");
         assert_eq!(
             notice.kind,
-            clawcrew_providers::SafeguardFallbackKind::ServerSide,
+            galleon_providers::SafeguardFallbackKind::ServerSide,
             "an ordinary 503 is not a refusal-triggered client recovery"
         );
         assert_eq!(notice.requested_model, "requested-a");
@@ -1090,12 +1090,12 @@
 
     #[tokio::test]
     async fn exhausted_refusal_with_billed_usage_delivers_safety_guidance() {
-        let reliable = clawcrew_providers::reliable::ReliableModelProvider::new(
+        let reliable = galleon_providers::reliable::ReliableModelProvider::new(
             "test",
             vec![(
                 "candidate-a".into(),
                 Box::new(RefusingCandidateProvider {
-                    usage: Some(clawcrew_providers::traits::TokenUsage {
+                    usage: Some(galleon_providers::traits::TokenUsage {
                         input_tokens: Some(7),
                         output_tokens: Some(3),
                         cached_input_tokens: None,
@@ -1114,13 +1114,13 @@
             .await
             .expect_err("an unrescued refusal fails the turn");
 
-        let usage = clawcrew_providers::rejected_attempt_usage_from_error(&error)
+        let usage = galleon_providers::rejected_attempt_usage_from_error(&error)
             .expect("billed refusal usage survives the terminal error");
         assert_eq!(usage.input_tokens, Some(7));
         assert_eq!(usage.output_tokens, Some(3));
         assert!(
             error
-                .downcast_ref::<clawcrew_providers::AnthropicRefusalError>()
+                .downcast_ref::<galleon_providers::AnthropicRefusalError>()
                 .is_none(),
             "production shape keeps the refusal beneath Reliable's envelopes: {error:#}"
         );
@@ -1134,7 +1134,7 @@
         assert!(message.contains("safety system"), "{message}");
         assert!(!message.contains("private-category"));
         assert!(
-            clawcrew_providers::reliable::transient_error_hint(&error)
+            galleon_providers::reliable::transient_error_hint(&error)
                 .is_some_and(|hint| hint.contains("safety system")),
             "the channel hint fallback must also see the refusal"
         );
@@ -1197,11 +1197,11 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             let Some(text) = self.chat_text else {
                 anyhow::bail!("chat path must not be used for this probe");
             };
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some(text.to_string()),
                 tool_calls: vec![],
                 usage: None,
@@ -1218,36 +1218,36 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-            _options: clawcrew_providers::traits::StreamOptions,
+            _options: galleon_providers::traits::StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<clawcrew_providers::traits::StreamEvent>,
+            galleon_providers::traits::StreamResult<galleon_providers::traits::StreamEvent>,
         > {
             use futures_util::StreamExt as _;
 
             match self.stream {
                 RuntimeStreamPlan::Unsupported => futures_util::stream::empty().boxed(),
                 RuntimeStreamPlan::Text(text) => futures_util::stream::iter(vec![
-                    Ok(clawcrew_providers::traits::StreamEvent::TextDelta(
-                        clawcrew_providers::traits::StreamChunk::delta(text),
+                    Ok(galleon_providers::traits::StreamEvent::TextDelta(
+                        galleon_providers::traits::StreamChunk::delta(text),
                     )),
-                    Ok(clawcrew_providers::traits::StreamEvent::Final),
+                    Ok(galleon_providers::traits::StreamEvent::Final),
                 ])
                 .boxed(),
                 RuntimeStreamPlan::EmptyWithUsage => futures_util::stream::iter(vec![
-                    Ok(clawcrew_providers::traits::StreamEvent::Usage(
-                        clawcrew_providers::traits::TokenUsage {
+                    Ok(galleon_providers::traits::StreamEvent::Usage(
+                        galleon_providers::traits::TokenUsage {
                             input_tokens: Some(13),
                             output_tokens: Some(7),
                             cached_input_tokens: None,
                             cache_creation_input_tokens: None,
                         },
                     )),
-                    Ok(clawcrew_providers::traits::StreamEvent::Final),
+                    Ok(galleon_providers::traits::StreamEvent::Final),
                 ])
                 .boxed(),
                 RuntimeStreamPlan::Error => futures_util::stream::iter(vec![Err(
-                    clawcrew_providers::traits::StreamError::ModelProvider(
+                    galleon_providers::traits::StreamError::ModelProvider(
                         "stream failed before output".into(),
                     ),
                 )])
@@ -1272,8 +1272,8 @@
     fn streaming_probe_reliable_provider(
         primary: RuntimeStreamingProbeProvider,
         fallback: RuntimeStreamingProbeProvider,
-    ) -> clawcrew_providers::reliable::ReliableModelProvider {
-        clawcrew_providers::reliable::ReliableModelProvider::new(
+    ) -> galleon_providers::reliable::ReliableModelProvider {
+        galleon_providers::reliable::ReliableModelProvider::new(
             "test",
             vec![
                 (
@@ -1312,7 +1312,7 @@
                 _request: ChatRequest<'_>,
                 _model: &str,
                 _temperature: Option<f64>,
-            ) -> Result<clawcrew_providers::ChatResponse> {
+            ) -> Result<galleon_providers::ChatResponse> {
                 anyhow::bail!("primary provider is down")
             }
         }
@@ -1329,7 +1329,7 @@
             }
         }
 
-        let reliable = clawcrew_providers::reliable::ReliableModelProvider::new(
+        let reliable = galleon_providers::reliable::ReliableModelProvider::new(
             "test",
             vec![
                 (
@@ -1478,7 +1478,7 @@
     /// record must be replaced by the route of the final accepted answer.
     #[tokio::test]
     async fn tool_call_then_final_fallback_surfaces_exactly_one_final_notice() {
-        let reliable = clawcrew_providers::reliable::ReliableModelProvider::new(
+        let reliable = galleon_providers::reliable::ReliableModelProvider::new(
             "test",
             vec![
                 (
@@ -1490,7 +1490,7 @@
                 (
                     "fallback".to_string(),
                     Box::new(MockModelProvider {
-                        responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                        responses: Mutex::new(vec![galleon_providers::ChatResponse {
                             text: Some("fallback final".to_string()),
                             tool_calls: vec![],
                             usage: None,
@@ -1575,11 +1575,11 @@
                 _: ChatRequest<'_>,
                 _: &str,
                 _: Option<f64>,
-            ) -> Result<clawcrew_providers::ChatResponse> {
+            ) -> Result<galleon_providers::ChatResponse> {
                 if self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst) == 0 {
                     anyhow::bail!("primary unavailable for first tool request");
                 }
-                Ok(clawcrew_providers::ChatResponse {
+                Ok(galleon_providers::ChatResponse {
                     text: Some("primary final".into()),
                     tool_calls: vec![],
                     usage: None,
@@ -1603,10 +1603,10 @@
                 _: ChatRequest<'_>,
                 _: &str,
                 _: Option<f64>,
-            ) -> Result<clawcrew_providers::ChatResponse> {
-                Ok(clawcrew_providers::ChatResponse {
+            ) -> Result<galleon_providers::ChatResponse> {
+                Ok(galleon_providers::ChatResponse {
                     text: Some("tool request".into()),
-                    tool_calls: vec![clawcrew_providers::ToolCall {
+                    tool_calls: vec![galleon_providers::ToolCall {
                         id: "fallback-tool".into(),
                         name: "echo".into(),
                         arguments: "{}".into(),
@@ -1618,7 +1618,7 @@
             }
         }
 
-        let reliable = clawcrew_providers::reliable::ReliableModelProvider::new(
+        let reliable = galleon_providers::reliable::ReliableModelProvider::new(
             "test",
             vec![
                 (
@@ -1692,7 +1692,7 @@
     }
 
     struct ModelCaptureModelProvider {
-        responses: Mutex<Vec<clawcrew_providers::ChatResponse>>,
+        responses: Mutex<Vec<galleon_providers::ChatResponse>>,
         seen_models: Arc<Mutex<Vec<String>>>,
     }
 
@@ -1713,11 +1713,11 @@
             _request: ChatRequest<'_>,
             model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             self.seen_models.lock().push(model.to_string());
             let mut guard = self.responses.lock();
             if guard.is_empty() {
-                return Ok(clawcrew_providers::ChatResponse {
+                return Ok(galleon_providers::ChatResponse {
                     text: Some("done".into()),
                     tool_calls: vec![],
                     usage: None,
@@ -1742,7 +1742,7 @@
 
     struct TranscriptCaptureModelProvider {
         alias: String,
-        responses: Mutex<Vec<clawcrew_providers::ChatResponse>>,
+        responses: Mutex<Vec<galleon_providers::ChatResponse>>,
         seen_messages: Arc<Mutex<Vec<Vec<ChatMessage>>>>,
     }
 
@@ -1767,11 +1767,11 @@
             request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             self.seen_messages.lock().push(request.messages.to_vec());
             let mut responses = self.responses.lock();
             if responses.is_empty() {
-                return Ok(clawcrew_providers::ChatResponse {
+                return Ok(galleon_providers::ChatResponse {
                     text: Some("done".into()),
                     tool_calls: vec![],
                     usage: None,
@@ -1859,12 +1859,12 @@
             request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             self.calls.fetch_add(1, Ordering::SeqCst);
             if self.reject_full_context && request.messages.len() > 2 {
                 anyhow::bail!("input exceeds the context window of this model")
             }
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some(self.answer.clone()),
                 tool_calls: vec![],
                 usage: None,
@@ -1930,9 +1930,9 @@
             _temperature: Option<f64>,
         ) -> Result<String> {
             self.calls.fetch_add(1, Ordering::SeqCst);
-            clawcrew_providers::commit_safeguard_fallback(Some(
-                clawcrew_providers::SafeguardFallbackNotice {
-                    kind: clawcrew_providers::SafeguardFallbackKind::ServerSide,
+            galleon_providers::commit_safeguard_fallback(Some(
+                galleon_providers::SafeguardFallbackNotice {
+                    kind: galleon_providers::SafeguardFallbackKind::ServerSide,
                     requested_model: "claude-sonnet-4-6".to_string(),
                     served_model: "server-fallback-model".to_string(),
                     category: None,
@@ -1946,17 +1946,17 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             self.calls.fetch_add(1, Ordering::SeqCst);
-            clawcrew_providers::commit_safeguard_fallback(Some(
-                clawcrew_providers::SafeguardFallbackNotice {
-                    kind: clawcrew_providers::SafeguardFallbackKind::ServerSide,
+            galleon_providers::commit_safeguard_fallback(Some(
+                galleon_providers::SafeguardFallbackNotice {
+                    kind: galleon_providers::SafeguardFallbackKind::ServerSide,
                     requested_model: "claude-sonnet-4-6".to_string(),
                     served_model: "server-fallback-model".to_string(),
                     category: None,
                 },
             ));
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some(self.answer.clone()),
                 tool_calls: vec![],
                 usage: None,
@@ -1973,15 +1973,15 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-            _options: clawcrew_providers::traits::StreamOptions,
+            _options: galleon_providers::traits::StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
             clawcrew_api::model_provider::StreamResult<clawcrew_api::model_provider::StreamEvent>,
         > {
             self.calls.fetch_add(1, Ordering::SeqCst);
-            clawcrew_providers::commit_safeguard_fallback(Some(
-                clawcrew_providers::SafeguardFallbackNotice {
-                    kind: clawcrew_providers::SafeguardFallbackKind::ServerSide,
+            galleon_providers::commit_safeguard_fallback(Some(
+                galleon_providers::SafeguardFallbackNotice {
+                    kind: galleon_providers::SafeguardFallbackKind::ServerSide,
                     requested_model: "claude-sonnet-4-6".to_string(),
                     served_model: "server-fallback-model".to_string(),
                     category: None,
@@ -2129,13 +2129,13 @@
             request: ChatRequest<'_>,
             model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             self.requests.lock().push((
                 model.to_string(),
                 request.tools.is_some(),
                 request.messages.to_vec(),
             ));
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some("routed response".into()),
                 tool_calls: vec![],
                 usage: None,
@@ -2188,7 +2188,7 @@
             request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             let call = self.call_count.fetch_add(1, Ordering::SeqCst) + 1;
             self.seen_messages.lock().push(request.messages.to_vec());
             if self.delay_chat_on_call == Some(call) {
@@ -2203,7 +2203,7 @@
             if self.fail_after_delta_on_call == Some(call) {
                 anyhow::bail!("synthetic provider failure after delta on call {call}");
             }
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some(if call == 1 { "draft" } else { "final" }.into()),
                 tool_calls: vec![],
                 usage: None,
@@ -2220,10 +2220,10 @@
             request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-            _options: clawcrew_providers::traits::StreamOptions,
+            _options: galleon_providers::traits::StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<clawcrew_providers::traits::StreamEvent>,
+            galleon_providers::traits::StreamResult<galleon_providers::traits::StreamEvent>,
         > {
             use futures_util::StreamExt as _;
 
@@ -2237,14 +2237,14 @@
                 async move {
                     match step {
                         0 if should_fail => Some((
-                            Err(clawcrew_providers::traits::StreamError::ModelProvider(
+                            Err(galleon_providers::traits::StreamError::ModelProvider(
                                 "synthetic provider failure".into(),
                             )),
                             1,
                         )),
                         0 => Some((
-                            Ok(clawcrew_providers::traits::StreamEvent::TextDelta(
-                                clawcrew_providers::traits::StreamChunk {
+                            Ok(galleon_providers::traits::StreamEvent::TextDelta(
+                                galleon_providers::traits::StreamChunk {
                                     delta,
                                     is_final: false,
                                     reasoning: None,
@@ -2254,14 +2254,14 @@
                             1,
                         )),
                         1 if should_fail_after_delta => Some((
-                            Err(clawcrew_providers::traits::StreamError::ModelProvider(
+                            Err(galleon_providers::traits::StreamError::ModelProvider(
                                 "synthetic provider failure after delta".into(),
                             )),
                             2,
                         )),
                         1 => {
                             tokio::time::sleep(std::time::Duration::from_millis(150)).await;
-                            Some((Ok(clawcrew_providers::traits::StreamEvent::Final), 2))
+                            Some((Ok(galleon_providers::traits::StreamEvent::Final), 2))
                         }
                         _ => None,
                     }
@@ -2332,11 +2332,11 @@
             request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             if let Some(message) = request.messages.iter().rfind(|msg| msg.role == "user") {
                 self.seen_user_messages.lock().push(message.content.clone());
             }
-            Ok(clawcrew_providers::ChatResponse {
+            Ok(galleon_providers::ChatResponse {
                 text: Some("done".into()),
                 tool_calls: vec![],
                 usage: None,
@@ -2349,10 +2349,10 @@
             request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-            _options: clawcrew_providers::traits::StreamOptions,
+            _options: galleon_providers::traits::StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<clawcrew_providers::traits::StreamEvent>,
+            galleon_providers::traits::StreamResult<galleon_providers::traits::StreamEvent>,
         > {
             use futures_util::stream::{self, StreamExt};
 
@@ -2361,8 +2361,8 @@
             }
 
             if self.streamed {
-                let chunk = clawcrew_providers::traits::StreamEvent::TextDelta(
-                    clawcrew_providers::traits::StreamChunk {
+                let chunk = galleon_providers::traits::StreamEvent::TextDelta(
+                    galleon_providers::traits::StreamChunk {
                         delta: "stream-done".into(),
                         is_final: false,
                         reasoning: None,
@@ -2371,11 +2371,11 @@
                 );
                 stream::iter(vec![
                     Ok(chunk),
-                    Ok(clawcrew_providers::traits::StreamEvent::Final),
+                    Ok(galleon_providers::traits::StreamEvent::Final),
                 ])
                 .boxed()
             } else {
-                stream::iter(vec![Ok(clawcrew_providers::traits::StreamEvent::Final)]).boxed()
+                stream::iter(vec![Ok(galleon_providers::traits::StreamEvent::Final)]).boxed()
             }
         }
 
@@ -2467,9 +2467,9 @@
 
         let model_provider = Box::new(MockModelProvider {
             responses: Mutex::new(vec![
-                clawcrew_providers::ChatResponse {
+                galleon_providers::ChatResponse {
                     text: Some("intermediate native narration".into()),
-                    tool_calls: vec![clawcrew_providers::ToolCall {
+                    tool_calls: vec![galleon_providers::ToolCall {
                         id: "tc1".into(),
                         name: "echo".into(),
                         arguments: "{}".into(),
@@ -2478,7 +2478,7 @@
                     usage: None,
                     reasoning_content: None,
                 },
-                clawcrew_providers::ChatResponse {
+                galleon_providers::ChatResponse {
                     text: Some("final answer".into()),
                     tool_calls: vec![],
                     usage: None,
@@ -2526,7 +2526,7 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             Err(anyhow::Error::msg("provider unavailable"))
         }
     }
@@ -2577,11 +2577,11 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             if self.calls.fetch_add(1, std::sync::atomic::Ordering::SeqCst) == 0 {
-                return Ok(clawcrew_providers::ChatResponse {
+                return Ok(galleon_providers::ChatResponse {
                     text: Some("running tool".into()),
-                    tool_calls: vec![clawcrew_providers::ToolCall {
+                    tool_calls: vec![galleon_providers::ToolCall {
                         id: "error-path-call".into(),
                         name: "echo".into(),
                         arguments: "{}".into(),
@@ -2666,7 +2666,7 @@
     #[tokio::test]
     async fn turn_without_tools_returns_text() {
         let model_provider = Box::new(MockModelProvider {
-            responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+            responses: Mutex::new(vec![galleon_providers::ChatResponse {
                 text: Some("hello".into()),
                 tool_calls: vec![],
                 usage: None,
@@ -2703,7 +2703,7 @@
     #[tokio::test]
     async fn direct_agent_strict_tool_parsing_ignores_xml_dispatcher_calls() {
         let provider = Box::new(MockModelProvider {
-            responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+            responses: Mutex::new(vec![galleon_providers::ChatResponse {
                 text: Some(
                     r#"<tool_call>{"name":"echo","arguments":{"value":"ignored"}}</tool_call>"#
                         .into(),
@@ -2899,7 +2899,7 @@
         /// Test provider that captures the provider-visible transcript and
         /// reports a configurable native-tool capability.
         struct CapturingModelProvider {
-            responses: Mutex<Vec<clawcrew_providers::ChatResponse>>,
+            responses: Mutex<Vec<galleon_providers::ChatResponse>>,
             supports_native: bool,
             captured_messages: CapturedTranscripts,
         }
@@ -2921,13 +2921,13 @@
                 request: ChatRequest<'_>,
                 _model: &str,
                 _temperature: Option<f64>,
-            ) -> Result<clawcrew_providers::ChatResponse> {
+            ) -> Result<galleon_providers::ChatResponse> {
                 self.captured_messages
                     .lock()
                     .push(request.messages.to_vec());
                 let mut guard = self.responses.lock();
                 if guard.is_empty() {
-                    return Ok(clawcrew_providers::ChatResponse {
+                    return Ok(galleon_providers::ChatResponse {
                         text: Some("done".into()),
                         tool_calls: vec![],
                         usage: None,
@@ -2973,7 +2973,7 @@
         fn dispatcher_selection_uses_the_selected_routes_tool_capability() {
             let (native_default, _) = capturing_provider(true);
             let (text_route, _) = capturing_provider(false);
-            let router = clawcrew_providers::router::RouterModelProvider::new(
+            let router = galleon_providers::router::RouterModelProvider::new(
                 "test",
                 vec![
                     ("default".to_string(), native_default),
@@ -2981,7 +2981,7 @@
                 ],
                 vec![(
                     "text".to_string(),
-                    clawcrew_providers::router::Route {
+                    galleon_providers::router::Route {
                         provider_name: "text".to_string(),
                         model: "text-model".to_string(),
                     },
@@ -3511,9 +3511,9 @@
     async fn turn_with_native_dispatcher_handles_tool_results_variant() {
         let model_provider = Box::new(MockModelProvider {
             responses: Mutex::new(vec![
-                clawcrew_providers::ChatResponse {
+                galleon_providers::ChatResponse {
                     text: Some(String::new()),
-                    tool_calls: vec![clawcrew_providers::ToolCall {
+                    tool_calls: vec![galleon_providers::ToolCall {
                         id: "tc1".into(),
                         name: "echo".into(),
                         arguments: "{}".into(),
@@ -3522,7 +3522,7 @@
                     usage: None,
                     reasoning_content: None,
                 },
-                clawcrew_providers::ChatResponse {
+                galleon_providers::ChatResponse {
                     text: Some("done".into()),
                     tool_calls: vec![],
                     usage: None,
@@ -3567,10 +3567,10 @@
     async fn turn_routes_with_hint_when_query_classification_matches() {
         let seen_models = Arc::new(Mutex::new(Vec::new()));
         let model_provider = Box::new(ModelCaptureModelProvider {
-            responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+            responses: Mutex::new(vec![galleon_providers::ChatResponse {
                 text: Some("classified".into()),
                 tool_calls: vec![],
-                usage: Some(clawcrew_providers::traits::TokenUsage {
+                usage: Some(galleon_providers::traits::TokenUsage {
                     input_tokens: Some(100),
                     cached_input_tokens: None,
                     cache_creation_input_tokens: None,
@@ -3591,10 +3591,10 @@
         );
 
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
-        let model_route_resolver = Arc::new(clawcrew_providers::router::ModelRouteResolver::new(
+        let model_route_resolver = Arc::new(galleon_providers::router::ModelRouteResolver::new(
             vec![(
                 "fast".to_string(),
-                clawcrew_providers::router::Route {
+                galleon_providers::router::Route {
                     provider_name: "anthropic.fast".to_string(),
                     model: "anthropic/claude-haiku-4-5".to_string(),
                 },
@@ -3673,7 +3673,7 @@
     async fn classified_route_keeps_selector_for_tool_protocol_and_unchanged_hook() {
         let default_requests: CapturedToolProtocolRequests = Arc::new(Mutex::new(Vec::new()));
         let text_requests: CapturedToolProtocolRequests = Arc::new(Mutex::new(Vec::new()));
-        let router = clawcrew_providers::router::RouterModelProvider::new(
+        let router = galleon_providers::router::RouterModelProvider::new(
             "classifier-router",
             vec![
                 (
@@ -3693,17 +3693,17 @@
             ],
             vec![(
                 "text".into(),
-                clawcrew_providers::router::Route {
+                galleon_providers::router::Route {
                     provider_name: "text".into(),
                     model: "text-model".into(),
                 },
             )],
             "native-model".into(),
         );
-        let route_resolver = Arc::new(clawcrew_providers::router::ModelRouteResolver::new(
+        let route_resolver = Arc::new(galleon_providers::router::ModelRouteResolver::new(
             vec![(
                 "text".into(),
-                clawcrew_providers::router::Route {
+                galleon_providers::router::Route {
                     provider_name: "text".into(),
                     model: "text-model".into(),
                 },
@@ -4111,7 +4111,7 @@
             Arc::clone(&tracker),
             Arc::new(build_model_provider_pricing(&config)),
         );
-        let usage = clawcrew_providers::traits::TokenUsage {
+        let usage = galleon_providers::traits::TokenUsage {
             input_tokens: Some(1_000_000),
             output_tokens: Some(1_000_000),
             cached_input_tokens: Some(0),
@@ -4439,7 +4439,7 @@
 
     #[test]
     fn seed_conversation_history_trims_over_cap_restore_without_splitting_tools() {
-        use clawcrew_providers::{ToolCall, ToolResultMessage};
+        use galleon_providers::{ToolCall, ToolResultMessage};
 
         let capturing = Arc::new(CapturingObserver::default());
         let observer: Arc<dyn Observer> = capturing.clone();
@@ -4638,14 +4638,14 @@
             request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             self.tools_received.lock().push(request.tools.is_some());
             let mut count = self.call_count.lock();
             *count += 1;
             if *count == 1 {
-                Ok(clawcrew_providers::ChatResponse {
+                Ok(galleon_providers::ChatResponse {
                     text: Some(String::new()),
-                    tool_calls: vec![clawcrew_providers::ToolCall {
+                    tool_calls: vec![galleon_providers::ToolCall {
                         id: "00000000-0000-0000-0000-000000000001".into(),
                         name: "echo".into(),
                         arguments: "{}".into(),
@@ -4655,7 +4655,7 @@
                     reasoning_content: None,
                 })
             } else {
-                Ok(clawcrew_providers::ChatResponse {
+                Ok(galleon_providers::ChatResponse {
                     text: Some("stream-done".into()),
                     tool_calls: vec![],
                     usage: None,
@@ -4673,18 +4673,18 @@
             request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-            _options: clawcrew_providers::traits::StreamOptions,
+            _options: galleon_providers::traits::StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<clawcrew_providers::traits::StreamEvent>,
+            galleon_providers::traits::StreamResult<galleon_providers::traits::StreamEvent>,
         > {
             use futures_util::stream::{self, StreamExt};
             self.tools_received.lock().push(request.tools.is_some());
             let mut count = self.call_count.lock();
             *count += 1;
             if *count == 1 {
-                let tc = clawcrew_providers::traits::StreamEvent::ToolCall(
-                    clawcrew_providers::ToolCall {
+                let tc = galleon_providers::traits::StreamEvent::ToolCall(
+                    galleon_providers::ToolCall {
                         id: "00000000-0000-0000-0000-000000000001".into(),
                         name: "echo".into(),
                         arguments: "{}".into(),
@@ -4693,12 +4693,12 @@
                 );
                 stream::iter(vec![
                     Ok(tc),
-                    Ok(clawcrew_providers::traits::StreamEvent::Final),
+                    Ok(galleon_providers::traits::StreamEvent::Final),
                 ])
                 .boxed()
             } else {
-                let chunk = clawcrew_providers::traits::StreamEvent::TextDelta(
-                    clawcrew_providers::traits::StreamChunk {
+                let chunk = galleon_providers::traits::StreamEvent::TextDelta(
+                    galleon_providers::traits::StreamChunk {
                         delta: "stream-done".into(),
                         is_final: false,
                         reasoning: None,
@@ -4707,7 +4707,7 @@
                 );
                 stream::iter(vec![
                     Ok(chunk),
-                    Ok(clawcrew_providers::traits::StreamEvent::Final),
+                    Ok(galleon_providers::traits::StreamEvent::Final),
                 ])
                 .boxed()
             }
@@ -5034,8 +5034,8 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
-            Ok(clawcrew_providers::ChatResponse {
+        ) -> Result<galleon_providers::ChatResponse> {
+            Ok(galleon_providers::ChatResponse {
                 text: Some("done".into()),
                 tool_calls: vec![],
                 usage: None,
@@ -5060,46 +5060,46 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-            _options: clawcrew_providers::traits::StreamOptions,
+            _options: galleon_providers::traits::StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<clawcrew_providers::traits::StreamEvent>,
+            galleon_providers::traits::StreamResult<galleon_providers::traits::StreamEvent>,
         > {
             use futures_util::stream::{self, StreamExt};
             let mut count = self.call_count.lock();
             *count += 1;
             if *count == 1 {
                 stream::iter(vec![
-                    Ok(clawcrew_providers::traits::StreamEvent::ToolCall(
-                        clawcrew_providers::ToolCall {
+                    Ok(galleon_providers::traits::StreamEvent::ToolCall(
+                        galleon_providers::ToolCall {
                             id: "00000000-0000-0000-0000-000000000001".into(),
                             name: "echo".into(),
                             arguments: "{}".into(),
                             extra_content: None,
                         },
                     )),
-                    Ok(clawcrew_providers::traits::StreamEvent::ToolCall(
-                        clawcrew_providers::ToolCall {
+                    Ok(galleon_providers::traits::StreamEvent::ToolCall(
+                        galleon_providers::ToolCall {
                             id: "00000000-0000-0000-0000-000000000002".into(),
                             name: "echo".into(),
                             arguments: "{}".into(),
                             extra_content: None,
                         },
                     )),
-                    Ok(clawcrew_providers::traits::StreamEvent::Final),
+                    Ok(galleon_providers::traits::StreamEvent::Final),
                 ])
                 .boxed()
             } else {
                 stream::iter(vec![
-                    Ok(clawcrew_providers::traits::StreamEvent::TextDelta(
-                        clawcrew_providers::traits::StreamChunk {
+                    Ok(galleon_providers::traits::StreamEvent::TextDelta(
+                        galleon_providers::traits::StreamChunk {
                             delta: "stream-done".into(),
                             is_final: false,
                             reasoning: None,
                             token_count: 0,
                         },
                     )),
-                    Ok(clawcrew_providers::traits::StreamEvent::Final),
+                    Ok(galleon_providers::traits::StreamEvent::Final),
                 ])
                 .boxed()
             }
@@ -5204,8 +5204,8 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
-            Ok(clawcrew_providers::ChatResponse {
+        ) -> Result<galleon_providers::ChatResponse> {
+            Ok(galleon_providers::ChatResponse {
                 text: Some(String::new()),
                 tool_calls: vec![],
                 usage: None,
@@ -5222,42 +5222,42 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-            _options: clawcrew_providers::traits::StreamOptions,
+            _options: galleon_providers::traits::StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<clawcrew_providers::traits::StreamEvent>,
+            galleon_providers::traits::StreamResult<galleon_providers::traits::StreamEvent>,
         > {
             use futures_util::stream::{self, StreamExt};
 
             stream::iter(vec![
                 Ok(
-                    clawcrew_providers::traits::StreamEvent::PreExecutedToolCall {
+                    galleon_providers::traits::StreamEvent::PreExecutedToolCall {
                         name: "file_read".into(),
                         args: "{\"path\":\"a.txt\"}".into(),
                     },
                 ),
                 Ok(
-                    clawcrew_providers::traits::StreamEvent::PreExecutedToolCall {
+                    galleon_providers::traits::StreamEvent::PreExecutedToolCall {
                         name: "shell".into(),
                         args: "{\"command\":\"pwd\"}".into(),
                     },
                 ),
                 Ok(
-                    clawcrew_providers::traits::StreamEvent::PreExecutedToolResult {
+                    galleon_providers::traits::StreamEvent::PreExecutedToolResult {
                         name: "file_read".into(),
                         output: "a".into(),
                     },
                 ),
                 Ok(
-                    clawcrew_providers::traits::StreamEvent::PreExecutedToolResult {
+                    galleon_providers::traits::StreamEvent::PreExecutedToolResult {
                         name: "shell".into(),
                         output: "b".into(),
                     },
                 ),
-                Ok(clawcrew_providers::traits::StreamEvent::TextDelta(
-                    clawcrew_providers::traits::StreamChunk::delta("done"),
+                Ok(galleon_providers::traits::StreamEvent::TextDelta(
+                    galleon_providers::traits::StreamChunk::delta("done"),
                 )),
-                Ok(clawcrew_providers::traits::StreamEvent::Final),
+                Ok(galleon_providers::traits::StreamEvent::Final),
             ])
             .boxed()
         }
@@ -5502,7 +5502,7 @@
     }
 
     fn push_trim_history_tool_exchange(agent: &mut Agent, index: usize) {
-        use clawcrew_providers::{ToolCall, ToolResultMessage};
+        use galleon_providers::{ToolCall, ToolResultMessage};
 
         let tool_call_id = format!("trim-history-call-{index}");
         agent.history.push(ConversationMessage::AssistantToolCalls {
@@ -5740,7 +5740,7 @@
             .expect_err("missing vision support should fail before provider dispatch");
 
         let capability_error = error
-            .downcast_ref::<clawcrew_providers::ProviderCapabilityError>()
+            .downcast_ref::<galleon_providers::ProviderCapabilityError>()
             .expect("vision refusal must retain its structured capability error");
         assert_eq!(capability_error.capability, "vision");
         assert_old_trim_test_turn_was_removed(&agent);
@@ -5773,7 +5773,7 @@
             .expect_err("missing vision support should fail before provider dispatch");
 
         let capability_error = error
-            .downcast_ref::<clawcrew_providers::ProviderCapabilityError>()
+            .downcast_ref::<galleon_providers::ProviderCapabilityError>()
             .expect("vision refusal must retain its structured capability error");
         assert_eq!(capability_error.capability, "vision");
         assert_old_trim_test_turn_was_removed(&agent);
@@ -6032,9 +6032,9 @@
         );
 
         let model_provider = Box::new(MockModelProvider {
-            responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+            responses: Mutex::new(vec![galleon_providers::ChatResponse {
                 text: Some("I will echo the message.".into()),
-                tool_calls: vec![clawcrew_providers::ToolCall {
+                tool_calls: vec![galleon_providers::ToolCall {
                     id: "tc1".into(),
                     name: "echo".into(),
                     arguments: "{}".into(),
@@ -6100,8 +6100,8 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
-            Ok(clawcrew_providers::ChatResponse {
+        ) -> Result<galleon_providers::ChatResponse> {
+            Ok(galleon_providers::ChatResponse {
                 text: Some("done".into()),
                 tool_calls: vec![],
                 usage: None,
@@ -6118,46 +6118,46 @@
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-            _options: clawcrew_providers::traits::StreamOptions,
+            _options: galleon_providers::traits::StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<clawcrew_providers::traits::StreamEvent>,
+            galleon_providers::traits::StreamResult<galleon_providers::traits::StreamEvent>,
         > {
             use futures_util::stream::{self, StreamExt};
             let mut count = self.call_count.lock();
             *count += 1;
             if *count == 1 {
                 stream::iter(vec![
-                    Ok(clawcrew_providers::traits::StreamEvent::TextDelta(
-                        clawcrew_providers::traits::StreamChunk {
+                    Ok(galleon_providers::traits::StreamEvent::TextDelta(
+                        galleon_providers::traits::StreamChunk {
                             delta: "I will echo the message.".into(),
                             is_final: false,
                             reasoning: None,
                             token_count: 0,
                         },
                     )),
-                    Ok(clawcrew_providers::traits::StreamEvent::ToolCall(
-                        clawcrew_providers::ToolCall {
+                    Ok(galleon_providers::traits::StreamEvent::ToolCall(
+                        galleon_providers::ToolCall {
                             id: "tc1".into(),
                             name: "echo".into(),
                             arguments: "{}".into(),
                             extra_content: None,
                         },
                     )),
-                    Ok(clawcrew_providers::traits::StreamEvent::Final),
+                    Ok(galleon_providers::traits::StreamEvent::Final),
                 ])
                 .boxed()
             } else {
                 stream::iter(vec![
-                    Ok(clawcrew_providers::traits::StreamEvent::TextDelta(
-                        clawcrew_providers::traits::StreamChunk {
+                    Ok(galleon_providers::traits::StreamEvent::TextDelta(
+                        galleon_providers::traits::StreamChunk {
                             delta: "done".into(),
                             is_final: false,
                             reasoning: None,
                             token_count: 0,
                         },
                     )),
-                    Ok(clawcrew_providers::traits::StreamEvent::Final),
+                    Ok(galleon_providers::traits::StreamEvent::Final),
                 ])
                 .boxed()
             }
@@ -6248,7 +6248,7 @@
         let seen_b = Arc::new(Mutex::new(Vec::new()));
         let provider_a = Box::new(TranscriptCaptureModelProvider {
             alias: "transcript-a".into(),
-            responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+            responses: Mutex::new(vec![galleon_providers::ChatResponse {
                 text: Some("from prior transcript".into()),
                 tool_calls: vec![],
                 usage: None,
@@ -6258,7 +6258,7 @@
         });
         let provider_b = Box::new(TranscriptCaptureModelProvider {
             alias: "transcript-b".into(),
-            responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+            responses: Mutex::new(vec![galleon_providers::ChatResponse {
                 text: Some("from fresh transcript".into()),
                 tool_calls: vec![],
                 usage: None,
@@ -6340,7 +6340,7 @@
         let mut seed_agent = Agent::builder()
             .model_provider(Box::new(TranscriptCaptureModelProvider {
                 alias: "shared-provider-alias".into(),
-                responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                responses: Mutex::new(vec![galleon_providers::ChatResponse {
                     text: Some("cached answer".into()),
                     tool_calls: vec![],
                     usage: None,
@@ -6374,7 +6374,7 @@
         let mut guarded_agent = Agent::builder()
             .model_provider(Box::new(TranscriptCaptureModelProvider {
                 alias: "shared-provider-alias".into(),
-                responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                responses: Mutex::new(vec![galleon_providers::ChatResponse {
                     text: Some("must not be returned".into()),
                     tool_calls: vec![],
                     usage: None,
@@ -6444,13 +6444,13 @@
                 request: ChatRequest<'_>,
                 model: &str,
                 _temperature: Option<f64>,
-            ) -> Result<clawcrew_providers::ChatResponse> {
+            ) -> Result<galleon_providers::ChatResponse> {
                 self.seen_messages.lock().push(request.messages.to_vec());
                 self.seen_models.lock().push(model.to_string());
-                Ok(clawcrew_providers::ChatResponse {
+                Ok(galleon_providers::ChatResponse {
                     text: Some("provider answer".into()),
                     tool_calls: vec![],
-                    usage: Some(clawcrew_providers::traits::TokenUsage {
+                    usage: Some(galleon_providers::traits::TokenUsage {
                         input_tokens: Some(1_000),
                         cached_input_tokens: None,
                         cache_creation_input_tokens: None,
@@ -6583,7 +6583,7 @@
         let tmp = tempfile::tempdir().expect("temp workspace");
         let default_requests: CapturedToolProtocolRequests = Arc::new(Mutex::new(Vec::new()));
         let text_requests: CapturedToolProtocolRequests = Arc::new(Mutex::new(Vec::new()));
-        let router = clawcrew_providers::router::RouterModelProvider::new(
+        let router = galleon_providers::router::RouterModelProvider::new(
             "hook-router",
             vec![
                 (
@@ -6603,7 +6603,7 @@
             ],
             vec![(
                 "text".into(),
-                clawcrew_providers::router::Route {
+                galleon_providers::router::Route {
                     provider_name: "text".into(),
                     model: "text-model".into(),
                 },
@@ -6681,7 +6681,7 @@
         let default_requests: CapturedToolProtocolRequests = Arc::new(Mutex::new(Vec::new()));
         let native_requests: CapturedToolProtocolRequests = Arc::new(Mutex::new(Vec::new()));
         let text_requests: CapturedToolProtocolRequests = Arc::new(Mutex::new(Vec::new()));
-        let mixed = clawcrew_providers::reliable::ReliableModelProvider::new(
+        let mixed = galleon_providers::reliable::ReliableModelProvider::new(
             "mixed",
             vec![
                 (
@@ -6702,7 +6702,7 @@
             0,
             0,
         );
-        let router = clawcrew_providers::router::RouterModelProvider::new(
+        let router = galleon_providers::router::RouterModelProvider::new(
             "hook-router",
             vec![
                 (
@@ -6716,7 +6716,7 @@
             ],
             vec![(
                 "mixed".into(),
-                clawcrew_providers::router::Route {
+                galleon_providers::router::Route {
                     provider_name: "mixed".into(),
                     model: "mixed-model".into(),
                 },
@@ -6860,7 +6860,7 @@
                 Agent::builder()
                     .model_provider(Box::new(TranscriptCaptureModelProvider {
                         alias: provider_alias.into(),
-                        responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                        responses: Mutex::new(vec![galleon_providers::ChatResponse {
                             text: Some(answer.into()),
                             tool_calls: vec![],
                             usage: None,
@@ -6912,7 +6912,7 @@
         );
         Agent::builder()
             .model_provider(Box::new(
-                clawcrew_providers::reliable::ReliableModelProvider::new(
+                galleon_providers::reliable::ReliableModelProvider::new(
                     "shared-reliable",
                     vec![(
                         "primary".into(),
@@ -7059,7 +7059,7 @@
         let build = |answer: &str| {
             Agent::builder()
                 .model_provider(Box::new(
-                    clawcrew_providers::reliable::ReliableModelProvider::new(
+                    galleon_providers::reliable::ReliableModelProvider::new(
                         "shared-reliable",
                         vec![
                             (
@@ -7138,7 +7138,7 @@
         let build = |answer: &str| {
             Agent::builder()
                 .model_provider(Box::new(
-                    clawcrew_providers::reliable::ReliableModelProvider::new(
+                    galleon_providers::reliable::ReliableModelProvider::new(
                         "shared-reliable",
                         vec![
                             (
@@ -7356,11 +7356,11 @@
         let seen_c = Arc::new(Mutex::new(Vec::new()));
         let seen_d = Arc::new(Mutex::new(Vec::new()));
         let build = |answer: &str, pinned_model: &str, seen: Arc<Mutex<Vec<Vec<ChatMessage>>>>| {
-            let pinned = clawcrew_providers::model_pin::ModelPinnedProvider::builder("shared-pin")
+            let pinned = galleon_providers::model_pin::ModelPinnedProvider::builder("shared-pin")
                 .pinned_model(pinned_model)
                 .inner(Box::new(TranscriptCaptureModelProvider {
                     alias: "shared-child".into(),
-                    responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                    responses: Mutex::new(vec![galleon_providers::ChatResponse {
                         text: Some(answer.into()),
                         tool_calls: vec![],
                         usage: None,
@@ -7369,7 +7369,7 @@
                     seen_messages: seen,
                 }))
                 .build();
-            let reliable = clawcrew_providers::reliable::ReliableModelProvider::new(
+            let reliable = galleon_providers::reliable::ReliableModelProvider::new(
                 "shared-reliable",
                 vec![("only".into(), Box::new(pinned))],
                 0,
@@ -7433,13 +7433,13 @@
         let seen_c = Arc::new(Mutex::new(Vec::new()));
         let seen_d = Arc::new(Mutex::new(Vec::new()));
         let build = |answer: &str, routed_model: &str, seen: Arc<Mutex<Vec<Vec<ChatMessage>>>>| {
-            let router = clawcrew_providers::router::RouterModelProvider::new(
+            let router = galleon_providers::router::RouterModelProvider::new(
                 "shared-router",
                 vec![(
                     "provider.default".into(),
                     Box::new(TranscriptCaptureModelProvider {
                         alias: "shared-child".into(),
-                        responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                        responses: Mutex::new(vec![galleon_providers::ChatResponse {
                             text: Some(answer.into()),
                             tool_calls: vec![],
                             usage: None,
@@ -7450,7 +7450,7 @@
                 )],
                 vec![(
                     "fast".into(),
-                    clawcrew_providers::router::Route {
+                    galleon_providers::router::Route {
                         provider_name: "provider.default".into(),
                         model: routed_model.into(),
                     },
@@ -7532,7 +7532,7 @@
                 Agent::builder()
                     .model_provider(Box::new(TranscriptCaptureModelProvider {
                         alias: "thinking-provider".into(),
-                        responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                        responses: Mutex::new(vec![galleon_providers::ChatResponse {
                             text: Some(answer.into()),
                             tool_calls: vec![],
                             usage: None,
@@ -7611,7 +7611,7 @@
                 Agent::builder()
                     .model_provider(Box::new(TranscriptCaptureModelProvider {
                         alias: "tool-capable".into(),
-                        responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                        responses: Mutex::new(vec![galleon_providers::ChatResponse {
                             text: Some(answer.into()),
                             tool_calls: vec![],
                             usage: None,
@@ -7775,7 +7775,7 @@
              cache: Arc<galleon_memory::response_cache::ResponseCache>| {
                 let provider = Box::new(TranscriptCaptureModelProvider {
                     alias: "memory-regression".into(),
-                    responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                    responses: Mutex::new(vec![galleon_providers::ChatResponse {
                         text: Some("answer".into()),
                         tool_calls: vec![],
                         usage: None,
@@ -9265,10 +9265,10 @@
         let ws_dir = tmp.path().to_path_buf();
         let mut agent_a = Agent::builder()
             .model_provider(Box::new(MockModelProvider {
-                responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                responses: Mutex::new(vec![galleon_providers::ChatResponse {
                     text: Some("cached answer".into()),
                     tool_calls: vec![],
-                    usage: Some(clawcrew_providers::traits::TokenUsage {
+                    usage: Some(galleon_providers::traits::TokenUsage {
                         input_tokens: Some(10),
                         cached_input_tokens: None,
                         cache_creation_input_tokens: None,
@@ -9298,7 +9298,7 @@
         let observer: Arc<dyn Observer> = capturing.clone();
         let mut agent_b = Agent::builder()
             .model_provider(Box::new(MockModelProvider {
-                responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                responses: Mutex::new(vec![galleon_providers::ChatResponse {
                     text: Some("uncached answer".into()),
                     tool_calls: vec![],
                     usage: None,
@@ -9347,15 +9347,15 @@
         let observer: Arc<dyn Observer> = capturing.clone();
         let mut agent = Agent::builder()
             .model_provider(Box::new(MockModelProvider {
-                responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                responses: Mutex::new(vec![galleon_providers::ChatResponse {
                     text: Some("I will echo.".into()),
-                    tool_calls: vec![clawcrew_providers::ToolCall {
+                    tool_calls: vec![galleon_providers::ToolCall {
                         id: "tc1".into(),
                         name: "echo".into(),
                         arguments: "{}".into(),
                         extra_content: None,
                     }],
-                    usage: Some(clawcrew_providers::traits::TokenUsage {
+                    usage: Some(galleon_providers::traits::TokenUsage {
                         input_tokens: Some(10),
                         cached_input_tokens: None,
                         cache_creation_input_tokens: None,
@@ -9457,10 +9457,10 @@
 
         let mut agent = Agent::builder()
             .model_provider(Box::new(MockModelProvider {
-                responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                responses: Mutex::new(vec![galleon_providers::ChatResponse {
                     text: Some("turn cost".into()),
                     tool_calls: vec![],
-                    usage: Some(clawcrew_providers::traits::TokenUsage {
+                    usage: Some(galleon_providers::traits::TokenUsage {
                         input_tokens: Some(1_000),
                         cached_input_tokens: None,
                         cache_creation_input_tokens: None,
@@ -9559,10 +9559,10 @@
 
         let mut agent = Agent::builder()
             .model_provider(Box::new(MockModelProvider {
-                responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+                responses: Mutex::new(vec![galleon_providers::ChatResponse {
                     text: Some("streamed cost".into()),
                     tool_calls: vec![],
-                    usage: Some(clawcrew_providers::traits::TokenUsage {
+                    usage: Some(galleon_providers::traits::TokenUsage {
                         input_tokens: Some(1_000),
                         cached_input_tokens: None,
                         cache_creation_input_tokens: None,
@@ -9676,7 +9676,7 @@
         );
 
         let model_provider = Box::new(MockModelProvider {
-            responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+            responses: Mutex::new(vec![galleon_providers::ChatResponse {
                 text: Some("done".into()),
                 tool_calls: vec![],
                 usage: None,
@@ -9724,7 +9724,7 @@
         );
 
         let model_provider = Box::new(MockModelProvider {
-            responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+            responses: Mutex::new(vec![galleon_providers::ChatResponse {
                 text: Some("done".into()),
                 tool_calls: vec![],
                 usage: None,
@@ -9780,7 +9780,7 @@
         );
         // Single response with no token usage.
         let model_provider = Box::new(MockModelProvider {
-            responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+            responses: Mutex::new(vec![galleon_providers::ChatResponse {
                 text: Some("done".into()),
                 tool_calls: vec![],
                 usage: None,
@@ -9854,10 +9854,10 @@
         );
         // Single response carrying usage WITHOUT token counts (kilocli-style).
         let model_provider = Box::new(MockModelProvider {
-            responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
+            responses: Mutex::new(vec![galleon_providers::ChatResponse {
                 text: Some("done".into()),
                 tool_calls: vec![],
-                usage: Some(clawcrew_providers::traits::TokenUsage::default()),
+                usage: Some(galleon_providers::traits::TokenUsage::default()),
                 reasoning_content: None,
             }]),
         });
@@ -9909,15 +9909,15 @@
         // usage-bearing per-call frame). Call 2: the final response WITHOUT usage.
         let model_provider = Box::new(MockModelProvider {
             responses: Mutex::new(vec![
-                clawcrew_providers::ChatResponse {
+                galleon_providers::ChatResponse {
                     text: Some("calling tool".into()),
-                    tool_calls: vec![clawcrew_providers::ToolCall {
+                    tool_calls: vec![galleon_providers::ToolCall {
                         id: "tc1".into(),
                         name: "echo".into(),
                         arguments: "{}".into(),
                         extra_content: None,
                     }],
-                    usage: Some(clawcrew_providers::traits::TokenUsage {
+                    usage: Some(galleon_providers::traits::TokenUsage {
                         input_tokens: Some(100),
                         cached_input_tokens: None,
                         cache_creation_input_tokens: None,
@@ -9925,7 +9925,7 @@
                     }),
                     reasoning_content: None,
                 },
-                clawcrew_providers::ChatResponse {
+                galleon_providers::ChatResponse {
                     text: Some("final answer".into()),
                     tool_calls: vec![],
                     usage: None,
@@ -10082,17 +10082,17 @@ vision_model_provider = "custom.vision"
                 _request: ChatRequest<'_>,
                 _model: &str,
                 _t: Option<f64>,
-            ) -> Result<clawcrew_providers::ChatResponse> {
+            ) -> Result<galleon_providers::ChatResponse> {
                 self.calls.fetch_add(1, Ordering::SeqCst);
-                Ok(clawcrew_providers::ChatResponse {
+                Ok(galleon_providers::ChatResponse {
                     text: None,
-                    tool_calls: vec![clawcrew_providers::ToolCall {
+                    tool_calls: vec![galleon_providers::ToolCall {
                         id: "c1".into(),
                         name: "attach_image".into(),
                         arguments: "{}".into(),
                         extra_content: None,
                     }],
-                    usage: Some(clawcrew_providers::traits::TokenUsage {
+                    usage: Some(galleon_providers::traits::TokenUsage {
                         input_tokens: Some(100),
                         cached_input_tokens: None,
                         cache_creation_input_tokens: None,
@@ -10321,7 +10321,7 @@ vision_model_provider = "custom.vision"
     #[tokio::test]
     async fn served_limits_follow_the_accepted_reliable_fallback_route() {
         use std::sync::atomic::{AtomicUsize, Ordering};
-        use clawcrew_providers::reliable::ReliableModelProvider;
+        use galleon_providers::reliable::ReliableModelProvider;
 
         // 200k primary that always fails, 8k backup that answers. Both are
         // configured aliases, so each resolves to a real `context_window`.
@@ -10365,7 +10365,7 @@ model_provider = "custom.primary"
                 _request: ChatRequest<'_>,
                 _model: &str,
                 _t: Option<f64>,
-            ) -> Result<clawcrew_providers::ChatResponse> {
+            ) -> Result<galleon_providers::ChatResponse> {
                 anyhow::bail!("primary is down")
             }
             // Deliberately does NOT support streaming so that reliable's
@@ -10414,9 +10414,9 @@ model_provider = "custom.primary"
                 _request: ChatRequest<'_>,
                 _model: &str,
                 _t: Option<f64>,
-            ) -> Result<clawcrew_providers::ChatResponse> {
+            ) -> Result<galleon_providers::ChatResponse> {
                 self.calls.fetch_add(1, Ordering::SeqCst);
-                Ok(clawcrew_providers::ChatResponse {
+                Ok(galleon_providers::ChatResponse {
                     text: Some("backup answered".to_string()),
                     tool_calls: Vec::new(),
                     usage: None,
@@ -10428,13 +10428,13 @@ model_provider = "custom.primary"
             }
             fn stream_chat(
                 &self,
-                _request: clawcrew_providers::ChatRequest<'_>,
+                _request: galleon_providers::ChatRequest<'_>,
                 _model: &str,
                 _t: Option<f64>,
-                _options: clawcrew_providers::traits::StreamOptions,
+                _options: galleon_providers::traits::StreamOptions,
             ) -> futures_util::stream::BoxStream<
                 'static,
-                clawcrew_providers::traits::StreamResult<clawcrew_api::model_provider::StreamEvent>,
+                galleon_providers::traits::StreamResult<clawcrew_api::model_provider::StreamEvent>,
             > {
                 self.calls.fetch_add(1, Ordering::SeqCst);
                 Box::pin(futures_util::stream::iter(vec![
@@ -10627,10 +10627,10 @@ model_provider = "custom.only"
                 _request: ChatRequest<'_>,
                 model: &str,
                 _t: Option<f64>,
-            ) -> Result<clawcrew_providers::ChatResponse> {
+            ) -> Result<galleon_providers::ChatResponse> {
                 if model == "small-model" {
                     self.small_calls.fetch_add(1, Ordering::SeqCst);
-                    return Ok(clawcrew_providers::ChatResponse {
+                    return Ok(galleon_providers::ChatResponse {
                         text: Some("fallback model answered".to_string()),
                         tool_calls: Vec::new(),
                         usage: None,
@@ -10644,13 +10644,13 @@ model_provider = "custom.only"
             }
             fn stream_chat(
                 &self,
-                _request: clawcrew_providers::ChatRequest<'_>,
+                _request: galleon_providers::ChatRequest<'_>,
                 model: &str,
                 _t: Option<f64>,
-                _options: clawcrew_providers::traits::StreamOptions,
+                _options: galleon_providers::traits::StreamOptions,
             ) -> futures_util::stream::BoxStream<
                 'static,
-                clawcrew_providers::traits::StreamResult<clawcrew_api::model_provider::StreamEvent>,
+                galleon_providers::traits::StreamResult<clawcrew_api::model_provider::StreamEvent>,
             > {
                 if model == "small-model" {
                     self.small_calls.fetch_add(1, Ordering::SeqCst);
@@ -10692,7 +10692,7 @@ model_provider = "custom.only"
         });
         // Mirror `push_pinned_entries`: both entries share ONE cooldown key
         // (the alias) and differ only in the pinned model.
-        let reliable = clawcrew_providers::reliable::ReliableModelProvider::new_pinned_for_test(
+        let reliable = galleon_providers::reliable::ReliableModelProvider::new_pinned_for_test(
             "custom.only",
             vec![
                 ("custom.only", "only", "large-model", Arc::clone(&inner)),
@@ -11434,16 +11434,16 @@ model_provider = "custom.only"
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-        ) -> Result<clawcrew_providers::ChatResponse> {
+        ) -> Result<galleon_providers::ChatResponse> {
             // The unified loop drives the streaming wrapper through `chat`
             // (stream events are synthesized post-hoc), so the tool call that
             // queues the switch is emitted here on the first call.
             let mut count = self.call_count.lock();
             *count += 1;
             if *count == 1 {
-                Ok(clawcrew_providers::ChatResponse {
+                Ok(galleon_providers::ChatResponse {
                     text: Some(String::new()),
-                    tool_calls: vec![clawcrew_providers::ToolCall {
+                    tool_calls: vec![galleon_providers::ToolCall {
                         id: "00000000-0000-0000-0000-000000000002".into(),
                         name: "model_switch_trigger".into(),
                         arguments: "{}".into(),
@@ -11455,7 +11455,7 @@ model_provider = "custom.only"
             } else {
                 // Should not be reached: after the switch, the next call goes
                 // to the switched provider, not this one.
-                Ok(clawcrew_providers::ChatResponse {
+                Ok(galleon_providers::ChatResponse {
                     text: Some("original-provider-should-not-be-reused".into()),
                     tool_calls: vec![],
                     usage: None,
@@ -11473,18 +11473,18 @@ model_provider = "custom.only"
             _request: ChatRequest<'_>,
             _model: &str,
             _temperature: Option<f64>,
-            _options: clawcrew_providers::traits::StreamOptions,
+            _options: galleon_providers::traits::StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<clawcrew_providers::traits::StreamEvent>,
+            galleon_providers::traits::StreamResult<galleon_providers::traits::StreamEvent>,
         > {
             use futures_util::stream::{self, StreamExt};
             let mut count = self.call_count.lock();
             *count += 1;
             if *count == 1 {
                 // First call: ask to run the tool that queues a model switch.
-                let tc = clawcrew_providers::traits::StreamEvent::ToolCall(
-                    clawcrew_providers::ToolCall {
+                let tc = galleon_providers::traits::StreamEvent::ToolCall(
+                    galleon_providers::ToolCall {
                         id: "00000000-0000-0000-0000-000000000002".into(),
                         name: "model_switch_trigger".into(),
                         arguments: "{}".into(),
@@ -11493,14 +11493,14 @@ model_provider = "custom.only"
                 );
                 stream::iter(vec![
                     Ok(tc),
-                    Ok(clawcrew_providers::traits::StreamEvent::Final),
+                    Ok(galleon_providers::traits::StreamEvent::Final),
                 ])
                 .boxed()
             } else {
                 // Should not be reached: after the switch, the next call goes
                 // to the switched provider, not this one.
-                let chunk = clawcrew_providers::traits::StreamEvent::TextDelta(
-                    clawcrew_providers::traits::StreamChunk {
+                let chunk = galleon_providers::traits::StreamEvent::TextDelta(
+                    galleon_providers::traits::StreamChunk {
                         delta: "original-provider-should-not-be-reused".into(),
                         is_final: false,
                         reasoning: None,
@@ -11509,7 +11509,7 @@ model_provider = "custom.only"
                 );
                 stream::iter(vec![
                     Ok(chunk),
-                    Ok(clawcrew_providers::traits::StreamEvent::Final),
+                    Ok(galleon_providers::traits::StreamEvent::Final),
                 ])
                 .boxed()
             }

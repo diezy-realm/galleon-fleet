@@ -7,7 +7,7 @@ use crate::agent::history::estimate_history_tokens;
 use crate::agent::history_trim::{insert_breadcrumb_deduped, trim_to_recent_turns_with_crumb};
 use crate::observability::{Observer, ObserverEvent};
 use std::time::Instant;
-use clawcrew_providers::ChatMessage;
+use galleon_providers::ChatMessage;
 
 /// Record a failed provider call: observer `LlmResponse` (failure) and the
 /// `llm_response` failure log line.
@@ -23,7 +23,7 @@ pub(crate) fn record_llm_failure(
     let safe_error = if is_tool_loop_cancelled(e) {
         "request cancelled by user".to_string()
     } else {
-        clawcrew_providers::sanitize_api_error(&e.to_string())
+        galleon_providers::sanitize_api_error(&e.to_string())
     };
     ctx.observer.record_event(&ObserverEvent::LlmResponse {
         model_provider: ctx.provider_name.to_string(),
@@ -69,7 +69,7 @@ pub(crate) async fn try_recover_context_overflow(
     // inserts a fresh crumb so classification never depends on text.
     crumb_present: &mut bool,
 ) -> bool {
-    if clawcrew_providers::reliable::is_context_window_exceeded(e) {
+    if galleon_providers::reliable::is_context_window_exceeded(e) {
         ::clawcrew_log::record!(
             WARN,
             ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Retry)
@@ -211,7 +211,7 @@ pub(crate) async fn try_recover_context_overflow(
 mod tests {
     use super::*;
     use crate::observability::NoopObserver;
-    use clawcrew_providers::ChatMessage;
+    use galleon_providers::ChatMessage;
 
     fn overflowing_history() -> Vec<ChatMessage> {
         let big = "x".repeat(4000);

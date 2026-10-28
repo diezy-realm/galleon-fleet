@@ -117,7 +117,7 @@ pub(crate) fn history_trimmed_ws_frame(
 }
 
 /// Build the display-only `safeguard_fallback` WS frame from a drained
-/// [`clawcrew_providers::SafeguardFallbackNotice`], or `None` when no notice
+/// [`galleon_providers::SafeguardFallbackNotice`], or `None` when no notice
 /// was recorded this turn (so "no notice → no frame" is enforced here).
 ///
 /// Privacy contract: only the requested/served model names and the fallback
@@ -125,13 +125,13 @@ pub(crate) fn history_trimmed_ws_frame(
 /// refusal explanation) are logs-only and MUST NEVER reach the browser — this
 /// helper deliberately never reads `notice.category`.
 pub(crate) fn safeguard_fallback_ws_frame(
-    notice: Option<&clawcrew_providers::SafeguardFallbackNotice>,
+    notice: Option<&galleon_providers::SafeguardFallbackNotice>,
 ) -> Option<serde_json::Value> {
     let notice = notice?;
     let fallback_kind = match notice.kind {
-        clawcrew_providers::SafeguardFallbackKind::ServerSide => "server",
-        clawcrew_providers::SafeguardFallbackKind::ClientSide => "client",
-        clawcrew_providers::SafeguardFallbackKind::ClientAndServer => "client_server",
+        galleon_providers::SafeguardFallbackKind::ServerSide => "server",
+        galleon_providers::SafeguardFallbackKind::ClientSide => "client",
+        galleon_providers::SafeguardFallbackKind::ClientAndServer => "client_server",
     };
     Some(serde_json::json!({
         "type": "safeguard_fallback",
@@ -142,7 +142,7 @@ pub(crate) fn safeguard_fallback_ws_frame(
 }
 
 pub(crate) fn success_terminal_ws_frames(
-    safeguard_notice: Option<&clawcrew_providers::SafeguardFallbackNotice>,
+    safeguard_notice: Option<&galleon_providers::SafeguardFallbackNotice>,
     done: serde_json::Value,
 ) -> Vec<serde_json::Value> {
     safeguard_fallback_ws_frame(safeguard_notice)
@@ -762,11 +762,11 @@ pub(crate) async fn process_chat_message(
                 } else {
                     format!("{accumulated_text}\n\n{marker}")
                 };
-                let mut d = clawcrew_providers::durable_chat_messages(agent.history());
-                d.push(clawcrew_providers::ChatMessage::assistant(&truncated));
+                let mut d = galleon_providers::durable_chat_messages(agent.history());
+                d.push(galleon_providers::ChatMessage::assistant(&truncated));
                 d
             } else {
-                clawcrew_providers::durable_chat_messages(agent.history())
+                galleon_providers::durable_chat_messages(agent.history())
             };
             let crumb = agent.history_has_trim_breadcrumb();
             replace_conversation_state_unless_deleted(
@@ -953,16 +953,16 @@ pub(crate) async fn process_chat_message(
             // transcript. Privacy: only the model names cross the wire — the
             // classifier `category` (and any refusal explanation) never do.
             let safeguard_notice = outcome.safeguard_fallback.as_ref().map(|s| {
-                clawcrew_providers::SafeguardFallbackNotice {
+                galleon_providers::SafeguardFallbackNotice {
                     kind: match s.kind {
                         clawcrew_api::agent::AgentSafeguardKind::ServerSide => {
-                            clawcrew_providers::SafeguardFallbackKind::ServerSide
+                            galleon_providers::SafeguardFallbackKind::ServerSide
                         }
                         clawcrew_api::agent::AgentSafeguardKind::ClientSide => {
-                            clawcrew_providers::SafeguardFallbackKind::ClientSide
+                            galleon_providers::SafeguardFallbackKind::ClientSide
                         }
                         clawcrew_api::agent::AgentSafeguardKind::ClientAndServer => {
-                            clawcrew_providers::SafeguardFallbackKind::ClientAndServer
+                            galleon_providers::SafeguardFallbackKind::ClientAndServer
                         }
                     },
                     requested_model: s.requested_model.clone(),
@@ -1028,7 +1028,7 @@ pub(crate) async fn process_chat_message(
                 "Agent turn failed"
             );
             let user_message =
-                clawcrew_providers::terminal_error::terminal_completion_error_message_with_renderer(
+                galleon_providers::terminal_error::terminal_completion_error_message_with_renderer(
                     &e.error,
                     None,
                     render_cli_string,
@@ -1053,7 +1053,7 @@ pub(crate) async fn process_chat_message(
                         "model_provider": provider_label,
                         "model": turn_model,
                         "session_key": session_key,
-                        "error": clawcrew_providers::sanitize_api_error(&e.error.to_string()),
+                        "error": galleon_providers::sanitize_api_error(&e.error.to_string()),
                         "error_code": err["code"],
                         "trace_id": turn_id,
                     })),
@@ -1078,7 +1078,7 @@ pub(crate) fn ws_turn_failure_frame(
     user_message: Option<&str>,
     is_terminal_provider_failure: bool,
 ) -> serde_json::Value {
-    let sanitized = clawcrew_providers::sanitize_api_error(diagnostic);
+    let sanitized = galleon_providers::sanitize_api_error(diagnostic);
     let error_code = if is_terminal_provider_failure {
         "PROVIDER_ERROR"
     } else if sanitized.to_lowercase().contains("api key")

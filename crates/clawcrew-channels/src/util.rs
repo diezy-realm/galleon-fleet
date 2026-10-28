@@ -866,7 +866,7 @@ mod tests {
         // not as a marker or a stray bracket span.
         let reply = format!(
             "I can't view that, it shows as {}.",
-            clawcrew_providers::multimodal::MEDIA_PLACEHOLDER
+            galleon_providers::multimodal::MEDIA_PLACEHOLDER
         );
         let (cleaned, attachments) = parse_attachment_markers(&reply);
         assert_eq!(cleaned, reply);

@@ -14,7 +14,7 @@ use uuid::Uuid;
 use clawcrew_api::agent::TurnEvent;
 use clawcrew_api::model_provider::StreamEvent;
 use clawcrew_config::schema::StreamReasoningMode;
-use clawcrew_providers::{ChatMessage, ChatRequest, ModelProvider, ProviderDispatch, ToolCall};
+use galleon_providers::{ChatMessage, ChatRequest, ModelProvider, ProviderDispatch, ToolCall};
 
 #[derive(Debug, Default)]
 pub(crate) struct StreamedChatOutcome {
@@ -27,7 +27,7 @@ pub(crate) struct StreamedChatOutcome {
     /// duplicated nor truncated when a tool call cuts the live stream short.
     pub(crate) forwarded_visible_text: String,
     pub(crate) suppressed_protocol: bool,
-    pub(crate) usage: Option<clawcrew_providers::traits::TokenUsage>,
+    pub(crate) usage: Option<galleon_providers::traits::TokenUsage>,
     pub(crate) saw_pre_executed_tool_activity: bool,
 }
 
@@ -54,7 +54,7 @@ pub(crate) async fn consume_provider_streaming_response(
         },
         model,
         temperature,
-        clawcrew_providers::traits::StreamOptions::new(true),
+        galleon_providers::traits::StreamOptions::new(true),
     );
     let mut outcome = StreamedChatOutcome::default();
     let mut delta_sender = on_delta;
@@ -163,7 +163,7 @@ pub(crate) async fn consume_provider_streaming_response(
                     {
                         usage = refusal.usage.as_deref().cloned();
                     }
-                    let cause = clawcrew_providers::ReliableProviderTerminalFailure::from_error(
+                    let cause = galleon_providers::ReliableProviderTerminalFailure::from_error(
                         &provider_error,
                     )
                     .with_terminal_cause(anyhow::Error::new(err));
@@ -375,8 +375,8 @@ mod tests {
     use async_trait::async_trait;
     use futures_util::stream::BoxStream;
     use clawcrew_api::model_provider::StreamChunk;
-    use clawcrew_providers::ToolCall;
-    use clawcrew_providers::traits::{
+    use galleon_providers::ToolCall;
+    use galleon_providers::traits::{
         ChatResponse, ProviderCapabilities, StreamOptions, StreamResult, TokenUsage,
     };
 

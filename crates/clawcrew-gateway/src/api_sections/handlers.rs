@@ -25,7 +25,7 @@ pub async fn handle_catalog(State(state): State<AppState>, headers: HeaderMap) -
     }
     let _ = state;
 
-    let model_providers: Vec<CatalogModelProvider> = clawcrew_providers::list_model_providers()
+    let model_providers: Vec<CatalogModelProvider> = galleon_providers::list_model_providers()
         .into_iter()
         .map(|p| CatalogModelProvider {
             name: p.name.to_string(),
@@ -45,13 +45,13 @@ pub async fn handle_catalog_models(
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    let local = clawcrew_providers::model_provider_is_local(&q.model_provider);
+    let local = galleon_providers::model_provider_is_local(&q.model_provider);
     // Snapshot config so the catalog resolves the alias credential and can reach
     // the native /models endpoint (surfacing new native-only models that the
     // models.dev snapshot may not carry yet) instead of silently falling back.
     let cfg = state.config.read().clone();
     let (models, pricing, live) =
-        clawcrew_providers::catalog::model_catalog_with_config(Some(&cfg), &q.model_provider).await;
+        galleon_providers::catalog::model_catalog_with_config(Some(&cfg), &q.model_provider).await;
     axum::Json(CatalogModelsResult {
         model_provider: q.model_provider,
         models,
@@ -146,7 +146,7 @@ pub(crate) fn quickstart_agent_missing_requirements(
             missing.push(format!("Choose a model for model provider `{model_ref}`."));
         } else if !model_provider_alias_usable(
             provider,
-            clawcrew_providers::model_provider_is_local(family),
+            galleon_providers::model_provider_is_local(family),
         ) {
             missing.push(format!(
                 "Set credential/auth for model provider `{model_ref}`."
@@ -478,7 +478,7 @@ pub(crate) fn picker_items_for(
 }
 
 pub(crate) fn providers_picker(cfg: &clawcrew_config::schema::Config) -> Vec<PickerItem> {
-    clawcrew_providers::list_model_providers()
+    galleon_providers::list_model_providers()
         .into_iter()
         .map(|p| PickerItem {
             key: p.name.to_string(),
@@ -498,7 +498,7 @@ pub(crate) fn any_usable_model_provider(cfg: &clawcrew_config::schema::Config) -
         .models
         .iter_entries()
         .any(|(family, _, base)| {
-            model_provider_alias_usable(base, clawcrew_providers::model_provider_is_local(family))
+            model_provider_alias_usable(base, galleon_providers::model_provider_is_local(family))
         })
 }
 

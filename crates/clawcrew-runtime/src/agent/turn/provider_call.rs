@@ -17,8 +17,8 @@ use crate::tools::ToolSpec;
 use anyhow::Result;
 use std::time::{Duration, Instant};
 use clawcrew_config::schema::StreamReasoningMode;
-use clawcrew_providers::dispatch::{AcceptedRoute, AccountedAttempt, with_exact_dispatch_route};
-use clawcrew_providers::{ChatMessage, ChatRequest, ChatResponse, ModelProvider, ProviderDispatch};
+use galleon_providers::dispatch::{AcceptedRoute, AccountedAttempt, with_exact_dispatch_route};
+use galleon_providers::{ChatMessage, ChatRequest, ChatResponse, ModelProvider, ProviderDispatch};
 
 pub(crate) struct ProviderCallOutcome {
     pub(crate) chat_result: Result<ChatResponse>,
@@ -169,9 +169,9 @@ pub(crate) async fn call_provider(
         // The stream is lazily consumed inside this call-scoped owner. Its
         // permitted non-stream recovery therefore shares the same Reliable
         // attempt ledger instead of opening a second scope.
-        let scope = clawcrew_providers::dispatch::AccountedChatScope::new();
+        let scope = galleon_providers::dispatch::AccountedChatScope::new();
         let (result, live_deltas, protocol_suppressed, visible_text) = scope
-            .scope(Box::pin(clawcrew_providers::reliable::scope_provider_fallback(Box::pin(async {
+            .scope(Box::pin(galleon_providers::reliable::scope_provider_fallback(Box::pin(async {
                     match consume_provider_streaming_response(
                         active_model_provider,
                         prepared_messages,
@@ -346,7 +346,7 @@ pub(crate) async fn call_provider(
         // Non-streaming path: wrap with optional per-step timeout from
         // pacing config to catch hung model responses.
         let dispatcher = ProviderDispatch::from_ref(active_model_provider);
-        let scope = clawcrew_providers::dispatch::AccountedChatScope::new();
+        let scope = galleon_providers::dispatch::AccountedChatScope::new();
         let chat_future = scope.scope(Box::pin(with_exact_dispatch_route(
             active_model_provider_name.to_string(),
             active_model.to_string(),
@@ -434,7 +434,7 @@ mod payload_capture_tests {
     use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
     use clawcrew_config::schema::{PacingConfig, StreamReasoningMode};
     use clawcrew_log::LogConfig;
-    use clawcrew_providers::{ChatMessage, ModelProvider};
+    use galleon_providers::{ChatMessage, ModelProvider};
 
     /// Minimal provider stub. Only `chat_with_system` is required by
     /// `ModelProvider`; `announce_llm_request` never calls it (it only opens
@@ -689,10 +689,10 @@ mod streaming_fallback_tests {
     use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
     use clawcrew_api::model_provider::{ModelRefusalError, StreamError, StreamEvent};
     use clawcrew_config::schema::PacingConfig;
-    use clawcrew_providers::compatible::{AuthStyle, OpenAiCompatibleModelProvider};
-    use clawcrew_providers::reliable::ReliableModelProvider;
-    use clawcrew_providers::traits::{StreamOptions, StreamResult, TokenUsage};
-    use clawcrew_providers::{
+    use galleon_providers::compatible::{AuthStyle, OpenAiCompatibleModelProvider};
+    use galleon_providers::reliable::ReliableModelProvider;
+    use galleon_providers::traits::{StreamOptions, StreamResult, TokenUsage};
+    use galleon_providers::{
         ModelProvider, ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
     };
 
@@ -1082,7 +1082,7 @@ mod streaming_fallback_tests {
             _options: StreamOptions,
         ) -> BoxStream<'static, StreamResult<StreamEvent>> {
             Box::pin(futures_util::stream::iter(vec![Err(
-                clawcrew_providers::traits::StreamError::ModelProvider(
+                galleon_providers::traits::StreamError::ModelProvider(
                     "error sending request for url (http://127.0.0.1:9/v1/messages): \
                      client error (Connect): connection refused"
                         .to_string(),
@@ -1133,7 +1133,7 @@ mod streaming_fallback_tests {
                 Ok(StreamEvent::TextDelta(
                     clawcrew_api::model_provider::StreamChunk::delta("visible"),
                 )),
-                Err(clawcrew_providers::traits::StreamError::ModelProvider(
+                Err(galleon_providers::traits::StreamError::ModelProvider(
                     "503 Service Unavailable".to_string(),
                 )),
             ]))
@@ -1237,7 +1237,7 @@ mod streaming_fallback_tests {
         assert_eq!(outcome.attempts[0].provider_ref(), "primary");
         assert!(matches!(
             outcome.attempts[0].outcome(),
-            clawcrew_providers::dispatch::AttemptUsageOutcome::OutcomeUnknown {
+            galleon_providers::dispatch::AttemptUsageOutcome::OutcomeUnknown {
                 observed: Some(usage),
             } if usage.input_tokens == Some(10) && usage.output_tokens == Some(5)
         ));
@@ -1254,7 +1254,7 @@ mod streaming_fallback_tests {
         assert_eq!(outcome.attempts[1].provider_ref(), "primary");
         assert!(matches!(
             outcome.attempts[1].outcome(),
-            clawcrew_providers::dispatch::AttemptUsageOutcome::Complete(usage)
+            galleon_providers::dispatch::AttemptUsageOutcome::Complete(usage)
                 if usage.input_tokens == Some(20) && usage.output_tokens == Some(7)
         ));
     }
@@ -1574,7 +1574,7 @@ mod streaming_fallback_tests {
             serving_model: None,
         };
 
-        let (outcome, notice) = clawcrew_providers::scope_safeguard_fallback(async {
+        let (outcome, notice) = galleon_providers::scope_safeguard_fallback(async {
             let outcome = call_provider(
                 &ctx,
                 &provider,
@@ -1588,7 +1588,7 @@ mod streaming_fallback_tests {
             )
             .await
             .expect("pre-output refusal is recovered by the next candidate");
-            (outcome, clawcrew_providers::take_last_safeguard_fallback())
+            (outcome, galleon_providers::take_last_safeguard_fallback())
         })
         .await;
 
@@ -1607,7 +1607,7 @@ mod streaming_fallback_tests {
         assert!(
             matches!(
                 outcome.attempts[0].outcome(),
-                clawcrew_providers::dispatch::AttemptUsageOutcome::OutcomeUnknown {
+                galleon_providers::dispatch::AttemptUsageOutcome::OutcomeUnknown {
                     observed: Some(usage),
                 } if usage.input_tokens == Some(7)
                     && usage.output_tokens == Some(3)
@@ -1618,7 +1618,7 @@ mod streaming_fallback_tests {
         );
         assert!(matches!(
             outcome.attempts[1].outcome(),
-            clawcrew_providers::dispatch::AttemptUsageOutcome::Complete(usage)
+            galleon_providers::dispatch::AttemptUsageOutcome::Complete(usage)
                 if usage.input_tokens == Some(11) && usage.output_tokens == Some(4)
         ));
         assert_eq!(
@@ -1627,7 +1627,7 @@ mod streaming_fallback_tests {
                 .iter()
                 .filter(|attempt| matches!(
                     attempt.outcome(),
-                    clawcrew_providers::dispatch::AttemptUsageOutcome::OutcomeUnknown {
+                    galleon_providers::dispatch::AttemptUsageOutcome::OutcomeUnknown {
                         observed: Some(usage),
                     } if usage.input_tokens == Some(7) && usage.output_tokens == Some(3)
                 ))
@@ -1639,7 +1639,7 @@ mod streaming_fallback_tests {
         let notice = notice.expect("successful refusal recovery notice");
         assert_eq!(
             notice.kind,
-            clawcrew_providers::SafeguardFallbackKind::ClientSide
+            galleon_providers::SafeguardFallbackKind::ClientSide
         );
         assert_eq!(notice.requested_model, "requested-model");
         assert_eq!(notice.served_model, "requested-model");
@@ -1771,7 +1771,7 @@ mod streaming_fallback_tests {
         assert_eq!(attempt.model(), "requested-model");
         assert!(matches!(
             attempt.outcome(),
-            clawcrew_providers::dispatch::AttemptUsageOutcome::Complete(usage)
+            galleon_providers::dispatch::AttemptUsageOutcome::Complete(usage)
                 if usage.input_tokens == Some(10) && usage.output_tokens == Some(5)
         ));
     }
@@ -1846,7 +1846,7 @@ mod streaming_fallback_tests {
         assert_eq!(attempt.model(), "requested-model");
         assert!(matches!(
             attempt.outcome(),
-            clawcrew_providers::dispatch::AttemptUsageOutcome::Complete(usage)
+            galleon_providers::dispatch::AttemptUsageOutcome::Complete(usage)
                 if usage.input_tokens == Some(10) && usage.output_tokens == Some(5)
         ));
     }

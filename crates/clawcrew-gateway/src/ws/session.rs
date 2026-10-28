@@ -744,7 +744,7 @@ pub(crate) fn session_queue_ws_error_code(
 pub(crate) fn replace_conversation_state_unless_deleted(
     backend: &dyn clawcrew_infra::session_backend::SessionBackend,
     session_key: &str,
-    durable: &[clawcrew_providers::ChatMessage],
+    durable: &[galleon_providers::ChatMessage],
     breadcrumb_present: bool,
 ) -> bool {
     match backend.replace_conversation_state_if_exists(session_key, durable, breadcrumb_present) {
@@ -776,7 +776,7 @@ pub(crate) fn persist_agent_conversation_state(
     session_key: &str,
     agent: &(dyn clawcrew_api::agent::AgentSession + '_),
 ) -> bool {
-    let durable = clawcrew_providers::durable_chat_messages(agent.history());
+    let durable = galleon_providers::durable_chat_messages(agent.history());
     replace_conversation_state_unless_deleted(
         backend,
         session_key,
@@ -786,12 +786,12 @@ pub(crate) fn persist_agent_conversation_state(
 }
 
 pub(crate) fn has_assistant_chat_message(
-    messages: &[clawcrew_providers::ConversationMessage],
+    messages: &[galleon_providers::ConversationMessage],
 ) -> bool {
     messages.iter().any(|message| {
         matches!(
             message,
-            clawcrew_providers::ConversationMessage::Chat(message)
+            galleon_providers::ConversationMessage::Chat(message)
                 if message.role == "assistant"
         )
     })

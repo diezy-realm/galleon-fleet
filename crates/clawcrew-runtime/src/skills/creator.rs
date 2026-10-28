@@ -573,7 +573,7 @@ fn extract_frontmatter_block(raw: &str) -> String {
 /// Scans assistant messages for tool call patterns (both JSON and XML formats)
 /// and returns records for each unique tool invocation.
 pub fn extract_tool_calls_from_history(
-    history: &[clawcrew_providers::ChatMessage],
+    history: &[galleon_providers::ChatMessage],
 ) -> Vec<ToolCallRecord> {
     let mut records = Vec::new();
 
@@ -1114,7 +1114,7 @@ tags = ["auto-generated"]
 
     #[test]
     fn extract_from_user_messages_only() {
-        use clawcrew_providers::ChatMessage;
+        use galleon_providers::ChatMessage;
         let history = vec![ChatMessage::user("hello"), ChatMessage::user("world")];
         let records = extract_tool_calls_from_history(&history);
         assert!(records.is_empty());

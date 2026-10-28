@@ -32,7 +32,7 @@ Ukuran dan arah dependency: Phase 5 §1 (`cargo metadata`).
 | | `galleon-macros`, `-commands`, `-relay-proto`, `-sop-graph`, `-dist` | Macro config, katalog slash-command, protokol relay, proyeksi graf SOP, registri target rilis |
 | Fondasi | `clawcrew-log`, `-spawn`, `-infra`, `-tls` | Logging terstruktur, spawn ber-atribusi, backend sesi/watchdog, TLS/mTLS |
 | | `clawcrew-config` (85k LOC, hub), `galleon-i18n` | Skema config & secret; Fluent i18n |
-| Domain | `clawcrew-providers` | **SSOT LLM** (ADR 0001) |
+| Domain | `galleon-providers` | **SSOT LLM** (ADR 0001) |
 | | `-memory`, `-tools`, `-tool-call-parser`, `-hardware` | Memori & embedding, tool agen, parser tool-call, perangkat |
 | | `clawcrew-runtime` (286k LOC) | Agent loop, SOP, hooks, cron, security, observability, skills, RPC, TUI, subagents |
 | Tepi | `clawcrew-channels` (198k LOC) | ±35 adapter channel + orchestrator |

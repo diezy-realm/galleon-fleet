@@ -2,7 +2,7 @@
 //! `role=tool` messages (native) or a `[Tool results]` user message (prompt
 //! mode).
 
-use clawcrew_providers::{ChatMessage, ToolCall};
+use galleon_providers::{ChatMessage, ToolCall};
 
 pub(crate) fn append_tool_round_to_history(
     history: &mut Vec<ChatMessage>,

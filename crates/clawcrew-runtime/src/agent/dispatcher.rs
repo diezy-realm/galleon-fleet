@@ -2,7 +2,7 @@ use super::history::canonicalize_tool_result_media_markers_for;
 use crate::tools::{Tool, ToolSpec};
 use serde_json::Value;
 use std::fmt::Write;
-use clawcrew_providers::{ChatMessage, ChatResponse, ConversationMessage, ToolResultMessage};
+use galleon_providers::{ChatMessage, ChatResponse, ConversationMessage, ToolResultMessage};
 
 #[derive(Debug, Clone)]
 pub struct ParsedToolCall {
@@ -315,7 +315,7 @@ mod tests {
     fn native_dispatcher_roundtrip() {
         let response = ChatResponse {
             text: Some("ok".into()),
-            tool_calls: vec![clawcrew_providers::ToolCall {
+            tool_calls: vec![galleon_providers::ToolCall {
                 id: "tc1".into(),
                 name: "file_read".into(),
                 arguments: "{\"path\":\"a.txt\"}".into(),
@@ -597,7 +597,7 @@ mod tests {
         let dispatcher = NativeToolDispatcher;
         let history = vec![ConversationMessage::AssistantToolCalls {
             text: Some("answer".into()),
-            tool_calls: vec![clawcrew_providers::ToolCall {
+            tool_calls: vec![galleon_providers::ToolCall {
                 id: "tc_1".into(),
                 name: "shell".into(),
                 arguments: "{}".into(),
@@ -621,7 +621,7 @@ mod tests {
         let dispatcher = NativeToolDispatcher;
         let history = vec![ConversationMessage::AssistantToolCalls {
             text: Some("answer".into()),
-            tool_calls: vec![clawcrew_providers::ToolCall {
+            tool_calls: vec![galleon_providers::ToolCall {
                 id: "tc_1".into(),
                 name: "shell".into(),
                 arguments: "{}".into(),
@@ -642,7 +642,7 @@ mod tests {
         let dispatcher = XmlToolDispatcher;
         let history = vec![ConversationMessage::AssistantToolCalls {
             text: Some("answer".into()),
-            tool_calls: vec![clawcrew_providers::ToolCall {
+            tool_calls: vec![galleon_providers::ToolCall {
                 id: "tc_1".into(),
                 name: "shell".into(),
                 arguments: "{}".into(),

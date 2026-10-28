@@ -318,7 +318,7 @@ data: {\"type\":\"message_stop\"}\n\n",
     assert_eq!(error["code"], "PROVIDER_ERROR");
     assert_eq!(
         error["message"],
-        clawcrew_providers::terminal_error::semantic_empty_terminal_completion_message_with_renderer(
+        galleon_providers::terminal_error::semantic_empty_terminal_completion_message_with_renderer(
             None,
             render_cli_string,
         ),
@@ -416,12 +416,12 @@ async fn websocket_connect_persists_a_restore_time_trim_before_going_live_inner(
     let session_id = "restore-trim-session";
     let session_key = format!("{GW_SESSION_PREFIX}{session_id}");
     let over_cap = vec![
-        clawcrew_providers::ChatMessage::user("turn one request"),
-        clawcrew_providers::ChatMessage::assistant("turn one answer"),
-        clawcrew_providers::ChatMessage::user("turn two request"),
-        clawcrew_providers::ChatMessage::assistant("turn two answer"),
-        clawcrew_providers::ChatMessage::user("turn three request"),
-        clawcrew_providers::ChatMessage::assistant("turn three answer"),
+        galleon_providers::ChatMessage::user("turn one request"),
+        galleon_providers::ChatMessage::assistant("turn one answer"),
+        galleon_providers::ChatMessage::user("turn two request"),
+        galleon_providers::ChatMessage::assistant("turn two answer"),
+        galleon_providers::ChatMessage::user("turn three request"),
+        galleon_providers::ChatMessage::assistant("turn three answer"),
     ];
     backend
         .replace_conversation_state(&session_key, &over_cap, false)
@@ -697,7 +697,7 @@ fn restore_trim_uses_live_history_trimmed_frame_shape() {
 
 #[test]
 fn safeguard_fallback_frame_carries_models_and_kind_without_category() {
-    use clawcrew_providers::{SafeguardFallbackKind, SafeguardFallbackNotice};
+    use galleon_providers::{SafeguardFallbackKind, SafeguardFallbackNotice};
     // A client-side notice with a non-empty classifier category — the
     // category must be dropped on the way to the browser.
     let notice = SafeguardFallbackNotice {
@@ -728,7 +728,7 @@ fn safeguard_fallback_frame_carries_models_and_kind_without_category() {
 
 #[test]
 fn safeguard_fallback_frame_maps_server_side_kind() {
-    use clawcrew_providers::{SafeguardFallbackKind, SafeguardFallbackNotice};
+    use galleon_providers::{SafeguardFallbackKind, SafeguardFallbackNotice};
     let notice = SafeguardFallbackNotice {
         kind: SafeguardFallbackKind::ServerSide,
         requested_model: "claude-fable-5".to_string(),
@@ -745,7 +745,7 @@ fn safeguard_fallback_frame_maps_server_side_kind() {
 
 #[test]
 fn safeguard_fallback_frame_preserves_composed_recovery() {
-    use clawcrew_providers::{SafeguardFallbackKind, SafeguardFallbackNotice};
+    use galleon_providers::{SafeguardFallbackKind, SafeguardFallbackNotice};
     let notice = SafeguardFallbackNotice {
         kind: SafeguardFallbackKind::ClientAndServer,
         requested_model: "model-a".to_string(),
@@ -762,7 +762,7 @@ fn safeguard_fallback_frame_preserves_composed_recovery() {
 
 #[test]
 fn safeguard_success_sequence_emits_exactly_one_notice_before_done() {
-    use clawcrew_providers::{SafeguardFallbackKind, SafeguardFallbackNotice};
+    use galleon_providers::{SafeguardFallbackKind, SafeguardFallbackNotice};
     let notice = SafeguardFallbackNotice {
         kind: SafeguardFallbackKind::ClientAndServer,
         requested_model: "model-a".to_string(),
@@ -1288,13 +1288,13 @@ struct DeletedSessionBackend {
 }
 
 impl clawcrew_infra::session_backend::SessionBackend for DeletedSessionBackend {
-    fn load(&self, _session_key: &str) -> Vec<clawcrew_providers::ChatMessage> {
+    fn load(&self, _session_key: &str) -> Vec<galleon_providers::ChatMessage> {
         Vec::new()
     }
     fn append(
         &self,
         session_key: &str,
-        message: &clawcrew_providers::ChatMessage,
+        message: &galleon_providers::ChatMessage,
     ) -> std::io::Result<()> {
         self.append_calls.lock().unwrap().push(format!(
             "{}:{}:{}",
@@ -1305,7 +1305,7 @@ impl clawcrew_infra::session_backend::SessionBackend for DeletedSessionBackend {
     fn rewrite_messages(
         &self,
         session_key: &str,
-        messages: &[clawcrew_providers::ChatMessage],
+        messages: &[galleon_providers::ChatMessage],
     ) -> std::io::Result<()> {
         self.rewrite_calls
             .lock()
@@ -1332,8 +1332,8 @@ fn replace_conversation_state_skips_deleted_session() {
         rewrite_calls: std::sync::Mutex::new(Vec::new()),
     };
     let durable = vec![
-        clawcrew_providers::ChatMessage::user("hi"),
-        clawcrew_providers::ChatMessage::assistant("[interrupted by user]"),
+        galleon_providers::ChatMessage::user("hi"),
+        galleon_providers::ChatMessage::assistant("[interrupted by user]"),
     ];
 
     replace_conversation_state_unless_deleted(&backend, "gw_deleted", &durable, false);
@@ -1350,17 +1350,17 @@ fn replace_conversation_state_skips_deleted_session() {
 /// NOT override `rewrite_messages`, exercising the trait's default
 /// replacement implementation built from those primitives.
 struct AppendOnlyBackend {
-    messages: std::sync::Mutex<Vec<clawcrew_providers::ChatMessage>>,
+    messages: std::sync::Mutex<Vec<galleon_providers::ChatMessage>>,
 }
 
 impl clawcrew_infra::session_backend::SessionBackend for AppendOnlyBackend {
-    fn load(&self, _session_key: &str) -> Vec<clawcrew_providers::ChatMessage> {
+    fn load(&self, _session_key: &str) -> Vec<galleon_providers::ChatMessage> {
         self.messages.lock().unwrap().clone()
     }
     fn append(
         &self,
         _session_key: &str,
-        message: &clawcrew_providers::ChatMessage,
+        message: &galleon_providers::ChatMessage,
     ) -> std::io::Result<()> {
         self.messages.lock().unwrap().push(message.clone());
         Ok(())
@@ -1382,13 +1382,13 @@ fn append_only_backend_durably_replaces_state_through_the_websocket_persistence_
     // silently no-op and drop the caller's replacement.
     let backend = AppendOnlyBackend {
         messages: std::sync::Mutex::new(vec![
-            clawcrew_providers::ChatMessage::user("stale first turn"),
-            clawcrew_providers::ChatMessage::assistant("stale reply"),
+            galleon_providers::ChatMessage::user("stale first turn"),
+            galleon_providers::ChatMessage::assistant("stale reply"),
         ]),
     };
     let authoritative = vec![
-        clawcrew_providers::ChatMessage::user("trimmed second turn"),
-        clawcrew_providers::ChatMessage::assistant("final reply"),
+        galleon_providers::ChatMessage::user("trimmed second turn"),
+        galleon_providers::ChatMessage::assistant("final reply"),
     ];
 
     replace_conversation_state_unless_deleted(&backend, "gw_append_only", &authoritative, true);
@@ -1413,13 +1413,13 @@ fn append_only_backend_durably_replaces_state_through_the_websocket_persistence_
 struct FailingReplaceBackend;
 
 impl clawcrew_infra::session_backend::SessionBackend for FailingReplaceBackend {
-    fn load(&self, _session_key: &str) -> Vec<clawcrew_providers::ChatMessage> {
+    fn load(&self, _session_key: &str) -> Vec<galleon_providers::ChatMessage> {
         Vec::new()
     }
     fn append(
         &self,
         _session_key: &str,
-        _message: &clawcrew_providers::ChatMessage,
+        _message: &galleon_providers::ChatMessage,
     ) -> std::io::Result<()> {
         Ok(())
     }
@@ -1437,7 +1437,7 @@ impl clawcrew_infra::session_backend::SessionBackend for FailingReplaceBackend {
     fn rewrite_messages(
         &self,
         _session_key: &str,
-        _messages: &[clawcrew_providers::ChatMessage],
+        _messages: &[galleon_providers::ChatMessage],
     ) -> std::io::Result<()> {
         Err(std::io::Error::other(
             "simulated durable replacement failure",
@@ -1452,7 +1452,7 @@ fn replace_conversation_state_unless_deleted_reports_durable_failure() {
     // the caller uses this to decide whether the authoritative-history
     // guarantee held for this turn.
     let backend = FailingReplaceBackend;
-    let durable = vec![clawcrew_providers::ChatMessage::user("hi")];
+    let durable = vec![galleon_providers::ChatMessage::user("hi")];
 
     assert!(
         !replace_conversation_state_unless_deleted(&backend, "gw_failing", &durable, false),

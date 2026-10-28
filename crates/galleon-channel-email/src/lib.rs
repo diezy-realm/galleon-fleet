@@ -49,7 +49,7 @@ pub struct EmailChannel {
     /// No cache (see AGENTS.md "ABSOLUTE RULE — SINGLE SOURCE OF TRUTH").
     pub peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
     seen_messages: Arc<Mutex<HashSet<String>>>,
-    auth_service: Option<Arc<clawcrew_providers::auth::AuthService>>,
+    auth_service: Option<Arc<galleon_providers::auth::AuthService>>,
 }
 
 impl EmailChannel {
@@ -71,7 +71,7 @@ impl EmailChannel {
     /// channels configured with `[channels.email.<alias>.oauth2]`.
     pub fn with_auth_service(
         mut self,
-        auth_service: Arc<clawcrew_providers::auth::AuthService>,
+        auth_service: Arc<galleon_providers::auth::AuthService>,
     ) -> Self {
         self.auth_service = Some(auth_service);
         self

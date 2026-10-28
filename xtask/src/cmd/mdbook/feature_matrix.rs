@@ -132,7 +132,7 @@ fn channels_rows(parity: &Parity) -> Result<Vec<Row>> {
 fn providers_rows(parity: &Parity) -> Result<Vec<Row>> {
     let mut rows = Vec::new();
     let mut walked = std::collections::BTreeSet::new();
-    for slot in clawcrew_providers::canonical_model_provider_slots() {
+    for slot in galleon_providers::canonical_model_provider_slots() {
         walked.insert(slot.to_string());
         let (openclaw, hermes) = external_cells(parity.providers.get(slot));
         rows.push(Row {

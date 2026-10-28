@@ -1294,7 +1294,7 @@ impl SlackChannel {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
-            let sanitized = clawcrew_providers::sanitize_api_error(&raw);
+            let sanitized = galleon_providers::sanitize_api_error(&raw);
             anyhow::bail!("Slack file byte upload failed ({status}): {sanitized}");
         }
 
@@ -1373,7 +1373,7 @@ impl SlackChannel {
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&raw);
+            let sanitized = galleon_providers::sanitize_api_error(&raw);
             anyhow::bail!("chat.postMessage failed ({status}): {sanitized}");
         }
 
@@ -1429,7 +1429,7 @@ impl SlackChannel {
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&raw);
+            let sanitized = galleon_providers::sanitize_api_error(&raw);
             anyhow::bail!("chat.update failed ({status}): {sanitized}");
         }
 
@@ -1658,7 +1658,7 @@ impl SlackChannel {
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
+            let sanitized = galleon_providers::sanitize_api_error(&body);
             ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "status": status.to_string(), "sanitized": sanitized})), "users.info failed for");
             return None;
         }
@@ -2158,7 +2158,7 @@ impl SlackChannel {
             .await
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
+            let sanitized = galleon_providers::sanitize_api_error(&body);
             ::clawcrew_log::record!(
                 WARN,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
@@ -2646,7 +2646,7 @@ impl SlackChannel {
             .await
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
+            let sanitized = galleon_providers::sanitize_api_error(&body);
             ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"file_id": file_id, "status": status.to_string(), "sanitized": sanitized})), "files.info failed for");
             return None;
         }
@@ -3023,7 +3023,7 @@ impl SlackChannel {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
+            let sanitized = galleon_providers::sanitize_api_error(&body);
             ::clawcrew_log::record!(
                 WARN,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
@@ -3766,7 +3766,7 @@ impl SlackChannel {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
+            let sanitized = galleon_providers::sanitize_api_error(&body);
             ::clawcrew_log::record!(
                 WARN,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
@@ -3938,7 +3938,7 @@ impl SlackChannel {
                 .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
 
             if !status.is_success() {
-                let sanitized = clawcrew_providers::sanitize_api_error(&body);
+                let sanitized = galleon_providers::sanitize_api_error(&body);
                 anyhow::bail!("Slack conversations.list failed ({status}): {sanitized}");
             }
 
@@ -4170,7 +4170,7 @@ impl SlackChannel {
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
+            let sanitized = galleon_providers::sanitize_api_error(&body);
             anyhow::bail!("Slack apps.connections.open failed ({status}): {sanitized}");
         }
 
@@ -4780,7 +4780,7 @@ impl SlackChannel {
             }
 
             if !status.is_success() {
-                let sanitized = clawcrew_providers::sanitize_api_error(&body);
+                let sanitized = galleon_providers::sanitize_api_error(&body);
                 ::clawcrew_log::record!(
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
@@ -5013,7 +5013,7 @@ impl SlackChannel {
             }
 
             if !status.is_success() {
-                let sanitized = clawcrew_providers::sanitize_api_error(&body);
+                let sanitized = galleon_providers::sanitize_api_error(&body);
                 ::clawcrew_log::record!(
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
@@ -5353,7 +5353,7 @@ impl Channel for SlackChannel {
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
+            let sanitized = galleon_providers::sanitize_api_error(&body);
             anyhow::bail!("chat.postMessage failed ({status}): {sanitized}");
         }
 
@@ -5705,7 +5705,7 @@ impl Channel for SlackChannel {
         let text = resp.text().await.unwrap_or_default();
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&text);
+            let sanitized = galleon_providers::sanitize_api_error(&text);
             anyhow::bail!("Slack reactions.add failed ({status}): {sanitized}");
         }
 
@@ -5750,7 +5750,7 @@ impl Channel for SlackChannel {
         let text = resp.text().await.unwrap_or_default();
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&text);
+            let sanitized = galleon_providers::sanitize_api_error(&text);
             anyhow::bail!("Slack reactions.remove failed ({status}): {sanitized}");
         }
 

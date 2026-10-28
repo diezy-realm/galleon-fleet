@@ -236,7 +236,7 @@ pub async fn handle_api_session_message_post(
         }
     };
 
-    let message = clawcrew_providers::ChatMessage::assistant(&body.content);
+    let message = galleon_providers::ChatMessage::assistant(&body.content);
     if let Err(e) = backend.append(&session_key, &message) {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,

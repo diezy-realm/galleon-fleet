@@ -37,7 +37,7 @@ fn crate_dependency_direction_strictly_enforced() {
             "clawcrew-gateway",
             "clawcrew-channels",
             "galleon-tools",
-            "clawcrew-providers",
+            "galleon-providers",
         ] {
             assert!(
                 !has_active_dependency(&content, forbidden),

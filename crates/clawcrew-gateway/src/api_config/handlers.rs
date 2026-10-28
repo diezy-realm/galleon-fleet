@@ -1360,7 +1360,7 @@ pub async fn handle_refresh_context_window(
 
     // Fetch context window from provider. No lock -- neither `config` nor
     // `config_write_lock` -- is held across this await.
-    let context_window = match clawcrew_providers::fetch_context_window(
+    let context_window = match galleon_providers::fetch_context_window(
         &provider_type,
         &provider_config,
     )

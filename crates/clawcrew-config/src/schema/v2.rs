@@ -683,7 +683,7 @@ fn normalize_provider_type(
         "kilocli" | "kilo-cli" => Some("kilocli"),
         // OpenAI chat-completions: V2's `Provider::kind` default/legacy
         // literal for a plain OpenAI-compatible endpoint was `openai-chat`
-        // (see clawcrew-providers' wire-kind constant), never folded into
+        // (see galleon-providers' wire-kind constant), never folded into
         // the V3 typed-family name. Left unmapped, `dispatch_family_factory`
         // rejects it post-migration with "Unknown model_provider family:
         // openai-chat" for any config that never rewrote `kind` to the V3

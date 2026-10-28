@@ -31,7 +31,7 @@ fn parse_category(label: &str) -> IntegrationCategory {
 
 fn evaluate_model_provider_activation(
     config: &Config,
-    info: &clawcrew_providers::ModelProviderInfo,
+    info: &galleon_providers::ModelProviderInfo,
 ) -> IntegrationStatus {
     bool_to_status(
         config
@@ -65,12 +65,12 @@ pub fn all_integrations(config: &Config) -> Vec<IntegrationEntry> {
         }
     });
 
-    let providers = clawcrew_providers::list_model_providers()
+    let providers = galleon_providers::list_model_providers()
         .into_iter()
         .map(|info| {
             let status = evaluate_model_provider_activation(config, &info);
             let category = match info.category {
-                clawcrew_providers::ModelProviderCategory::AiRouter => {
+                galleon_providers::ModelProviderCategory::AiRouter => {
                     IntegrationCategory::AiRouter
                 }
                 _ => IntegrationCategory::AiModel,
@@ -238,7 +238,7 @@ mod tests {
     fn ai_model_entries_carry_provider_family_key() {
         let config = Config::default();
         let entries = all_integrations(&config);
-        for info in clawcrew_providers::list_model_providers() {
+        for info in galleon_providers::list_model_providers() {
             let entry = entries
                 .iter()
                 .find(|e| {
@@ -570,7 +570,7 @@ mod tests {
 
     #[test]
     fn populated_typed_slot_activates_corresponding_ai_integration() {
-        for info in clawcrew_providers::list_model_providers() {
+        for info in galleon_providers::list_model_providers() {
             let mut config = Config::default();
             assert!(
                 config

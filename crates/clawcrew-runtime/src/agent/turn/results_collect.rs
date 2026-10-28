@@ -14,7 +14,7 @@ use std::fmt::Write;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 use clawcrew_config::schema::PacingConfig;
-use clawcrew_providers::ChatMessage;
+use galleon_providers::ChatMessage;
 use galleon_tool_call_parser::ParsedToolCall;
 
 /// One round's collected tool results.

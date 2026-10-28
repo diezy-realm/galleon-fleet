@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Instant;
 use clawcrew_config::schema::SkillImprovementConfig;
-use clawcrew_providers::ChatMessage;
+use galleon_providers::ChatMessage;
 
 const FRONT_MATTER_DELIM: &str = "---";
 

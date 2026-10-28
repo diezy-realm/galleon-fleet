@@ -2,7 +2,7 @@ use crate::util::*;
 use anyhow::Context as _;
 use std::path::{Path, PathBuf};
 use clawcrew_api::model_provider::ModelProvider;
-use clawcrew_providers::ProviderDispatch;
+use galleon_providers::ProviderDispatch;
 
 const DEFAULT_BATCH_SIZE: usize = 50;
 

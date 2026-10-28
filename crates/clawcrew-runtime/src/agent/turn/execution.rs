@@ -4,8 +4,8 @@ use std::sync::{Arc, Mutex};
 
 use clawcrew_api::model_provider::{ChatRequest, ChatResponse, SemanticEmptyTerminalCompletion};
 use clawcrew_config::schema::{MultimodalConfig, PacingConfig, ResolvedContextLimits};
-use clawcrew_providers::dispatch::{AccountedAttempt, with_exact_dispatch_route};
-use clawcrew_providers::{ModelProvider, ProviderDispatch, multimodal};
+use galleon_providers::dispatch::{AccountedAttempt, with_exact_dispatch_route};
+use galleon_providers::{ModelProvider, ProviderDispatch, multimodal};
 
 use super::{ContextLimitsResolver, LoopKnobs, ModelSwitchCallback};
 use crate::agent::tool_receipts::ReceiptGenerator;
@@ -98,7 +98,7 @@ impl ResolvedModelAccess<'_> {
             thinking,
         };
         let dispatcher = ProviderDispatch::from_ref(self.model_provider);
-        let scope = clawcrew_providers::dispatch::AccountedChatScope::new();
+        let scope = galleon_providers::dispatch::AccountedChatScope::new();
         let result = scope
             // The route identity records the model that actually serves this
             // request, while the dispatch call keeps the provider-facing
@@ -133,7 +133,7 @@ impl ResolvedModelAccess<'_> {
                     extend_rejected_summaries(settled_out, attempts);
                     return Err(anyhow::Error::new(SemanticEmptyTerminalCompletion));
                 }
-                clawcrew_providers::dispatch::commit_accepted_provider_route(accepted_route);
+                galleon_providers::dispatch::commit_accepted_provider_route(accepted_route);
                 crate::agent::cost::settle_provider_attempts(
                     &attempts[..attempts.len().saturating_sub(1)],
                     None,
@@ -319,9 +319,9 @@ mod run_model_query_tests {
     use clawcrew_api::model_provider::{
         ChatRequest, ChatResponse, SemanticEmptyTerminalCompletion, ToolCall,
     };
-    use clawcrew_providers::reliable::ReliableModelProvider;
-    use clawcrew_providers::traits::TokenUsage;
-    use clawcrew_providers::{ChatMessage, ModelProvider, ReliableRejectedCompletionUsage};
+    use galleon_providers::reliable::ReliableModelProvider;
+    use galleon_providers::traits::TokenUsage;
+    use galleon_providers::{ChatMessage, ModelProvider, ReliableRejectedCompletionUsage};
 
     /// Provider stub returning a fixed reply WITH token usage, so the seam's
     /// cost-recording path has something to record.

@@ -357,8 +357,8 @@ pub fn build_model_provider(
     };
     let dotted = format!("{kind}.{alias}");
 
-    let options = clawcrew_providers::provider_runtime_options_for_alias(&config, kind, &alias);
-    let provider = clawcrew_providers::create_resilient_model_provider_from_ref(
+    let options = galleon_providers::provider_runtime_options_for_alias(&config, kind, &alias);
+    let provider = galleon_providers::create_resilient_model_provider_from_ref(
         &config,
         &dotted,
         api_key.as_deref(),

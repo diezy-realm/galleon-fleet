@@ -67,7 +67,7 @@ pub type ImapSession = Session<TlsStreamTolerant>;
 
 pub async fn imap_connect(
     cfg: &EmailConfig,
-    auth_service: Option<&Arc<clawcrew_providers::auth::AuthService>>,
+    auth_service: Option<&Arc<galleon_providers::auth::AuthService>>,
     alias: &str,
 ) -> Result<ImapSession> {
     let addr = format!("{}:{}", cfg.imap_host, cfg.imap_port);

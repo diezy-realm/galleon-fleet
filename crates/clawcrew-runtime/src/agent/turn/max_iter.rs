@@ -11,7 +11,7 @@ use tokio::sync::mpsc::Sender;
 use tokio_util::sync::CancellationToken;
 use clawcrew_api::agent::TurnEvent;
 use clawcrew_config::schema::{MultimodalConfig, PacingConfig};
-use clawcrew_providers::{ChatMessage, ModelProvider};
+use galleon_providers::{ChatMessage, ModelProvider};
 use galleon_tool_call_parser::{strip_think_tags, strip_trailing_terminal_markers};
 
 /// Project a finished summary call's settled attempts as `TurnEvent::Usage`
@@ -127,7 +127,7 @@ pub(crate) async fn finish_after_max_iterations(
     // provider that rejects them would turn the graceful exit into a hard
     // request failure.
     let degrade_strip_images = !model_provider.capabilities_for_model(model).vision
-        && clawcrew_providers::multimodal::count_image_markers(history) > 0;
+        && galleon_providers::multimodal::count_image_markers(history) > 0;
     let mut tokens_before = None;
     let mut dropped_messages = 0;
     let mut dropped_turns = 0;
@@ -213,7 +213,7 @@ pub(crate) async fn finish_after_max_iterations(
     enum SummaryCall {
         Cancelled,
         TimedOut(u64),
-        Done(Result<clawcrew_providers::ChatResponse>),
+        Done(Result<galleon_providers::ChatResponse>),
     }
     // Collect the summary call's settled attempts so they can be projected
     // as Usage events below: without this the gateway ledger omits the
@@ -221,7 +221,7 @@ pub(crate) async fn finish_after_max_iterations(
     // match arms below can read it after the future completes.
     let mut summary_attempts = Vec::new();
     let summary_call = {
-        let summary_request = clawcrew_providers::ChatRequest {
+        let summary_request = galleon_providers::ChatRequest {
             messages: &request_messages,
             tools: None, // No tools — force a text response
             thinking: clawcrew_api::NATIVE_THINKING_OVERRIDE
@@ -390,8 +390,8 @@ mod graceful_summary_metering_tests {
         ChatRequest, ChatResponse, ProviderCapabilities, SemanticEmptyTerminalCompletion,
     };
     use clawcrew_config::schema::{CostConfig, MultimodalConfig, PacingConfig};
-    use clawcrew_providers::traits::TokenUsage;
-    use clawcrew_providers::{ChatMessage, ModelProvider};
+    use galleon_providers::traits::TokenUsage;
+    use galleon_providers::{ChatMessage, ModelProvider};
 
     use super::{Sender, TurnEvent};
 
@@ -839,7 +839,7 @@ mod graceful_summary_metering_tests {
             "raw audio path reached the provider on the max-iteration path: {captured}"
         );
         assert!(
-            captured.contains(clawcrew_providers::multimodal::MEDIA_PLACEHOLDER),
+            captured.contains(galleon_providers::multimodal::MEDIA_PLACEHOLDER),
             "audio marker should be replaced with a placeholder: {captured}"
         );
     }

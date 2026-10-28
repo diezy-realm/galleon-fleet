@@ -29,7 +29,7 @@ pub struct SystemGatewayService {
     /// SecretStore instance for authenticated decryption
     secret_store: std::sync::Arc<clawcrew_config::secrets::SecretStore>,
     /// ModelProvider instance for LLM streaming turn execution (Rust LLM SSOT)
-    model_provider: Option<std::sync::Arc<dyn clawcrew_providers::ModelProvider>>,
+    model_provider: Option<std::sync::Arc<dyn galleon_providers::ModelProvider>>,
     /// Optional authorization token required for privileged RPCs like GetDecryptedSecret
     auth_token: Option<String>,
     /// Optional Memory backend for learned rule persistence (BL-01)
@@ -117,7 +117,7 @@ impl SystemGatewayService {
     /// Configure a custom model provider for LLM streaming execution
     pub fn with_model_provider(
         mut self,
-        provider: std::sync::Arc<dyn clawcrew_providers::ModelProvider>,
+        provider: std::sync::Arc<dyn galleon_providers::ModelProvider>,
     ) -> Self {
         self.model_provider = Some(provider);
         self

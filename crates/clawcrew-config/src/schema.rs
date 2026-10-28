@@ -1083,7 +1083,7 @@ pub struct ModelProviderConfig {
 // - Multi-region family with a required `endpoint` field: see `MoonshotModelProviderConfig`
 //
 // The `ModelProviders` container in `crates/clawcrew-config/src/model_providers.rs`
-// holds a typed slot per family; the runtime impls in clawcrew-providers
+// holds a typed slot per family; the runtime impls in galleon-providers
 // consume the typed configs directly.
 
 // ── OpenAI ──
@@ -1127,7 +1127,7 @@ impl ModelEndpoint for OpenAIEndpoint {
 /// - Implicit dispatch with no config entry at all — a bare
 ///   `model_provider = "openai"` reference or a dotted ref to a nonexistent
 ///   alias — is built from a chat-anchored fallback config (see
-///   `openai_missing_entry_fallback_config` in `clawcrew-providers`), not this
+///   `openai_missing_entry_fallback_config` in `galleon-providers`), not this
 ///   `Default`, and stays on the chat wire so existing bare-ref installs don't
 ///   flip wire + tool-calling mode on upgrade.
 #[derive(Debug, Clone, Serialize, Deserialize, Configurable)]

@@ -130,8 +130,8 @@ use clawcrew_api::ingress::{IngressContext, TurnOrigin};
 use clawcrew_config::schema::Config;
 use galleon_memory::{self, Memory, MemoryCategory};
 #[cfg(test)]
-use clawcrew_providers::ChatRequest;
-use clawcrew_providers::{self, ChatMessage, ModelProvider, ToolCall};
+use galleon_providers::ChatRequest;
+use galleon_providers::{self, ChatMessage, ModelProvider, ToolCall};
 use regex::Regex;
 use std::collections::HashSet;
 use std::fmt::Write;
@@ -512,7 +512,7 @@ fn elide_image_data(content: &str) -> String {
 }
 
 pub(crate) fn scrub_for_export(content: &str) -> String {
-    scrub_credentials(&clawcrew_providers::scrub_secret_patterns(
+    scrub_credentials(&galleon_providers::scrub_secret_patterns(
         &elide_image_data(content),
     ))
 }
@@ -1483,14 +1483,14 @@ pub async fn run(
 
         let agent_runtime_options = match agent_provider_resolved.as_ref() {
             Some((ty, alias, _)) => {
-                clawcrew_providers::provider_runtime_options_for_alias(&config, ty, alias)
+                galleon_providers::provider_runtime_options_for_alias(&config, ty, alias)
             }
-            None => clawcrew_providers::provider_runtime_options_for_agent(&config, agent_alias),
+            None => galleon_providers::provider_runtime_options_for_agent(&config, agent_alias),
         };
         // Resolve every alias-owned option, including vision, through the shared
         // provider-ref resolver. This keeps a --provider override isolated from
         // the agent alias without a second capability-specific lookup.
-        let provider_runtime_options = clawcrew_providers::options_for_provider_ref(
+        let provider_runtime_options = galleon_providers::options_for_provider_ref(
             &config,
             &provider_name,
             &agent_runtime_options,
@@ -1503,7 +1503,7 @@ pub async fn run(
         let (initial_api_key, initial_uri) =
             api_key_and_uri_for_provider(&config, &provider_name, agent_model_provider);
         let mut model_provider: Box<dyn ModelProvider> =
-            clawcrew_providers::create_routed_model_provider_with_options(
+            galleon_providers::create_routed_model_provider_with_options(
                 &config,
                 &provider_name,
                 initial_api_key.as_deref(),
@@ -2042,7 +2042,7 @@ pub async fn run(
                                 agent_model_provider,
                             );
                             model_provider =
-                                clawcrew_providers::create_routed_model_provider_with_options(
+                                galleon_providers::create_routed_model_provider_with_options(
                                     &config,
                                     &new_model_provider,
                                     switch_api_key.as_deref(),
@@ -2050,10 +2050,10 @@ pub async fn run(
                                     &config.reliability,
                                     &config.model_routes,
                                     &new_model,
-                                    &clawcrew_providers::options_for_provider_ref(
+                                    &galleon_providers::options_for_provider_ref(
                                         &config,
                                         &new_model_provider,
-                                        &clawcrew_providers::provider_runtime_options_for_agent(
+                                        &galleon_providers::provider_runtime_options_for_agent(
                                             &config,
                                             agent_alias,
                                         ),
@@ -2627,7 +2627,7 @@ pub async fn run(
                                     agent_model_provider,
                                 );
                                 model_provider =
-                                    clawcrew_providers::create_routed_model_provider_with_options(
+                                    galleon_providers::create_routed_model_provider_with_options(
                                         &config,
                                         &new_model_provider,
                                         switch_api_key2.as_deref(),
@@ -2635,10 +2635,10 @@ pub async fn run(
                                         &config.reliability,
                                         &config.model_routes,
                                         &new_model,
-                                        &clawcrew_providers::options_for_provider_ref(
+                                        &galleon_providers::options_for_provider_ref(
                                             &config,
                                             &new_model_provider,
-                                            &clawcrew_providers::provider_runtime_options_for_agent(
+                                            &galleon_providers::provider_runtime_options_for_agent(
                                                 &config,
                                                 agent_alias,
                                             ),
@@ -2660,7 +2660,7 @@ pub async fn run(
                             }
                             // Context overflow recovery: drop oldest whole
                             // turns and retry. No summarization, no splicing.
-                            if clawcrew_providers::reliable::is_context_window_exceeded(&e) {
+                            if galleon_providers::reliable::is_context_window_exceeded(&e) {
                                 ::clawcrew_log::record!(
                                     WARN,
                                     ::clawcrew_log::Event::new(
@@ -3120,14 +3120,14 @@ pub(crate) async fn process_message_shared(
              `model` set. Configure [providers.models.{provider_name}.<alias>] model = \"...\"."
             ),
         };
-        let provider_runtime_options = clawcrew_providers::provider_runtime_options_for_alias(
+        let provider_runtime_options = galleon_providers::provider_runtime_options_for_alias(
             &config,
             provider_name,
             provider_alias.as_str(),
         );
         let model_provider_ref = format!("{provider_name}.{provider_alias}");
         let model_provider: Box<dyn ModelProvider> =
-            clawcrew_providers::create_routed_model_provider_with_options(
+            galleon_providers::create_routed_model_provider_with_options(
                 &config,
                 &model_provider_ref,
                 agent_model_provider

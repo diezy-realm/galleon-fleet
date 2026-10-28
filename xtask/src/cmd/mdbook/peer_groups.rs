@@ -788,9 +788,9 @@ fn render_env_var_name(path: &str) -> anyhow::Result<String> {
 }
 
 fn render_model_provider_endpoint(name: &str, format_fixed: impl FnOnce(&str) -> String) -> String {
-    use clawcrew_providers::factory::ProviderEndpoint;
+    use galleon_providers::factory::ProviderEndpoint;
 
-    let endpoint = clawcrew_providers::factory::endpoint_for_family(name);
+    let endpoint = galleon_providers::factory::endpoint_for_family(name);
     // INVARIANT: `name` comes from `list_model_providers`, whose canonical
     // entries are required by provider-catalog tests to define an endpoint
     // classification.
@@ -803,7 +803,7 @@ fn render_model_provider_endpoint(name: &str, format_fixed: impl FnOnce(&str) ->
 }
 
 fn render_model_provider_catalog_table() -> String {
-    use clawcrew_providers::ModelProviderCategory as C;
+    use galleon_providers::ModelProviderCategory as C;
     let category_title = |c: C| match c {
         C::Primary => "Primary",
         C::OpenAiCompatible => "OpenAI-compatible",
@@ -813,7 +813,7 @@ fn render_model_provider_catalog_table() -> String {
         C::CloudEndpoint => "Cloud AI endpoints",
         C::AiRouter => "AI Model Routers",
     };
-    let providers = clawcrew_providers::list_model_providers();
+    let providers = galleon_providers::list_model_providers();
     let mut out = String::new();
     for category in C::all() {
         let rows: Vec<_> = providers
@@ -836,7 +836,7 @@ fn render_model_provider_catalog_table() -> String {
 
 fn render_model_provider_fields() -> String {
     use std::fmt::Write as _;
-    use clawcrew_providers::ModelProviderCategory as C;
+    use galleon_providers::ModelProviderCategory as C;
     let category_title = |c: C| match c {
         C::Primary => "Primary",
         C::OpenAiCompatible => "OpenAI-compatible",
@@ -846,7 +846,7 @@ fn render_model_provider_fields() -> String {
         C::CloudEndpoint => "Cloud AI endpoints",
         C::AiRouter => "AI Model Routers",
     };
-    let providers = clawcrew_providers::list_model_providers();
+    let providers = galleon_providers::list_model_providers();
     let schema = schemars::schema_for!(clawcrew_config::schema::Config);
     let schema = schema.to_value();
     let provider_defaults =
@@ -1138,10 +1138,10 @@ mod generated_prose_gate {
         let catalog = super::render_model_provider_catalog_table();
         let fields = super::render_model_provider_fields();
 
-        for provider in clawcrew_providers::list_model_providers() {
-            use clawcrew_providers::factory::ProviderEndpoint;
+        for provider in galleon_providers::list_model_providers() {
+            use galleon_providers::factory::ProviderEndpoint;
 
-            let endpoint = clawcrew_providers::factory::endpoint_for_family(provider.name)
+            let endpoint = galleon_providers::factory::endpoint_for_family(provider.name)
                 .unwrap_or_else(|| panic!("missing endpoint metadata for {:?}", provider.name));
             let (catalog_endpoint, fields_endpoint) = match endpoint {
                 ProviderEndpoint::Fixed(url) => (format!("`{url}`"), format!("<code>{url}</code>")),

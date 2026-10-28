@@ -17,7 +17,7 @@
 //! fallback to another provider or to broader authority.
 //!
 //! NOTE — name distinction: this `AuthProvider` (an *inbound auth* trait) is
-//! unrelated to [`clawcrew_providers::auth`]'s `AuthProvider` enum, which names
+//! unrelated to [`galleon_providers::auth`]'s `AuthProvider` enum, which names
 //! *outbound LLM-provider* OAuth kinds. They live in different crates and never
 //! coexist in one import scope.
 //!

@@ -14,7 +14,7 @@ galleon-channel-core.workspace = true
 clawcrew-api.workspace = true
 clawcrew-config = { workspace = true, default-features = false }
 clawcrew-log.workspace = true
-clawcrew-providers.workspace = true
+galleon-providers.workspace = true
 galleon-tools.workspace = true
 anyhow = "1.0"
 async-imap = { version = "0.11", features = [

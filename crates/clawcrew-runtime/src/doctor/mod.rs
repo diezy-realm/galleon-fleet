@@ -221,7 +221,7 @@ fn codex_auth_wiring_items(codex_profile_present: bool, config: &Config) -> Vec<
 /// mismatch. Async because the profile store lives on disk; appended to the
 /// report from `run_structured`, mirroring `probe_models`.
 async fn check_codex_auth_wiring(config: &Config) -> Vec<DiagResult> {
-    let auth = clawcrew_providers::auth::AuthService::from_config(config);
+    let auth = galleon_providers::auth::AuthService::from_config(config);
     let codex_profile_present = match auth.list_profile_ids().await {
         Ok(ids) => ids.iter().any(|id| id.starts_with("openai-codex:")),
         // Store unreadable: skip rather than emit a "no credentials" warning we
@@ -435,18 +435,18 @@ fn create_doctor_model_provider(
     provider_name: &str,
 ) -> anyhow::Result<Box<dyn clawcrew_api::model_provider::ModelProvider>> {
     let api_key = configured_model_provider_api_key(config, provider_name);
-    let options = clawcrew_providers::options_for_provider_ref(
+    let options = galleon_providers::options_for_provider_ref(
         config,
         provider_name,
-        &clawcrew_providers::ModelProviderRuntimeOptions::default(),
+        &galleon_providers::ModelProviderRuntimeOptions::default(),
     );
 
     match provider_name.split_once('.') {
-        Some((family, alias)) => clawcrew_providers::create_model_provider_for_alias(
+        Some((family, alias)) => galleon_providers::create_model_provider_for_alias(
             config, family, alias, api_key, &options,
         ),
         None => {
-            clawcrew_providers::create_model_provider_with_options(provider_name, api_key, &options)
+            galleon_providers::create_model_provider_with_options(provider_name, api_key, &options)
         }
     }
 }
@@ -730,7 +730,7 @@ pub async fn update_context_windows(
         Box::new(
             |provider_type: &str,
              provider_config: &clawcrew_config::schema::ModelProviderConfig| {
-                Box::pin(clawcrew_providers::fetch_context_window(
+                Box::pin(galleon_providers::fetch_context_window(
                     provider_type,
                     provider_config,
                 ))
@@ -908,7 +908,7 @@ pub async fn update_context_windows(
 /// `quickstart` model picker, which also wants pricing) share one fetch path.
 pub async fn fetch_provider_catalog(config: &Config, provider_ref: &str) -> Result<Vec<String>> {
     let provider = create_doctor_model_provider(config, provider_ref)?;
-    clawcrew_providers::ProviderDispatch::from_ref(&*provider)
+    galleon_providers::ProviderDispatch::from_ref(&*provider)
         .list_models()
         .await
 }

@@ -71,7 +71,7 @@
     use clawcrew_api::channel::{
         Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
     };
-    use clawcrew_providers::{ChatMessage, ToolCall};
+    use galleon_providers::{ChatMessage, ToolCall};
     use galleon_tool_call_parser::parse_tool_calls;
 
     fn test_context_limits(
@@ -811,8 +811,8 @@
         ProviderCapabilities, StreamChunk, StreamError, StreamEvent, StreamOptions,
     };
     use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
-    use clawcrew_providers::ChatResponse;
-    use clawcrew_providers::router::{Route, RouterModelProvider};
+    use galleon_providers::ChatResponse;
+    use galleon_providers::router::{Route, RouterModelProvider};
 
     macro_rules! impl_test_model_provider_attribution {
         ($ty:ty) => {
@@ -854,7 +854,7 @@
 
     #[test]
     fn direct_cli_provider_failure_projection_hides_retry_diagnostics() {
-        use clawcrew_providers::{
+        use galleon_providers::{
             ReliableProviderTerminalFailure, ReliableProviderTerminalFailureKind,
         };
 
@@ -940,7 +940,7 @@
         ) -> anyhow::Result<ChatResponse> {
             self.calls.fetch_add(1, Ordering::SeqCst);
             let marker_count =
-                clawcrew_providers::multimodal::count_image_markers(request.messages);
+                galleon_providers::multimodal::count_image_markers(request.messages);
             if marker_count == 0 {
                 anyhow::bail!("expected image markers in request messages");
             }
@@ -1268,7 +1268,7 @@
             options: StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<StreamChunk>,
+            galleon_providers::traits::StreamResult<StreamChunk>,
         > {
             self.stream_calls.fetch_add(1, Ordering::SeqCst);
             if !options.enabled {
@@ -1339,7 +1339,7 @@
             _options: StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<StreamChunk>,
+            galleon_providers::traits::StreamResult<StreamChunk>,
         > {
             Box::pin(futures_util::stream::iter(vec![
                 Ok(StreamChunk::delta("visible")),
@@ -1451,7 +1451,7 @@
             options: StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<StreamEvent>,
+            galleon_providers::traits::StreamResult<StreamEvent>,
         > {
             self.stream_calls.fetch_add(1, Ordering::SeqCst);
             if request.tools.is_some_and(|tools| !tools.is_empty()) {
@@ -1586,7 +1586,7 @@
             options: StreamOptions,
         ) -> futures_util::stream::BoxStream<
             'static,
-            clawcrew_providers::traits::StreamResult<StreamChunk>,
+            galleon_providers::traits::StreamResult<StreamChunk>,
         > {
             self.stream_calls.fetch_add(1, Ordering::SeqCst);
             *self
@@ -2559,7 +2559,7 @@
             "carried-over image marker must be stripped, got: {sent_blob}"
         );
         assert!(
-            sent_blob.contains(clawcrew_providers::multimodal::MEDIA_PLACEHOLDER),
+            sent_blob.contains(galleon_providers::multimodal::MEDIA_PLACEHOLDER),
             "stripped marker should become the text placeholder, got: {sent_blob}"
         );
     }
@@ -7286,7 +7286,7 @@ This is an example, not an invocation."#;
                 _options: StreamOptions,
             ) -> futures_util::stream::BoxStream<
                 'static,
-                clawcrew_providers::traits::StreamResult<StreamEvent>,
+                galleon_providers::traits::StreamResult<StreamEvent>,
             > {
                 Box::pin(futures_util::stream::iter(vec![
                     Ok(StreamEvent::TextDelta(StreamChunk::delta(
@@ -8081,7 +8081,7 @@ This is an example, not an invocation."#;
                 _options: StreamOptions,
             ) -> futures_util::stream::BoxStream<
                 'static,
-                clawcrew_providers::traits::StreamResult<StreamEvent>,
+                galleon_providers::traits::StreamResult<StreamEvent>,
             > {
                 Box::pin(futures_util::stream::iter(vec![
                     Ok(StreamEvent::TextDelta(StreamChunk::delta(r#"{"tool"#))),
@@ -8169,7 +8169,7 @@ This is an example, not an invocation."#;
                 _options: StreamOptions,
             ) -> futures_util::stream::BoxStream<
                 'static,
-                clawcrew_providers::traits::StreamResult<StreamEvent>,
+                galleon_providers::traits::StreamResult<StreamEvent>,
             > {
                 Box::pin(futures_util::stream::iter(vec![
                     Ok(StreamEvent::TextDelta(StreamChunk::delta(
@@ -8377,7 +8377,7 @@ This is an example, not an invocation."#;
                 _options: StreamOptions,
             ) -> futures_util::stream::BoxStream<
                 'static,
-                clawcrew_providers::traits::StreamResult<StreamEvent>,
+                galleon_providers::traits::StreamResult<StreamEvent>,
             > {
                 Box::pin(futures_util::stream::iter(vec![
                     Ok(StreamEvent::TextDelta(StreamChunk::delta(r#"{"tool_"#))),
@@ -8461,7 +8461,7 @@ This is an example, not an invocation."#;
                 _options: StreamOptions,
             ) -> futures_util::stream::BoxStream<
                 'static,
-                clawcrew_providers::traits::StreamResult<StreamEvent>,
+                galleon_providers::traits::StreamResult<StreamEvent>,
             > {
                 Box::pin(futures_util::stream::iter(vec![
                     Ok(StreamEvent::TextDelta(StreamChunk::delta(
@@ -8545,7 +8545,7 @@ This is an example, not an invocation."#;
                 _options: StreamOptions,
             ) -> futures_util::stream::BoxStream<
                 'static,
-                clawcrew_providers::traits::StreamResult<StreamEvent>,
+                galleon_providers::traits::StreamResult<StreamEvent>,
             > {
                 Box::pin(futures_util::stream::iter(vec![
                     Ok(StreamEvent::TextDelta(StreamChunk::delta("```json\n"))),
@@ -8630,7 +8630,7 @@ This is an example, not an invocation."#;
                 _options: StreamOptions,
             ) -> futures_util::stream::BoxStream<
                 'static,
-                clawcrew_providers::traits::StreamResult<StreamEvent>,
+                galleon_providers::traits::StreamResult<StreamEvent>,
             > {
                 Box::pin(futures_util::stream::iter(vec![
                     Ok(StreamEvent::TextDelta(StreamChunk::delta("```tool_call\n"))),
@@ -8720,7 +8720,7 @@ This is an example, not an invocation."#;
                 _options: StreamOptions,
             ) -> futures_util::stream::BoxStream<
                 'static,
-                clawcrew_providers::traits::StreamResult<StreamEvent>,
+                galleon_providers::traits::StreamResult<StreamEvent>,
             > {
                 Box::pin(futures_util::stream::iter(vec![
                     Ok(StreamEvent::TextDelta(StreamChunk::delta(
@@ -8804,7 +8804,7 @@ This is an example, not an invocation."#;
                 _options: StreamOptions,
             ) -> futures_util::stream::BoxStream<
                 'static,
-                clawcrew_providers::traits::StreamResult<StreamEvent>,
+                galleon_providers::traits::StreamResult<StreamEvent>,
             > {
                 Box::pin(futures_util::stream::iter(vec![
                     Ok(StreamEvent::TextDelta(StreamChunk::delta(
@@ -10750,7 +10750,7 @@ Let me check the result."#;
     fn native_tool_specs_present_signal_uses_effective_specs_not_provider_capability() {
         let provider =
             ScriptedModelProvider::from_text_responses(vec!["ok"]).with_native_tool_support();
-        assert!(clawcrew_providers::ModelProvider::supports_native_tools(
+        assert!(galleon_providers::ModelProvider::supports_native_tools(
             &provider
         ));
 
@@ -11102,7 +11102,7 @@ Let me check the result."#;
         // A non-native provider exercises the text tool-use protocol path where
         // compact skill loading must advertise `read_skill` explicitly.
         let provider = ScriptedModelProvider::from_text_responses(vec!["ok"]);
-        assert!(!clawcrew_providers::ModelProvider::supports_native_tools(
+        assert!(!galleon_providers::ModelProvider::supports_native_tools(
             &provider
         ));
 
@@ -11475,7 +11475,7 @@ Let me check the result."#;
                 _options: StreamOptions,
             ) -> futures_util::stream::BoxStream<
                 'static,
-                clawcrew_providers::traits::StreamResult<StreamEvent>,
+                galleon_providers::traits::StreamResult<StreamEvent>,
             > {
                 Box::pin(futures_util::stream::iter(vec![
                     Ok(StreamEvent::TextDelta(StreamChunk::reasoning("Step 1: "))),
@@ -12242,7 +12242,7 @@ Let me check the result."#;
             responses: Arc::new(Mutex::new(VecDeque::from([ChatResponse {
                 text: Some("done".to_string()),
                 tool_calls: Vec::new(),
-                usage: Some(clawcrew_providers::traits::TokenUsage {
+                usage: Some(galleon_providers::traits::TokenUsage {
                     input_tokens: Some(1_000),
                     output_tokens: Some(200),
                     cached_input_tokens: None,
@@ -12348,12 +12348,12 @@ Let me check the result."#;
             run_tool_call_loop,
         };
         use clawcrew_api::agent::TurnEvent;
-        use clawcrew_providers::reliable::ReliableModelProvider;
+        use galleon_providers::reliable::ReliableModelProvider;
 
         let rejected = ChatResponse {
             text: Some("   ".to_string()),
             tool_calls: Vec::new(),
-            usage: Some(clawcrew_providers::traits::TokenUsage {
+            usage: Some(galleon_providers::traits::TokenUsage {
                 input_tokens: Some(80),
                 output_tokens: Some(5),
                 cached_input_tokens: None,
@@ -12364,7 +12364,7 @@ Let me check the result."#;
         let accepted = ChatResponse {
             text: Some("accepted response".to_string()),
             tool_calls: Vec::new(),
-            usage: Some(clawcrew_providers::traits::TokenUsage {
+            usage: Some(galleon_providers::traits::TokenUsage {
                 input_tokens: Some(80),
                 output_tokens: Some(7),
                 cached_input_tokens: None,
@@ -12529,7 +12529,7 @@ Let me check the result."#;
             run_tool_call_loop,
         };
         use clawcrew_api::agent::TurnEvent;
-        use clawcrew_providers::reliable::ReliableModelProvider;
+        use galleon_providers::reliable::ReliableModelProvider;
 
         struct ShellProbeTool;
         clawcrew_api::tool_attribution!(
@@ -12568,7 +12568,7 @@ Let me check the result."#;
                 "<tool_call>{\"name\": \"nonexistent_tool_xyz\", BROKEN!!!</tool_call>".to_string(),
             ),
             tool_calls: Vec::new(),
-            usage: Some(clawcrew_providers::traits::TokenUsage {
+            usage: Some(galleon_providers::traits::TokenUsage {
                 input_tokens: Some(60),
                 output_tokens: Some(4),
                 cached_input_tokens: None,
@@ -12579,7 +12579,7 @@ Let me check the result."#;
         let accepted = ChatResponse {
             text: Some("accepted response".to_string()),
             tool_calls: Vec::new(),
-            usage: Some(clawcrew_providers::traits::TokenUsage {
+            usage: Some(galleon_providers::traits::TokenUsage {
                 input_tokens: Some(80),
                 output_tokens: Some(7),
                 cached_input_tokens: None,
@@ -12939,7 +12939,7 @@ Let me check the result."#;
             responses: Arc::new(Mutex::new(VecDeque::from([ChatResponse {
                 text: Some("ok".to_string()),
                 tool_calls: Vec::new(),
-                usage: Some(clawcrew_providers::traits::TokenUsage {
+                usage: Some(galleon_providers::traits::TokenUsage {
                     input_tokens: Some(500),
                     output_tokens: Some(100),
                     cached_input_tokens: None,
@@ -13181,7 +13181,7 @@ Let me check the result."#;
             responses: Arc::new(Mutex::new(VecDeque::from([ChatResponse {
                 text: Some("Nothing to save.".to_string()),
                 tool_calls: Vec::new(),
-                usage: Some(clawcrew_providers::traits::TokenUsage {
+                usage: Some(galleon_providers::traits::TokenUsage {
                     input_tokens: Some(800),
                     output_tokens: Some(120),
                     cached_input_tokens: None,
@@ -13253,7 +13253,7 @@ Let me check the result."#;
             responses: Arc::new(Mutex::new(VecDeque::from([ChatResponse {
                 text: Some("should not be reached".to_string()),
                 tool_calls: Vec::new(),
-                usage: Some(clawcrew_providers::traits::TokenUsage {
+                usage: Some(galleon_providers::traits::TokenUsage {
                     input_tokens: Some(800),
                     output_tokens: Some(120),
                     cached_input_tokens: None,
@@ -13375,7 +13375,7 @@ Let me check the result."#;
                         arguments: "{}".to_string(),
                         extra_content: None,
                     }],
-                    usage: Some(clawcrew_providers::traits::TokenUsage {
+                    usage: Some(galleon_providers::traits::TokenUsage {
                         input_tokens: Some(1_000_000),
                         output_tokens: Some(10),
                         cached_input_tokens: None,
@@ -13445,7 +13445,7 @@ Let me check the result."#;
                         .to_string(),
                 ),
                 tool_calls: Vec::new(),
-                usage: Some(clawcrew_providers::traits::TokenUsage {
+                usage: Some(galleon_providers::traits::TokenUsage {
                     input_tokens: Some(800),
                     output_tokens: Some(120),
                     cached_input_tokens: None,
@@ -14667,7 +14667,7 @@ Let me check the result."#;
                 Ok(ChatResponse {
                     text: Some("done".to_string()),
                     tool_calls: Vec::new(),
-                    usage: Some(clawcrew_providers::traits::TokenUsage {
+                    usage: Some(galleon_providers::traits::TokenUsage {
                         input_tokens: Some(post_hook_estimate as u64 * 4),
                         output_tokens: Some(10),
                         cached_input_tokens: None,
@@ -15263,7 +15263,7 @@ Let me check the result."#;
                     } else {
                         Vec::new()
                     },
-                    usage: first.then_some(clawcrew_providers::traits::TokenUsage {
+                    usage: first.then_some(galleon_providers::traits::TokenUsage {
                         input_tokens: Some(estimated as u64 * self.usage_multiplier),
                         output_tokens: Some(10),
                         cached_input_tokens: None,
@@ -15992,7 +15992,7 @@ Let me check the result."#;
             ChatMessage::user("run once, no attachment this time".to_string()),
         ];
         let mut crumb_present = false;
-        let mut image_cache = clawcrew_providers::multimodal::LocalImageCache::new();
+        let mut image_cache = galleon_providers::multimodal::LocalImageCache::new();
 
         let provider = CapturingVisionProvider::default();
         let requests = Arc::clone(&provider.requests);

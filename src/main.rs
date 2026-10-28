@@ -1130,7 +1130,7 @@ async fn run_quickstart_cli(
     if providers.is_empty() {
         anyhow::bail!(
             "Quickstart could not enumerate model providers — \
-             clawcrew_providers::list_model_providers() returned no entries."
+             galleon_providers::list_model_providers() returned no entries."
         );
     }
 
@@ -2257,7 +2257,7 @@ fn model_path_provider_type(path: &str) -> Option<&'static str> {
         return None;
     }
     let family = parts[2];
-    clawcrew_providers::list_model_providers()
+    galleon_providers::list_model_providers()
         .iter()
         .find(|p| p.name == family)
         .map(|p| p.name)
@@ -4676,7 +4676,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 match message {
                     Some(msg) => {
                         let response =
-                            clawcrew_providers::ProviderDispatch::from_ref(&*model_provider)
+                            galleon_providers::ProviderDispatch::from_ref(&*model_provider)
                                 .simple_chat(&msg, model_name, Some(final_temperature))
                                 .await?;
                         println!("{response}");
@@ -4705,7 +4705,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 }
                             };
                             let response =
-                                clawcrew_providers::ProviderDispatch::from_ref(&*model_provider)
+                                galleon_providers::ProviderDispatch::from_ref(&*model_provider)
                                     .simple_chat(line.trim(), model_name, Some(final_temperature))
                                     .await?;
                             println!("{response}");
@@ -6398,7 +6398,7 @@ Add pricing to the active provider profile or supply a catalog entry."
         Commands::Providers {
             providers_command: None,
         } => {
-            let model_providers = clawcrew_providers::list_model_providers();
+            let model_providers = galleon_providers::list_model_providers();
             let configured_types: std::collections::HashSet<&str> = config
                 .providers
                 .models
@@ -6411,7 +6411,7 @@ Add pricing to the active provider profile or supply a catalog entry."
             );
             println!("  ID (use in config)  DESCRIPTION"); // i18n-exempt: literal command/identifier example
             println!("  ─────────────────── ───────────");
-            for category in clawcrew_providers::ModelProviderCategory::all() {
+            for category in galleon_providers::ModelProviderCategory::all() {
                 let in_category: Vec<_> = model_providers
                     .iter()
                     .filter(|p| p.category == *category)
@@ -8742,7 +8742,7 @@ fn indent_paircode_lines(lines: Vec<String>) -> String {
 
 // Interactive CLI input helpers used by `auth paste-token` /
 // `auth setup-token` / `auth paste-redirect`. The dialoguer dep belongs
-// to the binary; auth/mod.rs in clawcrew-providers shouldn't pull it in,
+// to the binary; auth/mod.rs in galleon-providers shouldn't pull it in,
 // so reads live here and trait flows accept the resulting string.
 
 #[cfg(feature = "agent-runtime")]

@@ -26,7 +26,7 @@
 | `crates/clawcrew-channels` | 79 | 9,123 | `rename` / `delete` |
 | `crates/clawcrew-runtime` | 245 | 8,868 | `rename` / `delete` |
 | `docs` | 238 | 3,836 | `rename` / `delete` |
-| `crates/clawcrew-providers` | 44 | 2,223 | `rename` / `delete` |
+| `crates/galleon-providers` | 44 | 2,223 | `rename` / `delete` |
 | `crates/galleon-tools` | 88 | 2,101 | `rename` / `delete` |
 | `crates/clawcrew-gateway` | 53 | 1,758 | `rename` / `delete` |
 | `src` | 125 | 1,508 | `rename` / `delete` |

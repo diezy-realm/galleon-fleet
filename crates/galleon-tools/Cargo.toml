@@ -14,7 +14,7 @@ clawcrew-log.workspace = true
 clawcrew-api.workspace = true
 clawcrew-spawn.workspace = true
 clawcrew-config = { workspace = true, default-features = false }
-clawcrew-providers.workspace = true
+galleon-providers.workspace = true
 galleon-memory.workspace = true
 clawcrew-infra.workspace = true
 anyhow = "1.0"
@@ -82,7 +82,7 @@ test-helpers = []
 
 [dev-dependencies]
 clawcrew-infra.workspace = true
-clawcrew-providers = { workspace = true, features = ["test-helpers"] }
+galleon-providers = { workspace = true, features = ["test-helpers"] }
 rcgen = "0.13"
 tempfile = "3.26"
 tokio = { version = "1.50", features = ["rt-multi-thread", "macros"] }

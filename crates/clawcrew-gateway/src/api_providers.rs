@@ -13,7 +13,7 @@ use axum::{
 use serde::Serialize;
 use std::collections::HashMap;
 
-use clawcrew_providers::reliability::{ProviderHealthRecord, provider_snapshot};
+use galleon_providers::reliability::{ProviderHealthRecord, provider_snapshot};
 
 #[derive(Debug, Serialize)]
 struct ProviderHealthRow {
@@ -116,7 +116,7 @@ pub struct ProviderDocEntry {
 pub fn render_provider_capability_docs(entries: &[ProviderDocEntry]) -> String {
     let mut out = String::from("# Provider Capabilities\n\n");
     out.push_str(
-        "Generated from the canonical provider catalog (`clawcrew_providers::list_model_providers`).\n\
+        "Generated from the canonical provider catalog (`galleon_providers::list_model_providers`).\n\
          Capability flags (vision/tools) are declared per model, not per provider.\n\n",
     );
     out.push_str("| Provider | Display name | Network |\n|---|---|---|\n");
@@ -139,7 +139,7 @@ pub async fn handle_provider_capabilities(
     if let Err(response) = require_auth(&state, &headers) {
         return response.into_response();
     }
-    let entries: Vec<ProviderDocEntry> = clawcrew_providers::list_model_providers()
+    let entries: Vec<ProviderDocEntry> = galleon_providers::list_model_providers()
         .into_iter()
         .map(|p| ProviderDocEntry {
             name: p.name.to_string(),

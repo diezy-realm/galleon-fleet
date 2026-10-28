@@ -1180,7 +1180,7 @@ mod tests {
         use std::sync::{Arc, Mutex};
         use clawcrew_config::schema::MemoryConfig;
         use galleon_memory::{self, Memory};
-        use clawcrew_providers::{ChatMessage, ChatRequest, ChatResponse, ModelProvider};
+        use galleon_providers::{ChatMessage, ChatRequest, ChatResponse, ModelProvider};
 
         pub type SharedRequests = Arc<Mutex<Vec<Vec<ChatMessage>>>>;
 
@@ -1266,7 +1266,7 @@ mod tests {
         use crate::agent::agent::Agent;
         use crate::agent::dispatcher::NativeToolDispatcher;
         use e2e_helpers::*;
-        use clawcrew_providers::{ChatResponse, ModelProvider, ToolCall};
+        use galleon_providers::{ChatResponse, ModelProvider, ToolCall};
 
         // ── Set up workspace with binary file ──
         let workspace = std::env::temp_dir().join("clawcrew_test_e2e_file_read_lossy");

@@ -1,6 +1,6 @@
 //! User-facing rendering for provider terminal errors (PR-32 / BR-C5).
 //!
-//! Extracted from `clawcrew_runtime::agent::turn::outcome` to `clawcrew-providers`
+//! Extracted from `clawcrew_runtime::agent::turn::outcome` to `galleon-providers`
 //! so that gateway and other consumers can format terminal completion errors
 //! without depending on the runtime agent subsystem.
 

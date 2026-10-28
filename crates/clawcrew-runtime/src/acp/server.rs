@@ -920,7 +920,7 @@ impl AcpServer {
                     .and_then(|mp| mp.model.clone())
                     .unwrap_or_default();
                 let error = galleon_security_scrub::scrub(
-                    &clawcrew_providers::sanitize_api_error(&e.to_string()),
+                    &galleon_providers::sanitize_api_error(&e.to_string()),
                 );
                 ::clawcrew_log::scope!(
                     session_key: session_id.as_str(),

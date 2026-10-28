@@ -16,7 +16,7 @@ use syn::{Attribute, Expr, Lit, LitStr, Macro, Meta, Token};
 const SCAN_ROOTS: &[&str] = &[
     "src",
     "crates/clawcrew-gateway/src",
-    "crates/clawcrew-providers/src/auth",
+    "crates/galleon-providers/src/auth",
     "crates/clawcrew-runtime/src/approval",
     "crates/clawcrew-runtime/src/integrations",
 ];

@@ -544,7 +544,7 @@ mod tests {
         use crate::agent::turn::provider_call::enforce_tool_loop_budget;
         use crate::cost::CostTracker;
         use clawcrew_config::schema::CostConfig;
-        use clawcrew_providers::traits::TokenUsage;
+        use galleon_providers::traits::TokenUsage;
         use std::collections::HashMap;
 
         let workspace = tempfile::TempDir::new().expect("temp dir");

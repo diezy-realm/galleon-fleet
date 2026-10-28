@@ -12,8 +12,8 @@ use crate::traits::{
 };
 use clawcrew_api::model_provider::ModelProvider;
 use clawcrew_config::schema::MemoryConfig;
-use clawcrew_providers::ProviderDispatch;
-use clawcrew_providers::multimodal::strip_media_markers;
+use galleon_providers::ProviderDispatch;
+use galleon_providers::multimodal::strip_media_markers;
 
 /// Output of consolidation extraction.
 #[derive(Debug, serde::Deserialize)]
@@ -1455,7 +1455,7 @@ mod consolidate_turn_tests {
         .unwrap();
 
         let prompt = provider.last_prompt().expect("model must be called");
-        assert!(prompt.contains(clawcrew_providers::multimodal::MEDIA_PLACEHOLDER));
+        assert!(prompt.contains(galleon_providers::multimodal::MEDIA_PLACEHOLDER));
         assert!(
             !prompt.contains("/home/user/private/cat.png"),
             "local paths must not reach the model"

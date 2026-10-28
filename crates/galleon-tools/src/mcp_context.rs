@@ -72,7 +72,7 @@ pub fn wrap_resource_contents(
     let mut body = String::new();
     for c in &contents.contents {
         if let Some(text) = &c.text {
-            body.push_str(&clawcrew_providers::sanitize_api_error(text));
+            body.push_str(&galleon_providers::sanitize_api_error(text));
             body.push('\n');
         } else if let Some(blob) = &c.blob {
             let mime = c.mime_type.as_deref().unwrap_or("application/octet-stream");
@@ -110,7 +110,7 @@ pub fn render_prompt_messages(
             .and_then(|t| t.as_str())
             .map(|s| s.to_string())
             .unwrap_or_else(|| m.content.to_string());
-        let scrubbed = clawcrew_providers::sanitize_api_error(&text);
+        let scrubbed = galleon_providers::sanitize_api_error(&text);
         body.push_str(&format!("[{}] {}\n", attr_escape(&m.role), scrubbed));
     }
     format!(

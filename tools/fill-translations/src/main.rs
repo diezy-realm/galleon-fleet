@@ -440,7 +440,7 @@ async fn translate_batch(
         } else {
             system.as_str()
         };
-        let content = clawcrew_providers::ProviderDispatch::from_ref(provider)
+        let content = galleon_providers::ProviderDispatch::from_ref(provider)
             .chat_with_system(Some(system_ref), source, model, None)
             .await
             .map_err(|e| fail(e, String::new()))?;

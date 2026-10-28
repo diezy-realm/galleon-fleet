@@ -12700,9 +12700,9 @@ fn markdown_attachment_not_detected_by_multimodal_image_markers() {
         &envelope("notes.md", None, b"# heading"),
         std::path::Path::new("/tmp/ws/notes.md"),
     );
-    let messages = vec![clawcrew_providers::ChatMessage::user(content)];
+    let messages = vec![galleon_providers::ChatMessage::user(content)];
     assert_eq!(
-        clawcrew_providers::multimodal::count_image_markers(&messages),
+        galleon_providers::multimodal::count_image_markers(&messages),
         0,
         "markdown file must not trigger image marker detection"
     );
@@ -12713,10 +12713,10 @@ fn markdown_attachment_not_detected_by_multimodal_image_markers() {
 #[test]
 fn photo_image_marker_detected_by_multimodal() {
     let photo_content = "[IMAGE:/tmp/workspace/photo_1_2.jpg]";
-    let messages = vec![clawcrew_providers::ChatMessage::user(
+    let messages = vec![galleon_providers::ChatMessage::user(
         photo_content.to_string(),
     )];
-    let count = clawcrew_providers::multimodal::count_image_markers(&messages);
+    let count = galleon_providers::multimodal::count_image_markers(&messages);
     assert_eq!(
         count, 1,
         "multimodal should detect exactly one image marker"
@@ -12737,9 +12737,9 @@ fn photo_image_marker_with_caption() {
     );
 
     // Multimodal pipeline still detects the marker.
-    let messages = vec![clawcrew_providers::ChatMessage::user(content)];
+    let messages = vec![galleon_providers::ChatMessage::user(content)];
     assert_eq!(
-        clawcrew_providers::multimodal::count_image_markers(&messages),
+        galleon_providers::multimodal::count_image_markers(&messages),
         1
     );
 }
@@ -12766,9 +12766,9 @@ fn e2e_attachment_saves_file_and_formats_content() {
         "document label format mismatch: {doc_content}"
     );
     // Multimodal must NOT detect image markers in document content.
-    let doc_msgs = vec![clawcrew_providers::ChatMessage::user(doc_content)];
+    let doc_msgs = vec![galleon_providers::ChatMessage::user(doc_content)];
     assert_eq!(
-        clawcrew_providers::multimodal::count_image_markers(&doc_msgs),
+        galleon_providers::multimodal::count_image_markers(&doc_msgs),
         0,
         "document content must not contain image markers"
     );
@@ -12795,9 +12795,9 @@ fn e2e_attachment_saves_file_and_formats_content() {
     );
 
     // Multimodal detects the marker.
-    let photo_msgs = vec![clawcrew_providers::ChatMessage::user(photo_content.clone())];
+    let photo_msgs = vec![galleon_providers::ChatMessage::user(photo_content.clone())];
     assert_eq!(
-        clawcrew_providers::multimodal::count_image_markers(&photo_msgs),
+        galleon_providers::multimodal::count_image_markers(&photo_msgs),
         1,
         "multimodal must detect exactly one image marker in photo content"
     );
@@ -12806,9 +12806,9 @@ fn e2e_attachment_saves_file_and_formats_content() {
     let mut captioned = photo_content;
     use std::fmt::Write;
     let _ = write!(captioned, "\n\nCheck this out");
-    let cap_msgs = vec![clawcrew_providers::ChatMessage::user(captioned.clone())];
+    let cap_msgs = vec![galleon_providers::ChatMessage::user(captioned.clone())];
     assert_eq!(
-        clawcrew_providers::multimodal::count_image_markers(&cap_msgs),
+        galleon_providers::multimodal::count_image_markers(&cap_msgs),
         1,
         "caption must not break image marker detection"
     );
@@ -12829,9 +12829,9 @@ fn e2e_attachment_saves_file_and_formats_content() {
         !md_content.contains("[IMAGE:"),
         "markdown must not get [IMAGE:] marker: {md_content}"
     );
-    let md_msgs = vec![clawcrew_providers::ChatMessage::user(md_content)];
+    let md_msgs = vec![galleon_providers::ChatMessage::user(md_content)];
     assert_eq!(
-        clawcrew_providers::multimodal::count_image_markers(&md_msgs),
+        galleon_providers::multimodal::count_image_markers(&md_msgs),
         0,
         "markdown file must not trigger image marker detection"
     );
@@ -12841,8 +12841,8 @@ fn e2e_attachment_saves_file_and_formats_content() {
 
 #[test]
 fn groq_provider_rejects_photo_with_vision_error() {
-    use clawcrew_providers::ModelProvider;
-    use clawcrew_providers::compatible::{AuthStyle, OpenAiCompatibleModelProvider};
+    use galleon_providers::ModelProvider;
+    use galleon_providers::compatible::{AuthStyle, OpenAiCompatibleModelProvider};
 
     let groq = OpenAiCompatibleModelProvider::builder("test")
         .display_name("Groq")
@@ -12858,10 +12858,10 @@ fn groq_provider_rejects_photo_with_vision_error() {
     );
 
     // Build a message with an [IMAGE:] marker (as photo attachment would).
-    let messages = vec![clawcrew_providers::ChatMessage::user(
+    let messages = vec![galleon_providers::ChatMessage::user(
         "[IMAGE:/tmp/photo.jpg]\n\nDescribe this image".to_string(),
     )];
-    let marker_count = clawcrew_providers::multimodal::count_image_markers(&messages);
+    let marker_count = galleon_providers::multimodal::count_image_markers(&messages);
     assert_eq!(marker_count, 1, "must detect image marker in photo content");
 
     // The combination of marker_count > 0 && !supports_vision() means

@@ -5,7 +5,7 @@ use tokio::task_local;
 use tokio_util::sync::CancellationToken;
 use clawcrew_api::tool::Tool;
 use clawcrew_config::schema::{MultimodalConfig, PacingConfig, SkillImprovementConfig};
-use clawcrew_providers::{ChatMessage, ModelProvider};
+use galleon_providers::{ChatMessage, ModelProvider};
 
 use crate::observability::Observer;
 use crate::tools::skill_manage::{SkillManageTool, SkillViewTool, SkillsListTool};

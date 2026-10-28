@@ -67,7 +67,7 @@ expect_run "runtime then channel" "all" \
 expect_skip "ZeroCode-only changes" "apps/zerocode/src/app.rs"
 expect_skip "web-only changes" "web/src/pages/AgentChat.tsx"
 expect_skip "docs-only changes" "docs/book/src/contributing/testing.md"
-expect_skip "unrelated crate changes" "crates/clawcrew-providers/src/openai.rs"
+expect_skip "unrelated crate changes" "crates/galleon-providers/src/openai.rs"
 expect_skip "empty input"
 
 mock_dir="$(mktemp -d)"

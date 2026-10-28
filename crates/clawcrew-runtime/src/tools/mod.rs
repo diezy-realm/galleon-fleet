@@ -865,7 +865,7 @@ fn warm_lazy_regexes() {
     std::sync::LazyLock::force(&crate::agent::turn::redact::SENSITIVE_KEY_REGEX);
     std::sync::LazyLock::force(&crate::agent::loop_::IMAGE_DATA_URI_REGEX);
     std::sync::LazyLock::force(&crate::agent::history::LOCAL_IMAGE_PATH_RE);
-    clawcrew_providers::multimodal::warm_lazy_regexes();
+    galleon_providers::multimodal::warm_lazy_regexes();
 }
 
 /// Create the full tool registry on a dedicated builder thread.
@@ -1238,7 +1238,7 @@ fn all_tools_with_runtime_on_thread(
         if !email_configs.is_empty() {
             let auth_service = if email_configs.values().any(|c| c.oauth2.is_some()) {
                 Some(Arc::new(
-                    clawcrew_providers::auth::AuthService::from_config(root_config),
+                    galleon_providers::auth::AuthService::from_config(root_config),
                 ))
             } else {
                 None
@@ -1265,7 +1265,7 @@ fn all_tools_with_runtime_on_thread(
             .clone()
             .unwrap_or_else(|| "openai/gpt-4o-mini".to_string());
         let llm_task_runtime_options =
-            clawcrew_providers::provider_runtime_options_for_alias(root_config, family, alias);
+            galleon_providers::provider_runtime_options_for_alias(root_config, family, alias);
         tool_arcs.push(Arc::new(LlmTaskTool::new(
             security.clone(),
             config.clone(),
@@ -2082,7 +2082,7 @@ fn all_tools_with_runtime_on_thread(
         (!trimmed_value.is_empty()).then(|| trimmed_value.to_owned())
     });
     let provider_runtime_options =
-        clawcrew_providers::provider_runtime_options_for_agent(root_config, agent_alias);
+        galleon_providers::provider_runtime_options_for_agent(root_config, agent_alias);
 
     #[cfg(test)]
     let mut built_delegate_tool: Option<Arc<DelegateTool>> = None;

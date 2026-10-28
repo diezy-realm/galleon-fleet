@@ -6301,7 +6301,7 @@ mod tests {
             "gateway preflight 429 must not be wrapped as fatal"
         );
         assert!(
-            !clawcrew_providers::reliable::is_non_retryable(&error),
+            !galleon_providers::reliable::is_non_retryable(&error),
             "gateway preflight 429 should stay on the supervisor retry path"
         );
     }

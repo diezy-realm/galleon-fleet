@@ -6,7 +6,7 @@ use axum::response::IntoResponse;
 #[cfg(feature = "channel-whatsapp-cloud")]
 use clawcrew_api::channel::ChannelMessage;
 use galleon_memory::{Memory, MemoryCategory, MemoryEntry};
-use clawcrew_providers::ModelProvider;
+use galleon_providers::ModelProvider;
 use galleon_tools::tool_search::{mcp_tool_access_policy, register_eager_mcp_tool_if_allowed};
 use http_body_util::BodyExt;
 use parking_lot::{Mutex, RwLock};
@@ -3452,7 +3452,7 @@ async fn websocket_resumes_seeded_legacy_dotted_session_inner() {
     backend
         .append(
             &legacy_key,
-            &clawcrew_providers::ChatMessage::user("seeded legacy turn"),
+            &galleon_providers::ChatMessage::user("seeded legacy turn"),
         )
         .expect("seed legacy transcript");
     state.session_backend = Some(backend);

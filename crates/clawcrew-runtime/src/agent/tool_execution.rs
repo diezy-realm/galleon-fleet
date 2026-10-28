@@ -2285,7 +2285,7 @@ mod tests {
         use crate::agent::loop_detector::{LoopDetector, LoopDetectorConfig};
         use crate::agent::turn::history_append::append_tool_round_to_history;
         use crate::agent::turn::results_collect::collect_tool_results;
-        use clawcrew_providers::ChatMessage;
+        use galleon_providers::ChatMessage;
         use std::collections::HashSet;
 
         let secret = "sk-HISTORY0123456789";
@@ -2360,7 +2360,7 @@ mod tests {
             );
         }
 
-        let native_calls: Vec<clawcrew_providers::ToolCall> = Vec::new();
+        let native_calls: Vec<galleon_providers::ToolCall> = Vec::new();
         let mut native_history: Vec<ChatMessage> = Vec::new();
         append_tool_round_to_history(
             &mut native_history,

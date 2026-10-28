@@ -4,7 +4,7 @@ use crate::tools::{ActivatedToolSet, Tool, ToolSpec};
 use anyhow::Result;
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
-use clawcrew_providers::ModelProvider;
+use galleon_providers::ModelProvider;
 
 /// Tool specs assembled for one loop iteration.
 pub(crate) struct IterationToolSpecs {
