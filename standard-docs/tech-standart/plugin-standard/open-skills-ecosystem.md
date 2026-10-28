@@ -8,7 +8,7 @@
 
 ## 1. Ikhtisar Arsitektur 3-Lapis (Three-Layer Resolution)
 
-Sistem ClawCrew / Galleon Fleet mengadopsi resolusi skill 3-lapis hierarkis:
+Sistem Galleon Fleet mengadopsi resolusi skill 3-lapis hierarkis:
 
 ```
 [Layer 1: Workspace Skills] (Prioritas Tertinggi — Project Specific)
@@ -19,10 +19,10 @@ Sistem ClawCrew / Galleon Fleet mengadopsi resolusi skill 3-lapis hierarkis:
 ```
 
 1. **Layer 1 — Workspace Scope:**
-   - Direktori: `<project_root>/.gemini/skills/` atau `.clawcrew/skills/`
+   - Direktori: `<project_root>/.gemini/skills/` atau `.galleon/skills/`
    - Memiliki override authority penuh terhadap global skills dengan nama yang sama.
 2. **Layer 2 — Global User Scope:**
-   - Direktori: `~/.kiro/crew/skills/` atau `~/.clawcrew/skills/`
+   - Direktori: `~/.kiro/crew/skills/` atau `~/.config/galleon/skills/`
    - Berisi skill lintas proyek yang dikelola oleh operator mesin.
 3. **Layer 3 — WASM & External Registry Plugins:**
    - Direktori: `skills-registry/` atau `<workspace>/extra-registry-<name>/`

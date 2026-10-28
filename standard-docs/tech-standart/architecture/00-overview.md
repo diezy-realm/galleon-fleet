@@ -109,10 +109,10 @@ See `docs/book/src/architecture/crates.md` (archived KiroCrew upstream) for deta
 - `galleon-gateway`: gRPC server, vault, secret management
 - `galleon-runtime`: Agent turn execution, tool dispatch, message streaming
 - `galleon-providers`: LLM vendor APIs (OpenAI, Gemini, Bedrock, Anthropic) — **SSOT (ADR 0001)**
-- `clawcrew-channel-*`: Channel plugins (Discord, Telegram, Slack, etc.)
-- `clawcrew-tools-*`: Native tool implementations (filesystem, shell, network)
+- `galleon-channel-*`: Channel plugins (Discord, Telegram, Slack, etc.)
+- `galleon-tools`: Native tool implementations (filesystem, shell, network)
 
-**Naming:** New crates use `galleon-*` prefix (ADR: brand consistency). Legacy `clawcrew-*` crates remain unchanged unless refactored.
+**Naming:** All crates use `galleon-*` prefix (SPEC-009 / brand consistency).
 
 ---
 

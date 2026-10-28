@@ -14,11 +14,11 @@
 | `proto/` | 1 | T2↔T3 | `agent_service.proto` — kontrak gRPC Go↔Rust | ✅ |
 | `crates/` | 942 | T2 | 27 crate Rust (§2) | ✅ sedang di-refactor |
 | `wit/` | 12 | T2 | `wit/v0/*.wit` kontrak plugin WASI (`clawcrew:plugin@0.1.0`), `.frozen`, `VERSIONING.md` | ✅ beku v0 |
-| `src/` | 126 | T2 | Binary root `clawcrew`: `main.rs`, `main_cli_args.rs`, subcommand CLI (`quickstart`, `agent`, `gateway`, `daemon`, `doctor`, `cron`, `channel`, `sop`, `plugin`, `desktop`, `eval`, `locales`, …) | 🕰/✅ host bagi crate Rust |
-| `apps/zerocode/` | — | T2 | TUI/runtime agen lokal Rust | 🕰 |
-| `apps/zerorelay/` | — | T2 | Relay jarak jauh | 🕰 |
-| `web/` | 193 | T4 | Dashboard ClawCrew; di-embed ke binary root lewat `/web/dist` | 🕰 |
-| `apps/tauri/` | — | T1 | Shell Tauri ClawCrew + supervisor daemon (`clawcrew-desktop`, anggota workspace) | 🕰 |
+| `src/` | 126 | T2 | Binary root `galleon`: `main.rs`, `main_cli_args.rs`, subcommand CLI (`quickstart`, `agent`, `gateway`, `daemon`, `doctor`, `cron`, `channel`, `sop`, `plugin`, `desktop`, `eval`, `locales`, …) | 🕰/✅ host bagi crate Rust |
+| `apps/galleoncode/` | — | T2 | TUI/runtime agen lokal Rust (`galleoncode`) | ✅ |
+| `apps/galleonrelay/` | — | T2 | Relay jarak jauh (`galleonrelay`) | ✅ |
+| `web/` | 193 | T4 | UI Galleon (Harbor, Treasury, Shipyard, EngineRoom, …) | ✅ |
+| `apps/tauri/` | — | T1 | Shell Tauri Galleon v2 (`fleet-ai-desktop`, anggota workspace) | ✅ |
 | `firmware/` | 36 | — | Firmware perangkat/periferal | pendukung hardware |
 | `xtask/`, `tools/fill-translations/` | 48 / 2 | — | Otomasi build & terjemahan (anggota workspace) | 🔧 |
 
