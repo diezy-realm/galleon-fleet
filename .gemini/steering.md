@@ -19,58 +19,58 @@ Jika terdapat kontradiksi antara dokumen mana pun di repo ini, urutan otoritas p
 
 ---
 
-## 2. Arsitektur Kanonikal 4-Tier & Strict Boundary Policy
+## 2. Arsitektur Kanonikal 3-Tier & Strict Boundary Policy
 
-Galleon beroperasi dalam **4 tier ketat** dengan batas tanggung jawab tegas ([`01-boundary-policy.md`](../standard-docs/tech-standart/architecture/01-boundary-policy.md)):
+Galleon beroperasi dalam **3 tier ketat** dengan batas tanggung jawab tegas ([`01-boundary-policy.md` v2](../standard-docs/tech-standart/architecture/01-boundary-policy.md) dan [`standard-docs/decisions/0018-rust-single-language-architecture.md`](../standard-docs/decisions/0018-rust-single-language-architecture.md)):
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        TIER 4: UI LAYER (`web/`)                       │
+│                        TIER 3: UI LAYER (`web/`)                       │
 │                   React 19 + TypeScript + Tailwind CSS 4               │
 │         Zero backend logic. Zero fake data. Zero direct LLM call.      │
 └───────────────────────────────────┬────────────────────────────────────┘
-                                    │ HTTP :9090 (REST/SSE)
+                                    │ HTTP / WebSocket :42617
                                     ▼
 ┌────────────────────────────────────────────────────────────────────────┐
-│                   TIER 3: AI ORCHESTRATOR (`engine/`)                  │
-│                     Go 1.27 (Google Wire DI, slog/zap)                 │
-│       Otak Tunggal: Turn Lifecycle, DAG, Fleet Governance, Memory      │
-└───────────────────┬────────────────────────────────┬───────────────────┘
-                    │ gRPC :50052                    ▲ IPC (proxy ke :9090)
-                    ▼ (SystemGateway)                │
-┌────────────────────────────────────────┐  ┌────────────────────────────┐
-│      TIER 2: SYSTEM CORE (`crates/`)   │  │ TIER 1: DESKTOP (`apps/    │
-│            Rust 2024 (27 crates)       │  │          tauri/`)          │
-│ Sandbox, Vault AES-256, LLM SSOT, WASI │  │ Tauri v2 OS Shell & Window │
-└────────────────────────────────────────┘  └────────────────────────────┘
+│             TIER 2: SYSTEM CORE & GATEWAY (`crates/`, `src/`)          │
+│                               Rust 2024                                │
+│       Gateway HTTP/WS :42617, Sandbox, Vault, LLM SSOT, WASI, Runtime  │
+└───────────────────────────────────▲────────────────────────────────────┘
+                                    │ Tauri IPC / HTTP Client
+┌───────────────────────────────────┴────────────────────────────────────┐
+│              TIER 1: CLIENT / DESKTOP APPS (`apps/tauri/`, CLI)        │
+│                     Tauri v2 OS Shell, Tray & Window                   │
+└────────────────────────────────────────────────────────────────────────┘
 ```
+
+> **Catatan:** Penulisan kode Go / engine Go dilarang di core repository ini; arsitektur backend dikonsolidasikan penuh ke Rust sesuai ADR-0018 dan 01-boundary-policy v2.
 
 ### Matriks Tanggung Jawab & Larangan
 
 | Tier | Path Aktif | Port / Protokol | Tanggung Jawab Resmi (Owned) | Hal Terlarang (FORBIDDEN) |
 |---|---|---|---|---|
-| **Tier 1: Desktop Shell** | `apps/tauri/` | Tauri IPC (`invoke`) | Window lifecycle, tray icon, dialog native OS, bundling installer (`.exe`/`.dmg`). | ❌ Business logic, eksekusi terminal langsung (ODR-07), data palsu (ADR 0003). |
-| **Tier 2: System Core** | `crates/` | gRPC Server `:50052` (`SystemGateway`) | Security microkernel, sandbox (Landlock/Seatbelt), **LLM Execution SSOT** (`galleon-providers`), secrets Vault (AES-256-GCM), native tools, WASI host, channel adapters. | ❌ Fleet governance, turn orchestration, RAG vector memory (milik Go). Rust = leaf service. |
-| **Tier 3: AI Orchestrator** | `engine/` | gRPC Server `:50051`, HTTP `:9090` | **Agent Brain**: turn state machine (`StartTurn`), task graph, fleet policies & approval gate, memori persisten (SQLite/Postgres), pairing/QR gateway. | ❌ Eksekusi shell/fs lokal tanpa Rust (wajib fail-closed), direct vendor LLM call (wajib delegasi ke Rust via gRPC). |
-| **Tier 4: UI Layer** | `web/` | HTTP proxy ke Go `:9090` | Rendering komponen, view model Zustand, client routing. | ❌ Backend logic di Express (`server.ts` harus dibersihkan, ADR 0002), direct LLM SDK (`@google/genai` dilarang, ODR-08). |
+| **Tier 1: Desktop Shell & CLI** | `apps/tauri/`, `src/` | Tauri IPC (`invoke`), CLI flags | Window lifecycle, tray icon, dialog native OS, bundling installer (`.exe`/`.dmg`), client transport. | ❌ Business logic, eksekusi terminal langsung tanpa sandbox (ODR-07), data palsu (ADR 0003). |
+| **Tier 2: System Core & Gateway** | `crates/`, `src/` | HTTP/WS Server `:42617` (`galleon-gateway`) | Gateway HTTP/WS, security microkernel, sandbox (Landlock/Seatbelt), **LLM Execution SSOT** (`galleon-providers`), secrets Vault (AES-256-GCM), native tools, WASI host, channel adapters, agent runtime (`galleon-runtime`). | ❌ Handler tanpa auth (kecuali rute publik), bypass security boundary, unwrap di jalur produksi. |
+| **Tier 3: UI Layer** | `web/` | HTTP/WS client ke Gateway `:42617` | Rendering komponen, view model Zustand, client routing. | ❌ Backend logic di Express (`server.ts` harus dibersihkan, ADR 0002), direct LLM SDK (`@google/genai` dilarang, ODR-08). |
 
 ### Invarian Keras (Hard Invariants):
-1. **Frontend → Go → Rust (Dilarang Frontend → Rust):** Go engine adalah satu-satunya gerbang kebijakan (*governance & anti-injection*). Frontend dilarang memanggil Rust gRPC `:50052` langsung.
-2. **LLM SSOT = Rust `galleon-providers` (ADR 0001):** Semua vendor LLM dijalankan di Rust. Go engine menyusun konteks pesan dan mendelegasikan inferensi ke Rust via gRPC `ExecuteTurn`.
-3. **Eksekusi Terminal Terproteksi (ODR-07):** Alur terminal wajib: `Tauri/Web` $\rightarrow$ `Go Engine (Policy & Approval)` $\rightarrow$ `Rust SystemGateway (Sandbox)`.
+1. **Frontend → Gateway → System Core:** Gateway adalah pintu masuk HTTP/WS (:42617). Frontend dilarang membypass gateway ke internal crates langsung.
+2. **LLM SSOT = Rust `galleon-providers` (ADR 0001):** Semua vendor LLM dijalankan di Rust.
+3. **Eksekusi Terminal Terproteksi (ODR-07):** Alur terminal wajib melalui gateway / runtime Rust dengan sandbox Landlock/Seatbelt.
 4. **Secrets SSOT = Rust Vault:** API key dan kredensial tersimpan di `~/.config/galleon/vault/` (AES-256-GCM terenkripsi). Wajib credential scrubbing di log.
 5. **No Shared Database:** Tiap tier mengisolasi storage-nya sendiri. Komunikasi lintas tier hanya via API.
 6. **Migrasi Legacy Path Tuntas (ODR-01, PR-01, CO-08):** Path kanonikal resmi adalah `web/` dan `apps/tauri/`. Direktori legacy `web-2/` dan `apps/tauri-2/` telah selesai dimigrasi dan dilarang dibuat, direferensikan, atau dimasukkan ke git tracking. Setiap residu lokal `web-2` atau `apps/tauri-2` wajib dihapus.
+7. **Larangan Go Engine:** Penulisan kode Go / engine Go dilarang di core repository ini; arsitektur backend dikonsolidasikan penuh ke Rust sesuai ADR-0018 dan 01-boundary-policy v2.
 
 ---
 
 ## 3. Empat Permukaan Akses & Channel Messaging
 
 - **4 Permukaan Akses Produk (ODR-02):**
-  - **CLI:** Binary Rust `galleon` sebagai klien tipis ke Go engine `:9090` (ODR-12).
-  - **Desktop:** Tauri v2 di `apps/tauri/` (hanya proxy ke Go + fitur OS).
+  - **CLI:** Binary Rust `galleon` sebagai klien ke Gateway `:42617` (ODR-12).
+  - **Desktop:** Tauri v2 di `apps/tauri/` (client/proxy ke Gateway + fitur OS).
   - **Web:** Dashboard React 19 di `web/`.
-  - **QR Pairing:** Otentikasi dan login perangkat tambahan terikat token via Nginx/Go.
+  - **QR Pairing:** Otentikasi dan pairing perangkat tambahan terikat token via Gateway.
 - **Distribusi Channel Messaging (ODR-04):**
   - **Tier A (Embed/Default):** Slack, WhatsApp, Discord, Telegram, Matrix (ikut instalasi default).
   - **Tier B (Compiled Feature-Crates `galleon-channel-<name>`):** WeChat, QQ, Signal, iMessage, AMQP, IRC.
@@ -102,23 +102,20 @@ Galleon beroperasi dalam **4 tier ketat** dengan batas tanggung jawab tegas ([`0
   cargo clippy -p <crate-name> -- -D warnings
   ```
 
-### B. Standar Go (Go 1.27)
-- **Dependency Injection:** Google Wire (`engine/app/wire.go` $\rightarrow$ `wire_gen.go`).
-- **Fail-Closed Policy:** Delegasi tool ke Rust via `ExecuteNativeTool`. Jika Rust offline, kembalikan error tertolak (fail-closed), dilarang fallback mengeksekusi shell/fs lokal di Go.
-- **Logging & Errors:** Structured logging via `zap`/`slog`. Error pembungkus wajib `%w`.
-- **Pengujian:** `go test -race ./...` di folder `engine/`.
+### B. Larangan Go Engine (`standard-docs/tech-standart/architecture/01-boundary-policy.md`)
+Penulisan kode Go / engine Go dilarang di core repository ini; arsitektur backend dikonsolidasikan penuh ke Rust sesuai [ADR-0018](../standard-docs/decisions/0018-rust-single-language-architecture.md) dan [`01-boundary-policy.md` v2](../standard-docs/tech-standart/architecture/01-boundary-policy.md).
 
 ### C. Standar Web & UI (React 19 + TypeScript + Tailwind 4)
-- **Zero Backend Logic:** Pindahkan logika Express di `server.ts` ke Go engine.
+- **Zero Backend Logic:** Pindahkan logika Express di `server.ts` ke backend Rust (ADR 0002).
 - **Zero Client LLM Calls:** Hapus `@google/genai` dari `web/package.json`.
-- **Type Safety:** TypeScript strict mode, zero `any`. Gunakan `apiClient.ts` untuk komunikasi dengan Go `:9090`.
+- **Type Safety:** TypeScript strict mode, zero `any`. Gunakan `apiClient.ts` untuk komunikasi dengan Gateway `:42617`.
 - **Peer Dependency & Lockfile Hygiene:** Dilarang menggunakan bypass `--force` atau `--legacy-peer-deps` di CI workflow maupun instalasi lokal. Versi `vite` dan `esbuild` di `web/package.json` wajib selaras, dan `package-lock.json` wajib ter-commit sinkron.
 
 ### D. Standar CI/Infra & Quality Gates (Ref: `.gemini/rules/ci-infra-standards.md`)
 Berdasarkan investigasi konkrit CI PR #18 (`ci-infra-fix/`), 4 pilar tata kelola CI/Infra berikut mengikat seluruh agent dan PR:
 1. **Zero-Unwrap Invariant Scoping:** Pengecekan CI diff wajib mengecualikan file `tests.rs` (`':!crates/**/tests.rs'`, `':!crates/**/*/tests.rs'`) dan blok `#[cfg(test)] mod tests`. Dilarang menandai helper unit test sebagai pelanggaran produksi.
 2. **Compiler Toolchain & sccache Isolation:** Karena `rustc-wrapper = "sccache"` aktif di `.cargo/config.toml`, setiap job CI yang memanggil `cargo` wajib menginstal binary `sccache` di runner PATH terlebih dahulu (misal via `mozilla-actions/sccache-action`), atau meng-override dengan `RUSTC_WRAPPER=""`. Dilarang menghapus konfigurasi caching dari `.cargo/config.toml`.
-3. **Pemisahan Channel Transport vs Governance (Gate D-2):** Conditional compilation `#[cfg(feature = "channel-*")]` pada fungsi utilitas murni di `crates/galleon-channels/src/util.rs` (HTTP limiter, string formatter, breadcrumbs) adalah SAH. **Koreksi 2026-10-09:** `util.rs` genuinely berisi `PendingApproval`/`resolve_pending_approval`/`new_approval_token` (bukan tidak ada sama sekali seperti klaim versi steering sebelumnya) — tapi ini SAH karena murni I/O/transport (generate token, tunggu balasan teks user per-channel), terbukti `galleon-channels` tidak depend ke `galleon-runtime` tempat logic kebijakan sungguhan (`approval/mod.rs`, `security/playbook.rs`) berada. Yang tetap dilarang keras: menaruh KEPUTUSAN kebijakan (risk-tier threshold, RACI, auto-approve criteria) atau dependency langsung ke `galleon-runtime`/Go policy di utilitas channel. Script gate D-2 wajib mendeteksi coupling tata kelola nyata (simbol kebijakan + dependency graph), bukan sekadar grep nama fitur channel ATAU grep nama simbol approval I/O semata.
+3. **Pemisahan Channel Transport vs Governance (Gate D-2):** Conditional compilation `#[cfg(feature = "channel-*")]` pada fungsi utilitas murni di `crates/galleon-channels/src/util.rs` (HTTP limiter, string formatter, breadcrumbs) adalah SAH. **Koreksi 2026-10-09:** `util.rs` genuinely berisi `PendingApproval`/`resolve_pending_approval`/`new_approval_token` (bukan tidak ada sama sekali seperti klaim versi steering sebelumnya) — tapi ini SAH karena murni I/O/transport (generate token, tunggu balasan teks user per-channel), terbukti `galleon-channels` tidak depend ke `galleon-runtime` tempat logic kebijakan sungguhan (`approval/mod.rs`, `security/playbook.rs`) berada. Yang tetap dilarang keras: menaruh KEPUTUSAN kebijakan (risk-tier threshold, RACI, auto-approve criteria) atau dependency langsung ke `galleon-runtime` policy di utilitas channel. Script gate D-2 wajib mendeteksi coupling tata kelola nyata (simbol kebijakan + dependency graph), bukan sekadar grep nama fitur channel ATAU grep nama simbol approval I/O semata.
 4. **Clean Web Packaging:** Seluruh dependensi web wajib resolvable dengan `npm ci` / `npm install` murni tanpa konflik `ERESOLVE`.
 
 ---
@@ -195,7 +192,7 @@ PR Diajukan ke Testing
 Untuk eksekusi task, rujuk ke tabel master 121 tiket di [`standard-docs/roadmap/PR-plan.md`](../standard-docs/roadmap/PR-plan.md):
 - **Gelombang 0 (P0 Dasar & Keamanan):** PR-00 s/d PR-06 (R-00 inventory, U-01 frontendDist, U-06 terminal removal, G-01 fail-closed).
 - **Gelombang 1 (Pembersihan & Gate CI):** PR-10 s/d PR-22 (Zero unwrap gate, boundary gates, AI studio artifact cleanup, Ollama probe removal).
-- **Gelombang 2 (Persistensi & Pemisahan Engine):** PR-30 s/d PR-72 (SQLite store, QR pairing, Agent loop ke Go, Channel decoupling).
+- **Gelombang 2 (Persistensi & Pemisahan Engine):** PR-30 s/d PR-72 (SQLite store, QR pairing, Agent loop, Channel decoupling).
 - **Gelombang 3 (Rebranding Galleon):** PR-80 s/d PR-88 (Rename crates, env vars, binaries `galleon`/`galleoncode`/`galleonrelay`).
 - **Gelombang 4 (Platform & Release):** PR-90 s/d PR-99 (Nginx TLS, Tauri sidecar, Release pipeline).
 

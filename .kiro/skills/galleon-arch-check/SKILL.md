@@ -1,6 +1,6 @@
 ---
 name: galleon-arch-check
-description: "Review arsitektur advisory untuk diff/PR galleon-fleet — validasi boundary 3-tier (UI → Go engine → Rust core), arah dependency, SSOT (tanpa duplikasi state lintas-tier), dan penempatan crate/paket. Advisory, bukan merge gate. Gunakan saat user minta 'arch-check', 'cek arsitektur', 'review boundary tier', 'apakah diff ini langgar arsitektur', atau sebelum membuka PR yang menyentuh web-2/engine/crates/apps."
+description: "Review arsitektur advisory untuk diff/PR galleon-fleet — validasi boundary 3-tier (UI → Rust Gateway → Rust System Core), arah dependency, SSOT (tanpa duplikasi state lintas-tier), dan penempatan crate/paket. Advisory, bukan merge gate. Gunakan saat user minta 'arch-check', 'cek arsitektur', 'review boundary tier', 'apakah diff ini langgar arsitektur', atau sebelum membuka PR yang menyentuh web/crates/apps."
 ---
 
 # Galleon Fleet — Architecture Check (advisory)
@@ -18,17 +18,19 @@ Review advisory apakah sebuah diff/PR menghormati arsitektur kanonikal galleon-f
 ## Boundary 3-tier (yang divalidasi)
 | Tier | Lokasi | Tugas | DILARANG |
 |---|---|---|---|
-| Interface | `web-2/` (+`apps/tauri-2` webview) | render, view-model, `apiClient.ts` | logika bisnis / data mocking di `.tsx`/`server.ts` |
-| Orchestrator | `engine/` (Go) | agent brain, fleet governance, memory RAG, persistensi | akses hardware/kernel tanpa `SystemGateway` |
-| System Core | `crates/`, `apps/tauri-2/src` (Rust) | sandbox, PTY, native tools, vault | duplikasi logic quest/crew planning milik Go |
+| Tier 1: Client/Desktop Apps | `apps/tauri/`, CLI | Window shell, tray, dialog OS native, client transport ke gateway | Logika bisnis di UI/shell, bypass gateway |
+| Tier 2: System Core | `crates/`, `src/` | Gateway HTTP/WS (:42617 `galleon-gateway`), security microkernel, sandbox, vault, native tools, WASI | Handler tanpa auth (kecuali publik), unsafe tanpa invariant |
+| Tier 3: UI Layer | `web/` | Render view, view-model, `apiClient.ts` | Logika bisnis / server di client, direct LLM SDK |
+
+> **Catatan:** Penulisan kode Go dilarang di core repository ini; arsitektur backend dikonsolidasikan penuh ke Rust sesuai ADR-0018 dan 01-boundary-policy v2.
 
 ## Workflow
 1. **Ambil diff.** Lokal: `git diff master -- <paths>` atau `git diff --stat`. PR GitHub (org `diezy-software`): `gh pr diff <N>` + `gh pr view <N> --json files,title,baseRefName,number`.
 2. **Muat sumber** di atas (selalu `AGENTS.md` + `galleon-architecture.md`; sisanya sesuai file yang disentuh).
 3. **Analisa** tiap kategori → verdict: **Pass** / **Advisory** / **Flag**:
-   - **Arah dependency**: UI → Go → Rust, tidak terbalik. UI tidak impor logic domain.
-   - **Boundary tier**: tiap file di tier yang benar; tidak ada logika bisnis bocor ke UI; Go tidak bypass sandbox Rust.
-   - **SSOT (no-duplicate-state)**: fakta yang sama tidak didefinisikan ganda lintas-tier dengan nilai beda (contoh nyata repo: risk-tier policy di Rust `apps/tauri-2/src/main.rs` DAN Go `engine/src/fleet/services.go`). Engine = sumber tunggal; Tauri cukup proxy.
+   - **Arah dependency**: UI → Gateway → System Core, tidak terbalik. UI tidak impor logic domain.
+   - **Boundary tier**: tiap file di tier yang benar; tidak ada logika bisnis bocor ke UI; penulisan kode Go dilarang (ADR-0018).
+   - **SSOT (no-duplicate-state)**: fakta yang sama tidak didefinisikan ganda lintas-tier dengan nilai beda. Gateway/runtime Rust = sumber tunggal kanonikal.
    - **Penempatan crate/paket**: fitur lintas-crate dipisah jadi crate independen (plugin arch), bukan monolit; seluruh crate/modul memakai prefix `galleon-` (SPEC-009).
    - **Klaim doc = kode**: doc arsitektur yang klaim perilaku harus cocok wiring nyata.
 4. **Tulis artifact** ke `$KIROCREW_SCRATCH/arch-review-<N>.md` (struktur di bawah).

@@ -8,14 +8,14 @@ inclusion: manual
 Load **manual** (`#galleon-review-rubric`) saat mereview PR/diff. Sengaja tidak auto-load agar hemat token. Sumber: `.gemini/style-guide.md` (di-galleon-kan). Prioritaskan keamanan, memory-safety, dan boundary 3-tier. Untuk kaidah idiom Rust lihat `galleon-rust.md`; untuk boundary tier lihat `galleon-architecture.md`.
 
 ## Priority level temuan
-- **CRITICAL**: kerentanan keamanan, pelanggaran memory-safety, kebocoran data/secret, pelanggaran boundary tier (UI berisi logika bisnis, Go bypass sandbox Rust).
-- **HIGH**: logic error, error handling salah, API misuse, duplikasi SSOT lintas-tier (fakta sama didefinisikan beda di Rust & Go).
+- **CRITICAL**: kerentanan keamanan, pelanggaran memory-safety, kebocoran data/secret, pelanggaran boundary tier (UI berisi logika bisnis, bypass sandbox Rust).
+- **HIGH**: logic error, error handling salah, API misuse, duplikasi SSOT lintas-tier.
 - **MEDIUM**: kualitas kode, perf, Rust non-idiomatik, alokasi tak perlu.
 - **LOW**: gaya, dokumentasi, refactor minor.
 
 ## Fokus per surface (hanya cek yang disentuh diff)
 - `crates/**` & `apps/tauri/src/` (Rust Core) → crypto/secret, `unsafe` (wajib `// SAFETY:`), `unwrap()`/`expect()` di jalur produksi, Landlock boundary, external surface default-closed.
-- `engine/**` (Go) → error propagation eksplisit (zero unhandled), `slog` terstruktur, Wire DI di `wire.go`, tidak akses hardware/kernel tanpa `SystemGateway`.
+- `engine/**` (Go) → penulisan kode Go dilarang (ADR-0018); tolak penambahan fitur Go baru.
 - `web/**` (TS/React) → zero backend logic di `.tsx`/`server.ts`, zero data mocking/hardcoded array, semua state dari `useFleetStore` ← API nyata, tipe ketat match `src/types/index.ts` (no `any`).
 - `wit/**` → cek breaking change terhadap marker `.frozen` (lihat `wit/VERSIONING.md`).
 - `.github/workflows/**`, config migration → risiko tinggi; migration wajib backward-compatible.
@@ -26,7 +26,7 @@ Load **manual** (`#galleon-review-rubric`) saat mereview PR/diff. Sengaja tidak 
 - Credential/secret hardcoded; secret ter-log.
 - `unsafe` tanpa justifikasi; `unwrap()`/`expect()`/`panic!` produksi.
 - Public API tanpa doc comment; breaking change tanpa deprecation.
-- **Duplikasi state lintas-tier** (pelanggaran SSOT `AGENTS.md`) — contoh nyata: risk-tier policy ganda di Rust & Go dengan nilai beda.
+- **Duplikasi state lintas-tier** (pelanggaran SSOT `AGENTS.md`).
 - Klaim doc ≠ kode (mis. doc bilang "persistensi via DiskStore" padahal wiring pakai MemoryStore).
 
 ## Aturan
