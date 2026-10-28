@@ -1,12 +1,12 @@
 use async_trait::async_trait;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_config::autonomy::AutonomyLevel;
+use galleon_config::policy::SecurityPolicy;
 use serde_json::json;
 use std::collections::BTreeSet;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use galleon_api::tool::{Tool, ToolOutput, ToolResult};
-use galleon_config::autonomy::AutonomyLevel;
-use galleon_config::policy::SecurityPolicy;
 
 use crate::util_helpers::clean_verbatim_path;
 
@@ -2182,12 +2182,12 @@ impl Tool for GitOperationsTool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use galleon_config::policy::SecurityPolicy;
     #[cfg(unix)]
     use std::io::Write;
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
     use tempfile::TempDir;
-    use galleon_config::policy::SecurityPolicy;
 
     #[cfg(unix)]
     struct MarkerGitCommandBoundary {

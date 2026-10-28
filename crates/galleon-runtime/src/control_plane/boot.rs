@@ -51,10 +51,9 @@ impl ControlPlaneRecoveryOwner {
         if reclaimed > 0 {
             ::galleon_log::record!(
                 INFO,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(
-                        ::serde_json::json!({ "reconciled": reclaimed, "boot_id": boot_id })
-                    ),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({ "reconciled": reclaimed, "boot_id": boot_id })
+                ),
                 "control-plane: reconciled prior-boot tasks at startup"
             );
         }

@@ -5,10 +5,10 @@
 
 use std::path::PathBuf;
 
-use rusqlite::Connection;
 use galleon_api::model_provider::ChatMessage;
 use galleon_infra::session_backend::{SessionBackend, SessionContext};
 use galleon_infra::session_sqlite::SqliteSessionBackend;
+use rusqlite::Connection;
 
 #[test]
 fn migration_adds_routing_columns_and_set_session_context_persists() {

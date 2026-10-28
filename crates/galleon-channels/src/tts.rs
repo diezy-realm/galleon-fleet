@@ -2325,9 +2325,10 @@ mod tests {
             &[script],
             std::time::Duration::from_secs(10),
         );
-        let mut handle = galleon_spawn::spawn!(async move {
-            provider.synthesize("hello", "en-US-AriaNeural").await
-        });
+        let mut handle =
+            galleon_spawn::spawn!(
+                async move { provider.synthesize("hello", "en-US-AriaNeural").await }
+            );
         // Wait until the child has created the artifact and recorded its path
         // so the abort deterministically drops the future while `child.wait()`
         // is pending. If startup fails, report the provider result instead of

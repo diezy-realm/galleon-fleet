@@ -4400,10 +4400,7 @@ mod live_smoke {
             "GALLEON_MATRIX_SMOKE_ACCESS_TOKEN",
             "GALLEON_MATRIX_ACCESS_TOKEN",
         );
-        let device_id = env_first(
-            "GALLEON_MATRIX_SMOKE_DEVICE_ID",
-            "GALLEON_MATRIX_DEVICE_ID",
-        );
+        let device_id = env_first("GALLEON_MATRIX_SMOKE_DEVICE_ID", "GALLEON_MATRIX_DEVICE_ID");
         let stamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("system time before unix epoch")
@@ -4520,10 +4517,7 @@ mod live_smoke {
             "GALLEON_MATRIX_SMOKE_ACCESS_TOKEN",
             "GALLEON_MATRIX_ACCESS_TOKEN",
         );
-        let device_id = env_first(
-            "GALLEON_MATRIX_SMOKE_DEVICE_ID",
-            "GALLEON_MATRIX_DEVICE_ID",
-        );
+        let device_id = env_first("GALLEON_MATRIX_SMOKE_DEVICE_ID", "GALLEON_MATRIX_DEVICE_ID");
         let stamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("system time before unix epoch")
@@ -4613,10 +4607,7 @@ mod live_smoke {
             "GALLEON_MATRIX_SMOKE_ACCESS_TOKEN",
             "GALLEON_MATRIX_ACCESS_TOKEN",
         );
-        let device_id = env_first(
-            "GALLEON_MATRIX_SMOKE_DEVICE_ID",
-            "GALLEON_MATRIX_DEVICE_ID",
-        );
+        let device_id = env_first("GALLEON_MATRIX_SMOKE_DEVICE_ID", "GALLEON_MATRIX_DEVICE_ID");
 
         let idle_secs: u64 = env::var("GALLEON_MATRIX_SMOKE_IDLE_SECS")
             .ok()

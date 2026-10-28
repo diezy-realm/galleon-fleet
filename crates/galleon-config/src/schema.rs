@@ -12,6 +12,8 @@ use crate::traits::{ChannelConfig, HasPropKind, PropKind};
 use crate::validation_bail;
 use anyhow::{Context, Result};
 use directories::UserDirs;
+use galleon_api::runtime_status::RuntimeConfigKind;
+use galleon_macros::Configurable;
 use serde::de::{self, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
@@ -22,8 +24,6 @@ use std::sync::{OnceLock, RwLock};
 use tokio::fs::File;
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
-use galleon_api::runtime_status::RuntimeConfigKind;
-use galleon_macros::Configurable;
 
 const SUPPORTED_PROXY_SERVICE_KEYS: &[&str] = &[
     "model_provider.anthropic",
@@ -767,9 +767,7 @@ pub trait FamilyEndpoint {
 /// the family's chat-completions-compatible endpoint). New OpenAI provider
 /// slots default to `responses`; other families default to chat-completions
 /// (or ignore the field) when unset.
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, galleon_macros::ConfigEnum,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, galleon_macros::ConfigEnum)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum WireApi {
@@ -15129,7 +15127,9 @@ pub enum CronShellOutputFormat {
 impl From<CronShellOutputFormat> for galleon_infra::cron_types::CronShellOutputFormat {
     fn from(f: CronShellOutputFormat) -> Self {
         match f {
-            CronShellOutputFormat::Wrapped => galleon_infra::cron_types::CronShellOutputFormat::Wrapped,
+            CronShellOutputFormat::Wrapped => {
+                galleon_infra::cron_types::CronShellOutputFormat::Wrapped
+            }
             CronShellOutputFormat::Raw => galleon_infra::cron_types::CronShellOutputFormat::Raw,
         }
     }
@@ -19305,9 +19305,7 @@ pub enum PaymentLockMode {
 }
 
 /// Classification of financial or payment operations covered by the lockout gate (BL-40).
-#[derive(
-    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, galleon_macros::ConfigEnum,
-)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, galleon_macros::ConfigEnum)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum PaymentActionCategory {
@@ -19373,7 +19371,6 @@ impl Default for PaymentLockConfig {
         }
     }
 }
-
 
 /// Nevis IAM integration configuration.
 ///
@@ -22207,7 +22204,9 @@ impl Config {
                 crate::config_migration::default_legacy_config_dir(),
                 default_config_dir(),
             ) {
-                if let Err(e) = crate::config_migration::migrate_config_directory(&legacy, &canonical) {
+                if let Err(e) =
+                    crate::config_migration::migrate_config_directory(&legacy, &canonical)
+                {
                     ::galleon_log::record!(
                         WARN,
                         ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
@@ -23820,15 +23819,12 @@ impl Config {
                     if !known_servers.contains(server.as_str()) {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({
-                                "mcp_bundle": bundle_alias,
-                                "server": server,
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({
+                                    "mcp_bundle": bundle_alias,
+                                    "server": server,
+                                })),
                             "mcp_bundles.<alias> references an MCP server name not in [mcp.servers]; it grants nothing"
                         );
                     }
@@ -23842,15 +23838,12 @@ impl Config {
                     if !self.mcp_bundles.contains_key(bundle_alias) {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({
-                                "agent": agent_alias,
-                                "mcp_bundle": bundle_alias,
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({
+                                    "agent": agent_alias,
+                                    "mcp_bundle": bundle_alias,
+                                })),
                             "agents.<alias>.mcp_bundles references an undefined [mcp_bundles.<alias>]; the agent is granted no servers from it"
                         );
                     }

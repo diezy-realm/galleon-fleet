@@ -1,14 +1,14 @@
 use crate::helpers::domain_guard;
 use async_trait::async_trait;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::{FirecrawlConfig, ProxyConfig, ProxyScope};
 use serde_json::json;
 use std::sync::{
     Arc,
     atomic::{AtomicBool, Ordering},
 };
 use std::time::Duration;
-use galleon_api::tool::{Tool, ToolOutput, ToolResult};
-use galleon_config::policy::SecurityPolicy;
-use galleon_config::schema::{FirecrawlConfig, ProxyConfig, ProxyScope};
 
 /// Minimum body length to consider a standard fetch successful.
 /// Bodies shorter than this are treated as JS-only pages that need Firecrawl.

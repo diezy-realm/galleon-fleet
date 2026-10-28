@@ -1,8 +1,8 @@
 use crate::schema::DockerRuntimeConfig;
 use anyhow::{Context, Result};
+use galleon_api::runtime_traits::{RuntimeAdapter, ShellDialect};
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
-use galleon_api::runtime_traits::{RuntimeAdapter, ShellDialect};
 
 /// Canonicalization failures that the runtime layer can present through
 /// localized tool diagnostics without parsing an English error chain.

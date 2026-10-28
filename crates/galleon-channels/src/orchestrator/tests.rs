@@ -1379,9 +1379,7 @@ struct ModelPickerRecordingChannel {
 
 impl ::galleon_api::attribution::Attributable for ModelPickerRecordingChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Telegram,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Telegram)
     }
 
     fn alias(&self) -> &str {
@@ -1421,9 +1419,7 @@ impl Channel for ModelPickerRecordingChannel {
 
 impl ::galleon_api::attribution::Attributable for NamedMockChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -1457,9 +1453,7 @@ struct MentionMockChannel {
 
 impl ::galleon_api::attribution::Attributable for MentionMockChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Discord,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Discord)
     }
     fn alias(&self) -> &str {
         "test"
@@ -4193,11 +4187,9 @@ impl ModelProvider for DummyModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for DummyModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "DummyModelProvider"
@@ -4238,11 +4230,9 @@ impl ModelProvider for FormatErrorModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for FormatErrorModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "FormatErrorModelProvider"
@@ -4278,11 +4268,9 @@ impl ModelProvider for TransientErrorModelProvider {
 #[cfg(feature = "channel-email")]
 impl ::galleon_api::attribution::Attributable for TransientErrorModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
 
     fn alias(&self) -> &str {
@@ -4322,11 +4310,9 @@ impl ModelProvider for QuerySecretErrorModelProvider {
 
 impl ::galleon_api::attribution::Attributable for QuerySecretErrorModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
 
     fn alias(&self) -> &str {
@@ -4390,9 +4376,7 @@ impl SendMessageRecordingChannel {
 
 impl ::galleon_api::attribution::Attributable for SendMessageRecordingChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -4647,9 +4631,7 @@ struct HangingSendChannel {
 
 impl ::galleon_api::attribution::Attributable for HangingSendChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "hanging-send-test"
@@ -4696,9 +4678,7 @@ struct WhatsAppRecordingChannel {
 
 impl ::galleon_api::attribution::Attributable for TelegramRecordingChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -4707,9 +4687,7 @@ impl ::galleon_api::attribution::Attributable for TelegramRecordingChannel {
 
 impl ::galleon_api::attribution::Attributable for SlowBusyChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "slow-busy-test"
@@ -4790,9 +4768,7 @@ impl Channel for SlowBusyChannel {
 
 impl ::galleon_api::attribution::Attributable for SlackRecordingChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -4831,9 +4807,7 @@ impl Channel for SlackRecordingChannel {
 
 impl ::galleon_api::attribution::Attributable for WhatsAppRecordingChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -4872,9 +4846,7 @@ impl Channel for WhatsAppRecordingChannel {
 
 impl ::galleon_api::attribution::Attributable for RecordingChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -4883,9 +4855,7 @@ impl ::galleon_api::attribution::Attributable for RecordingChannel {
 
 impl ::galleon_api::attribution::Attributable for PendingApprovalChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
 
     fn alias(&self) -> &str {
@@ -4895,9 +4865,7 @@ impl ::galleon_api::attribution::Attributable for PendingApprovalChannel {
 
 impl ::galleon_api::attribution::Attributable for FailingSendChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -4906,9 +4874,7 @@ impl ::galleon_api::attribution::Attributable for FailingSendChannel {
 
 impl ::galleon_api::attribution::Attributable for InputOnlyNoopChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -4917,9 +4883,7 @@ impl ::galleon_api::attribution::Attributable for InputOnlyNoopChannel {
 
 impl ::galleon_api::attribution::Attributable for DraftRecordingChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -5891,11 +5855,9 @@ impl ModelProvider for CancelMidTurnModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for CancelMidTurnModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "CancelMidTurnModelProvider"
@@ -6430,11 +6392,9 @@ impl ModelProvider for SlowModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for SlowModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "SlowModelProvider"
@@ -6457,11 +6417,9 @@ impl ModelProvider for NoReplyModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for NoReplyModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "NoReplyModelProvider"
@@ -6484,11 +6442,9 @@ impl ModelProvider for NoReplyRefusedModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for NoReplyRefusedModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "NoReplyRefusedModelProvider"
@@ -6511,11 +6467,9 @@ impl ModelProvider for NoReplyFailedModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for NoReplyFailedModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "NoReplyFailedModelProvider"
@@ -6568,11 +6522,9 @@ impl ModelProvider for ToolCallingModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for ToolCallingModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "ToolCallingModelProvider"
@@ -6650,11 +6602,9 @@ impl ModelProvider for NarratingNativeToolProvider {
 #[cfg(feature = "channel-telegram")]
 impl ::galleon_api::attribution::Attributable for NarratingNativeToolProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "NarratingNativeToolProvider"
@@ -6737,11 +6687,9 @@ impl ModelProvider for LeakingNarratingToolProvider {
 #[cfg(feature = "channel-telegram")]
 impl ::galleon_api::attribution::Attributable for LeakingNarratingToolProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "LeakingNarratingToolProvider"
@@ -6878,11 +6826,9 @@ impl ModelProvider for SessionsCurrentModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for SessionsCurrentModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "SessionsCurrentModelProvider"
@@ -6921,11 +6867,9 @@ impl ModelProvider for ToolCallingAliasModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for ToolCallingAliasModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "ToolCallingAliasModelProvider"
@@ -6960,11 +6904,9 @@ BTC is currently around $65,000 based on latest tool output."#
 }
 impl ::galleon_api::attribution::Attributable for RawToolArtifactModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "RawToolArtifactModelProvider"
@@ -7014,11 +6956,9 @@ impl ModelProvider for IterativeToolModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for IterativeToolModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "IterativeToolModelProvider"
@@ -7064,11 +7004,9 @@ impl ModelProvider for HistoryCaptureModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for HistoryCaptureModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "HistoryCaptureModelProvider"
@@ -7371,11 +7309,9 @@ impl ModelProvider for DelayedHistoryCaptureModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for DelayedHistoryCaptureModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "DelayedHistoryCaptureModelProvider"
@@ -7427,11 +7363,9 @@ impl ModelProvider for ModelCaptureModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for ModelCaptureModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "ModelCaptureModelProvider"
@@ -7496,11 +7430,9 @@ impl ModelProvider for ModelSwitchRequestProvider {
 
 impl ::galleon_api::attribution::Attributable for ModelSwitchRequestProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
 
     fn alias(&self) -> &str {
@@ -7545,11 +7477,9 @@ impl ModelProvider for PrecheckProbeModelProvider {
 
 impl ::galleon_api::attribution::Attributable for PrecheckProbeModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "PrecheckProbeModelProvider"
@@ -9103,9 +9033,9 @@ async fn process_channel_message_scopes_sender_session_key_for_sessions_current_
             std::path::PathBuf::new(),
         )),
         tools_registry: Arc::new(galleon_api::tool::ScopedToolRegistry::from_raw_for_test(
-            vec![Box::new(
-                galleon_tools::sessions::SessionsCurrentTool::new(Arc::clone(&session_store)),
-            )],
+            vec![Box::new(galleon_tools::sessions::SessionsCurrentTool::new(
+                Arc::clone(&session_store),
+            ))],
         )),
         observer: Arc::new(NoopObserver),
         system_prompt: Arc::new("test-system-prompt".to_string()),
@@ -11409,11 +11339,9 @@ impl ModelProvider for ConcurrencyTrackingProvider {
 
 impl ::galleon_api::attribution::Attributable for ConcurrencyTrackingProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "ConcurrencyTrackingProvider"
@@ -11528,11 +11456,9 @@ impl ModelProvider for GatedCallSequenceProvider {
 }
 impl ::galleon_api::attribution::Attributable for GatedCallSequenceProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "GatedCallSequenceProvider"
@@ -14990,9 +14916,7 @@ struct AckTimingChannel {
 
 impl ::galleon_api::attribution::Attributable for AckTimingChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "ack-timing"
@@ -16210,11 +16134,9 @@ impl ModelProvider for GatedModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for GatedModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "GatedModelProvider"
@@ -17773,11 +17695,9 @@ impl ModelProvider for GatedProbeModelProvider {
 }
 impl ::galleon_api::attribution::Attributable for GatedProbeModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "GatedProbeModelProvider"
@@ -17796,9 +17716,7 @@ struct WindDownGateChannel {
 
 impl ::galleon_api::attribution::Attributable for WindDownGateChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "wind-down-gate-test"
@@ -19242,11 +19160,9 @@ impl ModelProvider for SendViaTextRoutingProvider {
 
 impl ::galleon_api::attribution::Attributable for SendViaTextRoutingProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "SendViaTextRoutingProvider"
@@ -24637,9 +24553,7 @@ impl ObservedChannel {
 
 impl ::galleon_api::attribution::Attributable for ObservedChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -24678,9 +24592,7 @@ impl Channel for ObservedChannel {
 
 impl ::galleon_api::attribution::Attributable for AlwaysFailChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -24708,9 +24620,7 @@ impl Channel for AlwaysFailChannel {
 
 impl ::galleon_api::attribution::Attributable for BlockUntilClosedChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Webhook,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"
@@ -24719,9 +24629,7 @@ impl ::galleon_api::attribution::Attributable for BlockUntilClosedChannel {
 
 impl ::galleon_api::attribution::Attributable for FailOnceChannel {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Channel(
-            ::galleon_api::attribution::ChannelKind::Discord,
-        )
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Discord)
     }
 
     fn alias(&self) -> &str {
@@ -30809,8 +30717,7 @@ async fn channel_gate_approval_drives_resumed_execute_step() {
 
     tokio::time::timeout(Duration::from_secs(1), async {
         loop {
-            if active_run_status(&engine, &run_id) == Some(galleon_api::sop::SopRunStatus::Failed)
-            {
+            if active_run_status(&engine, &run_id) == Some(galleon_api::sop::SopRunStatus::Failed) {
                 break;
             }
             tokio::task::yield_now().await;
@@ -30855,8 +30762,7 @@ async fn approval_only_channel_gate_reply_bypasses_agent_ownership() {
 
     tokio::time::timeout(Duration::from_secs(1), async {
         loop {
-            if active_run_status(&engine, &run_id) == Some(galleon_api::sop::SopRunStatus::Failed)
-            {
+            if active_run_status(&engine, &run_id) == Some(galleon_api::sop::SopRunStatus::Failed) {
                 break;
             }
             tokio::task::yield_now().await;

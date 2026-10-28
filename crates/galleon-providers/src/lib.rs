@@ -5570,9 +5570,7 @@ mod tests {
                 base: ModelProviderConfig {
                     model: Some("gpt-4o".to_string()),
                     api_key: Some("a-key".to_string()),
-                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
-                        "openai.b",
-                    )],
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new("openai.b")],
                     ..Default::default()
                 },
             },
@@ -5583,9 +5581,7 @@ mod tests {
                 base: ModelProviderConfig {
                     model: Some("gpt-4.1".to_string()),
                     api_key: Some("b-key".to_string()),
-                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
-                        "openai.a",
-                    )],
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new("openai.a")],
                     ..Default::default()
                 },
             },

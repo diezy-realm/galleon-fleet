@@ -215,7 +215,10 @@ pub fn resolve_config_dir(cli_override: Option<&Path>) -> Result<PathBuf> {
             }
         }
         let profile = std::env::var("USERPROFILE").context("USERPROFILE not set")?;
-        Ok(PathBuf::from(profile).join("AppData").join("Roaming").join("galleon"))
+        Ok(PathBuf::from(profile)
+            .join("AppData")
+            .join("Roaming")
+            .join("galleon"))
     }
 }
 

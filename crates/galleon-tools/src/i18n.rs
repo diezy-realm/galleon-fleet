@@ -175,9 +175,7 @@ fn detect_locale() -> String {
     }
 
     if let Some(base) = directories::BaseDirs::new() {
-        let candidates = [
-            base.config_dir().join("galleon/config.toml"),
-        ];
+        let candidates = [base.config_dir().join("galleon/config.toml")];
         for path in candidates {
             if let Some(locale) = std::fs::read_to_string(path)
                 .ok()

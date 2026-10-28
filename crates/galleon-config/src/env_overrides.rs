@@ -517,10 +517,7 @@ mod tests {
     #[tokio::test]
     async fn mask_restores_structured_memory_grant_snapshot() {
         let _guard = super::env_test_lock().await;
-        let _v = EnvVarGuard::set(
-            "GALLEON_agents__alpha__workspace__read_memory_from",
-            "beta",
-        );
+        let _v = EnvVarGuard::set("GALLEON_agents__alpha__workspace__read_memory_from", "beta");
 
         let mut config = Config::default();
         for alias in ["alpha", "beta", "gamma"] {

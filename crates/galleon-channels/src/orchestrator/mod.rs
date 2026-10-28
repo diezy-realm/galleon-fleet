@@ -1083,8 +1083,7 @@ enum InboundSlot {
     Ready(InboundTurn),
     Debounced {
         turn: InboundTurn,
-        content:
-            tokio::sync::oneshot::Receiver<(String, Vec<galleon_api::media::MediaAttachment>)>,
+        content: tokio::sync::oneshot::Receiver<(String, Vec<galleon_api::media::MediaAttachment>)>,
     },
 }
 
@@ -2061,10 +2060,7 @@ fn runtime_conversation_memory_key(
 /// history key would concatenate different members' messages into a single
 /// turn attributed to whoever sent last. The history key is resolved by the
 /// caller so runtime callers keep the registry-aware namespace.
-fn message_debounce_key(
-    history_key: String,
-    msg: &galleon_api::channel::ChannelMessage,
-) -> String {
+fn message_debounce_key(history_key: String, msg: &galleon_api::channel::ChannelMessage) -> String {
     match msg.conversation_scope {
         galleon_api::channel::ChannelConversationScope::Sender => history_key,
         galleon_api::channel::ChannelConversationScope::ReplyTarget => {
@@ -3235,8 +3231,7 @@ async fn load_runtime_config_and_defaults(
     parsed.config_path = path.to_path_buf();
 
     if let Some(clawcrew_dir) = path.parent() {
-        let store =
-            galleon_config::secrets::SecretStore::new(clawcrew_dir, parsed.secrets.encrypt);
+        let store = galleon_config::secrets::SecretStore::new(clawcrew_dir, parsed.secrets.encrypt);
         parsed.decrypt_secrets(&store)?;
     }
     let applied = galleon_config::env_overrides::apply_env_overrides(&mut parsed)?;
@@ -5955,8 +5950,7 @@ fn truncate_at_incomplete_protocol_json(s: &str) -> String {
             // Nothing completes from here, so this is the unfinished tail and
             // everything after it belongs to the same value.
             _ => {
-                return if galleon_tool_call_parser::looks_like_incomplete_tool_protocol_json(tail)
-                {
+                return if galleon_tool_call_parser::looks_like_incomplete_tool_protocol_json(tail) {
                     s[..at].trim_end().to_string()
                 } else {
                     s.to_string()
@@ -6111,11 +6105,8 @@ async fn run_draft_updater(
                     {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Draft progress update failed"
                         );
                     }
@@ -8731,11 +8722,12 @@ fn resolve_cold_crumb_provenance_result(
         Err(e) => {
             ::galleon_log::record!(
                 DEBUG,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "history_key": history_key,
                         "error": format!("{}", e),
-                    })),
+                    })
+                ),
                 "Trim breadcrumb provenance unreadable; treating as absent without text inference"
             );
             Err(())
@@ -8847,13 +8839,14 @@ async fn process_channel_message_body(
         galleon_security_scrub::ScanOutcome::Suspicious { patterns, score } => {
             ::galleon_log::record!(
                 WARN,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "channel": msg.channel,
                         "sender": msg.sender,
                         "patterns": patterns,
                         "score": score,
-                    })),
+                    })
+                ),
                 "inbound channel message flagged suspicious by ContentSafety guard"
             );
             msg.content = sanitized_content;
@@ -10147,11 +10140,8 @@ async fn process_channel_message_body(
                     galleon_api::hook::HookResult::Cancel(reason) => {
                         ::galleon_log::record!(
                             INFO,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"reason": reason.to_string()})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"reason": reason.to_string()})),
                             "outgoing message suppressed by hook"
                         );
                         if let (Some(channel), Some(draft_id)) =
@@ -10285,11 +10275,8 @@ async fn process_channel_message_body(
                     {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Memory consolidation skipped"
                         );
                     }
@@ -10533,8 +10520,7 @@ async fn process_channel_message_body(
             }
         }
         LlmExecutionResult::Completed(Ok(Err(e))) => {
-            if galleon_api::agent::is_tool_loop_cancelled(&e) || cancellation_token.is_cancelled()
-            {
+            if galleon_api::agent::is_tool_loop_cancelled(&e) || cancellation_token.is_cancelled() {
                 ::galleon_log::record!(
                     INFO,
                     ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
@@ -10622,13 +10608,10 @@ async fn process_channel_message_body(
                     if cache.remove(&cache_key).is_some() {
                         ::galleon_log::record!(
                             INFO,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(
-                                ::serde_json::json!({"model_provider": route.model_provider})
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(
+                                    ::serde_json::json!({"model_provider": route.model_provider})
+                                ),
                             "Evicted cached model_provider after auth error; next request will re-create with fresh credentials"
                         );
                     }
@@ -11378,12 +11361,9 @@ async fn run_message_dispatch_loop(
                     Err(_) => {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"sender": msg.sender})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"sender": msg.sender})),
                             "stop executed without acknowledgement: reply budget exhausted"
                         );
                     }
@@ -12519,11 +12499,8 @@ fn build_channel_by_id(
                     nc.resolve_bot_secret().unwrap_or_else(|e| {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Failure),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Failure),
                             &e.to_string()
                         );
                         None

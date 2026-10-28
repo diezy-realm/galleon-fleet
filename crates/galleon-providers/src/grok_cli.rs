@@ -1022,11 +1022,9 @@ impl ModelProvider for GrokCliModelProvider {
 
 impl ::galleon_api::attribution::Attributable for GrokCliModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::GrokCli,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::GrokCli,
+        ))
     }
 
     fn alias(&self) -> &str {

@@ -1,5 +1,8 @@
 use crate::helpers::domain_guard;
 use async_trait::async_trait;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_config::policy::SecurityPolicy;
+use galleon_config::schema::{ProxyConfig, ProxyScope};
 use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderName, HeaderValue};
 use serde_json::json;
 use std::future::Future;
@@ -8,9 +11,6 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
-use galleon_api::tool::{Tool, ToolOutput, ToolResult};
-use galleon_config::policy::SecurityPolicy;
-use galleon_config::schema::{ProxyConfig, ProxyScope};
 
 const HTTP_REQUEST_PROXY_PINNING_ERROR: &str = "http_request requires direct transport so validated DNS answers remain pinned; set \
      proxy.scope = \"services\" and omit tool.http_request and tool.* from proxy.services, or disable the proxy; \
@@ -844,11 +844,11 @@ fn validate_resolved_ips_for_ssrf(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use galleon_config::autonomy::AutonomyLevel;
+    use galleon_config::policy::SecurityPolicy;
     use reqwest::header::AUTHORIZATION;
     use std::path::PathBuf;
     use tempfile::TempDir;
-    use galleon_config::autonomy::AutonomyLevel;
-    use galleon_config::policy::SecurityPolicy;
 
     async fn chunked_response(chunks: &[&[u8]]) -> reqwest::Response {
         use tokio::io::{AsyncReadExt, AsyncWriteExt};

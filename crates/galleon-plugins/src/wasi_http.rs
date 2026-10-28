@@ -46,6 +46,7 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, OnceLock};
 
+use galleon_infra::net_guard::NetworkGuardError;
 use hyper::header::HOST;
 use tokio::net::TcpStream;
 use tokio::time::{Instant, timeout, timeout_at};
@@ -55,7 +56,6 @@ use wasmtime_wasi_http::p2::{
     body::HyperOutgoingBody,
     types::{HostFutureIncomingResponse, IncomingResponse, OutgoingRequestConfig},
 };
-use galleon_infra::net_guard::NetworkGuardError;
 
 use crate::egress::{
     AuthorizedEgress, EgressError, EgressHostService, EgressRequest, EgressTransport,

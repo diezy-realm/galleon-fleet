@@ -4,13 +4,13 @@ use super::web_search_provider_routing::{
 use crate::helpers::response_body;
 use crate::util_helpers::truncate_with_ellipsis;
 use async_trait::async_trait;
+use galleon_api::tool::{Tool, ToolResult};
 use regex::Regex;
 use serde_json::json;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
-use galleon_api::tool::{Tool, ToolResult};
 
 // AnySearch skill protocol identifier. Keep this synchronized with the
 // upstream anysearch-ai/anysearch-skill CLIENT_HEADER value.

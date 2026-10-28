@@ -510,8 +510,7 @@ impl TranscriptionProvider for AssemblyAiProvider {
     async fn transcribe(&self, audio_data: &[u8], file_name: &str) -> Result<String> {
         let (_, _) = validate_audio(audio_data, file_name)?;
 
-        let client =
-            galleon_config::schema::build_runtime_proxy_client("transcription.assemblyai");
+        let client = galleon_config::schema::build_runtime_proxy_client("transcription.assemblyai");
 
         // Step 1: Upload the audio file.
         let upload_resp = client

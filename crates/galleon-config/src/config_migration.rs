@@ -47,7 +47,9 @@ pub fn migrate_config_directory(legacy_dir: &Path, target_dir: &Path) -> Result<
 
     // Check if legacy directory has any files to migrate
     let legacy_entries = match fs::read_dir(legacy_dir) {
-        Ok(entries) => entries.filter_map(std::result::Result::ok).collect::<Vec<_>>(),
+        Ok(entries) => entries
+            .filter_map(std::result::Result::ok)
+            .collect::<Vec<_>>(),
         Err(_) => return Ok(false),
     };
     if legacy_entries.is_empty() {

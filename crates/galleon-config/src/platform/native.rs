@@ -1,7 +1,7 @@
-use std::path::{Path, PathBuf};
 #[cfg(not(target_os = "windows"))]
 use galleon_api::platform::is_android;
 use galleon_api::runtime_traits::{RuntimeAdapter, ShellDialect, ShellProfile};
+use std::path::{Path, PathBuf};
 
 pub fn windows_cmd_shell_raw_arg(command: &str) -> String {
     format!("\"{command}\"")
