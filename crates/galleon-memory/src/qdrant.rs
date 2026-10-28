@@ -345,10 +345,10 @@ impl QdrantMemory {
         let dims = self.embedder.read().dimensions();
         if dims == 0 {
             // Noop embedder — skip vector collection setup
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Qdrant memory using noop embedder (0 dimensions); vector search disabled"
             );
             return Ok(());
@@ -405,9 +405,9 @@ impl QdrantMemory {
             anyhow::bail!("Qdrant collection creation failed ({status}): {text}");
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "Created Qdrant collection '{}' with {} dimensions",
                 self.collection, dims
@@ -500,9 +500,9 @@ impl QdrantMemory {
         }
 
         if rewritten > 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(
                         ::serde_json::json!({"rewritten": rewritten, "collection": self.collection})
                     ),

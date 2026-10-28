@@ -22,9 +22,9 @@ impl SopAuditLogger {
         let key = run_key(&run.run_id);
         let content = serde_json::to_string_pretty(run)?;
         self.memory.store(&key, &content, category(), None).await?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "SOP audit: run {} started for '{}'",
                 run.run_id, run.sop_name
@@ -60,10 +60,10 @@ impl SopAuditLogger {
             "timestamp": now,
         }))?;
         self.memory.store(&key, &content, category(), None).await?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "source": source,
                     "topic": topic,
@@ -94,10 +94,10 @@ impl SopAuditLogger {
             "timestamp": now,
         }))?;
         self.memory.store(&key, &content, category(), None).await?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "sop_name": sop_name,
                     "source": source,
@@ -114,9 +114,9 @@ impl SopAuditLogger {
         let key = run_key(&run.run_id);
         let content = serde_json::to_string_pretty(run)?;
         self.memory.store(&key, &content, category(), None).await?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "SOP audit: run {} finished with status {}",
                 run.run_id, run.status
@@ -131,10 +131,10 @@ impl SopAuditLogger {
         match self.memory.get(&key).await? {
             Some(entry) => {
                 let run: SopRun = serde_json::from_str(&entry.content).map_err(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"error": format!("{}", e), "run_id": run_id})
                             ),

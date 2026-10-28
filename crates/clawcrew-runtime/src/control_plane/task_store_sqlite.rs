@@ -233,9 +233,9 @@ fn migrate_schema(conn: &Connection) -> Result<()> {
             .context("apply control-plane schema v12")?;
     }
     if version > CONTROL_PLANE_SCHEMA_VERSION {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "db_version": version,
                     "known_version": CONTROL_PLANE_SCHEMA_VERSION,
@@ -610,10 +610,10 @@ where
 }
 
 fn log_unreadable_task_row(error: rusqlite::Error) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({ "error": format!("{error}") })),
         "control-plane: skipping unreadable task row"
     );
@@ -636,10 +636,10 @@ where
 }
 
 fn log_unreadable_terminal_settlement_intent(error: rusqlite::Error) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({ "error": format!("{error}") })),
         "control-plane: skipping unreadable terminal settlement intent"
     );

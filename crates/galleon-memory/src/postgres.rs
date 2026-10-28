@@ -41,10 +41,10 @@ impl<T: Send + 'static> Drop for DropOnThread<T> {
             // rather than drop it here: postgres::Client::drop calls
             // Runtime::block_on, which panics on a Tokio runtime thread.
             // A controlled leak is preferable to an unrecoverable panic.
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "postgres-client-drop thread spawn failed; leaking client to avoid nested-runtime panic"
             );
             // `slot` is ManuallyDrop — T is intentionally not dropped.
@@ -92,10 +92,10 @@ impl PostgresMemory {
         )?;
 
         if !pgvector_ok {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "pgvector extension not available; falling back to keyword-only recall"
             );
         }
@@ -151,10 +151,10 @@ impl PostgresMemory {
             .context("failed to spawn PostgreSQL initializer thread")?;
 
         init_handle.join().map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "PostgreSQL initializer thread panicked"
             );
             anyhow::Error::msg("PostgreSQL initializer thread panicked")
@@ -209,9 +209,9 @@ impl PostgresMemory {
             client.execute(&stmt, &[new, old])?;
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"rewritten": rewrites.len()})),
             "Normalized session_id values in memories table to sanitized form"
         );
@@ -319,10 +319,10 @@ where
         .context("failed to spawn PostgreSQL operation thread")?;
 
     rx.await.map_err(|_| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure),
             "PostgreSQL operation thread terminated unexpectedly"
         );
         anyhow::Error::msg("PostgreSQL operation thread terminated unexpectedly")

@@ -381,7 +381,7 @@ async fn blocked_host_log_writer_cannot_stall_export_or_exhaust_host_memory() {
         Arc::clone(&overflow_reports),
         Arc::clone(&attrib_line),
     );
-    let installed = clawcrew_log::try_install_line_sink_for_tests(move |line| {
+    let installed = galleon_log::try_install_line_sink_for_tests(move |line| {
         if line.contains(ATTRIB_MARKER) {
             *attrib
                 .lock()
@@ -411,9 +411,9 @@ async fn blocked_host_log_writer_cannot_stall_export_or_exhaust_host_memory() {
 
     // Phase 0: a record emitted under a host attribution span keeps that
     // scope through the queue, on both the structured and terminal outputs.
-    let mut structured_rx = clawcrew_log::subscribe_or_install();
-    let span = clawcrew_log::attribution_span!(&E2eAgent);
-    let result = clawcrew_log::Instrument::instrument(
+    let mut structured_rx = galleon_log::subscribe_or_install();
+    let span = galleon_log::attribution_span!(&E2eAgent);
+    let result = galleon_log::Instrument::instrument(
         execute(
             &mut flood_plugin,
             serde_json::json!({"mode": "log", "message": ATTRIB_MARKER}),

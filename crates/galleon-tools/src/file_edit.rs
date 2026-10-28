@@ -76,10 +76,10 @@ impl FileEditTool {
     async fn edit_file(&self, args: serde_json::Value) -> anyhow::Result<ToolResult> {
         // ── 1. Extract parameters ──────────────────────────────────
         let path = args.get("path").and_then(|v| v.as_str()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "path"})),
                 "file_edit: missing path parameter"
             );
@@ -90,10 +90,10 @@ impl FileEditTool {
             .get("old_string")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "old_string"})),
                     "file_edit: missing old_string parameter"
                 );
@@ -104,10 +104,10 @@ impl FileEditTool {
             .get("new_string")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "new_string"})),
                     "file_edit: missing new_string parameter"
                 );

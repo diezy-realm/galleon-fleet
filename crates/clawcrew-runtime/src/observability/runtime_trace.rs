@@ -2,12 +2,12 @@
 
 use std::path::Path;
 
-use clawcrew_log::LogEvent;
+use galleon_log::LogEvent;
 
-pub use clawcrew_log::{LogEvent as RuntimeTraceEvent, LogFilter, LogPage};
+pub use galleon_log::{LogEvent as RuntimeTraceEvent, LogFilter, LogPage};
 
-fn to_log_config(config: &galleon_config::schema::ObservabilityConfig) -> clawcrew_log::LogConfig {
-    clawcrew_log::LogConfig {
+fn to_log_config(config: &galleon_config::schema::ObservabilityConfig) -> galleon_log::LogConfig {
+    galleon_log::LogConfig {
         log_persistence: config.log_persistence.as_wire().to_string(),
         log_persistence_path: config.log_persistence_path.clone(),
         log_persistence_max_entries: config.log_persistence_max_entries,
@@ -30,7 +30,7 @@ pub fn init_from_config(
     config: &galleon_config::schema::ObservabilityConfig,
     workspace_dir: &Path,
 ) {
-    clawcrew_log::init_from_config(&to_log_config(config), workspace_dir);
+    galleon_log::init_from_config(&to_log_config(config), workspace_dir);
 }
 
 /// Resolve the configured log path (used by the doctor command).
@@ -38,7 +38,7 @@ pub fn resolve_trace_path(
     config: &galleon_config::schema::ObservabilityConfig,
     workspace_dir: &Path,
 ) -> std::path::PathBuf {
-    let policy = clawcrew_log::ResolvedPolicy::from_config(&to_log_config(config), workspace_dir);
+    let policy = galleon_log::ResolvedPolicy::from_config(&to_log_config(config), workspace_dir);
     policy.path
 }
 
@@ -57,11 +57,11 @@ pub fn load_events(
         q: contains.map(str::to_string),
         ..LogFilter::default()
     };
-    let page = clawcrew_log::load_page(path, &filter, limit)?;
+    let page = galleon_log::load_page(path, &filter, limit)?;
     Ok(page.events)
 }
 
 /// Lookup a single event by id.
 pub fn find_event_by_id(path: &Path, id: &str) -> anyhow::Result<Option<LogEvent>> {
-    clawcrew_log::find_event_by_id(path, id)
+    galleon_log::find_event_by_id(path, id)
 }

@@ -33,7 +33,7 @@ use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::mpsc::{Receiver, RecvTimeoutError, SyncSender, sync_channel};
 use std::time::Duration;
 
-use clawcrew_log::{Action, Event, EventOutcome, record};
+use galleon_log::{Action, Event, EventOutcome, record};
 
 use crate::component::PluginState;
 use crate::component::bindings;
@@ -64,7 +64,7 @@ struct QueuedPluginLog {
     /// inline; without it every plugin event would degrade to system-level
     /// attribution on the drain thread. A fixed-size host-owned handle,
     /// deliberately excluded from [`Self::guest_bytes`].
-    span: clawcrew_log::Span,
+    span: galleon_log::Span,
     instance: PluginInstanceId,
     level_idx: u8,
     fn_name: String,
@@ -296,7 +296,7 @@ macro_rules! impl_host {
                 // Hand off instead of writing inline: see the module docs for
                 // why this import must never block the executor thread.
                 enqueue_plugin_log(QueuedPluginLog {
-                    span: clawcrew_log::Span::current(),
+                    span: galleon_log::Span::current(),
                     instance: self.scope().id().clone(),
                     level_idx,
                     fn_name: event.function_name,
@@ -446,7 +446,7 @@ mod tests {
     fn plugin_log_queue_enforces_byte_bounds() {
         let scope = crate::instance::test_scope(PluginCapability::Tool, "bounds", []);
         let record = |msg: String| QueuedPluginLog {
-            span: clawcrew_log::Span::current(),
+            span: galleon_log::Span::current(),
             instance: scope.id().clone(),
             level_idx: 2,
             fn_name: "bounds::execute".to_string(),

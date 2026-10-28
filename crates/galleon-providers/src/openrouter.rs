@@ -482,10 +482,10 @@ impl OpenRouterModelProvider {
     ) -> anyhow::Result<String> {
         response.text().await.map_err(|error| {
             let sanitized = super::format_error_chain(&error);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "model_provider": provider_name,
                         "body": &sanitized,
@@ -505,10 +505,10 @@ impl OpenRouterModelProvider {
     ) -> anyhow::Result<T> {
         serde_json::from_str::<T>(body).map_err(|error| {
             let snippet = Self::compact_sanitized_body_snippet(body);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "model_provider": provider_name,
                         "kind": kind,
@@ -530,10 +530,10 @@ impl OpenRouterModelProvider {
             return Ok(serde_json::to_value(request)?);
         };
         let overrides = extra.as_object().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"provider_extra": extra})),
                 "openrouter: provider_extra must be a JSON object"
             );
@@ -650,10 +650,10 @@ impl ModelProvider for OpenRouterModelProvider {
         temperature: Option<f64>,
     ) -> anyhow::Result<String> {
         let credential = self.credential.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "credentials"})),
                 "openrouter: API key not configured"
             );
@@ -699,10 +699,10 @@ impl ModelProvider for OpenRouterModelProvider {
             .next()
             .map(|c| c.message.content)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "openrouter: empty choices in response"
                 );
                 anyhow::Error::msg("No response from OpenRouter")
@@ -716,10 +716,10 @@ impl ModelProvider for OpenRouterModelProvider {
         temperature: Option<f64>,
     ) -> anyhow::Result<String> {
         let credential = self.credential.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "credentials"})),
                 "openrouter: API key not configured"
             );
@@ -772,10 +772,10 @@ impl ModelProvider for OpenRouterModelProvider {
             .next()
             .map(|c| c.message.content)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "openrouter: empty choices in response"
                 );
                 anyhow::Error::msg("No response from OpenRouter")
@@ -789,10 +789,10 @@ impl ModelProvider for OpenRouterModelProvider {
         temperature: Option<f64>,
     ) -> anyhow::Result<ProviderChatResponse> {
         let credential = self.credential.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "credentials"})),
                 "openrouter: API key not configured"
             );
@@ -852,10 +852,10 @@ impl ModelProvider for OpenRouterModelProvider {
             .next()
             .map(|c| c.message)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "openrouter: empty choices in response"
                 );
                 anyhow::Error::msg("No response from OpenRouter")
@@ -990,10 +990,10 @@ impl ModelProvider for OpenRouterModelProvider {
         temperature: Option<f64>,
     ) -> anyhow::Result<ProviderChatResponse> {
         let credential = self.credential.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "credentials"})),
                 "openrouter: API key not configured"
             );
@@ -1085,10 +1085,10 @@ impl ModelProvider for OpenRouterModelProvider {
             .next()
             .map(|c| c.message)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "openrouter: empty choices in response"
                 );
                 anyhow::Error::msg("No response from OpenRouter")

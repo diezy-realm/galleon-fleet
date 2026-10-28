@@ -190,7 +190,7 @@ fn init_from_config_with_migration_and_shutdown_warning<F>(
         && let Err(err) = migrate_file(&policy.path)
     {
         tracing::warn!(
-            target: "clawcrew_log",
+            target: "galleon_log",
             error = ?err,
             path = %policy.path.display(),
             "log: legacy JSONL migration failed; daemon continuing with mixed-shape file"
@@ -264,7 +264,7 @@ fn shutdown_current_writer(warn_after: Duration) {
             }
             Err(TrySendError::Full(job)) => {
                 tracing::warn!(
-                    target: "clawcrew_log",
+                    target: "galleon_log",
                     "log: previous writer queue did not drain within {:?}; waiting to preserve exclusive ownership",
                     warn_after
                 );
@@ -290,7 +290,7 @@ fn shutdown_current_writer(warn_after: Duration) {
     }
 
     tracing::warn!(
-        target: "clawcrew_log",
+        target: "galleon_log",
         "log: previous writer worker did not exit within {:?}; waiting to preserve exclusive ownership",
         warn_after
     );
@@ -306,7 +306,7 @@ fn spawn_worker(rx: Receiver<WriterJob>, state: Arc<WorkerState>) {
     let builder = thread::Builder::new().name("clawcrew-log-writer".into());
     if let Err(err) = builder.spawn(move || worker_main(rx, state)) {
         tracing::warn!(
-            target: "clawcrew_log",
+            target: "galleon_log",
             error = %err,
             "log: failed to spawn clawcrew-log-writer thread; persistence disabled"
         );
@@ -960,7 +960,7 @@ fn seed_line_count(path: &Path) -> u64 {
         }
         Err(err) => {
             tracing::warn!(
-                target: "clawcrew_log",
+                target: "galleon_log",
                 error = ?err,
                 "log: could not seed entry-count from active file; starting from 0"
             );
@@ -1151,7 +1151,7 @@ fn seed_archive_seq(active: &Path) -> u64 {
             // as well. The watermark below still bounds the series, so this
             // only loses the archives-on-disk half of the comparison.
             tracing::warn!(
-                target: "clawcrew_log",
+                target: "galleon_log",
                 error = ?err,
                 path = %active.display(),
                 "log: could not read existing archives to seed the rotation sequence",

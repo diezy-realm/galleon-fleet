@@ -91,9 +91,9 @@ pub fn run_if_due(config: &MemoryConfig, workspace_dir: &Path) -> Result<()> {
     // Retention cleanup is independent from new audit collection: disabling
     // audit stops new rows, but existing sensitive rows still honor retention.
     if let Err(e) = prune_audit_entries(workspace_dir, config.audit_retention_days) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "audit pruning skipped"
         );
@@ -102,9 +102,9 @@ pub fn run_if_due(config: &MemoryConfig, workspace_dir: &Path) -> Result<()> {
     write_state(workspace_dir, &report)?;
 
     if report.total_actions() > 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "memory hygiene complete: archived_memory={} archived_sessions={} purged_memory={} purged_sessions={} pruned_conversation={} pruned_daily={} pruned_core={}",
                 report.archived_memory_files,
@@ -432,9 +432,9 @@ fn prune_audit_entries(workspace_dir: &Path, retention_days: u32) -> Result<()> 
     )?;
 
     if affected > 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({"affected": affected, "retention_days": retention_days})
             ),
             "pruned  audit entries older than  days"

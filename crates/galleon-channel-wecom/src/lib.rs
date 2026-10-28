@@ -58,9 +58,9 @@ impl WeComChannel {
             user_id,
             galleon_channel_core::allowlist::Match::Sensitive,
         );
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             TRACE,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "channel": "wecom",
                     "alias": self.alias,
@@ -131,9 +131,9 @@ impl Channel for WeComChannel {
     }
 
     async fn listen(&self, tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "channel ready (send-only via Bot Webhook)"
         );
         tx.closed().await;

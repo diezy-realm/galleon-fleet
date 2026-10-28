@@ -25,11 +25,11 @@ pub(crate) fn preflight_history_maintenance(history: &mut Vec<ChatMessage>) {
     // (see `repair_incomplete_tool_calls` on the ACP `session/load` path).
     let pruned_in_loop = crate::agent::history_pruner::remove_orphaned_tool_messages(history);
     if !pruned_in_loop.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Delete)
-                .with_category(::clawcrew_log::EventCategory::Agent)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Delete)
+                .with_category(::galleon_log::EventCategory::Agent)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "removed": pruned_in_loop.removed,
                     "orphan_tool_call_ids": pruned_in_loop.orphan_tool_call_ids,

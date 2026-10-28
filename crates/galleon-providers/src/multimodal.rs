@@ -620,10 +620,10 @@ pub fn sanitize_audio_markers(messages: &[ChatMessage]) -> Cow<'_, [ChatMessage]
         .collect();
 
     if stripped > 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "markers_stripped": stripped,
                 })),
@@ -710,10 +710,10 @@ pub fn sanitize_image_markers(messages: &[ChatMessage]) -> Cow<'_, [ChatMessage]
         .collect();
 
     if stripped > 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "markers_stripped": stripped,
                 })),
@@ -1057,9 +1057,9 @@ async fn prepare_messages_inner(
         let trimmed = trim_images_by_age(&normalized_messages, config.max_image_turns);
         let after = count_image_markers(&trimmed);
         if after < before {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "max_image_turns": config.max_image_turns,
                         "images_before": before,
@@ -1078,10 +1078,10 @@ async fn prepare_messages_inner(
     // do not consume budget and evict older images that could still be sent.
     let capped_messages = if has_successful_images && count_image_markers(&age_trimmed) > max_images
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "images_after_normalization": count_image_markers(&age_trimmed),
                     "max_images": max_images,
@@ -1340,17 +1340,17 @@ async fn normalize_image_references(
                         | "invalid_marker"
                 );
                 if is_tool_role && is_recoverable_load_failure {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(attrs),
                         "skipping multimodal marker in tool result (likely not a real attachment)"
                     );
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(attrs),
                         "skipping multimodal image that could not be loaded"
                     );

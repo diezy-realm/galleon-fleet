@@ -21,7 +21,7 @@
 //!   environment proxy fallback. That drags `galleon-config`; here only an
 //!   EXPLICIT per-channel `proxy_url` is honoured (plain `reqwest::Proxy`),
 //!   mirroring the signal crate. The env-proxy fallback is the ceiling.
-//! * **Structured logging.** Upstream emits `clawcrew_log` structured events on
+//! * **Structured logging.** Upstream emits `galleon_log` structured events on
 //!   auth/poll/parse/updateSeen failures. Porting that drags the log crate;
 //!   here those paths keep their control flow (continue / fall back to re-auth /
 //!   return `None`) but emit no structured event. Observability is the ceiling.
@@ -269,7 +269,7 @@ impl BlueskyChannel {
 
         if !resp.status().is_success() {
             // Refresh failed — fall back to full re-auth.
-            // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
+            // ceiling: upstream emits a `galleon_log` WARN here; dropped.
             return self.create_session().await;
         }
 
@@ -321,7 +321,7 @@ impl BlueskyChannel {
         // opt-in for a public bot. Either identifier may carry the grant, so
         // the deny is checked across both before the grants are.
         if !self.is_author_allowed(&notif.author.handle, &notif.author.did) {
-            // ceiling: upstream emits a `clawcrew_log` DEBUG here; dropped.
+            // ceiling: upstream emits a `galleon_log` DEBUG here; dropped.
             return None;
         }
 
@@ -433,7 +433,7 @@ impl BlueskyChannel {
                 });
             };
             if !seen_cursors.insert(next_cursor.clone()) {
-                // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
+                // ceiling: upstream emits a `galleon_log` WARN here; dropped.
                 // A repeated cursor means pagination looped — abandon the walk.
                 return None;
             }
@@ -454,7 +454,7 @@ impl BlueskyChannel {
             .await?;
 
         if !resp.status().is_success() {
-            // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
+            // ceiling: upstream emits a `galleon_log` WARN here; dropped.
             // updateSeen is best-effort — a failure retries on the next poll.
         }
         Ok(())
@@ -557,7 +557,7 @@ impl Channel for BlueskyChannel {
             let token = match self.get_access_jwt().await {
                 Ok(t) => t,
                 Err(_e) => {
-                    // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
+                    // ceiling: upstream emits a `galleon_log` WARN here; dropped.
                     continue;
                 }
             };
@@ -592,20 +592,20 @@ impl Channel for BlueskyChannel {
                         {
                             Ok(response) => response,
                             Err(_error) => {
-                                // ceiling: upstream emits a `clawcrew_log` WARN; dropped.
+                                // ceiling: upstream emits a `galleon_log` WARN; dropped.
                                 return None;
                             }
                         };
 
                         if !resp.status().is_success() {
-                            // ceiling: upstream emits a `clawcrew_log` WARN; dropped.
+                            // ceiling: upstream emits a `galleon_log` WARN; dropped.
                             return None;
                         }
 
                         match resp.json::<NotificationListResponse>().await {
                             Ok(listing) => Some(listing),
                             Err(_error) => {
-                                // ceiling: upstream emits a `clawcrew_log` WARN; dropped.
+                                // ceiling: upstream emits a `galleon_log` WARN; dropped.
                                 None
                             }
                         }
@@ -630,7 +630,7 @@ impl Channel for BlueskyChannel {
             if let Some(ref seen_at) = walk.newest_unread
                 && let Err(_e) = self.update_seen(seen_at).await
             {
-                // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
+                // ceiling: upstream emits a `galleon_log` WARN here; dropped.
             }
         }
     }

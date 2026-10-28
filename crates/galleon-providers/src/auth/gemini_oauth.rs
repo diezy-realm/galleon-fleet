@@ -325,7 +325,7 @@ pub async fn poll_device_code_tokens(
 /// If the callback server can't receive the redirect (e.g., remote/headless environment),
 /// the user can paste the full callback URL or just the code.
 pub async fn receive_loopback_code(expected_state: &str, timeout: Duration) -> Result<String> {
-    ::clawcrew_log::scope!(
+    ::galleon_log::scope!(
         model_provider_type: "gemini",
         model_provider_alias: "oauth",
         => async move {
@@ -380,10 +380,10 @@ async fn receive_loopback_code_inner(expected_state: &str, timeout: Duration) ->
                     Ok(code)
                 }
                 Ok(Err(e)) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "oauth_provider": "gemini",
                                 "phase": "callback_accept",
@@ -416,10 +416,10 @@ async fn receive_code_from_stdin(expected_state: &str) -> Result<String> {
         stdin.lock().read_line(&mut line).ok();
         let trimmed = line.trim().to_string();
         if trimmed.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"oauth_provider": "gemini"})),
                 "gemini_oauth: empty stdin input for OAuth code"
             );
@@ -457,10 +457,10 @@ fn parse_callback_params(
     expected_state: &str,
 ) -> Result<String> {
     let state = params.get("state").ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "oauth_provider": "gemini",
                     "missing": "state",
@@ -484,10 +484,10 @@ fn parse_callback_params(
         .get("code")
         .filter(|code| !code.trim().is_empty())
         .ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "oauth_provider": "gemini",
                         "missing": "code",

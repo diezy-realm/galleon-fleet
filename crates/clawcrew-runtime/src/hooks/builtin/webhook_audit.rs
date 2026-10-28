@@ -321,11 +321,11 @@ impl HookHandler for WebhookAuditHook {
             match client.post(&url).json(&payload).send().await {
                 Ok(resp) => {
                     if !resp.status().is_success() {
-                        ::clawcrew_log::record!(ERROR, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"hook": "webhook-audit", "url": url, "status": resp.status().to_string()})), "webhook endpoint returned non-success status");
+                        ::galleon_log::record!(ERROR, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"hook": "webhook-audit", "url": url, "status": resp.status().to_string()})), "webhook endpoint returned non-success status");
                     }
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"hook": "webhook-audit", "url": url, "error": format!("{}", e)})), "failed to POST audit payload");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"hook": "webhook-audit", "url": url, "error": format!("{}", e)})), "failed to POST audit payload");
                 }
             }
         });

@@ -80,13 +80,13 @@ impl EstopManager {
                         parsed
                     }
                     Err(error) => {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"path": state_path.display().to_string(), "error": format!("{}", error)})), "Failed to parse estop state file; entering fail-closed mode: ");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"path": state_path.display().to_string(), "error": format!("{}", error)})), "Failed to parse estop state file; entering fail-closed mode: ");
                         should_fail_closed = true;
                         EstopState::fail_closed()
                     }
                 },
                 Err(error) => {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"path": state_path.display().to_string(), "error": format!("{}", error)})), "Failed to read estop state file; entering fail-closed mode: ");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"path": state_path.display().to_string(), "error": format!("{}", error)})), "Failed to read estop state file; entering fail-closed mode: ");
                     should_fail_closed = true;
                     EstopState::fail_closed()
                 }

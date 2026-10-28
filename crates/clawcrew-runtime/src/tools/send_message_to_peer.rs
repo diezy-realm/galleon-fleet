@@ -82,10 +82,10 @@ impl Tool for SendMessageToPeerTool {
             .map(str::trim)
             .filter(|v| !v.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "channel"})),
                     "tool argument validation failed"
                 );
@@ -99,10 +99,10 @@ impl Tool for SendMessageToPeerTool {
             .map(str::trim)
             .filter(|v| !v.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "target"})),
                     "tool argument validation failed"
                 );
@@ -116,10 +116,10 @@ impl Tool for SendMessageToPeerTool {
             .map(str::trim)
             .filter(|v| !v.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "message"})),
                     "tool argument validation failed"
                 );
@@ -211,7 +211,7 @@ impl Tool for SendMessageToPeerTool {
                 ));
                 if let Err(e) = deliver_peer_turn_with_cost_scope(cost_ctx, turn_usage, turn).await
                 {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"sender": sender, "recipient": recipient_alias, "error": format!("{}", e)})), "peer-message in-process delivery failed");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"sender": sender, "recipient": recipient_alias, "error": format!("{}", e)})), "peer-message in-process delivery failed");
                 }
             });
 

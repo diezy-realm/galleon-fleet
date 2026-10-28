@@ -280,13 +280,13 @@ impl Tool for BackupTool {
                     .get("backup_name")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Reject
+                                ::galleon_log::Action::Reject
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "param": "backup_name",
                                 "command": "verify",
@@ -302,13 +302,13 @@ impl Tool for BackupTool {
                     .get("backup_name")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Reject
+                                ::galleon_log::Action::Reject
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "param": "backup_name",
                                 "command": "restore",

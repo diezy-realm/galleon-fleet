@@ -93,9 +93,9 @@ impl Transport for HardwareSerialTransport {
         let json = serde_json::to_string(cmd)
             .map_err(|e| TransportError::Protocol(format!("failed to serialize command: {e}")))?;
         // Log command name only — never log the full payload (may contain large or sensitive data).
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"port": self.port_path, "cmd": cmd.cmd})),
             "serial send"
         );

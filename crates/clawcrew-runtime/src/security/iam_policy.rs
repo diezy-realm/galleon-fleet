@@ -131,7 +131,7 @@ impl IamPolicy {
                 && (compiled.all_tools
                     || compiled.allowed_tools.iter().any(|t| t == &normalized_tool))
             {
-                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"user_id": crate::security::redact(&identity.user_id), "role": key, "tool": normalized_tool})), "IAM policy: tool access ALLOWED");
+                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"user_id": crate::security::redact(&identity.user_id), "role": key, "tool": normalized_tool})), "IAM policy: tool access ALLOWED");
                 return PolicyDecision::Allow;
             }
         }
@@ -140,7 +140,7 @@ impl IamPolicy {
             "no role grants access to tool '{normalized_tool}' for user '{}'",
             crate::security::redact(&identity.user_id)
         );
-        ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"user_id": crate::security::redact(&identity.user_id), "tool": normalized_tool})), "IAM policy: tool access DENIED");
+        ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"user_id": crate::security::redact(&identity.user_id), "tool": normalized_tool})), "IAM policy: tool access DENIED");
         PolicyDecision::Deny(reason)
     }
 
@@ -166,7 +166,7 @@ impl IamPolicy {
                         .iter()
                         .any(|w| w == &normalized_ws))
             {
-                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"user_id": crate::security::redact(&identity.user_id), "role": key, "workspace": normalized_ws})), "IAM policy: workspace access ALLOWED");
+                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"user_id": crate::security::redact(&identity.user_id), "role": key, "workspace": normalized_ws})), "IAM policy: workspace access ALLOWED");
                 return PolicyDecision::Allow;
             }
         }
@@ -175,7 +175,7 @@ impl IamPolicy {
             "no role grants access to workspace '{normalized_ws}' for user '{}'",
             crate::security::redact(&identity.user_id)
         );
-        ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"user_id": crate::security::redact(&identity.user_id), "workspace": normalized_ws})), "IAM policy: workspace access DENIED");
+        ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"user_id": crate::security::redact(&identity.user_id), "workspace": normalized_ws})), "IAM policy: workspace access DENIED");
         PolicyDecision::Deny(reason)
     }
 

@@ -25,7 +25,7 @@ use galleon_config::schema::{
     AliasedAgentConfig, Config, DelegateExecutionMode, DelegateToolConfig, ModelProviderConfig,
     ResolvedRuntime, RiskProfileConfig, RuntimeProfileConfig, SkillBundleConfig,
 };
-use clawcrew_log::Instrument as _;
+use galleon_log::Instrument as _;
 use galleon_memory::Memory;
 use galleon_providers::{self, ChatMessage, ModelProvider, ProviderDispatch};
 use galleon_tools::memory_export::MemoryExportTool;
@@ -575,10 +575,10 @@ impl DelegateTool {
                     self.security.risk_profile_name
                 )
             };
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "target_agent": target_alias,
                         "caller_alias": self.caller_alias,
@@ -608,10 +608,10 @@ impl DelegateTool {
                 .get(target_alias)
                 .map(|agent| agent.risk_profile.trim())
                 .unwrap_or_default();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "target_agent": target_alias,
                         "caller_alias": self.caller_alias,
@@ -624,10 +624,10 @@ impl DelegateTool {
         };
 
         let mut target_policy = SecurityPolicy::for_agent(config, target_alias).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "target_agent": target_alias,
                         "caller_alias": self.caller_alias,
@@ -899,10 +899,10 @@ impl DelegateTool {
             DelegateExecutionMode::Bounded => "bounded agentic",
         };
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "error_key": "delegate.agentic_always_ask_unsupported",
                     "caller_alias": self.caller_alias,
@@ -1357,10 +1357,10 @@ impl DelegateTool {
             .as_ref()
             .map(|config| config.data_dir.clone())
         else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "background delegation rejected because the durable task store is unavailable"
             );
             return Err(anyhow::Error::msg(
@@ -1628,13 +1628,13 @@ impl DelegateTool {
             {
                 Ok(ready) => {
                     if failures > 0 {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Write
+                                ::galleon_log::Action::Write
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Success)
+                            .with_outcome(::galleon_log::EventOutcome::Success)
                             .with_attrs(::serde_json::json!({
                                 "task_id": task_id,
                                 "attempts": failures + 1,
@@ -1648,13 +1648,13 @@ impl DelegateTool {
                 Err(error) => {
                     failures = failures.saturating_add(1);
                     if failures == 1 || failures.is_power_of_two() {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Write
+                                ::galleon_log::Action::Write
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "task_id": task_id,
                                 "attempt": failures,
@@ -1684,13 +1684,13 @@ impl DelegateTool {
             match transition().await {
                 Ok(won) => {
                     if failures > 0 {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Write
+                                ::galleon_log::Action::Write
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Success)
+                            .with_outcome(::galleon_log::EventOutcome::Success)
                             .with_attrs(::serde_json::json!({
                                 "task_id": task_id,
                                 "attempts": failures + 1,
@@ -1704,13 +1704,13 @@ impl DelegateTool {
                 Err(error) => {
                     failures = failures.saturating_add(1);
                     if failures == 1 || failures.is_power_of_two() {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Write
+                                ::galleon_log::Action::Write
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "task_id": task_id,
                                 "attempt": failures,
@@ -1974,10 +1974,10 @@ impl Tool for DelegateTool {
             .and_then(|v| v.as_str())
             .map(str::trim)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "agent"})),
                     "tool argument validation failed"
                 );
@@ -1998,10 +1998,10 @@ impl Tool for DelegateTool {
             .and_then(|v| v.as_str())
             .map(str::trim)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "prompt"})),
                     "tool argument validation failed"
                 );
@@ -2070,9 +2070,9 @@ impl DelegateTool {
                 .is_some_and(|config| self.resolve_agentic(&config.runtime_profile));
 
             // Log fallback routing decision to observability layer
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Write)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Write)
                     .with_attrs(::serde_json::json!({
                         "agent": agent_name,
                         "requested_candidate": fallback.requested_candidate,
@@ -2691,7 +2691,7 @@ impl DelegateTool {
                 .await;
                 })),
             )
-            .instrument(::clawcrew_log::attribution_span!(
+            .instrument(::galleon_log::attribution_span!(
                 &crate::agent::AgentAttribution(__zc_delegate_alias.as_str())
             ))
         );
@@ -2731,10 +2731,10 @@ impl DelegateTool {
             .and_then(|v| v.as_str())
             .map(str::trim)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "prompt"})),
                     "tool argument validation failed"
                 );
@@ -2900,7 +2900,7 @@ impl DelegateTool {
                         .await;
                     (agent_name_for_return, result)
                 }
-                .instrument(::clawcrew_log::attribution_span!(
+                .instrument(::galleon_log::attribution_span!(
                     &crate::agent::AgentAttribution(__zc_delegate_alias.as_str())
                 ))
             ));
@@ -3156,10 +3156,10 @@ impl DelegateTool {
             .get("task_id")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "task_id"})),
                     "tool argument validation failed"
                 );
@@ -3356,10 +3356,10 @@ impl DelegateTool {
             .get("task_id")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "task_id"})),
                     "tool argument validation failed"
                 );
@@ -4081,7 +4081,7 @@ impl DelegateTool {
                 parent_agent_alias: None,
                 turn_id: &turn_id,
             })
-            .instrument(::clawcrew_log::attribution_span!(
+            .instrument(::galleon_log::attribution_span!(
                 &crate::agent::AgentAttribution(agent_name)
             )),
         );

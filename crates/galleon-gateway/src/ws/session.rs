@@ -84,10 +84,10 @@ pub(crate) async fn handle_socket(
     let ws_memory = match resolve_ws_memory_handle(&config, &agent_alias).await {
         Ok(memory) => memory,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "agent": &agent_alias,
                         "error": format!("{e:#}"),
@@ -108,10 +108,10 @@ pub(crate) async fn handle_socket(
         let messages = match backend.try_load(&session_key) {
             Ok(messages) => messages,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "session_key": session_key,
                             "error": format!("{}", e),
@@ -181,15 +181,15 @@ pub(crate) async fn handle_socket(
             Some(Ok(Message::Text(text))) => {
                 if let Ok(cp) = serde_json::from_str::<ConnectParams>(&text) {
                     if cp.msg_type == "connect" {
-                        ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"session_id": cp.session_id, "device_name": cp.device_name, "capabilities": cp.capabilities, "cwd": cp.cwd})), "WebSocket connect params received");
+                        ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"session_id": cp.session_id, "device_name": cp.device_name, "capabilities": cp.capabilities, "cwd": cp.cwd})), "WebSocket connect params received");
                         if let Some(sid) = &cp.session_id {
                             memory_session_id =
                                 clawcrew_api::session_keys::sanitize_session_key(sid);
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 DEBUG,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({"session_id": sid})),
                                 "WebSocket connect session override received"
@@ -253,10 +253,10 @@ pub(crate) async fn handle_socket(
     {
         Ok(a) => a,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Agent initialization failed"
             );
@@ -305,10 +305,10 @@ pub(crate) async fn handle_socket(
             .map(|backend| backend.get_session_trim_breadcrumb(&session_key));
         match crumb_res {
             Some(Err(e)) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "session_key": session_key,
                             "error": format!("{}", e),
@@ -381,9 +381,9 @@ pub(crate) async fn handle_socket(
         Vec::new()
     };
     if !channel_names.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({"channels": channel_names, "session": session_key})
             ),
             "Seeded {} channel(s) into dashboard agent session",
@@ -566,7 +566,7 @@ pub(crate) async fn handle_socket(
                     if let (Some(decision), Some(tx)) = (decision, pending_approvals.lock().remove(request_id)) {
                         let _ = tx.send(decision);
                     } else {
-                        ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"request_id": request_id})), "approval_response with no matching pending request");
+                        ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"request_id": request_id})), "approval_response with no matching pending request");
                     }
                     continue;
                 }
@@ -653,7 +653,7 @@ pub(crate) async fn handle_socket(
                         "timeout_secs": timeout_secs,
                     }),
                     other => {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"kind": format!("{:?}", other)})), "non-ApprovalRequest event leaked into approval channel");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"kind": format!("{:?}", other)})), "non-ApprovalRequest event leaked into approval channel");
                         continue;
                     }
                 };
@@ -671,10 +671,10 @@ pub(crate) fn resolve_session_cwd(
         .map(PathBuf::from)
         .unwrap_or_else(|| default_workspace.to_path_buf());
     std::fs::canonicalize(&cwd).map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "cwd": cwd.display().to_string(),
                     "error": format!("{}", e),
@@ -696,10 +696,10 @@ pub(crate) fn resolve_ws_session_cwd(
     let agent_workspace = config.agent_workspace_dir(agent_alias);
     if requested_cwd.is_none() {
         std::fs::create_dir_all(&agent_workspace).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "agent": agent_alias,
                         "cwd": agent_workspace.display().to_string(),
@@ -750,10 +750,10 @@ pub(crate) fn replace_conversation_state_unless_deleted(
     match backend.replace_conversation_state_if_exists(session_key, durable, breadcrumb_present) {
         Ok(_) => true,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "session_key": session_key,
                         "error": format!("{}", e),

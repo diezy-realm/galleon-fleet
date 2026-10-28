@@ -104,10 +104,10 @@ impl Tool for AskUserTool {
             .map(|s| s.trim())
             .filter(|s| !s.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "question"})),
                     "ask_user: missing question parameter"
                 );
@@ -148,10 +148,10 @@ impl Tool for AskUserTool {
             if let Some(ref name) = requested_channel {
                 let ch = channels.get(name.as_str()).cloned().ok_or_else(|| {
                     let available = channels.keys().cloned().collect::<Vec<_>>().join(", ");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "channel_requested": name,
                                 "available": &available,
@@ -165,10 +165,10 @@ impl Tool for AskUserTool {
                 (name.clone(), ch)
             } else {
                 let (name, ch) = channels.iter().next().ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"missing": "channels"})),
                         "ask_user: no channels configured"
                     );

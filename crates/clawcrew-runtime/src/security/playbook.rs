@@ -92,26 +92,26 @@ pub fn load_playbooks(dir: &Path) -> Vec<Playbook> {
                     Ok(contents) => match serde_json::from_str::<Playbook>(&contents) {
                         Ok(pb) => playbooks.push(pb),
                         Err(e) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 &format!("Failed to parse playbook {}", path.display().to_string())
                             );
                         }
                     },
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             &format!("Failed to read playbook {}", path.display().to_string())
                         );

@@ -50,10 +50,10 @@ impl Tool for MemoryPurgeTool {
         let session_id = args.get("session_id").and_then(|v| v.as_str());
 
         if namespace.is_none() && session_id.is_none() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "namespace_or_session_id"})),
                 "memory_purge: must provide namespace or session_id"
             );

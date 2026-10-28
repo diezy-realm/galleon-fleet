@@ -449,7 +449,7 @@ pub async fn handle_patch(
     let config_path = working.config_path.clone();
     // Collect non-fatal validation warnings against the post-save state
     // before working is moved into persist_and_swap. Same signal as
-    // `clawcrew_log::record!` from `validate()`, surfaced structured so dashboard
+    // `galleon_log::record!` from `validate()`, surfaced structured so dashboard
     // callers see it.
     let mut warnings = working.collect_warnings();
     warnings.extend(scoped_validation_warnings);
@@ -462,10 +462,10 @@ pub async fn handle_patch(
     {
         // Comments are best-effort decoration; surface as a non-fatal warn.
         // The patch itself succeeded — return success but log the failure.
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "failed to apply PATCH op comments to config.toml"
         );

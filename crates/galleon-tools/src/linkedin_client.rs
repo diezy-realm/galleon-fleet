@@ -107,40 +107,40 @@ impl LinkedInClient {
         }
 
         let client_id = client_id.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "LINKEDIN_CLIENT_ID"})),
                 "linkedin_client: LINKEDIN_CLIENT_ID missing from .env"
             );
             anyhow::Error::msg("LINKEDIN_CLIENT_ID not found in .env")
         })?;
         let client_secret = client_secret.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "LINKEDIN_CLIENT_SECRET"})),
                 "linkedin_client: LINKEDIN_CLIENT_SECRET missing from .env"
             );
             anyhow::Error::msg("LINKEDIN_CLIENT_SECRET not found in .env")
         })?;
         let access_token = access_token.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "LINKEDIN_ACCESS_TOKEN"})),
                 "linkedin_client: LINKEDIN_ACCESS_TOKEN missing from .env"
             );
             anyhow::Error::msg("LINKEDIN_ACCESS_TOKEN not found in .env")
         })?;
         let person_id = person_id.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "LINKEDIN_PERSON_ID"})),
                 "linkedin_client: LINKEDIN_PERSON_ID missing from .env"
             );
@@ -539,10 +539,10 @@ impl LinkedInClient {
             .as_deref()
             .filter(|t| !t.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "linkedin_client: no refresh token available"
                 );
                 anyhow::Error::msg("No refresh token available")
@@ -577,10 +577,10 @@ impl LinkedInClient {
             .and_then(|v| v.as_str())
             .map(String::from)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"field": "access_token"})),
                     "linkedin_client: token refresh response missing access_token"
                 );
@@ -624,10 +624,10 @@ impl LinkedInClient {
             .pointer("/value/uploadUrl")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"missing": "uploadUrl"})),
                     "linkedin_client: register response missing uploadUrl"
                 );
@@ -639,10 +639,10 @@ impl LinkedInClient {
             .pointer("/value/image")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"missing": "image_urn"})),
                     "linkedin_client: register response missing image URN"
                 );
@@ -851,10 +851,10 @@ impl ImageGenerator {
                 "dalle" => self.try_dalle(prompt, &image_dir, &base_name).await,
                 "flux" => self.try_flux(prompt, &image_dir, &base_name).await,
                 other => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"other": other})),
                         "Unknown image model_provider '', skipping"
                     );
@@ -864,15 +864,15 @@ impl ImageGenerator {
 
             match result {
                 Ok(path) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!("Image generated via {provider_name}: {}", path.display())
                     );
                     return Ok(path);
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", e), "provider_name": provider_name})), "Image model_provider '' failed");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", e), "provider_name": provider_name})), "Image model_provider '' failed");
                 }
             }
         }
@@ -882,9 +882,9 @@ impl ImageGenerator {
             let svg_path = image_dir.join(format!("{base_name}.svg"));
             let svg_content = Self::generate_fallback_card(prompt, &self.config.card_accent_color);
             tokio::fs::write(&svg_path, &svg_content).await?;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!("Fallback SVG card generated: {}", svg_path.display())
             );
             return Ok(svg_path);
@@ -974,10 +974,10 @@ impl ImageGenerator {
             .pointer("/artifacts/0/base64")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"image_provider": "stability"})),
                     "linkedin_client: Stability response missing image data"
                 );
@@ -1037,10 +1037,10 @@ impl ImageGenerator {
             .pointer("/predictions/0/bytesBase64Encoded")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"image_provider": "imagen"})),
                     "linkedin_client: Imagen response missing image data"
                 );
@@ -1095,10 +1095,10 @@ impl ImageGenerator {
             .pointer("/data/0/b64_json")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"image_provider": "dalle"})),
                     "linkedin_client: DALL-E response missing image data"
                 );
@@ -1151,10 +1151,10 @@ impl ImageGenerator {
             .pointer("/images/0/url")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"image_provider": "flux"})),
                     "linkedin_client: Flux response missing image URL"
                 );

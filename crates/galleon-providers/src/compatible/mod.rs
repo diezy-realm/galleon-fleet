@@ -151,10 +151,10 @@ pub(crate) fn sanitize_tool_arguments(function_name: &str, arguments: &str) -> S
             // booleans do not satisfy a strict-provider function-arguments
             // contract (reported by Cohere, tracked by OpenRouter's
             // auto-exacto validator).
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "function": function_name,
                         "payload_len": arguments.len(),
@@ -166,10 +166,10 @@ pub(crate) fn sanitize_tool_arguments(function_name: &str, arguments: &str) -> S
         }
         Err(_) => {}
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({
                 "function": function_name,
                 "payload_len": arguments.len(),
@@ -275,10 +275,10 @@ pub(crate) fn apply_auth_to_request(
 /// the credential itself.
 fn zhipu_jwt_bearer_or_refuse(credential: &str, provider: &str) -> anyhow::Result<String> {
     zhipu_jwt_bearer(credential).map_err(|reason| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "model_provider": provider,
                     "auth_style": "zhipu_jwt",
@@ -744,13 +744,13 @@ impl OpenAiCompatibleBuilder {
                 .and_then(|path| match std::fs::read(path) {
                     Ok(bytes) => Some(bytes),
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"path": path, "error": format!("{}", e)})
                             ),
@@ -842,10 +842,10 @@ impl OpenAiCompatibleModelProvider {
         if let Some(ref pem) = self.tls_ca_cert_pem {
             match reqwest::Certificate::from_pem(pem) {
                 Ok(cert) => return builder.add_root_certificate(cert),
-                Err(e) => ::clawcrew_log::record!(
+                Err(e) => ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Failed to parse CA certificate — TLS will use system roots"
                 ),
@@ -931,13 +931,13 @@ impl OpenAiCompatibleModelProvider {
                         headers.insert(name, val);
                     }
                     _ => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"header": key})),
                             "Skipping invalid extra header name or value"
                         );
@@ -957,10 +957,10 @@ impl OpenAiCompatibleModelProvider {
             );
 
             return builder.build().unwrap_or_else(|error| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": super::format_error_chain(&error)})
                         ),
@@ -1006,13 +1006,13 @@ impl OpenAiCompatibleModelProvider {
                         headers.insert(name, val);
                     }
                     _ => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"header": key})),
                             "Skipping invalid extra header name or value"
                         );
@@ -1031,10 +1031,10 @@ impl OpenAiCompatibleModelProvider {
                 "provider.compatible",
             );
             return builder.build().unwrap_or_else(|error| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": super::format_error_chain(&error)})
                         ),
@@ -1051,10 +1051,10 @@ impl OpenAiCompatibleModelProvider {
         let builder =
             galleon_config::schema::apply_runtime_proxy_to_builder(builder, "provider.compatible");
         builder.build().unwrap_or_else(|error| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": super::format_error_chain(&error)})),
                 "Failed to build proxied streaming client: "
             );
@@ -1508,10 +1508,10 @@ impl UsageInfo {
 
     fn into_provider_usage(self) -> clawcrew_api::model_provider::TokenUsage {
         if let Some(creation) = self.cache_creation_input_tokens.filter(|count| *count > 0) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Success)
                     .with_attrs(::serde_json::json!({
                         "cache_creation_input_tokens": creation,
                         "cache_read_input_tokens": self.cache_read_input_tokens,
@@ -2019,9 +2019,9 @@ fn parse_proxy_tool_event(line: &str) -> Option<StreamEvent> {
 
     if let Some(ts) = obj.get("x_tool_start") {
         let Some(name) = ts.get("name").and_then(|v| v.as_str()) else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "proxy x_tool_start event missing required 'name' field"
             );
             return None;
@@ -2471,10 +2471,10 @@ fn parse_chat_response_body(name: &str, body: &str) -> anyhow::Result<ApiChatRes
         .map(ApiChatResponseEnvelope::into_response)
         .map_err(|_| {
             let sanitized = super::sanitize_api_error(body);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "model_provider": name,
                         "body": &sanitized,
@@ -3221,10 +3221,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
                 .send()
                 .await
                 .map_err(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "model_provider": &self.name,
                                 "url": &url,
@@ -3245,10 +3245,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
             let raw = read_body_capped(response, MAX_MODELS_RESPONSE_BYTES)
                 .await
                 .map_err(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "model_provider": &self.name,
                                 "phase": "model_list_read",
@@ -3262,10 +3262,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
                     ))
                 })?;
             let body: ModelsResponse = serde_json::from_slice(&raw).map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "model_provider": &self.name,
                             "phase": "model_list_parse",
@@ -3312,10 +3312,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
                 .send()
                 .await
                 .map_err(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "model_provider": &self.name,
                                 "url": &url,
@@ -3336,10 +3336,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
             let raw = read_body_capped(response, MAX_MODELS_RESPONSE_BYTES)
                 .await
                 .map_err(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "model_provider": &self.name,
                                 "phase": "model_list_read",
@@ -3353,10 +3353,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
                     ))
                 })?;
             let body: ModelsResponse = serde_json::from_slice(&raw).map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "model_provider": &self.name,
                             "phase": "model_list_parse",
@@ -3506,10 +3506,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
                 }
             })
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"model_provider": &self.name})),
                     "compatible: empty choices in response"
                 );
@@ -3598,10 +3598,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
                 }
             })
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"model_provider": &self.name})),
                     "compatible: empty choices in response"
                 );
@@ -3652,10 +3652,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
             {
                 Ok(response) => response,
                 Err(error) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!(
                             "{} native tool call transport failed: {error}; falling back to history path",
                             self.name
@@ -3680,10 +3680,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
                 && super::rejects_tools_with_reasoning_effort(status, &error)
                 && ensure_reasoning_effort_none(&mut payload)
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Retry)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Retry)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "provider": &self.name,
                             "alias": &self.alias,
@@ -3708,10 +3708,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
         let chat_response = parse_chat_response_body(&self.name, &body)?;
         let usage = chat_response.usage.map(UsageInfo::into_provider_usage);
         let choice = chat_response.choices.into_iter().next().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"model_provider": &self.name})),
                 "compatible: empty choices in response"
             );
@@ -3760,10 +3760,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
             self.reasoning_effort.is_some() && payload.get("reasoning_effort").is_none();
         let reasoning_effort_omission_reason =
             reasoning_effort_omitted.then_some("model_ineligible");
-        if ::clawcrew_log::debug_enabled() {
-            ::clawcrew_log::record!(
+        if ::galleon_log::debug_enabled() {
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
                     .with_attrs(::serde_json::json!({
                         "provider": &self.name,
                         "alias": &self.alias,
@@ -3805,10 +3805,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
                 && super::rejects_tools_with_reasoning_effort(status, &error)
                 && ensure_reasoning_effort_none(&mut payload)
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Retry)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Retry)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "provider": &self.name,
                             "alias": &self.alias,
@@ -3852,10 +3852,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
             .next()
             .map(|choice| choice.message)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"model_provider": &self.name})),
                     "compatible: empty choices in response"
                 );
@@ -3986,10 +3986,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
                     return;
                 }
             };
-            if ::clawcrew_log::debug_enabled() {
-                ::clawcrew_log::record!(
+            if ::galleon_log::debug_enabled() {
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
                         .with_attrs(::serde_json::json!({
                             "provider": &provider.name,
                             "alias": &provider.alias,
@@ -4067,10 +4067,10 @@ impl ModelProvider for OpenAiCompatibleModelProvider {
                     && super::rejects_tools_with_reasoning_effort(status, &error)
                     && ensure_reasoning_effort_none(&mut payload)
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Retry)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Retry)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "provider": &provider.name,
                                 "alias": &provider.alias,

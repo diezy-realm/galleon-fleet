@@ -248,9 +248,9 @@ pub fn canonicalize_tool_result_media_markers(output: &str) -> String {
         }
 
         if promotable.len() == MAX_PROMOTED_TOOL_RESULT_IMAGES {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "max_promoted_images": MAX_PROMOTED_TOOL_RESULT_IMAGES,
                     })),
@@ -505,10 +505,10 @@ pub fn trim_history(history: &mut Vec<ChatMessage>, max_history: usize) {
 
     let dropped = messages_before.saturating_sub(history.len());
     if dropped > 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "messages_before": messages_before,
                     "messages_after": history.len(),

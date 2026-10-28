@@ -5,14 +5,14 @@
 
 /// Private re-export root for macro expansion. External crates must not
 /// reach through here — it exists solely so `spawn!` can expand without
-/// callers needing `tokio`, `tracing`, or `clawcrew_log` as direct
+/// callers needing `tokio`, `tracing`, or `galleon_log` as direct
 /// dependencies.
 #[doc(hidden)]
 pub mod __private {
     pub use ::serde_json;
     pub use ::tokio;
     pub use ::tracing;
-    pub use ::clawcrew_log;
+    pub use ::galleon_log;
 }
 
 /// Stable event name for spawn-lifecycle records emitted by [`spawn!`].
@@ -36,11 +36,11 @@ macro_rules! spawn {
         // Spawn-time record — fires synchronously on the caller's
         // thread, attributed to whatever span the caller currently has
         // entered.
-        $crate::__private::clawcrew_log::record!(
+        $crate::__private::galleon_log::record!(
             INFO,
-            $crate::__private::clawcrew_log::Event::new(
+            $crate::__private::galleon_log::Event::new(
                 $crate::TASK_EVENT_NAME,
-                $crate::__private::clawcrew_log::Action::Spawn,
+                $crate::__private::galleon_log::Action::Spawn,
             )
             .with_attrs($crate::__private::serde_json::json!({
                 "task_site": format!("{}:{}", __ZC_TASK_FILE, __ZC_TASK_LINE),
@@ -57,13 +57,13 @@ macro_rules! spawn {
         let __zc_task_future = async move {
             let __zc_task_output = { $body }.await;
             let __zc_task_elapsed_ms = __zc_task_started_at.elapsed().as_millis() as u64;
-            $crate::__private::clawcrew_log::record!(
+            $crate::__private::galleon_log::record!(
                 INFO,
-                $crate::__private::clawcrew_log::Event::new(
+                $crate::__private::galleon_log::Event::new(
                     $crate::TASK_EVENT_NAME,
-                    $crate::__private::clawcrew_log::Action::Complete,
+                    $crate::__private::galleon_log::Action::Complete,
                 )
-                .with_outcome($crate::__private::clawcrew_log::EventOutcome::Success)
+                .with_outcome($crate::__private::galleon_log::EventOutcome::Success)
                 .with_duration(__zc_task_elapsed_ms)
                 .with_attrs($crate::__private::serde_json::json!({
                     "task_site": format!("{}:{}", __ZC_TASK_FILE, __ZC_TASK_LINE),
@@ -91,7 +91,7 @@ mod tests {
     /// Layer that records, for every event it sees, the names of every
     /// span on the event's span stack at the moment of recording. Lets
     /// us assert "yes, the spawned task's event saw the caller's span"
-    /// without depending on `clawcrew-log` formatting.
+    /// without depending on `galleon-log` formatting.
     #[derive(Clone, Default)]
     struct SpanCapture {
         events: Arc<Mutex<Vec<Vec<String>>>>,

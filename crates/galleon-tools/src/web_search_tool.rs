@@ -322,10 +322,10 @@ impl WebSearchTool {
     /// Re-read `config.toml` and decrypt `[web_search] brave_api_key`.
     fn reload_brave_api_key(&self) -> anyhow::Result<String> {
         let contents = std::fs::read_to_string(&self.config_path).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "brave",
@@ -340,10 +340,10 @@ impl WebSearchTool {
         })?;
 
         let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "brave",
@@ -362,10 +362,10 @@ impl WebSearchTool {
             .brave_api_key
             .filter(|k| !k.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"search_provider": "brave"})),
                     "web_search: Brave API key not configured"
                 );
@@ -542,10 +542,10 @@ impl WebSearchTool {
     /// Re-read `config.toml` and decrypt `[web_search] tavily_api_key`.
     fn reload_tavily_api_key(&self) -> anyhow::Result<String> {
         let contents = std::fs::read_to_string(&self.config_path).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "tavily",
@@ -560,10 +560,10 @@ impl WebSearchTool {
         })?;
 
         let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "tavily",
@@ -582,10 +582,10 @@ impl WebSearchTool {
             .tavily_api_key
             .filter(|k| !k.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"search_provider": "tavily"})),
                     "web_search: Tavily API key not configured"
                 );
@@ -667,10 +667,10 @@ impl WebSearchTool {
             .get("results")
             .and_then(|r| r.as_array())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"search_provider": "tavily"})),
                     "web_search: invalid Tavily response"
                 );
@@ -718,10 +718,10 @@ impl WebSearchTool {
     /// Re-read `config.toml` and decrypt `[web_search] jina_api_key`.
     fn reload_jina_api_key(&self) -> anyhow::Result<String> {
         let contents = std::fs::read_to_string(&self.config_path).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "jina",
@@ -736,10 +736,10 @@ impl WebSearchTool {
         })?;
 
         let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "jina",
@@ -758,10 +758,10 @@ impl WebSearchTool {
             .jina_api_key
             .filter(|k| !k.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"search_provider": "jina"})),
                     "web_search: Jina AI API key not configured"
                 );
@@ -815,10 +815,10 @@ impl WebSearchTool {
     fn parse_jina_results(&self, json: &serde_json::Value, query: &str) -> anyhow::Result<String> {
         // Jina API returns {"code": 200, "status": 20000, "data": [...]}
         let results = json.get("data").and_then(|r| r.as_array()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"search_provider": "jina"})),
                 "web_search: invalid Jina AI response"
             );
@@ -857,10 +857,10 @@ impl WebSearchTool {
 
     fn resolve_bocha_api_key(&self) -> anyhow::Result<String> {
         let contents = std::fs::read_to_string(&self.config_path).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "bocha",
@@ -875,10 +875,10 @@ impl WebSearchTool {
         })?;
 
         let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "bocha",
@@ -897,10 +897,10 @@ impl WebSearchTool {
             .bocha_api_key
             .filter(|k| !k.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"search_provider": "bocha"})),
                     "web_search: Bocha AI API key not configured"
                 );
@@ -989,10 +989,10 @@ impl WebSearchTool {
             .and_then(|w| w.get("value"))
             .and_then(|v| v.as_array())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"search_provider": "bocha"})),
                     "web_search: invalid Bocha AI response"
                 );
@@ -1057,10 +1057,10 @@ impl WebSearchTool {
         }
 
         let contents = std::fs::read_to_string(&self.config_path).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "anysearch",
@@ -1077,10 +1077,10 @@ impl WebSearchTool {
         let config: galleon_config::schema::Config =
             toml::from_str(&contents).map_err(|error| {
                 let line = anysearch_config_parse_line(&contents, &error);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(anysearch_config_parse_attrs(&self.config_path, line)),
                     "web_search: failed to parse config for AnySearch API key"
                 );
@@ -1179,10 +1179,10 @@ impl WebSearchTool {
             .and_then(|data| data.get("results"))
             .and_then(|results| results.as_array())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"search_provider": "anysearch"})),
                     "web_search: invalid AnySearch response"
                 );
@@ -1220,10 +1220,10 @@ impl WebSearchTool {
     /// Build the "not configured" error for the Serply key, logging which
     /// lookup produced it (`env_override` or `config`).
     fn serply_api_key_not_configured(source: &'static str) -> anyhow::Error {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"search_provider": "serply", "source": source})),
             "web_search: Serply API key not configured"
         );
@@ -1245,10 +1245,10 @@ impl WebSearchTool {
         }
 
         let contents = std::fs::read_to_string(&self.config_path).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "serply",
@@ -1264,10 +1264,10 @@ impl WebSearchTool {
 
         let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
             let failure = SerplyConfigParseFailure::new(&contents, &e);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(failure.log_attrs(&self.config_path)),
                 "web_search: failed to parse config for Serply API key"
             );
@@ -1360,10 +1360,10 @@ impl WebSearchTool {
             .get("results")
             .and_then(|r| r.as_array())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"search_provider": "serply"})),
                     "web_search: invalid Serply response"
                 );
@@ -1422,10 +1422,10 @@ impl WebSearchTool {
         }
 
         let contents = std::fs::read_to_string(&self.config_path).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "keenable",
@@ -1446,10 +1446,10 @@ impl WebSearchTool {
         // is an error, not a fall-through to keyless search.
         let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
             let line = toml_error_line(&contents, &e);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(keenable_config_parse_attrs(&self.config_path, line)),
                 "web_search: failed to parse config for Keenable API key"
             );
@@ -1555,10 +1555,10 @@ impl WebSearchTool {
         )
         .await?;
         if body.overflowed {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "search_provider": "keenable",
                         "limit_bytes": KEENABLE_MAX_RESPONSE_BYTES,
@@ -1572,10 +1572,10 @@ impl WebSearchTool {
         }
 
         let json: serde_json::Value = serde_json::from_slice(&body.bytes).map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"search_provider": "keenable"})),
                 "web_search: Keenable response is not JSON"
             );
@@ -1593,10 +1593,10 @@ impl WebSearchTool {
             .get("results")
             .and_then(|r| r.as_array())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"search_provider": "keenable"})),
                     "web_search: invalid Keenable response"
                 );
@@ -1640,10 +1640,10 @@ impl WebSearchTool {
             .and_then(|w| w.get("results"))
             .and_then(|r| r.as_array())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"search_provider": "brave"})),
                     "web_search: invalid Brave response"
                 );
@@ -1688,10 +1688,10 @@ impl WebSearchTool {
 
         // Slow path: re-read config.toml to pick up values set after boot.
         let contents = std::fs::read_to_string(&self.config_path).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "searxng",
@@ -1706,10 +1706,10 @@ impl WebSearchTool {
         })?;
 
         let config: galleon_config::schema::Config = toml::from_str(&contents).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config_path.display().to_string(),
                         "search_provider": "searxng",
@@ -1728,10 +1728,10 @@ impl WebSearchTool {
             .searxng_instance_url
             .filter(|u| !u.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"search_provider": "searxng"})),
                     "web_search: SearXNG instance URL not configured"
                 );
@@ -1779,10 +1779,10 @@ impl WebSearchTool {
             .get("results")
             .and_then(|r| r.as_array())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"search_provider": "searxng"})),
                     "web_search: invalid SearXNG response"
                 );
@@ -2292,10 +2292,10 @@ impl Tool for WebSearchTool {
 
     async fn execute(&self, args: serde_json::Value) -> anyhow::Result<ToolResult> {
         let query = args.get("query").and_then(|q| q.as_str()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "query"})),
                 "web_search: missing query parameter"
             );
@@ -2306,18 +2306,18 @@ impl Tool for WebSearchTool {
             anyhow::bail!("Search query cannot be empty");
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("Searching web for: {}", query)
         );
 
         let resolution = resolve_web_search_provider(&self.model_provider);
         if resolution.used_fallback {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "Unknown web search model_provider '{}'; falling back to '{}'",
                     self.model_provider, resolution.canonical_provider
@@ -4796,10 +4796,10 @@ mod tests {
     async fn test_keenable_config_parse_failure_withholds_the_offending_line() {
         const SECRET: &str = "kn-live-7f3a9c2e-DISTINCTIVE-5b8d1e0f";
 
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let tmp = tempfile::tempdir().unwrap();

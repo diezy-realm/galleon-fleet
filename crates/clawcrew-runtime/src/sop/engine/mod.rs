@@ -405,9 +405,9 @@ impl SopEngine {
                     return Some(step_alias.to_string());
                 } else {
                     // step.agent is not found in config.agents -> fallback to default agent config of SOP
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({
                                 "sop_name": sop.name,
                                 "step_number": step.number,
@@ -430,11 +430,11 @@ impl SopEngine {
                         if agents_map.get(sop_alias).is_some() {
                             return Some(sop_alias.to_string());
                         } else {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({
                                     "sop_name": sop.name,
@@ -470,9 +470,9 @@ impl SopEngine {
                 if agents_map.get(sop_alias).is_some() {
                     return Some(sop_alias.to_string());
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({
                                 "sop_name": sop.name,
                                 "invalid_sop_agent": sop_alias,
@@ -702,13 +702,13 @@ impl SopEngine {
                         {
                             Ok(retained) => retained,
                             Err(e) => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(
                                         ::serde_json::json!({
                                             "run_id": pr.run.run_id.as_str(),
@@ -741,11 +741,11 @@ impl SopEngine {
                             // a COMPLETED failure-route continuation (e.g. a denied
                             // checkpoint that Retried and re-parked). Its marker is stale —
                             // release it now rather than renew it forever.
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({
                                     "run_id": pr.run.run_id.as_str(),
@@ -769,15 +769,15 @@ impl SopEngine {
                         .store
                         .renew_claim_for_restore(&pr.run.run_id, &pr.run.sop_name)
                     {
-                        let span = ::clawcrew_log::attribution_span!(&pr.run);
+                        let span = ::galleon_log::attribution_span!(&pr.run);
                         let _guard = span.enter();
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "run_id": pr.run.run_id.as_str(),
                                 "sop_name": pr.run.sop_name.as_str(),
@@ -803,13 +803,13 @@ impl SopEngine {
                 // boundary. Finalize before any restored work can resume.
                 for run_id in finalize_cancel_requests {
                     if let Err(e) = self.finish_requested_cancellation(&run_id) {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "error": e.to_string(),
@@ -825,31 +825,31 @@ impl SopEngine {
                     self.notify_park_request(&run_id);
                 }
                 if restored > 0 {
-                    let span = ::clawcrew_log::info_span!(
+                    let span = ::galleon_log::info_span!(
                         target: "clawcrew_log_internal_scope",
                         "clawcrew_scope",
                         sop_name = "*",
                     );
                     let _guard = span.enter();
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"restored": restored})),
                         &format!("SOP engine restored {restored} run(s) from store")
                     );
                 }
             }
             Err(e) => {
-                let span = ::clawcrew_log::info_span!(
+                let span = ::galleon_log::info_span!(
                     target: "clawcrew_log_internal_scope",
                     "clawcrew_scope",
                     sop_name = "*",
                 );
                 let _guard = span.enter();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "SOP engine: failed to restore runs from store"
                 );
@@ -869,12 +869,12 @@ impl SopEngine {
             Ok(runs) => {
                 let mut seeded = 0usize;
                 for pr in runs {
-                    let span = ::clawcrew_log::attribution_span!(&pr.run);
+                    let span = ::galleon_log::attribution_span!(&pr.run);
                     let _guard = span.enter();
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Success)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Success)
                             .with_attrs(::serde_json::json!({
                                 "run_id": pr.run.run_id.as_str(),
                                 "sop_name": pr.run.sop_name.as_str(),
@@ -887,15 +887,15 @@ impl SopEngine {
                 self.finished_runs
                     .sort_by(|a, b| a.started_at.cmp(&b.started_at));
                 if seeded > 0 {
-                    let span = ::clawcrew_log::info_span!(
+                    let span = ::galleon_log::info_span!(
                         target: "clawcrew_log_internal_scope",
                         "clawcrew_scope",
                         sop_name = "*",
                     );
                     let _guard = span.enter();
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"seeded": seeded})),
                         &format!(
                             "SOP engine seeded {seeded} terminal run(s) into the retention window"
@@ -904,16 +904,16 @@ impl SopEngine {
                 }
             }
             Err(e) => {
-                let span = ::clawcrew_log::info_span!(
+                let span = ::galleon_log::info_span!(
                     target: "clawcrew_log_internal_scope",
                     "clawcrew_scope",
                     sop_name = "*",
                 );
                 let _guard = span.enter();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "SOP engine: failed to seed terminal runs from store"
                 );
@@ -990,10 +990,10 @@ impl SopEngine {
     }
 
     fn log_persist_failure(run_id: &str, e: crate::sop::store::StoreError) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"run_id": run_id, "error": e.to_string()})),
             "SOP engine: failed to persist run"
         );
@@ -1029,10 +1029,10 @@ impl SopEngine {
     }
 
     fn log_pending_capacity_full(run_id: &str, reason: &str) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"run_id": run_id, "reason": reason})),
             "SOP engine: pending-approval pool full at park transition; KEEPING the exec claim"
         );
@@ -1059,10 +1059,10 @@ impl SopEngine {
     ) -> Result<()> {
         let (persisted, run) = self.persisted_active_snapshot(run_id)?;
         self.store.save_run_with_event(&persisted, event).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(
                         ::serde_json::json!({"run_id": run_id, "error": e.to_string()})
                     ),
@@ -1097,10 +1097,10 @@ impl SopEngine {
                 // reaper reclaims it once it expires, silently undoing the fail-closed
                 // keep and over-admitting a newer trigger.
                 self.claims_pending_persist.insert(run_id.to_string());
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"run_id": run_id})),
                     "SOP engine: parked snapshot not persisted; KEEPING the exec claim (fail closed) so the park is not lost"
                 );
@@ -1183,10 +1183,10 @@ impl SopEngine {
 
             if step.kind == SopStepKind::Checkpoint {
                 if let Err(e) = self.persist_deterministic_state(&run_id, &sop, true) {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "error": e.to_string(),
@@ -1266,10 +1266,10 @@ impl SopEngine {
 
     fn release_claim_best_effort(&self, token: &ClaimToken) {
         if let Err(e) = self.store.release_claim(token) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "run_id": token.run_id.as_str(),
                         "error": e.to_string(),
@@ -1292,10 +1292,10 @@ impl SopEngine {
     fn heartbeat_claim_for_run(&self, run: &SopRun) {
         let token = Self::claim_handle_for_run(run);
         if let Err(e) = self.store.heartbeat_claim(&token) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "run_id": run.run_id.as_str(),
                         "error": e.to_string(),
@@ -1443,10 +1443,10 @@ impl SopEngine {
                 sop_name,
             })),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "run_id": rid.as_str(),
                             "error": e.to_string(),
@@ -1477,10 +1477,10 @@ impl SopEngine {
             .renew_claim_for_restore(&run.run_id, &run.sop_name)
             .map(|_| ())
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "run_id": run.run_id.as_str(),
                             "error": e.to_string(),
@@ -1500,10 +1500,10 @@ impl SopEngine {
         // active snapshot so the store's revision guard accepts it.
         pr.revision = self.next_run_revision(&run.run_id);
         self.store.finish_run(&run.run_id, &pr).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(
                         ::serde_json::json!({"run_id": run.run_id, "error": e.to_string()})
                     ),
@@ -1527,10 +1527,10 @@ impl SopEngine {
         self.store
             .finish_run_with_event(&run.run_id, &pr, event)
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(
                             ::serde_json::json!({"run_id": run.run_id, "error": e.to_string()})
                         ),
@@ -1562,10 +1562,10 @@ impl SopEngine {
             payload,
         };
         if let Err(e) = self.store.append_event(&ev) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(
                         ::serde_json::json!({"run_id": run_id, "kind": kind, "error": e.to_string()})
                     ),
@@ -1582,9 +1582,9 @@ impl SopEngine {
             self.config.sops_dir.as_deref(),
             super::parse_execution_mode(&self.config.default_execution_mode),
         );
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("SOP engine loaded {} SOPs", self.sops.len())
         );
     }
@@ -1881,9 +1881,9 @@ impl SopEngine {
             if let Some((_, evicted_run)) = self.dispatch_dedup.pop_front()
                 && self.active_runs.contains_key(&evicted_run)
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "evicted_run_id": evicted_run,
                             "cap": DISPATCH_DEDUP_CAP,
@@ -1955,10 +1955,10 @@ impl SopEngine {
         run.status = SopRunStatus::Cancelled;
         run.completed_at = Some(now_iso8601());
         if let Err(e) = self.persist_terminal(&run) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "run_id": run.run_id.as_str(),
                         "error": e.to_string(),
@@ -1993,10 +1993,10 @@ impl SopEngine {
         let sop = self
             .get_sop(sop_name)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"sop_name": sop_name})),
                     "SOP engine: sop not found"
                 );
@@ -2076,9 +2076,9 @@ impl SopEngine {
         self.active_runs.insert(run_id.clone(), run);
 
         if deterministic {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "Deterministic SOP run {} started for '{}'",
                     run_id, sop.name
@@ -2089,9 +2089,9 @@ impl SopEngine {
                 Err(e) => Err(self.rollback_failed_start(&run_id, &claim, e)),
             }
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!("SOP run {} started for '{}'", run_id, sop.name)
             );
             match self.dispatch_llm_step(&run_id, &sop, 1, None) {
@@ -2104,10 +2104,10 @@ impl SopEngine {
     pub fn advance_step(&mut self, run_id: &str, result: SopStepResult) -> Result<SopRunAction> {
         let (sop_name, current_step_number) = {
             let run = self.active_runs.get(run_id).ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"run_id": run_id})),
                     "SOP engine: active run not found"
                 );
@@ -2117,10 +2117,10 @@ impl SopEngine {
                 run.status,
                 SopRunStatus::WaitingApproval | SopRunStatus::PausedCheckpoint
             ) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "run_id": run_id,
                             "status": run.status.to_string(),
@@ -2143,10 +2143,10 @@ impl SopEngine {
             .iter()
             .find(|s| s.name == sop_name)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"sop_name": sop_name})),
                     "SOP engine: sop no longer loaded (definition removed mid-run)"
                 );
@@ -2159,10 +2159,10 @@ impl SopEngine {
             .get((current_step_number.saturating_sub(1)) as usize)
             .cloned()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(
                             ::serde_json::json!({"sop_name": sop_name, "step": current_step_number})
                         ),
@@ -2179,10 +2179,10 @@ impl SopEngine {
             .is_some_and(|run| run.status == SopRunStatus::Pending)
             && pending_step_blocks_direct_advance(&sop, &current_step)
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "run_id": run_id,
                         "step": current_step.number,
@@ -2279,10 +2279,10 @@ impl SopEngine {
             recorded.effective_agent.as_deref(),
             prior_results,
         ) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "run_id": run_id,
                         "step": current_step.number,
@@ -2365,10 +2365,10 @@ impl SopEngine {
                 "phase": phase,
             }),
         );
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "run_id": run_id,
                     "step": step_number,
@@ -2404,10 +2404,10 @@ impl SopEngine {
 
     fn record_step_result(&mut self, run_id: &str, result: SopStepResult) -> Result<()> {
         let run = self.active_runs.get_mut(run_id).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"run_id": run_id})),
                 "SOP engine: active run not found"
             );
@@ -2558,9 +2558,9 @@ impl SopEngine {
                 if deterministic {
                     self.finish_deterministic_run(run_id)
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"run_id": run_id})),
                         "SOP run completed successfully"
                     );
@@ -2622,10 +2622,10 @@ impl SopEngine {
             performer,
             prior_results,
         ) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "run_id": run_id,
                         "step": step_number,
@@ -2824,10 +2824,10 @@ impl SopEngine {
             performer,
             prior_results,
         ) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "run_id": run_id,
                         "step": step_number,
@@ -2854,10 +2854,10 @@ impl SopEngine {
             .find(|step| step.number == step_number)
             .cloned()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(
                             ::serde_json::json!({"sop_name": sop.name, "step": step_number})
                         ),
@@ -2908,10 +2908,10 @@ impl SopEngine {
                 });
             }
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "run_id": run_id,
                     "sop_name": sop.name,
@@ -2992,10 +2992,10 @@ impl SopEngine {
                 phase,
                 reason,
             } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "run_id": run_id,
                             "step": step,
@@ -3019,10 +3019,10 @@ impl SopEngine {
                 step,
                 reason,
             } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "run_id": run_id,
                             "sop_name": sop_name,
@@ -3051,9 +3051,9 @@ impl SopEngine {
             .map(|run| run.llm_calls_saved)
             .unwrap_or(0);
         let action = self.finish_run(run_id, SopRunStatus::Completed, None)?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("Deterministic SOP run {run_id} completed ({saved} LLM calls saved)")
         );
         self.deterministic_savings.total_llm_calls_saved += saved;
@@ -3092,9 +3092,9 @@ impl SopEngine {
             payload: ::serde_json::json!({ "step": current_step }),
         };
         self.finish_run_with_gate_event(run_id, SopRunStatus::Cancelled, reason, &event)?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"run_id": run_id})),
             "SOP run cancelled"
         );
@@ -3132,9 +3132,9 @@ impl SopEngine {
                 source,
             }));
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"run_id": run_id})),
             "SOP run cancellation requested"
         );
@@ -3261,10 +3261,10 @@ impl SopEngine {
             .active_runs
             .get(run_id)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"run_id": run_id})),
                     "SOP engine: active run not found"
                 );
@@ -3588,10 +3588,10 @@ impl SopEngine {
         // the atomic store write, then release the temporary execution claim and
         // present the versioned replacement prompt.
         if let Err(e) = self.persist_deterministic_state(run_id, &sop, true) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"run_id": run_id, "error": e.to_string()})),
                 "SOP engine: revised state-file refresh failed (run store remains authoritative)"
             );
@@ -3925,10 +3925,10 @@ impl SopEngine {
             .active_runs
             .get(run_id)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"run_id": run_id})),
                     "SOP engine: active run not found"
                 );
@@ -4119,10 +4119,10 @@ impl SopEngine {
             .iter()
             .find(|s| s.name == sop_name)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"sop_name": sop_name})),
                     "SOP engine: sop no longer loaded (definition removed mid-run)"
                 );
@@ -4261,10 +4261,10 @@ impl SopEngine {
         self.enforce_admission(sop_name)?;
 
         let sop = self.get_sop(sop_name).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"sop_name": sop_name})),
                 "SOP engine: sop not found"
             );
@@ -4821,10 +4821,10 @@ impl SopEngine {
         completed_at: Option<String>,
     ) -> Result<SopRunAction> {
         let run = self.active_runs.get_mut(run_id).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"run_id": run_id})),
                 "SOP engine: active run not found"
             );
@@ -4951,10 +4951,10 @@ impl SopEngine {
             }
             None => {
                 let run_id = state.run_id.clone();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"run_id": run_id})),
                     "SOP engine: active run not found"
                 );
@@ -4979,10 +4979,10 @@ impl SopEngine {
             .iter()
             .find(|s| s.name == sop_name)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"sop_name": sop_name.as_str()})),
                     "SOP engine: sop no longer loaded (definition removed mid-run)"
                 );
@@ -5149,9 +5149,9 @@ impl SopEngine {
                     run.revision_base = run.revision;
                 }
 
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!(
                         "Deterministic SOP run {run_id}: checkpoint at step {} '{}', state persisted to {}",
                         step.number,
@@ -5222,10 +5222,10 @@ impl SopEngine {
         paused_at_checkpoint: bool,
     ) -> Result<PathBuf> {
         let run = self.active_runs.get(run_id).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"run_id": run_id})),
                 "SOP engine: run not found in history"
             );
@@ -5277,10 +5277,10 @@ impl SopEngine {
             Ok(()) => {}
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "run_id": run.run_id,
                             "path": path.display().to_string(),
@@ -5368,13 +5368,13 @@ impl SopEngine {
                 Some(SopRunStatus::Running) => match self.fail_headless_step_budget(&run_id) {
                     Ok(_) => finalized += 1,
                     Err(error) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "error": error.to_string(),
@@ -5412,10 +5412,10 @@ impl SopEngine {
                     self.cancellation_finalization_ready.remove(&run_id);
                 }
                 Err(error) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "error": error.to_string(),
@@ -5436,10 +5436,10 @@ impl SopEngine {
         let expired = match self.store.expired_claims(&now) {
             Ok(claims) => claims,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "SOP maintenance: failed to read expired claims"
                 );
@@ -5450,10 +5450,10 @@ impl SopEngine {
         for token in &expired {
             match self.store.release_claim(token) {
                 Ok(()) => reclaimed += 1,
-                Err(e) => ::clawcrew_log::record!(
+                Err(e) => ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "SOP maintenance: failed to release expired claim"
                 ),
@@ -5472,10 +5472,10 @@ impl SopEngine {
         match self.store.prune(&policy) {
             Ok(n) => n,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "SOP maintenance: failed to prune terminal runs"
                 );
@@ -5953,10 +5953,10 @@ impl SopEngine {
         step: u32,
     ) -> Result<Vec<GateVote>, StoreError> {
         let events = self.store.list_events(run_id).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "run_id": run_id,
                         "step": step,

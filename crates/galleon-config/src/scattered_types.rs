@@ -142,9 +142,9 @@ impl ThinkingConfig {
         const ALL_LEVELS: &[ThinkingLevel] = &[Off, Minimal, Low, Medium, High, Max];
         for key in self.budget_tokens.keys() {
             if !ALL_LEVELS.iter().any(|l| l.as_str() == key) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"key": key})),
                     "Unknown thinking level in budget_tokens config; \
                      valid levels are: off, minimal, low, medium, high, max"

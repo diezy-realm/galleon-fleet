@@ -129,9 +129,9 @@ pub fn load_global_pricing_catalog(data_dir: &Path) -> usize {
                 catalog.finalize();
                 let n = catalog.priced_len();
                 *cell().write() = Arc::new(catalog);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "path": path.display().to_string(),
                             "priced_models": n
@@ -141,10 +141,10 @@ pub fn load_global_pricing_catalog(data_dir: &Path) -> usize {
                 n
             }
             Err(error) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "path": path.display().to_string(),
                             "error": format!("{error}")
@@ -164,10 +164,10 @@ pub fn load_global_pricing_catalog(data_dir: &Path) -> usize {
         Err(error) => {
             // Present but unreadable (permissions, a directory, transient I/O): keep the
             // previous catalog rather than silently dropping configured rates.
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "path": path.display().to_string(),
                         "error": format!("{error}")

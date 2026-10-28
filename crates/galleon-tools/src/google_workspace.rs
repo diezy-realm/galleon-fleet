@@ -189,10 +189,10 @@ impl Tool for GoogleWorkspaceTool {
             .get("service")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "service"})),
                     "google_workspace: missing service parameter"
                 );
@@ -202,20 +202,20 @@ impl Tool for GoogleWorkspaceTool {
             .get("resource")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "resource"})),
                     "google_workspace: missing resource parameter"
                 );
                 anyhow::Error::msg("Missing 'resource' parameter")
             })?;
         let method = args.get("method").and_then(|v| v.as_str()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "method"})),
                 "google_workspace: missing method parameter"
             );
@@ -428,7 +428,7 @@ impl Tool for GoogleWorkspaceTool {
         }
 
         if self.audit_log {
-            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"tool": "google_workspace", "service": service, "resource": resource, "sub_resource": sub_resource.unwrap_or(""), "method": method})), "gws audit: executing API call");
+            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"tool": "google_workspace", "service": service, "resource": resource, "sub_resource": sub_resource.unwrap_or(""), "method": method})), "gws audit: executing API call");
         }
 
         let result =

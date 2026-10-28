@@ -273,10 +273,10 @@ impl RpiSystemContext {
         };
         let devices_dir = home.join(".clawcrew").join("hardware").join("devices");
         if let Err(e) = fs::create_dir_all(&devices_dir) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Failed to create hardware devices dir"
             );
@@ -286,17 +286,17 @@ impl RpiSystemContext {
         let path = devices_dir.join("rpi0.md");
         let content = self.device_profile_markdown();
         if let Err(e) = fs::write(&path, &content) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Failed to write rpi0.md"
             );
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"path": path.display().to_string()})),
                 "Wrote rpi0.md hardware context file"
             );
@@ -386,20 +386,20 @@ impl Tool for GpioRpiWriteTool {
 
     async fn execute(&self, args: Value) -> anyhow::Result<ToolResult> {
         let pin = args.get("pin").and_then(|v| v.as_u64()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "pin"})),
                 "rpi gpio tool: missing 'pin' parameter"
             );
             anyhow::Error::msg("Missing 'pin' parameter")
         })? as u8;
         let value = args.get("value").and_then(|v| v.as_u64()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "value"})),
                 "rpi gpio tool: missing 'value' parameter"
             );
@@ -411,10 +411,10 @@ impl Tool for GpioRpiWriteTool {
         if is_onboard_led(pin) {
             let brightness = if value == 0 { "0" } else { "1" };
             let path = led_brightness_path().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "ACT LED sysfs path not found"
                 );
                 anyhow::Error::msg("ACT LED sysfs path not found")
@@ -482,10 +482,10 @@ impl Tool for GpioRpiReadTool {
 
     async fn execute(&self, args: Value) -> anyhow::Result<ToolResult> {
         let pin = args.get("pin").and_then(|v| v.as_u64()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "pin"})),
                 "rpi gpio tool: missing 'pin' parameter"
             );
@@ -495,10 +495,10 @@ impl Tool for GpioRpiReadTool {
         // Onboard ACT LED → read from sysfs
         if is_onboard_led(pin) {
             let path = led_brightness_path().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "ACT LED sysfs path not found"
                 );
                 anyhow::Error::msg("ACT LED sysfs path not found")
@@ -577,10 +577,10 @@ impl Tool for GpioRpiBlinkTool {
 
     async fn execute(&self, args: Value) -> anyhow::Result<ToolResult> {
         let pin = args.get("pin").and_then(|v| v.as_u64()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "pin"})),
                 "rpi gpio tool: missing 'pin' parameter"
             );
@@ -605,10 +605,10 @@ impl Tool for GpioRpiBlinkTool {
         // Onboard ACT LED → Linux LED subsystem (async-friendly, no spawn_blocking)
         if is_onboard_led(pin) {
             let path = led_brightness_path().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "ACT LED sysfs path not found"
                 );
                 anyhow::Error::msg("ACT LED sysfs path not found")
@@ -679,10 +679,10 @@ impl Tool for RpiSystemInfoTool {
 
     async fn execute(&self, _args: Value) -> anyhow::Result<ToolResult> {
         let ctx = RpiSystemContext::discover().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "rpi peripheral refused: host is not a Raspberry Pi"
             );
             anyhow::Error::msg("Not running on a Raspberry Pi")

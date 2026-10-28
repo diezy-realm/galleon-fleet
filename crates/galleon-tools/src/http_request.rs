@@ -396,10 +396,10 @@ impl HttpRequestTool {
         body: Option<&str>,
     ) -> anyhow::Result<reqwest::Response> {
         let timeout_secs = if self.timeout_secs == 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "http_request: timeout_secs is 0, using safe default of 30s"
             );
             30
@@ -563,10 +563,10 @@ impl Tool for HttpRequestTool {
 
     async fn execute(&self, args: serde_json::Value) -> anyhow::Result<ToolResult> {
         let url = args.get("url").and_then(|v| v.as_str()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "url"})),
                 "http_request: missing url parameter"
             );
@@ -603,10 +603,10 @@ impl Tool for HttpRequestTool {
 
         let proxy_config = galleon_config::schema::runtime_proxy_config();
         if proxy_conflicts_with_dns_pinning(&proxy_config) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"service": "tool.http_request"})),
                 "http_request: configured runtime proxy rejected to preserve validated DNS pin"
             );
@@ -619,10 +619,10 @@ impl Tool for HttpRequestTool {
 
         let ignored_environment_proxy = galleon_config::schema::environment_proxy_for_url(url);
         if let Some(variable) = ignored_environment_proxy {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"proxy_variable": variable})),
                 "http_request: environment proxy ignored to preserve validated DNS pin"
             );
@@ -760,10 +760,10 @@ fn proxy_conflicts_with_dns_pinning(config: &ProxyConfig) -> bool {
 
 fn extract_host(url: &str) -> anyhow::Result<String> {
     if !url.starts_with("http://") && !url.starts_with("https://") {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"url": url})),
             "http_request: non-http(s) URL rejected"
         );
@@ -771,10 +771,10 @@ fn extract_host(url: &str) -> anyhow::Result<String> {
     }
 
     let parsed = reqwest::Url::parse(url).map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"url": url})),
             "http_request: invalid URL"
         );

@@ -242,18 +242,18 @@ fn record_workspace_io_failure(
         "decision": decision,
     });
     if permanent {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(attrs),
             what
         );
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(attrs),
             what
         );
@@ -446,10 +446,10 @@ fn encrypt_aes_ecb(plaintext: &[u8], key: &[u8; 16]) -> anyhow::Result<Vec<u8>> 
     let encrypted = Aes128EcbEnc::new(&(*key).into())
         .encrypt_padded_mut::<Pkcs7>(&mut buffer, plaintext.len())
         .map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "media encrypt failed"
             );
@@ -464,10 +464,10 @@ fn decrypt_aes_ecb(ciphertext: &[u8], key: &[u8; 16]) -> anyhow::Result<Vec<u8>>
         .decrypt_padded_mut::<Pkcs7>(&mut buffer)
         .map(|decrypted| decrypted.to_vec())
         .map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "wechat: media decrypt failed"
             );
@@ -479,20 +479,20 @@ fn parse_aes_key(raw: &str) -> anyhow::Result<[u8; 16]> {
     let raw = raw.trim();
     if raw.len() == 32 && raw.bytes().all(|b| b.is_ascii_hexdigit()) {
         let bytes = hex::decode(raw).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "media hex aes_key invalid"
             );
             anyhow::Error::msg(format!("media hex aes_key invalid: {e}"))
         })?;
         return <[u8; 16]>::try_from(bytes.as_slice()).map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"key_kind": "hex", "expected_bytes": 16})),
                 "wechat: media hex aes_key has wrong byte length"
             );
@@ -503,10 +503,10 @@ fn parse_aes_key(raw: &str) -> anyhow::Result<[u8; 16]> {
     let decoded = base64::engine::general_purpose::STANDARD
         .decode(raw)
         .map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "media base64 aes_key invalid"
             );
@@ -515,10 +515,10 @@ fn parse_aes_key(raw: &str) -> anyhow::Result<[u8; 16]> {
 
     if decoded.len() == 16 {
         return <[u8; 16]>::try_from(decoded.as_slice()).map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"key_kind": "base64", "expected_bytes": 16})),
                 "wechat: media base64 aes_key has wrong byte length"
             );
@@ -528,30 +528,30 @@ fn parse_aes_key(raw: &str) -> anyhow::Result<[u8; 16]> {
 
     if decoded.len() == 32 && decoded.iter().all(u8::is_ascii_hexdigit) {
         let hex_text = std::str::from_utf8(&decoded).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "media aes_key utf8 invalid"
             );
             anyhow::Error::msg(format!("media aes_key utf8 invalid: {e}"))
         })?;
         let bytes = hex::decode(hex_text).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "media nested hex aes_key invalid"
             );
             anyhow::Error::msg(format!("media nested hex aes_key invalid: {e}"))
         })?;
         return <[u8; 16]>::try_from(bytes.as_slice()).map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(
                         ::serde_json::json!({"key_kind": "nested_hex", "expected_bytes": 16})
                     ),
@@ -872,10 +872,10 @@ fn render_login_qr(code: &str) -> anyhow::Result<String> {
     }
 
     let qr = qrcode::QrCode::new(payload.as_bytes()).map_err(|err| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
             "Failed to encode WeChat QR payload"
         );
@@ -1018,10 +1018,10 @@ impl WeChatChannel {
                 // log where `clawcrew service logs` / the gateway can find it.
                 // Tag it `Channel` so the web Logs page shows it by default
                 // (an untagged event defaults to `Internal` and is hidden).
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Channel)
                         .with_attrs(::serde_json::json!({
                             "alias": alias.as_str(),
                             "pairing_code": code.as_str(),
@@ -1156,9 +1156,9 @@ impl WeChatChannel {
                     Err(poisoned) => poisoned.into_inner(),
                 };
                 *bot_token = Some(token.clone());
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "loaded persisted bot token"
                 );
             }
@@ -1177,17 +1177,17 @@ impl WeChatChannel {
         {
             if !sync.get_updates_buf.is_empty() {
                 *self.cursor.lock() = sync.get_updates_buf;
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "loaded persisted sync cursor"
                 );
             }
             if !sync.context_tokens.is_empty() {
                 *self.context_tokens.lock() = sync.context_tokens;
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "loaded persisted context tokens"
                 );
             }
@@ -1197,10 +1197,10 @@ impl WeChatChannel {
     /// Save account data to disk.
     fn save_account_data(&self, token: &str, account_id: &str, user_id: Option<&str>) {
         if let Err(e) = std::fs::create_dir_all(&self.state_dir) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "failed to create state dir"
             );
@@ -1217,19 +1217,19 @@ impl WeChatChannel {
         match serde_json::to_string_pretty(&data) {
             Ok(json) => {
                 if let Err(e) = write_private(&path, json.as_bytes()) {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "failed to write account data"
                     );
                 }
             }
-            Err(e) => ::clawcrew_log::record!(
+            Err(e) => ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "failed to serialize account data"
             ),
@@ -1239,10 +1239,10 @@ impl WeChatChannel {
     /// Save sync cursor to disk.
     fn save_sync_data(&self) {
         if let Err(e) = std::fs::create_dir_all(&self.state_dir) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "failed to create state dir"
             );
@@ -1256,19 +1256,19 @@ impl WeChatChannel {
         match serde_json::to_string(&data) {
             Ok(json) => {
                 if let Err(e) = write_private(&path, json.as_bytes()) {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "failed to write sync data"
                     );
                 }
             }
-            Err(e) => ::clawcrew_log::record!(
+            Err(e) => ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "failed to serialize sync data"
             ),
@@ -1476,10 +1476,10 @@ impl WeChatChannel {
             )
         })?;
         if !candidate_canon.starts_with(&workspace_canon) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "attachment path {} canonicalizes to {} which escapes workspace {}",
                     raw_target,
@@ -1499,10 +1499,10 @@ impl WeChatChannel {
 
     fn resolve_local_attachment_path(&self, target: &str) -> anyhow::Result<PathBuf> {
         let workspace_dir = self.workspace_dir.as_deref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "workspace directory is not configured; cannot resolve local attachment path"
             );
             anyhow::Error::msg(
@@ -1532,10 +1532,10 @@ impl WeChatChannel {
         if candidate.is_absolute() || candidate.has_root() {
             let normalized = normalize_lexical(candidate);
             if !normalized.starts_with(&workspace_normalized) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "attachment path {} escapes workspace {}, rejected",
                         target,
@@ -1768,10 +1768,10 @@ impl WeChatChannel {
                 Ok(resp) => {
                     let status = resp.status();
                     let body = resp.text().await.unwrap_or_default();
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "attempt": attempt,
                                 "status": status.as_u16(),
@@ -1789,10 +1789,10 @@ impl WeChatChannel {
                     last_error = Some(error);
                 }
                 Err(err) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "attempt": attempt,
                                 "phase": "cdn_upload",
@@ -1808,10 +1808,10 @@ impl WeChatChannel {
         }
 
         Err(last_error.unwrap_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"phase": "cdn_upload"})),
                 "wechat: CDN upload exhausted retries"
             );
@@ -2042,10 +2042,10 @@ impl WeChatChannel {
         let bytes = match self.download_inbound_attachment(&spec).await {
             Ok(bytes) => bytes,
             Err(failure) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "error": failure.to_string(),
                             "retryable": matches!(failure, AttachmentBuildFailure::Retryable(_)),
@@ -2183,10 +2183,10 @@ impl WeChatChannel {
             match render_login_qr(qr_payload) {
                 Ok(qr) => println!("{qr}"),
                 Err(err) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                         "failed to render terminal QR code"
                     )
@@ -2228,11 +2228,11 @@ impl WeChatChannel {
                 let resp = match poll_result {
                     Ok(Ok(r)) => r,
                     Ok(Err(e)) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "QR poll error"
@@ -2249,11 +2249,11 @@ impl WeChatChannel {
                 let status: serde_json::Value = match resp.json().await {
                     Ok(v) => v,
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "QR poll parse error"
@@ -2332,11 +2332,11 @@ impl WeChatChannel {
                         return Ok((bot_token, account_id, user_id));
                     }
                     other => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"other": other})),
                             "QR status"
@@ -2357,9 +2357,9 @@ impl WeChatChannel {
             return Ok(());
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "no persisted token, starting QR login..."
         );
         let (token, account_id, user_id) = self.qr_login().await?;
@@ -2376,10 +2376,10 @@ impl WeChatChannel {
         if let Some(ref uid) = user_id
             && let Err(e) = self.persist_allowed_identity(uid).await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e), "uid": uid})),
                 "failed to persist scanned identity"
             );
@@ -2580,10 +2580,10 @@ impl WeChatChannel {
     ) -> Option<PendingPairingReply> {
         let pairing = self.pairing.as_ref()?;
         if let Some(conflict) = self.pairing_deny_conflict(from_user_id) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"conflict": conflict})),
                 "refusing bind before consuming pairing code"
             );
@@ -2594,13 +2594,13 @@ impl WeChatChannel {
             Ok(Some(reservation)) => {
                 if let Err(e) = self.persist_allowed_identity(from_user_id).await {
                     drop(reservation);
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"from_user_id": from_user_id, "e": e.to_string()})), "rolled back bind: could not persist bound identity");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"from_user_id": from_user_id, "e": e.to_string()})), "rolled back bind: could not persist bound identity");
                     return Some(PendingPairingReply::BindNotSaved);
                 }
                 let _ = reservation.commit();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"from_user_id": from_user_id})),
                     "user bound via pairing code"
                 );
@@ -2608,10 +2608,10 @@ impl WeChatChannel {
             }
             Ok(None) => Some(PendingPairingReply::InvalidCode),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "pairing error"
                 );
@@ -2677,10 +2677,10 @@ impl WeChatChannel {
                         message_id,
                         PendingPairingEffect::ReplyUndeliverable(response.reply),
                     );
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "error": e.to_string(),
                                 "retryable": false,
@@ -2688,10 +2688,10 @@ impl WeChatChannel {
                         "WeChat pairing response is permanently undeliverable; advancing the batch so later updates can flow"
                     );
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "error": e.to_string(),
                                 "retryable": true,
@@ -2735,9 +2735,9 @@ impl WeChatChannel {
             self.retry_pending_pairing_reply(batch_cursor, from_user_id, message_id)
                 .await
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"from_user_id": from_user_id})),
                 "ignoring unauthorized message from"
             );
@@ -2935,10 +2935,10 @@ impl Channel for WeChatChannel {
         let context_token = self.get_context_token(recipient);
 
         if context_token.is_none() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"recipient": recipient})),
                 "no context_token for , message may fail to associate"
             );
@@ -2972,9 +2972,9 @@ impl Channel for WeChatChannel {
         // Ensure we're logged in (QR scan if needed)
         self.ensure_logged_in().await?;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "channel listening for messages..."
         );
 
@@ -2990,20 +2990,20 @@ impl Channel for WeChatChannel {
             let token = match self.get_token() {
                 Some(t) => t,
                 None => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "token lost, attempting re-login..."
                     );
                     if let Err(e) = self.ensure_logged_in().await {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "re-login failed"
                         );
@@ -3040,7 +3040,7 @@ impl Channel for WeChatChannel {
                 Ok(Ok(r)) => r,
                 Ok(Err(e)) => {
                     consecutive_failures += 1;
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"consecutive_failures": consecutive_failures, "MAX_CONSECUTIVE_FAILURES": MAX_CONSECUTIVE_FAILURES, "e": e.to_string()})), "getUpdates error (/)");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"consecutive_failures": consecutive_failures, "MAX_CONSECUTIVE_FAILURES": MAX_CONSECUTIVE_FAILURES, "e": e.to_string()})), "getUpdates error (/)");
                     if consecutive_failures >= MAX_CONSECUTIVE_FAILURES {
                         consecutive_failures = 0;
                         tokio::time::sleep(BACKOFF_DELAY).await;
@@ -3051,9 +3051,9 @@ impl Channel for WeChatChannel {
                 }
                 Err(_) => {
                     // Client-side timeout — normal for long-poll, just retry
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "getUpdates: client-side timeout, retrying"
                     );
                     continue;
@@ -3064,10 +3064,10 @@ impl Channel for WeChatChannel {
                 Ok(v) => v,
                 Err(e) => {
                     consecutive_failures += 1;
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "getUpdates parse error"
                     );
@@ -3088,10 +3088,10 @@ impl Channel for WeChatChannel {
 
             if is_error {
                 if errcode == SESSION_EXPIRED_ERRCODE || ret == SESSION_EXPIRED_ERRCODE {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         &format!(
                             "session expired (errcode {SESSION_EXPIRED_ERRCODE}), pausing for {} min",
                             SESSION_PAUSE_DURATION.as_secs() / 60
@@ -3106,13 +3106,13 @@ impl Channel for WeChatChannel {
                     tokio::time::sleep(SESSION_PAUSE_DURATION).await;
                     // Try to re-login
                     if let Err(e) = self.ensure_logged_in().await {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "re-login after session expiry failed"
                         );
@@ -3123,7 +3123,7 @@ impl Channel for WeChatChannel {
 
                 consecutive_failures += 1;
                 let errmsg = data.get("errmsg").and_then(|v| v.as_str()).unwrap_or("");
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"ret": ret, "errcode": errcode, "errmsg": errmsg, "consecutive_failures": consecutive_failures, "MAX_CONSECUTIVE_FAILURES": MAX_CONSECUTIVE_FAILURES})), "getUpdates failed: ret= errcode= errmsg= (/)");
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"ret": ret, "errcode": errcode, "errmsg": errmsg, "consecutive_failures": consecutive_failures, "MAX_CONSECUTIVE_FAILURES": MAX_CONSECUTIVE_FAILURES})), "getUpdates failed: ret= errcode= errmsg= (/)");
                 if consecutive_failures >= MAX_CONSECUTIVE_FAILURES {
                     consecutive_failures = 0;
                     tokio::time::sleep(BACKOFF_DELAY).await;
@@ -3484,11 +3484,11 @@ impl Channel for WeChatChannel {
                         continue;
                     };
                     if tx.send(*channel_msg).await.is_err() {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             ),
                             "channel receiver dropped, stopping"
                         );
@@ -3532,10 +3532,10 @@ impl Channel for WeChatChannel {
                     .saturating_mul(1u32 << consecutive_batch_holds.min(5))
                     .min(BATCH_RETRY_MAX_DELAY);
                 consecutive_batch_holds = consecutive_batch_holds.saturating_add(1);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "consecutive_batch_holds": consecutive_batch_holds,
                             "retryable_attachment_failure": batch_has_retryable_attachment_failure,

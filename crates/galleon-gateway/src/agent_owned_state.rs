@@ -35,10 +35,10 @@ pub struct OwnedStateReport {
 
 async fn write_json(path: &Path, bytes: Vec<u8>) {
     if let Err(err) = tokio::fs::write(path, bytes).await {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"path": path.display().to_string(), "err": err.to_string()})),
             "owned-state cascade: failed to write archive file"
         );
@@ -148,10 +148,10 @@ pub async fn cascade_owned_state(
     };
 
     if !warnings.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"agent": alias, "warnings": warnings})),
             "owned-state cascade completed with warnings (some state may not have been removed)"
         );
@@ -251,10 +251,10 @@ pub async fn cascade_rename_agent(
     };
 
     if !warnings.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"from": from, "to": to, "warnings": warnings})),
             "rename owned-state cascade completed with warnings (some state may not have been re-pointed)"
         );

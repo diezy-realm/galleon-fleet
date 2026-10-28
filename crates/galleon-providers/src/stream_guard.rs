@@ -20,11 +20,11 @@ impl Drop for AbortOnDrop {
             return;
         }
         self.0.abort();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Kill)
-                .with_category(::clawcrew_log::EventCategory::Provider)
-                .with_outcome(::clawcrew_log::EventOutcome::Success),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Kill)
+                .with_category(::galleon_log::EventCategory::Provider)
+                .with_outcome(::galleon_log::EventOutcome::Success),
             "stream: consumer dropped — aborting detached parser task to release socket"
         );
     }
@@ -38,11 +38,11 @@ pub(crate) async fn finish_sse_stream(
     completion_signal: &str,
 ) {
     if saw_completion {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Complete)
-                .with_category(::clawcrew_log::EventCategory::Provider)
-                .with_outcome(::clawcrew_log::EventOutcome::Success),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Complete)
+                .with_category(::galleon_log::EventCategory::Provider)
+                .with_outcome(::galleon_log::EventOutcome::Success),
             "stream: SSE parser reached end of stream, emitting Final"
         );
         let _ = tx
@@ -50,11 +50,11 @@ pub(crate) async fn finish_sse_stream(
             .await;
         return;
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-            .with_category(::clawcrew_log::EventCategory::Provider)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+            .with_category(::galleon_log::EventCategory::Provider)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(::serde_json::json!({
                 "completion_signal": completion_signal,
             })),

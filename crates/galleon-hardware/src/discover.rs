@@ -67,10 +67,10 @@ pub fn list_usb_devices() -> Result<Vec<UsbDeviceInfo>> {
     let mut devices = Vec::new();
 
     let iter = nusb::list_devices().wait().map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "USB device enumeration failed"
         );

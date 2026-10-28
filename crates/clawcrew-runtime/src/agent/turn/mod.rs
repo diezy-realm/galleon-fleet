@@ -404,17 +404,17 @@ fn record_dispatch_trim(
         return;
     }
     // Keep this scope synchronous so route attribution cannot leak across awaits.
-    let span = ::clawcrew_log::info_span!(
+    let span = ::galleon_log::info_span!(
         target: "clawcrew_log_internal_scope",
         "clawcrew_scope",
         model = %model,
         model_provider = %provider_name,
     );
     let _guard = span.entered();
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Delete)
-            .with_category(::clawcrew_log::EventCategory::Agent)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Delete)
+            .with_category(::galleon_log::EventCategory::Agent)
             .with_attrs(::serde_json::json!({
                 "dropped_messages": trim.dropped_messages,
                 "dropped_turns": dropped_turns,
@@ -1231,11 +1231,11 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
         if let Some(ref budget) = shared_budget
             && !try_reserve_shared_iteration(budget)
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_category(::galleon_log::EventCategory::Agent)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"iteration": iteration})),
                 "Shared iteration budget exhausted at iteration"
             );
@@ -1250,11 +1250,11 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
             let guard = match callback.lock() {
                 Ok(guard) => guard,
                 Err(poisoned) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_category(::clawcrew_log::EventCategory::Provider)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_category(::galleon_log::EventCategory::Provider)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "model-switch lock poisoned while checking for a pending switch; recovering guard for read"
                     );
                     poisoned.into_inner()
@@ -1265,10 +1265,10 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
         if let Some((new_model_provider, new_model)) = pending_model_switch.as_ref()
             && (new_model_provider != provider_name || new_model != model)
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Migrate)
-                    .with_category(::clawcrew_log::EventCategory::Provider),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Migrate)
+                    .with_category(::galleon_log::EventCategory::Provider),
                 &format!(
                     "Model switch detected: {} {} -> {} {}",
                     provider_name, model, new_model_provider, new_model
@@ -1445,18 +1445,18 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
             let system_floor =
                 crate::agent::history::estimate_system_floor_tokens(&provider_request_messages);
             if system_floor >= context_token_budget {
-                let __zc_floor_span = ::clawcrew_log::info_span!(
+                let __zc_floor_span = ::galleon_log::info_span!(
                     target: "clawcrew_log_internal_scope",
                     "clawcrew_scope",
                     model = %provider_request_model,
                     model_provider = %active_model_provider_name,
                 );
                 let _zc_floor_guard = __zc_floor_span.entered();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Agent)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Agent)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "system_floor": system_floor,
                             "budget": context_token_budget,
@@ -1783,11 +1783,11 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
         let should_consume_provider_stream = (on_delta.is_some() || event_tx.is_some())
             && active_provider_supports_streaming
             && (request_tools.is_none() || active_provider_supports_streaming_tool_events);
-        if ::clawcrew_log::debug_enabled() {
-            ::clawcrew_log::record!(
+        if ::galleon_log::debug_enabled() {
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_category(::galleon_log::EventCategory::Agent)
                     .with_attrs(::serde_json::json!({
                         "has_on_delta": on_delta.is_some(),
                         "has_event_tx": event_tx.is_some(),
@@ -2010,11 +2010,11 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
             // with a fresh vec or returning the fallback.
             emit_rejected_attempt_usage(ctx.event_tx, &attempts).await;
             malformed_tool_protocol_retries += 1;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_category(::clawcrew_log::EventCategory::Provider)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_category(::galleon_log::EventCategory::Provider)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(serde_json::json!({
                         "channel": channel_name,
                         "model_provider": active_model_provider_name,
@@ -2024,10 +2024,10 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
                     })),
                 "tool_call_parse_feedback"
             );
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_category(::clawcrew_log::EventCategory::Provider)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_category(::galleon_log::EventCategory::Provider)
                     .with_attrs(serde_json::json!({
                     "iteration": iteration + 1,
                     "retry": malformed_tool_protocol_retries,
@@ -2126,11 +2126,11 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
         galleon_providers::dispatch::commit_accepted_provider_route(accepted_route);
 
         if tool_calls.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Complete)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Complete)
+                    .with_category(::galleon_log::EventCategory::Agent)
+                    .with_outcome(::galleon_log::EventOutcome::Success)
                     .with_attrs(::serde_json::json!({
                         "model": active_model,
                         "iteration": iteration + 1,
@@ -2560,11 +2560,11 @@ fn collect_callable_tool_names(
         let activated = match activated.lock() {
             Ok(guard) => guard,
             Err(poisoned) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Tool)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Tool)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "activated-tool lock poisoned while resolving SOP step scope; recovering guard for read"
                 );
                 poisoned.into_inner()
@@ -2605,11 +2605,11 @@ fn sop_step_excluded_tools(
         let engine = match queued.engine.lock() {
             Ok(engine) => engine,
             Err(poisoned) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Tool)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Tool)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"run_id": run_id, "step": step.number})),
                     "SOP engine lock poisoned while resolving step tool scope; recovering guard for read"
                 );
@@ -3053,11 +3053,11 @@ async fn drive_live_sop_actions(
                             // the exact escalation this whole seam exists to prevent. Fail
                             // the step CLOSED, the same as an assembly error below, rather
                             // than under-enforce in silence (omission is not a grant).
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 ),
                                 &format!(
                                     "SOP step delegates to agent '{alias}' but this run path \
@@ -3423,9 +3423,9 @@ async fn drive_live_sop_actions(
                     action = next_action;
                 }
                 crate::sop::SopRunAction::WaitApproval { run_id, step, .. } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "step": step.number,
@@ -3463,9 +3463,9 @@ async fn drive_live_sop_actions(
                     tokio::task::yield_now().await;
                 }
                 crate::sop::SopRunAction::CheckpointWait { run_id, step, .. } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "step": step.number,
@@ -3480,9 +3480,9 @@ async fn drive_live_sop_actions(
                     reason,
                     ..
                 } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "step": step,
@@ -3493,9 +3493,9 @@ async fn drive_live_sop_actions(
                     break;
                 }
                 crate::sop::SopRunAction::Completed { run_id, sop_name } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "sop_name": sop_name,
@@ -3505,9 +3505,9 @@ async fn drive_live_sop_actions(
                     break;
                 }
                 crate::sop::SopRunAction::Cancelled { run_id, sop_name } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Cancel)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Cancel)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "sop_name": sop_name,
@@ -3521,10 +3521,10 @@ async fn drive_live_sop_actions(
                     sop_name,
                     reason,
                 } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "sop_name": sop_name,

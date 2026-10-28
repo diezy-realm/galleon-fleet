@@ -90,10 +90,10 @@ async fn handle_socket(socket: WebSocket, state: AppState, default_agent: Option
                         break;
                     }
                 }
-                Err(e) => ::clawcrew_log::record!(
+                Err(e) => ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "ACP WebSocket received non-UTF-8 binary frame"
                 ),
@@ -105,16 +105,16 @@ async fn handle_socket(socket: WebSocket, state: AppState, default_agent: Option
                 if msg.contains("Connection reset without closing handshake")
                     || msg.contains("Connection closed normally")
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "ACP WebSocket closed without handshake"
                     );
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "ACP WebSocket receive error"
                     );
@@ -128,19 +128,19 @@ async fn handle_socket(socket: WebSocket, state: AppState, default_agent: Option
 
     if let Some(task) = server_task {
         if let Err(e) = task.await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "ACP WebSocket server task panicked"
             );
         }
     }
     output_task.abort();
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         DEBUG,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "ACP WebSocket disconnected"
     );
 }

@@ -115,10 +115,10 @@ impl SopMetricsCollector {
     /// Call after `audit.log_run_complete()`.
     pub fn record_run_complete(&self, run: &SopRun) {
         let Ok(mut state) = self.inner.write() else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "SOP metrics collector lock poisoned in record_run_complete"
             );
             return;
@@ -155,10 +155,10 @@ impl SopMetricsCollector {
     /// `engine.resolve_gate`).
     pub fn record_approval(&self, sop_name: &str, run_id: &str) {
         let Ok(mut state) = self.inner.write() else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "SOP metrics collector lock poisoned in record_approval"
             );
             return;
@@ -181,10 +181,10 @@ impl SopMetricsCollector {
     /// EPIC G: record a deterministic capability step execution (global + per-SOP).
     pub fn record_capability_executed(&self, sop_name: &str) {
         let Ok(mut state) = self.inner.write() else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "SOP metrics collector lock poisoned in record_capability_executed"
             );
             return;
@@ -203,10 +203,10 @@ impl SopMetricsCollector {
     /// `gate_resolved` ledger row is written inside `engine.resolve_gate`).
     pub fn record_timeout_auto_approve(&self, sop_name: &str, run_id: &str) {
         let Ok(mut state) = self.inner.write() else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "SOP metrics collector lock poisoned in record_timeout_auto_approve"
             );
             return;
@@ -534,10 +534,10 @@ fn parse_completed_at(ts: &str) -> Option<DateTime<Utc>> {
         return Some(n.and_utc());
     }
     // Last resort
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({"ts": ts})),
         "SOP metrics: could not parse completed_at timestamp: "
     );

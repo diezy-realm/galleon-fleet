@@ -1,5 +1,5 @@
 [package]
-name = "clawcrew-log"
+name = "galleon-log"
 rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
@@ -33,7 +33,7 @@ windows = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", 
 tempfile = "3.26"
 tokio = { version = "1.50", features = ["rt-multi-thread", "macros", "time"] }
 
-# clawcrew-log IS the log pipeline. The `record!` macro it exports is
+# galleon-log IS the log pipeline. The `record!` macro it exports is
 # the workspace-wide deny gate for `tracing::info!`/`warn!`/etc. — see
 # workspace clippy.toml. This crate's own implementation has to call
 # the underlying `tracing::*` macros directly to bootstrap the

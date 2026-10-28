@@ -814,10 +814,10 @@ fn handle_edit(
         .into_iter()
         .find(|s| s.r#ref.name() == target.name())
         .ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"skill_ref": target.to_string()})),
                 "skill show: target ref not found"
             );
@@ -1156,10 +1156,10 @@ fn handle_bundle_show(config: &crate::config::Config, alias: String) -> Result<(
         .into_iter()
         .find(|b| b.alias == alias)
         .ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"skill_bundle": alias})),
                 "skill bundle lookup failed: alias not in config"
             );

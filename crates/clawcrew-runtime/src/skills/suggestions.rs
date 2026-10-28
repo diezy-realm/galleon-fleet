@@ -227,10 +227,10 @@ fn load_toml_skill_package_metadata(
         return None;
     };
     let Ok(manifest) = toml::from_str::<RegistrySkillManifest>(&manifest) else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"path": manifest_path.display().to_string()})),
             "failed to parse cached registry skill metadata"
         );
@@ -268,10 +268,10 @@ fn load_cached_installable_plugin_capabilities(
         Ok(Some(index)) => index,
         Ok(None) => return Vec::new(),
         Err(error) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": error.to_string()})),
                 "failed to parse cached plugin registry metadata"
             );

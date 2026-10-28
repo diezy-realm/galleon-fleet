@@ -67,10 +67,10 @@ pub fn apply_env_overrides(config: &mut Config) -> Result<AppliedOverrides> {
         // that refuses to start. The value has no effect: TodoWrite display is
         // now owned by ZeroCode's `zerocode-config.toml`.
         if is_recognized_legacy_todotracker(&tail) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"env_var": env_name})),
                 "ignoring removed [todotracker] env override; move this setting into zerocode-config.toml"
             );
@@ -79,10 +79,10 @@ pub fn apply_env_overrides(config: &mut Config) -> Result<AppliedOverrides> {
         let path = resolve_path(&tail, config)
             .with_context(|| format!("{env_name} did not resolve to a schema path"))?;
         if NON_OVERRIDABLE_PATHS.contains(path.as_str()) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"env_var": env_name, "path": path})),
                 "env override rejected: field is not overridable"
             );
@@ -99,17 +99,17 @@ pub fn apply_env_overrides(config: &mut Config) -> Result<AppliedOverrides> {
             .set_prop(&path, &value)
             .with_context(|| format!("{env_name} → {path}"))?;
         if Config::prop_is_secret(&path) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"path": path, "env_var": env_name})),
                 "Secret applied from env override"
             );
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"path": path, "env_var": env_name})),
                 "Env override applied"
             );
@@ -117,9 +117,9 @@ pub fn apply_env_overrides(config: &mut Config) -> Result<AppliedOverrides> {
         paths.insert(path);
     }
     if !paths.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"count": paths.len()})),
             "Applied env-var config overrides"
         );
@@ -141,10 +141,10 @@ fn resolve_path(tail: &str, config: &mut Config) -> Result<String> {
         };
         let mut parts = rest.splitn(2, SEP);
         let alias = parts.next().filter(|s| !s.is_empty()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"section": section.path, "tail": tail})),
                 "env override path missing alias segment"
             );
@@ -156,10 +156,10 @@ fn resolve_path(tail: &str, config: &mut Config) -> Result<String> {
         // instead of the generic "Unknown property" that would surface from
         // a downstream `set_prop` against a non-existent map key.
         config.create_map_key(section.path, alias).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "section": section.path,
                         "alias": alias,
@@ -191,10 +191,10 @@ fn resolve_path(tail: &str, config: &mut Config) -> Result<String> {
         .find(|f| f.name.replace('.', SEP) == tail)
         .map(|f| f.name)
         .ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"tail": tail})),
                 "env override path does not match any schema field"
             );

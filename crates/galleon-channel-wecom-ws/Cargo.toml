@@ -16,7 +16,7 @@ workspace = true
 clawcrew-api.workspace = true
 galleon-config = { workspace = true, features = ["ws-transport"] }
 galleon-spawn.workspace = true
-clawcrew-log.workspace = true
+galleon-log.workspace = true
 galleon-tool-call-parser.workspace = true
 galleon-i18n.workspace = true
 galleon-security-scrub.workspace = true

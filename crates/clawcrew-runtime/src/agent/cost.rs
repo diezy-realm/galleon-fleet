@@ -399,7 +399,7 @@ fn record_tool_loop_cost_usage_inner_with_live(
             conversation_id,
         )
     {
-        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_category(::clawcrew_log::EventCategory::Provider).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": model_provider_name, "model": model, "error": format!("{}", error)})), "Failed to record cost tracking usage: ");
+        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_category(::galleon_log::EventCategory::Provider).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": model_provider_name, "model": model, "error": format!("{}", error)})), "Failed to record cost tracking usage: ");
     }
 
     Some((cost_usage.total_tokens, cost_usage.cost_usd))
@@ -423,11 +423,11 @@ fn warn_once_missing_pricing(model_provider: &str, model: &str, missing_dimensio
     let seen = SEEN.get_or_init(|| Mutex::new(HashSet::new()));
     let missing_dimensions = missing_dimensions.join(", ");
     if missing_pricing_first_sighting(seen, model_provider, model) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_category(::clawcrew_log::EventCategory::Provider)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_category(::galleon_log::EventCategory::Provider)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "model_provider": model_provider,
                     "model": model,
@@ -441,10 +441,10 @@ fn warn_once_missing_pricing(model_provider: &str, model: &str, missing_dimensio
              This warning fires once per (model_provider, model) pair per process."
         );
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_category(::clawcrew_log::EventCategory::Provider)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_category(::galleon_log::EventCategory::Provider)
                 .with_attrs(
                     ::serde_json::json!({"model_provider": model_provider, "model": model})
                 ),

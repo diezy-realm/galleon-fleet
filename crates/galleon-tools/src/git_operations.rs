@@ -868,10 +868,10 @@ impl GitOperationsTool {
                     self.security.workspace_dir.join(p)
                 };
                 let resolved = candidate.canonicalize().map_err(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "path": p,
                                 "error": format!("{}", e),
@@ -898,10 +898,10 @@ impl GitOperationsTool {
                 .workspace_dir
                 .canonicalize()
                 .map_err(|error| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "path": self.security.workspace_dir,
                                 "error": format!("{error}"),
@@ -929,10 +929,10 @@ impl GitOperationsTool {
         self.git_command_boundary
             .wrap_command(command.as_std_mut())
             .map_err(|error| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{error}")})),
                     "git_operations: write command boundary rejected Git subprocess"
                 );
@@ -1035,10 +1035,10 @@ impl GitOperationsTool {
             }
             let key = std::str::from_utf8(key)?;
             let Some(driver) = Self::filter_driver_from_config_key(key) else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "git_operations: Git filter configuration cannot be disabled safely"
                 );
                 anyhow::bail!("Git filter configuration cannot be disabled safely: {key}");
@@ -1101,10 +1101,10 @@ impl GitOperationsTool {
                 .filter(|root| working_dir.starts_with(root))
                 .min_by_key(|root| root.components().count())
             else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({ "path": working_dir })),
                     "git_operations: Git discovery ceiling has no authorized root"
                 );
@@ -1196,10 +1196,10 @@ impl GitOperationsTool {
             anyhow::Error::msg(format!("Git metadata validation task failed: {error}"))
         })?;
         validation.map_err(|error| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": working_dir,
                         "requires_write_access": requires_write_access,
@@ -1271,10 +1271,10 @@ impl GitOperationsTool {
         {
             let root = clean_verbatim_path(root);
             let Some(root) = root.to_str() else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "git_operations: Git discovery ceiling has non-Unicode root"
                 );
                 anyhow::bail!("Git discovery ceiling cannot represent non-Unicode authorized root");
@@ -1559,10 +1559,10 @@ impl GitOperationsTool {
             .get("message")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "message"})),
                     "git_operations: missing message parameter"
                 );
@@ -1627,10 +1627,10 @@ impl GitOperationsTool {
         working_dir: &std::path::Path,
     ) -> anyhow::Result<ToolResult> {
         let paths = args.get("paths").and_then(|v| v.as_str()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "paths"})),
                 "git_operations: missing paths parameter"
             );
@@ -1670,10 +1670,10 @@ impl GitOperationsTool {
         working_dir: &std::path::Path,
     ) -> anyhow::Result<ToolResult> {
         let branch = args.get("branch").and_then(|v| v.as_str()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "branch"})),
                 "git_operations: missing branch parameter"
             );
@@ -1768,10 +1768,10 @@ impl GitOperationsTool {
             "drop" => {
                 let index_raw = args.get("index").and_then(|v| v.as_u64()).unwrap_or(0);
                 let index = i32::try_from(index_raw).map_err(|_| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"index": index_raw})),
                         "git_operations: stash index too large"
                     );
@@ -2099,10 +2099,10 @@ impl Tool for GitOperationsTool {
             }
             RepositoryAuthorization::Denied => {
                 let path_display = working_dir.display().to_string();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "path": path_display,
                             "operation": operation,

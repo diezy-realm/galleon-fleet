@@ -110,9 +110,9 @@ impl DeviceRegistry {
 
     pub fn new(workspace_dir: &Path) -> Self {
         Self::try_new(workspace_dir).unwrap_or_else(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!("Failed to initialize SQLite device registry at {}: {e}", workspace_dir.display())
             );
             Self {
@@ -450,10 +450,10 @@ pub async fn submit_pairing_enhanced(
                         capabilities: None,
                     },
                 ) {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                         "device registry insert failed after successful pairing; rolling back in-process token"
                     );
@@ -477,10 +477,10 @@ pub async fn submit_pairing_enhanced(
             )
             .await
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                     "pairing token persistence failed; rolling back in-process token"
                 );
@@ -539,10 +539,10 @@ pub async fn list_devices(State(state): State<AppState>, headers: HeaderMap) -> 
         Some(r) => match r.list() {
             Ok(devices) => devices,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                     "device registry list failed"
                 );

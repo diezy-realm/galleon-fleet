@@ -149,10 +149,10 @@ fn load_ftl_from_disk(locale: &str) -> Option<String> {
 }
 
 fn missing_tool_string(key: &str) -> String {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({"error_key": "i18n.missing_tool_string", "key": key})),
         "missing tool Fluent string"
     );

@@ -7,7 +7,7 @@ use rusqlite::{Connection, OptionalExtension, params};
 use std::path::Path;
 use clawcrew_api::model_provider::{ChatMessage, ConversationMessage, ToolCall, ToolResultMessage};
 use clawcrew_api::plan::PlanEntry;
-use clawcrew_log::{Action, EventOutcome};
+use galleon_log::{Action, EventOutcome};
 
 /// Internal discriminator for `acp_tool_calls.event_kind`. The 'in' row
 /// records the call args; the 'out' row records the result. Two append-only
@@ -872,13 +872,13 @@ impl AcpSessionStore {
                         tool_name,
                     }),
                     other => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Read,
+                                ::galleon_log::Action::Read,
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "session_id": session_id,
                                 "message_id": msg_id,
@@ -1117,13 +1117,13 @@ impl AcpSessionStore {
                     let msg_id = match last_assistant_msg_id {
                         Some(id) => id,
                         None => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 ERROR,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Write,
+                                    ::galleon_log::Action::Write,
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({
                                     "session_id": session_id,
                                 })),
@@ -1284,7 +1284,7 @@ impl AcpSessionStore {
 
     /// Record a session-lifecycle event. Caller passes typed enums; the SQLite
     /// layer is the only place strings appear. Same `Action` / `EventOutcome`
-    /// values are used at the matching `clawcrew_log::record!` call site.
+    /// values are used at the matching `galleon_log::record!` call site.
     pub fn append_event(
         &self,
         session_uuid: &str,
@@ -1477,9 +1477,9 @@ impl AcpSessionStore {
 
 fn parse_ts(s: &str, field: &'static str, session_uuid: &str) -> DateTime<Utc> {
     s.parse::<DateTime<Utc>>().unwrap_or_else(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "session_uuid": session_uuid,
                     "field": field,

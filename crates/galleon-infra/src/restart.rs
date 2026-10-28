@@ -204,19 +204,19 @@ pub fn respawn_if_requested() -> Option<u32> {
     match command.spawn() {
         Ok(child) => {
             let pid = child.id();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({ "pid": pid })),
                 "post-upgrade self-respawn launched"
             );
             Some(pid)
         }
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({ "error": format!("{e}") })),
                 "post-upgrade self-respawn failed; service will stay down until restarted"
             );

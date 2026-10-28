@@ -247,10 +247,10 @@ impl SecretStore {
 
             let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng);
             let ciphertext = cipher.encrypt(&nonce, plaintext.as_bytes()).map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "ChaCha20-Poly1305 encryption failed"
                 );
@@ -299,10 +299,10 @@ impl SecretStore {
             Ok((plaintext, None))
         } else if let Some(hex_str) = value.strip_prefix("enc:") {
             // Legacy XOR cipher — decrypt and re-encrypt with ChaCha20-Poly1305
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Decrypting legacy XOR-encrypted secret (enc: prefix). \
                  This format is insecure and will be removed in a future release. \
                  The secret will be automatically migrated to enc2: (ChaCha20-Poly1305)."
@@ -342,10 +342,10 @@ impl SecretStore {
 
             let plaintext_bytes = cipher.decrypt(nonce, ciphertext).map_err(|e| {
                 let backend = self.key_source.backend_name();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "backend": backend,
                             "error": format!("{e}")
@@ -907,10 +907,10 @@ fn apply_windows_acl(path: &Path) -> Result<()> {
         .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
         .unwrap_or_else(|| std::env::var("USERNAME").unwrap_or_default());
     let Some(grant_arg) = build_windows_icacls_grant_arg(&username) else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "USERNAME environment variable is empty; \
              cannot restrict key file permissions via icacls"
         );
@@ -926,10 +926,10 @@ fn apply_windows_acl(path: &Path) -> Result<()> {
         .output()
     {
         Ok(o) if !o.status.success() => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "Failed to take ownership of key file via takeown (exit code {:?})",
                     o.status.code()
@@ -941,10 +941,10 @@ fn apply_windows_acl(path: &Path) -> Result<()> {
             );
         }
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Could not take ownership of key file"
             );
@@ -963,10 +963,10 @@ fn apply_windows_acl(path: &Path) -> Result<()> {
         .output()
     {
         Ok(o) if !o.status.success() => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "Failed to set key file permissions via icacls (exit code {:?})",
                     o.status.code()
@@ -978,10 +978,10 @@ fn apply_windows_acl(path: &Path) -> Result<()> {
             );
         }
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Could not set key file permissions"
             );
@@ -1092,10 +1092,10 @@ fn resolve_onepassword_ref(reference: &str) -> Result<String> {
         .stdout(Stdio::piped())
         .spawn()
         .map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": e.to_string()})),
                 "Failed to run 1Password CLI"
             );

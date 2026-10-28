@@ -7,10 +7,10 @@ use clawcrew_runtime::i18n::{get_required_cli_string, get_required_cli_string_wi
 /// Bail with a clear error if the named agent isn't configured.
 fn require_configured_agent(config: &Config, agent_alias: &str) -> Result<()> {
     if config.agent(agent_alias).is_none() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"agent_alias": agent_alias})),
             "cron CLI rejected: unknown agent alias"
         );
@@ -23,10 +23,10 @@ fn parse_explicit_rfc3339_utc(raw: &str) -> Result<chrono::DateTime<chrono::Utc>
     chrono::DateTime::parse_from_rfc3339(raw)
         .map(|timestamp| timestamp.with_timezone(&chrono::Utc))
         .map_err(|err| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "raw": raw,
                         "error": format!("{}", err),

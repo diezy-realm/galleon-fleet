@@ -110,10 +110,10 @@ impl Channel for AskUserApprovalBridge {
                 }
                 Ok(None) => continue,
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "tool": request.tool_name,
                                 "channel": channel_name,

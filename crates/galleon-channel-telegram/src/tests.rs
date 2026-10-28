@@ -4942,11 +4942,11 @@ async fn model_picker_cleanup_failures_emit_scrubbed_diagnostics() {
         false,
     )
     .with_mock_api_base(server.uri());
-    let _writer_guard = clawcrew_log::__private_test_writer_lock();
-    let _hook_guard = clawcrew_log::__private_test_hook_lock();
+    let _writer_guard = galleon_log::__private_test_writer_lock();
+    let _hook_guard = galleon_log::__private_test_hook_lock();
     let _hook_cleanup = BroadcastHookGuard;
-    clawcrew_log::try_install_capture_subscriber();
-    let mut rx = clawcrew_log::subscribe_or_install();
+    galleon_log::try_install_capture_subscriber();
+    let mut rx = galleon_log::subscribe_or_install();
     while rx.try_recv().is_ok() {}
 
     channel
@@ -13866,7 +13866,7 @@ struct BroadcastHookGuard;
 
 impl Drop for BroadcastHookGuard {
     fn drop(&mut self) {
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
     }
 }
 
@@ -13913,11 +13913,11 @@ async fn register_bot_commands_truncates_to_telegram_max() {
     .with_tool_command_specs(specs);
 
     // Install a broadcast hook so we can capture the WARN log event.
-    let _writer_guard = clawcrew_log::__private_test_writer_lock();
-    let _hook_guard = clawcrew_log::__private_test_hook_lock();
+    let _writer_guard = galleon_log::__private_test_writer_lock();
+    let _hook_guard = galleon_log::__private_test_hook_lock();
     let _hook_cleanup = BroadcastHookGuard;
-    clawcrew_log::try_install_capture_subscriber();
-    let mut rx = clawcrew_log::subscribe_or_install();
+    galleon_log::try_install_capture_subscriber();
+    let mut rx = galleon_log::subscribe_or_install();
     while rx.try_recv().is_ok() {}
 
     ch.register_bot_commands().await;
@@ -14016,7 +14016,7 @@ async fn register_bot_commands_truncates_to_telegram_max() {
 /// channel, while the numeric counts remain in `attributes`.
 #[tokio::test]
 async fn register_bot_commands_truncation_warn_carries_channel_attribution() {
-    use clawcrew_log::Instrument;
+    use galleon_log::Instrument;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -14052,11 +14052,11 @@ async fn register_bot_commands_truncation_warn_carries_channel_attribution() {
     .with_mock_api_base(mock_server.uri())
     .with_tool_command_specs(specs);
 
-    let _writer_guard = clawcrew_log::__private_test_writer_lock();
-    let _hook_guard = clawcrew_log::__private_test_hook_lock();
+    let _writer_guard = galleon_log::__private_test_writer_lock();
+    let _hook_guard = galleon_log::__private_test_hook_lock();
     let _hook_cleanup = BroadcastHookGuard;
-    clawcrew_log::try_install_capture_subscriber();
-    let mut rx = clawcrew_log::subscribe_or_install();
+    galleon_log::try_install_capture_subscriber();
+    let mut rx = galleon_log::subscribe_or_install();
     while rx.try_recv().is_ok() {}
 
     // Run under the same attribution span the orchestrator opens around
@@ -14064,7 +14064,7 @@ async fn register_bot_commands_truncation_warn_carries_channel_attribution() {
     async {
         ch.register_bot_commands().await;
     }
-    .instrument(clawcrew_log::attribution_span!(&ch))
+    .instrument(galleon_log::attribution_span!(&ch))
     .await;
 
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);

@@ -124,10 +124,10 @@ impl Tool for ClaudeCodeRunnerTool {
 
         // Extract prompt (required)
         let prompt = args.get("prompt").and_then(|v| v.as_str()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "prompt"})),
                 "claude_code_runner: missing prompt parameter"
             );
@@ -390,18 +390,18 @@ async fn cleanup_expired_session(tmux_binary: &Path, session_name: &str) -> Resu
     let result = kill_tmux_session(tmux_binary, session_name).await;
     match &result {
         Ok(()) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"session": session_name})),
                 "Claude Code runner session TTL expired, cleaned up"
             );
         }
         Err(error) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"session": session_name, "error": error})),
                 "Claude Code runner session TTL cleanup failed"
             );
@@ -768,10 +768,10 @@ mod tests {
     #[allow(clippy::await_holding_lock)]
     #[tokio::test]
     async fn successful_session_runs_ttl_cleanup() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let (_temp, binary, log) = fake_tmux(0, 0);
@@ -803,10 +803,10 @@ mod tests {
     #[allow(clippy::await_holding_lock)]
     #[tokio::test]
     async fn expired_session_cleanup_propagates_tmux_failure() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let (_temp, binary, log) = fake_tmux(0, 8);

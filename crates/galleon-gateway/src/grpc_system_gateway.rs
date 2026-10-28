@@ -433,9 +433,9 @@ impl SystemGateway for SystemGatewayService {
         let req = request.into_inner();
 
         if let Some(ref id) = req_id {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new("grpc_system_gateway", ::clawcrew_log::Action::Invoke)
+                ::galleon_log::Event::new("grpc_system_gateway", ::galleon_log::Action::Invoke)
                     .with_attrs(::serde_json::json!({
                         "trace_id": id,
                         "tool": req.tool_name,
@@ -576,10 +576,10 @@ impl SystemGateway for SystemGatewayService {
                 .unwrap_or(false);
 
             if !authorized {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"action": "get_decrypted_secret", "reason": "unauthorized"})),
                     "GetDecryptedSecret rejected: caller is not authorized"
                 );
@@ -619,9 +619,9 @@ impl SystemGateway for SystemGatewayService {
 
         match self.secret_store.decrypt(&encrypted) {
             Ok(decrypted) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"key_name": key_name, "found": true})),
                     "vault secret decrypted successfully"
                 );
@@ -631,9 +631,9 @@ impl SystemGateway for SystemGatewayService {
                 }))
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
                         .with_attrs(::serde_json::json!({"key_name": key_name})),
                     "failed to decrypt vault secret"
                 );
@@ -655,10 +655,10 @@ impl SystemGateway for SystemGatewayService {
         // Fail-closed enforcement (GW-5 / R-20 / ODR-07):
         // External task dispatch is not implemented on the native host.
         // Returning fake success is strictly forbidden.
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "task_id": task_id,
                     "error": "ExecuteTask is not implemented: external task executor backend not configured"
@@ -691,11 +691,11 @@ impl SystemGateway for SystemGatewayService {
             let agent_config = agent_alias.and_then(|alias| {
                 if let Some(ref cfg) = config {
                     if let Some(agent) = cfg.agents.get(alias) {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Resolve
+                                ::galleon_log::Action::Resolve
                             ),
                             &format!(
                                 "Resolved agent alias `{}` to model_provider `{}`",
@@ -704,11 +704,11 @@ impl SystemGateway for SystemGatewayService {
                         );
                         Some(agent.clone())
                     } else {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Resolve
+                                ::galleon_log::Action::Resolve
                             ),
                             &format!(
                                 "Agent alias `{}` not found in config, falling back to default",
@@ -918,9 +918,9 @@ impl SystemGateway for SystemGatewayService {
             .await
         {
             Ok(_) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"rule_id": &id, "scope": req.scope})),
                     "learned rule stored successfully"
                 );
@@ -931,9 +931,9 @@ impl SystemGateway for SystemGatewayService {
                 }))
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "failed to store learned rule"
                 );
@@ -1062,9 +1062,9 @@ impl SystemGateway for SystemGatewayService {
 
         match registry.register(token_hash, info) {
             Ok(()) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"device_id": &req.device_id})),
                     "device synchronized to Rust SQLite DeviceRegistry SSOT (BG-C2)"
                 );
@@ -1074,10 +1074,10 @@ impl SystemGateway for SystemGatewayService {
                 }))
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"device_id": &req.device_id, "error": e.to_string()})),
                     "failed to sync device to Rust SQLite DeviceRegistry"
                 );
@@ -1132,9 +1132,9 @@ impl SystemGateway for SystemGatewayService {
         match registry.revoke(&req.device_id) {
             Ok(deleted_token_hash) => {
                 let success = deleted_token_hash.is_some();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(
                             ::serde_json::json!({"device_id": &req.device_id, "revoked": success})
                         ),
@@ -1162,9 +1162,9 @@ impl SystemGateway for SystemGatewayService {
     ) -> Result<Response<GetNativeToolCatalogResponse>, Status> {
         let req_id = extract_request_id(&request);
         if let Some(ref id) = req_id {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new("grpc_system_gateway", ::clawcrew_log::Action::Query)
+                ::galleon_log::Event::new("grpc_system_gateway", ::galleon_log::Action::Query)
                     .with_attrs(::serde_json::json!({
                         "trace_id": id,
                         "catalog": "native_tools",
@@ -1221,9 +1221,9 @@ impl SystemGateway for SystemGatewayService {
     ) -> Result<Response<SystemMetricsResponse>, Status> {
         let req_id = extract_request_id(&request);
         if let Some(ref id) = req_id {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new("grpc_system_gateway", ::clawcrew_log::Action::Query)
+                ::galleon_log::Event::new("grpc_system_gateway", ::galleon_log::Action::Query)
                     .with_attrs(::serde_json::json!({
                         "trace_id": id,
                         "query": "system_metrics",

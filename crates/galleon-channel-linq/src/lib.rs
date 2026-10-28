@@ -129,9 +129,9 @@ impl LinqChannel {
             .and_then(|e| e.as_str())
             .unwrap_or("");
         if event_type != "message.received" {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"event_type": event_type})),
                 "skipping non-message event"
             );
@@ -144,9 +144,9 @@ impl LinqChannel {
 
         // Skip messages sent by the bot itself
         if Self::sender_is_from_me(data) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "skipping is_from_me message"
             );
             return messages;
@@ -166,10 +166,10 @@ impl LinqChannel {
 
         // Check allowlist
         if !self.is_sender_allowed(&normalized_from) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"normalized_from": normalized_from})),
                 "ignoring message from unauthorized sender: . Add to channels.linq.allowed_senders in config.toml, or run `clawcrew config set channels.linq.allowed-senders='[\"<sender-id>\"]'`."
             );
@@ -197,11 +197,11 @@ impl LinqChannel {
                         if let Some(marker) = Self::media_part_to_image_marker(part) {
                             Some(marker)
                         } else {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 DEBUG,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({"part_type": part_type})),
                                 "skipping unsupported part"
@@ -210,11 +210,11 @@ impl LinqChannel {
                         }
                     }
                     _ => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"part_type": part_type})),
                             "skipping part"
@@ -348,7 +348,7 @@ impl Channel for LinqChannel {
             if !create_resp.status().is_success() {
                 let status = create_resp.status();
                 let error_body = create_resp.text().await.unwrap_or_default();
-                ::clawcrew_log::record!(ERROR, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"status": status.to_string(), "error_body": error_body})), "create chat failed:");
+                ::galleon_log::record!(ERROR, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"status": status.to_string(), "error_body": error_body})), "create chat failed:");
                 anyhow::bail!("API error: {status}");
             }
 
@@ -357,10 +357,10 @@ impl Channel for LinqChannel {
 
         let status = resp.status();
         let error_body = resp.text().await.unwrap_or_default();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(
                     ::serde_json::json!({"status": status.to_string(), "error_body": error_body})
                 ),
@@ -372,9 +372,9 @@ impl Channel for LinqChannel {
     async fn listen(&self, _tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
         // Linq uses webhooks (push-based), not polling.
         // Messages are received via the gateway's /linq endpoint.
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "channel active (webhook mode). \
             Configure Linq webhook to POST to your gateway's /linq endpoint."
         );
@@ -409,9 +409,9 @@ impl Channel for LinqChannel {
             .await?;
 
         if !resp.status().is_success() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!("start_typing failed: {}", resp.status())
             );
         }
@@ -430,9 +430,9 @@ impl Channel for LinqChannel {
             .await?;
 
         if !resp.status().is_success() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!("stop_typing failed: {}", resp.status())
             );
         }
@@ -449,20 +449,20 @@ pub fn verify_linq_signature(secret: &str, body: &str, timestamp: &str, signatur
     if let Ok(ts) = timestamp.parse::<i64>() {
         let now = chrono::Utc::now().timestamp();
         if (now - ts).unsigned_abs() > 300 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"ts": ts, "now": now})),
                 "rejecting stale webhook timestamp (, now=)"
             );
             return false;
         }
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"timestamp": timestamp})),
             "invalid webhook timestamp"
         );
@@ -480,10 +480,10 @@ pub fn verify_linq_signature(secret: &str, body: &str, timestamp: &str, signatur
         .strip_prefix("sha256=")
         .unwrap_or(signature);
     let Ok(provided) = hex::decode(signature_hex.trim()) else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "invalid webhook signature format"
         );
         return false;

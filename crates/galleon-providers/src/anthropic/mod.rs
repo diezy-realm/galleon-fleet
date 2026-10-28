@@ -726,7 +726,7 @@ impl AnthropicModelProvider {
     ) -> reqwest::RequestBuilder {
         let is_setup = Self::is_setup_token(credential);
         let len = credential.len();
-        ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"header": if is_setup { "Authorization" } else { "x-api-key" }, "credential_len": len})), "Anthropic auth header applied");
+        ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"header": if is_setup { "Authorization" } else { "x-api-key" }, "credential_len": len})), "Anthropic auth header applied");
         let request = if is_setup {
             request
                 .header("Authorization", format!("Bearer {credential}"))
@@ -1405,14 +1405,14 @@ impl AnthropicModelProvider {
                         // so their stubs can say a result arrived and was not
                         // delivered, and the drop is logged.
                         let candidate_count = run.record_undelivered();
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Reject
+                                ::galleon_log::Action::Reject
                             )
-                            .with_category(::clawcrew_log::EventCategory::Provider)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_category(::galleon_log::EventCategory::Provider)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(Self::dropped_output_attrs(candidate_count, carrier.len())),
                             "anthropic: unpairable tool output dropped — no unambiguous tool_use to attach it to"
                         );
@@ -2078,11 +2078,11 @@ impl AnthropicModelProvider {
         };
 
         if parsed.is_semantically_empty_terminal() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_category(::clawcrew_log::EventCategory::Provider)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_category(::galleon_log::EventCategory::Provider)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "provider": "anthropic",
                         "stop_reason": stop_reason,
@@ -2108,10 +2108,10 @@ impl AnthropicModelProvider {
             ));
         }
         parsed.text.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "anthropic: empty text in response"
             );
             anyhow::Error::msg("No response from Anthropic")
@@ -2136,11 +2136,11 @@ impl AnthropicModelProvider {
             .stop_details
             .as_ref()
             .and_then(|details| details.category.clone());
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_category(::clawcrew_log::EventCategory::Provider)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_category(::galleon_log::EventCategory::Provider)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "model": requested_model,
                     "category": category,
@@ -2194,10 +2194,10 @@ impl AnthropicModelProvider {
                     served_model: served.to_string(),
                     category: None,
                 };
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Provider)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Provider)
                         .with_attrs(::serde_json::json!({
                             "requested_model": requested_model,
                             "served_model": served,
@@ -2211,10 +2211,10 @@ impl AnthropicModelProvider {
                 // self-referential (== requested). Record no notice — it would
                 // name the requested model as its own rescue — but still log so
                 // ops see that a fallback ran.
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Provider)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Provider)
                         .with_attrs(::serde_json::json!({
                             "requested_model": requested_model,
                             "served_model": response.model,
@@ -2239,9 +2239,9 @@ impl AnthropicModelProvider {
         match thinking {
             Some(params) => {
                 let style = anthropic_thinking_style(model);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "model": model,
                             "style": match style {
@@ -2359,7 +2359,7 @@ impl AnthropicModelProvider {
 
         // The block summary only feeds the DEBUG `message_stop` event. Avoid
         // per-block String and map allocations when that event is disabled.
-        let collect_debug_metadata = ::clawcrew_log::debug_enabled();
+        let collect_debug_metadata = ::galleon_log::debug_enabled();
         let mut last_stop_reason: Option<String> = None;
         let mut content_block_count = 0usize;
         let mut content_block_types =
@@ -2369,11 +2369,11 @@ impl AnthropicModelProvider {
                 Ok(Some(line)) => line,
                 Ok(None) => break,
                 Err(err) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_category(::clawcrew_log::EventCategory::Provider)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_category(::galleon_log::EventCategory::Provider)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "error": format!("{err}"),
                             })),
@@ -2427,7 +2427,7 @@ impl AnthropicModelProvider {
                     if let Some(v) = observed_cache_create {
                         cache_creation_input_tokens = Some(v);
                     }
-                    ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"model": model, "input_tokens": observed_input, "cached_input_tokens": observed_cached, "cache_creation_input_tokens": observed_cache_create})), "stream: message_start");
+                    ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"model": model, "input_tokens": observed_input, "cached_input_tokens": observed_cached, "cache_creation_input_tokens": observed_cache_create})), "stream: message_start");
                 }
                 "content_block_start" => {
                     if let Some(block) = event.get("content_block") {
@@ -2623,18 +2623,18 @@ impl AnthropicModelProvider {
                         return;
                     }
                     if stop_reason == "max_tokens" {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"output_tokens": observed_output})),
                             "response truncated: hit max_tokens limit. Increase provider_max_tokens in config."
                         );
                     } else {
-                        ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"stop_reason": stop_reason, "output_tokens": observed_output})), "stream: message_delta");
+                        ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"stop_reason": stop_reason, "output_tokens": observed_output})), "stream: message_delta");
                     }
                 }
                 "message_stop" => {
@@ -2653,11 +2653,11 @@ impl AnthropicModelProvider {
                         return;
                     }
                     if collect_debug_metadata {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({
                                 "stop_reason": last_stop_reason.as_deref().unwrap_or("unknown"),
@@ -2730,10 +2730,10 @@ impl ModelProvider for AnthropicModelProvider {
     ) -> anyhow::Result<String> {
         commit_safeguard_fallback(None);
         let credential = self.credential.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "credentials"})),
                 "anthropic: no credentials configured"
             );
@@ -2749,9 +2749,9 @@ impl ModelProvider for AnthropicModelProvider {
             system
         };
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"max_tokens": self.max_tokens, "model": model})),
             "API request"
         );
@@ -2821,10 +2821,10 @@ impl ModelProvider for AnthropicModelProvider {
             return Err(anyhow::Error::new(refusal));
         }
         let credential = self.credential.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "credentials"})),
                 "anthropic: no credentials configured"
             );
@@ -2868,10 +2868,10 @@ impl ModelProvider for AnthropicModelProvider {
             .as_ref()
             .is_some_and(|config| config.display.is_some());
 
-        if ::clawcrew_log::debug_enabled() {
-            ::clawcrew_log::record!(
+        if ::galleon_log::debug_enabled() {
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "provider": "anthropic",
                         "alias": &self.alias,
@@ -2960,19 +2960,19 @@ impl ModelProvider for AnthropicModelProvider {
             .iter()
             .filter_map(|t| {
                 let func = t.get("function").or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "Skipping malformed tool definition (missing 'function' key)"
                     );
                     None
                 })?;
                 let name = func.get("name").and_then(|n| n.as_str()).or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "Skipping tool with missing or non-string 'name'"
                     );
                     None
@@ -3086,9 +3086,9 @@ impl ModelProvider for AnthropicModelProvider {
             .is_some_and(|config| config.display.is_some());
 
         if thinking_config.is_some() && !thinking_display_beta {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "provider": "anthropic",
                         "alias": &self.alias,
@@ -3203,10 +3203,10 @@ impl ModelProvider for AnthropicModelProvider {
             .boxed();
         }
 
-        if ::clawcrew_log::debug_enabled() {
-            ::clawcrew_log::record!(
+        if ::galleon_log::debug_enabled() {
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "provider": "anthropic",
                         "alias": &self.alias,
@@ -3260,10 +3260,10 @@ impl ModelProvider for AnthropicModelProvider {
 
         let (tx, rx) = tokio::sync::mpsc::channel::<StreamResult<StreamEvent>>(64);
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Spawn)
-                .with_category(::clawcrew_log::EventCategory::Provider)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Spawn)
+                .with_category(::galleon_log::EventCategory::Provider)
                 .with_attrs(::serde_json::json!({
                     "idle_timeout_secs": STREAM_IDLE_TIMEOUT.as_secs(),
                     "channel_capacity": 64,

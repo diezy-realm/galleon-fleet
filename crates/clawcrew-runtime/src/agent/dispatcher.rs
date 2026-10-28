@@ -69,14 +69,14 @@ impl XmlToolDispatcher {
                         });
                     }
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_category(::clawcrew_log::EventCategory::Agent)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_category(::galleon_log::EventCategory::Agent)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Malformed <tool_call> JSON"
                         );
@@ -180,7 +180,7 @@ impl ToolDispatcher for NativeToolDispatcher {
             .map(|tc| ParsedToolCall {
                 name: tc.name.clone(),
                 arguments: serde_json::from_str(&tc.arguments).unwrap_or_else(|e| {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_category(::clawcrew_log::EventCategory::Tool).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"tool": tc.name, "error": format!("{}", e)})), "Failed to parse native tool call arguments as JSON; defaulting to empty object");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_category(::galleon_log::EventCategory::Tool).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"tool": tc.name, "error": format!("{}", e)})), "Failed to parse native tool call arguments as JSON; defaulting to empty object");
                     Value::Object(serde_json::Map::new())
                 }),
                 tool_call_id: Some(tc.id.clone()),

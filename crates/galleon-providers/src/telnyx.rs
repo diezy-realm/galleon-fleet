@@ -62,10 +62,10 @@ impl TelnyxModelProvider {
     /// Returns a list of model IDs that can be used with the chat API.
     pub async fn list_models(&self) -> anyhow::Result<Vec<String>> {
         let api_key = self.api_key.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "api_key"})),
                 "telnyx: API key not configured"
             );
@@ -158,10 +158,10 @@ impl ModelProvider for TelnyxModelProvider {
         temperature: Option<f64>,
     ) -> anyhow::Result<String> {
         let api_key = self.api_key.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "api_key"})),
                 "telnyx: API key not configured"
             );
@@ -214,10 +214,10 @@ impl ModelProvider for TelnyxModelProvider {
             .next()
             .map(|c| c.message.content)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "telnyx: empty choices in response"
                 );
                 anyhow::Error::msg("No response from Telnyx")
@@ -231,10 +231,10 @@ impl ModelProvider for TelnyxModelProvider {
         temperature: Option<f64>,
     ) -> anyhow::Result<String> {
         let api_key = self.api_key.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "api_key"})),
                 "telnyx: API key not configured"
             );
@@ -281,10 +281,10 @@ impl ModelProvider for TelnyxModelProvider {
             .next()
             .map(|c| c.message.content)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "telnyx: empty choices in response"
                 );
                 anyhow::Error::msg("No response from Telnyx")

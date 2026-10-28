@@ -86,9 +86,9 @@ impl SlashReconcileState {
         };
         let dir = Self::dir(ws);
         if let Err(e) = std::fs::create_dir_all(&dir) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"error": e.to_string()})),
                 "could not create slash-command state dir; reconcile state not persisted"
             );
@@ -118,9 +118,9 @@ impl SlashReconcileState {
             std::fs::write(&tmp, &bytes).and_then(|()| std::fs::rename(&tmp, Self::path(ws)))
         {
             let _ = std::fs::remove_file(&tmp);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"error": e.to_string()})),
                 "could not persist slash-command reconcile state"
             );

@@ -68,10 +68,10 @@ impl Tunnel for CloudflareTunnel {
 
         // Read stderr to find the public URL (cloudflared prints it there)
         let stderr = child.stderr.take().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(
                         ::serde_json::json!({"tunnel_provider": "cloudflare", "stream": "stderr"})
                     ),
@@ -91,9 +91,9 @@ impl Tunnel for CloudflareTunnel {
 
             match line {
                 Ok(Ok(Some(l))) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"l": l})),
                         "cloudflared: "
                     );

@@ -450,10 +450,10 @@ fn prop_name_to_serde_field(prefix: &str, name: &str) -> anyhow::Result<String> 
         name.strip_prefix(prefix)
             .and_then(|s| s.strip_prefix('.'))
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"prefix": prefix, "name": name})),
                     "prop_name_to_serde_field: property name does not share the configured prefix"
                 );
@@ -466,10 +466,10 @@ fn prop_name_to_serde_field(prefix: &str, name: &str) -> anyhow::Result<String> 
 
 fn parse_prop_value(value_str: &str, kind: PropKind) -> anyhow::Result<toml::Value> {
     let reject = |reason: &'static str, attrs: serde_json::Value| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(attrs),
             "parse_prop_value rejected input"
         );

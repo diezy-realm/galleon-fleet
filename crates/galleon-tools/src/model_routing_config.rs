@@ -24,10 +24,10 @@ impl ModelRoutingConfigTool {
 
     fn load_config_without_env(&self) -> anyhow::Result<Config> {
         let contents = fs::read_to_string(&self.config.config_path).map_err(|error| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config.config_path.display().to_string(),
                         "error": format!("{}", error),
@@ -42,10 +42,10 @@ impl ModelRoutingConfigTool {
 
         let mut parsed =
             galleon_config::migration::migrate_to_current(&contents).map_err(|error| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "path": self.config.config_path.display().to_string(),
                             "error": format!("{}", error),
@@ -96,10 +96,10 @@ impl ModelRoutingConfigTool {
             let mut out = Vec::new();
             for item in array {
                 let value = item.as_str().ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"field": field})),
                         "model_routing_config: array element must be a string"
                     );
@@ -138,13 +138,13 @@ impl ModelRoutingConfigTool {
             for item in array {
                 let mut target: DelegateTargetConfig =
                     serde_json::from_value(item.clone()).map_err(|error| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Reject
+                                ::galleon_log::Action::Reject
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "field": field,
                                 "error": format!("{}", error),
@@ -171,10 +171,10 @@ impl ModelRoutingConfigTool {
             .get(field)
             .and_then(Value::as_str)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": field})),
                     "model_routing_config: missing required string param"
                 );
@@ -190,10 +190,10 @@ impl ModelRoutingConfigTool {
     }
 
     fn reject_unknown_model_provider_family(family: &str, name: &str) -> anyhow::Result<()> {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "model_provider_family": family,
                     "name": name,
@@ -215,10 +215,10 @@ impl ModelRoutingConfigTool {
         let value = raw
             .as_str()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"field": field})),
                     "model_routing_config: field must be string or null"
                 );
@@ -245,10 +245,10 @@ impl ModelRoutingConfigTool {
         }
 
         let value = raw.as_f64().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"field": field})),
                 "model_routing_config: field must be number or null"
             );
@@ -267,20 +267,20 @@ impl ModelRoutingConfigTool {
         }
 
         let raw_value = raw.as_u64().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"field": field})),
                 "model_routing_config: usize field must be non-negative integer or null"
             );
             anyhow::Error::msg(format!("'{field}' must be a non-negative integer or null"))
         })?;
         let value = usize::try_from(raw_value).map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"field": field, "raw_value": raw_value})),
                 "model_routing_config: usize value too large"
             );
@@ -299,20 +299,20 @@ impl ModelRoutingConfigTool {
         }
 
         let raw_value = raw.as_u64().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"field": field})),
                 "model_routing_config: u32 field must be non-negative integer or null"
             );
             anyhow::Error::msg(format!("'{field}' must be a non-negative integer or null"))
         })?;
         let value = u32::try_from(raw_value).map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"field": field, "raw_value": raw_value})),
                 "model_routing_config: u32 value too large"
             );
@@ -331,20 +331,20 @@ impl ModelRoutingConfigTool {
         }
 
         let raw_value = raw.as_i64().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"field": field})),
                 "model_routing_config: i32 field must be integer or null"
             );
             anyhow::Error::msg(format!("'{field}' must be an integer or null"))
         })?;
         let value = i32::try_from(raw_value).map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"field": field, "raw_value": raw_value})),
                 "model_routing_config: i32 value out of range"
             );
@@ -359,10 +359,10 @@ impl ModelRoutingConfigTool {
         };
 
         let value = raw.as_bool().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"field": field})),
                 "model_routing_config: field must be boolean"
             );
@@ -581,10 +581,10 @@ impl ModelRoutingConfigTool {
             .models
             .ensure(&type_k, &alias_k)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "model_provider_type": &type_k,
                             "alias": &alias_k,
@@ -652,7 +652,7 @@ impl ModelRoutingConfigTool {
             }
             // Retryable errors (e.g. transient network issues) — keep the
             // new config and let the resilient wrapper handle retries.
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model": model_name, "probe_err": probe_err.to_string()})), "Model probe returned retryable error (keeping new config)");
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model": model_name, "probe_err": probe_err.to_string()})), "Model probe returned retryable error (keeping new config)");
         }
 
         Ok(ToolResult {

@@ -111,14 +111,14 @@ impl<M: Memory> AuditedMemory<M> {
         // audit.db must surface as success=false instead of being silently
         // swallowed.
         let outcome = if recorded {
-            ::clawcrew_log::EventOutcome::Success
+            ::galleon_log::EventOutcome::Success
         } else {
-            ::clawcrew_log::EventOutcome::Failure
+            ::galleon_log::EventOutcome::Failure
         };
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::MemoryAudit)
-                .with_category(::clawcrew_log::EventCategory::Memory)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::MemoryAudit)
+                .with_category(::galleon_log::EventCategory::Memory)
                 .with_outcome(outcome)
                 .with_duration(elapsed_ms)
                 .with_attrs(::serde_json::json!({
@@ -716,9 +716,9 @@ mod tests {
         use std::sync::{Arc as StdArc, Mutex as StdMutex};
         use clawcrew_api::observability_traits::{Observer, ObserverEvent, ObserverMetric};
 
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
 
         #[derive(Default)]
         struct CapturingObserver {
@@ -742,12 +742,12 @@ mod tests {
         let audited = AuditedMemory::new(NoneMemory::new("none"), tmp.path()).unwrap();
 
         let observer = StdArc::new(CapturingObserver::default());
-        ::clawcrew_log::set_observer_bridge(observer.clone());
+        ::galleon_log::set_observer_bridge(observer.clone());
         audited
             .store("bridge_key", "v", MemoryCategory::Core, None)
             .await
             .unwrap();
-        ::clawcrew_log::clear_observer_bridge();
+        ::galleon_log::clear_observer_bridge();
 
         let events = observer.events.lock().unwrap();
         assert!(

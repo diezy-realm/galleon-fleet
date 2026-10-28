@@ -389,10 +389,10 @@ pub async fn handle_api_cli_tools(
         Err(e) => {
             // The blocking task panicked; degrade to an empty list rather
             // than failing the request, but record why it was empty.
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "cli-tools discovery task failed; returning empty list"
             );
@@ -457,9 +457,9 @@ pub async fn handle_claude_code_hook(
     // back to a session we spawned.
     let _ = &state; // retained for future Slack update wiring
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "session_id": payload.session_id,
                 "event_type": payload.event_type,

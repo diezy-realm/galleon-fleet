@@ -329,10 +329,10 @@ async fn finalize_plugin_webhooks(
             continue;
         }
         if !candidate.config_read {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "plugin": candidate.package,
                         "channel_alias": candidate.alias,
@@ -351,10 +351,10 @@ async fn finalize_plugin_webhooks(
                 paths.push(Some(path));
             }
             Ok(Some(path)) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "plugin": candidate.package,
                             "channel_alias": candidate.alias,
@@ -367,10 +367,10 @@ async fn finalize_plugin_webhooks(
                 paths.push(None);
             }
             Ok(None) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "plugin": candidate.package,
                             "channel_alias": candidate.alias,
@@ -382,10 +382,10 @@ async fn finalize_plugin_webhooks(
                 paths.push(None);
             }
             Err(error) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "plugin": candidate.package,
                             "channel_alias": candidate.alias,
@@ -412,10 +412,10 @@ async fn finalize_plugin_webhooks(
             continue;
         }
         if ambiguous.contains(&index) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "plugin": candidate.package,
                         "channel_alias": candidate.alias,
@@ -431,9 +431,9 @@ async fn finalize_plugin_webhooks(
             let (sink, receiver) = tokio::sync::mpsc::channel(64);
             candidate.channel.set_webhook_receiver(receiver);
             routes.insert(path.clone(), sink);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
                     .with_attrs(::serde_json::json!({
                         "plugin": candidate.package,
                         "channel_alias": candidate.alias,
@@ -448,10 +448,10 @@ async fn finalize_plugin_webhooks(
     if registry.replace(routes) {
         channels
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "error_key": "plugin_webhook_generation_stale",
                 })),
@@ -503,10 +503,10 @@ pub async fn configured_plugin_channels_with_webhooks(
         let host = match plugin_host(&config) {
             Ok(host) => host,
             Err(error) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{error}")})),
                     "Failed to discover WASM channel plugins"
                 );
@@ -516,10 +516,10 @@ pub async fn configured_plugin_channels_with_webhooks(
         let plan = match PluginActivationPlan::build(&config, &host) {
             Ok(plan) => plan,
             Err(error) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{error}")})),
                     "Failed to admit logical plugin instances"
                 );
@@ -558,13 +558,13 @@ pub async fn configured_plugin_channels_with_webhooks(
                 match galleon_plugins::endpoint::PluginChannelEndpoint::new(scope, "plugin") {
                     Ok(endpoint) => endpoint,
                     Err(error) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Load
+                                ::galleon_log::Action::Load
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "plugin": package,
                                 "error": format!("{error}"),
@@ -595,10 +595,10 @@ pub async fn configured_plugin_channels_with_webhooks(
                     channel: channel.with_sender_authorizer(authorizer),
                 }),
                 Err(error) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "plugin": package,
                                 "channel_alias": alias,
@@ -610,9 +610,9 @@ pub async fn configured_plugin_channels_with_webhooks(
             }
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load).with_attrs(
                 ::serde_json::json!({
                     "admitted": admitted_count,
                     "constructed": candidates.len(),

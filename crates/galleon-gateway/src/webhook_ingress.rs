@@ -295,10 +295,10 @@ fn log_refusal(
             serde_json::Value::from(signature_state),
         );
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(attrs),
         "webhook ingress refused: request not authenticated"
     );
@@ -578,9 +578,9 @@ async fn process_verified_message(
     #[cfg(test)] suppress_reply_send: bool,
     msg: &ChannelMessage,
 ) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "channel": spec.channel,
                 "alias": alias,
@@ -634,10 +634,10 @@ async fn process_verified_message(
                 .send(&SendMessage::new(response, &msg.reply_target))
                 .await
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "channel": spec.channel,
                             "error": format!("{}", e),
@@ -648,10 +648,10 @@ async fn process_verified_message(
         }
         Err(e) => {
             let reply = if is_needs_quickstart_err(&e) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "{} chat refused: gateway has no model configured; visit /quickstart",
                         spec.display_name
@@ -659,10 +659,10 @@ async fn process_verified_message(
                 );
                 needs_quickstart_channel_reply().to_string()
             } else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "channel": spec.channel,
                             "error": format!("{}", e),

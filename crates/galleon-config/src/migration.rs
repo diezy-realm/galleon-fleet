@@ -47,10 +47,10 @@ pub fn detect_version(value: &toml::Value) -> Result<u32> {
         None => Ok(1),
         Some(toml::Value::Integer(n)) if *n >= 1 => Ok(*n as u32),
         Some(other) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"found": other.to_string()})),
                 "config schema_version is not a positive integer"
             );
@@ -66,10 +66,10 @@ pub fn migrate_file(input: &str) -> Result<Option<String>> {
         return Ok(None);
     }
     if from > CURRENT_SCHEMA_VERSION {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "from_version": from,
                     "supported_version": CURRENT_SCHEMA_VERSION,
@@ -219,7 +219,7 @@ fn encrypt_in_place(value: &mut toml::Value, store: &crate::secrets::SecretStore
 /// Used by repair tooling (`clawcrew config migrate`, `model_routing_config`)
 /// that needs the precise failure. Daemon load uses the resilient path.
 pub fn migrate_to_current(input: &str) -> Result<Config> {
-    let _attribution = ::clawcrew_log::attribution_span!(&ConfigLoadAttribution).entered();
+    let _attribution = ::galleon_log::attribution_span!(&ConfigLoadAttribution).entered();
     let final_value = migrate_value(input)?;
     final_value
         .try_into()
@@ -263,10 +263,10 @@ pub fn migrate_to_current_salvaged(input: &str) -> ResilientLoad {
     let value = match migrate_value(input) {
         Ok(value) => value,
         Err(err) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({ "error": format!("{err:#}") })),
                 "config could not be parsed or migrated; starting on defaults so it \
                  can be repaired (gateway /api/config, `clawcrew config migrate`)"
@@ -292,10 +292,10 @@ fn migrate_value(input: &str) -> Result<toml::Value> {
     if from == CURRENT_SCHEMA_VERSION {
         Ok(value)
     } else if from > CURRENT_SCHEMA_VERSION {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "from_version": from,
                     "supported_version": CURRENT_SCHEMA_VERSION,
@@ -334,10 +334,10 @@ fn deserialize_resilient(value: toml::Value) -> ResilientLoad {
         // Nothing in the root table is individually salvageable (e.g. a
         // non-table root). Boot on defaults so repair surfaces are reachable.
         whole_config_lost = true;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({ "error": format!("{err:#}") })),
             "config could not be salvaged section-by-section; starting on defaults \
              so it can be repaired"
@@ -361,10 +361,10 @@ fn deserialize_resilient(value: toml::Value) -> ResilientLoad {
     }
 
     for path in &dropped_plain {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({ "dropped_config": path })),
             &format!(
                 "config section `{path}` is invalid and was skipped so the daemon can \
@@ -373,10 +373,10 @@ fn deserialize_resilient(value: toml::Value) -> ResilientLoad {
         );
     }
     for path in &dropped_security {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({ "dropped_security_config": path })),
             &format!(
                 "SECURITY-CRITICAL config section `{path}` is invalid and was reset to \
@@ -604,7 +604,7 @@ fn channel_alias_is_invalid(chan_type: &str, alias_value: &toml::Value) -> bool 
 }
 
 pub fn migrate_file_in_place(path: &Path) -> Result<Option<MigrateReport>> {
-    let _attribution = ::clawcrew_log::attribution_span!(&ConfigLoadAttribution).entered();
+    let _attribution = ::galleon_log::attribution_span!(&ConfigLoadAttribution).entered();
     let raw = std::fs::read_to_string(path)
         .with_context(|| format!("failed to read config at {}", path.display().to_string()))?;
     let migrated = match migrate_file(&raw)? {
@@ -668,10 +668,10 @@ pub fn migrate_file_in_place(path: &Path) -> Result<Option<MigrateReport>> {
         if backup_path.exists() {
             let _ = std::fs::copy(&backup_path, path);
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "path": path.display().to_string(),
                     "backup_path": backup_path.display().to_string(),

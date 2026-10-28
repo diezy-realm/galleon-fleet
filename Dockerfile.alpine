@@ -80,7 +80,7 @@ RUN mkdir -p src src/bin benches apps/tauri/src apps/galleoncode/src apps/galleo
         mkdir -p "${d}src"; \
         printf '' > "${d}src/lib.rs"; \
     done \
-    && echo "fn main() {}" > crates/clawcrew-log/tests/fixtures/attribution-macro-consumer/src/main.rs \
+    && echo "fn main() {}" > crates/galleon-log/tests/fixtures/attribution-macro-consumer/src/main.rs \
     && for d in crates/*/; do \
         [ "$d" = "crates/galleon-macros/" ] && continue; \
         mkdir -p "${d}src"; \

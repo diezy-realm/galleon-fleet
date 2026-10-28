@@ -369,10 +369,10 @@ fn refresh_gemini_cli_token(
         .form(&form)
         .send()
         .map_err(|error| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "oauth_provider": "gemini_cli",
                         "phase": "refresh_request",
@@ -399,10 +399,10 @@ fn refresh_gemini_cli_token(
     }
 
     let parsed: TokenResponse = serde_json::from_str(&body).map_err(|_| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"oauth_provider": "gemini_cli"})),
             "gemini: CLI OAuth refresh response is not valid JSON"
         );
@@ -413,10 +413,10 @@ fn refresh_gemini_cli_token(
         .access_token
         .filter(|t| !t.trim().is_empty())
         .ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "oauth_provider": "gemini_cli",
                         "missing": "access_token",
@@ -502,10 +502,10 @@ async fn refresh_gemini_cli_token_async(
     })
     .await
     .map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "oauth_provider": "gemini_cli",
                     "phase": "task_join",
@@ -823,9 +823,9 @@ impl GeminiModelProvider {
                     guard.client_secret.as_deref(),
                 )
                 .await?;
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "Gemini CLI OAuth token refreshed successfully (runtime)"
                 );
                 guard.access_token = refreshed.access_token;
@@ -872,10 +872,10 @@ impl GeminiModelProvider {
                     let mut cached_project = self.oauth_project.lock().await;
                     *cached_project = None;
                 }
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "Gemini OAuth: rotated credential to {}",
                         self.oauth_cred_paths[next].display().to_string()
@@ -956,10 +956,10 @@ impl GeminiModelProvider {
             let status = response.status();
             let body = response.text().await.unwrap_or_default();
             if let Some(seed) = project_seed {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"status": status.to_string()})),
                     "loadCodeAssist failed (HTTP ); using oauth_project seed fallback"
                 );
@@ -973,10 +973,10 @@ impl GeminiModelProvider {
             .resolve_project_id()
             .or(project_seed)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "missing": "cloudaicompanionProject",
                         })),
@@ -1114,10 +1114,10 @@ impl GeminiModelProvider {
                         parts: vec![Part::text("[continue]")],
                     });
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({ "turns": contents.len() })),
                         "gemini: model-only history cannot anchor a generateContent request"
                     );
@@ -1178,10 +1178,10 @@ impl GeminiModelProvider {
         temperature: Option<f64>,
     ) -> anyhow::Result<(String, Option<TokenUsage>)> {
         let auth = self.auth.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "auth"})),
                 "gemini: no auth configured"
             );
@@ -1209,10 +1209,10 @@ impl GeminiModelProvider {
             }
             GeminiAuth::ManagedOAuth => {
                 let auth_service = self.auth_service.as_ref().ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"missing": "auth_service"})),
                         "gemini: ManagedOAuth requires auth_service"
                     );
@@ -1226,10 +1226,10 @@ impl GeminiModelProvider {
                     )
                     .await?
                     .ok_or_else(|| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({"oauth_provider": "gemini"})),
                             "gemini: auth profile not found"
                         );
@@ -1308,13 +1308,13 @@ impl GeminiModelProvider {
                                 )
                                 .await?
                                 .ok_or_else(|| {
-                                    ::clawcrew_log::record!(
+                                    ::galleon_log::record!(
                                         ERROR,
-                                        ::clawcrew_log::Event::new(
+                                        ::galleon_log::Event::new(
                                             module_path!(),
-                                            ::clawcrew_log::Action::Reject
+                                            ::galleon_log::Action::Reject
                                         )
-                                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                        .with_outcome(::galleon_log::EventOutcome::Failure)
                                         .with_attrs(
                                             ::serde_json::json!({"oauth_provider": "gemini"})
                                         ),
@@ -1351,10 +1351,10 @@ impl GeminiModelProvider {
             } else if auth.is_oauth()
                 && Self::should_retry_oauth_without_generation_config(status, &error_text)
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "Gemini OAuth internal endpoint rejected generationConfig; retrying without generationConfig"
                 );
                 response = self
@@ -1380,10 +1380,10 @@ impl GeminiModelProvider {
             if auth.is_oauth()
                 && Self::should_retry_oauth_without_generation_config(status, &error_text)
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "Gemini OAuth internal endpoint rejected generationConfig; retrying without generationConfig"
                 );
                 response = self
@@ -1428,10 +1428,10 @@ impl GeminiModelProvider {
             .and_then(|c| c.content)
             .and_then(|c| c.effective_text())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "gemini: empty response text"
                 );
                 anyhow::Error::msg("No response from Gemini")
@@ -1533,13 +1533,13 @@ impl ModelProvider for GeminiModelProvider {
                     // For ManagedOAuth, verify and refresh the token if needed.
                     // This ensures fallback works even if tokens expired during daemon uptime.
                     let auth_service = self.auth_service.as_ref().ok_or_else(|| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Reject
+                                ::galleon_log::Action::Reject
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"missing": "auth_service"})),
                             "gemini: ManagedOAuth requires auth_service"
                         );
@@ -1554,10 +1554,10 @@ impl ModelProvider for GeminiModelProvider {
                         )
                         .await?
                         .ok_or_else(|| {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 ERROR,
-                                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                                    .with_outcome(::galleon_log::EventOutcome::Failure)
                                     .with_attrs(::serde_json::json!({"oauth_provider": "gemini"})),
                                 "gemini: auth profile not found or expired"
                             );

@@ -13021,12 +13021,12 @@ Let me check the result."#;
     async fn trim_record_carries_model_attribution() {
         use super::{ToolLoop, run_tool_call_loop};
         use crate::observability::noop::NoopObserver;
-        use ::clawcrew_log::Instrument;
+        use ::galleon_log::Instrument;
 
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let model_provider = ScriptedModelProvider {
@@ -13106,7 +13106,7 @@ Let me check the result."#;
             agent_alias: None,
             turn_id: "test-turn-id",
         })
-        .instrument(clawcrew_log::attribution_span!(
+        .instrument(galleon_log::attribution_span!(
             &crate::agent::AgentAttribution("trimtest")
         ))
         .await

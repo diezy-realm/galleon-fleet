@@ -1383,10 +1383,10 @@ async fn send_notice_with_timeout(
     .await
     .is_err()
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "recipient": message.recipient,
                     "kind": kind,
@@ -1476,10 +1476,10 @@ impl ConversationLaneRegistry {
         match tx.try_send(turn) {
             Ok(()) => LaneAdmission::Enqueued,
             Err(refused) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"conversation": key})),
                     "conversation lane closed before its first turn was queued"
                 );
@@ -1636,10 +1636,10 @@ fn send_conversation_busy(
     busy_notice_budget: &Arc<tokio::sync::Semaphore>,
     busy_notice_tasks: &Arc<IngressTaskTracker>,
 ) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({
                 "conversation": conversation_history_key(msg),
                 "sender": msg.sender,
@@ -1734,9 +1734,9 @@ async fn route_inbound_slot(
     }
 
     if let Err(err) = enforce_attachment_limits(&turn.msg) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject).with_attrs(
                 ::serde_json::json!({
                     "reason": format!("{err:?}"),
                     "attachments_count": turn.msg.attachments.len(),
@@ -3151,10 +3151,10 @@ fn runtime_defaults_from_config(
         .filter(|model| !model.is_empty())
         .map(ToString::to_string)
         .ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "model_provider": model_provider,
                         "reason": "no_model_configured",
@@ -3290,13 +3290,13 @@ async fn maybe_apply_runtime_config_update(ctx: &ChannelRuntimeContext) -> Resul
         .await
     {
         if galleon_providers::reliable::is_non_retryable(&err) {
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": next_defaults.default_model_provider, "model": next_defaults.model, "err": err.to_string()})), "Rejecting config reload: model not available (non-retryable)");
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": next_defaults.default_model_provider, "model": next_defaults.model, "err": err.to_string()})), "Rejecting config reload: model not available (non-retryable)");
             return Ok(());
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(
                     ::serde_json::json!({"model_provider": next_defaults.default_model_provider, "err": err.to_string()})
                 ),
@@ -3330,7 +3330,7 @@ async fn maybe_apply_runtime_config_update(ctx: &ChannelRuntimeContext) -> Resul
         .lock()
         .unwrap_or_else(|e| e.into_inner()) = Some(stamp);
 
-    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"path": config_path.display().to_string(), "model_provider": next_defaults.default_model_provider, "model": next_defaults.model, "temperature": next_defaults.temperature, "agent_model_provider": next_defaults.default_model_provider})), "Applied updated channel runtime config from disk");
+    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"path": config_path.display().to_string(), "model_provider": next_defaults.default_model_provider, "model": next_defaults.model, "temperature": next_defaults.temperature, "agent_model_provider": next_defaults.default_model_provider})), "Applied updated channel runtime config from disk");
 
     Ok(())
 }
@@ -3991,13 +3991,13 @@ fn append_sender_turn(
                                     // breadcrumb be counted as a real turn.
                                     // Leave the cache unreconciled instead;
                                     // the next turn retries hydration.
-                                    ::clawcrew_log::record!(
+                                    ::galleon_log::record!(
                                         WARN,
-                                        ::clawcrew_log::Event::new(
+                                        ::galleon_log::Event::new(
                                             module_path!(),
-                                            ::clawcrew_log::Action::Note
+                                            ::galleon_log::Action::Note
                                         )
-                                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                                         .with_attrs(
                                             ::serde_json::json!({
                                                 "sender_key": sender_key,
@@ -4011,13 +4011,13 @@ fn append_sender_turn(
                         }
                         Ok(_) => {}
                         Err(e) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({
                                     "sender_key": sender_key,
                                     "error": format!("{}", e),
@@ -4044,10 +4044,10 @@ fn append_sender_turn(
     if let Some(ref store) = ctx.session_store
         && let Err(e) = store.append(sender_key, &turn)
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "Failed to persist session turn"
         );
@@ -4204,10 +4204,10 @@ fn resync_sender_history_after_trim(
         if let Err(e) =
             store.replace_conversation_state(sender_key, &published_turns, breadcrumb_present)
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Failed to persist trimmed session history and breadcrumb provenance"
             );
@@ -4237,10 +4237,10 @@ fn resync_sender_history_after_trim(
                     // that didn't happen; the next successful resync or a
                     // fresh restart-time reload will reconcile once the
                     // backend can be read again.
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "Failed to read trim breadcrumb provenance after a persistence \
                          failure; leaving cached history and breadcrumb flag unreconciled \
@@ -4436,10 +4436,10 @@ fn rollback_orphan_user_turn(
     if let Some(ref store) = ctx.session_store
         && let Err(e) = store.remove_last(sender_key)
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "Failed to rollback session store entry"
         );
@@ -4620,10 +4620,10 @@ async fn get_or_create_provider(
     let model_provider: Arc<dyn ModelProvider> = Arc::from(model_provider);
 
     if let Err(err) = ProviderDispatch::from_ref(&*model_provider).warmup().await {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(
                     ::serde_json::json!({"model_provider": provider_name, "err": err.to_string()})
                 ),
@@ -5071,10 +5071,10 @@ async fn handle_runtime_command_for_delivery(
             Ok(true) => return true,
             Ok(false) => {}
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "channel": msg.channel.as_str(),
                             "channel_alias": request.channel_alias.as_str(),
@@ -5165,10 +5165,10 @@ async fn handle_runtime_command_for_delivery(
                 // Per-sender authorization gate for the `--agent` scope only.
                 // `/model --user` is unaffected.
                 let channel_alias = msg.channel_alias.as_deref().unwrap_or(msg.channel.as_str());
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "sender": msg.sender.as_str(),
                             "agent": ctx.agent_alias.as_str(),
@@ -5196,10 +5196,10 @@ async fn handle_runtime_command_for_delivery(
                 if scope == OverrideScope::Agent {
                     let channel_alias =
                         msg.channel_alias.as_deref().unwrap_or(msg.channel.as_str());
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Approve)
-                            .with_outcome(::clawcrew_log::EventOutcome::Success)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Approve)
+                            .with_outcome(::galleon_log::EventOutcome::Success)
                             .with_attrs(::serde_json::json!({
                                 "sender": msg.sender.as_str(),
                                 "agent": ctx.agent_alias.as_str(),
@@ -5310,10 +5310,10 @@ async fn handle_runtime_command_for_delivery(
             if let Some(ref store) = ctx.session_store
                 && let Err(e) = store.delete_session(&sender_key)
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": format!("{}", e), "sender_key": sender_key})
                         ),
@@ -5362,10 +5362,10 @@ async fn handle_runtime_command_for_delivery(
     };
 
     if let Err(err) = channel.send(&SendMessage::reply_to(msg, response)).await {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             &format!(
                 "Failed to send runtime command response on {}: {err}",
                 channel.name()
@@ -5652,10 +5652,10 @@ async fn resolve_classifier_route(
     let (type_key, alias_key) = match provider_str.split_once('.') {
         Some(parts) => parts,
         None => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"provider": provider_str})),
                 "classifier_provider must be dotted `<type>.<alias>`; falling back to main agent"
             );
@@ -5671,10 +5671,10 @@ async fn resolve_classifier_route(
     {
         Some(cfg) => cfg,
         None => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"provider": provider_str})),
                 "classifier_provider references an unknown [providers.models.<type>.<alias>] entry; falling back to main agent"
             );
@@ -5685,10 +5685,10 @@ async fn resolve_classifier_route(
     let model = model_cfg.model.clone().unwrap_or_default();
     let temperature = model_cfg.temperature;
     if model.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"provider": provider_str})),
             "classifier_provider points to a [providers.models] entry without a `model` field; falling back to main agent"
         );
@@ -5706,10 +5706,10 @@ async fn resolve_classifier_route(
         Ok(p) => p,
         Err(e) => {
             let safe_err = galleon_providers::sanitize_api_error(&e.to_string());
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"provider": provider_str, "error": safe_err})),
                 "Failed to initialize classifier_provider; falling back to main agent provider"
             );
@@ -5717,9 +5717,9 @@ async fn resolve_classifier_route(
         }
     };
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
             .with_attrs(::serde_json::json!({"provider": provider_str, "model": model.as_str()})),
         "classifier_provider override active"
     );
@@ -6054,9 +6054,9 @@ async fn run_draft_updater(
                     .update_draft_lifecycle(&reply_target, &draft_id, event)
                     .await
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "Draft lifecycle update failed"
                     );
@@ -6090,9 +6090,9 @@ async fn run_draft_updater(
                     .update_draft_progress(&reply_target, &draft_id, &visible)
                     .await
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "Draft progress update failed"
                     );
@@ -6109,11 +6109,11 @@ async fn run_draft_updater(
                         .update_draft_progress(&reply_target, &draft_id, &visible)
                         .await
                     {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Draft progress update failed"
@@ -6132,9 +6132,9 @@ async fn run_draft_updater(
                     .update_draft(&reply_target, &draft_id, &visible)
                     .await
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "Draft update failed"
                     );
@@ -6321,9 +6321,9 @@ async fn apply_multi_message_narration_policy(
             .await
         {
             clawcrew_api::hook::HookResult::Cancel(reason) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"reason": reason.to_string()})),
                     "outgoing narration suppressed by hook"
                 );
@@ -6335,11 +6335,11 @@ async fn apply_multi_message_narration_policy(
                 mut modified_content,
             )) => {
                 if hook_channel != channel || hook_recipient != reply_target {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"from_channel": channel, "from_recipient": reply_target, "to_channel": hook_channel, "to_recipient": hook_recipient})), "on_message_sending attempted to rewrite narration routing; only content mutation is applied");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"from_channel": channel, "from_recipient": reply_target, "to_channel": hook_channel, "to_recipient": hook_recipient})), "on_message_sending attempted to rewrite narration routing; only content mutation is applied");
                 }
                 let modified_len = modified_content.chars().count();
                 if modified_len > CHANNEL_HOOK_MAX_OUTBOUND_CHARS {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"limit": CHANNEL_HOOK_MAX_OUTBOUND_CHARS, "attempted": modified_len})), "hook-modified narration exceeded limit; truncating");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"limit": CHANNEL_HOOK_MAX_OUTBOUND_CHARS, "attempted": modified_len})), "hook-modified narration exceeded limit; truncating");
                     modified_content =
                         truncate_with_ellipsis(&modified_content, CHANNEL_HOOK_MAX_OUTBOUND_CHARS);
                 }
@@ -6439,9 +6439,9 @@ async fn flush_completed_narration_turn(
                 .flush_draft_turn(reply_target, draft_id, owned_guarded)
                 .await
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Draft turn flush failed"
                 );
@@ -6456,9 +6456,9 @@ async fn flush_completed_narration_turn(
                 .discard_draft_turn(reply_target, draft_id, owned_guarded)
                 .await
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Draft turn discard failed"
                 );
@@ -6487,10 +6487,10 @@ fn redact_channel_outbound_leaks(
     {
         galleon_security_scrub::LeakResult::Clean => content.to_string(),
         galleon_security_scrub::LeakResult::Detected { patterns, redacted } => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"patterns": patterns})),
                 "output guardrail: credential leak detected in outbound channel response"
             );
@@ -6780,10 +6780,10 @@ fn ensure_nonempty_channel_reply(
     if !delivered_response.trim().is_empty() {
         return delivered_response;
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({
                 "channel": channel,
                 "reply_target": reply_target,
@@ -7253,7 +7253,7 @@ fn spawn_supervised_listener_with_health_interval(
         Some(a) if !a.is_empty() => format!("{}.{}", ch.name(), a),
         _ => ch.name().to_string(),
     };
-    let span = clawcrew_log::attribution_span!(&*ch);
+    let span = galleon_log::attribution_span!(&*ch);
     galleon_spawn::spawn!(
         async move {
             let component = format!("channel:{composite}");
@@ -7286,13 +7286,13 @@ fn spawn_supervised_listener_with_health_interval(
 
                 match result {
                     Ok(()) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                             &format!("Channel {} exited unexpectedly; restarting", ch.name())
                         );
                         galleon_infra::health::mark_component_error(
@@ -7303,13 +7303,13 @@ fn spawn_supervised_listener_with_health_interval(
                     }
                     Err(e) => {
                         if is_non_retryable_channel_listener_error(ch.name(), &e) {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 ERROR,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Reject
+                                    ::galleon_log::Action::Reject
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "channel listener hit non-retryable error; waiting for config change or shutdown"
                             );
@@ -7319,13 +7319,13 @@ fn spawn_supervised_listener_with_health_interval(
                                 () = std::future::pending::<()>() => unreachable!(),
                             }
                         }
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "channel listener error; restarting"
                         );
@@ -7382,10 +7382,10 @@ fn max_in_flight_messages_for_config(
 
 fn log_worker_join_result(result: Result<(), tokio::task::JoinError>) {
     if let Err(error) = result {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"error": format!("{}", error)})),
             "Channel message worker crashed"
         );
@@ -7412,16 +7412,16 @@ fn spawn_scoped_typing_task(
                 () = stop_signal.cancelled() => break,
                 _ = interval.tick() => {
                     if let Err(e) = channel.start_typing(&recipient).await {
-                        ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"error": scrub_typing_error(&e)})), "failed to start typing");
+                        ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"error": scrub_typing_error(&e)})), "failed to start typing");
                     }
                 }
             }
         }
 
         if let Err(e) = channel.stop_typing(&recipient).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"error": scrub_typing_error(&e)})),
                 "failed to stop typing"
             );
@@ -7486,11 +7486,11 @@ fn spawn_matrix_single_message_typing_task(
             () = cancellation.cancelled() => true,
             result = channel.start_typing(&recipient) => {
                 if let Err(e) = result {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(
+                        ::galleon_log::Event::new(
                             module_path!(),
-                            ::clawcrew_log::Action::Note
+                            ::galleon_log::Action::Note
                         )
                         .with_attrs(::serde_json::json!({
                             "error": scrub_typing_error(&e)
@@ -7507,11 +7507,11 @@ fn spawn_matrix_single_message_typing_task(
                     () = cancellation.cancelled() => break,
                     _ = interval.tick() => {
                         if let Err(e) = channel.start_typing(&recipient).await {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 DEBUG,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({
                                     "error": scrub_typing_error(&e)
@@ -7530,17 +7530,17 @@ fn spawn_matrix_single_message_typing_task(
         .await
         {
             Ok(Err(e)) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"error": scrub_typing_error(&e)})),
                     "failed to stop typing"
                 );
             }
             Err(_) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "timed out stopping typing"
                 );
             }
@@ -7741,9 +7741,9 @@ async fn run_inbound_message_hook(
 
     match hooks.run_on_message_received(msg).await {
         clawcrew_api::hook::HookResult::Cancel(reason) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"reason": reason.to_string()})),
                 "incoming message dropped by hook"
             );
@@ -7804,7 +7804,7 @@ async fn process_channel_message_with_delivery_id(
     let sender = msg.sender.clone();
     let message_id = msg.id.clone();
     let composite_for_body = channel_composite.clone();
-    clawcrew_log::scope!(
+    galleon_log::scope!(
         category: "channel",
         agent_alias: agent_alias.as_str(),
         channel: channel_composite.as_str(),
@@ -8512,11 +8512,11 @@ async fn run_matrix_single_message_draft_updater(
             maybe_error = flush_rx.recv(), if flush_in_flight => {
                 flush_in_flight = false;
                 if let Some(Some(error)) = maybe_error {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(
+                        ::galleon_log::Event::new(
                             module_path!(),
-                            ::clawcrew_log::Action::Note
+                            ::galleon_log::Action::Note
                         )
                         .with_attrs(::serde_json::json!({"error": error})),
                         "Coalesced draft progress update failed"
@@ -8635,10 +8635,10 @@ fn stamp_session_routing_context(
         sender_id: Some(msg.sender.as_str()).filter(|s| !s.is_empty()),
     };
     if let Err(e) = store.set_session_context(history_key, context) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"history_key": history_key, "e": e.to_string()})),
             "Failed to stamp session routing context"
         );
@@ -8649,9 +8649,9 @@ fn record_passive_context(ctx: &ChannelRuntimeContext, msg: &ChannelMessage, his
     let timestamped_content =
         timestamped_channel_user_history_content(msg, WHATSAPP_OBSERVED_GROUP_MESSAGE_LABEL);
     append_sender_turn(ctx, history_key, ChatMessage::user(&timestamped_content));
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "message_id": msg.id,
                 "history_key": history_key,
@@ -8729,9 +8729,9 @@ fn resolve_cold_crumb_provenance_result(
         // migration path.
         Ok(None) => Ok(legacy_inference(history)),
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "history_key": history_key,
                         "error": format!("{}", e),
@@ -8750,9 +8750,9 @@ async fn process_channel_message_body(
     channel_composite: String,
     delivery_message_id: String,
 ) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Inbound).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Inbound).with_attrs(
             ::serde_json::json!({
                 "sender": msg.sender,
                 "message_id": msg.id,
@@ -8776,9 +8776,9 @@ async fn process_channel_message_body(
 
     if let Some(channel) = target_channel.as_ref() {
         if channel.drop_self_messages(&msg) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"sender": msg.sender})),
                 "dropping self-authored inbound message (self-loop guard, sdk layer)"
             );
@@ -8788,9 +8788,9 @@ async fn process_channel_message_body(
             &msg.sender,
             channel.self_handle().as_deref(),
         ) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"sender": msg.sender})),
                 "dropping self-authored inbound message (self-loop guard, agent-loop fallback)"
             );
@@ -8824,10 +8824,10 @@ async fn process_channel_message_body(
 
     match safety_outcome {
         galleon_security_scrub::ScanOutcome::Blocked { reason } => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "channel": msg.channel,
                         "sender": msg.sender,
@@ -8845,9 +8845,9 @@ async fn process_channel_message_body(
             return;
         }
         galleon_security_scrub::ScanOutcome::Suspicious { patterns, score } => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "channel": msg.channel,
                         "sender": msg.sender,
@@ -8894,9 +8894,9 @@ async fn process_channel_message_body(
             let agent_alias = Arc::clone(&ctx.agent_alias);
             let sender = msg.sender.clone();
             let channel_label = channel.name().to_string();
-            let span = ::clawcrew_log::attribution_span!(&*channel);
+            let span = ::galleon_log::attribution_span!(&*channel);
             Some(galleon_spawn::spawn!(
-            ::clawcrew_log::scope!(
+            ::galleon_log::scope!(
                 category: "channel",
                 agent_alias: agent_alias.as_str(),
                 channel: channel_label.as_str(),
@@ -8907,9 +8907,9 @@ async fn process_channel_message_body(
                         .add_reaction(&reply_target, &message_id, "\u{1F440}")
                         .await
                     {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Failed to add ack reaction"
                         );
@@ -8935,9 +8935,9 @@ async fn process_channel_message_body(
         runtime_defaults_snapshot(ctx.as_ref()).defaults.temperature,
     );
     if thinking.effective_content != msg.content {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"thinking_level": thinking.level})),
             "Thinking directive parsed from channel message"
         );
@@ -8981,9 +8981,9 @@ async fn process_channel_message_body(
         };
         let enriched = link_enricher::enrich_message(&msg.content, &enricher_cfg).await;
         if enriched != msg.content {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"sender": msg.sender})),
                 "Link enricher: prepended URL summaries to message"
             );
@@ -8992,10 +8992,10 @@ async fn process_channel_message_body(
     }
 
     if let Err(err) = maybe_apply_runtime_config_update(ctx.as_ref()).await {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
             "Failed to apply runtime config update"
         );
@@ -9036,7 +9036,7 @@ async fn process_channel_message_body(
             .iter()
             .find(|r| r.hint.eq_ignore_ascii_case(&hint))
     {
-        ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"hint": hint.as_str(), "model_provider": matched_route.model_provider.as_str(), "model": matched_route.model.as_str()})), "Channel message classified — overriding route");
+        ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"hint": hint.as_str(), "model_provider": matched_route.model_provider.as_str(), "model": matched_route.model.as_str()})), "Channel message classified — overriding route");
         route = ChannelRouteSelection {
             model_provider: matched_route.model_provider.clone(),
             model: matched_route.model.clone(),
@@ -9135,9 +9135,9 @@ async fn process_channel_message_body(
             .await;
     }
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
             .with_attrs(::serde_json::json!({"message_id": msg.id})),
         "processing inbound message"
     );
@@ -9187,10 +9187,10 @@ async fn process_channel_message_body(
         // recreating an unreconciled cache entry. Defer instead: drop this
         // turn without persisting or replying, so the next inbound message
         // retries hydration against the still-intact durable transcript.
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "sender": msg.sender,
                     "history_key": history_key,
@@ -9419,7 +9419,7 @@ async fn process_channel_message_body(
         .map(|c| c.is_direct_message(&msg))
         .unwrap_or(false);
     let precheck = &ctx.agent_cfg.precheck;
-    let classifier_intent = ::clawcrew_log::scope!(
+    let classifier_intent = ::galleon_log::scope!(
         category: "channel",
         model_provider: route.model_provider.as_str(),
         model: route.model.as_str(),
@@ -9427,9 +9427,9 @@ async fn process_channel_message_body(
             if should_bypass_reply_intent_precheck(&msg, direct_message) {
                 AssistantChannelOutcome::Reply(String::new())
             } else if !precheck.enabled {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Skip).with_attrs(
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Skip).with_attrs(
                         ::serde_json::json!({
                             "phase": "precheck",
                             "reason": "disabled",
@@ -9469,9 +9469,9 @@ async fn process_channel_message_body(
                     .await
                 {
                     Ok(Ok(outcome)) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                                 .with_duration(
                                     u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
                                 )
@@ -9485,10 +9485,10 @@ async fn process_channel_message_body(
                     }
                     Ok(Err(e)) => {
                         let safe_err = galleon_providers::sanitize_api_error(&e.to_string());
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_duration(
                                     u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
                                 )
@@ -9502,10 +9502,10 @@ async fn process_channel_message_body(
                         AssistantChannelOutcome::Reply(String::new())
                     }
                     Err(_) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_duration(
                                     u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
                                 )
@@ -9541,9 +9541,9 @@ async fn process_channel_message_body(
             ref reason,
         } = classifier_intent
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "kind": format!("{kind:?}"),
                     "reason": reason.as_deref().unwrap_or(""),
@@ -9576,9 +9576,9 @@ async fn process_channel_message_body(
                 .add_reaction(&msg.reply_target, &msg.id, emoji)
                 .await
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!(
                         "Failed to add {emoji} no-reply reaction on {}: {e}",
                         channel.name()
@@ -9614,10 +9614,10 @@ async fn process_channel_message_body(
             Some((notice_text, Ok(()))) => notice_text.clone(),
             Some((_, Err(e))) => {
                 let safe_error = galleon_providers::sanitize_api_error(&e.to_string());
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "phase": "no_reply_notice",
                             "error": safe_error,
@@ -9641,9 +9641,9 @@ async fn process_channel_message_body(
             &history_key,
             ChatMessage::assistant(&history_response),
         );
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Skip)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Skip)
                 .with_duration(u64::try_from(started_at.elapsed().as_millis()).unwrap_or(u64::MAX),)
                 .with_attrs(::serde_json::json!({
                     "model_provider": route.model_provider,
@@ -9662,7 +9662,7 @@ async fn process_channel_message_body(
         .as_ref()
         .is_some_and(|ch| ch.supports_draft_updates());
 
-    ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"has_target_channel": target_channel.is_some(), "use_draft_streaming": use_draft_streaming})), "Streaming decision");
+    ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"has_target_channel": target_channel.is_some(), "use_draft_streaming": use_draft_streaming})), "Streaming decision");
 
     // Partial mode: delta channel for draft updates (progress + text).
     let (delta_tx, delta_rx) = if use_draft_streaming {
@@ -9689,9 +9689,9 @@ async fn process_channel_message_body(
             {
                 Ok(id) => id,
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         &format!("Failed to send draft on {}", channel.name())
                     );
@@ -9874,9 +9874,9 @@ async fn process_channel_message_body(
     let llm_call_start = Instant::now();
     #[allow(clippy::cast_possible_truncation)]
     let elapsed_before_llm_ms = started_at.elapsed().as_millis() as u64;
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
             .with_attrs(::serde_json::json!({"elapsed_before_llm_ms": elapsed_before_llm_ms})),
         "starting LLM call"
     );
@@ -10048,18 +10048,18 @@ async fn process_channel_message_body(
     turn_guard.finish();
 
     // Drop all senders so updater tasks can exit (rx.recv() returns None).
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         DEBUG,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "Post-loop: dropping delta_tx and awaiting draft updater"
     );
     drop(delta_tx);
     if let Some(handle) = draft_updater {
         let _ = handle.await;
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         DEBUG,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "Post-loop: draft updater completed"
     );
 
@@ -10078,9 +10078,9 @@ async fn process_channel_message_body(
     let llm_call_ms = llm_call_start.elapsed().as_millis() as u64;
     #[allow(clippy::cast_possible_truncation)]
     let total_ms = started_at.elapsed().as_millis() as u64;
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
             .with_attrs(::serde_json::json!({"llm_call_ms": llm_call_ms, "total_ms": total_ms})),
         "LLM call completed"
     );
@@ -10099,16 +10099,16 @@ async fn process_channel_message_body(
 
     match llm_result {
         LlmExecutionResult::Cancelled => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"sender": msg.sender})),
                 "Cancelled in-flight channel request due to newer message"
             );
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Cancel)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Cancel)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_duration(
                         u64::try_from(started_at.elapsed().as_millis()).unwrap_or(u64::MAX),
                     )
@@ -10124,9 +10124,9 @@ async fn process_channel_message_body(
                 (target_channel.as_ref(), draft_message_id.as_deref())
                 && let Err(err) = channel.cancel_draft(&msg.reply_target, draft_id).await
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                     &format!("Failed to cancel draft on {}", channel.name())
                 );
@@ -10145,11 +10145,11 @@ async fn process_channel_message_body(
                     .await
                 {
                     clawcrew_api::hook::HookResult::Cancel(reason) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"reason": reason.to_string()})),
                             "outgoing message suppressed by hook"
@@ -10167,12 +10167,12 @@ async fn process_channel_message_body(
                         mut modified_content,
                     )) => {
                         if hook_channel != msg.channel || hook_recipient != msg.reply_target {
-                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"from_channel": channel_composite, "from_recipient": msg.reply_target, "to_channel": hook_channel, "to_recipient": hook_recipient})), "on_message_sending attempted to rewrite channel routing; only content mutation is applied");
+                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"from_channel": channel_composite, "from_recipient": msg.reply_target, "to_channel": hook_channel, "to_recipient": hook_recipient})), "on_message_sending attempted to rewrite channel routing; only content mutation is applied");
                         }
 
                         let modified_len = modified_content.chars().count();
                         if modified_len > CHANNEL_HOOK_MAX_OUTBOUND_CHARS {
-                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"limit": CHANNEL_HOOK_MAX_OUTBOUND_CHARS, "attempted": modified_len})), "hook-modified outbound content exceeded limit; truncating");
+                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"limit": CHANNEL_HOOK_MAX_OUTBOUND_CHARS, "attempted": modified_len})), "hook-modified outbound content exceeded limit; truncating");
                             modified_content = truncate_with_ellipsis(
                                 &modified_content,
                                 CHANNEL_HOOK_MAX_OUTBOUND_CHARS,
@@ -10180,7 +10180,7 @@ async fn process_channel_message_body(
                         }
 
                         if modified_content != outbound_response {
-                            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"sender": msg.sender, "before_len": outbound_response.chars().count(), "after_len": modified_content.chars().count()})), "outgoing message content modified by hook");
+                            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"sender": msg.sender, "before_len": outbound_response.chars().count(), "after_len": modified_content.chars().count()})), "outgoing message content modified by hook");
                         }
 
                         outbound_response = modified_content;
@@ -10216,10 +10216,10 @@ async fn process_channel_message_body(
                 safeguard_notice.as_ref(),
             );
 
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Outbound)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Outbound)
+                    .with_outcome(::galleon_log::EventOutcome::Success)
                     .with_duration(
                         u64::try_from(started_at.elapsed().as_millis()).unwrap_or(u64::MAX),
                     )
@@ -10283,11 +10283,11 @@ async fn process_channel_message_body(
                         )
                         .await
                     {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Memory consolidation skipped"
@@ -10296,10 +10296,10 @@ async fn process_channel_message_body(
                 });
             }
 
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Outbound)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Outbound)
+                    .with_outcome(::galleon_log::EventOutcome::Success)
                     .with_duration(
                         u64::try_from(started_at.elapsed().as_millis()).unwrap_or(u64::MAX),
                     )
@@ -10445,13 +10445,13 @@ async fn process_channel_message_body(
                                     .downcast_ref::<clawcrew_api::channel::FinalizePartialDelivery>()
                                     .map(|p| p.delivered)
                                     .unwrap_or(0);
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(::serde_json::json!({"delivered_chunks": delivered})),
                                     "Final answer partially delivered; not resending to avoid \
                                      duplicating the accepted prefix"
@@ -10459,13 +10459,13 @@ async fn process_channel_message_body(
                                 true
                             }
                             Err(e) => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                     "Failed to finalize draft; sending as new message"
                                 );
@@ -10490,13 +10490,13 @@ async fn process_channel_message_body(
                     match channel.send_final(&send_msg).await {
                         Ok(()) => true,
                         Err(e) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 ERROR,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Fail
+                                    ::galleon_log::Action::Fail
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "failed to reply"
                             );
@@ -10522,10 +10522,10 @@ async fn process_channel_message_body(
                         )
                         .await
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "failed to send tool receipts block"
                     );
@@ -10535,16 +10535,16 @@ async fn process_channel_message_body(
         LlmExecutionResult::Completed(Ok(Err(e))) => {
             if clawcrew_api::agent::is_tool_loop_cancelled(&e) || cancellation_token.is_cancelled()
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"sender": msg.sender})),
                     "Cancelled in-flight channel request due to newer message"
                 );
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Cancel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Cancel)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_duration(
                             u64::try_from(started_at.elapsed().as_millis()).unwrap_or(u64::MAX),
                         )
@@ -10560,9 +10560,9 @@ async fn process_channel_message_body(
                     (target_channel.as_ref(), draft_message_id.as_deref())
                     && let Err(err) = channel.cancel_draft(&msg.reply_target, draft_id).await
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                         &format!("Failed to cancel draft on {}", channel.name())
                     );
@@ -10579,10 +10579,10 @@ async fn process_channel_message_body(
                     started_at.elapsed().as_millis(),
                     compacted
                 );
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_duration(
                             u64::try_from(started_at.elapsed().as_millis()).unwrap_or(u64::MAX),
                         )
@@ -10620,11 +10620,11 @@ async fn process_channel_message_body(
                     );
                     let mut cache = ctx.provider_cache.lock().unwrap_or_else(|p| p.into_inner());
                     if cache.remove(&cache_key).is_some() {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(
                                 ::serde_json::json!({"model_provider": route.model_provider})
@@ -10633,10 +10633,10 @@ async fn process_channel_message_body(
                         );
                     }
                 }
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_duration(
                             u64::try_from(started_at.elapsed().as_millis()).unwrap_or(u64::MAX),
                         )
@@ -10687,10 +10687,10 @@ async fn process_channel_message_body(
                 "LLM response timed out after {}s (base={}s, max_tool_iterations={})",
                 timeout_budget_secs, ctx.message_timeout_secs, ctx.max_tool_iterations
             );
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Timeout)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Timeout)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_duration(
                         u64::try_from(started_at.elapsed().as_millis()).unwrap_or(u64::MAX),
                     )
@@ -10825,9 +10825,9 @@ async fn register_inbound_turn(
     // most recent state preserves the one-active-turn-per-sender semantics.
     let previous = match (interrupt_enabled, previous) {
         (true, Some(previous)) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"sender": msg.sender})),
                 "interrupting previous in-flight request for sender"
             );
@@ -11046,9 +11046,9 @@ async fn dispatch_channel_sop_gate(
                 (Form::Marker, c.to_ascii_lowercase(), r.to_string())
             }
             _ => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"marker": rest})),
                     "dropping malformed or unknown channel SOP-gate marker"
                 );
@@ -11248,7 +11248,7 @@ async fn run_message_dispatch_loop(
         }
 
         let Some(ctx) = router.resolve(&msg) else {
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"channel_alias": msg.channel_alias, "sender": msg.sender})), "dropping inbound message: no agent owns this channel");
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"channel_alias": msg.channel_alias, "sender": msg.sender})), "dropping inbound message: no agent owns this channel");
             continue;
         };
 
@@ -11376,23 +11376,23 @@ async fn run_message_dispatch_loop(
                         });
                     }
                     Err(_) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"sender": msg.sender})),
                             "stop executed without acknowledgement: reply budget exhausted"
                         );
                     }
                 }
             } else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "stop command: no registered channel found for reply"
                 );
             }
@@ -11477,13 +11477,13 @@ async fn run_message_dispatch_loop(
                                 // reserving a fresh slot loses ordering but never
                                 // the message.
                                 Err(returned) => {
-                                    ::clawcrew_log::record!(
+                                    ::galleon_log::record!(
                                         WARN,
-                                        ::clawcrew_log::Event::new(
+                                        ::galleon_log::Event::new(
                                             module_path!(),
-                                            ::clawcrew_log::Action::Note
+                                            ::galleon_log::Action::Note
                                         )
-                                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                                         .with_attrs(
                                             ::serde_json::json!({"debounce": debounce_key})
                                         ),
@@ -11944,10 +11944,10 @@ fn resolve_telegram_tts(
     match crate::tts::TtsManager::from_config_for_agent(config, owner) {
         Ok(m) => Some(Arc::new(m)),
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                 "TTS disabled"
             );
@@ -11968,10 +11968,10 @@ fn resolve_whatsapp_tts(
     match crate::tts::TtsManager::from_config_for_agent(config, owner) {
         Ok(m) => Some(Arc::new(m)),
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                 "TTS disabled"
             );
@@ -12517,13 +12517,13 @@ fn build_channel_by_id(
                 NextcloudTalkChannel::new_with_proxy(
                     nc.base_url.clone(),
                     nc.resolve_bot_secret().unwrap_or_else(|e| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                             &e.to_string()
                         );
                         None
@@ -13250,10 +13250,10 @@ fn resolved_transcription_manager(
     match crate::transcription::build_channel_transcription_manager(config, &provider) {
         Ok(manager) => Some(Arc::new(manager)),
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(
                         ::serde_json::json!({"channel_key": channel_key, "e": e.to_string()})
                     ),
@@ -13276,10 +13276,10 @@ fn resolve_whatsapp_tts(
     match crate::tts::TtsManager::from_config_for_agent(config, owner) {
         Ok(m) => Some(Arc::new(m)),
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{}", e))})),
                 "TTS disabled"
             );
@@ -13466,10 +13466,10 @@ fn collect_configured_channels(
 
     if active_channel_aliases.disabled_owners_exist() {
         let skipped: Vec<&String> = active_channel_aliases.all_known_bindings.iter().collect();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "skipped_bindings": skipped.len(),
                     "bindings": skipped,
@@ -13533,10 +13533,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-telegram"))]
     if !config.channels.telegram.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Telegram channel is configured but this build was compiled without \
              `channel-telegram`; skipping Telegram."
         );
@@ -13574,10 +13574,10 @@ fn collect_configured_channels(
                     discord_ch = discord_ch.with_archive_memory(std::sync::Arc::new(mem));
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "discord: archive enabled but failed to open discord.db"
                     );
@@ -13593,10 +13593,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-discord"))]
     if !config.channels.discord.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Discord channel is configured but this build was compiled without \
              `channel-discord`; skipping Discord."
         );
@@ -13618,10 +13618,10 @@ fn collect_configured_channels(
         let thread_context_max_messages_resolver =
             slack_thread_context_max_messages_resolver(config_arc, alias);
         let Some(bot_token) = sl.resolved_bot_token() else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({ "alias": alias.clone() })),
                 "Slack channel skipped: bot_token not set in config or via \
                  CLAWCREW_SLACK_BOT_TOKEN / SLACK_BOT_TOKEN env"
@@ -13663,10 +13663,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-slack"))]
     if !config.channels.slack.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Slack channel is configured but this build was compiled without \
              `channel-slack`; skipping Slack."
         );
@@ -13720,10 +13720,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-mattermost"))]
     if !config.channels.mattermost.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Mattermost channel is configured but this build was compiled without \
              `channel-mattermost`; skipping Mattermost."
         );
@@ -13755,10 +13755,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-imessage"))]
     if !config.channels.imessage.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "iMessage channel is configured but this build was compiled without \
              `channel-imessage`; skipping iMessage."
         );
@@ -13781,10 +13781,10 @@ fn collect_configured_channels(
                 });
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Matrix channel construction failed"
                 );
@@ -13794,10 +13794,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-matrix"))]
     if !config.channels.matrix.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             &format!(
                 "Matrix channel is configured but this build was compiled without `channel-matrix`; skipping Matrix {}.",
                 matrix_skip_context
@@ -13814,10 +13814,10 @@ fn collect_configured_channels(
             continue;
         }
         if !sig.has_required_credentials() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "Signal channel '{alias}' is enabled but missing required fields \
                      (channels.signal.{alias}.http_url, channels.signal.{alias}.account); \
@@ -13856,10 +13856,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-signal"))]
     if !config.channels.signal.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Signal channel is configured but this build was compiled without \
              `channel-signal`; skipping Signal."
         );
@@ -13874,10 +13874,10 @@ fn collect_configured_channels(
             continue;
         }
         if wa.is_ambiguous_config() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "WhatsApp config has both phone_number_id (Cloud) and a Web selector (session_path/pair_phone/pair_code/ws_url/mode=personal) set; preferring Cloud API mode. Remove one selector to avoid ambiguity."
             );
         }
@@ -13913,29 +13913,29 @@ fn collect_configured_channels(
                         ),
                     });
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "WhatsApp Cloud API configured but missing required fields (phone_number_id, access_token, verify_token)"
                     );
                 }
                 #[cfg(not(feature = "channel-whatsapp-cloud"))]
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "WhatsApp Cloud API backend requires 'channel-whatsapp-cloud' feature. Build/run with --features channel-whatsapp-cloud"
                     );
                 }
             }
             #[cfg(not(feature = "channel-whatsapp-cloud"))]
             "cloud" => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "WhatsApp Cloud API is configured but this build was compiled without `channel-whatsapp-cloud`; skipping WhatsApp Cloud."
                 );
             }
@@ -13993,19 +13993,19 @@ fn collect_configured_channels(
                         ),
                     });
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "WhatsApp Web configured but session_path not set"
                     );
                 }
                 #[cfg(not(feature = "whatsapp-web"))]
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "WhatsApp Web backend requires 'whatsapp-web' feature. Enable with: cargo build --features whatsapp-web"
                     );
                     eprintln!(
@@ -14015,10 +14015,10 @@ fn collect_configured_channels(
                 }
             }
             _ => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "WhatsApp config invalid: neither phone_number_id (Cloud API) nor session_path (Web) is set"
                 );
             }
@@ -14052,10 +14052,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-linq"))]
     if !config.channels.linq.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Linq channel is configured but this build was compiled without \
              `channel-linq`; skipping Linq."
         );
@@ -14084,10 +14084,10 @@ fn collect_configured_channels(
             channel: Arc::new(NextcloudTalkChannel::new_with_proxy(
                 nc.base_url.clone(),
                 nc.resolve_bot_secret().unwrap_or_else(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         &e.to_string()
                     );
                     None
@@ -14102,10 +14102,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-nextcloud"))]
     if !config.channels.nextcloud_talk.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Nextcloud Talk channel is configured but this build was compiled without \
              `channel-nextcloud`; skipping Nextcloud Talk."
         );
@@ -14166,10 +14166,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-email"))]
     if !config.channels.email.is_empty() || !config.channels.gmail_push.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Email/Gmail Push channel is configured but this build was compiled without \
              `channel-email`; skipping Email and Gmail Push."
         );
@@ -14210,10 +14210,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-irc"))]
     if !config.channels.irc.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "IRC channel is configured but this build was compiled without \
              `channel-irc`; skipping IRC."
         );
@@ -14251,10 +14251,10 @@ fn collect_configured_channels(
         }) {
             Ok(ch) => ch,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "alias": alias,
                             "error": err.to_string(),
@@ -14273,10 +14273,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-amqp"))]
     if !config.channels.amqp.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "AMQP channel is configured but this build was compiled without \
              `channel-amqp`; skipping AMQP."
         );
@@ -14311,10 +14311,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-twitch"))]
     if !config.channels.twitch.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Twitch channel is configured but this build was compiled without \
              `channel-twitch`; skipping Twitch."
         );
@@ -14355,10 +14355,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-lark"))]
     if !config.channels.lark.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Lark/Feishu channel is configured but this build was compiled without `channel-lark`; skipping Lark/Feishu health check."
         );
     }
@@ -14406,10 +14406,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-line"))]
     if !config.channels.line.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "LINE channel is configured but this build was compiled without `channel-line`; skipping LINE health check."
         );
     }
@@ -14444,10 +14444,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-dingtalk"))]
     if !config.channels.dingtalk.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "DingTalk channel is configured but this build was compiled without \
              `channel-dingtalk`; skipping DingTalk."
         );
@@ -14488,10 +14488,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-qq"))]
     if !config.channels.qq.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "QQ channel is configured but this build was compiled without \
              `channel-qq`; skipping QQ."
         );
@@ -14523,10 +14523,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-twitter"))]
     if !config.channels.twitter.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "X/Twitter channel is configured but this build was compiled without \
              `channel-twitter`; skipping X/Twitter."
         );
@@ -14552,10 +14552,10 @@ fn collect_configured_channels(
                 channel: Arc::new(channel),
             }),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "alias": alias,
                             "error": e.to_string(),
@@ -14568,10 +14568,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-git"))]
     if !config.channels.git.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Git channel is configured but this build was compiled without \
              `channel-git`; skipping Git."
         );
@@ -14605,10 +14605,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-mochat"))]
     if !config.channels.mochat.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Mochat channel is configured but this build was compiled without \
              `channel-mochat`; skipping Mochat."
         );
@@ -14640,10 +14640,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-wecom"))]
     if !config.channels.wecom.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "WeCom channel is configured but this build was compiled without \
              `channel-wecom`; skipping WeCom."
         );
@@ -14686,10 +14686,10 @@ fn collect_configured_channels(
                 channel: Arc::new(channel),
             }),
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{err:#}")})),
                     format!(
                         "WeCom WebSocket channel configuration is invalid; skipping WeCom WebSocket {matrix_skip_context}"
@@ -14701,10 +14701,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-wecom-ws"))]
     if !config.channels.wecom_ws.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             format!(
                 "WeCom WebSocket channel is configured but this build was compiled without `channel-wecom-ws`; skipping WeCom WebSocket {matrix_skip_context}."
             ),
@@ -14747,7 +14747,7 @@ fn collect_configured_channels(
                 });
             }
             Err(err) => {
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"matrix_skip_context": matrix_skip_context, "err": err.to_string()})), "WeChat channel configuration is invalid; skipping WeChat");
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"matrix_skip_context": matrix_skip_context, "err": err.to_string()})), "WeChat channel configuration is invalid; skipping WeChat");
             }
         }
     }
@@ -14755,10 +14755,10 @@ fn collect_configured_channels(
     #[cfg(not(feature = "channel-wechat"))]
     for alias in config.channels.wechat.keys() {
         if active_channel_aliases.contains(&format!("wechat.{alias}")) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"matrix_skip_context": matrix_skip_context})),
                 "WeChat channel is configured but this build was compiled without `channel-wechat`; skipping WeChat ."
             );
@@ -14782,10 +14782,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-clawdtalk"))]
     if !config.channels.clawdtalk.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "ClawdTalk channel is configured but this build was compiled without \
              `channel-clawdtalk`; skipping ClawdTalk."
         );
@@ -14796,10 +14796,10 @@ fn collect_configured_channels(
     if config.notion.enabled && !config.notion.database_id.trim().is_empty() {
         let notion_api_key = config.notion.api_key.trim().to_string();
         if notion_api_key.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Notion channel enabled but `notion.api_key` is unset. Set it via the schema-mirror grammar: \
                  `CLAWCREW_notion__api_key=...`."
             );
@@ -14824,10 +14824,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-notion"))]
     if config.notion.enabled {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Notion channel is enabled but this build was compiled without \
              `channel-notion`; skipping Notion."
         );
@@ -14860,10 +14860,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-reddit"))]
     if !config.channels.reddit.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Reddit channel is configured but this build was compiled without \
              `channel-reddit`; skipping Reddit."
         );
@@ -14893,10 +14893,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-bluesky"))]
     if !config.channels.bluesky.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Bluesky channel is configured but this build was compiled without \
              `channel-bluesky`; skipping Bluesky."
         );
@@ -14934,10 +14934,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "voice-wake"))]
     if !config.channels.voice_wake.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "VoiceWake channel is configured but this build was compiled without \
              `voice-wake`; skipping VoiceWake."
         );
@@ -14952,10 +14952,10 @@ fn collect_configured_channels(
             continue;
         }
         if !vc.has_required_credentials() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "Voice Call channel '{alias}' is enabled but missing required fields \
                      (channels.voice_call.{alias}.account_id, channels.voice_call.{alias}.auth_token, \
@@ -14974,10 +14974,10 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-voice-call"))]
     if !config.channels.voice_call.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Voice Call channel is configured but this build was compiled without \
              `channel-voice-call`; skipping Voice Call."
         );
@@ -15014,19 +15014,19 @@ fn collect_configured_channels(
 
     #[cfg(not(feature = "channel-webhook"))]
     if !config.channels.webhook.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Webhook channel is configured but this build was compiled without \
              `channel-webhook`; skipping Webhook."
         );
     }
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({
                 "activated_bindings": active_channel_aliases.enabled_bindings.len(),
                 "bindings": active_channel_aliases.enabled_bindings.iter().collect::<Vec<_>>(),
@@ -15128,10 +15128,10 @@ pub async fn doctor_channels(config: Config) -> Result<()> {
     {
         let config = config_arc.read();
         if !config.channels.nostr.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Nostr channel is configured but this build was compiled without \
                  `channel-nostr`; skipping Nostr health check."
             );
@@ -15258,10 +15258,10 @@ fn build_owner_by_channel_key(
 
     if any_binding_declared_anywhere {
         if owner_by_channel_key.is_empty() && !collected_channel_keys.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "channel bindings exist but no owning agent is enabled; \
                  affected channels will be unbound and inbound messages dropped (#8013)"
             );
@@ -15340,10 +15340,10 @@ fn hydrate_session_transcript(
     let mut msgs = match store.try_load(session_key) {
         Ok(v) => v,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "session_key": session_key,
                         "error": format!("{}", e),
@@ -15366,10 +15366,10 @@ fn hydrate_session_transcript(
     let durable_crumb = match store.get_session_trim_breadcrumb(session_key) {
         Ok(v) => v,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "session_key": session_key,
                         "error": format!("{}", e),
@@ -15396,9 +15396,9 @@ fn hydrate_session_transcript(
     if msgs.last().is_some_and(|msg| msg.role == "user") {
         let closure = ChatMessage::assistant("[Session interrupted — not continuing this request]");
         if let Err(e) = store.append(session_key, &closure) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 &format!("Failed to persist orphan closure for {session_key}")
             );
@@ -15443,9 +15443,9 @@ fn hydrate_session_transcript(
             store.set_session_trim_breadcrumb(session_key, crumb_present)
         };
         if let Err(e) = persist_result {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 &format!("Failed to reconcile stale trim breadcrumb flag for {session_key}")
             );
@@ -15511,10 +15511,10 @@ pub async fn start_channels_with_plugin_webhooks(
         .filter(|(_, a)| a.enabled)
         .any(|(_, a)| runtime_defaults_from_config(&config, a.model_provider.as_str()).is_ok());
     if !any_agent_provider_resolves {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Channels supervisor: no model configured. Waiting for reload \
              (complete onboarding at /onboard or set \
              [providers.models.<type>.<alias>] model = \"...\" and reload)."
@@ -15553,9 +15553,9 @@ pub async fn start_channels_with_plugin_webhooks(
                 &config.channels.session_backend,
             ) {
                 Ok(backend) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!(
                             "📂 Session persistence enabled (backend: {})",
                             config.channels.session_backend
@@ -15564,10 +15564,10 @@ pub async fn start_channels_with_plugin_webhooks(
                     Some(backend)
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "Session persistence disabled"
                     );
@@ -15628,10 +15628,10 @@ pub async fn start_channels_with_plugin_webhooks(
         );
 
         if let Err(e) = ProviderDispatch::from_ref(&*model_provider).warmup().await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(
                         ::serde_json::json!({"error": format!("{}", e), "agent": agent_alias})
                     ),
@@ -15692,10 +15692,10 @@ pub async fn start_channels_with_plugin_webhooks(
             }
             #[cfg(not(feature = "channel-nostr"))]
             if !config.channels.nostr.is_empty() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "Nostr channel is configured but this build was compiled without \
                      `channel-nostr`; skipping Nostr."
                 );
@@ -15725,10 +15725,10 @@ pub async fn start_channels_with_plugin_webhooks(
             }
             #[cfg(not(feature = "channel-filesystem"))]
             if !config.channels.filesystem.is_empty() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "Filesystem channel is configured but this build was compiled without \
                      `channel-filesystem`; skipping Filesystem."
                 );
@@ -15744,9 +15744,9 @@ pub async fn start_channels_with_plugin_webhooks(
                 publish_cron_channel_registry(&configured_channels);
             cron_channel_registry_lease = Some(registry_lease);
             if configured_channels.is_empty() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "No active channels to supervise (none configured or all disabled). \
                      Waiting for reload signal."
                 );
@@ -15936,7 +15936,7 @@ pub async fn start_channels_with_plugin_webhooks(
             let pruned =
                 galleon_tool_call_parser::history_pruner::remove_orphaned_tool_messages(&mut msgs);
             if !pruned.is_empty() {
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"category": "agent", "agent_alias": owner_agent.as_deref().unwrap_or(""), "channel": m.channel_id.as_deref().unwrap_or(""), "session_key": m.key, "removed": pruned.removed, "orphan_tool_call_ids": pruned.orphan_tool_call_ids})), "removed orphaned tool messages from restored history (tool_use/tool_result pairing inconsistency auto-healed)");
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"category": "agent", "agent_alias": owner_agent.as_deref().unwrap_or(""), "channel": m.channel_id.as_deref().unwrap_or(""), "session_key": m.key, "removed": pruned.removed, "orphan_tool_call_ids": pruned.orphan_tool_call_ids})), "removed orphaned tool messages from restored history (tool_use/tool_result pairing inconsistency auto-healed)");
             }
             target_ctx
                 .history_crumb_flags
@@ -15953,17 +15953,17 @@ pub async fn start_channels_with_plugin_webhooks(
             hydrated += 1;
         }
         if hydrated > 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"hydrated": hydrated})),
                 "restored sessions from disk"
             );
         }
         if orphans_closed > 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"orphans_closed": orphans_closed})),
                 "closed orphaned session turns from previous crash"
             );
@@ -16030,10 +16030,10 @@ pub async fn deliver_announcement(
     let channel_type = raw_type.to_ascii_lowercase();
     #[allow(unused_variables)]
     let not_configured = || {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure),
             &format!("[channels.{channel_type}.{alias}] not configured")
         );
         anyhow::Error::msg(format!("[channels.{channel_type}.{alias}] not configured"))
@@ -16174,10 +16174,10 @@ pub async fn deliver_announcement(
             if !qq.enabled {
                 let message =
                     format!("[channels.qq.{alias}] is disabled; set enabled = true to deliver");
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"channel": format!("qq.{alias}")})),
                     &message
                 );
@@ -16206,10 +16206,10 @@ pub async fn deliver_announcement(
             // use_feishu. Error text names the real config table, not the
             // cron alias the user wrote.
             let lk = config.channels.lark.get(alias).ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     &format!(
                         "[channels.lark.{alias}] not configured (cron channel \"{channel_type}.{alias}\")"
                     )
@@ -16228,10 +16228,10 @@ pub async fn deliver_announcement(
                 );
             }
             if channel_type == "lark" && lk.use_feishu {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "cron channel=\"lark.{alias}\" with [channels.lark.{alias}] use_feishu=true \
                          falls back to one-shot channel construction; prefer channel=\"feishu.{alias}\" \

@@ -151,9 +151,9 @@ impl V1Config {
                     toml::Value::Table(entry_table),
                 );
 
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(
                             ::serde_json::json!({"default_provider_key": default_provider_key})
                         ),
@@ -188,9 +188,9 @@ impl V1Config {
                 apply_v1_to_v2_channel_folds(channels_table);
             }
             passthrough.insert("channels".to_string(), channels_value);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "channels_config → channels"
             );
         }
@@ -257,18 +257,18 @@ fn apply_v1_to_v2_channel_folds(channels: &mut toml::Table) {
     if let Some(toml::Value::Table(matrix)) = channels.get_mut("matrix")
         && fold_string_into_array(matrix, "room_id", "allowed_rooms")
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "channels.matrix.room_id folded into channels.matrix.allowed_rooms[]"
         );
     }
     if let Some(toml::Value::Table(slack)) = channels.get_mut("slack")
         && fold_string_into_array(slack, "channel_id", "channel_ids")
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "channels.slack.channel_id folded into channels.slack.channel_ids[]"
         );
     }

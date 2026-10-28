@@ -5848,10 +5848,10 @@
 
     #[test]
     fn trim_history_log_uses_canonical_attribution() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut log_rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut log_rx = galleon_log::subscribe_or_install();
         while log_rx.try_recv().is_ok() {}
 
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -5893,7 +5893,7 @@
                 "trim LogEvent with trace_id=trim-test-turn was not captured; candidates: {candidates:#?}"
             )
         });
-        let event: clawcrew_log::LogEvent =
+        let event: galleon_log::LogEvent =
             serde_json::from_value(value).expect("captured trim event should deserialize");
 
         assert_eq!(event.clawcrew.get("agent_alias"), Some("trim-test-agent"));
@@ -5907,7 +5907,7 @@
         assert!(event.attributes.get("channel").is_none());
         assert!(event.attributes.get("turn_id").is_none());
 
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
     }
 
     #[tokio::test]

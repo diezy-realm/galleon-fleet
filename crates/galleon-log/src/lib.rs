@@ -15,7 +15,7 @@ pub mod writer;
 
 /// Private re-export root. The `record!` / `scope!` / `attribution_span!`
 /// macros expand to paths under here so external crates can never
-/// reach `tracing` types via `clawcrew_log::*`. Do NOT use directly
+/// reach `tracing` types via `galleon_log::*`. Do NOT use directly
 /// from anywhere outside this crate.
 #[doc(hidden)]
 pub mod __private {
@@ -44,7 +44,7 @@ pub use writer::{
 };
 
 /// Opaque span handle. Same wire format as `tracing::Span` (we re-export
-/// the type) but the public path is `clawcrew_log::Span` — no `tracing`
+/// the type) but the public path is `galleon_log::Span` — no `tracing`
 /// in any consumer's source.
 pub use ::tracing::Span;
 

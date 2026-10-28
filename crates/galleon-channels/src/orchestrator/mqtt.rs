@@ -33,9 +33,9 @@ pub async fn run_mqtt_sop_listener(
     // Configure TLS transport when mqtts:// scheme is used
     if config.use_tls {
         mqtt_options.set_transport(Transport::tls_with_default_config());
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "MQTT SOP listener: TLS transport enabled"
         );
     }
@@ -51,9 +51,9 @@ pub async fn run_mqtt_sop_listener(
     // Subscribe to all configured topics
     for topic in &config.topics {
         client.subscribe(topic, qos).await?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"topic": topic})),
             "MQTT SOP listener: subscribed to ''"
         );
@@ -77,9 +77,9 @@ pub async fn run_mqtt_sop_listener(
             }
             Ok(Event::Incoming(Packet::ConnAck(_))) => {
                 galleon_infra::health::mark_component_ok("mqtt");
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "MQTT SOP listener: connected to broker"
                 );
             }
@@ -88,10 +88,10 @@ pub async fn run_mqtt_sop_listener(
             }
             Err(e) => {
                 galleon_infra::health::mark_component_error("mqtt", e.to_string());
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "MQTT SOP listener: connection error"
                 );

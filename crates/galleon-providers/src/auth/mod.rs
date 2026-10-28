@@ -130,10 +130,10 @@ impl AuthService {
         let profile_id = resolve_requested_profile_id(&model_provider, requested_profile);
 
         let profile = data.profiles.get(&profile_id).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "profile_id": &profile_id,
                         "reason": "auth_profile_not_found",
@@ -615,10 +615,10 @@ impl std::str::FromStr for AuthProvider {
             anyhow::bail!("ModelProvider name cannot be empty");
         }
         serde_json::from_value(serde_json::Value::String(normalized.clone())).map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"normalized": &normalized})),
                 "auth: unknown auth provider"
             );
@@ -709,7 +709,7 @@ async fn refresh_openai_access_token_with_retries(
     refresh_oauth_access_token_with_retries(
         || refresh_access_token(client, refresh_token),
         |failure| {
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"attempt": failure.attempt, "max_attempts": failure.max_attempts, "retry": failure.should_retry, "error": format!("{}", failure.error)})), "OpenAI token refresh failed");
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"attempt": failure.attempt, "max_attempts": failure.max_attempts, "retry": failure.should_retry, "error": format!("{}", failure.error)})), "OpenAI token refresh failed");
         },
     )
     .await
@@ -726,7 +726,7 @@ async fn refresh_gemini_access_token_with_retries(
             gemini_oauth::refresh_access_token(client, client_id, client_secret, refresh_token)
         },
         |failure| {
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"attempt": failure.attempt, "max_attempts": failure.max_attempts, "retry": failure.should_retry, "error": format!("{}", failure.error)})), "Gemini token refresh failed");
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"attempt": failure.attempt, "max_attempts": failure.max_attempts, "retry": failure.should_retry, "error": format!("{}", failure.error)})), "Gemini token refresh failed");
         },
     )
     .await
@@ -750,7 +750,7 @@ async fn refresh_email_access_token_with_retries(
             )
         },
         |failure| {
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"attempt": failure.attempt, "max_attempts": failure.max_attempts, "retry": failure.should_retry, "non_retryable": failure.non_retryable, "error": format!("{}", failure.error)})), "Email OAuth2 token refresh failed");
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"attempt": failure.attempt, "max_attempts": failure.max_attempts, "retry": failure.should_retry, "non_retryable": failure.non_retryable, "error": format!("{}", failure.error)})), "Email OAuth2 token refresh failed");
         },
     )
     .await
@@ -1256,10 +1256,10 @@ impl AuthProviderFlow for OpenaiCodexFlow {
         input: Option<&str>,
     ) -> Result<()> {
         let pending = load_pending_oauth_login(ctx.config, "openai")?.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "oauth_provider": "openai",
                         "profile": profile,
@@ -1278,10 +1278,10 @@ impl AuthProviderFlow for OpenaiCodexFlow {
             );
         }
         let redirect_input = input.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"oauth_provider": "openai"})),
                 "auth: paste-redirect requires URL or code"
             );
@@ -1336,10 +1336,10 @@ impl GeminiFlow {
     /// the operator's Google Cloud OAuth app credentials.
     fn alias_creds<'a>(config: &'a Config, profile: &str) -> Result<(&'a str, &'a str)> {
         let alias_cfg = config.providers.models.gemini.get(profile).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "oauth_provider": "gemini",
                         "profile": profile,
@@ -1359,10 +1359,10 @@ impl GeminiFlow {
             .map(str::trim)
             .filter(|s| !s.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "oauth_provider": "gemini",
                             "profile": profile,
@@ -1380,10 +1380,10 @@ impl GeminiFlow {
             .map(str::trim)
             .filter(|s| !s.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "oauth_provider": "gemini",
                             "profile": profile,
@@ -1511,10 +1511,10 @@ impl AuthProviderFlow for GeminiFlow {
     ) -> Result<()> {
         let (client_id, client_secret) = Self::alias_creds(ctx.config, profile)?;
         let pending = load_pending_oauth_login(ctx.config, "gemini")?.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "oauth_provider": "gemini",
                         "profile": profile,
@@ -1533,10 +1533,10 @@ impl AuthProviderFlow for GeminiFlow {
             );
         }
         let redirect_input = input.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"oauth_provider": "gemini"})),
                 "auth: paste-redirect requires URL or code"
             );

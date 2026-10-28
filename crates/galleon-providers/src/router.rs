@@ -149,7 +149,7 @@ impl RouterModelProvider {
                 match provider_indices.get(&route.provider_name) {
                     Some(_) => Some((hint, route)),
                     None => {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"hint": hint, "model_provider": route.provider_name})), "Route references unknown model_provider, skipping");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"hint": hint, "model_provider": route.provider_name})), "Route references unknown model_provider, skipping");
                         None
                     }
                 }
@@ -226,10 +226,10 @@ impl RouterModelProvider {
         }
 
         // Fallback to default
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "No cost-optimized route found with matching pricing data, \
              falling back to default"
         );
@@ -243,10 +243,10 @@ impl RouterModelProvider {
         let resolved = self.route_resolver.resolve(model);
         if resolved.kind == RouteResolutionKind::UnknownHintFallback {
             let hint = model.strip_prefix("hint:").unwrap_or_default();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"hint": hint})),
                 "Unknown route hint, falling back to default model_provider"
             );
@@ -327,7 +327,7 @@ impl ModelProvider for RouterModelProvider {
         // `provider_name` is the configured `<type>.<alias>` key the
         // caller registered with `RouterModelProvider::new` — already a
         // composite. Layer's `set_composite` splits it on emit.
-        ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": provider_name.as_str(), "model": resolved_model.as_str()})), "router dispatching request");
+        ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": provider_name.as_str(), "model": resolved_model.as_str()})), "router dispatching request");
 
         with_exact_dispatch_route(
             provider_name.clone(),
@@ -539,17 +539,17 @@ impl ModelProvider for RouterModelProvider {
 
     async fn warmup(&self) -> anyhow::Result<()> {
         for (name, model_provider) in &self.model_providers {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"model_provider": name})),
                 "Warming up routed model_provider"
             );
             if let Err(e) = ProviderDispatch::from_ref(&**model_provider).warmup().await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": format!("{}", e), "model_provider": name})
                         ),

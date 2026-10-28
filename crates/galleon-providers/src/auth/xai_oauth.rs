@@ -349,7 +349,7 @@ async fn parse_token_response(response: reqwest::Response) -> Result<TokenSet> {
 }
 
 pub async fn receive_loopback_code(expected_state: &str, timeout: Duration) -> Result<String> {
-    ::clawcrew_log::scope!(
+    ::galleon_log::scope!(
         model_provider_type: "xai",
         model_provider_alias: "oauth",
         => async move {
@@ -442,7 +442,7 @@ pub async fn import_grok_auth_profile(
     profile: &str,
     import_path: &std::path::Path,
 ) -> Result<()> {
-    ::clawcrew_log::scope!(
+    ::galleon_log::scope!(
         model_provider_type: "xai",
         model_provider_alias: profile,
         => async move {

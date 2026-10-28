@@ -422,10 +422,10 @@ pub(crate) fn refresh_qwen_oauth_access_token(
         ])
         .send()
         .map_err(|error| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "oauth_provider": "qwen",
                         "phase": "refresh_request",
@@ -454,10 +454,10 @@ pub(crate) fn refresh_qwen_oauth_access_token(
     }
 
     let payload = parsed.ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "oauth_provider": "qwen",
                     "phase": "refresh_parse",
@@ -482,10 +482,10 @@ pub(crate) fn refresh_qwen_oauth_access_token(
         .map(str::trim)
         .filter(|token| !token.is_empty())
         .ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "oauth_provider": "qwen",
                         "field": "access_token",
@@ -567,10 +567,10 @@ pub(crate) fn refresh_minimax_oauth_access_token(
         ])
         .send()
         .map_err(|error| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "oauth_provider": "minimax",
                         "phase": "refresh_request",
@@ -658,10 +658,10 @@ fn resolve_qwen_oauth_context(credential_override: Option<&str>) -> QwenOauthPro
                 cached = Some(refreshed);
             }
             Err(error) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", error)})),
                     "OAuth refresh failed"
                 );
@@ -1317,10 +1317,10 @@ pub(crate) fn api_error_from_parts(
     body: &str,
 ) -> anyhow::Error {
     let sanitized = sanitize_api_error(body);
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         ERROR,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(::serde_json::json!({
                 "model_provider": model_provider,
                 "status": status.as_u16(),
@@ -1820,10 +1820,10 @@ fn append_fallback_chain(
     depth: usize,
 ) -> anyhow::Result<()> {
     if depth > galleon_config::providers::MAX_FALLBACK_DEPTH {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                         "max_depth": galleon_config::providers::MAX_FALLBACK_DEPTH
                 })),
@@ -1837,10 +1837,10 @@ fn append_fallback_chain(
             continue;
         }
         let Some((family, alias, entry)) = config.providers.models.find_by_name(raw) else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"fallback": raw})),
                 "fallback ref does not resolve; skipping"
             );
@@ -1848,10 +1848,10 @@ fn append_fallback_chain(
         };
         let resolved = format!("{family}.{alias}");
         if visited.iter().any(|v| v == &resolved) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"fallback": resolved})),
                 "fallback ref closes a cycle; pruning"
             );

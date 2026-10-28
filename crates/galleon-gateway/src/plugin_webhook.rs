@@ -86,10 +86,10 @@ async fn handle_plugin_webhook(
     let rate_key =
         client_key_from_request(Some(peer_addr), &headers, state.trust_forwarded_headers);
     if !state.rate_limiter.allow_webhook(&rate_key) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "path": path,
                     "error_key": "plugin_webhook_rate_limited",
@@ -156,10 +156,10 @@ async fn handle_plugin_webhook(
             (StatusCode::BAD_GATEWAY, "invalid webhook response").into_response()
         }
         Ok(Ok(Err(WebhookReject::Unauthorized(_)))) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": path,
                         "error_key": "plugin_webhook_unauthorized",
@@ -169,10 +169,10 @@ async fn handle_plugin_webhook(
             (StatusCode::UNAUTHORIZED, "unauthorized webhook").into_response()
         }
         Ok(Ok(Err(WebhookReject::BadRequest(_)))) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": path,
                         "error_key": "plugin_webhook_invalid",
@@ -182,10 +182,10 @@ async fn handle_plugin_webhook(
             (StatusCode::BAD_REQUEST, "invalid webhook").into_response()
         }
         Ok(Ok(Err(WebhookReject::Unavailable(_)))) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": path,
                         "error_key": "plugin_webhook_unavailable",

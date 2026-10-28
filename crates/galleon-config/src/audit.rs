@@ -283,10 +283,10 @@ impl AuditLogger {
                     std::env::VarError::NotPresent => "missing",
                     std::env::VarError::NotUnicode(_) => "not_valid_unicode",
                 };
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"reason": reason})),
                     "audit log: sign_events=true but CLAWCREW_AUDIT_SIGNING_KEY env var is not usable"
                 );
@@ -301,10 +301,10 @@ impl AuditLogger {
             })?;
 
             let key_bytes = hex::decode(&key_hex).map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                     "audit log: CLAWCREW_AUDIT_SIGNING_KEY env var must be hex-encoded"
                 );
@@ -407,10 +407,10 @@ impl AuditLogger {
             use sha2::Sha256;
 
             let mut mac = Hmac::<Sha256>::new_from_slice(key_bytes).map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                     "audit log: HMAC-SHA256 init rejected key length"
                 );
@@ -769,10 +769,10 @@ fn verify_chain_file(
             use sha2::Sha256;
 
             let mut mac = Hmac::<Sha256>::new_from_slice(key_bytes).map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                     "audit log: HMAC-SHA256 verify rejected key length"
                 );

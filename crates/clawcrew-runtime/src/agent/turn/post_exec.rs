@@ -32,14 +32,14 @@ pub(crate) async fn record_executed_outcomes(
         // batches interleave call->result per tool. Post-exec only records the
         // outcome to history, logs, hooks, and ordered_results.
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Complete)
-                .with_category(::clawcrew_log::EventCategory::Tool)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Complete)
+                .with_category(::galleon_log::EventCategory::Tool)
                 .with_outcome(if outcome.success {
-                    ::clawcrew_log::EventOutcome::Success
+                    ::galleon_log::EventOutcome::Success
                 } else {
-                    ::clawcrew_log::EventOutcome::Failure
+                    ::galleon_log::EventOutcome::Failure
                 })
                 .with_duration(u64::try_from(outcome.duration.as_millis()).unwrap_or(u64::MAX))
                 .with_attrs(::serde_json::json!({
@@ -79,10 +79,10 @@ pub(crate) async fn record_executed_outcomes(
         send_progress(ctx.on_delta, ProgressEvent::Planning).await;
         if let (Some(tx), Some(stream_call)) = (ctx.on_delta, stream_call) {
             let secs = outcome.duration.as_secs();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_category(::clawcrew_log::EventCategory::Tool)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_category(::galleon_log::EventCategory::Tool)
                     .with_attrs(::serde_json::json!({"tool": call.name, "secs": secs})),
                 "Sending progress complete to draft"
             );

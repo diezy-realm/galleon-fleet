@@ -312,9 +312,9 @@ impl LandlockSandbox {
         match sandbox.build_ruleset() {
             Ok(_) => Ok(sandbox),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Landlock not available"
                 );
@@ -433,9 +433,9 @@ impl LandlockSandbox {
                             (!leaked.is_empty()).then_some((grant_path, leaked))
                         })
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({
                                 "root": root.display().to_string(),
                                 "tier": tier,
@@ -487,11 +487,11 @@ impl LandlockSandbox {
                                 if source.kind() == std::io::ErrorKind::NotFound
                         );
                         if absent {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 DEBUG,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({
                                     "root": root.display().to_string(),
@@ -500,11 +500,11 @@ impl LandlockSandbox {
                                 "Skipping absent allowed root in Landlock ruleset"
                             );
                         } else {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({
                                     "root": root.display().to_string(),
@@ -538,11 +538,11 @@ impl LandlockSandbox {
                                 ),
                             ));
                         }
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             ),
                             format!(
                                 "Failed to create PathFd for a nonexistent path {}.",

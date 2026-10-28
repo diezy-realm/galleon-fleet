@@ -266,10 +266,10 @@ pub fn print_install_tier_banner(name: &str, version: Option<&str>, tier: SkillT
 /// their skill.
 fn warn_skipped_skill(path: &Path, summary: &str, scripts_blocked: bool, allow_scripts: bool) {
     if scripts_blocked && !allow_scripts {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             &format!(
                 "skipping skill directory {}: {summary}. \
              To allow script files in skills, set `skills.allow_scripts = true` in your config.",
@@ -284,10 +284,10 @@ fn warn_skipped_skill(path: &Path, summary: &str, scripts_blocked: bool, allow_s
                 .unwrap_or_else(|| path.display().to_string()),
         );
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             &format!(
                 "skipping insecure skill directory {}: {summary}",
                 path.display().to_string()
@@ -309,10 +309,10 @@ fn warn_metadata_drift(skill_dir: &Path, toml_skill: &Skill, md_path: &Path) {
     if let Some(ref md_name) = parsed.meta.name
         && md_name != &toml_skill.name
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             &format!(
                 "skill '{}': name mismatch between TOML ('{}') and SKILL.md ('{}')",
                 dir_name, toml_skill.name, md_name
@@ -322,10 +322,10 @@ fn warn_metadata_drift(skill_dir: &Path, toml_skill: &Skill, md_path: &Path) {
     if let Some(ref md_desc) = parsed.meta.description {
         let md_desc = md_desc.trim();
         if !md_desc.is_empty() && md_desc != ">-" && md_desc != toml_skill.description.trim() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "skill '{}': description mismatch between TOML and SKILL.md — TOML takes precedence",
                     dir_name
@@ -428,7 +428,7 @@ pub fn load_skills_for_agent_audited(
         let bundle = match config.skill_bundles.get(bundle_alias) {
             Some(b) => b,
             None => {
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"agent": agent_alias, "bundle": bundle_alias, "bundle_alias": bundle_alias})), "skipping skill bundle: [skill_bundles.] is not configured");
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"agent": agent_alias, "bundle": bundle_alias, "bundle_alias": bundle_alias})), "skipping skill bundle: [skill_bundles.] is not configured");
                 continue;
             }
         };
@@ -439,7 +439,7 @@ pub fn load_skills_for_agent_audited(
         ) {
             Ok(d) => d,
             Err(e) => {
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"agent": agent_alias, "bundle": bundle_alias, "e": e.to_string()})), "skipping skill bundle: ");
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"agent": agent_alias, "bundle": bundle_alias, "e": e.to_string()})), "skipping skill bundle: ");
                 continue;
             }
         };
@@ -593,10 +593,10 @@ fn load_skills_from_directory_uncached(
                 continue;
             }
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "skipping unauditable skill directory {}: {err}",
                         path.display().to_string()
@@ -632,10 +632,10 @@ fn load_skills_from_directory_uncached(
                     skills.push(skill);
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "path": toml_path.display().to_string(),
                                 "error": format!("{}", e),
@@ -722,10 +722,10 @@ fn load_open_skills_from_directory_uncached(
                 continue;
             }
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "skipping unauditable open-skill directory {}: {err}",
                         path.display().to_string()
@@ -760,10 +760,10 @@ fn load_open_skills_from_directory_uncached(
                     skills.push(finalize_open_skill(skill));
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "path": toml_path.display().to_string(),
                                 "error": format!("{}", e),
@@ -831,10 +831,10 @@ fn load_open_skills(repo_dir: &Path, allow_scripts: bool) -> (Vec<Skill>, Vec<Dr
             Ok(report) => {
                 let summary = report.summary();
                 let scripts_blocked = report.scripts_blocked;
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "skipping insecure open-skill file {}: {}",
                         path.display().to_string(),
@@ -853,10 +853,10 @@ fn load_open_skills(repo_dir: &Path, allow_scripts: bool) -> (Vec<Skill>, Vec<Dr
                 continue;
             }
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "skipping unauditable open-skill file {}: {err}",
                         path.display().to_string()
@@ -897,10 +897,10 @@ fn open_skills_enabled_from_sources(
             return enabled;
         }
         if !raw.trim().is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Ignoring invalid CLAWCREW_OPEN_SKILLS_ENABLED (valid: 1|0|true|false|yes|no|on|off)"
             );
         }
@@ -969,10 +969,10 @@ fn ensure_open_skills_repo(
         if pull_open_skills_repo(&repo_dir) {
             let _ = mark_open_skills_synced(&repo_dir);
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "open-skills update failed; using local copy from {}",
                     repo_dir.display().to_string()
@@ -988,10 +988,10 @@ fn clone_open_skills_repo(repo_dir: &Path) -> bool {
     if let Some(parent) = repo_dir.parent()
         && let Err(err) = std::fs::create_dir_all(parent)
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             &format!(
                 "failed to create open-skills parent directory {}: {err}",
                 parent.display().to_string()
@@ -1007,9 +1007,9 @@ fn clone_open_skills_repo(repo_dir: &Path) -> bool {
 
     match output {
         Ok(result) if result.status.success() => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "initialized open-skills at {}",
                     repo_dir.display().to_string()
@@ -1019,20 +1019,20 @@ fn clone_open_skills_repo(repo_dir: &Path) -> bool {
         }
         Ok(result) => {
             let stderr = String::from_utf8_lossy(&result.stderr);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"stderr": stderr})),
                 "failed to clone open-skills: "
             );
             false
         }
         Err(err) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                 "failed to run git clone for open-skills"
             );
@@ -1057,20 +1057,20 @@ fn pull_open_skills_repo(repo_dir: &Path) -> bool {
         Ok(result) if result.status.success() => true,
         Ok(result) => {
             let stderr = String::from_utf8_lossy(&result.stderr);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"stderr": stderr})),
                 "failed to pull open-skills updates: "
             );
             false
         }
         Err(err) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                 "failed to run git pull for open-skills"
             );
@@ -1576,10 +1576,10 @@ fn resolve_elevated_tool(
     resolution_registry: &[std::sync::Arc<dyn clawcrew_api::tool::Tool>],
 ) -> Option<Box<dyn clawcrew_api::tool::Tool>> {
     let Some(target_name) = tool.target.as_deref() else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             &format!(
                 "Skill tool {}.{} has kind='{}' but no 'target' field, skipping",
                 skill_name, tool.name, kind_label
@@ -1595,10 +1595,10 @@ fn resolve_elevated_tool(
             tool.locked_args.clone(),
         ))),
         None => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "Skill tool {}.{} targets {} '{}' which was not found in the \
                      resolution registry (for MCP, use the prefixed name \
@@ -1655,10 +1655,10 @@ pub(crate) fn skills_to_tools_with_context_and_runtime_optional_nat64(
     for skill in skills {
         for tool in &skill.tools {
             if !is_registered_skill_tool_kind(tool.kind.as_str()) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "Unknown skill tool kind '{}' for {}.{}, skipping",
                         tool.kind, skill.name, tool.name
@@ -1706,10 +1706,10 @@ pub(crate) fn skills_to_tools_with_context_and_runtime_optional_nat64(
                 // ever drift apart: an unsupported tool is safer skipped than
                 // allowed to abort agent startup.
                 other => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!(
                             "Registered skill tool kind '{other}' for {}.{} has no dispatcher, skipping",
                             skill.name, tool.name
@@ -2617,9 +2617,9 @@ fn clone_skills_repository(target_dir: &Path, repo_url: &str) -> Result<()> {
         anyhow::bail!("failed to clone skills registry: {stderr}");
     }
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         &format!(
             "cloned skills registry to {}",
             target_dir.display().to_string()
@@ -2649,20 +2649,20 @@ fn pull_skills_registry(registry_dir: &Path) -> bool {
         Ok(result) if result.status.success() => true,
         Ok(result) => {
             let stderr = String::from_utf8_lossy(&result.stderr);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"stderr": stderr})),
                 "failed to pull skills registry updates: "
             );
             false
         }
         Err(err) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                 "failed to run git pull for skills registry"
             );
@@ -2703,10 +2703,10 @@ fn ensure_skills_registry(workspace_dir: &Path, registry_url: Option<&str>) -> R
         if pull_skills_registry(&registry_dir) {
             let _ = mark_skills_registry_synced(&registry_dir);
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "skills registry update failed; using local copy from {}",
                     registry_dir.display().to_string()
@@ -2918,10 +2918,10 @@ fn ensure_extra_registry(
         if pull_skills_registry(&registry_dir) {
             let _ = mark_skills_registry_synced(&registry_dir);
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "extra registry update failed; using local copy from {}",
                     registry_dir.display().to_string()
@@ -3055,10 +3055,10 @@ pub fn load_plugin_skills_from_config(
     ) {
         Ok(host) => host,
         Err(err) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                 "failed to discover plugin skills"
             );
@@ -3069,10 +3069,10 @@ pub fn load_plugin_skills_from_config(
     let plan = match crate::plugin_runtime::PluginActivationPlan::build(config, &host) {
         Ok(plan) => plan,
         Err(err) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                 "failed to admit logical plugin skill instances"
             );

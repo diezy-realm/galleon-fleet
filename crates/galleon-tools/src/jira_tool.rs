@@ -111,10 +111,10 @@ impl JiraTool {
             .query(&query)
             .timeout(std::time::Duration::from_secs(self.timeout_secs));
         let resp = self.authenticated(req).send().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Jira get_ticket request failed"
             );
@@ -131,10 +131,10 @@ impl JiraTool {
         }
 
         let raw: Value = resp.json().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Failed to parse Jira get_ticket response"
             );
@@ -208,10 +208,10 @@ impl JiraTool {
                 .json(&body)
                 .timeout(std::time::Duration::from_secs(self.timeout_secs));
             let resp = self.authenticated(req).send().await.map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "jira: Jira search_tickets request failed"
                 );
@@ -228,10 +228,10 @@ impl JiraTool {
             }
 
             let raw: Value = resp.json().await.map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "jira: Failed to parse Jira search response"
                 );
@@ -280,10 +280,10 @@ impl JiraTool {
                 .json(&body)
                 .timeout(std::time::Duration::from_secs(self.timeout_secs));
             let resp = self.authenticated(req).send().await.map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "jira: Jira search_tickets request failed"
                 );
@@ -300,10 +300,10 @@ impl JiraTool {
             }
 
             let raw: Value = resp.json().await.map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "jira: Failed to parse Jira search response"
                 );
@@ -359,10 +359,10 @@ impl JiraTool {
             .json(&body)
             .timeout(std::time::Duration::from_secs(self.timeout_secs));
         let resp = self.authenticated(req).send().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Jira comment_ticket request failed"
             );
@@ -379,10 +379,10 @@ impl JiraTool {
         }
 
         let response: Value = resp.json().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Failed to parse Jira comment response"
             );
@@ -408,10 +408,10 @@ impl JiraTool {
             .get(&url)
             .timeout(std::time::Duration::from_secs(self.timeout_secs));
         let resp = self.authenticated(req).send().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Jira list_projects request failed"
             );
@@ -428,10 +428,10 @@ impl JiraTool {
         }
 
         let projects: Vec<Value> = resp.json().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Failed to parse Jira list_projects response"
             );
@@ -459,10 +459,10 @@ impl JiraTool {
             ])
             .timeout(std::time::Duration::from_secs(self.timeout_secs));
         let users_resp = self.authenticated(users_req).send().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Jira list_projects users request failed"
             );
@@ -471,10 +471,10 @@ impl JiraTool {
 
         let users: Vec<Value> = if users_resp.status().is_success() {
             users_resp.json().await.map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "jira: Failed to parse Jira list_projects users response"
                 );
@@ -501,10 +501,10 @@ impl JiraTool {
                     continue;
                 };
                 statuses_results[idx] = result.map_err(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "jira: Jira statuses failed"
                     );
@@ -528,13 +528,13 @@ impl JiraTool {
                         None => req.bearer_auth(&token),
                     };
                     let resp = req.send().await.map_err(|e| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "jira: statuses request failed"
                         );
@@ -546,13 +546,13 @@ impl JiraTool {
                     }
 
                     resp.json::<Value>().await.map_err(|e| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "jira: failed to parse statuses response"
                         );
@@ -566,10 +566,10 @@ impl JiraTool {
 
         while let Some(Ok((idx, result))) = set.join_next().await {
             statuses_results[idx] = result.map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "jira: Jira statuses failed"
                 );
@@ -606,10 +606,10 @@ impl JiraTool {
             .get(&url)
             .timeout(std::time::Duration::from_secs(self.timeout_secs));
         let resp = self.authenticated(req).send().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Jira myself request failed"
             );
@@ -626,10 +626,10 @@ impl JiraTool {
         }
 
         let raw: Value = resp.json().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Failed to parse Jira myself response"
             );
@@ -697,10 +697,10 @@ impl JiraTool {
             .get(&url)
             .timeout(std::time::Duration::from_secs(self.timeout_secs));
         let resp = self.authenticated(req).send().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Jira list_transitions request failed"
             );
@@ -717,10 +717,10 @@ impl JiraTool {
         }
 
         let raw: Value = resp.json().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Failed to parse Jira transitions response"
             );
@@ -798,10 +798,10 @@ impl JiraTool {
             .json(&body)
             .timeout(std::time::Duration::from_secs(self.timeout_secs));
         let resp = self.authenticated(req).send().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Jira transition_ticket request failed"
             );
@@ -896,10 +896,10 @@ impl JiraTool {
             .json(&body)
             .timeout(std::time::Duration::from_secs(self.timeout_secs));
         let resp = self.authenticated(req).send().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Jira create_ticket request failed"
             );
@@ -916,10 +916,10 @@ impl JiraTool {
         }
 
         let raw: Value = resp.json().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "jira: Failed to parse Jira create_ticket response"
             );

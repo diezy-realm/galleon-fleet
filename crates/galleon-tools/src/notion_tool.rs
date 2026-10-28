@@ -35,10 +35,10 @@ impl NotionTool {
         headers.insert(
             "Authorization",
             format!("Bearer {}", self.api_key).parse().map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "notion_tool: invalid API key header value"
                 );

@@ -21,10 +21,10 @@ pub fn scan_plugin_dir() -> Vec<LoadedPlugin> {
     let tools_dir = match plugin_tools_dir() {
         Ok(p) => p,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "cannot resolve plugin tools dir"
             );
@@ -35,10 +35,10 @@ pub fn scan_plugin_dir() -> Vec<LoadedPlugin> {
     // Create the directory tree if it is missing.
     if !tools_dir.exists() {
         if let Err(e) = fs::create_dir_all(&tools_dir) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "[registry] could not create {:?}: {}",
                     tools_dir.display().to_string(),
@@ -47,9 +47,9 @@ pub fn scan_plugin_dir() -> Vec<LoadedPlugin> {
             );
             return Vec::new();
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "[registry] created plugin directory: {}",
                 tools_dir.display().to_string()
@@ -76,10 +76,10 @@ pub fn scan_plugin_dir() -> Vec<LoadedPlugin> {
     let entries = match fs::read_dir(&tools_dir) {
         Ok(e) => e,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "cannot read tools dir"
             );
@@ -91,10 +91,10 @@ pub fn scan_plugin_dir() -> Vec<LoadedPlugin> {
         let entry = match entry {
             Ok(e) => e,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "skipping unreadable dir entry"
                 );
@@ -112,9 +112,9 @@ pub fn scan_plugin_dir() -> Vec<LoadedPlugin> {
         let manifest_path = plugin_dir.join("tool.toml");
 
         if !manifest_path.exists() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "[registry] no tool.toml in {:?} — skipping",
                     plugin_dir.file_name().unwrap_or_default()
@@ -126,10 +126,10 @@ pub fn scan_plugin_dir() -> Vec<LoadedPlugin> {
         match load_one_plugin(&plugin_dir, &manifest_path) {
             Ok(plugin) => plugins.push(plugin),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "[registry] skipping plugin in {:?}: {}",
                         plugin_dir.file_name().unwrap_or_default(),
@@ -147,10 +147,10 @@ pub fn scan_plugin_dir() -> Vec<LoadedPlugin> {
 /// Returns `Err` on any validation failure so the caller can log and continue.
 fn load_one_plugin(plugin_dir: &Path, manifest_path: &Path) -> Result<LoadedPlugin> {
     let raw = fs::read_to_string(manifest_path).map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "manifest_path": manifest_path.display().to_string(),
                     "error": format!("{}", e),
@@ -161,10 +161,10 @@ fn load_one_plugin(plugin_dir: &Path, manifest_path: &Path) -> Result<LoadedPlug
     })?;
 
     let manifest: ToolManifest = toml::from_str(&raw).map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "manifest_path": manifest_path.display().to_string(),
                     "error": format!("{}", e),
@@ -205,10 +205,10 @@ fn load_one_plugin(plugin_dir: &Path, manifest_path: &Path) -> Result<LoadedPlug
 
     // Validate binary path: must exist, be a regular file, and reside within plugin_dir.
     let canonical_plugin_dir = plugin_dir.canonicalize().map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "plugin_dir": plugin_dir.display().to_string(),
                     "error": format!("{}", e),
@@ -228,10 +228,10 @@ fn load_one_plugin(plugin_dir: &Path, manifest_path: &Path) -> Result<LoadedPlug
         );
     }
     let binary_path = raw_binary_path.canonicalize().map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "binary_path": raw_binary_path.display().to_string(),
                     "error": format!("{}", e),
@@ -272,10 +272,10 @@ fn load_one_plugin(plugin_dir: &Path, manifest_path: &Path) -> Result<LoadedPlug
 pub fn plugin_tools_dir() -> Result<PathBuf> {
     use directories::BaseDirs;
     let base = BaseDirs::new().ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure),
             "cannot determine the user home directory"
         );
         anyhow::Error::msg("cannot determine the user home directory")

@@ -153,9 +153,9 @@ impl NextcloudTalkChannel {
 
         // Legacy/custom format.
         if !event_type.eq_ignore_ascii_case("message") {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"event_type": event_type})),
                 "Talk: skipping non-message event"
             );
@@ -177,9 +177,9 @@ impl NextcloudTalkChannel {
         // Only handle Note objects (= chat messages). Ignore reactions, etc.
         let object_type = obj.get("type").and_then(|v| v.as_str()).unwrap_or("");
         if !object_type.eq_ignore_ascii_case("note") {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"object_type": object_type})),
                 "Talk: skipping AS2 Create with object.type="
             );
@@ -195,10 +195,10 @@ impl NextcloudTalkChannel {
             .filter(|t| !t.is_empty());
 
         let Some(room_token) = room_token else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Talk: missing target.id (room token) in AS2 payload"
             );
             return messages;
@@ -208,9 +208,9 @@ impl NextcloudTalkChannel {
         let actor = payload.get("actor").cloned().unwrap_or_default();
         let actor_type = actor.get("type").and_then(|v| v.as_str()).unwrap_or("");
         if actor_type.eq_ignore_ascii_case("application") {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Talk: skipping bot-originated AS2 message (type=Application)"
             );
             return messages;
@@ -228,10 +228,10 @@ impl NextcloudTalkChannel {
             .filter(|id| !id.is_empty());
 
         let Some(actor_id) = actor_id else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Talk: missing actor.id in AS2 payload"
             );
             return messages;
@@ -241,9 +241,9 @@ impl NextcloudTalkChannel {
         // set actor.type="Application" reliably for bot-sent messages.
         let raw_actor_id = actor.get("id").and_then(|v| v.as_str()).unwrap_or("");
         if raw_actor_id.starts_with("bots/") {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Talk: skipping bot-originated AS2 message (id prefix=bots/)"
             );
             return messages;
@@ -254,9 +254,9 @@ impl NextcloudTalkChannel {
             .unwrap_or("")
             .to_ascii_lowercase();
         if self.is_bot_name(&actor_name) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"actor_name": actor_name})),
                 "Talk: skipping bot-originated AS2 message (name=)"
             );
@@ -264,10 +264,10 @@ impl NextcloudTalkChannel {
         }
 
         if !self.is_user_allowed(actor_id) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"actor_id": actor_id})),
                 "Talk: ignoring message from unauthorized actor: . Add to channels.nextcloud_talk.allowed_users in config.toml, or run `clawcrew config set channels.nextcloud_talk.allowed-users='[\"<user-id>\"]'`."
             );
@@ -289,9 +289,9 @@ impl NextcloudTalkChannel {
             .filter(|s| !s.is_empty());
 
         let Some(content) = content else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Talk: empty or unparseable AS2 message content"
             );
             return messages;
@@ -336,10 +336,10 @@ impl NextcloudTalkChannel {
             .filter(|token| !token.is_empty());
 
         let Some(room_token) = room_token else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Talk: missing room token in webhook payload"
             );
             return messages;
@@ -355,9 +355,9 @@ impl NextcloudTalkChannel {
         // Nextcloud Talk uses "bots" or "application" depending on version/context.
         if actor_type.eq_ignore_ascii_case("bots") || actor_type.eq_ignore_ascii_case("application")
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"actor_type": actor_type})),
                 "Talk: skipping bot-originated message (actorType=)"
             );
@@ -372,10 +372,10 @@ impl NextcloudTalkChannel {
             .filter(|id| !id.is_empty());
 
         let Some(actor_id) = actor_id else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Talk: missing actorId in webhook payload"
             );
             return messages;
@@ -383,9 +383,9 @@ impl NextcloudTalkChannel {
 
         // Also skip by known bot names in case actorType is not set reliably.
         if self.is_bot_name(actor_id) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"actor_id": actor_id})),
                 "Talk: skipping bot-originated message (actorId=)"
             );
@@ -393,10 +393,10 @@ impl NextcloudTalkChannel {
         }
 
         if !self.is_user_allowed(actor_id) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"actor_id": actor_id})),
                 "Talk: ignoring message from unauthorized actor: . Add to channels.nextcloud_talk.allowed_users in config.toml, or run `clawcrew config set channels.nextcloud_talk.allowed-users='[\"<user-id>\"]'`."
             );
@@ -408,9 +408,9 @@ impl NextcloudTalkChannel {
             .and_then(|v| v.as_str())
             .unwrap_or("comment");
         if !message_type.eq_ignore_ascii_case("comment") {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"message_type": message_type})),
                 "Talk: skipping non-comment messageType"
             );
@@ -424,9 +424,9 @@ impl NextcloudTalkChannel {
             .map(str::trim)
             .is_some_and(|value| !value.is_empty());
         if has_system_message {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Talk: skipping system message event"
             );
             return messages;
@@ -539,10 +539,10 @@ impl NextcloudTalkChannel {
 
         let status = response.status();
         let body = response.text().await.unwrap_or_default();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"status": status.to_string(), "body": body})),
             "Talk send failed:"
         );
@@ -560,10 +560,10 @@ impl NextcloudTalkChannel {
         if !response.status().is_success() {
             let status = response.status();
             let body = response.text().await.unwrap_or_default();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"status": status.to_string(), "body": body})),
                 "Talk send_to_room_with_id failed:"
             );
@@ -596,10 +596,10 @@ impl NextcloudTalkChannel {
     async fn delete_message(&self, _room_token: &str, _message_id: &str) -> anyhow::Result<()> {
         // Deletion via bot API is not yet supported in Nextcloud Talk 23.0.3
         // We log a warning and return success to maintain API compatibility
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Talk delete_message: message deletion not supported via bot API yet"
         );
         Ok(())
@@ -662,9 +662,9 @@ impl Channel for NextcloudTalkChannel {
         let initial = Self::truncate_to_nc_limit(initial);
         match self.send_to_room_with_id(&message.recipient, initial).await {
             Ok(id) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(
                             ::serde_json::json!({"room": message.recipient, "message_id": id})
                         ),
@@ -676,10 +676,10 @@ impl Channel for NextcloudTalkChannel {
                 Ok(Some(id))
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"e": e.to_string()})),
                     "Talk: send_draft failed, falling back to final send"
                 );
@@ -716,10 +716,10 @@ impl Channel for NextcloudTalkChannel {
             Err(e) => {
                 // Non-fatal: log and continue. The final send will still deliver the
                 // complete response even if mid-stream edits fail.
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Talk update_draft edit failed; final response will still be delivered"
                 );
@@ -740,9 +740,9 @@ impl Channel for NextcloudTalkChannel {
 
         match self.edit_message(recipient, message_id, display_text).await {
             Ok(()) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(
                             ::serde_json::json!({"room": recipient, "message_id": message_id})
                         ),
@@ -752,10 +752,10 @@ impl Channel for NextcloudTalkChannel {
             }
             Err(e) => {
                 // Edit failed (e.g. message too old, permissions) — delete and re-send.
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"e": e.to_string()})),
                     "Talk finalize_draft edit failed ; attempting delete+resend"
                 );
@@ -767,9 +767,9 @@ impl Channel for NextcloudTalkChannel {
 
     async fn cancel_draft(&self, recipient: &str, message_id: &str) -> anyhow::Result<()> {
         if let Err(e) = self.delete_message(recipient, message_id).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Talk cancel_draft delete failed (non-fatal)"
             );
@@ -779,9 +779,9 @@ impl Channel for NextcloudTalkChannel {
     }
 
     async fn listen(&self, _tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Talk channel active (webhook mode). \
             Configure Nextcloud Talk bot webhook to POST to your gateway's /nextcloud-talk endpoint."
         );
@@ -824,10 +824,10 @@ pub fn verify_nextcloud_talk_signature(
 ) -> bool {
     let random = random.trim();
     if random.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Talk: missing X-Nextcloud-Talk-Random header"
         );
         return false;
@@ -840,10 +840,10 @@ pub fn verify_nextcloud_talk_signature(
         .trim();
 
     let Ok(provided) = hex::decode(signature_hex) else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Talk: invalid signature format"
         );
         return false;

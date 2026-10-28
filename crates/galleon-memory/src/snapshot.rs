@@ -22,9 +22,9 @@ const SNAPSHOT_HEADER: &str = "# 🧠 ClawCrew Memory Snapshot\n\n\
 pub fn export_snapshot(workspace_dir: &Path) -> Result<usize> {
     let db_path = workspace_dir.join("memory").join("brain.db");
     if !db_path.exists() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "snapshot export skipped: brain.db does not exist"
         );
         return Ok(0);
@@ -47,9 +47,9 @@ pub fn export_snapshot(workspace_dir: &Path) -> Result<usize> {
         .collect::<rusqlite::Result<Vec<_>>>()?;
 
     if rows.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "snapshot export: no core memories to export"
         );
         return Ok(0);
@@ -77,9 +77,9 @@ pub fn export_snapshot(workspace_dir: &Path) -> Result<usize> {
     let snapshot_path = snapshot_path(workspace_dir);
     fs::write(&snapshot_path, output)?;
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         &format!(
             "📸 Memory snapshot exported: {} core memories → {}",
             rows.len(),
@@ -133,9 +133,9 @@ pub fn hydrate_from_snapshot(workspace_dir: &Path) -> Result<usize> {
 
     tx.commit()?;
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         &format!(
             "🧬 Memory hydration complete: {} entries restored from {}",
             hydrated,
@@ -197,10 +197,10 @@ pub fn should_hydrate(workspace_dir: &Path) -> bool {
 }
 
 fn log_hydration_admission_failure() {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown),
         "snapshot hydration admission inspection failed; skipping hydration"
     );
 }

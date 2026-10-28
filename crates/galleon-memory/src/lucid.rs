@@ -284,10 +284,10 @@ impl LucidMemory {
             Ok(status) => status?,
             Err(_) => {
                 let cleanup_error = child.kill().await.err().map(|error| error.to_string());
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Timeout)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Timeout)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "command": lucid_cmd,
                             "timeout_ms": timeout_window.as_millis() as u64,
@@ -346,9 +346,9 @@ impl LucidMemory {
     async fn sync_to_lucid_async(&self, key: &str, content: &str, category: &MemoryCategory) {
         let args = self.build_store_args(key, content, category);
         if let Err(error) = self.run_lucid_command(&args, self.store_timeout).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(
                         ::serde_json::json!({"command": self.lucid_cmd, "error": format!("{}", error)})
                     ),
@@ -417,10 +417,10 @@ impl Memory for LucidMemory {
             .map(chrono::DateTime::parse_from_rfc3339)
             .transpose()
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(
                             ::serde_json::json!({"field": "since", "error": format!("{}", e)})
                         ),
@@ -432,10 +432,10 @@ impl Memory for LucidMemory {
             .map(chrono::DateTime::parse_from_rfc3339)
             .transpose()
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(
                             ::serde_json::json!({"field": "until", "error": format!("{}", e)})
                         ),
@@ -496,7 +496,7 @@ impl Memory for LucidMemory {
             }
             Err(error) => {
                 self.mark_failure_now();
-                ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"command": self.lucid_cmd, "error": format!("{}", error)})), "Lucid context unavailable; using local sqlite results");
+                ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"command": self.lucid_cmd, "error": format!("{}", error)})), "Lucid context unavailable; using local sqlite results");
                 Ok(local_results)
             }
         }

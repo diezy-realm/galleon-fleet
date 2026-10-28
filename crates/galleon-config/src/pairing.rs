@@ -250,10 +250,10 @@ impl PairingCodePolicy {
         if let Some(configured) = clamped_from {
             // Never silently downgrade or inflate a pairing code: the
             // operator asked for one strength and is getting another.
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "configured_length": configured,
                         "effective_length": length,
@@ -782,8 +782,8 @@ mod tests {
     static CLAMP_LOG_LOCK: Mutex<()> = Mutex::new(());
 
     fn capture_log_events() -> tokio::sync::broadcast::Receiver<serde_json::Value> {
-        ::clawcrew_log::try_install_capture_subscriber();
-        ::clawcrew_log::subscribe_or_install()
+        ::galleon_log::try_install_capture_subscriber();
+        ::galleon_log::subscribe_or_install()
     }
 
     fn drain_captured_events(

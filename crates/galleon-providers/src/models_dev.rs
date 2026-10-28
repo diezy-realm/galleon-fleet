@@ -76,10 +76,10 @@ pub(crate) fn parse_catalog(bytes: &[u8]) -> Result<Catalog> {
 /// Pure — separated from the live fetch so it can be unit-tested.
 pub(crate) fn filter_models(catalog: &Catalog, provider_key: &str) -> Result<Vec<String>> {
     let entry = catalog.get(provider_key).ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"model_provider": provider_key})),
             "models_dev: provider not in catalog"
         );
@@ -94,7 +94,7 @@ pub(crate) fn filter_models(catalog: &Catalog, provider_key: &str) -> Result<Vec
 }
 
 pub async fn list_models_for(provider_key: &str) -> Result<Vec<String>> {
-    ::clawcrew_log::scope!(
+    ::galleon_log::scope!(
         model_provider_type: "models_dev",
         model_provider_alias: "catalog",
         => async move {
@@ -111,7 +111,7 @@ pub async fn list_models_for(provider_key: &str) -> Result<Vec<String>> {
 pub async fn list_models_with_context_for(
     provider_key: &str,
 ) -> Result<Vec<(String, Option<usize>)>> {
-    ::clawcrew_log::scope!(
+    ::galleon_log::scope!(
         model_provider_type: "models_dev",
         model_provider_alias: "catalog",
         => async move {

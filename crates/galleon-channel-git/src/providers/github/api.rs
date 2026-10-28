@@ -137,9 +137,9 @@ impl GithubApi {
             pages += 1;
             if pages >= MAX_PAGES_PER_POLL {
                 if following.is_some() {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({
                                 "endpoint": endpoint,
                                 "pages": pages,
@@ -256,9 +256,9 @@ impl GithubApi {
             )
             .await?;
         if page.total_count as usize > page.repositories.len() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "total": page.total_count,
                         "polled": page.repositories.len(),

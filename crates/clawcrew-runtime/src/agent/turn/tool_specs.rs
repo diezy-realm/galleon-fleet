@@ -43,11 +43,11 @@ pub(crate) fn build_iteration_tool_specs(
         let activated_tools = match at.lock() {
             Ok(guard) => guard,
             Err(poisoned) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Tool)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Tool)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "activated-tool lock poisoned while assembling iteration tool specs; recovering guard for read"
                 );
                 poisoned.into_inner()

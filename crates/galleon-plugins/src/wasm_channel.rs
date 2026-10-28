@@ -479,10 +479,10 @@ fn sender_is_authorized(
         return true;
     }
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(::serde_json::json!({
                 "plugin": endpoint.instance_id().package(),
                 "channel_alias": endpoint.alias(),
@@ -554,10 +554,10 @@ fn log_webhook_rejection(endpoint: &PluginChannelEndpoint, rejection: &WebhookRe
         WebhookReject::InvalidResponse => ("plugin_webhook_invalid_response", None),
         WebhookReject::Timeout => ("plugin_webhook_timeout", None),
     };
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(::serde_json::json!({
                 "plugin": endpoint.instance_id().package(),
                 "channel_alias": endpoint.alias(),
@@ -633,9 +633,9 @@ async fn deliver_webhook_messages(
         let reservation =
             reserve_webhook_delivery(idempotency, message.id.trim(), cancellation).await?;
         if matches!(reservation, DeliveryReservation::Duplicate) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "plugin": endpoint.instance_id().package(),
                         "channel_alias": endpoint.alias(),
@@ -658,10 +658,10 @@ async fn deliver_webhook_messages(
         if let DeliveryReservation::Owner(owner) = reservation
             && !owner.commit()
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "plugin": endpoint.instance_id().package(),
                         "channel_alias": endpoint.alias(),
@@ -769,13 +769,13 @@ impl Channel for WasmChannel {
                     Ok(None) => mark_poll_healthy(&self.poll_healthy, true),
                     Err(error) => {
                         mark_poll_healthy(&self.poll_healthy, false);
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Inbound
+                                ::galleon_log::Action::Inbound
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "channel": self.endpoint.channel_type(),
                                 "channel_alias": self.endpoint.alias(),

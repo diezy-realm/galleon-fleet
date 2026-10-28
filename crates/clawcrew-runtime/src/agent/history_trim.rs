@@ -222,9 +222,9 @@ pub fn trim_to_recent_turns_with_crumb(
     let tokens_after = estimate_history_tokens(&kept);
 
     let trimmed_tokens = tokens_before.saturating_sub(tokens_after);
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "action": "trim_history",
                 "tokens_before": tokens_before,

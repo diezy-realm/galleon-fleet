@@ -65,11 +65,11 @@ impl Tunnel for CustomTunnel {
 
                 match line {
                     Ok(Ok(Some(l))) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"l": l})),
                             "custom-tunnel: "

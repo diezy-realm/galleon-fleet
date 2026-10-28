@@ -1841,9 +1841,9 @@ fn parse_glm_shortened_body(body: &str) -> Option<ParsedToolCall> {
     None
 }
 
-fn malformed_tool_block_event(payload_len: usize) -> ::clawcrew_log::Event {
-    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+fn malformed_tool_block_event(payload_len: usize) -> ::galleon_log::Event {
+    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+        .with_outcome(::galleon_log::EventOutcome::Unknown)
         .with_attrs(::serde_json::json!({
             "payload_len": payload_len,
         }))
@@ -2201,10 +2201,10 @@ pub fn parse_tool_calls(response: &str) -> (String, Vec<ParsedToolCall>) {
             }
 
             if !parsed_any {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "Malformed <tool_call>: expected tool-call object in tag body (JSON/XML/GLM)"
                 );
             }
@@ -2397,7 +2397,7 @@ pub fn parse_tool_calls(response: &str) -> (String, Vec<ParsedToolCall>) {
                     });
                 } else {
                     // Log a warning if we found a tool block but couldn't parse arguments
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
                         malformed_tool_block_event(inner.len()),
                         "Found ```tool <name> block but could not parse JSON arguments"
@@ -3745,10 +3745,10 @@ Done."#;
 
     #[test]
     fn malformed_tool_block_log_omits_model_controlled_content() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let secret_name = "sk_live_SECRET_IDENTIFIER";

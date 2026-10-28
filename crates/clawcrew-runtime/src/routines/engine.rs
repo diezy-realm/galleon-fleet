@@ -134,9 +134,9 @@ impl RoutinesEngine {
             }
 
             if !routine.enabled {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"routine": routine.name})),
                     "routine matched but disabled"
                 );
@@ -154,7 +154,7 @@ impl RoutinesEngine {
                 let cooldown = Duration::from_secs(routine.cooldown_secs);
                 if elapsed < cooldown {
                     let remaining = cooldown.saturating_sub(elapsed).as_secs();
-                    ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"routine": routine.name, "remaining_secs": remaining})), "routine in cooldown");
+                    ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"routine": routine.name, "remaining_secs": remaining})), "routine in cooldown");
                     results.push(RoutineDispatchResult::Cooldown {
                         routine_name: routine.name.clone(),
                         remaining_secs: remaining,
@@ -163,7 +163,7 @@ impl RoutinesEngine {
                 }
             }
 
-            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"routine": routine.name, "source": event.source, "topic": event.topic})), "routine fired");
+            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"routine": routine.name, "source": event.source, "topic": event.topic})), "routine fired");
             self.cooldowns.insert(routine.name.clone(), now);
             results.push(RoutineDispatchResult::Fired {
                 routine_name: routine.name.clone(),
@@ -190,10 +190,10 @@ pub fn load_routines_from_file(path: &std::path::Path) -> Vec<Routine> {
         Ok(content) => match toml::from_str::<RoutinesManifest>(&content) {
             Ok(manifest) => manifest.routines,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     &format!(
                         "Failed to parse routines file {}",
@@ -204,9 +204,9 @@ pub fn load_routines_from_file(path: &std::path::Path) -> Vec<Routine> {
             }
         },
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 &format!("Routines file not found at {}", path.display().to_string())
             );

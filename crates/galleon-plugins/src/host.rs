@@ -118,7 +118,7 @@ impl PluginHost {
     #[must_use]
     pub fn resolve_signature_mode(mode: &str) -> SignatureMode {
         Self::parse_signature_mode(mode).unwrap_or_else(|| {
-            let span = ::clawcrew_log::__private::tracing::info_span!(
+            let span = ::galleon_log::__private::tracing::info_span!(
                 target: "clawcrew_log_internal_attribution",
                 "clawcrew_attribution",
                 zc_role_family = %::clawcrew_api::attribution::Role::System.family_str(),
@@ -131,10 +131,10 @@ impl PluginHost {
                 zc_alias = "plugins",
             );
             span.in_scope(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({ "signature_mode": mode })),
                     "Unrecognized plugins.security.signature_mode; failing safe to strict"
                 );
@@ -163,7 +163,7 @@ impl PluginHost {
                     && let Ok((manifest, manifest_toml)) = self.load_manifest(&manifest_path)
                 {
                     if let Err(e) = validate_manifest_shape(&manifest, &path) {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"plugin": path.display().to_string(), "error": format!("{}", e)})), "skipping plugin due to invalid manifest shape");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"plugin": path.display().to_string(), "error": format!("{}", e)})), "skipping plugin due to invalid manifest shape");
                         continue;
                     }
 
@@ -172,7 +172,7 @@ impl PluginHost {
                     match self.verify_plugin_signature(&manifest.name, &manifest_toml, &manifest) {
                         Ok(()) => {
                             if let Err(e) = validate_manifest_config(&manifest) {
-                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"plugin": path.display().to_string(), "error": format!("{}", e)})), "skipping plugin due to invalid config schema");
+                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"plugin": path.display().to_string(), "error": format!("{}", e)})), "skipping plugin due to invalid config schema");
                                 continue;
                             }
                             if ambiguous_packages.contains(&manifest.name) {
@@ -180,13 +180,13 @@ impl PluginHost {
                             }
                             if self.loaded.remove(&manifest.name).is_some() {
                                 ambiguous_packages.insert(manifest.name.clone());
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Load
+                                        ::galleon_log::Action::Load
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                    .with_outcome(::galleon_log::EventOutcome::Failure)
                                     .with_attrs(
                                         ::serde_json::json!({
                                             "plugin": manifest.name,
@@ -199,7 +199,7 @@ impl PluginHost {
                             let component = match admit_component(&path, &manifest) {
                                 Ok(component) => component,
                                 Err(e) => {
-                                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"plugin": path.display().to_string(), "error": format!("{}", e)})), "skipping plugin due to executable artifact admission failure");
+                                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"plugin": path.display().to_string(), "error": format!("{}", e)})), "skipping plugin due to executable artifact admission failure");
                                     continue;
                                 }
                             };
@@ -213,7 +213,7 @@ impl PluginHost {
                             );
                         }
                         Err(e) => {
-                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"plugin": path.display().to_string(), "error": format!("{}", e)})), "skipping plugin due to signature verification failure");
+                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"plugin": path.display().to_string(), "error": format!("{}", e)})), "skipping plugin due to signature verification failure");
                         }
                     }
                 }

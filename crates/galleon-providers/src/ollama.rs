@@ -291,9 +291,9 @@ impl OllamaModelProvider {
         if let Some(thinking) = thinking.map(str::trim).filter(|t| !t.is_empty()) {
             let stripped_thinking = Self::strip_think_tags(thinking);
             if !stripped_thinking.trim().is_empty() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!(
                         "Ollama: using thinking field as effective content ({} chars)",
                         stripped_thinking.len()
@@ -310,10 +310,10 @@ impl OllamaModelProvider {
         if let Some(thinking) = thinking.map(str::trim).filter(|value| !value.is_empty()) {
             let thinking_log_excerpt: String = thinking.chars().take(100).collect();
             let thinking_reply_excerpt: String = thinking.chars().take(200).collect();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "Ollama returned empty content with only thinking for model '{}': '{}'. Model may have stopped prematurely.",
                     model, thinking_log_excerpt
@@ -325,10 +325,10 @@ impl OllamaModelProvider {
             );
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             &format!(
                 "Ollama returned empty or whitespace content with no tool calls for model '{}'",
                 model
@@ -593,9 +593,9 @@ impl OllamaModelProvider {
 
         let url = format!("{}/api/chat", self.base_url);
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "Ollama request: url={} model={} message_count={} temperature={:?} think={:?} tool_count={}",
                 url,
@@ -615,26 +615,26 @@ impl OllamaModelProvider {
 
         let response = request_builder.send().await?;
         let status = response.status();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("response status: {}", status)
         );
 
         let body = response.bytes().await?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("response body length: {} bytes", body.len())
         );
 
         if !status.is_success() {
             let raw = String::from_utf8_lossy(&body);
             let sanitized = super::sanitize_api_error(&raw);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 &format!(
                     "Ollama error response: status={} body_excerpt={}",
                     status, sanitized
@@ -652,10 +652,10 @@ impl OllamaModelProvider {
             Err(e) => {
                 let raw = String::from_utf8_lossy(&body);
                 let sanitized = super::sanitize_api_error(&raw);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     &format!(
                         "Ollama response deserialization failed: {e}. body_excerpt={}",
                         sanitized
@@ -690,10 +690,10 @@ impl OllamaModelProvider {
         match result {
             Ok(resp) => Ok(resp),
             Err(first_err) if self.reasoning_enabled == Some(true) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"model": model, "error": format!("{}", first_err)})
                         ),
@@ -705,7 +705,7 @@ impl OllamaModelProvider {
                     .await
                     .map_err(|retry_err| {
                         // Both attempts failed — return the original error for clarity.
-                        ::clawcrew_log::record!(ERROR, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"model": model, "original_error": first_err.to_string(), "retry_error": retry_err.to_string()})), "Ollama request also failed without think; returning original error");
+                        ::galleon_log::record!(ERROR, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"model": model, "original_error": first_err.to_string(), "retry_error": retry_err.to_string()})), "Ollama request also failed without think; returning original error");
                         first_err
                     })
             }
@@ -760,9 +760,9 @@ impl OllamaModelProvider {
                 .get("arguments")
                 .cloned()
                 .unwrap_or(serde_json::json!({}));
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "Unwrapped nested tool call: {} -> {} with args {:?}",
                     name, nested_name, nested_args
@@ -841,9 +841,9 @@ impl ModelProvider for OllamaModelProvider {
 
         // If model returned tool calls, format them for loop_.rs's parse_tool_calls
         if !response.message.tool_calls.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "Ollama returned {} tool call(s), formatting for loop parser",
                     response.message.tool_calls.len()
@@ -888,9 +888,9 @@ impl ModelProvider for OllamaModelProvider {
 
         // If model returned tool calls, format them for loop_.rs's parse_tool_calls
         if !response.message.tool_calls.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "Ollama returned {} tool call(s), formatting for loop parser",
                     response.message.tool_calls.len()

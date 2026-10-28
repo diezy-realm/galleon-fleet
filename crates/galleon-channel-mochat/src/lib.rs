@@ -153,9 +153,9 @@ impl Channel for MochatChannel {
     }
 
     async fn listen(&self, tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "starting message poller"
         );
 
@@ -180,13 +180,13 @@ impl Channel for MochatChannel {
                     let data: serde_json::Value = match resp.json().await {
                         Ok(d) => d,
                         Err(e) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "failed to parse response"
                             );
@@ -219,11 +219,11 @@ impl Channel for MochatChannel {
                                 .unwrap_or("unknown");
 
                             if !self.is_user_allowed(sender) {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     DEBUG,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
                                     .with_attrs(::serde_json::json!({"sender": sender})),
                                     "ignoring message from unauthorized user"
@@ -265,13 +265,13 @@ impl Channel for MochatChannel {
                             };
 
                             if tx.send(channel_msg).await.is_err() {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                                     "message channel closed"
                                 );
                                 return Ok(());
@@ -286,13 +286,13 @@ impl Channel for MochatChannel {
                 Ok(resp) => {
                     let status = resp.status();
                     let err = resp.text().await.unwrap_or_default();
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", err), "status": status.to_string()})), "poll request failed");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", err), "status": status.to_string()})), "poll request failed");
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "poll request error"
                     );

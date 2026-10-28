@@ -34,9 +34,9 @@ impl ModelProvider for EverythingFake {
         _: &str,
         _: Option<f64>,
     ) -> anyhow::Result<ChatResponse> {
-        clawcrew_log::record!(
+        galleon_log::record!(
             INFO,
-            clawcrew_log::Event::new(module_path!(), clawcrew_log::Action::Note),
+            galleon_log::Event::new(module_path!(), galleon_log::Action::Note),
             "EverythingFake chat"
         );
         Ok(ChatResponse {
@@ -48,9 +48,9 @@ impl ModelProvider for EverythingFake {
     }
 
     async fn simple_chat(&self, _: &str, _: &str, _: Option<f64>) -> anyhow::Result<String> {
-        clawcrew_log::record!(
+        galleon_log::record!(
             INFO,
-            clawcrew_log::Event::new(module_path!(), clawcrew_log::Action::Note),
+            galleon_log::Event::new(module_path!(), galleon_log::Action::Note),
             "EverythingFake simple_chat"
         );
         Ok(String::new())
@@ -63,9 +63,9 @@ impl ModelProvider for EverythingFake {
         _: &str,
         _: Option<f64>,
     ) -> anyhow::Result<String> {
-        clawcrew_log::record!(
+        galleon_log::record!(
             INFO,
-            clawcrew_log::Event::new(module_path!(), clawcrew_log::Action::Note),
+            galleon_log::Event::new(module_path!(), galleon_log::Action::Note),
             "EverythingFake chat_with_system"
         );
         Ok(String::new())
@@ -77,9 +77,9 @@ impl ModelProvider for EverythingFake {
         _: &str,
         _: Option<f64>,
     ) -> anyhow::Result<String> {
-        clawcrew_log::record!(
+        galleon_log::record!(
             INFO,
-            clawcrew_log::Event::new(module_path!(), clawcrew_log::Action::Note),
+            galleon_log::Event::new(module_path!(), galleon_log::Action::Note),
             "EverythingFake chat_with_history"
         );
         Ok(String::new())
@@ -92,9 +92,9 @@ impl ModelProvider for EverythingFake {
         _: &str,
         _: Option<f64>,
     ) -> anyhow::Result<ChatResponse> {
-        clawcrew_log::record!(
+        galleon_log::record!(
             INFO,
-            clawcrew_log::Event::new(module_path!(), clawcrew_log::Action::Note),
+            galleon_log::Event::new(module_path!(), galleon_log::Action::Note),
             "EverythingFake chat_with_tools"
         );
         Ok(ChatResponse {
@@ -106,27 +106,27 @@ impl ModelProvider for EverythingFake {
     }
 
     async fn list_models(&self) -> anyhow::Result<Vec<String>> {
-        clawcrew_log::record!(
+        galleon_log::record!(
             INFO,
-            clawcrew_log::Event::new(module_path!(), clawcrew_log::Action::Note),
+            galleon_log::Event::new(module_path!(), galleon_log::Action::Note),
             "EverythingFake list_models"
         );
         Ok(vec!["m".into()])
     }
 
     async fn list_models_with_pricing(&self) -> anyhow::Result<Vec<ModelInfo>> {
-        clawcrew_log::record!(
+        galleon_log::record!(
             INFO,
-            clawcrew_log::Event::new(module_path!(), clawcrew_log::Action::Note),
+            galleon_log::Event::new(module_path!(), galleon_log::Action::Note),
             "EverythingFake list_models_with_pricing"
         );
         Ok(Vec::new())
     }
 
     async fn warmup(&self) -> anyhow::Result<()> {
-        clawcrew_log::record!(
+        galleon_log::record!(
             INFO,
-            clawcrew_log::Event::new(module_path!(), clawcrew_log::Action::Note),
+            galleon_log::Event::new(module_path!(), galleon_log::Action::Note),
             "EverythingFake warmup"
         );
         Ok(())
@@ -142,9 +142,9 @@ impl ModelProvider for EverythingFake {
         futures_util::stream::unfold(0u8, |state| async move {
             match state {
                 0 => {
-                    clawcrew_log::record!(
+                    galleon_log::record!(
                         INFO,
-                        clawcrew_log::Event::new(module_path!(), clawcrew_log::Action::Note),
+                        galleon_log::Event::new(module_path!(), galleon_log::Action::Note),
                         "EverythingFake stream_chat chunk"
                     );
                     Some((Ok(StreamEvent::TextDelta(StreamChunk::delta("x"))), 1u8))
@@ -159,10 +159,10 @@ impl ModelProvider for EverythingFake {
 
 #[tokio::test]
 async fn every_dispatcher_method_attributes() {
-    let _writer_guard = clawcrew_log::__private_test_writer_lock();
-    let _hook_guard = clawcrew_log::__private_test_hook_lock();
-    clawcrew_log::try_install_capture_subscriber();
-    let mut rx = clawcrew_log::subscribe_or_install();
+    let _writer_guard = galleon_log::__private_test_writer_lock();
+    let _hook_guard = galleon_log::__private_test_hook_lock();
+    galleon_log::try_install_capture_subscriber();
+    let mut rx = galleon_log::subscribe_or_install();
     while rx.try_recv().is_ok() {}
 
     let fake: Arc<dyn ModelProvider> = Arc::new(EverythingFake {
@@ -240,5 +240,5 @@ async fn every_dispatcher_method_attributes() {
         missing.is_empty(),
         "missed messages: {missing:?}; all received: {all_received:?}; matched: {seen:?}"
     );
-    clawcrew_log::clear_broadcast_hook();
+    galleon_log::clear_broadcast_hook();
 }

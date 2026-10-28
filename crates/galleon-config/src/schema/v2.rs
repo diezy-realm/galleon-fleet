@@ -139,9 +139,9 @@ impl V2Config {
                     "risk_profiles".to_string(),
                     toml::Value::Table(risk_profiles),
                 );
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "[autonomy] authorization fields → [risk_profiles.default]"
                 );
             }
@@ -155,9 +155,9 @@ impl V2Config {
                     "runtime_profiles".to_string(),
                     toml::Value::Table(runtime_profiles),
                 );
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "[autonomy] budget/timeout fields → [runtime_profiles.default]"
                 );
             }
@@ -179,9 +179,9 @@ impl V2Config {
                     "risk_profiles".to_string(),
                     toml::Value::Table(risk_profiles),
                 );
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "[agent.allowed_tools] → [risk_profiles.default.allowed_tools]"
                 );
             }
@@ -195,9 +195,9 @@ impl V2Config {
                     "runtime_profiles".to_string(),
                     toml::Value::Table(runtime_profiles),
                 );
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "[agent] → [runtime_profiles.default]"
                 );
             }
@@ -205,9 +205,9 @@ impl V2Config {
 
         // V3 dropped swarms.
         if !swarms.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!("[swarms] dropped ({} entries)", swarms.len())
             );
         }
@@ -218,9 +218,9 @@ impl V2Config {
             let dropped_fb = reliability_table.remove("fallback_providers").is_some();
             let dropped_mf = reliability_table.remove("model_fallbacks").is_some();
             if dropped_fb || dropped_mf {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "[reliability] {{fallback_providers, model_fallbacks}} dropped (provider fallback eradicated in V3)"
                 );
             }
@@ -235,9 +235,9 @@ impl V2Config {
             })
             .unwrap_or_default();
         if new_providers.remove("fallback").is_some() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "providers.fallback eradicated"
             );
         }
@@ -365,10 +365,10 @@ impl V2Config {
             passthrough.insert("embedding_routes".to_string(), routes);
         }
         if !new_providers.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "[providers] residual keys dropped during V3 hoist: {:?}",
                     new_providers.keys().collect::<Vec<_>>()
@@ -396,9 +396,9 @@ impl V2Config {
                     toml::Value::Table(peer_groups_for_fold),
                 );
             }
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "[channels] sections alias-wrapped, discord_history folded, inbound peer-auth folded into [peer_groups.*]"
             );
         }
@@ -411,9 +411,9 @@ impl V2Config {
             if !scheduler_extras.is_empty() {
                 merge_into_table(&mut passthrough, "scheduler", scheduler_extras);
             }
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "[cron] restructured into [cron.<alias>] + [scheduler]"
             );
         }
@@ -487,9 +487,9 @@ fn normalize_gateway_pairing_code(passthrough: &mut toml::Table) {
     if let Some(toml::Value::Table(dashboard)) = gateway.get_mut("pairing_dashboard")
         && dashboard.remove("code_length").is_some()
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "[gateway.pairing_dashboard] code_length retired → [gateway.pairing_code]"
         );
     }
@@ -524,9 +524,9 @@ fn rename_subkey(table: &mut toml::Table, parent: &str, inner: &str, replacement
     }
     if let Some(value) = parent_tbl.remove(inner) {
         parent_tbl.insert(replacement.to_string(), value);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({"parent": parent, "inner": inner, "replacement": replacement})
             ),
             &format!(
@@ -583,9 +583,9 @@ fn restructure_cron(cron_value: toml::Value) -> (toml::Table, toml::Table) {
     // Anything left was unknown to V2 cron; surface but don't drop silently —
     // dropped fields are visible in INFO logs instead.
     if !cron_table.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "[cron] had unmodeled keys: {:?}",
                 cron_table.keys().collect::<Vec<_>>()
@@ -1475,9 +1475,9 @@ fn fold_providers_globals_into_models(
     }
 
     if any_value_globals {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({"target_type": target_type, "target_alias": target_alias})
             ),
             "[providers] globals folded onto model_providers.."
@@ -1596,9 +1596,9 @@ fn drop_cost_prices_with_logs(prices: &toml::Table) {
             ),
             None => (None, None),
         };
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({"model_id": model_id, "input": format!("{:?}", input), "output": format!("{:?}", output)})
             ),
             &format!(
@@ -1652,9 +1652,9 @@ fn synthesize_peer_group_from_allowlist(
         toml::Value::Array(external_peers),
     );
     peer_groups.insert(group_name, toml::Value::Table(group_entry));
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({"channel_type": channel_type, "channel_alias": channel_alias, "field_name": field_name})
         ),
         &format!(
@@ -1713,9 +1713,9 @@ fn alias_wrap_channels(channels_value: toml::Value, peer_groups: &mut toml::Tabl
     // Unmodeled channel-section keys: pass through under their original key.
     if !channels_table.is_empty() {
         let leftover_keys: Vec<String> = channels_table.keys().cloned().collect();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "[channels] passthrough for unmodeled keys: {:?}",
                 leftover_keys
@@ -1739,10 +1739,10 @@ fn strip_feishu_block(channels: &mut toml::Table) -> Option<toml::Table> {
     match feishu_value {
         toml::Value::Table(t) => Some(t),
         _ => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "[channels.feishu] is not a table; dropping during fold to lark"
             );
             None
@@ -1761,20 +1761,20 @@ fn inject_feishu_as_lark_alias(new_channels: &mut toml::Table, feishu_table: Opt
         .entry("lark".to_string())
         .or_insert_with(|| toml::Value::Table(toml::Table::new()));
     let Some(lark_aliases) = lark_entry.as_table_mut() else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "[channels.lark] is not a table; cannot inject feishu alias"
         );
         return;
     };
 
     if lark_aliases.contains_key("feishu") {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "[channels.lark.feishu] already exists; the V2 [channels.feishu] \
              block was dropped to avoid clobbering it. Recover the dropped \
              value from the pre-migration <config>.backup if needed."
@@ -1783,9 +1783,9 @@ fn inject_feishu_as_lark_alias(new_channels: &mut toml::Table, feishu_table: Opt
     }
 
     lark_aliases.insert("feishu".to_string(), toml::Value::Table(feishu_table));
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "[channels.feishu] folded into [channels.lark.feishu] (use_feishu=true)"
     );
 }
@@ -1845,17 +1845,17 @@ fn fold_discord_history(channels: &mut toml::Table) {
             toml::Value::Boolean(effective_enabled),
         );
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
             .with_attrs(::serde_json::json!({"effective_enabled": effective_enabled})),
         "[channels.discord_history] folded into [channels.discord] (archive=true, effective enabled=)"
     );
     if bot_token_conflict {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "[channels.discord_history].bot_token differed from [channels.discord].bot_token; \
              the discord_history token was dropped and the discord token survives. \
              Two-bot deployments must reconfigure manually — recover the dropped value \
@@ -1872,23 +1872,23 @@ fn apply_v2_to_v3_channel_folds(channel_type: &str, instance: &mut toml::Table) 
     use crate::migration::fold_string_into_array;
     match channel_type {
         "discord" if fold_string_into_array(instance, "guild_id", "guild_ids") => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "channels.discord.guild_id folded into channels.discord.guild_ids[]"
             );
         }
         "mattermost" if fold_string_into_array(instance, "channel_id", "channel_ids") => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "channels.mattermost.channel_id folded into channels.mattermost.channel_ids[]"
             );
         }
         "reddit" if fold_string_into_array(instance, "subreddit", "subreddits") => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "channels.reddit.subreddit folded into channels.reddit.subreddits[]"
             );
         }
@@ -1901,9 +1901,9 @@ fn apply_v2_to_v3_channel_folds(channel_type: &str, instance: &mut toml::Table) 
             {
                 if group_id == "dm" {
                     instance.insert("dm_only".to_string(), toml::Value::Boolean(true));
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "channels.signal.group_id=\"dm\" → channels.signal.dm_only=true"
                     );
                 } else {
@@ -1916,9 +1916,9 @@ fn apply_v2_to_v3_channel_folds(channel_type: &str, instance: &mut toml::Table) 
                             arr.push(toml::Value::String(group_id));
                         }
                     }
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "channels.signal.group_id folded into channels.signal.group_ids[]"
                     );
                 }
@@ -2025,16 +2025,16 @@ fn synthesize_agent_brains(
                 "model_provider".to_string(),
                 toml::Value::String(format!("{provider_type}.{provider_alias}")),
             );
-            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"alias": alias, "provider_type": provider_type, "provider_alias": provider_alias})), "agents.: inline brain → providers.models..");
+            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"alias": alias, "provider_type": provider_type, "provider_alias": provider_alias})), "agents.: inline brain → providers.models..");
         } else {
             // No provider declared but operator still set timeout_secs;
             // drop it rather than silently storing on the agent block,
             // since V3 has no agent-level slot for it.
             if provider_timeout_secs.is_some() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"alias": alias})),
                     "agents..timeout_secs dropped: V3 stores it on \
                      [model_providers.<type>.<alias>] and this agent has no \
@@ -2067,9 +2067,9 @@ fn synthesize_agent_brains(
             agent_table
                 .entry("risk_profile".to_string())
                 .or_insert_with(|| toml::Value::String(profile_alias.clone()));
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(
                         ::serde_json::json!({"alias": alias, "profile_alias": profile_alias})
                     ),
@@ -2099,9 +2099,9 @@ fn synthesize_agent_brains(
             agent_table
                 .entry("runtime_profile".to_string())
                 .or_insert_with(|| toml::Value::String(profile_alias.clone()));
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(
                         ::serde_json::json!({"alias": alias, "profile_alias": profile_alias})
                     ),
@@ -2120,7 +2120,7 @@ fn synthesize_agent_brains(
             if stays_inside_shared {
                 bundle_entry.insert("directory".to_string(), toml::Value::String(skills_dir));
             } else {
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"alias": alias, "skills_dir": skills_dir, "bundle_alias": bundle_alias})), "agents..skills_directory = \"\" lies outside \
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"alias": alias, "skills_dir": skills_dir, "bundle_alias": bundle_alias})), "agents..skills_directory = \"\" lies outside \
                      <install>/shared/. V3 confines skill-bundles to \
                      <install>/shared/skills/<alias>/; the path was dropped and the bundle \
                      falls back to the default. Copy the V2 skill files into \
@@ -2144,9 +2144,9 @@ fn synthesize_agent_brains(
                 new_list.push(toml::Value::String(bundle_alias.clone()));
             }
             agent_table.insert("skill_bundles".to_string(), toml::Value::Array(new_list));
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(
                         ::serde_json::json!({"alias": alias, "bundle_alias": bundle_alias})
                     ),
@@ -2309,7 +2309,7 @@ fn rewrite_dangling_peer_group_agents(passthrough: &mut toml::Table) {
             if let Some(toml::Value::String(channel_ref)) = group_table.get("channel") {
                 rewritten_channel_types.push(channel_ref.clone());
             }
-            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"group_name": group_name, "replacement_alias": format!("{:?}", replacement_alias)})), "peer_groups..agents rewritten from [\"default\"] to [] (no agents.default exists)");
+            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"group_name": group_name, "replacement_alias": format!("{:?}", replacement_alias)})), "peer_groups..agents rewritten from [\"default\"] to [] (no agents.default exists)");
         }
     }
 
@@ -2358,7 +2358,7 @@ fn rewrite_dangling_peer_group_agents(passthrough: &mut toml::Table) {
         }
     }
     if !added.is_empty() {
-        ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"replacement_alias": replacement_alias, "added": format!("{:?}", added)})), "agents..channels extended with  so the rewritten peer_groups resolve");
+        ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"replacement_alias": replacement_alias, "added": format!("{:?}", added)})), "agents..channels extended with  so the rewritten peer_groups resolve");
     }
 }
 
@@ -2395,9 +2395,9 @@ fn backfill_heartbeat_agent(passthrough: &mut toml::Table) {
     };
     if let Some(toml::Value::Table(hb)) = passthrough.get_mut("heartbeat") {
         hb.insert("agent".to_string(), toml::Value::String(alias.clone()));
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"alias": format!("{:?}", alias)})),
             &format!(
                 "heartbeat.agent unset with heartbeat.enabled = true → backfilled to {alias:?}"
@@ -2425,10 +2425,10 @@ fn lift_top_level_identity_into_agents(passthrough: &mut toml::Table) {
         return;
     };
     let Some(agents_value) = passthrough.get_mut("agents") else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "[identity] dropped during V2->V3 (no [agents] table to attach to)"
         );
         return;
@@ -2437,10 +2437,10 @@ fn lift_top_level_identity_into_agents(passthrough: &mut toml::Table) {
         return;
     };
     if agents_table.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "[identity] dropped during V2->V3 (agents map empty after fold)"
         );
         return;
@@ -2460,9 +2460,9 @@ fn lift_top_level_identity_into_agents(passthrough: &mut toml::Table) {
         agent_table.insert("identity".to_string(), identity_value.clone());
         folded += 1;
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
             .with_attrs(::serde_json::json!({"folded": folded})),
         &format!("[identity] lifted into [agents.<alias>.identity] ({folded} agent(s))")
     );
@@ -2503,9 +2503,9 @@ fn synthesize_default_agent_if_needed(passthrough: &toml::Table) -> toml::Table 
 
     let mut agents = toml::Table::new();
     agents.insert("default".to_string(), toml::Value::Table(default_agent));
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "synthesized [agents.default] from V1/V2 implicit single-agent semantics"
     );
     agents
@@ -2531,9 +2531,9 @@ fn fold_v2_tts_into_providers(passthrough: &mut toml::Table, new_providers: &mut
                 && let Some(v) = t.remove("model_id")
             {
                 t.entry("model".to_string()).or_insert(v);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "tts.elevenlabs.model_id renamed to tts.elevenlabs.model"
                 );
             }
@@ -2544,18 +2544,18 @@ fn fold_v2_tts_into_providers(passthrough: &mut toml::Table, new_providers: &mut
     }
 
     if tts_table.remove("default_provider").is_some() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "[tts].default_provider dropped (V3 has no global default-provider; set agent.<X>.tts_provider instead)"
         );
     }
 
     if !tts_aliased.is_empty() {
         new_providers.insert("tts".to_string(), toml::Value::Table(tts_aliased));
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "[tts.<type>] sub-blocks promoted to [tts_providers.<type>.default]"
         );
     }
@@ -2597,9 +2597,9 @@ fn fold_v2_transcription_into_providers(
         let mut wrapped = toml::Table::new();
         wrapped.insert("default".to_string(), toml::Value::Table(groq_entry));
         transcription_aliased.insert("groq".to_string(), toml::Value::Table(wrapped));
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "[transcription] Groq fields promoted to [transcription_providers.groq.default]"
         );
     }
@@ -2613,9 +2613,9 @@ fn fold_v2_transcription_into_providers(
         "default_transcription_provider",
     ] {
         if transcription_table.remove(*legacy_default).is_some() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"legacy_default": legacy_default})),
                 &format!(
                     "[transcription].{legacy_default} dropped (V3 has no global default-provider; set agent.<X>.transcription_provider instead)"
@@ -2635,9 +2635,9 @@ fn fold_v2_transcription_into_providers(
                 existing.entry(family).or_insert(value);
             }
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "[transcription.<family>] sub-blocks promoted to [transcription_providers.<family>.default]"
         );
     }
@@ -2675,17 +2675,17 @@ fn rename_route_provider_field(new_providers: &mut toml::Table, routes_key: &str
         }
     }
     if renamed > 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"routes_key": routes_key, "renamed": renamed})),
             "[providers.]  entry/entries: `provider` field renamed to `model_provider`"
         );
     }
     if promoted > 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"routes_key": routes_key, "promoted": promoted})),
             "[providers.]  entry/entries: bare `model_provider` promoted to dotted `<type>.default` form"
         );
@@ -2730,9 +2730,9 @@ fn fold_v2_storage_subsystems(passthrough: &mut toml::Table) {
 
     if let Some(toml::Value::Table(qdrant_data)) = memory_qdrant {
         merge_storage_default(storage_table, "qdrant", qdrant_data);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "[memory.qdrant] promoted to [storage.qdrant.default]"
         );
     }
@@ -2740,17 +2740,17 @@ fn fold_v2_storage_subsystems(passthrough: &mut toml::Table) {
         let mut sqlite_fields = toml::Table::new();
         sqlite_fields.insert("open_timeout_secs".to_string(), timeout_value);
         merge_storage_default(storage_table, "sqlite", sqlite_fields);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "memory.sqlite_open_timeout_secs → [storage.sqlite.default].open_timeout_secs"
         );
     }
     if let Some(toml::Value::Table(postgres_vector_data)) = memory_postgres {
         merge_storage_default(storage_table, "postgres", postgres_vector_data);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "[memory.postgres] vector fields promoted to [storage.postgres.default]"
         );
     }
@@ -2788,9 +2788,9 @@ fn fold_v2_storage_subsystems(passthrough: &mut toml::Table) {
                 &provider_type,
                 std::mem::take(&mut adapted_fields),
             );
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"provider_type": provider_type})),
                 "[storage.provider.config provider=] promoted to [storage..default]"
             );
@@ -2856,9 +2856,9 @@ fn adapt_storage_provider_config(mut config: toml::Table) -> (String, toml::Tabl
             (provider_type, out)
         }
         _ => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(
                         ::serde_json::json!({"provider_type": format!("{:?}", provider_type)})
                     ),
@@ -2912,10 +2912,10 @@ fn fold_security_into_risk_profile(passthrough: &mut toml::Table) {
             .iter()
             .map(|(k, v)| format!("{k}={v}"))
             .collect();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             &format!(
                 "[security.resources] dropped during V2→V3 migration (no V3 enforcement \
              codepath existed; sandbox backends own resource budgets): {}",
@@ -2953,9 +2953,9 @@ fn fold_security_into_risk_profile(passthrough: &mut toml::Table) {
         };
         default_profile.entry(target_key.to_string()).or_insert(v);
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "[security.sandbox] folded into [risk_profiles.default]"
     );
 }
@@ -3174,9 +3174,9 @@ pub fn migrate_v2_to_v3_install_filesystem(
         .flatten()
         .is_some_and(|mut it| it.next().is_some());
     if data_populated && agent_populated {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "data_target": data_target.display().to_string(),
                     "agent_target": agent_default.display().to_string(),
@@ -3209,9 +3209,9 @@ pub fn migrate_v2_to_v3_install_filesystem(
             backup_dir.display()
         )
     })?;
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "backup": backup_dir.display().to_string(),
             })
@@ -3236,9 +3236,9 @@ pub fn migrate_v2_to_v3_install_filesystem(
 
     relocate_default_agent_skills_to_shared(install_root)?;
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "backup": backup_dir.display().to_string(),
                 "entries_relocated": entries_relocated,
@@ -3271,10 +3271,10 @@ fn relocate_workspace_toplevel(
         let entry = entry?;
         let name = entry.file_name();
         let Some(name_str) = name.to_str() else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "legacy": legacy.display().to_string(),
                     })),
@@ -3319,10 +3319,10 @@ fn relocate_memory_subentries(
         let entry = entry?;
         let name = entry.file_name();
         let Some(name_str) = name.to_str() else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "legacy_memory_dir": legacy_memory_dir.display().to_string(),
                     })),
@@ -3348,10 +3348,10 @@ fn relocate_memory_subentries(
 
 fn move_with_refuse_to_clobber(src: &Path, dst: &Path) -> MigResult<bool> {
     if dst.exists() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "source": src.display().to_string(),
                     "target": dst.display().to_string(),
@@ -3433,9 +3433,9 @@ pub fn relocate_default_agent_skills_to_shared(install_root: &Path) -> MigResult
         std::fs::remove_dir_all(&src)
             .with_context(|| format!("[system] failed to remove {} after copy", src.display()))?;
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "from": src.display().to_string(),
                 "to": dst.display().to_string(),
@@ -3742,9 +3742,9 @@ fn backup_sqlite_for_multi_agent_migration(db_path: &Path, conn: &Connection) ->
             backup_path.display(),
         )
     })?;
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "backup": backup_path.display().to_string(),
             })
@@ -3959,9 +3959,9 @@ pub async fn migrate_qdrant_collection_to_v3(
     }
 
     if updated > 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "collection": collection,
                     "updated": updated,

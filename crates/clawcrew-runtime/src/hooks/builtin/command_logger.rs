@@ -47,9 +47,9 @@ impl HookHandler for CommandLoggerHook {
             duration.as_millis(),
             result.success,
         );
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"hook": "command-logger"})),
             &format!("{}", entry)
         );

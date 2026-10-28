@@ -112,7 +112,7 @@ pub async fn handle_sse_events(
 /// given authentication posture. Returns `None` to withhold the frame.
 ///
 /// Fail-closed contract: a frame carrying broadcast-only pairing secrets
-/// (stamped [`clawcrew_log::EPHEMERAL_BROADCAST_MARKER`] by the log layer when
+/// (stamped [`galleon_log::EPHEMERAL_BROADCAST_MARKER`] by the log layer when
 /// it merges `ephemeral_attributes` — QR payloads, pair codes) is withheld
 /// entirely unless `auth_enforced` is true. This keeps the credential off any
 /// unauthenticated `/api/events` stream even though the pre-existing handler
@@ -125,13 +125,13 @@ fn sse_frame_for_stream(
     if !is_public_sse_event(&value) {
         return None;
     }
-    if clawcrew_log::frame_carries_ephemeral_credentials(&value) && !auth_enforced {
+    if galleon_log::frame_carries_ephemeral_credentials(&value) && !auth_enforced {
         return None;
     }
     // Strip the internal marker so the delivered public shape is unchanged.
     // Shared with every other broadcast consumer so the
     // credential boundary is enforced identically across the bus.
-    clawcrew_log::strip_ephemeral_broadcast_marker(&mut value);
+    galleon_log::strip_ephemeral_broadcast_marker(&mut value);
     Some(value)
 }
 
@@ -157,7 +157,7 @@ fn history_events_payload(buffer: &EventBuffer) -> serde_json::Value {
         // observer that fills this buffer, so a marked frame should never be
         // here in the first place — this filter fails closed as defense in
         // depth for the non-persistent credential boundary.
-        .filter(|event| !clawcrew_log::frame_carries_ephemeral_credentials(event))
+        .filter(|event| !galleon_log::frame_carries_ephemeral_credentials(event))
         .collect();
     serde_json::json!({ "events": events })
 }
@@ -600,14 +600,14 @@ mod tests {
         assert_eq!(events[1]["type"], "gateway_lifecycle");
     }
 
-    /// Build a broadcast frame stamped the way `clawcrew_log::record_event`
+    /// Build a broadcast frame stamped the way `galleon_log::record_event`
     /// stamps a credential-bearing login event (ephemeral attrs merged into
     /// `attributes.login`, plus the fail-closed marker).
     fn credential_login_frame() -> serde_json::Value {
         serde_json::json!({
             "source": "observability",
             "attributes": { "login": { "state": "qr", "qr_payload": "SECRET-QR-PAYLOAD" } },
-            clawcrew_log::EPHEMERAL_BROADCAST_MARKER: true,
+            galleon_log::EPHEMERAL_BROADCAST_MARKER: true,
         })
     }
 
@@ -636,7 +636,7 @@ mod tests {
         );
         assert!(
             delivered
-                .get(clawcrew_log::EPHEMERAL_BROADCAST_MARKER)
+                .get(galleon_log::EPHEMERAL_BROADCAST_MARKER)
                 .is_none(),
             "internal fail-closed marker must be stripped before delivery"
         );
@@ -910,7 +910,7 @@ mod tests {
             !dump.contains("SECRET-QR-PAYLOAD"),
             "history must not expose a pairing secret: {dump}"
         );
-        assert!(!dump.contains(clawcrew_log::EPHEMERAL_BROADCAST_MARKER));
+        assert!(!dump.contains(galleon_log::EPHEMERAL_BROADCAST_MARKER));
     }
 
     // ── Route-level `/api/events` credential-boundary regressions ─────────
@@ -1091,7 +1091,7 @@ mod tests {
             "an authenticated client should receive the QR payload: {body:?}"
         );
         assert!(
-            !body.contains(clawcrew_log::EPHEMERAL_BROADCAST_MARKER),
+            !body.contains(galleon_log::EPHEMERAL_BROADCAST_MARKER),
             "the internal fail-closed marker must be stripped before delivery: {body:?}"
         );
     }

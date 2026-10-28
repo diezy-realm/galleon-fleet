@@ -46,10 +46,10 @@ pub fn apply_timeout_action(
             ) {
                 Ok(action) => Some(action),
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "error": e.to_string(),
@@ -86,10 +86,10 @@ pub fn apply_timeout_action(
 /// Warn that a timeout action was skipped because its audit row could not be
 /// persisted (fail-closed: the gate is left for the next tick to retry).
 fn log_audit_skip(run_id: &str, action: &str, e: &impl std::fmt::Display) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(::serde_json::json!({
                 "run_id": run_id, "action": action, "error": e.to_string()
             })),
@@ -112,7 +112,7 @@ fn deliver_escalation_route(engine: &SopEngine, run_id: &str) {
     };
     let broker = engine.approval_broker();
     if let Some(route) = broker.escalation_delivery_route(engine.approval_config(), &policy_name) {
-        let span = ::clawcrew_log::info_span!(
+        let span = ::galleon_log::info_span!(
             target: "clawcrew_log_internal_scope",
             "clawcrew_scope",
             session_key = %run_id,

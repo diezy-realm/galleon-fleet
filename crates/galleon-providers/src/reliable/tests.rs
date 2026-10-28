@@ -883,10 +883,10 @@
     /// the terminal aggregate remains bounded and free of route identity.
     #[tokio::test]
     async fn pinned_empty_completion_logs_served_model_but_aggregate_stays_safe() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let calls = Arc::new(AtomicUsize::new(0));
@@ -918,7 +918,7 @@
             .await
             .expect_err("a pinned entry stuck on empty completions must not succeed");
         let events = drain_captured_events(&mut rx);
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
 
         let text = err.to_string();
         assert!(text.contains("event 1 (retry 1/2): empty_response"));
@@ -947,10 +947,10 @@
 
     #[tokio::test]
     async fn pinned_retry_and_exhaustion_logs_use_served_model() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let calls = Arc::new(AtomicUsize::new(0));
@@ -977,7 +977,7 @@
             .await
             .expect_err("a pinned entry stuck on a retryable error must not succeed");
         let events = drain_captured_events(&mut rx);
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
 
         let text = err.to_string();
         assert!(
@@ -1004,10 +1004,10 @@
 
     #[tokio::test]
     async fn pinned_non_retryable_log_uses_served_model() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let calls = Arc::new(AtomicUsize::new(0));
@@ -1034,7 +1034,7 @@
             .await
             .expect_err("a pinned entry with a non-retryable error must fail");
         let events = drain_captured_events(&mut rx);
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
 
         let text = err.to_string();
         assert!(!text.contains("HTTP 400 invalid request"));
@@ -1056,10 +1056,10 @@
 
     #[tokio::test]
     async fn pinned_context_truncation_log_uses_served_model() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let calls = Arc::new(AtomicUsize::new(0));
@@ -1092,7 +1092,7 @@
             .await
             .expect("the truncated retry should recover");
         let events = drain_captured_events(&mut rx);
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
 
         assert_eq!(result, "recovered after truncation");
         assert_captured_model(
@@ -1106,10 +1106,10 @@
 
     #[tokio::test]
     async fn pinned_rate_limit_and_cooldown_logs_use_each_served_model() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let rate_limited_calls = Arc::new(AtomicUsize::new(0));
@@ -1164,7 +1164,7 @@
             .await
             .expect("the downstream fallback should recover");
         let events = drain_captured_events(&mut rx);
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
 
         assert_eq!(result, "recovered");
         assert_captured_model(
@@ -8689,10 +8689,10 @@
         // End-to-end through ProviderDispatch: the captured event
         // must report the inner provider's `model_provider_type`,
         // never `reliable`.
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let reliable: Arc<dyn ModelProvider> = Arc::new(reliable);
@@ -8727,5 +8727,5 @@
             Some("reliable"),
             "ReliableModelProvider must not surface as model_provider_type=reliable",
         );
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
     }

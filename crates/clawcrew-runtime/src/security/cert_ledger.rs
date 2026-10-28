@@ -902,10 +902,10 @@ impl CertLedger {
         // open the same failure IS fatal, because there is no in-flight
         // operation to protect and a broken ledger should surface loudly.
         if let Err(error) = self.reconcile_undelivered_issuances() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({ "error": format!("{error:#}") })),
                 "cert ledger: could not sweep undelivered certificates before this issuance; \
                  they stay eligible for the next issuance, ledger open, or explicit sweep"
@@ -1079,10 +1079,10 @@ impl CertLedger {
             params![entry.fingerprint, PENDING],
         );
         if let Err(error) = result {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Delete)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Delete)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "error": format!("{error}"),
                         "fingerprint": entry.fingerprint,

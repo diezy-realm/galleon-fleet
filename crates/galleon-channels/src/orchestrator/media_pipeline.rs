@@ -145,7 +145,7 @@ impl<'a> MediaPipeline<'a> {
                 }
             }
             Err(err) => {
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"file": attachment.file_name, "error": format!("{}", err)})), "Media pipeline: audio transcription failed");
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"file": attachment.file_name, "error": format!("{}", err)})), "Media pipeline: audio transcription failed");
                 "[Audio: transcription failed]".to_string()
             }
         }
@@ -192,10 +192,10 @@ fn image_payload_for_vision(attachment: &MediaAttachment) -> (String, Cow<'_, [u
         match webp_to_png(&attachment.data) {
             Ok(png) => return ("image/png".to_string(), Cow::Owned(png)),
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "file": attachment.file_name,
                             "error": format!("{}", err),

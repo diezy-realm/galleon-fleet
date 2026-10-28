@@ -1172,11 +1172,11 @@ fn project_cli_terminal_completion_error(error: anyhow::Error) -> anyhow::Error 
         return error;
     };
     let diagnostic = error.to_string();
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         ERROR,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-            .with_category(::clawcrew_log::EventCategory::Agent)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+            .with_category(::galleon_log::EventCategory::Agent)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(::serde_json::json!({
                 "error": diagnostic,
                 "error_key": "terminal_completion",
@@ -1201,7 +1201,7 @@ pub async fn run(
     origin: TurnOrigin,
     overrides: AgentRunOverrides,
 ) -> Result<String> {
-    use ::clawcrew_log::Instrument;
+    use ::galleon_log::Instrument;
     let agent = resolved_agent_for_turn(&config, agent_alias)?;
     crate::agent::thinking::validate_thinking_config(&agent.resolved.thinking);
     let risk_profile = config
@@ -1230,8 +1230,8 @@ pub async fn run(
     };
     let __zc_alias = agent_alias.to_string();
     let __zc_attribution_span =
-        ::clawcrew_log::attribution_span!(&crate::agent::AgentAttribution(__zc_alias.as_str()));
-    let __zc_scope_span = ::clawcrew_log::info_span!(
+        ::galleon_log::attribution_span!(&crate::agent::AgentAttribution(__zc_alias.as_str()));
+    let __zc_scope_span = ::galleon_log::info_span!(
         target: "clawcrew_log_internal_scope",
         "clawcrew_scope",
         risk_profile = %agent.risk_profile,
@@ -1258,10 +1258,10 @@ pub async fn run(
                 galleon_config::schema::ObservabilityBackend::Prometheus
             )
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Observability backend is Prometheus (pull/scrape model): a one-shot CLI process \
                  exits before any scraper can pull, so its telemetry will not be collected. \
                  Prometheus is intended for long-running (daemon) deployments."
@@ -1297,20 +1297,20 @@ pub async fn run(
                 }
             }
         };
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                .with_category(::clawcrew_log::EventCategory::Memory)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                .with_category(::galleon_log::EventCategory::Memory)
                 .with_attrs(::serde_json::json!({"backend": mem.name()})),
             "Memory initialized"
         );
 
         // ── Peripherals (merge peripheral tools into registry) ─
         if !peripheral_overrides.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                    .with_category(::galleon_log::EventCategory::Agent)
                     .with_attrs(::serde_json::json!({"peripherals": peripheral_overrides})),
                 "Peripheral overrides from CLI (config boards take precedence)"
             );
@@ -1427,10 +1427,10 @@ pub async fn run(
             &escalate_handle,
         );
         if count > 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Register)
-                    .with_category(::clawcrew_log::EventCategory::Channel)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Register)
+                    .with_category(::galleon_log::EventCategory::Channel)
                     .with_attrs(::serde_json::json!({"count": count})),
                 &format!("Registered {} channel(s) for CLI agent", count),
             );
@@ -1442,11 +1442,11 @@ pub async fn run(
             .as_deref()
             .or(agent_provider_ref.as_deref())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_category(::clawcrew_log::EventCategory::Agent)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_category(::galleon_log::EventCategory::Agent)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"agent_alias": agent_alias})),
                     "agent loop refused: agent.model_provider unresolved and no --provider override"
                 );
@@ -1472,7 +1472,7 @@ pub async fn run(
             config.resolved_context_limits_for_route(agent_alias, &provider_name, &model_name);
 
         {
-            let span = clawcrew_log::Span::current();
+            let span = galleon_log::Span::current();
             let mp_composite = match agent_provider_resolved.as_ref() {
                 Some((ty, alias, _)) => format!("{ty}.{alias}"),
                 None => provider_name.clone(),
@@ -1533,10 +1533,10 @@ pub async fn run(
             .and_then(Result::ok)
             .filter(|r: &crate::rag::HardwareRag| !r.is_empty());
         if let Some(ref rag) = hardware_rag {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                    .with_category(::galleon_log::EventCategory::Agent)
                     .with_attrs(::serde_json::json!({"chunks": rag.len()})),
                 "Hardware RAG loaded"
             );
@@ -1753,13 +1753,13 @@ pub async fn run(
             let (thinking_directive, effective_msg) =
                 match crate::agent::thinking::parse_thinking_directive(&msg) {
                     Some((level, remaining)) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_category(::clawcrew_log::EventCategory::Agent)
+                            .with_category(::galleon_log::EventCategory::Agent)
                             .with_attrs(::serde_json::json!({"thinking_level": level})),
                             "Thinking directive parsed from message"
                         );
@@ -2023,13 +2023,13 @@ pub async fn run(
                     Err(e) => {
                         if let Some((new_model_provider, new_model)) = is_model_switch_requested(&e)
                         {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Migrate
+                                    ::galleon_log::Action::Migrate
                                 )
-                                .with_category(::clawcrew_log::EventCategory::Provider),
+                                .with_category(::galleon_log::EventCategory::Provider),
                                 &format!(
                                     "Model switch requested, switching from {} {} to {} {}",
                                     provider_name, model_name, new_model_provider, new_model
@@ -2109,36 +2109,36 @@ pub async fn run(
                     };
                     match creation_result {
                         Ok(Some(slug)) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Register
+                                    ::galleon_log::Action::Register
                                 )
-                                .with_category(::clawcrew_log::EventCategory::Agent)
+                                .with_category(::galleon_log::EventCategory::Agent)
                                 .with_attrs(::serde_json::json!({"slug": slug})),
                                 "Auto-created skill from execution"
                             );
                         }
                         Ok(None) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 DEBUG,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Skip
+                                    ::galleon_log::Action::Skip
                                 )
-                                .with_category(::clawcrew_log::EventCategory::Agent),
+                                .with_category(::galleon_log::EventCategory::Agent),
                                 "Skill creation skipped (duplicate or disabled)"
                             );
                         }
-                        Err(e) => ::clawcrew_log::record!(
+                        Err(e) => ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_category(::clawcrew_log::EventCategory::Agent)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_category(::galleon_log::EventCategory::Agent)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Skill creation failed"
                         ),
@@ -2298,13 +2298,13 @@ pub async fn run(
                 let (thinking_directive, effective_input) =
                     match crate::agent::thinking::parse_thinking_directive(&user_input) {
                         Some((level, remaining)) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_category(::clawcrew_log::EventCategory::Agent)
+                                .with_category(::galleon_log::EventCategory::Agent)
                                 .with_attrs(::serde_json::json!({"thinking_level": level})),
                                 "Thinking directive parsed"
                             );
@@ -2608,13 +2608,13 @@ pub async fn run(
                             if let Some((new_model_provider, new_model)) =
                                 is_model_switch_requested(&e)
                             {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     INFO,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Migrate
+                                        ::galleon_log::Action::Migrate
                                     )
-                                    .with_category(::clawcrew_log::EventCategory::Provider),
+                                    .with_category(::galleon_log::EventCategory::Provider),
                                     &format!(
                                         "Model switch requested, switching from {} {} to {} {}",
                                         provider_name, model_name, new_model_provider, new_model
@@ -2661,13 +2661,13 @@ pub async fn run(
                             // Context overflow recovery: drop oldest whole
                             // turns and retry. No summarization, no splicing.
                             if galleon_providers::reliable::is_context_window_exceeded(&e) {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Retry
+                                        ::galleon_log::Action::Retry
                                     )
-                                    .with_category(::clawcrew_log::EventCategory::Agent),
+                                    .with_category(::galleon_log::EventCategory::Agent),
                                     "Context overflow in interactive loop, attempting recovery"
                                 );
                                 let taken = std::mem::take(&mut history);
@@ -2698,21 +2698,21 @@ pub async fn run(
                                         );
                                     history = trimmed;
                                     {
-                                        let __zc_trim_span = ::clawcrew_log::info_span!(
+                                        let __zc_trim_span = ::galleon_log::info_span!(
                                             target: "clawcrew_log_internal_scope",
                                             "clawcrew_scope",
                                             model = %model_name,
                                             model_provider = %provider_name,
                                         );
                                         let _zc_trim_guard = __zc_trim_span.entered();
-                                        ::clawcrew_log::record!(
+                                        ::galleon_log::record!(
                                             INFO,
-                                            ::clawcrew_log::Event::new(
+                                            ::galleon_log::Event::new(
                                                 module_path!(),
-                                                ::clawcrew_log::Action::Retry
+                                                ::galleon_log::Action::Retry
                                             )
-                                            .with_category(::clawcrew_log::EventCategory::Agent)
-                                            .with_outcome(::clawcrew_log::EventOutcome::Success)
+                                            .with_category(::galleon_log::EventCategory::Agent)
+                                            .with_outcome(::galleon_log::EventOutcome::Success)
                                             .with_attrs(::serde_json::json!({
                                                 "dropped_messages": result.dropped_messages,
                                                 "dropped_turns": result.dropped_turns,
@@ -2728,7 +2728,7 @@ pub async fn run(
                                     crate::agent::history::estimate_system_floor_tokens(&history);
                                 let floor_exceeds_budget = system_floor >= recovery_budget;
                                 {
-                                    let __zc_trim_span = ::clawcrew_log::info_span!(
+                                    let __zc_trim_span = ::galleon_log::info_span!(
                                         target: "clawcrew_log_internal_scope",
                                         "clawcrew_scope",
                                         model = %model_name,
@@ -2736,14 +2736,14 @@ pub async fn run(
                                     );
                                     let _zc_trim_guard = __zc_trim_span.entered();
                                     if floor_exceeds_budget {
-                                        ::clawcrew_log::record!(
+                                        ::galleon_log::record!(
                                             WARN,
-                                            ::clawcrew_log::Event::new(
+                                            ::galleon_log::Event::new(
                                                 module_path!(),
-                                                ::clawcrew_log::Action::Fail
+                                                ::galleon_log::Action::Fail
                                             )
-                                            .with_category(::clawcrew_log::EventCategory::Agent)
-                                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                            .with_category(::galleon_log::EventCategory::Agent)
+                                            .with_outcome(::galleon_log::EventOutcome::Failure)
                                             .with_attrs(::serde_json::json!({
                                                 "system_floor": system_floor,
                                                 "budget": recovery_budget,
@@ -2755,14 +2755,14 @@ pub async fn run(
                                             )
                                         );
                                     } else {
-                                        ::clawcrew_log::record!(
+                                        ::galleon_log::record!(
                                             WARN,
-                                            ::clawcrew_log::Event::new(
+                                            ::galleon_log::Event::new(
                                                 module_path!(),
-                                                ::clawcrew_log::Action::Fail
+                                                ::galleon_log::Action::Fail
                                             )
-                                            .with_category(::clawcrew_log::EventCategory::Agent)
-                                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                                            .with_category(::galleon_log::EventCategory::Agent)
+                                            .with_outcome(::galleon_log::EventOutcome::Failure),
                                             "Context overflow but only one turn remains; cannot trim further"
                                         );
                                     }
@@ -2909,7 +2909,7 @@ pub(crate) async fn process_message_shared(
     session_id: Option<&str>,
     origin: TurnOrigin,
 ) -> Result<String> {
-    use ::clawcrew_log::Instrument;
+    use ::galleon_log::Instrument;
     let agent = resolved_agent_for_turn(&config, agent_alias)?;
     crate::agent::thinking::validate_thinking_config(&agent.resolved.thinking);
     let risk_profile = config
@@ -2940,8 +2940,8 @@ pub(crate) async fn process_message_shared(
     let __zc_message = message.to_string();
     let __zc_session_id = session_id.map(str::to_string);
     let __zc_attribution_span =
-        ::clawcrew_log::attribution_span!(&crate::agent::AgentAttribution(__zc_alias.as_str()));
-    let __zc_scope_span = ::clawcrew_log::info_span!(
+        ::galleon_log::attribution_span!(&crate::agent::AgentAttribution(__zc_alias.as_str()));
+    let __zc_scope_span = ::galleon_log::info_span!(
         target: "clawcrew_log_internal_scope",
         "clawcrew_scope",
         risk_profile = %agent.risk_profile,
@@ -3099,10 +3099,10 @@ pub(crate) async fn process_message_shared(
             &escalate_handle,
         );
         if count > 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Register)
-                    .with_category(::clawcrew_log::EventCategory::Channel)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Register)
+                    .with_category(::galleon_log::EventCategory::Channel)
                     .with_attrs(::serde_json::json!({"count": count})),
                 &format!("Registered {} channel(s) for process_message agent", count),
             );
@@ -3307,10 +3307,10 @@ pub(crate) async fn process_message_shared(
         let (thinking_directive, effective_message) =
             match crate::agent::thinking::parse_thinking_directive(message) {
                 Some((level, remaining)) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_category(::clawcrew_log::EventCategory::Agent)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_category(::galleon_log::EventCategory::Agent)
                             .with_attrs(::serde_json::json!({"thinking_level": level})),
                         "Thinking directive parsed from message"
                     );

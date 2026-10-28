@@ -427,10 +427,10 @@ impl ComposioTool {
             Some(id) => id.to_string(),
             None => {
                 let app = app_name.ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"missing": "app_or_auth_config_id"})),
                         "composio: v3 connect missing app or auth_config_id"
                     );
@@ -464,10 +464,10 @@ impl ComposioTool {
             .await
             .context("Failed to decode Composio v3 connect response")?;
         let redirect_url = extract_redirect_url(&result).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "composio: v3 response missing redirect URL"
             );
             anyhow::Error::msg("No redirect URL in Composio v3 response")
@@ -613,10 +613,10 @@ impl Tool for ComposioTool {
 
     async fn execute(&self, args: serde_json::Value) -> anyhow::Result<ToolResult> {
         let action = args.get("action").and_then(|v| v.as_str()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "action"})),
                 "composio: missing action parameter"
             );
@@ -739,13 +739,13 @@ impl Tool for ComposioTool {
                     .or_else(|| args.get("action_name"))
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Reject
+                                ::galleon_log::Action::Reject
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(
                                 ::serde_json::json!({"missing": "action_name_or_tool_slug"})
                             ),

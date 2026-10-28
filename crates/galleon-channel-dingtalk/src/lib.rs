@@ -172,10 +172,10 @@ impl Channel for DingTalkChannel {
     async fn send(&self, message: &SendMessage) -> anyhow::Result<()> {
         let webhooks = self.session_webhooks.read().await;
         let webhook_url = webhooks.get(&message.recipient).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "recipient": message.recipient,
                         "reason": "no_session_webhook",
@@ -211,18 +211,18 @@ impl Channel for DingTalkChannel {
     }
 
     async fn listen(&self, tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "registering gateway connection..."
         );
 
         let gw = self.register_connection().await?;
         let ws_url = format!("{}?ticket={}", gw.endpoint, gw.ticket);
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "connecting to stream WebSocket..."
         );
         let (ws_stream, _) = galleon_config::schema::ws_connect_with_proxy(
@@ -233,9 +233,9 @@ impl Channel for DingTalkChannel {
         .await?;
         let (mut write, mut read) = ws_stream.split();
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "connected and listening for messages..."
         );
 
@@ -244,10 +244,10 @@ impl Channel for DingTalkChannel {
                 Ok(Message::Text(t)) => t,
                 Ok(Message::Close(_)) => break,
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "WebSocket error"
                     );
@@ -283,13 +283,13 @@ impl Channel for DingTalkChannel {
                     });
 
                     if let Err(e) = write.send(Message::Text(pong.to_string().into())).await {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "failed to send pong"
                         );
@@ -301,11 +301,11 @@ impl Channel for DingTalkChannel {
                     let data = match Self::parse_stream_data(&frame) {
                         Some(v) => v,
                         None => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 DEBUG,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 ),
                                 "frame has no parseable data payload"
                             );
@@ -331,13 +331,13 @@ impl Channel for DingTalkChannel {
                         .unwrap_or("unknown");
 
                     if !self.is_user_allowed(sender_id) {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"sender_id": sender_id})),
                             "ignoring message from unauthorized user"
                         );
@@ -394,13 +394,13 @@ impl Channel for DingTalkChannel {
                     };
 
                     if tx.send(channel_msg).await.is_err() {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                             "message channel closed"
                         );
                         break;

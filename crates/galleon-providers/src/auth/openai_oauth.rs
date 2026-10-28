@@ -274,7 +274,7 @@ pub async fn poll_device_code_tokens_with_client(
 }
 
 pub async fn receive_loopback_code(expected_state: &str, timeout: Duration) -> Result<String> {
-    ::clawcrew_log::scope!(
+    ::galleon_log::scope!(
         model_provider_type: "openai",
         model_provider_alias: "oauth",
         => async move {
@@ -303,10 +303,10 @@ async fn receive_loopback_code_inner(expected_state: &str, timeout: Duration) ->
 
     let request = String::from_utf8_lossy(&buffer[..bytes_read]);
     let first_line = request.lines().next().ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"oauth_provider": "openai"})),
             "openai_oauth: malformed callback request"
         );
@@ -314,10 +314,10 @@ async fn receive_loopback_code_inner(expected_state: &str, timeout: Duration) ->
     })?;
 
     let path = first_line.split_whitespace().nth(1).ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"oauth_provider": "openai"})),
             "openai_oauth: callback request missing path"
         );
@@ -521,7 +521,7 @@ pub async fn import_codex_auth_profile(
     profile: &str,
     import_path: &std::path::Path,
 ) -> anyhow::Result<()> {
-    ::clawcrew_log::scope!(
+    ::galleon_log::scope!(
         model_provider_type: "openai",
         model_provider_alias: profile,
         => async move {
@@ -582,10 +582,10 @@ async fn import_codex_auth_profile_inner(
         .account_id
         .or_else(|| extract_account_id_from_jwt(&token_set.access_token));
     if account_id.is_none() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Could not extract OpenAI account id from imported access token; \
              requests may fail until re-authentication."
         );

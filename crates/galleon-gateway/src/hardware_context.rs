@@ -166,7 +166,7 @@ pub async fn handle_hardware_pin(
                 "GPIO {} registered as {} on {}",
                 req.pin, component, req.device
             );
-            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"device": req.device, "pin": req.pin, "component": component})), &format!("{}", message));
+            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"device": req.device, "pin": req.pin, "component": component})), &format!("{}", message));
             (
                 StatusCode::OK,
                 Json(serde_json::json!({ "ok": true, "message": message })),
@@ -270,9 +270,9 @@ pub async fn handle_hardware_context_post(
 
     match append_to_file(&device_path, &content).await {
         Ok(()) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(
                         ::serde_json::json!({"device": req.device, "bytes": content.len()})
                     ),
@@ -365,9 +365,9 @@ pub async fn handle_hardware_reload(
     let context = galleon_hardware::load_hardware_context_prompt(&[]);
     let context_length = context.len();
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({"context_length": context_length, "tool_count": tool_count})
         ),
         "Hardware context reloaded (on-disk read)"

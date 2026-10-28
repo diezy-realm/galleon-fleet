@@ -229,7 +229,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
      - `/crates/clawcrew-runtime/src/agent/history_trim.rs` - structured log `trim_history` dengan token counters
      - `/crates/clawcrew-runtime/src/agent/cost.rs` - cost & token accounting
   2. **Acceptance criteria testable:**
-     - [x] Log `trim_history` dengan field `trimmed`, `tokens_before`, `tokens_after`, `dropped_turns` tercatat via `clawcrew_log::record!`
+     - [x] Log `trim_history` dengan field `trimmed`, `tokens_before`, `tokens_after`, `dropped_turns` tercatat via `galleon_log::record!`
      - [x] Log `cache_hit` dan `cache_miss` tercatat pada runtime metrics
      - [x] Test suite `history_trim` lolos 100% (38/38 pass)
 

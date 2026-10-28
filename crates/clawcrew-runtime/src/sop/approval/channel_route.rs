@@ -402,10 +402,10 @@ impl ApprovalRouteAdapter for ChannelRouteAdapter {
             let prompted = match channel.send_gate_prompt(&recipient, &prompt).await {
                 Ok(prompted) => prompted,
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "route": route, "run_id": run_id, "error": e.to_string()
                             })),
@@ -415,10 +415,10 @@ impl ApprovalRouteAdapter for ChannelRouteAdapter {
                 }
             };
             if !prompted && let Err(e) = channel.send(&msg).await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "route": route, "run_id": run_id, "error": e.to_string()
                         })),

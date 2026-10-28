@@ -187,18 +187,18 @@ impl HeartbeatEngine {
     /// Start the heartbeat loop (runs until cancelled)
     pub async fn run(&self) -> Result<()> {
         if !self.config.enabled {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Heartbeat disabled"
             );
             return Ok(());
         }
 
         let interval_mins = self.config.interval_minutes.max(1);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("💓 Heartbeat started: every {} minutes", interval_mins)
         );
 
@@ -211,21 +211,21 @@ impl HeartbeatEngine {
             match self.tick().await {
                 Ok(tasks) => {
                     if tasks > 0 {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             ),
                             &format!("💓 Heartbeat: processed {} tasks", tasks)
                         );
                     }
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!("💓 Heartbeat error: {}", e)
                     );
                     self.observer.record_event(&ObserverEvent::Error {

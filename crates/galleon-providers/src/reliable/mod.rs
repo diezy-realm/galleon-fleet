@@ -2055,9 +2055,9 @@ impl ReliableModelProvider {
     }
 
     fn log_cooldown_skip(&self, provider_name: &str, model: &str) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "model_provider": provider_name,
                     "model": model,
@@ -2087,9 +2087,9 @@ impl ReliableModelProvider {
         err: &anyhow::Error,
     ) -> Duration {
         let cooldown = self.set_rate_limit_cooldown(&entry.cooldown_key, err);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "model_provider": entry.display_name,
                     "model": model,
@@ -2136,10 +2136,10 @@ impl ReliableModelProvider {
             "empty_response",
             None,
         );
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "model_provider": provider_name,
                     "model": model,
@@ -2175,9 +2175,9 @@ impl ModelProvider for ReliableModelProvider {
     async fn warmup(&self) -> anyhow::Result<()> {
         for entry in &self.model_providers {
             let provider_name = entry.display_name.as_str();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"model_provider": provider_name})),
                 "Warming up model_provider connection pool"
             );
@@ -2186,10 +2186,10 @@ impl ModelProvider for ReliableModelProvider {
                 .await
                 .is_err()
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"model_provider": provider_name})),
                     "Warmup failed (non-fatal)"
                 );
@@ -2283,7 +2283,7 @@ impl ModelProvider for ReliableModelProvider {
                                     .map(|entry| entry.display_name.as_str())
                                     != Some(provider_name)
                             {
-                                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "attempt": attempt, "original_model": model})), "ModelProvider recovered (failover/retry)");
+                                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "attempt": attempt, "original_model": model})), "ModelProvider recovered (failover/retry)");
                                 let primary = self
                                     .model_providers
                                     .first()
@@ -2391,19 +2391,19 @@ impl ModelProvider for ReliableModelProvider {
                                 && !non_retryable_rate_limit
                                 && let Some(new_key) = self.rotate_key()
                             {
-                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "error": error_detail})), &format!("Rate limited; key rotation selected key ending ...{} \
+                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "error": error_detail})), &format!("Rate limited; key rotation selected key ending ...{} \
                                      but cannot apply (ModelProvider trait has no set_api_key). \
                                      Retrying with original key.", &new_key[new_key.len().saturating_sub(4)..]));
                             }
 
                             if non_retryable {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(
                                         provider_failure_attrs(
                                             provider_name,
@@ -2431,13 +2431,13 @@ impl ModelProvider for ReliableModelProvider {
 
                             if attempt < self.max_retries {
                                 let wait = self.compute_backoff(backoff_ms, &e);
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(
                                         provider_retry_attrs(
                                             provider_name,
@@ -2460,10 +2460,10 @@ impl ModelProvider for ReliableModelProvider {
                     }
                 }
 
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(provider_exhausted_attrs(
                             provider_name,
                             served_model,
@@ -2475,7 +2475,7 @@ impl ModelProvider for ReliableModelProvider {
             }
 
             if *current_model != model {
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"original_model": model, "fallback_model": *current_model})), "Model fallback exhausted all model_providers, trying next fallback model");
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"original_model": model, "fallback_model": *current_model})), "Model fallback exhausted all model_providers, trying next fallback model");
             }
         }
 
@@ -2572,7 +2572,7 @@ impl ModelProvider for ReliableModelProvider {
                                     .map(|entry| entry.display_name.as_str())
                                     != Some(provider_name)
                             {
-                                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "attempt": attempt, "original_model": model, "context_truncated": context_truncated})), "ModelProvider recovered (failover/retry)");
+                                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "attempt": attempt, "original_model": model, "context_truncated": context_truncated})), "ModelProvider recovered (failover/retry)");
                                 let primary = self
                                     .model_providers
                                     .first()
@@ -2651,7 +2651,7 @@ impl ModelProvider for ReliableModelProvider {
                                 if dropped > 0 {
                                     record_provider_context_truncation();
                                     context_truncated = true;
-                                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "dropped": dropped, "remaining": effective_messages.len()})), "Context window exceeded; truncated history and retrying");
+                                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "dropped": dropped, "remaining": effective_messages.len()})), "Context window exceeded; truncated history and retrying");
                                     continue; // Retry with truncated messages (counts as an attempt)
                                 }
                                 // No complete older turn can be removed safely.
@@ -2697,19 +2697,19 @@ impl ModelProvider for ReliableModelProvider {
                                 && !non_retryable_rate_limit
                                 && let Some(new_key) = self.rotate_key()
                             {
-                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "error": error_detail})), &format!("Rate limited; key rotation selected key ending ...{} \
+                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "error": error_detail})), &format!("Rate limited; key rotation selected key ending ...{} \
                                      but cannot apply (ModelProvider trait has no set_api_key). \
                                      Retrying with original key.", &new_key[new_key.len().saturating_sub(4)..]));
                             }
 
                             if non_retryable {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(
                                         provider_failure_attrs(
                                             provider_name,
@@ -2737,13 +2737,13 @@ impl ModelProvider for ReliableModelProvider {
 
                             if attempt < self.max_retries {
                                 let wait = self.compute_backoff(backoff_ms, &e);
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(
                                         provider_retry_attrs(
                                             provider_name,
@@ -2766,10 +2766,10 @@ impl ModelProvider for ReliableModelProvider {
                     }
                 }
 
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(provider_exhausted_attrs(
                             provider_name,
                             served_model,
@@ -2989,7 +2989,7 @@ impl ModelProvider for ReliableModelProvider {
                                     .map(|entry| entry.display_name.as_str())
                                     != Some(provider_name)
                             {
-                                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "attempt": attempt, "original_model": model, "context_truncated": context_truncated})), "ModelProvider recovered (failover/retry)");
+                                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "attempt": attempt, "original_model": model, "context_truncated": context_truncated})), "ModelProvider recovered (failover/retry)");
                                 let primary = self
                                     .model_providers
                                     .first()
@@ -3066,7 +3066,7 @@ impl ModelProvider for ReliableModelProvider {
                                 if dropped > 0 {
                                     record_provider_context_truncation();
                                     context_truncated = true;
-                                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "dropped": dropped, "remaining": effective_messages.len()})), "Context window exceeded; truncated history and retrying");
+                                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "dropped": dropped, "remaining": effective_messages.len()})), "Context window exceeded; truncated history and retrying");
                                     continue; // Retry with truncated messages (counts as an attempt)
                                 }
                                 // No complete older turn can be removed safely.
@@ -3112,19 +3112,19 @@ impl ModelProvider for ReliableModelProvider {
                                 && !non_retryable_rate_limit
                                 && let Some(new_key) = self.rotate_key()
                             {
-                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "error": error_detail})), &format!("Rate limited; key rotation selected key ending ...{} \
+                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "error": error_detail})), &format!("Rate limited; key rotation selected key ending ...{} \
                                      but cannot apply (ModelProvider trait has no set_api_key). \
                                      Retrying with original key.", &new_key[new_key.len().saturating_sub(4)..]));
                             }
 
                             if non_retryable {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(
                                         provider_failure_attrs(
                                             provider_name,
@@ -3152,13 +3152,13 @@ impl ModelProvider for ReliableModelProvider {
 
                             if attempt < retry_limit {
                                 let wait = self.compute_backoff(backoff_ms, &e);
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(
                                         provider_retry_attrs(
                                             provider_name,
@@ -3181,10 +3181,10 @@ impl ModelProvider for ReliableModelProvider {
                     }
                 }
 
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(provider_exhausted_attrs(
                             provider_name,
                             served_model,
@@ -3341,7 +3341,7 @@ impl ModelProvider for ReliableModelProvider {
                                     .map(|entry| entry.display_name.as_str())
                                     != Some(provider_name)
                             {
-                                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "attempt": attempt, "original_model": model, "context_truncated": context_truncated})), "ModelProvider recovered (failover/retry)");
+                                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "attempt": attempt, "original_model": model, "context_truncated": context_truncated})), "ModelProvider recovered (failover/retry)");
                                 let primary = self
                                     .model_providers
                                     .first()
@@ -3418,7 +3418,7 @@ impl ModelProvider for ReliableModelProvider {
                                 if dropped > 0 {
                                     record_provider_context_truncation();
                                     context_truncated = true;
-                                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "dropped": dropped, "remaining": effective_messages.len()})), "Context window exceeded; truncated history and retrying");
+                                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "model": served_model, "dropped": dropped, "remaining": effective_messages.len()})), "Context window exceeded; truncated history and retrying");
                                     continue; // Retry with truncated messages (counts as an attempt)
                                 }
                                 // No complete older turn can be removed safely.
@@ -3464,19 +3464,19 @@ impl ModelProvider for ReliableModelProvider {
                                 && !non_retryable_rate_limit
                                 && let Some(new_key) = self.rotate_key()
                             {
-                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "error": error_detail})), &format!("Rate limited; key rotation selected key ending ...{} \
+                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": provider_name, "error": error_detail})), &format!("Rate limited; key rotation selected key ending ...{} \
                                      but cannot apply (ModelProvider trait has no set_api_key). \
                                      Retrying with original key.", &new_key[new_key.len().saturating_sub(4)..]));
                             }
 
                             if non_retryable {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(
                                         provider_failure_attrs(
                                             provider_name,
@@ -3504,13 +3504,13 @@ impl ModelProvider for ReliableModelProvider {
 
                             if attempt < retry_limit {
                                 let wait = self.compute_backoff(backoff_ms, &e);
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(
                                         provider_retry_attrs(
                                             provider_name,
@@ -3533,10 +3533,10 @@ impl ModelProvider for ReliableModelProvider {
                     }
                 }
 
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(provider_exhausted_attrs(
                             provider_name,
                             served_model,
@@ -3548,7 +3548,7 @@ impl ModelProvider for ReliableModelProvider {
             }
 
             if *current_model != model {
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"original_model": model, "fallback_model": *current_model})), "Model fallback exhausted all model_providers, trying next fallback model");
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"original_model": model, "fallback_model": *current_model})), "Model fallback exhausted all model_providers, trying next fallback model");
             }
         }
 

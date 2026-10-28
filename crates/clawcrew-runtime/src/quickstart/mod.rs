@@ -119,22 +119,22 @@ pub fn validate_only_with_surface(
         serde_json::json!({"error_count": errors.len()}),
     );
     let outcome = if ok {
-        ::clawcrew_log::EventOutcome::Success
+        ::galleon_log::EventOutcome::Success
     } else {
-        ::clawcrew_log::EventOutcome::Failure
+        ::galleon_log::EventOutcome::Failure
     };
     if ok {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Validate)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Validate)
                 .with_outcome(outcome)
                 .with_attrs(attrs),
             "quickstart: validate_only"
         );
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Validate)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Validate)
                 .with_outcome(outcome)
                 .with_attrs(attrs),
             "quickstart: validate_only"
@@ -158,9 +158,9 @@ pub async fn apply_with_surface(
     let ctx = RunCtx::new(surface);
     let started = std::time::Instant::now();
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Start)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Start)
             .with_attrs(ctx.base_attrs()),
         "quickstart: apply"
     );
@@ -175,10 +175,10 @@ pub async fn apply_with_surface(
         Some(&ctx),
     );
     if !errors.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(merge_attrs(
                     ctx.base_attrs(),
                     serde_json::json!({
@@ -216,9 +216,9 @@ pub async fn apply_with_surface(
                 &[("err", &err.to_string())],
             )]
         })?;
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             merge_attrs(
                 ctx.base_attrs(),
                 serde_json::json!({"flag": "quickstart_completed"}),
@@ -229,9 +229,9 @@ pub async fn apply_with_surface(
 
     let dirty_count = config.dirty_paths.len();
     let write_started = std::time::Instant::now();
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         DEBUG,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Write).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Write).with_attrs(
             merge_attrs(
                 ctx.base_attrs(),
                 serde_json::json!({"dirty_path_count": dirty_count}),
@@ -242,10 +242,10 @@ pub async fn apply_with_surface(
     let write_result = config.save_dirty().await;
     let write_ms = write_started.elapsed().as_millis() as u64;
     match &write_result {
-        Ok(_) => ::clawcrew_log::record!(
+        Ok(_) => ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Write)
-                .with_outcome(::clawcrew_log::EventOutcome::Success)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Write)
+                .with_outcome(::galleon_log::EventOutcome::Success)
                 .with_attrs(merge_attrs(
                     ctx.base_attrs(),
                     serde_json::json!({
@@ -255,10 +255,10 @@ pub async fn apply_with_surface(
                 )),
             "quickstart: persist complete"
         ),
-        Err(err) => ::clawcrew_log::record!(
+        Err(err) => ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Write)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Write)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(merge_attrs(
                     ctx.base_attrs(),
                     serde_json::json!({
@@ -291,10 +291,10 @@ pub async fn apply_with_surface(
         return Err(commit_errors);
     }
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Complete)
-            .with_outcome(::clawcrew_log::EventOutcome::Success)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Complete)
+            .with_outcome(::galleon_log::EventOutcome::Success)
             .with_attrs(merge_attrs(
                 ctx.base_attrs(),
                 serde_json::json!({
@@ -320,10 +320,10 @@ pub fn record_dismissed(run_id: &str, surface: Surface, last_step: Option<Quicks
             QuickstartStep::Agent => "agent",
         })
         .unwrap_or("none");
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({
                 "quickstart.run_id": run_id,
                 "quickstart.surface": surface.as_str(),
@@ -824,9 +824,9 @@ fn apply_into(
 
     let channel_refs = apply_channels(config, &submission.channels, errors, ctx);
     if let Some(ctx) = ctx {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 merge_attrs(
                     ctx.base_attrs(),
                     serde_json::json!({
@@ -857,9 +857,9 @@ fn apply_into(
     let peer_group_refs =
         apply_peer_groups(config, &submission.peer_groups, &channel_refs, errors, ctx);
     if let Some(ctx) = ctx {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 merge_attrs(
                     ctx.base_attrs(),
                     serde_json::json!({
@@ -943,9 +943,9 @@ fn selector_mode<T>(choice: &SelectorChoice<T>) -> &'static str {
 
 fn emit_selector_pick(ctx: Option<&RunCtx>, selector: &str, mode: &str, value: &str) {
     let Some(ctx) = ctx else { return };
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         DEBUG,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             merge_attrs(
                 ctx.base_attrs(),
                 serde_json::json!({

@@ -119,10 +119,10 @@ pub fn apply_thinking_level_with_config(
     {
         let clamped = budget.clamp(MIN_BUDGET_TOKENS, MAX_BUDGET_TOKENS);
         if clamped != budget {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_category(::galleon_log::EventCategory::Agent)
                     .with_attrs(::serde_json::json!({
                         "requested": budget,
                         "clamped": clamped,
@@ -174,10 +174,10 @@ pub fn resolve_thinking_from_message(
 ) -> ResolvedThinking {
     let (directive, effective_message) = match parse_thinking_directive(message) {
         Some((level, remaining)) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_category(::galleon_log::EventCategory::Agent)
                     .with_attrs(::serde_json::json!({"thinking_level": format!("{level:?}")})),
                 "Thinking directive parsed from message"
             );

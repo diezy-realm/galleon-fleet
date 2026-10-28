@@ -52,11 +52,11 @@ async fn record_duplicate_tool_call(
 ) -> ToolExecutionOutcome {
     let duplicate =
         format!("Skipped duplicate tool call '{tool_name}' with identical arguments in this turn.");
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Skip)
-            .with_category(::clawcrew_log::EventCategory::Tool)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Skip)
+            .with_category(::galleon_log::EventCategory::Tool)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(::serde_json::json!({
                 "model": ctx.model,
                 "iteration": iteration + 1,
@@ -166,13 +166,13 @@ pub(crate) async fn prepare_tool_calls(
                     // The before phase ran, so this context's only terminal
                     // lifecycle operation is abandonment.
                     abandon_prepared_context(ctx, &hook_context, &tool_name).await;
-                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Cancel).with_category(::clawcrew_log::EventCategory::Tool).with_attrs(::serde_json::json!({"tool": call.name, "reason": reason.to_string()})), "tool call cancelled by hook");
+                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Cancel).with_category(::galleon_log::EventCategory::Tool).with_attrs(::serde_json::json!({"tool": call.name, "reason": reason.to_string()})), "tool call cancelled by hook");
                     let cancelled = format!("Cancelled by hook: {reason}");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Cancel)
-                            .with_category(::clawcrew_log::EventCategory::Tool)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Cancel)
+                            .with_category(::galleon_log::EventCategory::Tool)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "model": ctx.model,
                                 "iteration": iteration + 1,
@@ -248,10 +248,10 @@ pub(crate) async fn prepare_tool_calls(
                 let repeated = format!(
                     "Agent loop aborted: repeated prompt-required tool call '{tool_name}' with identical arguments before approval."
                 );
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "model": ctx.model,
                             "iteration": iteration + 1,
@@ -329,10 +329,10 @@ pub(crate) async fn prepare_tool_calls(
             continue;
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Start)
-                .with_category(::clawcrew_log::EventCategory::Tool)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Start)
+                .with_category(::galleon_log::EventCategory::Tool)
                 .with_attrs(::serde_json::json!({
                     "model": ctx.model,
                     "iteration": iteration + 1,
@@ -354,10 +354,10 @@ pub(crate) async fn prepare_tool_calls(
             ),
         });
         if let (Some(tx), Some(stream_call)) = (ctx.on_delta, stream_call.as_ref()) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_category(::clawcrew_log::EventCategory::Tool)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_category(::galleon_log::EventCategory::Tool)
                     .with_attrs(::serde_json::json!({"tool": tool_name})),
                 "Sending progress start to draft"
             );

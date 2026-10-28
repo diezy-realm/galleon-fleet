@@ -35,7 +35,7 @@ plugins-wasm-cranelift = ["plugins-wasmtime", "wasmtime/cranelift"]
 plugins-wasm-pulley = ["plugins-wasmtime", "wasmtime/pulley"]
 
 [dependencies]
-clawcrew-log.workspace = true
+galleon-log.workspace = true
 clawcrew-api.workspace = true
 galleon-infra.workspace = true
 anyhow = "1.0"

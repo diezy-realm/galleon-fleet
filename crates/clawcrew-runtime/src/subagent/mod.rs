@@ -89,10 +89,10 @@ impl SubAgentSpawn {
             child_policy
                 .ensure_no_escalation_beyond(&self.parent_policy)
                 .map_err(|violation| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "violation": violation.to_string(),
                             })),

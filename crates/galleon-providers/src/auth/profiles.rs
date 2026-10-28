@@ -240,10 +240,10 @@ impl AuthProfilesStore {
         let mut data = self.load_locked().await?;
 
         let profile = data.profiles.get_mut(profile_id).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"profile_id": profile_id})),
                 "auth_profiles: profile not found for update"
             );
@@ -292,13 +292,13 @@ impl AuthProfilesStore {
             let token_set = match kind {
                 AuthProfileKind::OAuth => {
                     let access = access_token.ok_or_else(|| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Reject
+                                ::galleon_log::Action::Reject
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "profile_id": id,
                                 "missing": "access_token",
@@ -516,13 +516,13 @@ impl AuthProfilesStore {
                         fs::remove_file(&self.lock_path)
                             .await
                             .inspect(|e| {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     ERROR,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Fail
+                                        ::galleon_log::Action::Fail
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                    .with_outcome(::galleon_log::EventOutcome::Failure)
                                     .with_attrs(::serde_json::json!({"e": format!("{:?}", e)})),
                                     "Failed to remove auth profile lock file: "
                                 );

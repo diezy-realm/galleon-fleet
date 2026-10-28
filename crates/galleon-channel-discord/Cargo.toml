@@ -14,7 +14,7 @@ galleon-channel-core.workspace = true
 clawcrew-api.workspace = true
 galleon-config = { workspace = true, default-features = false, features = ["ws-transport"] }
 galleon-infra.workspace = true
-clawcrew-log.workspace = true
+galleon-log.workspace = true
 galleon-memory.workspace = true
 galleon-spawn.workspace = true
 galleon-i18n.workspace = true

@@ -222,10 +222,10 @@ pub fn enforce_signature_policy(
             match mode {
                 SignatureMode::Strict => Err(PluginError::UnsignedPlugin(plugin_name.to_string())),
                 SignatureMode::Permissive => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"plugin": plugin_name})),
                         "plugin is unsigned; loading in permissive mode"
                     );
@@ -238,7 +238,7 @@ pub fn enforce_signature_policy(
             let result = verify_manifest(manifest_toml, sig, pub_key, trusted_keys);
             match &result {
                 VerificationResult::Valid { publisher_key } => {
-                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"plugin": plugin_name, "publisher_key": publisher_key.as_str()})), "plugin signature verified");
+                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"plugin": plugin_name, "publisher_key": publisher_key.as_str()})), "plugin signature verified");
                     Ok(result)
                 }
                 VerificationResult::Untrusted => match mode {
@@ -247,7 +247,7 @@ pub fn enforce_signature_policy(
                         publisher_key: pub_key.to_string(),
                     }),
                     SignatureMode::Permissive => {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"plugin": plugin_name, "publisher_key": pub_key})), "plugin publisher key not trusted; loading in permissive mode");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"plugin": plugin_name, "publisher_key": pub_key})), "plugin publisher key not trusted; loading in permissive mode");
                         Ok(result)
                     }
                     SignatureMode::Disabled => Ok(result),
@@ -258,7 +258,7 @@ pub fn enforce_signature_policy(
                         plugin_name, reason
                     ))),
                     SignatureMode::Permissive => {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"plugin": plugin_name, "reason": reason.as_str()})), "plugin signature invalid; loading in permissive mode");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"plugin": plugin_name, "reason": reason.as_str()})), "plugin signature invalid; loading in permissive mode");
                         Ok(result)
                     }
                     SignatureMode::Disabled => Ok(result),

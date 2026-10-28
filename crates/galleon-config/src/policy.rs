@@ -4657,10 +4657,10 @@ impl SecurityPolicy {
 
     pub fn for_agent(config: &crate::schema::Config, agent_alias: &str) -> anyhow::Result<Self> {
         let risk_profile = config.risk_profile_for_agent(agent_alias).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"agent_alias": agent_alias})),
                 "SecurityPolicy::for_agent: agent has no resolvable risk_profile"
             );

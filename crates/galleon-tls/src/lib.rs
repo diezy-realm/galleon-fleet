@@ -572,10 +572,10 @@ pub fn load_private_key(path: &str) -> Result<PrivateKeyDer<'static>> {
     let key = rustls_pemfile::private_key(&mut reader)
         .with_context(|| format!("failed to parse private key from {path}"))?
         .ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"path": path})),
                 "TLS private key file contains no key"
             );

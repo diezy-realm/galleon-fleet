@@ -99,10 +99,10 @@ impl CostTracker {
         }
 
         if !estimated_cost_usd.is_finite() || estimated_cost_usd < 0.0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"estimated_cost_usd": estimated_cost_usd})),
                 "cost budget check rejected: estimated cost is not finite or is negative"
             );
@@ -266,10 +266,10 @@ impl CostTracker {
         }
 
         if !usage.cost_usd.is_finite() || usage.cost_usd < 0.0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"cost_usd": usage.cost_usd})),
                 "token usage record rejected: cost is not finite or is negative"
             );
@@ -523,10 +523,10 @@ impl CostTracker {
         let storage_path = match resolve_storage_path(workspace_dir) {
             Ok(path) => path,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Failed to resolve global cost tracker storage path"
                 );
@@ -560,10 +560,10 @@ impl CostTracker {
                 Some(ct)
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Failed to initialize global cost tracker"
                 );
@@ -588,10 +588,10 @@ fn resolve_storage_path(workspace_dir: &Path) -> Result<PathBuf> {
         }
 
         if let Err(error) = fs::rename(&legacy_path, &storage_path) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "Failed to move legacy cost storage from {} to {}: {error}; falling back to copy",
                     legacy_path.display().to_string(),
@@ -881,13 +881,13 @@ impl CostStorage {
                 Err(_) => {
                     if let Err(error) = Self::recover_concatenated_records(trimmed, &mut on_record)
                     {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "path": self.path.display().to_string(),
                                 "line": line_number + 1,

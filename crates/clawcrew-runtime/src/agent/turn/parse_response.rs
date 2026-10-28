@@ -283,11 +283,11 @@ pub(crate) async fn interpret_chat_response(
         })
     };
     if let Some(ref issue) = parse_issue {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_category(::clawcrew_log::EventCategory::Tool)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_category(::galleon_log::EventCategory::Tool)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "model": model,
                     "iteration": iteration + 1,
@@ -418,11 +418,11 @@ pub(crate) async fn record_accepted_chat_response(
             })
             .await;
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Receive)
-            .with_category(::clawcrew_log::EventCategory::Provider)
-            .with_outcome(::clawcrew_log::EventOutcome::Success)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Receive)
+            .with_category(::galleon_log::EventCategory::Provider)
+            .with_outcome(::galleon_log::EventOutcome::Success)
             .with_duration(u64::try_from(llm_started_at.elapsed().as_millis()).unwrap_or(u64::MAX))
             .with_attrs(::serde_json::json!({
                 "model": effective_model,
@@ -849,10 +849,10 @@ mod cost_usd_regression_tests {
         // Capture the `llm_response` broadcast record. Hold the public
         // writer + hook locks so a parallel `clear_broadcast_hook` (or a
         // peer crate's writer test) doesn't drop this test's event.
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut log_rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut log_rx = galleon_log::subscribe_or_install();
         while log_rx.try_recv().is_ok() {}
 
         // Parse, then record the accepted response inside the cost scope so
@@ -940,7 +940,7 @@ mod cost_usd_regression_tests {
             "llm_response cost_usd {logged} != expected {expected}"
         );
 
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
     }
 
     #[tokio::test]

@@ -85,9 +85,9 @@ pub fn merge_hardware_tools(
             .collect();
         if !new_hw_tools.is_empty() {
             added_tool_names = new_hw_tools.iter().map(|t| t.name().to_string()).collect();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"count": new_hw_tools.len()})),
                 "Hardware registry tools added"
             );
@@ -135,9 +135,9 @@ pub fn load_hardware_context_from_dir(hw_dir: &std::path::Path, aliases: &[&str]
     let devices_dir = hw_dir.join("devices");
     for alias in aliases {
         let path = devices_dir.join(format!("{alias}.md"));
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("loading device file: {:?}", path)
         );
         if let Ok(content) = std::fs::read_to_string(&path)
@@ -177,17 +177,17 @@ fn inject_rpi_context(
     context_files_prompt: &mut String,
 ) {
     if let Some(ctx) = rpi::RpiSystemContext::discover() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({"board": ctx.model.display_name(), "ip": ctx.ip_address})
             ),
             "RPi self-discovery complete"
         );
         if let Some(led) = ctx.model.onboard_led_gpio() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"gpio": led})),
                 "Onboard ACT LED"
             );
@@ -262,10 +262,10 @@ pub async fn boot(
             registry_inner
                 .attach_transport(&alias, transport, caps)
                 .unwrap_or_else(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"alias": alias, "err": e.to_string()})
                             ),
@@ -274,9 +274,9 @@ pub async fn boot(
                 });
             // Mark path as registered so duplicate config entries are skipped.
             discovered_paths.insert(path.clone());
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(
                         ::serde_json::json!({"board": board.board, "path": path, "alias": alias})
                     ),
@@ -287,14 +287,14 @@ pub async fn boot(
 
     // BOOTSEL auto-detect: warn the user if a Pico is in BOOTSEL mode at startup.
     if uf2::find_rpi_rp2_mount().is_some() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Pico detected in BOOTSEL mode (RPI-RP2 drive found)"
         );
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Say \"flash my pico\" to install ClawCrew firmware automatically"
         );
     }
@@ -307,9 +307,9 @@ pub async fn boot(
     };
     let mut tools = registry.into_tools();
     if !tools.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"count": tools.len()})),
             "Hardware registry tools loaded"
         );
@@ -324,9 +324,9 @@ pub async fn boot(
     let alias_refs: Vec<&str> = alias_strings.iter().map(|s: &String| s.as_str()).collect();
     let mut context_files_prompt = load_hardware_context_prompt(&alias_refs);
     if !context_files_prompt.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Hardware context files loaded"
         );
     }
@@ -354,9 +354,9 @@ pub async fn boot(
     };
     let mut tools = registry.into_tools();
     if !tools.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"count": tools.len()})),
             "Hardware registry tools loaded (plugins only)"
         );
@@ -552,10 +552,10 @@ fn info_via_probe(chip: &str) -> anyhow::Result<()> {
 
     println!("Connecting to {} via USB (ST-Link)...", chip);
     let session = Session::auto_attach(chip, SessionConfig::default()).map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "chip": chip,
                     "error": format!("{}", e),

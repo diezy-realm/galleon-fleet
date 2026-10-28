@@ -313,10 +313,10 @@ impl ModelSwitchTool {
             Ok(live) if !live.is_empty() => live,
             Ok(_) => hardcoded_models_for(&provider_family),
             Err(error) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "model_provider": model_provider,
                             "provider_family": provider_family,
@@ -734,10 +734,10 @@ mod tests {
 
     #[tokio::test]
     async fn list_models_logs_warn_on_catalog_err() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {} // drain prior events
 
         let mut config = Config::default();
@@ -791,6 +791,6 @@ mod tests {
             found,
             "did not capture the model_switch WARN fallback event"
         );
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
     }
 }

@@ -404,10 +404,10 @@ impl WebAuthnManager {
             .find(|c| c.credential_id == response.id)
             .cloned()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"credential_id": response.id})),
                     "webauthn verify refused: credential id not in store"
                 );
@@ -510,10 +510,10 @@ impl WebAuthnManager {
     fn generate_challenge(&self) -> Result<String> {
         let mut buf = [0u8; CHALLENGE_LEN];
         self.rng.fill(&mut buf).map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "webauthn challenge: RNG fill failed"
             );
             anyhow::Error::msg("Failed to generate random challenge")
@@ -682,10 +682,10 @@ fn verify_es256_signature(public_key: &[u8], message: &[u8], sig: &[u8]) -> Resu
     let pk = signature::UnparsedPublicKey::new(&signature::ECDSA_P256_SHA256_ASN1, public_key);
 
     pk.verify(message, sig).map_err(|_| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure),
             "WebAuthn signature verification failed"
         );
         anyhow::Error::msg("WebAuthn signature verification failed")

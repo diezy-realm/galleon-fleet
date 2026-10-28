@@ -13,7 +13,7 @@ use chrono::{DateTime, Utc};
 use clawcrew_api::runtime_traits::RuntimeAdapter;
 use galleon_config::schema::Config;
 use galleon_config::schema::{CronJobDecl, CronScheduleDecl, CronShellOutputFormat};
-use clawcrew_log::Instrument;
+use galleon_log::Instrument;
 use futures_util::{StreamExt, stream};
 use std::process::Stdio;
 use std::sync::Arc;
@@ -143,10 +143,10 @@ pub async fn deliver_and_classify_run_result(
         let delivery_error = e.to_string();
 
         if job.delivery.best_effort {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "job_id": job.id,
                         "agent_alias": job.agent_alias,
@@ -161,10 +161,10 @@ pub async fn deliver_and_classify_run_result(
             }
         } else {
             success = false;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "job_id": job.id,
                         "agent_alias": job.agent_alias,
@@ -235,10 +235,10 @@ async fn run_manual_job_inner(
         Some(&outcome.output),
         duration_ms,
     ) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"job_id": job.id, "error": format!("{}", e)})),
             "manual cron trigger: failed to persist run history"
         );
@@ -297,9 +297,9 @@ pub async fn run(
             delivery: None,
             shell_output_format: CronShellOutputFormat::default(),
         };
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"schedule": schedule_cron})),
             "Synthesizing builtin backup cron job from config.backup.schedule_cron"
         );
@@ -309,18 +309,18 @@ pub async fn run(
     match sync_declarative_jobs(&config, &jobs_with_builtin) {
         Ok(()) => {
             if !jobs_with_builtin.is_empty() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"count": jobs_with_builtin.len()})),
                     "Synced declarative cron jobs from config"
                 );
             }
         }
-        Err(e) => ::clawcrew_log::record!(
+        Err(e) => ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "Failed to sync declarative cron jobs"
         ),
@@ -331,16 +331,16 @@ pub async fn run(
     //    eligible again instead of being wedged out of `due_jobs` forever.
     match clear_stale_locks(&config) {
         Ok(0) => {}
-        Ok(cleared) => ::clawcrew_log::record!(
+        Ok(cleared) => ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"cleared": cleared})),
             "Cleared stale cron in-flight locks at startup"
         ),
-        Err(e) => ::clawcrew_log::record!(
+        Err(e) => ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "Failed to clear stale cron in-flight locks at startup"
         ),
@@ -349,9 +349,9 @@ pub async fn run(
     if config.scheduler.catch_up_on_startup {
         catch_up_overdue_jobs(&config, &event_tx).await;
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Scheduler startup: catch-up disabled by config"
         );
         skip_missed_jobs_on_startup(&config).await;
@@ -367,10 +367,10 @@ pub async fn run(
                     Ok(jobs) => jobs,
                     Err(e) => {
                         crate::health::mark_component_error(SCHEDULER_COMPONENT, e.to_string());
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Scheduler query failed"
                         );
@@ -383,9 +383,9 @@ pub async fn run(
             }
             _ = cancel.cancelled() => {
                 crate::health::mark_component_ok(SCHEDULER_COMPONENT);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "Cron scheduler shutting down via cancellation token"
                 );
                 return Ok(());
@@ -414,10 +414,10 @@ async fn catch_up_overdue_jobs(config: &Config, event_tx: &EventBroadcast) {
     let jobs = match all_overdue_jobs(config, now) {
         Ok(jobs) => jobs,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Startup catch-up query failed"
             );
@@ -426,17 +426,17 @@ async fn catch_up_overdue_jobs(config: &Config, event_tx: &EventBroadcast) {
     };
 
     if jobs.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Scheduler startup: no overdue jobs to catch up"
         );
         return;
     }
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
             .with_attrs(::serde_json::json!({"count": jobs.len()})),
         "Scheduler startup: catching up overdue jobs"
     );
@@ -444,9 +444,9 @@ async fn catch_up_overdue_jobs(config: &Config, event_tx: &EventBroadcast) {
     let jobs = claim_due_jobs(config, jobs);
     process_due_jobs(config, jobs, SCHEDULER_COMPONENT, event_tx).await;
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "Scheduler startup: catch-up complete"
     );
 }
@@ -456,10 +456,10 @@ async fn skip_missed_jobs_on_startup(config: &Config) {
     let jobs = match all_overdue_jobs(config, now) {
         Ok(jobs) => jobs,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Scheduler startup skip: query failed",
             );
@@ -468,9 +468,9 @@ async fn skip_missed_jobs_on_startup(config: &Config) {
     };
 
     if jobs.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Scheduler startup skip: no overdue jobs to advance",
         );
         return;
@@ -490,10 +490,10 @@ async fn skip_missed_jobs_on_startup(config: &Config) {
                 }
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "job_id": job.id,
                             "error": format!("{}", e),
@@ -504,9 +504,9 @@ async fn skip_missed_jobs_on_startup(config: &Config) {
         }
     }
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "total": jobs.len(),
                 "skipped_recurring": skipped_recurring,
@@ -541,7 +541,7 @@ async fn execute_job_now_with_runtime(
             ),
         );
     }
-    use clawcrew_log::Instrument;
+    use galleon_log::Instrument;
     let Some(agent_alias) = resolve_owning_agent(config, job) else {
         return (
             false,
@@ -556,7 +556,7 @@ async fn execute_job_now_with_runtime(
         Ok(s) => s,
         Err(e) => return (false, format!("agent {agent_alias} risk profile: {e}")),
     };
-    let span = clawcrew_log::attribution_span!(job);
+    let span = galleon_log::attribution_span!(job);
     Box::pin(execute_job_with_retry(
         config,
         &security,
@@ -652,19 +652,19 @@ fn claim_due_jobs(config: &Config, jobs: Vec<CronJob>) -> Vec<CronJob> {
         .filter(|job| match claim_job(config, &job.id, Utc::now()) {
             Ok(true) => true,
             Ok(false) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"job_id": job.id})),
                     "Cron job already in flight; skipping duplicate launch"
                 );
                 false
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"job_id": job.id, "error": format!("{}", e)})
                         ),
@@ -688,7 +688,7 @@ async fn process_due_jobs(
     let max_concurrent = config.scheduler.max_concurrent.max(1);
     let mut in_flight = stream::iter(jobs.into_iter().filter_map(|job| {
         let Some(agent_alias) = resolve_owning_agent(config, &job) else {
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"job_id": job.id})), "Cron job has no owning agent; add the alias to an [agents.<x>].cron_jobs list");
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"job_id": job.id})), "Cron job has no owning agent; add the alias to an [agents.<x>].cron_jobs list");
             let _ = release_job(config, &job.id);
             return None;
         };
@@ -696,7 +696,7 @@ async fn process_due_jobs(
         let security = match SecurityPolicy::for_agent(config, &agent_alias) {
             Ok(s) => Arc::new(s),
             Err(e) => {
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"job_id": job.id, "agent": agent_alias, "error": format!("{}", e)})), "Cron job: failed to build SecurityPolicy for owning agent");
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"job_id": job.id, "agent": agent_alias, "error": format!("{}", e)})), "Cron job: failed to build SecurityPolicy for owning agent");
                 let _ = release_job(config, &job.id);
                 return None;
             }
@@ -718,10 +718,10 @@ async fn process_due_jobs(
 
     while let Some((job_id, success, output)) = in_flight.next().await {
         if !success {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"job_id": job_id, "output": output})),
                 "Scheduler job '' failed: "
             );
@@ -757,7 +757,7 @@ async fn execute_and_persist_job(
     let producer_task =
         project_cron_task_start(crate::control_plane::control_plane(), agent_alias, &job.id).await;
 
-    let span = clawcrew_log::attribution_span!(job);
+    let span = galleon_log::attribution_span!(job);
     let (success, output) = Box::pin(execute_job_with_retry(
         config,
         security,
@@ -787,10 +787,10 @@ async fn execute_and_persist_job(
     // done. A deleted one-shot row simply releases nothing. If this fails the lock
     // is recovered by `clear_stale_locks` at the next startup
     if let Err(e) = release_job(config, &job.id) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"job_id": job.id, "error": format!("{}", e)})),
             "Cron job: failed to release in-flight lock after run"
         );
@@ -821,10 +821,10 @@ async fn project_cron_task_start(
     {
         Ok(()) => Some((control_plane.clone(), task_id)),
         Err(error) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "job_id": job_id,
                         "error": format!("{error}"),
@@ -862,10 +862,10 @@ async fn project_cron_task_settle(
     )
     .await
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "task_id": task_id,
                     "error": format!("{error}"),
@@ -917,7 +917,7 @@ async fn run_agent_job(
     let run_session_id = uuid::Uuid::new_v4().to_string();
     let session_path = cron_agent_session_path(&job.session_target, &run_session_id);
 
-    let subagent_span = clawcrew_log::info_span!(
+    let subagent_span = galleon_log::info_span!(
         "subagent",
         category = "cron",
         agent_alias = %agent_alias,
@@ -1040,10 +1040,10 @@ async fn persist_job_result(
         duration_ms,
         action,
     ) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"e": e.to_string()})),
             "Failed to persist scheduler run result: "
         );
@@ -1061,10 +1061,10 @@ async fn persist_job_result(
                 Some(&outcome.output),
                 RunCompletionAction::Disable,
             ) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"disable_err": disable_err.to_string()})),
                     "Failed to disable one-shot cron job after history persistence failure: "
                 );
@@ -1080,10 +1080,10 @@ async fn persist_job_result(
                 Some(&outcome.output),
                 action,
             ) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"state_err": state_err.to_string()})),
                     "Failed to update cron job state after history persistence failure: "
                 );
@@ -1117,10 +1117,10 @@ fn is_high_frequency_agent_job(job: &CronJob) -> bool {
 
 fn warn_if_high_frequency_agent_job(job: &CronJob) {
     if is_high_frequency_agent_job(job) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             &format!(
                 "Cron agent job '{}' is scheduled more frequently than every 5 minutes",
                 job.id
@@ -1136,10 +1136,10 @@ async fn deliver_if_configured(config: &Config, job: &CronJob, output: &str) -> 
     }
 
     if !announce_delivery_decision(output).should_deliver() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Success)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Success)
                 .with_attrs(::serde_json::json!({"job_id": job.id})),
             "Cron job returned NO_REPLY sentinel — skipping delivery"
         );
@@ -1147,20 +1147,20 @@ async fn deliver_if_configured(config: &Config, job: &CronJob, output: &str) -> 
     }
 
     let channel = delivery.channel.as_deref().ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"field": "channel"})),
             "cron delivery announce refused: required field missing"
         );
         anyhow::Error::msg("delivery.channel is required for announce mode")
     })?;
     let target = delivery.to.as_deref().ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"field": "to"})),
             "cron delivery announce refused: required field missing"
         );
@@ -1217,10 +1217,10 @@ pub async fn deliver_announcement(
         )
         .await
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"channel": channel, "target": target})),
             "Cron delivery skipped: no delivery handler registered \
              (register_delivery_fn was not called by the binary)"

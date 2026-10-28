@@ -92,10 +92,10 @@ impl Tool for RpiGpioReadTool {
 
     async fn execute(&self, args: Value) -> anyhow::Result<ToolResult> {
         let pin = args.get("pin").and_then(|v| v.as_u64()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"tool": "gpio_read", "param": "pin"})),
                 "tool argument validation failed: missing parameter"
             );
@@ -153,20 +153,20 @@ impl Tool for RpiGpioWriteTool {
 
     async fn execute(&self, args: Value) -> anyhow::Result<ToolResult> {
         let pin = args.get("pin").and_then(|v| v.as_u64()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"tool": "gpio_write", "param": "pin"})),
                 "tool argument validation failed: missing parameter"
             );
             anyhow::Error::msg("Missing 'pin' parameter")
         })?;
         let value = args.get("value").and_then(|v| v.as_u64()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"tool": "gpio_write", "param": "value"})),
                 "tool argument validation failed: missing parameter"
             );

@@ -171,10 +171,10 @@ impl AgentScopedMemory {
     /// Refuses cross-agent erase if `agent_id != self.agent_id`.
     pub async fn forget_all_for_agent(&self, agent_id: &str) -> Result<usize> {
         if agent_id != self.agent_id {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "target_agent": agent_id,
                         "bound_agent": self.agent_id,
@@ -324,10 +324,10 @@ impl Memory for AgentScopedMemory {
         if let Some(requested) = agent_id
             && requested != self.agent_id
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "bound_agent": self.agent_id,
                         "requested_agent": requested,
@@ -437,10 +437,10 @@ impl Memory for AgentScopedMemory {
             None => Ok(false),
             Some(entry) => match entry.agent_id.as_deref() {
                 Some(other) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "key": key,
                                 "row_agent": other,
@@ -453,10 +453,10 @@ impl Memory for AgentScopedMemory {
                     );
                 }
                 None => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "key": key,
                                 "bound_agent": self.agent_id,
@@ -475,10 +475,10 @@ impl Memory for AgentScopedMemory {
         // Only the bound agent can delete its own row through the
         // wrapper. Allowlist grants recall, never delete.
         if agent_id != self.agent_id {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "key": key,
                         "row_agent": agent_id,
@@ -508,10 +508,10 @@ impl Memory for AgentScopedMemory {
         // Bulk cross-agent destruction has no agent-scoped form on the
         // trait. Refuse rather than passing through; the operator path
         // for purges is an admin Memory handle, not an agent loop.
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "namespace": namespace,
                     "bound_agent": self.agent_id,

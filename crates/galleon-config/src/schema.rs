@@ -10889,7 +10889,7 @@ impl ProxyConfig {
                     builder = builder.proxy(apply_no_proxy(proxy, no_proxy.clone()));
                 }
                 Err(error) => {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"proxy_url": url, "service_key": service_key, "error": format!("{}", error)})), "Ignoring invalid all_proxy URL: ");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"proxy_url": url, "service_key": service_key, "error": format!("{}", error)})), "Ignoring invalid all_proxy URL: ");
                 }
             }
         }
@@ -10900,7 +10900,7 @@ impl ProxyConfig {
                     builder = builder.proxy(apply_no_proxy(proxy, no_proxy.clone()));
                 }
                 Err(error) => {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"proxy_url": url, "service_key": service_key, "error": format!("{}", error)})), "Ignoring invalid http_proxy URL: ");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"proxy_url": url, "service_key": service_key, "error": format!("{}", error)})), "Ignoring invalid http_proxy URL: ");
                 }
             }
         }
@@ -10911,7 +10911,7 @@ impl ProxyConfig {
                     builder = builder.proxy(apply_no_proxy(proxy, no_proxy));
                 }
                 Err(error) => {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"proxy_url": url, "service_key": service_key, "error": format!("{}", error)})), "Ignoring invalid https_proxy URL: ");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"proxy_url": url, "service_key": service_key, "error": format!("{}", error)})), "Ignoring invalid https_proxy URL: ");
                 }
             }
         }
@@ -11112,13 +11112,13 @@ fn validate_mcp_config(config: &McpConfig) -> Result<()> {
                     .filter(|value| !value.is_empty())
                     .ok_or_else(|| {
                         let transport_str = server.transport.wire_name();
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Reject
+                                ::galleon_log::Action::Reject
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "index": i,
                                 "transport": transport_str,
@@ -11554,10 +11554,10 @@ pub fn build_runtime_proxy_client(service_key: &str) -> reqwest::Client {
     let (generation, config) = runtime_proxy_config_snapshot();
     let builder = config.apply_to_reqwest_builder(reqwest::Client::builder(), service_key);
     let client = builder.build().unwrap_or_else(|error| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(
                     ::serde_json::json!({"service_key": service_key, "error": format!("{}", error)})
                 ),
@@ -11586,10 +11586,10 @@ pub fn build_runtime_proxy_client_with_timeouts(
         .connect_timeout(std::time::Duration::from_secs(connect_timeout_secs));
     let builder = config.apply_to_reqwest_builder(builder, service_key);
     let client = builder.build().unwrap_or_else(|error| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(
                     ::serde_json::json!({"service_key": service_key, "error": format!("{}", error)})
                 ),
@@ -11622,10 +11622,10 @@ pub fn build_runtime_proxy_client_with_read_timeout(
         .read_timeout(std::time::Duration::from_secs(read_timeout_secs));
     let builder = config.apply_to_reqwest_builder(builder, service_key);
     let client = builder.build().unwrap_or_else(|error| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(
                     ::serde_json::json!({"service_key": service_key, "error": format!("{}", error)})
                 ),
@@ -11716,7 +11716,7 @@ fn build_explicit_proxy_client(
     }
     builder = apply_explicit_proxy_to_builder(builder, service_key, proxy_url);
     let client = builder.build().unwrap_or_else(|error| {
-        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"service_key": service_key, "proxy_url": proxy_url, "error": format!("{}", error)})), "Failed to build channel proxy client: ");
+        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"service_key": service_key, "proxy_url": proxy_url, "error": format!("{}", error)})), "Failed to build channel proxy client: ");
         reqwest::Client::new()
     });
     set_runtime_proxy_cached_client(cache_key, generation, client.clone());
@@ -11734,7 +11734,7 @@ fn apply_explicit_proxy_to_builder(
             builder = builder.proxy(proxy);
         }
         Err(error) => {
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"proxy_url": proxy_url, "service_key": service_key, "error": format!("{}", error)})), "Ignoring invalid channel proxy_url: ");
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"proxy_url": proxy_url, "service_key": service_key, "error": format!("{}", error)})), "Ignoring invalid channel proxy_url: ");
         }
     }
     builder
@@ -11906,10 +11906,10 @@ pub async fn ws_connect_with_proxy(
             let target_host = target
                 .host_str()
                 .ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"ws_url": ws_url})),
                         "WebSocket URL has no host"
                     );
@@ -11993,10 +11993,10 @@ async fn ws_connect_via_proxy(
     let target_host = target
         .host_str()
         .ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"ws_url": ws_url})),
                 "WebSocket URL has no host"
             );
@@ -13165,7 +13165,7 @@ pub struct ObservabilityConfig {
     pub otel_headers: Option<std::collections::HashMap<String, String>>,
 
     /// Log persistence mode: "none" | "rolling" | "full".
-    /// Controls whether every event passing through `clawcrew_log::record!`
+    /// Controls whether every event passing through `galleon_log::record!`
     /// is appended to the on-disk JSONL log.
     #[serde(
         default = "default_log_persistence",
@@ -21134,10 +21134,10 @@ fn expand_tilde_path(path: &str) -> PathBuf {
             }
         }
         // If UserDirs also fails, log a warning and use the literal path
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"path": path})),
             "Failed to expand tilde: HOME environment variable is not set and UserDirs failed. \
              In cron/non-TTY environments, use absolute paths or set HOME explicitly."
@@ -21257,10 +21257,10 @@ async fn resolve_runtime_config_dirs(
                 .filter(|v| !v.trim().is_empty())
                 .is_some()
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "CLAWCREW_CONFIG_DIR is set; CLAWCREW_DATA_DIR is ignored \
                      (CONFIG_DIR pins both the config directory and the data \
                      directory under it)."
@@ -21271,10 +21271,10 @@ async fn resolve_runtime_config_dirs(
                 .filter(|v| !v.is_empty())
                 .is_some()
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "CLAWCREW_CONFIG_DIR is set; CLAWCREW_WORKSPACE (deprecated) \
                      is ignored. CLAWCREW_WORKSPACE will be removed in a future \
                      release; switch any remaining references to CLAWCREW_DATA_DIR."
@@ -21297,10 +21297,10 @@ async fn resolve_runtime_config_dirs(
             .filter(|v| !v.is_empty())
             .is_some()
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "CLAWCREW_DATA_DIR and CLAWCREW_WORKSPACE are both set; \
                  CLAWCREW_WORKSPACE (deprecated) is ignored. \
                  CLAWCREW_WORKSPACE will be removed in a future release."
@@ -21314,10 +21314,10 @@ async fn resolve_runtime_config_dirs(
     if let Ok(custom_workspace) = std::env::var("CLAWCREW_WORKSPACE")
         && !custom_workspace.is_empty()
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "CLAWCREW_WORKSPACE is deprecated; use CLAWCREW_DATA_DIR instead. \
              CLAWCREW_WORKSPACE will be removed in a future release."
         );
@@ -22215,10 +22215,10 @@ impl Config {
         if needs_fs_migration
             && let Err(e) = crate::schema::v2::migrate_v2_to_v3_install_filesystem(&clawcrew_dir)
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "install": clawcrew_dir.display().to_string(),
                         "error": format!("{}", e),
@@ -22229,10 +22229,10 @@ impl Config {
             && let Err(e) =
                 crate::schema::v2::relocate_default_agent_skills_to_shared(&clawcrew_dir)
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "install": clawcrew_dir.display().to_string(),
                         "error": format!("{}", e),
@@ -22295,10 +22295,10 @@ impl Config {
                 if let Ok(meta) = fs::metadata(&config_path).await
                     && meta.permissions().mode() & 0o004 != 0
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!(
                             "Config file {:?} is world-readable (mode {:o}). \
                              Consider restricting with: chmod 600 {:?}",
@@ -22316,10 +22316,10 @@ impl Config {
 
             let retired_wati_config_sections = Self::retired_wati_config_sections(&contents);
             for path in &retired_wati_config_sections {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "channel": "wati",
                             "retired_config": path,
@@ -22333,10 +22333,10 @@ impl Config {
             }
             let retired_node_transport_config = Self::has_retired_node_transport_config(&contents);
             if retired_node_transport_config {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "retired_config": "node_transport",
                         })),
@@ -22383,10 +22383,10 @@ impl Config {
             config.retired_wati_config_sections = retired_wati_config_sections;
             config.retired_node_transport_config = retired_node_transport_config;
             if let Some(from_version) = stale_version {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "Config at {} is schema_version {from_version}; auto-migrated to {} in memory. \
                      Run `clawcrew config migrate` to commit the migration to disk. \
@@ -22427,10 +22427,10 @@ impl Config {
             // This replaces the previous serde_ignored-based approach which
             // had false-positive issues with #[serde(default)] nested structs.
             for key in Self::unknown_keys(&contents) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"key": key})),
                     "Unknown config key ignored: \"\". Check config.toml for typos or deprecated options."
                 );
@@ -22446,10 +22446,10 @@ impl Config {
                 } else {
                     "references to its aliases will fail to resolve"
                 };
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"kind": kind, "family": family})),
                     &format!(
                         "[providers.{kind}.{family}] section dropped: not a known {kind} \
@@ -22465,10 +22465,10 @@ impl Config {
                 let family = entry.family.as_str();
                 let alias = entry.alias.as_str();
                 let nested = entry.nested.as_str();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "family": family,
                             "alias": alias,
@@ -22495,10 +22495,10 @@ impl Config {
                     crate::skill_bundles::resolve_directory(&config, &install_root, &alias)
                     && let Err(e) = std::fs::create_dir_all(&dir)
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!(
                             "skill-bundle '{alias}' directory creation failed at {}: {e}",
                             dir.display().to_string()
@@ -22533,10 +22533,10 @@ impl Config {
             // still come up so the user can navigate to the bad section
             // and repair it.
             if let Err(e) = config.validate() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{e:#}")})),
                     "[system] config has validation errors — booting anyway so you \
                      can fix them via /config or `clawcrew config set`"
@@ -22546,7 +22546,7 @@ impl Config {
             // configuration before any runtime client or tool is constructed.
             // Interactive proxy_config updates use the same live state.
             set_runtime_proxy_config(config.proxy.clone());
-            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"path": config.config_path.display().to_string(), "workspace": config.data_dir.display().to_string(), "source": resolution_source.as_str(), "initialized": true})), "Config loaded");
+            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"path": config.config_path.display().to_string(), "workspace": config.data_dir.display().to_string(), "source": resolution_source.as_str(), "initialized": true})), "Config loaded");
             Ok(config)
         } else {
             let mut config = Config {
@@ -22574,17 +22574,17 @@ impl Config {
             // a fresh-init config can't realistically fail validation,
             // but if it does we still want the daemon up.
             if let Err(e) = config.validate() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{e:#}")})),
                     "[system] freshly-initialized config has validation errors — \
                      booting anyway so you can fix them via /config"
                 );
             }
             set_runtime_proxy_config(config.proxy.clone());
-            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"path": config.config_path.display().to_string(), "workspace": config.data_dir.display().to_string(), "source": resolution_source.as_str(), "initialized": true})), "Config loaded");
+            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"path": config.config_path.display().to_string(), "workspace": config.data_dir.display().to_string(), "source": resolution_source.as_str(), "initialized": true})), "Config loaded");
             Ok(config)
         }
     }
@@ -23377,10 +23377,10 @@ impl Config {
         // Tunnel — OpenVPN
         if self.tunnel.tunnel_provider.trim() == "openvpn" {
             let openvpn = self.tunnel.openvpn.as_ref().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "tunnel.tunnel_provider='openvpn' rejected: [tunnel.openvpn] block missing"
                 );
                 anyhow::Error::msg("tunnel.tunnel_provider='openvpn' requires [tunnel.openvpn]")
@@ -23721,13 +23721,13 @@ impl Config {
             for alias in self.skill_bundles.keys() {
                 let dir = crate::skill_bundles::resolve_directory(self, &install_root, alias)
                     .map_err(|e| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Reject
+                                ::galleon_log::Action::Reject
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "skill_bundle": alias,
                                 "error": format!("{}", e),
@@ -23764,10 +23764,10 @@ impl Config {
             // once at startup so this surfaces via `doctor` and the
             // standard startup warning stream.
             if self.mcp.enabled && !self.mcp.servers.is_empty() && self.mcp_bundles.is_empty() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note,)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note,)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "mcp_servers_configured": self.mcp.servers.len(),
                         })),
@@ -23780,13 +23780,13 @@ impl Config {
             for (bundle_alias, bundle) in &self.mcp_bundles {
                 for server in bundle.servers.iter().chain(bundle.exclude.iter()) {
                     if !known_servers.contains(server.as_str()) {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "mcp_bundle": bundle_alias,
                                 "server": server,
@@ -23802,13 +23802,13 @@ impl Config {
                 };
                 for bundle_alias in &agent.mcp_bundles {
                     if !self.mcp_bundles.contains_key(bundle_alias) {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "agent": agent_alias,
                                 "mcp_bundle": bundle_alias,
@@ -24003,10 +24003,10 @@ impl Config {
                 .iter()
                 .any(|known| known == normalized)
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "action": normalized,
                             "known_actions": default_otp_gated_actions(),
@@ -24171,7 +24171,7 @@ impl Config {
                 .as_deref()
                 .is_some_and(|v| !v.trim().is_empty());
             if !has_uri && !has_api_key && !has_model {
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": profile_name, "profile_name": profile_name})), "providers.models. is empty (no uri / api_key / model). \
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"model_provider": profile_name, "profile_name": profile_name})), "providers.models. is empty (no uri / api_key / model). \
                      Skipping at runtime; run `clawcrew quickstart` (or use the dashboard) \
                      to make this model_provider usable.");
                 continue;
@@ -24190,10 +24190,10 @@ impl Config {
 
             if let Some(temp) = profile.temperature {
                 validate_temperature(temp).map_err(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "profile": profile_name,
                                 "temperature": temp,
@@ -24225,10 +24225,10 @@ impl Config {
         // collect_warnings; emit them to tracing here so the existing log
         // behavior is preserved, with the single documented exception below.
         for w in self.collect_warnings() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"path": w.path, "code": w.code})),
                 &format!("{}", w.message)
             );
@@ -25322,10 +25322,10 @@ impl Config {
             // Make the refusal observable: callers that check the return surface a
             // reserved-name error, and this WARN with a stable `error_key` lets an
             // operator see why a set-prop on a fresh `agents.default` was dropped.
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "error_key": "config.reserved_agent_vivify_refused",
                         "alias": alias,
@@ -25436,7 +25436,7 @@ impl Config {
                 resolved.display()
             );
         }
-        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"path": self.config_path.display().to_string(), "resolved": resolved.display().to_string(), "source": source.as_str()})), "Config path missing parent directory; resolving from runtime environment");
+        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"path": self.config_path.display().to_string(), "resolved": resolved.display().to_string(), "source": source.as_str()})), "Config path missing parent directory; resolving from runtime environment");
         Ok(resolved)
     }
 
@@ -25624,10 +25624,10 @@ fn restore_onepassword_references_for_save(
             continue;
         }
         if let Err(err) = config_to_save.set_prop(path, value) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"path": path, "error": format!("{}", err)})),
                 "1Password reference save-restore failed; field retains resolved value"
             );
@@ -25806,10 +25806,10 @@ async fn write_config_atomically_with_sync(
     {
         use std::{fs::Permissions, os::unix::fs::PermissionsExt};
         if let Err(err) = fs::set_permissions(config_path, Permissions::from_mode(0o600)).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "Failed to harden config permissions to 0600 at {}: {}",
                     config_path.display().to_string(),
@@ -25833,10 +25833,10 @@ async fn write_config_atomically_with_sync(
         // Report the durability uncertainty, keep the backup for recovery,
         // and classify the save as committed so save-then-swap callers install
         // the matching snapshot.
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "error_key": "config.directory_sync_after_replace_failed",
                     "path": config_path.display().to_string(),
@@ -26382,10 +26382,10 @@ fn warn_natural_key_doc_kind_mismatch(
     } else {
         format!("{}.{array_key}", parent_segs.join("."))
     };
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({
                 "section_path": section_path,
                 "alias": alias,
@@ -26798,9 +26798,9 @@ async fn sync_directory(path: &Path) -> Result<()> {
         // files have already been synced, so it is safe to ignore this error.
         if let Err(e) = dir.sync_all() {
             if e.raw_os_error() == Some(5) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     TRACE,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!(
                         "Ignoring expected ACCESS_DENIED when fsyncing directory on Windows: {}",
                         path.display().to_string()

@@ -30,7 +30,7 @@ Ukuran dan arah dependency: Phase 5 §1 (`cargo metadata`).
 |---|---|---|
 | Kontrak/leaf | `clawcrew-api` | Trait + tipe bersama (tanpa dep internal) |
 | | `galleon-macros`, `-commands`, `-relay-proto`, `-sop-graph`, `-dist` | Macro config, katalog slash-command, protokol relay, proyeksi graf SOP, registri target rilis |
-| Fondasi | `clawcrew-log`, `-spawn`, `-infra`, `-tls` | Logging terstruktur, spawn ber-atribusi, backend sesi/watchdog, TLS/mTLS |
+| Fondasi | `galleon-log`, `-spawn`, `-infra`, `-tls` | Logging terstruktur, spawn ber-atribusi, backend sesi/watchdog, TLS/mTLS |
 | | `galleon-config` (85k LOC, hub), `galleon-i18n` | Skema config & secret; Fluent i18n |
 | Domain | `galleon-providers` | **SSOT LLM** (ADR 0001) |
 | | `-memory`, `-tools`, `-tool-call-parser`, `-hardware` | Memori & embedding, tool agen, parser tool-call, perangkat |
@@ -42,7 +42,7 @@ Ukuran dan arah dependency: Phase 5 §1 (`cargo metadata`).
 | | `galleon-routing` | `DynamicRouter`/`RouteHandler` (kini dependency gateway; belum di-commit) |
 | | `galleon-eval` | Harness evaluasi trace |
 
-Fixture (anggota workspace): `crates/galleon-plugins/tests/fixtures/*` (channel, nostr-pilot, egress, tool-*), `crates/clawcrew-log/tests/fixtures/attribution-macro-*`.
+Fixture (anggota workspace): `crates/galleon-plugins/tests/fixtures/*` (channel, nostr-pilot, egress, tool-*), `crates/galleon-log/tests/fixtures/attribution-macro-*`.
 
 ## 3. Domain Go (`engine/src/`)
 

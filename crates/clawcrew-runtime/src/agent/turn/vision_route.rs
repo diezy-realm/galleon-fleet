@@ -44,11 +44,11 @@ pub(crate) fn resolve_vision_provider(
                     .map(|provider| (provider, None)),
             }
             .map_err(|error| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_category(::clawcrew_log::EventCategory::Provider)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_category(::galleon_log::EventCategory::Provider)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "vision_provider": vp,
                             "error": format!("{error}"),
@@ -113,11 +113,11 @@ pub(crate) fn resolve_vision_provider(
             }
             .into());
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_category(::clawcrew_log::EventCategory::Provider)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_category(::galleon_log::EventCategory::Provider)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "model_provider": provider_name,
                         "image_marker_count": image_marker_count,

@@ -203,10 +203,10 @@ pub fn strip_orphaned_tool_calls_from_assistants(messages: &mut Vec<ChatMessage>
         }
         stripped += 1;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({ "orphan_ids": orphan_ids })),
             "Stripped unpaired tool_calls from assistant history message — likely a \
              max_tool_iterations early exit"

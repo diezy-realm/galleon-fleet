@@ -151,10 +151,10 @@ impl ClawdTalkChannel {
 
         if !response.status().is_success() {
             let error = response.text().await?;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("Failed to hangup call: {}", error)
             );
         }
@@ -308,9 +308,9 @@ impl Channel for ClawdTalkChannel {
         // ClawdTalk listens for incoming calls via webhooks
         // This would typically be handled by the gateway module
         // For now, we signal that this channel is ready and wait indefinitely
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "channel listening for incoming calls"
         );
 
@@ -339,10 +339,10 @@ impl Channel for ClawdTalkChannel {
         match response {
             Ok(resp) => resp.status().is_success(),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "health check failed"
                 );

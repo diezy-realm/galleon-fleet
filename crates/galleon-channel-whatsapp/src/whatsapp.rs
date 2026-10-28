@@ -303,13 +303,13 @@ impl WhatsAppChannel {
                 {
                     Ok(re) => Some(re),
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"trimmed": trimmed, "e": e.to_string()})
                             ),
@@ -419,13 +419,13 @@ impl WhatsAppChannel {
                     };
 
                     if !self.is_number_allowed(&normalized_from) {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"normalized_from": normalized_from})),
                             "ignoring message from unauthorized number: . Add to channels.whatsapp.allowed_numbers in config.toml, or run `clawcrew config set channels.whatsapp.allowed-numbers='[\"<msisdn>\"]'`."
                         );
@@ -461,11 +461,11 @@ impl WhatsAppChannel {
                             ),
                             // Missing coordinates — drop rather than fabricate 0,0.
                             _ => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     DEBUG,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
                                     .with_attrs(::serde_json::json!({"from": from})),
                                     "skipping location message without coordinates"
@@ -486,11 +486,11 @@ impl WhatsAppChannel {
                         match reply.and_then(|r| r.get("id")).and_then(|i| i.as_str()) {
                             Some(id) if !id.is_empty() => format!("[choice]{id}"),
                             _ => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     DEBUG,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
                                     .with_attrs(::serde_json::json!({"from": from})),
                                     "WhatsApp interactive reply missing id, dropping"
@@ -500,11 +500,11 @@ impl WhatsAppChannel {
                         }
                     } else {
                         // Could be image, audio, etc. — skip for now
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"from": from})),
                             "skipping non-text message from"
@@ -538,11 +538,11 @@ impl WhatsAppChannel {
                         ) {
                             Some(c) => c,
                             None => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     DEBUG,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
                                     .with_attrs(::serde_json::json!({"from": from})),
                                     "WhatsApp message did not match mention patterns, dropping"
@@ -730,7 +730,7 @@ impl WhatsAppChannel {
         if !resp.status().is_success() {
             let status = resp.status();
             let error_body = resp.text().await.unwrap_or_default();
-            ::clawcrew_log::record!(ERROR, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"status": status.to_string(), "error_body": error_body})), "WhatsApp interactive send failed:");
+            ::galleon_log::record!(ERROR, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"status": status.to_string(), "error_body": error_body})), "WhatsApp interactive send failed:");
             anyhow::bail!("WhatsApp API error: {status}");
         }
         Ok(())
@@ -782,7 +782,7 @@ impl WhatsAppChannel {
             let status = resp.status();
             // `None` when the error body itself could not be read.
             let error_body = resp.text().await.ok();
-            ::clawcrew_log::record!(ERROR, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"status": status.to_string(), "error_body": error_body})), "send failed:");
+            ::galleon_log::record!(ERROR, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"status": status.to_string(), "error_body": error_body})), "send failed:");
             anyhow::bail!("WhatsApp API error: {status}");
         }
 
@@ -874,10 +874,10 @@ impl Channel for WhatsAppChannel {
             match crate::util::WhatsAppLocation::parse(target) {
                 Some(loc) => self.post_message(location_message_body(to, &loc)).await?,
                 None => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"reason": "invalid_location"})),
                         "whatsapp: location marker target is malformed or outside WGS84 range"
                     );
@@ -1017,9 +1017,9 @@ impl Channel for WhatsAppChannel {
         // WhatsApp uses webhooks (push-based), not polling.
         // Messages are received via the gateway's /whatsapp endpoint.
         // This method keeps the channel "alive" but doesn't actively poll.
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "WhatsApp channel active (webhook mode). \
             Configure Meta webhook to POST to your gateway's /whatsapp endpoint."
         );

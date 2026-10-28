@@ -185,10 +185,10 @@ impl RedditChannel {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("<failed to read response: {e}>"));
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"status": status.to_string(), "body": body})),
                 "inbox fetch failed"
             );
@@ -217,10 +217,10 @@ impl RedditChannel {
             .await?;
 
         if !resp.status().is_success() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("mark_read failed: {}", resp.status())
             );
         }
@@ -242,9 +242,9 @@ impl RedditChannel {
         // are consent to be driven. An empty peer group denies everyone; `"*"`
         // is the explicit opt-in for a public bot.
         if !self.is_user_allowed(author) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"author": author})),
                 "ignoring inbox item from unauthorized sender"
             );
@@ -388,9 +388,9 @@ impl Channel for RedditChannel {
                     .join(", ")
             )
         };
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("channel listening as u/{} {}...", self.username, scope)
         );
 
@@ -400,10 +400,10 @@ impl Channel for RedditChannel {
             let items = match self.fetch_inbox().await {
                 Ok(items) => items,
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "poll error"
                     );
@@ -424,10 +424,10 @@ impl Channel for RedditChannel {
             }
 
             if let Err(e) = self.mark_read(&read_ids).await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "mark_read error"
                 );

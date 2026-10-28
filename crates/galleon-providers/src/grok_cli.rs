@@ -755,10 +755,10 @@ impl GrokCliModelProvider {
         let mut child = match spawn_result {
             Ok(child) => child,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "binary": self.binary_path.display().to_string(),
                             "phase": "spawn",
@@ -918,10 +918,10 @@ async fn terminate_child_tree(child: &mut ManagedChild, guard: &mut ProcessTreeG
 }
 
 fn log_acp_failure(phase: &'static str, error_key: &'static str, stderr: StderrSummary) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         ERROR,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(::serde_json::json!({
                 "phase": phase,
                 "error_key": error_key,

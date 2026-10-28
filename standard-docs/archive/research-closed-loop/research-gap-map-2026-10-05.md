@@ -65,7 +65,7 @@ Tidak ada satu pun riset sesi ini yang menyentuh: bagaimana release dibuat (`cla
 - **Kenapa layak diriset**: supply-chain attack terhadap tooling AI-agent adalah vektor yang makin disorot industri (mirip insiden xz-utils) — belum ada verifikasi bagaimana Galleon sendiri melindungi rantai build→distribusi.
 
 ### 2.6 Observability/Telemetry — Siapa Melihat Apa (BELUM TERSENTUH)
-Riset resource-management menyentuh `process_stats`/dashboard Tasks-view SECARA SEMPIT (untuk kasus loop-detector). Belum ada riset menyeluruh soal: apa yang di-log/di-trace secara default, apakah ada PII yang bocor ke log (`clawcrew-log` crate ada scrubbing kredensial menurut `rust-conventions`/roadmap R-23, tapi belum diverifikasi langsung), siapa yang punya akses ke log tersebut lintas-tier.
+Riset resource-management menyentuh `process_stats`/dashboard Tasks-view SECARA SEMPIT (untuk kasus loop-detector). Belum ada riset menyeluruh soal: apa yang di-log/di-trace secara default, apakah ada PII yang bocor ke log (`galleon-log` crate ada scrubbing kredensial menurut `rust-conventions`/roadmap R-23, tapi belum diverifikasi langsung), siapa yang punya akses ke log tersebut lintas-tier.
 
 ---
 
@@ -78,7 +78,7 @@ Riset resource-management menyentuh `process_stats`/dashboard Tasks-view SECARA 
 | **3** | **Data governance memory (retention/privacy)** | Modul `hygiene.rs`/`policy.rs`/`audit.rs` sudah ADA tapi isinya belum dibaca — kemungkinan quick-win (infrastruktur sudah dibangun, tinggal diverifikasi dan didokumentasikan) dibanding topik lain yang mungkin dari nol. |
 | **4** | **Channel Tier A/B/C keamanan per-protokol** | Permukaan serangan terbesar (198k LOC), tapi granularitas riset BL-14 sudah menutup gap PALING kritis (prompt-injection) — sisanya adalah hardening lanjutan, bukan gap darurat. |
 | **5** | **CI/CD & supply-chain** | Penting untuk kematangan produk jangka panjang, tapi dampak langsung ke runtime risk lebih rendah dibanding 1-3 (ini soal "bagaimana Galleon dibangun," bukan "apa yang Galleon lakukan saat berjalan"). |
-| **6** | **Observability/log PII scrubbing** | Scope lebih kecil, kemungkinan besar sudah tertutup pola `clawcrew-log` yang konsisten (sudah terlihat sepintas di riset lain) — perlu verifikasi tapi effort lebih kecil dari 1-4. |
+| **6** | **Observability/log PII scrubbing** | Scope lebih kecil, kemungkinan besar sudah tertutup pola `galleon-log` yang konsisten (sudah terlihat sepintas di riset lain) — perlu verifikasi tapi effort lebih kecil dari 1-4. |
 
 ---
 

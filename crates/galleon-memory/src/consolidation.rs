@@ -160,10 +160,10 @@ pub async fn consolidate_turn(
         if let Err(e) =
             policy_gate::validate_store(memory, &policy, "default", &MemoryCategory::Core).await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": e.to_string()})),
                 "memory consolidation write denied by policy"
             );
@@ -176,9 +176,9 @@ pub async fn consolidate_turn(
         match dedup::dedup_gate(&candidates, update, memory_config) {
             DedupAction::Insert => {}
             DedupAction::Reject { dup_of } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"duplicate_of": dup_of})),
                     "memory consolidation skipped duplicate core update"
                 );
@@ -225,9 +225,9 @@ pub async fn consolidate_turn(
         {
             Ok(ids) => ids,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "conflict check skipped"
                 );
@@ -252,10 +252,10 @@ pub async fn consolidate_turn(
         if memory_config.conflict_supersede_enabled
             && let Err(e) = memory.supersede(&superseded_ids, &mem_key).await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "memory supersede skipped"
             );
@@ -298,10 +298,10 @@ async fn store_typed_facts(
         if let Err(e) =
             policy_gate::validate_store(memory, &policy, "default", &MemoryCategory::Core).await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": e.to_string()})),
                 "memory fact write denied by policy"
             );
@@ -316,9 +316,9 @@ async fn store_typed_facts(
         match dedup::dedup_gate(&candidates, fact, memory_config) {
             DedupAction::Insert => {}
             DedupAction::Reject { dup_of } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"duplicate_of": dup_of})),
                     "memory fact skipped as duplicate"
                 );
@@ -358,9 +358,9 @@ async fn store_typed_facts(
         {
             Ok(ids) => ids,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "conflict check skipped"
                 );
@@ -385,10 +385,10 @@ async fn store_typed_facts(
         if memory_config.conflict_supersede_enabled
             && let Err(e) = memory.supersede(&superseded_ids, &mem_key).await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "memory supersede skipped"
             );

@@ -352,10 +352,10 @@ async fn handle_node_socket(socket: WebSocket, registry: Arc<NodeRegistry>) {
             } => {
                 // Validate node_id
                 if node_id.is_empty() || node_id.len() > 128 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "Node registration rejected: invalid node_id length"
                     );
                     continue;
@@ -369,9 +369,9 @@ async fn handle_node_socket(socket: WebSocket, registry: Arc<NodeRegistry>) {
                 };
 
                 if registry.register(info) {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(
                                 ::serde_json::json!({"node_id": node_id, "caps_count": caps_count})
                             ),
@@ -379,10 +379,10 @@ async fn handle_node_socket(socket: WebSocket, registry: Arc<NodeRegistry>) {
                     );
                     registered_node_id = Some(node_id.clone());
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"node_id": node_id})),
                         "Node registration rejected: registry at capacity for"
                     );
@@ -408,9 +408,9 @@ async fn handle_node_socket(socket: WebSocket, registry: Arc<NodeRegistry>) {
     // Cleanup: unregister node on disconnect
     if let Some(node_id) = registered_node_id {
         registry.unregister(&node_id);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"node_id": node_id})),
             "Node disconnected and unregistered"
         );

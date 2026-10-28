@@ -178,9 +178,9 @@ pub async fn check(target_version: Option<&str>) -> Result<UpdateInfo> {
 
 pub async fn run(target_version: Option<&str>, force: bool) -> Result<()> {
     // Phase 1: Preflight
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "Phase 1/6: Preflight checks..."
     );
     let update_info = check(target_version).await?;
@@ -221,9 +221,9 @@ pub async fn run(target_version: Option<&str>, force: bool) -> Result<()> {
     ensure_install_dir_writable(&current_exe).await?;
 
     // Phase 2: Download
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "Phase 2/6: Downloading..."
     );
     let temp_dir = tempfile::Builder::new()
@@ -239,9 +239,9 @@ pub async fn run(target_version: Option<&str>, force: bool) -> Result<()> {
     .await?;
 
     // Phase 3: Backup
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "Phase 3/6: Creating backup..."
     );
     let backup_path = current_exe.with_extension("bak");
@@ -250,25 +250,25 @@ pub async fn run(target_version: Option<&str>, force: bool) -> Result<()> {
         .context("failed to backup current binary")?;
 
     // Phase 4: Validate
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "Phase 4/6: Validating download..."
     );
     validate_binary(&main_binary).await?;
 
     // Phase 5: Swap
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "Phase 5/6: Swapping binary..."
     );
     if let Err(e) = swap_binary(&main_binary, &current_exe).await {
         // Rollback
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "Swap failed, rolling back"
         );
@@ -284,9 +284,9 @@ pub async fn run(target_version: Option<&str>, force: bool) -> Result<()> {
     }
 
     // Phase 6: Smoke test
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         "Phase 6/6: Smoke test..."
     );
     match smoke_test(&current_exe).await {
@@ -303,10 +303,10 @@ pub async fn run(target_version: Option<&str>, force: bool) -> Result<()> {
             Ok(())
         }
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Smoke test failed, rolling back"
             );
@@ -451,10 +451,10 @@ async fn download_release(
     if let Some(sums_url) = sha256sums_url {
         verify_download_checksum(&bytes, url, sums_url, &client).await?;
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "No SHA256SUMS asset found; skipping update download checksum verification"
         );
     }
@@ -521,10 +521,10 @@ async fn verify_download_checksum(
         .context("failed to read SHA256SUMS body")?;
     verify_checksum_bytes(bytes, &asset_name, &sums_text)?;
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Success)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Success)
             .with_attrs(::serde_json::json!({"asset": asset_name})),
         "Update download checksum verified"
     );
@@ -1004,17 +1004,17 @@ async fn install_companion_artifacts(
     let staged_web_dist = staging.join("web").join("dist");
     if staged_web_dist.is_dir() {
         match install_web_dist(&staged_web_dist, current_exe, host_candidates).await {
-            Ok(target) => ::clawcrew_log::record!(
+            Ok(target) => ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Success)
                     .with_attrs(::serde_json::json!({"dir": target.display().to_string()})),
                 "Updated web dashboard assets"
             ),
-            Err(e) => ::clawcrew_log::record!(
+            Err(e) => ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                 "Web dashboard assets not updated; the main update still succeeded"
             ),
@@ -1029,10 +1029,10 @@ async fn install_companion_artifacts(
     //    radius so a compromised or forged release cannot install an
     //    arbitrarily-named file beside the running binary.
     let Some(install_dir) = current_exe.parent() else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Cannot determine install directory; sibling files not refreshed"
         );
         return;
@@ -1055,10 +1055,10 @@ async fn install_companion_artifacts(
         // skip the entry rather than guessing where it should go.
         if ft.is_dir() {
             if name_str != "web" {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"name": name_str})),
                     "Release archive contains a top-level directory the updater \
                      doesn't know how to install — skipping. Teach \
@@ -1081,10 +1081,10 @@ async fn install_companion_artifacts(
         // `install_dir.join(&name)` composes the target path — no traversal
         // is possible because `read_dir(staging)` only yields staged names.
         if !is_known_companion(name_str) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"name": name_str})),
                 "Release archive contains a top-level file that is not on the \
                  companion allowlist — skipping. Add it to KNOWN_COMPANION_FILES \
@@ -1096,20 +1096,20 @@ async fn install_companion_artifacts(
         let staged_path = entry.path();
         let target = install_dir.join(&name);
         match swap_file(&staged_path, &target).await {
-            Ok(()) => ::clawcrew_log::record!(
+            Ok(()) => ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Success)
                     .with_attrs(::serde_json::json!({
                         "name": name_str,
                         "path": target.display().to_string()
                     })),
                 "Updated sibling file from release archive"
             ),
-            Err(e) => ::clawcrew_log::record!(
+            Err(e) => ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "name": name_str,
                         "error": format!("{e}")
@@ -1243,9 +1243,9 @@ async fn install_web_dist(
     // `target` (it does — staging is in /tmp), `rename` would fail with
     // EXDEV; fall back to a recursive copy in that case.
     if let Err(rename_err) = tokio::fs::rename(staged_dist, &staging_dir).await {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"rename_err": rename_err.to_string()})),
             "rename into target filesystem failed, falling back to copy"
         );

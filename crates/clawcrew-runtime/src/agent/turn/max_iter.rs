@@ -63,11 +63,11 @@ pub(crate) async fn finish_after_max_iterations(
     token_counter: super::DispatchTokenCounter,
     observer: &dyn crate::observability::Observer,
 ) -> Result<String> {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-            .with_category(::clawcrew_log::EventCategory::Agent)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+            .with_category(::galleon_log::EventCategory::Agent)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(::serde_json::json!({
                 "model": model,
                 "max_iterations": max_iterations,
@@ -83,11 +83,11 @@ pub(crate) async fn finish_after_max_iterations(
     }
 
     // Graceful shutdown: ask the LLM for a final summary without tools
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_category(::clawcrew_log::EventCategory::Agent)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_category(::galleon_log::EventCategory::Agent)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({"max_iterations": max_iterations})),
         "Max iterations reached, requesting final summary"
     );
@@ -96,10 +96,10 @@ pub(crate) async fn finish_after_max_iterations(
     let tool_messages_removed =
         crate::agent::history_pruner::remove_orphaned_tool_messages(history).removed;
     if tool_calls_stripped > 0 || tool_messages_removed > 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "tool_calls_stripped": tool_calls_stripped,
                     "tool_messages_removed": tool_messages_removed,
@@ -283,11 +283,11 @@ pub(crate) async fn finish_after_max_iterations(
             anyhow::bail!("Final summary LLM call timed out after {step_secs}s (step_timeout_secs)")
         }
         SummaryCall::Done(Err(e)) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_category(::clawcrew_log::EventCategory::Provider)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_category(::galleon_log::EventCategory::Provider)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "model": model,
                         "provider": provider_name,
@@ -326,11 +326,11 @@ pub(crate) async fn finish_after_max_iterations(
     let protocol_suppressed =
         super::protocol_detect::detect_internal_protocol_without_tools(&display_text).is_some();
     if protocol_suppressed {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_category(::clawcrew_log::EventCategory::Tool)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_category(::galleon_log::EventCategory::Tool)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "model": model,
                     "max_iterations": max_iterations,

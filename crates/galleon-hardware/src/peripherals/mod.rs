@@ -59,9 +59,9 @@ pub async fn create_peripheral_tools(config: &PeripheralsConfig) -> Result<Vec<B
         {
             tools.push(Box::new(uno_q_bridge::UnoQGpioReadTool));
             tools.push(Box::new(uno_q_bridge::UnoQGpioWriteTool));
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"board": board.board})),
                 "Uno Q Bridge GPIO tools added"
             );
@@ -76,18 +76,18 @@ pub async fn create_peripheral_tools(config: &PeripheralsConfig) -> Result<Vec<B
             match rpi::RpiGpioPeripheral::connect_from_config(board).await {
                 Ok(peripheral) => {
                     tools.extend(peripheral.tools());
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"board": board.board})),
                         "RPi GPIO peripheral connected"
                     );
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!("Failed to connect RPi GPIO {}: {}", board.board, e)
                     );
                 }
@@ -100,10 +100,10 @@ pub async fn create_peripheral_tools(config: &PeripheralsConfig) -> Result<Vec<B
             continue;
         }
         if board.path.is_none() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("Skipping serial board {}: no path", board.board)
             );
             continue;
@@ -113,10 +113,10 @@ pub async fn create_peripheral_tools(config: &PeripheralsConfig) -> Result<Vec<B
             Ok(peripheral) => {
                 let mut p = peripheral;
                 if p.connect().await.is_err() {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!("Peripheral {} connect warning (continuing)", p.name())
                     );
                 }
@@ -128,9 +128,9 @@ pub async fn create_peripheral_tools(config: &PeripheralsConfig) -> Result<Vec<B
                     tools.push(Box::new(arduino_upload::ArduinoUploadTool::new(
                         path.clone(),
                     )));
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!("Arduino upload tool added (port: {})", path)
                     );
                 }
@@ -143,26 +143,26 @@ pub async fn create_peripheral_tools(config: &PeripheralsConfig) -> Result<Vec<B
                         transport: transport.clone(),
                     }));
                     tools.push(Box::new(smartroom::ReadDeviceTool { transport }));
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"board": board.board})),
                         "Smart-room device tools added (set_device, read_device)"
                     );
                 }
 
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"board": board.board})),
                     "Serial peripheral connected"
                 );
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!("Failed to connect {}: {}", board.board, e)
                 );
             }

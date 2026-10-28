@@ -394,10 +394,10 @@ impl SkillManageTool {
             Ok(r) => r,
             Err(e) => {
                 restore_snapshot(md_path, pre_snapshot.as_deref()).await;
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"slug": slug, "error": format!("{e}")})),
                     "Post-patch audit errored"
                 );
@@ -710,10 +710,10 @@ async fn restore_snapshot(target: &Path, snapshot: Option<&str>) {
     if let Some(s) = snapshot
         && let Err(e) = tokio::fs::write(target, s).await
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(
                     ::serde_json::json!({"target": target.display().to_string(), "error": format!("{e}")})
                 ),
@@ -727,10 +727,10 @@ async fn rollback_write(target: &Path, snapshot: Option<&[u8]>, target_existed: 
         if let Some(bytes) = snapshot
             && let Err(e) = tokio::fs::write(target, bytes).await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(
                         ::serde_json::json!({"target": target.display().to_string(), "error": format!("{e}")})
                     ),
@@ -738,10 +738,10 @@ async fn rollback_write(target: &Path, snapshot: Option<&[u8]>, target_existed: 
             );
         }
     } else if let Err(e) = tokio::fs::remove_file(target).await {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(
                     ::serde_json::json!({"target": target.display().to_string(), "error": format!("{e}")})
                 ),

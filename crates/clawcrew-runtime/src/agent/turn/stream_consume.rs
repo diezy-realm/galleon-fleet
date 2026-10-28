@@ -141,11 +141,11 @@ pub(crate) async fn consume_provider_streaming_response(
         let event = match event_result {
             Ok(event) => event,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_category(::clawcrew_log::EventCategory::Provider)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_category(::galleon_log::EventCategory::Provider)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                     "model_provider stream emitted an error event"
                 );
@@ -343,11 +343,11 @@ pub(crate) async fn consume_provider_streaming_response(
     outcome.suppressed_protocol = text_guard.suppressed_protocol;
 
     if outcome.response_text.trim().is_empty() && outcome.tool_calls.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_category(::clawcrew_log::EventCategory::Provider)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_category(::galleon_log::EventCategory::Provider)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "has_reasoning": !outcome.reasoning_content.trim().is_empty(),
                     "protocol_suppressed": outcome.suppressed_protocol,

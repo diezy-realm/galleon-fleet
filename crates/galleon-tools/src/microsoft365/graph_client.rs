@@ -89,9 +89,9 @@ pub async fn mail_send(
         let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
         let code = extract_graph_error_code(&body).unwrap_or_else(|| "unknown".to_string());
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"body": body})),
             "ms365: mail_send raw error body"
         );
@@ -158,9 +158,9 @@ pub async fn teams_message_send(
         let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
         let code = extract_graph_error_code(&body).unwrap_or_else(|| "unknown".to_string());
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"body": body})),
             "ms365: teams_message_send raw error body"
         );
@@ -278,9 +278,9 @@ pub async fn calendar_event_delete(
         let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
         let code = extract_graph_error_code(&body).unwrap_or_else(|| "unknown".to_string());
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"body": body})),
             "ms365: calendar_event_delete raw error body"
         );
@@ -341,9 +341,9 @@ pub async fn onedrive_download(
         let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
         let code = extract_graph_error_code(&body).unwrap_or_else(|| "unknown".to_string());
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"body": body})),
             "ms365: onedrive_download raw error body"
         );
@@ -418,9 +418,9 @@ async fn handle_json_response(
         let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
         let code = extract_graph_error_code(&body).unwrap_or_else(|| "unknown".to_string());
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"operation": operation, "body": body})),
             "ms365: raw error body"
         );

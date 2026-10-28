@@ -74,26 +74,26 @@ impl EscalateToHumanTool {
                 .iter()
                 .filter_map(|name| {
                     let Some(ch) = channels.get(name) else {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"name": name})),
                             "escalate_to_human: alert channel not found in channel map"
                         );
                         return None;
                     };
                     if !ch.supports_outbound_send() {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"name": name})),
                             "escalate_to_human: alert channel cannot deliver outbound messages"
                         );
@@ -107,10 +107,10 @@ impl EscalateToHumanTool {
         for (name, ch) in targets {
             let msg = SendMessage::new(text, "");
             if let Err(e) = ch.send(&msg).await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e), "name": name})),
                     "escalate_to_human: alert to channel failed"
                 );
@@ -190,10 +190,10 @@ impl Tool for EscalateToHumanTool {
             .map(|s| s.trim())
             .filter(|s| !s.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "summary"})),
                     "escalate: missing summary parameter"
                 );
@@ -258,10 +258,10 @@ impl Tool for EscalateToHumanTool {
                 // than silently escalating somewhere the operator isn't looking.
                 let ch = channels.get(name.as_str()).cloned().ok_or_else(|| {
                     let available = channels.keys().cloned().collect::<Vec<_>>().join(", ");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "channel_requested": name,
                                 "available": &available,
@@ -275,10 +275,10 @@ impl Tool for EscalateToHumanTool {
                 (name.clone(), ch)
             } else {
                 let (name, ch) = channels.iter().next().ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"missing": "channels"})),
                         "escalate: no channels configured"
                     );

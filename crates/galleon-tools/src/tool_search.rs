@@ -235,10 +235,10 @@ impl Tool for ToolSearchTool {
         let mut guard = match self.activated.lock() {
             Ok(guard) => guard,
             Err(poisoned) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "query": query,
                             "mode": "keyword_search",
@@ -254,9 +254,9 @@ impl Tool for ToolSearchTool {
                 break;
             }
             if !self.is_allowed(&stub.prefixed_name) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!(
                         "tool_search: '{}' matched query but denied by access policy",
                         stub.prefixed_name
@@ -288,9 +288,9 @@ impl Tool for ToolSearchTool {
         drop(guard);
         self.notify_activated(newly_activated);
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "tool_search: query={query:?}, matched={}, activated={activated_count}",
                 results.len()
@@ -314,10 +314,10 @@ impl ToolSearchTool {
         let mut guard = match self.activated.lock() {
             Ok(guard) => guard,
             Err(poisoned) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "requested_names": names,
                             "mode": "select",
@@ -333,9 +333,9 @@ impl ToolSearchTool {
                 continue;
             }
             if !self.is_allowed(name) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!("tool_search select: '{}' denied by access policy", name)
                 );
                 not_found.push(*name);
@@ -373,9 +373,9 @@ impl ToolSearchTool {
             let _ = write!(output, "\nNot found: {}", not_found.join(", "));
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "tool_search select: requested={}, activated={activated_count}, not_found={}",
                 names.len(),

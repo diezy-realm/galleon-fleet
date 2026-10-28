@@ -58,7 +58,7 @@ pub(crate) async fn announce_llm_request(
         turn_id: Some(ctx.turn_id.to_string()),
     });
     {
-        let _provider_guard = ::clawcrew_log::attribution_span!(active_model_provider).entered();
+        let _provider_guard = ::galleon_log::attribution_span!(active_model_provider).entered();
         let mut attrs = ::serde_json::json!({
             "iteration": iteration + 1,
             "messages_count": request_messages.len(),
@@ -68,7 +68,7 @@ pub(crate) async fn announce_llm_request(
         // Opt-in request payload capture (observability.log_llm_request_payload,
         // default off). When enabled, attach the scrubbed + truncated message
         // history; when off (or no writer installed) `attrs` is unchanged.
-        if let Some((policy, truncate_bytes)) = ::clawcrew_log::llm_request_payload_policy()
+        if let Some((policy, truncate_bytes)) = ::galleon_log::llm_request_payload_policy()
             && policy.captures_payload()
             && let ::serde_json::Value::Object(map) = &mut attrs
         {
@@ -81,7 +81,7 @@ pub(crate) async fn announce_llm_request(
             let serialized = ::serde_json::to_string(&rendered).unwrap_or_default();
             let scrubbed = scrub_credentials(&serialized);
             if let Some(capture) =
-                ::clawcrew_log::capture_llm_request(policy, truncate_bytes, &scrubbed)
+                ::galleon_log::capture_llm_request(policy, truncate_bytes, &scrubbed)
             {
                 map.insert(
                     "request_messages".to_string(),
@@ -96,10 +96,10 @@ pub(crate) async fn announce_llm_request(
                 }
             }
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
-                .with_category(::clawcrew_log::EventCategory::Provider)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
+                .with_category(::galleon_log::EventCategory::Provider)
                 .with_attrs(attrs),
             "llm_request"
         );
@@ -123,11 +123,11 @@ pub(crate) fn enforce_tool_loop_budget() -> Result<()> {
         period,
     }) = check_tool_loop_budget()
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_category(::clawcrew_log::EventCategory::Provider)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_category(::galleon_log::EventCategory::Provider)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "current_usd": current_usd,
                     "limit_usd": limit_usd,
@@ -274,11 +274,11 @@ pub(crate) async fn call_provider(
                                 scope.mark_stream_recovery_semantic_empty();
                             }
                             scope.record_stream_recovery_failure(&stream_err);
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                                    .with_category(::clawcrew_log::EventCategory::Provider)
-                                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                                    .with_category(::galleon_log::EventCategory::Provider)
+                                    .with_outcome(::galleon_log::EventOutcome::Failure)
                                     .with_attrs(::serde_json::json!({
                                         "model": active_model,
                                         "iteration": iteration + 1,
@@ -433,7 +433,7 @@ mod payload_capture_tests {
     use async_trait::async_trait;
     use clawcrew_api::attribution::{Attributable, ModelProviderKind, ProviderKind, Role};
     use galleon_config::schema::{PacingConfig, StreamReasoningMode};
-    use clawcrew_log::LogConfig;
+    use galleon_log::LogConfig;
     use galleon_providers::{ChatMessage, ModelProvider};
 
     /// Minimal provider stub. Only `chat_with_system` is required by
@@ -574,7 +574,7 @@ mod payload_capture_tests {
             log_persistence: "none".into(),
             ..LogConfig::default()
         };
-        clawcrew_log::init_from_config(&cfg, std::path::Path::new("/"));
+        galleon_log::init_from_config(&cfg, std::path::Path::new("/"));
     }
 
     // The raw credential embedded in one message. The rendering-layer scrubber
@@ -589,11 +589,11 @@ mod payload_capture_tests {
         // Serialize against writer::tests and the broadcast-hook tests for the
         // whole test: we drive `record!` -> LogCaptureLayer -> broadcast hook,
         // and a parallel `clear_broadcast_hook` would otherwise drop our event.
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
 
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
 
         let observer = NoopObserver;
         let pacing = PacingConfig::default();
@@ -666,7 +666,7 @@ mod payload_capture_tests {
             "messages_count is present regardless of payload policy"
         );
 
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
     }
 }
 

@@ -44,36 +44,36 @@ pub fn try_parse_voice_event(text: &str) -> Option<VoiceEvent> {
 pub fn handle_voice_event(event: VoiceEvent) -> Option<serde_json::Value> {
     match event {
         VoiceEvent::SpeechStart => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "voice duplex: speech_start received"
             );
             None
         }
         VoiceEvent::SpeechEnd { transcript } => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"transcript": transcript})),
                 "voice duplex: speech_end received"
             );
             None
         }
         VoiceEvent::BargeIn => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "voice duplex: barge_in received"
             );
             // TODO: wire into session abort mechanism (ref upstream
             None
         }
         VoiceEvent::TtsCancel | VoiceEvent::TtsChunk { .. } => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "voice duplex: received server-side event from client"
             );
             Some(serde_json::json!({

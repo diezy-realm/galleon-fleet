@@ -112,11 +112,11 @@ impl TokenCache {
                 match self.refresh_token(client, &refresh_tok).await {
                     Ok(new_state) => return Ok(new_state),
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "ms365: refresh token failed, re-authenticating"
@@ -165,9 +165,9 @@ impl TokenCache {
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"body": body})),
                 "ms365: client_credentials raw OAuth error"
             );
@@ -206,9 +206,9 @@ impl TokenCache {
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"body": body})),
                 "ms365: device_code initiation raw error"
             );
@@ -222,9 +222,9 @@ impl TokenCache {
 
         // Log only a generic prompt; the full device_resp.message may contain
         // sensitive verification URIs or codes that should not appear in logs.
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "ms365: device code auth required — follow the instructions shown to the user"
         );
         // Print the user-facing message to stderr so the operator can act on it
@@ -276,9 +276,9 @@ impl TokenCache {
                 tokio::time::sleep(std::time::Duration::from_secs(5)).await;
                 continue;
             }
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"body": body})),
                 "ms365: device code polling raw error"
             );
@@ -320,9 +320,9 @@ impl TokenCache {
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"body": body})),
                 "ms365: token refresh raw error"
             );
@@ -352,10 +352,10 @@ impl TokenCache {
         if let Ok(json) = serde_json::to_string_pretty(state)
             && let Err(e) = std::fs::write(&self.cache_path, json)
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "ms365: failed to persist token cache"
             );

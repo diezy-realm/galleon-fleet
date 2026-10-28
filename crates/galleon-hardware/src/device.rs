@@ -230,10 +230,10 @@ impl DeviceRegistry {
             entry.capabilities = capabilities;
             Ok(())
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"device_alias": alias})),
                 "device registry attach refused: unknown alias"
             );
@@ -405,9 +405,9 @@ impl DeviceRegistry {
             let probe_transport = if !is_known_vid {
                 let probe = HardwareSerialTransport::new(&info.port_path, DEFAULT_BAUD);
                 if !probe.ping_handshake().await {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"port": info.port_path})),
                         "skipping unknown device: no ClawCrew firmware response"
                     );
@@ -444,10 +444,10 @@ impl DeviceRegistry {
             registry
                 .attach_transport(&alias, transport, caps)
                 .unwrap_or_else(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"alias": alias, "err": e.to_string()})
                             ),
@@ -455,7 +455,7 @@ impl DeviceRegistry {
                     )
                 });
 
-            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"alias": alias, "port": info.port_path, "vid": info.vid})), "device registered");
+            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"alias": alias, "port": info.port_path, "vid": info.vid})), "device registered");
         }
 
         registry
@@ -468,10 +468,10 @@ impl DeviceRegistry {
         use super::serial::{DEFAULT_BAUD, HardwareSerialTransport};
 
         let entry = self.devices.get_mut(alias).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"device_alias": alias})),
                 "device registry reconnect refused: unknown alias"
             );
@@ -488,10 +488,10 @@ impl DeviceRegistry {
                 p.to_string()
             }
             None => entry.device.device_path.clone().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"device_alias": alias})),
                     "device registry reconnect refused: no recorded port path"
                 );
@@ -514,9 +514,9 @@ impl DeviceRegistry {
         entry.transport = Some(Arc::new(transport) as Arc<dyn super::transport::Transport>);
         entry.capabilities.gpio = true;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"alias": alias, "port": port_path})),
             "device reconnected"
         );

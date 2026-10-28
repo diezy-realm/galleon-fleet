@@ -186,10 +186,10 @@ impl GmailPushChannel {
     pub async fn register_watch(&self) -> Result<WatchResponse> {
         let token = self.config.oauth_token.clone();
         if token.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "Gmail OAuth token is not configured"
             );
             anyhow::bail!("Gmail OAuth token is not configured");
@@ -211,10 +211,10 @@ impl GmailPushChannel {
         if !resp.status().is_success() {
             let status = resp.status();
             let text = resp.text().await.unwrap_or_default();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "phase": "watch_registration",
                         "status": status.as_u16(),
@@ -233,9 +233,9 @@ impl GmailPushChannel {
         if *last_id == 0 {
             *last_id = watch.history_id;
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "Gmail watch registered — historyId={}, expiration={}",
                 watch.history_id, watch.expiration
@@ -260,10 +260,10 @@ impl GmailPushChannel {
     ) -> Result<Vec<String>> {
         let token = self.config.oauth_token.clone();
         if token.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "Gmail OAuth token is not configured"
             );
             anyhow::bail!("Gmail OAuth token is not configured");
@@ -286,10 +286,10 @@ impl GmailPushChannel {
             if !resp.status().is_success() {
                 let status = resp.status();
                 let text = resp.text().await.unwrap_or_default();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "phase": "history_fetch",
                             "status": status.as_u16(),
@@ -340,10 +340,10 @@ impl GmailPushChannel {
         if !resp.status().is_success() {
             let status = resp.status();
             let text = resp.text().await.unwrap_or_default();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "phase": "message_fetch",
                         "status": status.as_u16(),
@@ -385,9 +385,9 @@ impl GmailPushChannel {
     /// Process a Pub/Sub push notification and dispatch new messages to the agent.
     pub async fn handle_notification(&self, envelope: &PubSubEnvelope) -> Result<()> {
         let notification = parse_notification(&envelope.message)?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "Gmail push notification: email={}, historyId={}",
                 notification.email_address, notification.history_id
@@ -401,9 +401,9 @@ impl GmailPushChannel {
         if *last_id == 0 {
             // First notification — just record the history ID.
             *last_id = notification.history_id;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "Gmail push: first notification, seeding historyId={}",
                     notification.history_id
@@ -418,17 +418,17 @@ impl GmailPushChannel {
         drop(last_id);
 
         if message_ids.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Gmail push: no new messages in history"
             );
             return Ok(());
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "Gmail push: {} new message(s) to process",
                 message_ids.len()
@@ -442,10 +442,10 @@ impl GmailPushChannel {
             match tx_guard.clone() {
                 Some(tx) => tx,
                 None => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "Gmail push: no listener registered, dropping messages"
                     );
                     return Ok(());
@@ -460,13 +460,13 @@ impl GmailPushChannel {
                     let sender_email = extract_email_from_header(&sender);
 
                     if !self.is_sender_allowed(&sender_email) {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                             &format!("Gmail push: blocked message from {}", sender_email)
                         );
                         continue;
@@ -504,11 +504,11 @@ impl GmailPushChannel {
                     };
 
                     if tx.send(channel_msg).await.is_err() {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             ),
                             "Gmail push: listener channel closed"
                         );
@@ -516,10 +516,10 @@ impl GmailPushChannel {
                     }
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         &format!("Gmail push: failed to fetch message {}: {}", msg_id, e)
                     );
                 }
@@ -561,10 +561,10 @@ impl Channel for GmailPushChannel {
         // Send via Gmail API (drafts.send or messages.send)
         let token = self.config.oauth_token.clone();
         if token.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "Gmail OAuth token is not configured for sending"
             );
             anyhow::bail!("Gmail OAuth token is not configured for sending");
@@ -597,10 +597,10 @@ impl Channel for GmailPushChannel {
         if !resp.status().is_success() {
             let status = resp.status();
             let text = resp.text().await.unwrap_or_default();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "phase": "send",
                         "status": status.as_u16(),
@@ -614,9 +614,9 @@ impl Channel for GmailPushChannel {
             )));
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("Gmail message sent to {}", message.recipient)
         );
         Ok(())
@@ -629,9 +629,9 @@ impl Channel for GmailPushChannel {
             *tx_guard = Some(tx);
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Gmail push channel started — registering watch subscription"
         );
 
@@ -639,10 +639,10 @@ impl Channel for GmailPushChannel {
         if !self.config.webhook_url.is_empty()
             && let Err(e) = self.register_watch().await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"e": e.to_string()})),
                 "Gmail watch registration failed"
             );
@@ -654,16 +654,16 @@ impl Channel for GmailPushChannel {
         let renewal_interval = Duration::from_secs(6 * 24 * 60 * 60); // 6 days
         loop {
             tokio::time::sleep(renewal_interval).await;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Gmail push: renewing watch subscription"
             );
             if let Err(e) = self.register_watch().await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"e": e.to_string()})),
                     "Gmail watch renewal failed"
                 );
@@ -696,20 +696,20 @@ impl Channel for GmailPushChannel {
 /// Parse and decode the Gmail notification from a Pub/Sub message.
 pub fn parse_notification(msg: &PubSubMessage) -> Result<GmailNotification> {
     let decoded = BASE64.decode(&msg.data).map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "Invalid base64 in Pub/Sub message"
         );
         anyhow::Error::msg(format!("Invalid base64 in Pub/Sub message: {e}"))
     })?;
     let notification: GmailNotification = serde_json::from_slice(&decoded).map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "Invalid JSON in Gmail notification"
         );

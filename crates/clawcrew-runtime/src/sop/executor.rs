@@ -166,17 +166,17 @@ pub(crate) fn fail_exhausted_step_budget(engine: &Arc<Mutex<SopEngine>>, run_id:
         guard.fail_headless_step_budget(run_id)
     };
     match terminal {
-        Ok(_) => ::clawcrew_log::record!(
+        Ok(_) => ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"run_id": run_id})),
             "SOP driver: step budget exhausted; run failed"
         ),
-        Err(e) => ::clawcrew_log::record!(
+        Err(e) => ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "run_id": run_id,
                     "error": e.to_string(),
@@ -288,13 +288,13 @@ async fn drive_headless_run(
                     }
                     Ok(None) => {}
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "error": e.to_string(),
@@ -362,13 +362,13 @@ async fn drive_headless_run(
                         action = next;
                     }
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "error": e.to_string(),
@@ -397,13 +397,13 @@ async fn drive_headless_run(
                     }
                     Ok(next) => action = next,
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "run_id": run_id,
                                 "error": e.to_string(),
@@ -416,9 +416,9 @@ async fn drive_headless_run(
             }
             SopRunAction::WaitApproval { run_id, step, .. }
             | SopRunAction::CheckpointWait { run_id, step, .. } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "run_id": run_id,
                             "step": step.number,
@@ -433,9 +433,9 @@ async fn drive_headless_run(
                 reason,
                 ..
             } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "run_id": run_id,
                             "step": step,
@@ -446,9 +446,9 @@ async fn drive_headless_run(
                 return;
             }
             SopRunAction::Completed { run_id, sop_name } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "run_id": run_id,
                             "sop_name": sop_name,
@@ -458,9 +458,9 @@ async fn drive_headless_run(
                 return;
             }
             SopRunAction::Cancelled { run_id, sop_name } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Cancel)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Cancel)
                         .with_attrs(::serde_json::json!({
                             "run_id": run_id,
                             "sop_name": sop_name,
@@ -474,10 +474,10 @@ async fn drive_headless_run(
                 sop_name,
                 reason,
             } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "run_id": run_id,
                             "sop_name": sop_name,
@@ -531,10 +531,10 @@ pub(crate) async fn audit_sop_step(
         return;
     };
     if let Err(e) = audit.log_step_result(run_id, result).await {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": e.to_string()})),
             "SOP executor: audit log_step_result failed"
         );
@@ -542,10 +542,10 @@ pub(crate) async fn audit_sop_step(
     if let Some(run) = finished_run
         && let Err(e) = audit.log_run_complete(run).await
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": e.to_string()})),
             "SOP executor: audit log_run_complete failed"
         );

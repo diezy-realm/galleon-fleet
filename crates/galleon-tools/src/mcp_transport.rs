@@ -713,10 +713,10 @@ impl StdioTransport {
                     })?;
             }
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Start)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Start)
+                    .with_outcome(::galleon_log::EventOutcome::Success)
                     .with_attrs(::serde_json::json!({
                         "mcp_server": &config.name,
                         "sandboxed": false,
@@ -731,10 +731,10 @@ impl StdioTransport {
             .with_context(|| format!("failed to spawn MCP server `{}`", config.name))?;
 
         let stdin = child.stdin.take().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "mcp_server": &config.name,
                         "missing": "stdin",
@@ -744,10 +744,10 @@ impl StdioTransport {
             anyhow::Error::msg(format!("no stdin on MCP server `{}`", config.name))
         })?;
         let stdout = child.stdout.take().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "mcp_server": &config.name,
                         "missing": "stdout",
@@ -1076,9 +1076,9 @@ async fn stdio_read_loop(
                 };
                 let response_id = response.id.as_ref().and_then(serde_json::Value::as_u64);
                 if !deliver_stdio_response(&pending, generation, response) {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({
                                 "mcp_server": &server_name,
                                 "response_id": response_id,
@@ -1089,10 +1089,10 @@ async fn stdio_read_loop(
                 }
             }
             Ok(BoundedLine::Oversized) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "mcp_server": &server_name,
                             "max_bytes": MAX_LINE_BYTES,
@@ -1258,10 +1258,10 @@ impl HttpTransport {
             .url
             .as_ref()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "mcp_server": &config.name,
                             "transport": "http",
@@ -1410,10 +1410,10 @@ impl SharedMcpTransportConn for HttpTransport {
                 read_response.await?
             };
             let response = maybe_resp.ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "mcp_transport: MCP server returned no response in SSE stream"
                 );
                 anyhow::Error::msg("MCP server returned no response in SSE stream")
@@ -1475,10 +1475,10 @@ impl SseTransport {
             .url
             .as_ref()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "mcp_server": &config.name,
                             "transport": "sse",
@@ -1551,10 +1551,10 @@ impl SseTransport {
         }
         if !resp.status().is_success() {
             let status = resp.status();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"status": status.as_u16()})),
                 "mcp_transport: MCP server returned non-success HTTP"
             );
@@ -1617,10 +1617,10 @@ impl SseTransport {
                                 // A single line already exceeded the response cap.
                                 // Drop the in-flight event and resync at the next
                                 // line rather than buffering the oversized payload.
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                                        .with_outcome(::galleon_log::EventOutcome::Failure)
                                         .with_attrs(::serde_json::json!({
                                             "mcp_server": &server_name,
                                             "limit": max_response_bytes,
@@ -1683,10 +1683,10 @@ impl SseTransport {
                             // exceed the cap while the stripped lengths stay under.
                             cur_bytes = cur_bytes.saturating_add(consumed);
                             if cur_bytes > max_response_bytes {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                                        .with_outcome(::galleon_log::EventOutcome::Failure)
                                         .with_attrs(::serde_json::json!({
                                             "mcp_server": &server_name,
                                             "limit": max_response_bytes,
@@ -1729,10 +1729,10 @@ impl SseTransport {
         let derived = derive_message_url(&self.sse_url, "messages")
             .or_else(|| derive_message_url(&self.sse_url, "message"))
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"sse_url": &self.sse_url})),
                     "mcp_transport: invalid SSE URL"
                 );
@@ -1858,9 +1858,9 @@ async fn handle_sse_event(
     if let Some(tx) = tx {
         let _ = tx.send(resp);
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "MCP SSE `{}` received response for unknown id {}",
                 server_name, id

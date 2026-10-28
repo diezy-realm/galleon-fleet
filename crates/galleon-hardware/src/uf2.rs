@@ -44,10 +44,10 @@ pub fn ensure_firmware_dir() -> Result<PathBuf> {
     use directories::BaseDirs;
 
     let base = BaseDirs::new().ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure),
             "cannot determine the user home directory"
         );
         anyhow::Error::msg("cannot determine home directory")
@@ -71,9 +71,9 @@ pub fn ensure_firmware_dir() -> Result<PathBuf> {
             );
         }
         std::fs::write(&uf2_path, PICO_UF2)?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"path": uf2_path.display().to_string()})),
             "extracted bundled UF2"
         );
@@ -90,9 +90,9 @@ pub async fn flash_uf2(mount_point: &Path, firmware_dir: &Path) -> Result<()> {
     let src_str = uf2_src.to_string_lossy().into_owned();
     let dst_str = uf2_dst.to_string_lossy().into_owned();
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
             .with_attrs(::serde_json::json!({"src": src_str, "dst": dst_str})),
         "flashing UF2"
     );
@@ -115,10 +115,10 @@ pub async fn flash_uf2(mount_point: &Path, firmware_dir: &Path) -> Result<()> {
         let result = tokio::task::spawn_blocking(move || std::fs::copy(&src, &dst))
             .await
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "UF2 copy task panicked"
                 );
@@ -127,23 +127,23 @@ pub async fn flash_uf2(mount_point: &Path, firmware_dir: &Path) -> Result<()> {
 
         match result {
             Ok(Ok(_)) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "UF2 copy complete (std::fs::copy) — Pico will reboot"
                 );
                 return Ok(());
             }
-            Ok(Err(e)) => ::clawcrew_log::record!(
+            Ok(Err(e)) => ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("std::fs::copy failed ({}), trying cp", e)
             ),
-            Err(e) => ::clawcrew_log::record!(
+            Err(e) => ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("std::fs::copy task failed ({}), trying cp", e)
             ),
         }
@@ -165,34 +165,34 @@ pub async fn flash_uf2(mount_point: &Path, firmware_dir: &Path) -> Result<()> {
 
         match out {
             Err(_elapsed) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!("cp timed out after {}s, trying sudo cp", CP_TIMEOUT_SECS)
                 );
             }
             Ok(Ok(o)) if o.status.success() => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "UF2 copy complete (cp) — Pico will reboot"
                 );
                 return Ok(());
             }
             Ok(Ok(o)) => {
                 let stderr = String::from_utf8_lossy(&o.stderr);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!("cp failed ({}), trying sudo cp", stderr.trim())
                 );
             }
-            Ok(Err(e)) => ::clawcrew_log::record!(
+            Ok(Err(e)) => ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("cp spawn failed ({}), trying sudo cp", e)
             ),
         }
@@ -212,34 +212,34 @@ pub async fn flash_uf2(mount_point: &Path, firmware_dir: &Path) -> Result<()> {
 
         match out {
             Err(_elapsed) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!("sudo cp timed out after {}s", SUDO_CP_TIMEOUT_SECS)
                 );
             }
             Ok(Ok(o)) if o.status.success() => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "UF2 copy complete (sudo cp) — Pico will reboot"
                 );
                 return Ok(());
             }
             Ok(Ok(o)) => {
                 let stderr = String::from_utf8_lossy(&o.stderr);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!("sudo cp failed: {}", stderr.trim())
                 );
             }
-            Ok(Err(e)) => ::clawcrew_log::record!(
+            Ok(Err(e)) => ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "sudo cp spawn failed"
             ),

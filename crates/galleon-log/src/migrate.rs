@@ -55,7 +55,7 @@ pub fn migrate_legacy_jsonl_in_place(path: &Path) -> Result<()> {
             Ok(v) => v,
             Err(err) => {
                 tracing::warn!(
-                    target: "clawcrew_log",
+                    target: "galleon_log",
                     error = ?err,
                     "log: preserving malformed line during migrate"
                 );
@@ -105,7 +105,7 @@ pub fn migrate_legacy_jsonl_in_place(path: &Path) -> Result<()> {
     temp_cleanup.disarm();
     if let Err(err) = sync_parent_directory(path) {
         tracing::warn!(
-            target: "clawcrew_log",
+            target: "galleon_log",
             error = ?err,
             path = %path.display(),
             "log: migration committed but parent directory sync failed"
@@ -114,7 +114,7 @@ pub fn migrate_legacy_jsonl_in_place(path: &Path) -> Result<()> {
 
     if migrated > 0 {
         tracing::info!(
-            target: "clawcrew_log",
+            target: "galleon_log",
             migrated,
             kept,
             path = %path.display(),

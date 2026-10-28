@@ -195,10 +195,10 @@ pub(crate) async fn resolve_routed_approval(
 
     match route.on_no_approver {
         galleon_config::autonomy::OnNoApprover::Deny => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "tool": request.tool_name,
                         "approver_channel": route.approver_channel,
@@ -217,10 +217,10 @@ pub(crate) async fn resolve_routed_approval(
             }
         }
         galleon_config::autonomy::OnNoApprover::InheritOriginator => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "tool": request.tool_name,
                         "approver_channel": route.approver_channel,
@@ -470,10 +470,10 @@ pub struct Agent {
 
 impl Drop for Agent {
     fn drop(&mut self) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_category(::clawcrew_log::EventCategory::Agent)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_category(::galleon_log::EventCategory::Agent)
                 .with_attrs(::serde_json::json!({
                     "model_provider": self.model_provider_name,
                     "model": self.model_name,
@@ -925,10 +925,10 @@ impl AgentBuilder {
 
     pub fn build(self) -> Result<Agent> {
         let mut tools = self.tools.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing_field": "tools"})),
                 "AgentBuilder::build missing required field"
             );
@@ -950,10 +950,10 @@ impl AgentBuilder {
             Arc::new(galleon_memory::NoneMemory::new("none"))
         } else {
             self.memory.ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"missing_field": "memory"})),
                     "AgentBuilder::build missing required field"
                 );
@@ -975,10 +975,10 @@ impl AgentBuilder {
 
         Ok(Agent {
             model_provider: self.model_provider.ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"missing_field": "model_provider"})),
                     "AgentBuilder::build missing required field"
                 );
@@ -987,10 +987,10 @@ impl AgentBuilder {
             tools,
             memory: memory.clone(),
             observer: self.observer.ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"missing_field": "observer"})),
                     "AgentBuilder::build missing required field"
                 );
@@ -1000,10 +1000,10 @@ impl AgentBuilder {
                 .prompt_builder
                 .unwrap_or_else(SystemPromptBuilder::with_defaults),
             tool_dispatcher: self.tool_dispatcher.ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"missing_field": "tool_dispatcher"})),
                     "AgentBuilder::build missing required field"
                 );
@@ -1976,7 +1976,7 @@ impl Agent {
         // file writes (and downstream markdown-memory backends) don't
         // hit ENOENT on a fresh install.
         if let Err(e) = tokio::fs::create_dir_all(&agent_workspace).await {
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"agent": agent_alias, "workspace": agent_workspace.display().to_string(), "e": e.to_string()})), "Failed to create per-agent workspace dir (continuing): ");
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"agent": agent_alias, "workspace": agent_workspace.display().to_string(), "e": e.to_string()})), "Failed to create per-agent workspace dir (continuing): ");
         }
         if let Err(e) = crate::agent::personality::seed_default_personality(
             config,
@@ -1985,7 +1985,7 @@ impl Agent {
         )
         .await
         {
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"agent": agent_alias, "workspace": agent_workspace.display().to_string(), "e": e.to_string()})), "Failed to ensure per-agent bootstrap files (continuing with whatever exists): ");
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"agent": agent_alias, "workspace": agent_workspace.display().to_string(), "e": e.to_string()})), "Failed to ensure per-agent bootstrap files (continuing with whatever exists): ");
         }
         let security = Arc::new({
             // Use for_agent so the runtime profile (max_actions_per_hour,
@@ -2370,12 +2370,12 @@ impl Agent {
         let turn_id = turn_id.map(str::to_owned);
 
         {
-            let scope_span = ::clawcrew_log::info_span!(
+            let scope_span = ::galleon_log::info_span!(
                 target: "clawcrew_log_internal_scope",
                 "clawcrew_scope",
-                agent_alias = ::clawcrew_log::field::Empty,
+                agent_alias = ::galleon_log::field::Empty,
                 channel = %channel,
-                trace_id = ::clawcrew_log::field::Empty,
+                trace_id = ::galleon_log::field::Empty,
             );
             if let Some(agent_alias) = agent_alias.as_deref() {
                 scope_span.record("agent_alias", agent_alias);
@@ -2384,11 +2384,11 @@ impl Agent {
                 scope_span.record("trace_id", turn_id);
             }
             let _scope_guard = scope_span.enter();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Complete)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Complete)
+                    .with_category(::galleon_log::EventCategory::Agent)
+                    .with_outcome(::galleon_log::EventOutcome::Success)
                     .with_attrs(::serde_json::json!({
                         "max_history_messages": max,
                         "dropped_messages": result.dropped_messages,
@@ -2637,9 +2637,9 @@ impl Agent {
             return None;
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "Model switch detected in turn_streamed: {} {} -> {} {}",
                 self.model_provider_name, current_effective_model, new_model_provider, new_model
@@ -2713,10 +2713,10 @@ impl Agent {
                 Some(new_model)
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"err": e.to_string()})),
                     &format!(
                         "Failed to apply model_switch in turn_streamed; staying on {} {}",
@@ -2737,7 +2737,7 @@ impl Agent {
                 .model_route_resolver
                 .configured_model_for_hint(&decision.hint)
                 .unwrap_or("unknown");
-            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"hint": decision.hint.as_str(), "model": resolved_model, "rule_priority": decision.priority, "message_length": user_message.len()})), "Classified message route");
+            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"hint": decision.hint.as_str(), "model": resolved_model, "rule_priority": decision.priority, "message_length": user_message.len()})), "Classified message route");
             return format!("hint:{}", decision.hint);
         }
 
@@ -2747,7 +2747,7 @@ impl Agent {
             if let Some(hint) = ac.hint_for(tier)
                 && self.model_route_resolver.has_hint(hint)
             {
-                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"hint": hint, "complexity": format!("{:?}", tier), "message_length": user_message.len()})), "Auto-classified by complexity");
+                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"hint": hint, "complexity": format!("{:?}", tier), "message_length": user_message.len()})), "Auto-classified by complexity");
                 return format!("hint:{hint}");
             }
         }
@@ -2909,11 +2909,11 @@ impl Agent {
 
     pub async fn turn(&mut self, user_message: &str) -> Result<String> {
         if user_message.trim().is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_category(::galleon_log::EventCategory::Agent)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "reason": "empty_user_message",
                         "entry_point": "Agent::turn",
@@ -3326,11 +3326,11 @@ impl Agent {
         // push a timestamp-only user message into history and the model would
         // narrate the trailing prompt-template sentinel instead of replying.
         if user_message.trim().is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_category(::galleon_log::EventCategory::Agent)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "reason": "empty_user_message",
                         "entry_point": "Agent::turn_streamed",
@@ -3380,11 +3380,11 @@ impl Agent {
         // push a timestamp-only user message into history and the model would
         // narrate the trailing prompt-template sentinel instead of replying.
         if user_message.trim().is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_category(::galleon_log::EventCategory::Agent)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "reason": "empty_user_message",
                         "entry_point": "Agent::turn_streamed_with_steering_state",

@@ -45,10 +45,10 @@ impl Tool for SopListTool {
         let filter_lower = filter.to_lowercase();
 
         let engine = self.engine.lock().map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "SOP engine lock poisoned"
             );

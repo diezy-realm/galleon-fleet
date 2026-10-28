@@ -100,9 +100,9 @@ pub(crate) fn spawn_request_loop(
 ) {
     galleon_spawn::spawn!(async move {
         if let Err(error) = request_loop(server, data_dir, cancel).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
                     .with_attrs(::serde_json::json!({ "error": format!("{error:#}") })),
                 "enrollment paircode admin loop exited"
             );
@@ -147,9 +147,9 @@ fn process_requests(server: &EnrollServer, requests: &Path, responses: &Path) ->
             Ok(request) => request,
             Err(error) => {
                 let _ = std::fs::remove_file(&path);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
                         .with_attrs(::serde_json::json!({ "error": error.to_string() })),
                     "discarded malformed enrollment paircode request"
                 );

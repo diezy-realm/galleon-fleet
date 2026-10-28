@@ -202,10 +202,10 @@ impl Tool for SkillHttpTool {
         let client = match self.build_client(&target) {
             Ok(client) => client,
             Err(error) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": error.to_string()})),
                     "skill_http tool: reqwest client build failed"
                 );

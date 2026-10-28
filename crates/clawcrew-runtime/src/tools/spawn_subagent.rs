@@ -13,7 +13,7 @@ use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use galleon_config::schema::Config;
-use clawcrew_log::scope;
+use galleon_log::scope;
 
 /// Spawn an ephemeral SubAgent that inherits the parent agent's
 /// identity and runs a focused prompt under the same alias.

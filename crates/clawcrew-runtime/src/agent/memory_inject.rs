@@ -129,10 +129,10 @@ fn build_rerank_config(
         other => {
             static WARN_ONCE: std::sync::Once = std::sync::Once::new();
             WARN_ONCE.call_once(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "rerank_strategy": other,
                         })),

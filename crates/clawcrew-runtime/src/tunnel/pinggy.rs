@@ -67,10 +67,10 @@ impl Tunnel for PinggyTunnel {
         // Pinggy may print the tunnel URL to stdout or stderr depending on
         // SSH mode; read both streams concurrently to catch it either way.
         let stdout = child.stdout.take().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(
                         ::serde_json::json!({"tunnel_provider": "pinggy", "stream": "stdout"})
                     ),
@@ -79,10 +79,10 @@ impl Tunnel for PinggyTunnel {
             anyhow::Error::msg("Failed to capture pinggy stdout")
         })?;
         let stderr = child.stderr.take().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(
                         ::serde_json::json!({"tunnel_provider": "pinggy", "stream": "stderr"})
                     ),
@@ -118,9 +118,9 @@ impl Tunnel for PinggyTunnel {
 
             match stream_line {
                 Ok(StreamLine::Stdout(Ok(Some(l))) | StreamLine::Stderr(Ok(Some(l)))) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"l": l})),
                         "pinggy: "
                     );

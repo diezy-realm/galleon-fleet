@@ -258,9 +258,9 @@ async fn wait_for_exit_signal(
             }
             tokio::time::sleep(Duration::from_secs(1)).await;
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"grace_secs": EPHEMERAL_GRACE_SECS})),
             "All socket clients disconnected; starting ephemeral grace period"
         );
@@ -286,28 +286,28 @@ async fn wait_for_exit_signal(
         loop {
             tokio::select! {
                 _ = sigint.recv() => {
-                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "Received SIGINT, shutting down...");
+                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "Received SIGINT, shutting down...");
                     return Ok(DaemonExit::Shutdown);
                 }
                 _ = sigterm.recv() => {
-                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "Received SIGTERM, shutting down...");
+                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "Received SIGTERM, shutting down...");
                     return Ok(DaemonExit::Shutdown);
                 }
                 _ = sighup.recv() => {
-                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "Received SIGHUP, ignoring (daemon stays running)");
+                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "Received SIGHUP, ignoring (daemon stays running)");
                 }
                 changed = reload_rx.changed() => {
                     if changed.is_err() {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), "Reload sender dropped; shutting down");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), "Reload sender dropped; shutting down");
                         return Ok(DaemonExit::Shutdown);
                     }
                     if *reload_rx.borrow_and_update() {
-                        ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "Reload requested via /admin/reload");
+                        ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "Reload requested via /admin/reload");
                         return Ok(DaemonExit::Reload);
                     }
                 }
                 _ = &mut ephemeral_shutdown => {
-                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "Ephemeral daemon: no clients remaining, shutting down");
+                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "Ephemeral daemon: no clients remaining, shutting down");
                     return Ok(DaemonExit::Shutdown);
                 }
             }
@@ -324,25 +324,25 @@ async fn wait_for_exit_signal(
             tokio::select! {
                 res = tokio::signal::ctrl_c() => {
                     res?;
-                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "Received Ctrl+C, shutting down...");
+                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "Received Ctrl+C, shutting down...");
                     return Ok(DaemonExit::Shutdown);
                 }
                 _ = &mut respawn_shutdown => {
-                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "In-process shutdown requested, shutting down...");
+                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "In-process shutdown requested, shutting down...");
                     return Ok(DaemonExit::Shutdown);
                 }
                 changed = reload_rx.changed() => {
                     if changed.is_err() {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), "Reload sender dropped; shutting down");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), "Reload sender dropped; shutting down");
                         return Ok(DaemonExit::Shutdown);
                     }
                     if *reload_rx.borrow_and_update() {
-                        ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "Reload requested via /admin/reload");
+                        ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "Reload requested via /admin/reload");
                         return Ok(DaemonExit::Reload);
                     }
                 }
                 _ = &mut ephemeral_shutdown => {
-                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "Ephemeral daemon: no clients remaining, shutting down");
+                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "Ephemeral daemon: no clients remaining, shutting down");
                     return Ok(DaemonExit::Shutdown);
                 }
             }
@@ -360,9 +360,9 @@ async fn wait_for_ephemeral(client_count: std::sync::Arc<std::sync::atomic::Atom
         }
         tokio::time::sleep(Duration::from_secs(1)).await;
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
             .with_attrs(::serde_json::json!({"grace_secs": EPHEMERAL_GRACE_SECS})),
         "All socket clients disconnected; starting ephemeral grace period"
     );
@@ -513,7 +513,7 @@ pub async fn run(
     // heartbeat) can publish real-time events to dashboard clients.
     let (event_tx, _rx) = tokio::sync::broadcast::channel::<serde_json::Value>(256);
 
-    clawcrew_log::set_broadcast_hook(event_tx.clone());
+    galleon_log::set_broadcast_hook(event_tx.clone());
 
     if config.heartbeat.enabled
         && let Ok((_, heartbeat_workspace_dir)) = resolve_heartbeat_workspace_dir(&config)
@@ -597,18 +597,18 @@ pub async fn run(
     match crate::platform::backup::recover_pending_restore(&config.data_dir) {
         Ok(0) => {} // no pending journal — common case
         Ok(_) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Success),
                 "completed a pending journaled restore from a previous crash"
             );
         }
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({ "error": format!("{e:#}") })),
                 "failed to recover pending journaled restore; stores may be inconsistent"
             );
@@ -620,10 +620,10 @@ pub async fn run(
             .await
             .map(crate::control_plane::init_control_plane)
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({ "error": format!("{e:#}") })),
             "control-plane failed to start; supervision disabled for this run"
         );
@@ -660,17 +660,17 @@ pub async fn run(
             ));
         } else {
             crate::health::mark_component_ok("channels");
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "No channels configured; channel supervisor disabled"
             );
         }
     } else {
         crate::health::mark_component_ok("channels");
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Channels subsystem not wired; channel supervisor disabled"
         );
     }
@@ -684,10 +684,10 @@ pub async fn run(
         ) {
             Ok(logger) => Some(logger),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "certificate audit logger unavailable: enrollment and certificate \
                      renewal will refuse to issue"
@@ -849,9 +849,9 @@ pub async fn run(
         ));
     } else {
         crate::health::mark_component_ok("scheduler");
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Cron disabled; scheduler supervisor not started"
         );
     }
@@ -975,11 +975,11 @@ pub fn state_file_path(config: &Config) -> PathBuf {
 }
 
 fn record_daemon_started(config: &Config, host: &str, port: u16) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Start)
-            .with_category(::clawcrew_log::EventCategory::System)
-            .with_outcome(::clawcrew_log::EventOutcome::Success)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Start)
+            .with_category(::galleon_log::EventCategory::System)
+            .with_outcome(::galleon_log::EventOutcome::Success)
             .with_attrs(::serde_json::json!({
                 "requested_gateway": format!("http://{host}:{port}"),
                 "socket": socket_path(config).display().to_string(),
@@ -1165,10 +1165,10 @@ pub(crate) async fn await_connection_drain(
             return ConnectionDrain::Complete;
         }
         if tokio::time::Instant::now() >= deadline {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({ "connections": outstanding })),
                 "Transport connections still draining when the shutdown budget expired"
             );
@@ -1197,10 +1197,10 @@ fn settle_exit_against_drain(
     if !matches!(exit, Ok(DaemonExit::Reload)) {
         return exit;
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({ "connections": outstanding })),
         "Reload refused: work from the retiring generation is still unwinding; shutting down \
          instead so a replacement generation cannot overlap it"
@@ -1239,13 +1239,13 @@ where
                             SCHEDULER_CLEAN_SHUTDOWN_OBSERVED
                                 .store(true, std::sync::atomic::Ordering::SeqCst);
                         }
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Success)
+                            .with_outcome(::galleon_log::EventOutcome::Success)
                             .with_attrs(::serde_json::json!({"name": name})),
                             &format!(
                                 "Daemon component '{name}' shut down cleanly via cancellation token"
@@ -1254,10 +1254,10 @@ where
                         return;
                     }
                     crate::health::mark_component_error(name, "component exited unexpectedly");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "name": name,
                                 "ran_for_secs": ran_for.as_secs(),
@@ -1271,10 +1271,10 @@ where
                 Err(e) => {
                     let error_chain = format!("{e:#}");
                     crate::health::mark_component_error(name, &error_chain);
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "error": &error_chain,
                                 "name": name,
@@ -1531,10 +1531,10 @@ async fn connect_heartbeat_mcp_registry(
     match crate::tools::McpRegistry::connect_all(&servers).await {
         Ok(registry) => Ok(Some(std::sync::Arc::new(registry))),
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "agent": agent_alias,
                         "error": format!("{:#}", e),
@@ -1827,25 +1827,25 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                     );
                     match tokio::time::timeout(Duration::from_secs(30), delivery_fut).await {
                         Ok(Err(e)) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "Deadman alert delivery failed"
                             );
                         }
                         Err(_) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                                 "Deadman alert delivery timed out (30s)"
                             );
                         }
@@ -1934,13 +1934,13 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                 {
                     Ok(r) => r,
                     Err(_) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Timeout
+                                ::galleon_log::Action::Timeout
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "phase": "phase1_decision",
                                 "timeout_secs": config.heartbeat.task_timeout_secs,
@@ -1960,11 +1960,11 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                 Ok(response) => {
                     let indices = HeartbeatEngine::parse_decision_response(&response, tasks.len());
                     if indices.is_empty() {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             ),
                             "heartbeat phase 1: skip (nothing to do)"
                         );
@@ -1974,17 +1974,17 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                         metrics.lock().record_success(elapsed);
                         continue;
                     }
-                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"selected": indices.len(), "total": tasks.len()})), "heartbeat phase 1: running task subset");
+                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"selected": indices.len(), "total": tasks.len()})), "heartbeat phase 1: running task subset");
                     indices
                         .into_iter()
                         .filter_map(|i| tasks.get(i).cloned())
                         .collect()
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "heartbeat phase 1 failed; running all tasks"
                     );
@@ -2055,13 +2055,13 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                 {
                     Ok(r) => r,
                     Err(_) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Timeout
+                                ::galleon_log::Action::Timeout
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "phase": "phase2_heartbeat",
                                 "timeout_secs": config.heartbeat.task_timeout_secs,
@@ -2129,13 +2129,13 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                         !crate::cron::scheduler::announce_delivery_decision(&announcement)
                             .should_deliver();
                     if suppress_delivery {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Success)
+                            .with_outcome(::galleon_log::EventOutcome::Success)
                             .with_attrs(::serde_json::json!({"task": task.text})),
                             "Heartbeat task returned NO_REPLY sentinel — skipping delivery"
                         );
@@ -2160,13 +2160,13 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                                     "heartbeat",
                                     format!("delivery failed: {e}"),
                                 );
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                     "Heartbeat delivery failed"
                                 );
@@ -2176,13 +2176,13 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                                     "heartbeat",
                                     "delivery timed out (30s)".to_string(),
                                 );
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                                     "Heartbeat delivery timed out (30s)"
                                 );
                             }
@@ -2207,10 +2207,10 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                         config.heartbeat.max_run_history,
                     );
                     crate::health::mark_component_error("heartbeat", e.to_string());
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "Heartbeat task failed"
                     );
@@ -2294,10 +2294,10 @@ fn load_heartbeat_session_context(config: &Config) -> Option<String> {
         .filter(|v| !v.is_empty())?;
 
     if channel.contains('/') || channel.contains('\\') || to.contains('/') || to.contains('\\') {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "heartbeat session context: channel/to contains path separators, skipping"
         );
         return None;
@@ -2331,9 +2331,9 @@ fn load_heartbeat_session_context(config: &Config) -> Option<String> {
         .map(|e| e.path())?;
 
     if !path.exists() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"channel": channel, "to": to})),
             "heartbeat session context: no session file found"
         );
@@ -2361,9 +2361,9 @@ fn load_heartbeat_session_context(config: &Config) -> Option<String> {
     // Monika's own messages back to her in a loop.
     let has_user_message = recent.iter().any(|m| m.role == "user");
     if !has_user_message {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "💓 Heartbeat session context: no user messages in recent history — skipping"
         );
         return None;
@@ -2393,9 +2393,9 @@ fn load_heartbeat_session_context(config: &Config) -> Option<String> {
         None => String::new(),
     };
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         DEBUG,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         &format!(
             "💓 Heartbeat session context: {} messages from {}, silence: {}",
             recent.len(),
@@ -2618,7 +2618,7 @@ mod tests {
     /// closes their receiver mid-read, which surfaces as a missing log event.
     #[must_use]
     fn hold_log_broadcast() -> impl Drop {
-        clawcrew_log::__private_test_hook_lock()
+        galleon_log::__private_test_hook_lock()
     }
 
     async fn recv_log_event(
@@ -2722,10 +2722,10 @@ mod tests {
     #[allow(clippy::await_holding_lock)]
     #[tokio::test]
     async fn daemon_startup_diagnostics_are_logged_as_structured_event() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let tmp = TempDir::new().unwrap();
@@ -3041,10 +3041,10 @@ mod tests {
     #[allow(clippy::await_holding_lock)]
     #[tokio::test]
     async fn supervisor_preserves_component_error_chain() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let cancel = tokio_util::sync::CancellationToken::new();

@@ -221,10 +221,10 @@ impl AmqpChannel {
                     // rather than a broker-level redelivery: the broker-redelivery
                     // safety net is reserved for SOP-only dispatch, where there is no
                     // agent handoff to double-run.
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "alias": self.alias,
                                 "routing_key": routing_key,

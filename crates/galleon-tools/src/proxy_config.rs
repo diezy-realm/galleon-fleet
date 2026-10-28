@@ -21,10 +21,10 @@ impl ProxyConfigTool {
 
     fn load_config_without_env(&self) -> anyhow::Result<Config> {
         let contents = fs::read_to_string(&self.config.config_path).map_err(|error| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config.config_path.display().to_string(),
                         "error": format!("{}", error),
@@ -38,10 +38,10 @@ impl ProxyConfigTool {
         })?;
 
         let mut parsed: Config = toml::from_str(&contents).map_err(|error| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": self.config.config_path.display().to_string(),
                         "error": format!("{}", error),
@@ -101,10 +101,10 @@ impl ProxyConfigTool {
             let mut out = Vec::new();
             for item in array {
                 let value = item.as_str().ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"field": field})),
                         "proxy_config: array element must be a string"
                     );
@@ -133,10 +133,10 @@ impl ProxyConfigTool {
         let value = raw
             .as_str()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"field": field})),
                     "proxy_config: field must be a string or null"
                 );
@@ -228,10 +228,10 @@ impl ProxyConfigTool {
 
         if let Some(enabled) = args.get("enabled") {
             proxy.enabled = enabled.as_bool().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "enabled"})),
                     "proxy_config: enabled must be boolean"
                 );
@@ -241,20 +241,20 @@ impl ProxyConfigTool {
 
         if let Some(scope_raw) = args.get("scope") {
             let scope = scope_raw.as_str().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "scope"})),
                     "proxy_config: scope must be string"
                 );
                 anyhow::Error::msg("'scope' must be a string")
             })?;
             proxy.scope = Self::parse_scope(scope).ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"scope": scope})),
                     "proxy_config: invalid scope"
                 );

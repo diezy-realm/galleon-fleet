@@ -77,10 +77,10 @@ impl GenerationGate {
             return;
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "error_key": "hailo_endpoint_quarantined",
                     "reason": reason.as_str(),
@@ -279,10 +279,10 @@ impl HailoOllamaModelProvider {
     }
 
     fn invalid_url(reason: &'static str, message: &'static str) -> anyhow::Error {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "error_key": "hailo_url_invalid",
                     "reason": reason,
@@ -378,10 +378,10 @@ impl HailoOllamaModelProvider {
             return Ok(());
         };
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "error_key": "hailo_endpoint_quarantined",
                     "model_provider": self.alias,
@@ -457,10 +457,10 @@ impl HailoOllamaModelProvider {
             ("other", "Hailo-Ollama transport request failed".to_string())
         };
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "error_key": "hailo_transport_error",
                     "model_provider": self.alias,
@@ -725,10 +725,10 @@ impl HailoOllamaModelProvider {
                     .filter(|tool_calls| !tool_calls.is_empty())
             {
                 let rendered = serde_json::to_string(tool_calls).map_err(|error| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "error_key": "hailo_tool_history_serialize",
                                 "model_provider": self.alias,
@@ -774,10 +774,10 @@ impl HailoOllamaModelProvider {
             .position(|candidate| candidate.kind == MessageKind::User)
             .unwrap_or(candidates.len());
         if first_user == candidates.len() && !candidates.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "error_key": "hailo_history_missing_user_anchor",
                         "model_provider": self.alias,
@@ -790,10 +790,10 @@ impl HailoOllamaModelProvider {
             )));
         }
         if first_user > 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "error_key": "hailo_orphan_history_dropped",
                         "model_provider": self.alias,
@@ -879,10 +879,10 @@ impl HailoOllamaModelProvider {
             }
         };
         if candidates.len() < original_candidate_count {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "error_key": "hailo_context_budget_bounded",
                         "model_provider": self.alias,
@@ -894,10 +894,10 @@ impl HailoOllamaModelProvider {
             );
         }
         if retained_chars > history_char_budget && !candidates.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "error_key": "hailo_latest_turn_exceeds_context_budget",
                         "model_provider": self.alias,
@@ -992,9 +992,9 @@ impl HailoOllamaModelProvider {
         temperature: Option<f64>,
     ) -> anyhow::Result<ApiChatResponse> {
         let request = self.build_request(messages.to_vec(), model, temperature);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "model_provider": self.alias,
                     "model": model,
@@ -1021,10 +1021,10 @@ impl HailoOllamaModelProvider {
         if !status.is_success() {
             let raw = String::from_utf8_lossy(&body);
             let sanitized = self.sanitize_response_body(&raw);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "error_key": "hailo_api_error",
                         "model_provider": self.alias,
@@ -1044,10 +1044,10 @@ impl HailoOllamaModelProvider {
         let parsed: ApiChatResponse = serde_json::from_slice(&body).map_err(|error| {
             let raw = String::from_utf8_lossy(&body);
             let sanitized = self.sanitize_response_body(&raw);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "error_key": "hailo_response_deserialize",
                         "model_provider": self.alias,
@@ -1087,10 +1087,10 @@ impl HailoOllamaModelProvider {
         } else {
             "unknown"
         };
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "error_key": "hailo_request_worker_failed",
                     "model_provider": self.alias,
@@ -1117,10 +1117,10 @@ impl HailoOllamaModelProvider {
             tokio::time::timeout(self.queue_timeout, gate.semaphore.clone().acquire_owned())
                 .await
                 .map_err(|_| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "error_key": "hailo_queue_timeout",
                                 "model_provider": self.alias,
@@ -1133,10 +1133,10 @@ impl HailoOllamaModelProvider {
                     ))
                 })?
                 .map_err(|_| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "error_key": "hailo_generation_semaphore_closed",
                                 "model_provider": self.alias,

@@ -59,10 +59,10 @@ pub fn make_session_backend(
         }
         "sqlite" => Ok(Arc::new(open_sqlite_with_jsonl_import(workspace_dir)?)),
         other => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"other": other})),
                 "Unknown session_backend ''; falling back to sqlite. \
                  Valid values: 'sqlite' (default), 'jsonl'."
@@ -82,9 +82,9 @@ fn open_sqlite_with_jsonl_import(
         .map_err(|e| std::io::Error::other(format!("{e:#}")))?
     {
         0 => {}
-        n => ::clawcrew_log::record!(
+        n => ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "session_backend=sqlite: completed {n} legacy JSONL session migration \
              handoff(s) from {}/sessions to *.jsonl.migrated.",

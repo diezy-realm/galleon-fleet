@@ -16,10 +16,10 @@ pub fn next_run_for_schedule(schedule: &Schedule, from: DateTime<Utc>) -> Result
                     .with_context(|| format!("Invalid IANA timezone: {tz_name}"))?;
                 let localized_from = from.with_timezone(&timezone);
                 let next_local = cron.after(&localized_from).next().ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"expr": expr})),
                         "cron schedule: no future occurrence for expression"
                     );
@@ -31,10 +31,10 @@ pub fn next_run_for_schedule(schedule: &Schedule, from: DateTime<Utc>) -> Result
                 // expectations instead of always using UTC.
                 let local_from = from.with_timezone(&chrono::Local);
                 let next_local = cron.after(&local_from).next().ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"expr": expr})),
                         "cron schedule: no future occurrence for expression"
                     );
@@ -51,10 +51,10 @@ pub fn next_run_for_schedule(schedule: &Schedule, from: DateTime<Utc>) -> Result
             let ms = i64::try_from(*every_ms).context("every_ms is too large")?;
             let delta = ChronoDuration::milliseconds(ms);
             from.checked_add_signed(delta).ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"every_ms": *every_ms})),
                     "cron schedule: every_ms overflowed DateTime arithmetic"
                 );

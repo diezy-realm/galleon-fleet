@@ -122,10 +122,10 @@ impl TwitterChannel {
             .and_then(|d| d.get("id"))
             .and_then(|id| id.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "Missing user id in Twitter response"
                 );
                 anyhow::Error::msg("Missing user id in Twitter response")
@@ -232,15 +232,15 @@ impl Channel for TwitterChannel {
     }
 
     async fn listen(&self, tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "authenticating..."
         );
         let bot_user_id = self.get_authenticated_user_id().await?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"bot_user_id": bot_user_id})),
             "authenticated as user"
         );
@@ -271,13 +271,13 @@ impl Channel for TwitterChannel {
                     let data: serde_json::Value = match resp.json().await {
                         Ok(d) => d,
                         Err(e) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "failed to parse mentions response"
                             );
@@ -328,11 +328,11 @@ impl Channel for TwitterChannel {
                                 .unwrap_or_else(|| author_id.to_string());
 
                             if !self.is_author_allowed(&[&username, author_id]) {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     DEBUG,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
                                     .with_attrs(::serde_json::json!({"username": username})),
                                     "ignoring mention from unauthorized user"
@@ -370,13 +370,13 @@ impl Channel for TwitterChannel {
                             };
 
                             if tx.send(channel_msg).await.is_err() {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                                     "message channel closed"
                                 );
                                 return Ok(());
@@ -402,26 +402,26 @@ impl Channel for TwitterChannel {
                     let status = resp.status();
                     if status.as_u16() == 429 {
                         // Rate limited — back off
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                             "rate limited, backing off 60s"
                         );
                         tokio::time::sleep(std::time::Duration::from_secs(60)).await;
                         continue;
                     }
                     let err = resp.text().await.unwrap_or_default();
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", err), "status": status.to_string()})), "mentions request failed");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", err), "status": status.to_string()})), "mentions request failed");
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "mentions request error"
                     );

@@ -132,7 +132,7 @@ RUN mkdir -p src src/bin benches apps/galleoncode/src apps/galleonrelay/src tool
     && echo "fn main() {}" > crates/galleon-hardware/examples/esp32_sim.rs \
     && for d in crates/*/; do [ "$d" = "crates/galleon-macros/" ] && continue; mkdir -p "${d}src" && printf '' > "${d}src/lib.rs"; done \
     && for d in crates/*/tests/fixtures/*/; do [ -f "${d}Cargo.toml" ] || continue; mkdir -p "${d}src" && printf '' > "${d}src/lib.rs"; done \
-    && printf 'fn main() {}' > crates/clawcrew-log/tests/fixtures/attribution-macro-consumer/src/main.rs
+    && printf 'fn main() {}' > crates/galleon-log/tests/fixtures/attribution-macro-consumer/src/main.rs
 RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/registry,sharing=locked \
     --mount=type=cache,id=clawcrew-cargo-git,target=/usr/local/cargo/git,sharing=locked \
     --mount=type=cache,id=clawcrew-target,target=/app/target,sharing=locked \

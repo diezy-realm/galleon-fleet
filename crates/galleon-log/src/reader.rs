@@ -294,7 +294,7 @@ pub fn load_page(path: &Path, filter: &LogFilter, limit: usize) -> Result<LogPag
             Ok(event) => event,
             Err(err) => {
                 tracing::trace!(
-                    target: "clawcrew_log",
+                    target: "galleon_log",
                     error = ?err,
                     "log: skipping malformed JSONL line"
                 );
@@ -591,7 +591,7 @@ pub(crate) fn list_archives_reporting(
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => continue,
             Err(err) => {
                 tracing::warn!(
-                    target: "clawcrew_log",
+                    target: "galleon_log",
                     error = ?err,
                     path = %entry.path().display(),
                     "log: could not read archive metadata; this archive is excluded from \
@@ -705,7 +705,7 @@ pub(crate) fn enumerate_segment_metas(
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => false,
         Err(err) => {
             tracing::warn!(
-                target: "clawcrew_log",
+                target: "galleon_log",
                 error = ?err,
                 path = %active.display(),
                 "log: could not stat the active log file; this page omits it and is \
@@ -763,7 +763,7 @@ fn scan_segment(
         }
         Err(err) => {
             tracing::warn!(
-                target: "clawcrew_log",
+                target: "galleon_log",
                 error = ?err,
                 path = %seg.path.display(),
                 "log: could not open segment; excluded from this page",
@@ -789,7 +789,7 @@ fn scan_segment(
                 // every other segment's history, but the page can no longer
                 // claim to be the whole stream.
                 tracing::warn!(
-                    target: "clawcrew_log",
+                    target: "galleon_log",
                     error = ?err,
                     path = %seg.path.display(),
                     "log: stopped reading a segment early; the rest of it is \
@@ -821,7 +821,7 @@ fn scan_segment(
             Ok(e) => e,
             Err(err) => {
                 tracing::trace!(
-                    target: "clawcrew_log",
+                    target: "galleon_log",
                     error = ?err,
                     "log: skipping malformed JSONL line"
                 );
@@ -964,7 +964,7 @@ fn anchor_is_at_offset(
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => return false,
         Err(err) => {
             tracing::warn!(
-                target: "clawcrew_log",
+                target: "galleon_log",
                 error = ?err,
                 path = %seg.path.display(),
                 "log: could not open the segment to validate a cursor anchor"
@@ -982,7 +982,7 @@ fn anchor_is_at_offset(
             Ok(n) => n,
             Err(err) => {
                 tracing::warn!(
-                    target: "clawcrew_log",
+                    target: "galleon_log",
                     error = ?err,
                     path = %seg.path.display(),
                     "log: stopped reading a segment early while validating a cursor anchor"
@@ -1006,7 +1006,7 @@ fn anchor_is_at_offset(
             Ok(event) => event.id == anchor_id,
             Err(err) => {
                 tracing::trace!(
-                    target: "clawcrew_log",
+                    target: "galleon_log",
                     error = ?err,
                     path = %seg.path.display(),
                     "log: malformed JSONL while validating a cursor anchor"
@@ -1030,7 +1030,7 @@ fn find_anchor_offset(seg: &SegmentMeta, anchor_id: &str, unreadable: &mut bool)
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => return None,
         Err(err) => {
             tracing::warn!(
-                target: "clawcrew_log",
+                target: "galleon_log",
                 error = ?err,
                 path = %seg.path.display(),
                 "log: could not open the segment while searching for a cursor anchor"
@@ -1048,7 +1048,7 @@ fn find_anchor_offset(seg: &SegmentMeta, anchor_id: &str, unreadable: &mut bool)
             Ok(n) => n,
             Err(err) => {
                 tracing::warn!(
-                    target: "clawcrew_log",
+                    target: "galleon_log",
                     error = ?err,
                     path = %seg.path.display(),
                     "log: stopped reading a segment early while searching for a cursor anchor"
@@ -1068,7 +1068,7 @@ fn find_anchor_offset(seg: &SegmentMeta, anchor_id: &str, unreadable: &mut bool)
                 Ok(_) => {}
                 Err(err) => {
                     tracing::trace!(
-                        target: "clawcrew_log",
+                        target: "galleon_log",
                         error = ?err,
                         path = %seg.path.display(),
                         "log: malformed JSONL while searching for a cursor anchor"
@@ -1482,7 +1482,7 @@ pub fn find_event_across_segments(
                 }
                 Err(err) => {
                     tracing::warn!(
-                        target: "clawcrew_log",
+                        target: "galleon_log",
                         error = ?err,
                         path = %seg.path.display(),
                         "log: skipping unreadable segment during id lookup"
@@ -1496,7 +1496,7 @@ pub fn find_event_across_segments(
                     // The rest of this segment is unreadable. Keep searching
                     // the others, but the part not read could have held the id.
                     tracing::warn!(
-                        target: "clawcrew_log",
+                        target: "galleon_log",
                         path = %seg.path.display(),
                         "log: stopped reading a segment early during id lookup"
                     );
@@ -1517,7 +1517,7 @@ pub fn find_event_across_segments(
                     Ok(_) => {}
                     Err(err) => {
                         tracing::trace!(
-                            target: "clawcrew_log",
+                            target: "galleon_log",
                             error = ?err,
                             path = %seg.path.display(),
                             "log: skipping malformed JSONL line during id lookup"

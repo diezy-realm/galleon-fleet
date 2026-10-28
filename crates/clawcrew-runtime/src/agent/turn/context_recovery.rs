@@ -40,11 +40,11 @@ pub(crate) fn record_llm_failure(
         // Error path: no prompt/completion content captured.
         messages: None,
     });
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-            .with_category(::clawcrew_log::EventCategory::Provider)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+            .with_category(::galleon_log::EventCategory::Provider)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_duration(u64::try_from(llm_started_at.elapsed().as_millis()).unwrap_or(u64::MAX))
             .with_attrs(::serde_json::json!({
                 "model": model,
@@ -70,10 +70,10 @@ pub(crate) async fn try_recover_context_overflow(
     crumb_present: &mut bool,
 ) -> bool {
     if galleon_providers::reliable::is_context_window_exceeded(e) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Retry)
-                .with_category(::clawcrew_log::EventCategory::Agent)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Retry)
+                .with_category(::galleon_log::EventCategory::Agent)
                 .with_attrs(::serde_json::json!({"iteration": iteration + 1})),
             "Context window exceeded, attempting in-loop recovery"
         );
@@ -119,10 +119,10 @@ pub(crate) async fn try_recover_context_overflow(
         }
         *history = recovered_history;
         if trimmed {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Retry)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Retry)
+                    .with_category(::galleon_log::EventCategory::Agent)
                     .with_attrs(::serde_json::json!({
                         "dropped_turns": dropped_turns,
                         "dropped_messages": dropped_messages,
@@ -179,11 +179,11 @@ pub(crate) async fn try_recover_context_overflow(
 
         let system_floor = crate::agent::history::estimate_system_floor_tokens(history);
         if system_floor >= context_limits.context_token_budget {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_category(::galleon_log::EventCategory::Agent)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "system_floor": system_floor,
                         "budget": context_limits.context_token_budget,
@@ -195,11 +195,11 @@ pub(crate) async fn try_recover_context_overflow(
                 )
             );
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_category(::galleon_log::EventCategory::Agent)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "Context overflow unrecoverable: only one turn left, cannot trim further"
             );
         }
@@ -575,9 +575,9 @@ mod tests {
         // Serialize against the broadcast-hook tests for the whole test: we drive
         // `record!` -> LogCaptureLayer -> broadcast hook, and a parallel
         // `clear_broadcast_hook` would otherwise drop our event.
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
 
         // System prompt + tool definitions dominate; a single turn means nothing
         // can be trimmed, so the floor-dominates-budget remediation branch fires.
@@ -666,6 +666,6 @@ mod tests {
             "remediation message must not reference the inert knob: {message}"
         );
 
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
     }
 }

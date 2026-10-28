@@ -308,10 +308,10 @@ impl Tool for PipelineTool {
 
     async fn execute(&self, args: serde_json::Value) -> Result<ToolResult> {
         let request: PipelineRequest = serde_json::from_value(args).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "pipeline: invalid request"
             );

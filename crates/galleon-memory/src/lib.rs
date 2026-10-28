@@ -221,7 +221,7 @@ where
             audit_enabled,
         ),
         MemoryBackendKind::Unknown => {
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"backend_name": backend_name, "unknown_context": unknown_context})), "Unknown memory backend '', falling back to markdown");
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"backend_name": backend_name, "unknown_context": unknown_context})), "Unknown memory backend '', falling back to markdown");
             wrap_scanned_and_audit(
                 MarkdownMemory::new("markdown", workspace_dir),
                 policy,
@@ -385,10 +385,10 @@ fn resolve_embedding_config(
         .iter()
         .find(|route| route.hint.trim() == hint)
     else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"hint": hint})),
             "Unknown embedding route hint; falling back to [memory] embedding settings"
         );
@@ -399,10 +399,10 @@ fn resolve_embedding_config(
     let model = route.model.trim();
     let dimensions = route.dimensions.unwrap_or(config.embedding_dimensions);
     if model_provider.is_empty() || model.is_empty() || dimensions == 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"hint": hint})),
             "Invalid embedding route configuration; falling back to [memory] embedding settings"
         );
@@ -450,10 +450,10 @@ fn resolve_provider_ref(
     let Some((kind, _alias, provider_cfg)) =
         providers.and_then(|catalog| catalog.find_by_name(&reference))
     else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "error_key": "memory.embedding_route_unresolved",
                     "provider_ref": reference,
@@ -486,10 +486,10 @@ fn resolve_provider_ref(
         None => None,
     };
     let Some(concrete_provider) = concrete_provider else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "error_key": "memory.embedding_route_no_endpoint",
                     "provider_ref": reference,
@@ -596,10 +596,10 @@ pub fn create_memory_with_storage_and_routes(
 
     // Best-effort memory hygiene/retention pass (throttled by state file).
     if let Err(e) = hygiene::run_if_due(config, workspace_dir) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "memory hygiene skipped"
         );
@@ -614,10 +614,10 @@ pub fn create_memory_with_storage_and_routes(
         )
         && let Err(e) = snapshot::export_snapshot(workspace_dir)
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "memory snapshot skipped"
         );
@@ -632,27 +632,27 @@ pub fn create_memory_with_storage_and_routes(
         )
         && snapshot::should_hydrate(workspace_dir)
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "cold boot detected; hydrating from MEMORY_SNAPSHOT.md"
         );
         match snapshot::hydrate_from_snapshot(workspace_dir) {
             Ok(count) => {
                 if count > 0 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"count": count})),
                         "hydrated core memories from snapshot"
                     );
                 }
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "memory hydration failed"
                 );
@@ -730,9 +730,9 @@ pub fn create_memory_with_storage_and_routes(
                 &resolved_embedding.model,
                 resolved_embedding.dimensions,
             ));
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "📦 Qdrant memory backend configured (url: {}, collection: {})",
                 url, collection
@@ -826,10 +826,10 @@ fn reconcile_embedding_identity(
     let stored = match mem.stored_embedding_identity() {
         Ok(stored) => stored,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                 "memory: failed to read stored embedding identity; skipping reconciliation"
             );
@@ -841,10 +841,10 @@ fn reconcile_embedding_identity(
         None => match mem.record_embedding_identity(current) {
             Ok(()) => EmbeddingIdentityOutcome::Adopted,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                     "memory: failed to record embedding identity; will retry next startup"
                 );
@@ -854,9 +854,9 @@ fn reconcile_embedding_identity(
         Some(stored) if stored == *current => EmbeddingIdentityOutcome::Match,
         Some(stored) => match mem.invalidate_embeddings_for_identity_change(current) {
             Ok(invalidated) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "stored_identity": stored.to_string(),
                             "current_identity": current.to_string(),
@@ -872,10 +872,10 @@ fn reconcile_embedding_identity(
                 EmbeddingIdentityOutcome::Invalidated(invalidated)
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "stored_identity": stored.to_string(),
                             "current_identity": current.to_string(),
@@ -896,9 +896,9 @@ fn reconcile_embedding_identity(
 /// operator is pointed at `clawcrew memory reindex` instead.
 fn spawn_auto_reindex(mem: &SqliteMemory) {
     let Ok(handle) = tokio::runtime::Handle::try_current() else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "memory: auto_reindex_on_identity_change is set but no async runtime is \
              available here; run `clawcrew memory reindex` to re-embed"
         );
@@ -908,18 +908,18 @@ fn spawn_auto_reindex(mem: &SqliteMemory) {
     handle.spawn(async move {
         match mem.reindex().await {
             Ok(count) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"reembedded": count})),
                     "memory: background re-embed after embedding identity change complete"
                 );
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                     "memory: background re-embed after embedding identity change failed; \
                      run `clawcrew memory reindex` to retry"
@@ -1158,9 +1158,9 @@ pub fn create_response_cache(config: &MemoryConfig, workspace_dir: &Path) -> Opt
         config.response_cache_max_entries,
     ) {
         Ok(cache) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "💾 Response cache enabled (TTL: {}min, max: {} entries)",
                     config.response_cache_ttl_minutes, config.response_cache_max_entries
@@ -1169,10 +1169,10 @@ pub fn create_response_cache(config: &MemoryConfig, workspace_dir: &Path) -> Opt
             Some(cache)
         }
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Response cache disabled due to error"
             );
@@ -2814,10 +2814,10 @@ store_timeout_ms = 40000
     #[allow(clippy::await_holding_lock)]
     #[tokio::test]
     async fn resolve_embedding_config_no_endpoint_emits_loud_warning() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let cfg = MemoryConfig {

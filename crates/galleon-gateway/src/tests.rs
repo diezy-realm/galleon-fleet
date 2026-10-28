@@ -5995,9 +5995,9 @@ fn idempotency_store_rapid_duplicate_rejected() {
 
 #[test]
 fn duplicate_idempotency_log_omits_caller_key() {
-    let _hook_guard = clawcrew_log::__private_test_hook_lock();
-    clawcrew_log::try_install_capture_subscriber();
-    let mut receiver = clawcrew_log::subscribe_or_install();
+    let _hook_guard = galleon_log::__private_test_hook_lock();
+    galleon_log::try_install_capture_subscriber();
+    let mut receiver = galleon_log::subscribe_or_install();
     while receiver.try_recv().is_ok() {}
 
     let raw_key = "caller-sensitive-id";
@@ -6015,7 +6015,7 @@ fn duplicate_idempotency_log_omits_caller_key() {
             Err(error) => panic!("duplicate log event was not broadcast: {error}"),
         }
     };
-    clawcrew_log::clear_broadcast_hook();
+    galleon_log::clear_broadcast_hook();
 
     assert_eq!(
         event["attributes"]["idempotency_key_present"],

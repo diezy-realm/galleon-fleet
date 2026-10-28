@@ -96,10 +96,10 @@ pub fn handle_command(command: crate::SopCommands, config: &crate::config::Confi
         }
         crate::SopCommands::Show { name } => {
             let sop = sops.iter().find(|s| s.name == name).ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"sop": name})),
                     "sop show: name not found in loaded SOPs"
                 );

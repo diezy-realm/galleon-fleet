@@ -166,10 +166,10 @@ pub async fn handle_apply(
 
 fn signal_daemon_reload(state: &AppState) -> bool {
     let Some(reload_tx) = state.reload_tx.clone() else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "reason": "no_supervisor",
                 })),
@@ -177,9 +177,9 @@ fn signal_daemon_reload(state: &AppState) -> bool {
         );
         return false;
     };
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Start),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Start),
         "quickstart: daemon reload signalled"
     );
     let shutdown_tx = state.shutdown_tx.clone();
@@ -191,10 +191,10 @@ fn signal_daemon_reload(state: &AppState) -> bool {
         tokio::time::sleep(std::time::Duration::from_millis(200)).await;
         let _ = shutdown_tx.send(true);
         let _ = reload_tx.send(true);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Complete)
-                .with_outcome(::clawcrew_log::EventOutcome::Success)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Complete)
+                .with_outcome(::galleon_log::EventOutcome::Success)
                 .with_attrs(::serde_json::json!({
                     "elapsed_ms": started.elapsed().as_millis() as u64,
                 })),

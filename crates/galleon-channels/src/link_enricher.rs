@@ -205,9 +205,9 @@ pub async fn enrich_message(content: &str, config: &LinkEnricherConfig) -> Strin
                 enrichments.push(format!("[Link: {} — {}]", summary.title, summary.snippet));
             }
             None => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"url": url})),
                     "Link enricher: failed to fetch or extract summary"
                 );

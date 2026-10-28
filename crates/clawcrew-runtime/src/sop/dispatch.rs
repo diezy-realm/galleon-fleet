@@ -175,10 +175,10 @@ fn log_ingress_unavailable(
     if let Some(topic) = topic {
         attrs["topic"] = ::serde_json::Value::String(topic.to_string());
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(attrs),
         "SOP ingress: dropping event because required runtime handles are unavailable"
     );
@@ -334,9 +334,9 @@ fn record_started_run(
     if is_deterministic {
         pending_deterministic.push((run_id.clone(), sop_name.to_string(), action.clone()));
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         &format!(
             "SOP dispatch: started '{}' run {run_id} (action: {})",
             sop_name,
@@ -371,9 +371,9 @@ fn reclassify_failed_start(eng: &SopEngine, sop_name: &str, err: &anyhow::Error)
             reason: err.to_string(),
         },
     };
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "error": format!("{}", err), "sop_name": sop_name,
             })
@@ -395,9 +395,9 @@ fn coalesce_confirmed_redelivery(
     match dedup {
         Some((key, true)) => {
             let existing_run_id = eng.dispatch_dedup_lookup(sop_name, key)?;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "sop_name": sop_name,
                         "existing_run_id": existing_run_id,
@@ -472,10 +472,10 @@ async fn dispatch_sop_event_filtered(
         Ok(eng) => ContentSafety::from_sop_config(eng.config()),
         Err(e) => {
             crate::health::mark_component_error("sop_dispatch", format!("lock poisoned: {e}"));
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "SOP dispatch: engine lock poisoned during safety config phase"
             );
@@ -494,10 +494,10 @@ async fn dispatch_sop_event_filtered(
                     )
                     .await
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "SOP dispatch: suspicious untrusted audit failed"
                 );
@@ -509,10 +509,10 @@ async fn dispatch_sop_event_filtered(
                 .log_blocked_unsafe(target_sop, event.source, event.topic.as_deref(), &reason)
                 .await
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "SOP dispatch: blocked unsafe audit failed"
                 );
@@ -534,10 +534,10 @@ async fn dispatch_sop_event_filtered(
             .collect(),
         Err(e) => {
             crate::health::mark_component_error("sop_dispatch", format!("lock poisoned: {e}"));
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "SOP dispatch: engine lock poisoned during match phase"
             );
@@ -546,18 +546,18 @@ async fn dispatch_sop_event_filtered(
     };
 
     if matched_names.is_empty() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"target_sop": target_sop})),
             "SOP dispatch: no match for event"
         );
         return vec![DispatchResult::NoMatch];
     }
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         &format!(
             "SOP dispatch: {} SOP(s) matched: {:?}",
             matched_names.len(),
@@ -574,10 +574,10 @@ async fn dispatch_sop_event_filtered(
             Ok(e) => e,
             Err(e) => {
                 crate::health::mark_component_error("sop_dispatch", format!("lock poisoned: {e}"));
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "SOP dispatch: engine lock poisoned during start phase"
                 );
@@ -636,11 +636,11 @@ async fn dispatch_sop_event_filtered(
                                 SopAdmission::Defer { reason } => reason,
                                 _ => "AMQP delivery deferred because another matched SOP is backpressured".to_string(),
                             };
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({
                                     "sop_name": sop_name, "reason": reason
@@ -655,11 +655,11 @@ async fn dispatch_sop_event_filtered(
                             });
                         }
                         SopAdmission::Coalesce { existing_run_id } => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({
                                     "sop_name": sop_name, "existing_run_id": existing_run_id
@@ -674,11 +674,11 @@ async fn dispatch_sop_event_filtered(
                             });
                         }
                         SopAdmission::Drop { reason } => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({
                                     "sop_name": sop_name, "reason": reason
@@ -704,11 +704,11 @@ async fn dispatch_sop_event_filtered(
                 match admission {
                     SopAdmission::Admit => admit_names.push(sop_name.clone()),
                     SopAdmission::Coalesce { existing_run_id } => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({
                                 "sop_name": sop_name, "existing_run_id": existing_run_id
@@ -723,11 +723,11 @@ async fn dispatch_sop_event_filtered(
                         });
                     }
                     SopAdmission::Drop { reason } => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({
                                 "sop_name": sop_name, "reason": reason
@@ -745,11 +745,11 @@ async fn dispatch_sop_event_filtered(
                     // mixed Started+Deferred batch would be the 2b hazard described
                     // below, so defer the WHOLE delivery and start nothing.
                     SopAdmission::Defer { reason } => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({
                                 "sop_name": sop_name, "reason": reason
@@ -792,10 +792,10 @@ async fn dispatch_sop_event_filtered(
                     global_cap
                 );
                 crate::health::mark_component_error("sop_dispatch", reason.clone());
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "admissible_fan_out": admit_names.len(),
                             "max_concurrent_total": global_cap,
@@ -835,9 +835,9 @@ async fn dispatch_sop_event_filtered(
                 for reservation in reservations {
                     eng.release_reservation(reservation);
                 }
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "blocked_sop": blocked.as_str(), "reason": reason.as_str()
                         })),
@@ -886,10 +886,10 @@ async fn dispatch_sop_event_filtered(
                 for reservation in remaining {
                     eng.release_reservation(reservation);
                 }
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "failed_sop": failed_sop.as_str(), "reason": reason.as_str()
                         })),
@@ -920,11 +920,11 @@ async fn dispatch_sop_event_filtered(
                 // carried on a DispatchResult) so a non-admitted trigger is never lost.
                 match eng.evaluate_admission(sop_name) {
                     SopAdmission::Defer { reason } => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({
                                 "sop_name": sop_name, "reason": reason
@@ -940,11 +940,11 @@ async fn dispatch_sop_event_filtered(
                         continue;
                     }
                     SopAdmission::Coalesce { existing_run_id } => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({
                                 "sop_name": sop_name, "existing_run_id": existing_run_id
@@ -960,11 +960,11 @@ async fn dispatch_sop_event_filtered(
                         continue;
                     }
                     SopAdmission::Drop { reason } => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({
                                 "sop_name": sop_name, "reason": reason
@@ -1034,11 +1034,11 @@ async fn dispatch_sop_event_filtered(
     };
 
     // Phase 3: audit (async, no lock)
-    use clawcrew_log::Instrument;
+    use galleon_log::Instrument;
     for run in &started_runs {
-        let span = clawcrew_log::attribution_span!(run);
+        let span = galleon_log::attribution_span!(run);
         let run_id = run.run_id.clone();
-        if let Err(e) = clawcrew_log::scope!(
+        if let Err(e) = galleon_log::scope!(
             session_key: run_id,
             =>
             audit.log_run_start(run)
@@ -1046,10 +1046,10 @@ async fn dispatch_sop_event_filtered(
         .instrument(span)
         .await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 &format!("SOP dispatch: audit log failed for run {}", run.run_id)
             );
@@ -1071,10 +1071,10 @@ pub fn process_headless_results(results: &[DispatchResult]) {
                 action,
             } => match action.as_ref() {
                 SopRunAction::ExecuteStep { step, .. } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!(
                             "SOP headless dispatch: run {run_id} ('{sop_name}') ready for step {} \
                          '{}' but no agent loop available to execute",
@@ -1083,9 +1083,9 @@ pub fn process_headless_results(results: &[DispatchResult]) {
                     );
                 }
                 SopRunAction::WaitApproval { step, .. } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!(
                             "SOP headless dispatch: run {run_id} ('{sop_name}') waiting for approval \
                          on step {} '{}'. Timeout polling will handle progression",
@@ -1094,9 +1094,9 @@ pub fn process_headless_results(results: &[DispatchResult]) {
                     );
                 }
                 SopRunAction::DeterministicStep { step, .. } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!(
                             "SOP headless dispatch: run {run_id} ('{sop_name}') deterministic step {} \
                          '{}'",
@@ -1107,9 +1107,9 @@ pub fn process_headless_results(results: &[DispatchResult]) {
                 SopRunAction::CheckpointWait {
                     step, state_file, ..
                 } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!(
                             "SOP headless dispatch: run {run_id} ('{sop_name}') checkpoint at step {} \
                          '{}', state persisted to {}",
@@ -1120,18 +1120,18 @@ pub fn process_headless_results(results: &[DispatchResult]) {
                     );
                 }
                 SopRunAction::Pending { step, reason, .. } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!(
                             "SOP headless dispatch: run {run_id} ('{sop_name}') pending before step {step}: {reason}"
                         )
                     );
                 }
                 SopRunAction::Completed { .. } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(
                                 ::serde_json::json!({"run_id": run_id, "sop_name": sop_name})
                             ),
@@ -1141,9 +1141,9 @@ pub fn process_headless_results(results: &[DispatchResult]) {
                     );
                 }
                 SopRunAction::Cancelled { .. } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Cancel)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Cancel)
                             .with_attrs(
                                 ::serde_json::json!({"run_id": run_id, "sop_name": sop_name})
                             ),
@@ -1151,26 +1151,26 @@ pub fn process_headless_results(results: &[DispatchResult]) {
                     );
                 }
                 SopRunAction::Failed { reason, .. } => {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"run_id": run_id, "sop_name": sop_name, "reason": reason.to_string()})), &format!("SOP headless dispatch: run {run_id} ('{sop_name}') failed: {reason}"));
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"run_id": run_id, "sop_name": sop_name, "reason": reason.to_string()})), &format!("SOP headless dispatch: run {run_id} ('{sop_name}') failed: {reason}"));
                 }
             },
             DispatchResult::Skipped { sop_name, reason } => {
-                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"sop_name": sop_name, "reason": reason.to_string()})), &format!("SOP headless dispatch: skipped '{sop_name}': {reason}"));
+                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"sop_name": sop_name, "reason": reason.to_string()})), &format!("SOP headless dispatch: skipped '{sop_name}': {reason}"));
             }
             DispatchResult::Deferred { sop_name, reason } => {
-                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"sop_name": sop_name, "reason": reason.to_string()})), &format!("SOP headless dispatch: deferred '{sop_name}' (backpressure): {reason}"));
+                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"sop_name": sop_name, "reason": reason.to_string()})), &format!("SOP headless dispatch: deferred '{sop_name}' (backpressure): {reason}"));
             }
             DispatchResult::Coalesced {
                 sop_name,
                 existing_run_id,
             } => {
-                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"sop_name": sop_name, "existing_run_id": existing_run_id})), &format!("SOP headless dispatch: coalesced '{sop_name}' into run {existing_run_id}"));
+                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"sop_name": sop_name, "existing_run_id": existing_run_id})), &format!("SOP headless dispatch: coalesced '{sop_name}' into run {existing_run_id}"));
             }
             DispatchResult::BlockedUnsafe { sop_name, reason } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"sop_name": sop_name, "reason": reason})),
                     "SOP headless dispatch: blocked unsafe untrusted trigger content"
                 );
@@ -1319,10 +1319,10 @@ async fn dispatch_untrusted_fan_in_inner(
         None => (None, false),
     };
     if topic_truncated || payload_truncated {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "source": source.to_string(),
                     "topic_truncated": topic_truncated,
@@ -1391,10 +1391,10 @@ impl SopCronCache {
         let eng = match engine.lock() {
             Ok(e) => e,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "SopCronCache: engine lock poisoned"
                 );
@@ -1409,13 +1409,13 @@ impl SopCronCache {
                     let normalized = match crate::cron::normalize_expression(expression) {
                         Ok(n) => n,
                         Err(e) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                                 &format!(
                                     "SopCronCache: invalid cron expression '{}' in SOP '{}': {e}",
                                     expression, sop.name
@@ -1429,13 +1429,13 @@ impl SopCronCache {
                             schedules.push((sop.name.clone(), expression.clone(), schedule));
                         }
                         Err(e) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                                 &format!(
                                     "SopCronCache: failed to parse cron schedule '{}' for SOP '{}': {e}",
                                     normalized, sop.name
@@ -1447,9 +1447,9 @@ impl SopCronCache {
             }
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("SopCronCache: cached {} cron schedule(s)", schedules.len())
         );
         Self { schedules }

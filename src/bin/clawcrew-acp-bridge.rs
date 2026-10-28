@@ -194,10 +194,10 @@ fn config_dir_from_args(args: impl IntoIterator<Item = String>) -> Result<Option
     while let Some(arg) = args.next() {
         if arg == "--config-dir" {
             let dir = args.next().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "acp-bridge args rejected: --config-dir missing value"
                 );
                 anyhow::Error::msg("--config-dir requires a path value")
@@ -216,10 +216,10 @@ fn pair_code_from_args(args: impl IntoIterator<Item = String>) -> Result<Option<
     while let Some(arg) = args.next() {
         if arg == "--pair-code" {
             let code = args.next().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "acp-bridge args rejected: --pair-code missing value"
                 );
                 anyhow::Error::msg("--pair-code requires a code value")

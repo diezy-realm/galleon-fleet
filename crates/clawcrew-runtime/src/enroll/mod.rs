@@ -342,9 +342,9 @@ pub async fn serve_on(
     server: Arc<EnrollServer>,
     cancel: CancellationToken,
 ) -> Result<()> {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
             .with_attrs(::serde_json::json!({ "bind": server.bind_addr.to_string() })),
         "enrollment endpoint listening"
     );
@@ -359,9 +359,9 @@ pub async fn serve_on(
                 let (tcp, peer) = match accepted {
                     Ok(v) => v,
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             &format!("enrollment accept error: {e}")
                         );
                         continue;
@@ -419,10 +419,10 @@ pub async fn serve_on(
 /// eligible for the next connection, the next issuance, or the next restart.
 fn sweep_undelivered(server: &EnrollServer) {
     if let Err(error) = server.ledger.sweep_undelivered_certificates() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({ "error": format!("{error:#}") })),
             "enrollment: could not sweep undelivered certificates; they stay eligible for the \
              next enrollment, issuance, or ledger open"
@@ -523,10 +523,10 @@ async fn deliver_enroll_response<S: AsyncWrite + Unpin>(
             match write_json(stream, 200, "OK", &json).await {
                 Ok(()) => mark_enrollment_delivered(server, &fingerprint),
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "error": format!("{e}"),
                                 "fingerprint": fingerprint,
@@ -558,20 +558,20 @@ fn mark_enrollment_delivered(server: &EnrollServer, fingerprint: &str) {
     match server.ledger.mark_delivered(fingerprint) {
         Ok(true) => {}
         Ok(false) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({ "fingerprint": fingerprint })),
                 "enrollment delivered but no active undelivered ledger row matched; it will be \
                  reconciled unless it was already marked"
             );
         }
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "error": format!("{e}"),
                         "fingerprint": fingerprint,

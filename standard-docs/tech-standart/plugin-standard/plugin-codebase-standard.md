@@ -64,7 +64,7 @@ Pola referensi: `galleon-channel-signal`, `-imessage`, `-bluesky` (1 file, < 1.3
 
 ```
 crates/galleon-channel-<name>/
-├── Cargo.toml     # name = "galleon-channel-<name>"; deps hanya: clawcrew-api, galleon-channel-core, clawcrew-log, + SDK
+├── Cargo.toml     # name = "galleon-channel-<name>"; deps hanya: clawcrew-api, galleon-channel-core, galleon-log, + SDK
 ├── src/lib.rs     # impl trait Channel dari galleon-channel-core; fasad kecil
 └── src/{transport,codec,auth,config,error}.rs   # pecah bila > 800 baris
 ```

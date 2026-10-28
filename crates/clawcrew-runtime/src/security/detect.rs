@@ -553,19 +553,19 @@ fn selected_backend_label(backend: &SandboxBackend) -> &'static str {
 }
 
 fn log_requested_backend_unavailable(label: &'static str) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown),
         &format!("{label} requested but not available, falling back to application-layer")
     );
 }
 
 fn log_requested_backend_unavailable_with_docker_runtime(label: &'static str) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown),
         &format!(
             "{label} requested but not available; Docker runtime container isolation remains active"
         )
@@ -573,10 +573,10 @@ fn log_requested_backend_unavailable_with_docker_runtime(label: &'static str) {
 }
 
 fn log_docker_sandbox_redundant_with_docker_runtime() {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown),
         "Docker sandbox skipped: runtime.kind = \"docker\" already runs commands in a container; \
          a nested Docker sandbox would double-wrap the command"
     );
@@ -586,72 +586,72 @@ fn log_auto_backend_selection(selected: SelectedSandboxBackend, runtime_kind: Ru
     match selected {
         SelectedSandboxBackend::None => {
             if matches!(runtime_kind, RuntimeKind::Native) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "Docker sandbox skipped: runtime.kind = \"native\" overrides auto-detection"
                 );
             }
             if matches!(runtime_kind, RuntimeKind::Docker) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "No additional sandbox backend available; Docker runtime still provides container isolation"
                 );
             } else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "No sandbox backend available, using application-layer security"
                 );
             }
         }
         SelectedSandboxBackend::DockerRuntime => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Docker runtime provides container isolation; no additional sandbox wrapper needed"
             );
         }
         SelectedSandboxBackend::Landlock => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Landlock sandbox enabled (Linux kernel 5.13+)"
             );
         }
         SelectedSandboxBackend::Firejail => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Firejail sandbox enabled"
             );
         }
         SelectedSandboxBackend::Bubblewrap => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Bubblewrap sandbox enabled"
             );
         }
         SelectedSandboxBackend::Docker => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Docker sandbox enabled"
             );
         }
         SelectedSandboxBackend::SandboxExec => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "macOS sandbox-exec (Seatbelt) enabled"
             );
         }
         SelectedSandboxBackend::AppContainer => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Windows AppContainer / process isolation enabled"
             );
         }

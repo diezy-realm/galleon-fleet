@@ -170,10 +170,10 @@ fn build_responses_url(base_or_endpoint: &str) -> anyhow::Result<String> {
     }
 
     let mut parsed = reqwest::Url::parse(candidate).map_err(|_| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"candidate": candidate})),
             "openai_codex: endpoint override is not a valid URL"
         );
@@ -929,10 +929,10 @@ pub(crate) fn process_sse_chunk(
         }
         let event = serde_json::from_str::<Value>(line).map_err(|err| {
             let sanitized = super::sanitize_api_error(line);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "phase": "sse_parse",
                         "payload": &sanitized,
@@ -1058,10 +1058,10 @@ pub(crate) fn append_utf8_stream_chunk(
             }
 
             if err.error_len().is_some() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "phase": "utf8_decode",
                             "error": format!("{}", err),
@@ -1087,10 +1087,10 @@ fn parse_responses_body(body: &str) -> anyhow::Result<ResponsesTurnResult> {
         let result = parse_sse_turn(body)?;
         return ensure_nonempty_responses_turn(result, || {
             let sanitized = super::sanitize_api_error(body);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"payload": &sanitized})),
                 "openai_codex: empty SSE stream payload"
             );
@@ -1102,10 +1102,10 @@ fn parse_responses_body(body: &str) -> anyhow::Result<ResponsesTurnResult> {
 
     let parsed: ResponsesResponse = serde_json::from_str(body).map_err(|err| {
         let sanitized = super::sanitize_api_error(body);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "payload": &sanitized,
                     "error": format!("{}", err),
@@ -1119,10 +1119,10 @@ fn parse_responses_body(body: &str) -> anyhow::Result<ResponsesTurnResult> {
     let result = responses_turn_from_response(&parsed);
     ensure_nonempty_responses_turn(result, || {
         let sanitized = super::sanitize_api_error(body);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"payload": &sanitized})),
             "openai_codex: empty response"
         );
@@ -1137,10 +1137,10 @@ async fn decode_responses_body(response: reqwest::Response) -> anyhow::Result<Re
 
     while let Some(chunk) = stream.next().await {
         let bytes = chunk.map_err(|err| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "phase": "stream_read",
                         "error": format!("{}", err),
@@ -1160,10 +1160,10 @@ async fn decode_responses_body(response: reqwest::Response) -> anyhow::Result<Re
                 // incomplete multi-byte sequences (error_len == None), so from_utf8
                 // always returns Err here. Handled as an error rather than a panic so
                 // the daemon survives if the invariant is somehow violated.
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "openai_codex: pending bytes were valid UTF-8 (invariant violated)"
                 );
                 return Err(anyhow::Error::msg(
@@ -1171,10 +1171,10 @@ async fn decode_responses_body(response: reqwest::Response) -> anyhow::Result<Re
                 ));
             }
         };
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
             "openai_codex: response ended with incomplete UTF-8"
         );
@@ -1204,10 +1204,10 @@ impl OpenAiCodexModelProvider {
         {
             Ok(profile) => profile,
             Err(err) if use_gateway_api_key_auth => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                     "failed to load OpenAI Codex profile; continuing with custom endpoint API key mode"
                 );
@@ -1223,10 +1223,10 @@ impl OpenAiCodexModelProvider {
         {
             Ok(token) => token,
             Err(err) if use_gateway_api_key_auth => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                     "failed to refresh OpenAI token; continuing with custom endpoint API key mode"
                 );
@@ -1251,10 +1251,10 @@ impl OpenAiCodexModelProvider {
         } else {
             Some(oauth_access_token.ok_or_else(|| {
                 if had_profile {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "missing": "oauth_access_token",
                                 "had_profile": true,
@@ -1265,10 +1265,10 @@ impl OpenAiCodexModelProvider {
                         "OpenAI Codex credentials are present but expired or could not be refreshed. Re-run `clawcrew auth login --model-provider openai-codex` to sign in again.",
                     )
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "missing": "oauth_access_token",
                                 "had_profile": false,
@@ -1286,10 +1286,10 @@ impl OpenAiCodexModelProvider {
             account_id
         } else {
             Some(account_id.ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"missing": "account_id"})),
                     "openai_codex: account_id not found in profile/token"
                 );
@@ -1382,10 +1382,10 @@ impl OpenAiCodexModelProvider {
             tool_choice: has_tools.then(|| "auto".to_string()),
             parallel_tool_calls: has_tools.then_some(true),
         };
-        if ::clawcrew_log::debug_enabled() {
-            ::clawcrew_log::record!(
+        if ::galleon_log::debug_enabled() {
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
                     .with_attrs(::serde_json::json!({
                         "provider": "openai_codex",
                         "alias": &self.alias,
@@ -1424,10 +1424,10 @@ impl OpenAiCodexModelProvider {
                     return Err(stream_err);
                 }
 
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", stream_err)})),
                     "OpenAI Codex streaming response decode failed, retrying without streaming"
                 );
@@ -1452,10 +1452,10 @@ impl OpenAiCodexModelProvider {
                 decode_responses_body(non_streaming_response)
                     .await
                     .map_err(|fallback_err| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({
                                     "stream_err": format!("{}", stream_err),
                                     "fallback_err": format!("{}", fallback_err),
@@ -1631,10 +1631,10 @@ impl ModelProvider for OpenAiCodexModelProvider {
                 tool_choice: has_tools.then(|| "auto".to_string()),
                 parallel_tool_calls: has_tools.then_some(true),
             };
-            if ::clawcrew_log::debug_enabled() {
-                ::clawcrew_log::record!(
+            if ::galleon_log::debug_enabled() {
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
                         .with_attrs(::serde_json::json!({
                             "provider": "openai_codex",
                             "alias": &provider.alias,

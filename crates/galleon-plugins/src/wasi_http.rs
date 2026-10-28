@@ -108,10 +108,10 @@ fn dns_failure() -> ErrorCode {
 /// host-side — the operator needs both to seed a grant — while only the guest's
 /// error is masked.
 fn record_denial(id: &PluginInstanceId, host: &str, reason: &str) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(::serde_json::json!({
                 "plugin": id.package(),
                 "capability": format!("{:?}", id.capability()),
@@ -131,10 +131,10 @@ fn record_denial(id: &PluginInstanceId, host: &str, reason: &str) {
 /// egress denials does not mistake a budget refusal for a missing grant, the
 /// same distinction the guest now sees in its error code.
 fn record_connection_limit(id: &PluginInstanceId, host: &str, reason: &str) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(::serde_json::json!({
                 "plugin": id.package(),
                 "capability": format!("{:?}", id.capability()),
@@ -254,10 +254,10 @@ fn record_trust_anchors(anchors: &TrustAnchors) {
             // public web, but any endpoint whose certificate chains only to a
             // locally installed CA will fail, and this line is the only place that
             // says why before the failure looks like a broken plugin.
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(attrs),
                 "Plugin HTTPS trusts the bundled roots only; the platform trust store added nothing"
             );
@@ -267,19 +267,19 @@ fn record_trust_anchors(anchors: &TrustAnchors) {
             // are in force, so an operator chasing a failing endpoint needs to
             // know their store was consulted and came back short, not that it
             // was ignored.
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(attrs),
                 "Plugin HTTPS trusts the bundled roots plus part of the platform trust store; some of that store could not be read"
             );
         }
         TrustVerdict::Complete => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Success)
                     .with_attrs(attrs),
                 "Plugin HTTPS trusts the bundled roots plus the platform trust store"
             );
@@ -834,10 +834,10 @@ where
         let outcome = conn.await;
         drop(authorized);
         if let Err(error) = outcome {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({ "error": format!("{error}") })),
                 "plugin egress connection ended with an error"
             );

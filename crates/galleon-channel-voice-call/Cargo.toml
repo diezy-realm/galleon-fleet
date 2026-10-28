@@ -13,7 +13,7 @@ publish = true
 galleon-channel-core.workspace = true
 clawcrew-api.workspace = true
 galleon-config.workspace = true
-clawcrew-log.workspace = true
+galleon-log.workspace = true
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 reqwest = { version = "0.12", default-features = false, features = [
   "__rustls-ring",

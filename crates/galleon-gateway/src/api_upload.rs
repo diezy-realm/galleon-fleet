@@ -145,10 +145,10 @@ pub async fn handle_upload(
 
     let save_dir = workspace.join("webui_uploads");
     if let Err(e) = tokio::fs::create_dir_all(&save_dir).await {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{e}"))})),
             "Failed to create webui_uploads directory"
         );
@@ -164,10 +164,10 @@ pub async fn handle_upload(
     let file_name = format!("webui_{}.{ext}", uuid::Uuid::new_v4().simple());
     let local_path = save_dir.join(&file_name);
     if let Err(e) = tokio::fs::write(&local_path, &body).await {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": galleon_security_scrub::scrub(&format!("{e}"))})),
             "Failed to save webui upload"
         );

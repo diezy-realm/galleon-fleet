@@ -44,10 +44,10 @@ impl PushoverTool {
     async fn get_credentials(&self) -> anyhow::Result<(String, String)> {
         let env_path = self.workspace_dir.join(".env");
         let content = tokio::fs::read_to_string(&env_path).await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": env_path.display().to_string(),
                         "error": format!("{}", e),
@@ -79,20 +79,20 @@ impl PushoverTool {
         }
 
         let token = token.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "PUSHOVER_TOKEN"})),
                 "pushover: PUSHOVER_TOKEN missing from .env"
             );
             anyhow::Error::msg("PUSHOVER_TOKEN not found in .env")
         })?;
         let user_key = user_key.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "PUSHOVER_USER_KEY"})),
                 "pushover: PUSHOVER_USER_KEY missing from .env"
             );
@@ -161,10 +161,10 @@ impl Tool for PushoverTool {
             .map(str::trim)
             .filter(|v| !v.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "message"})),
                     "pushover: missing message parameter"
                 );

@@ -185,10 +185,10 @@ impl Memory for AgentScopedMarkdownMemory {
             .await
             {
                 Ok(rows) => merged.extend(Self::attribute(&peer.alias, rows)),
-                Err(error) => ::clawcrew_log::record!(
+                Err(error) => ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"peer": peer.alias, "error": format!("{}", error)})
                         ),
@@ -238,10 +238,10 @@ impl Memory for AgentScopedMarkdownMemory {
             .await
             {
                 Ok(rows) => merged.extend(Self::attribute(&peer.alias, rows)),
-                Err(error) => ::clawcrew_log::record!(
+                Err(error) => ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"peer": peer.alias, "error": format!("{}", error)})
                         ),

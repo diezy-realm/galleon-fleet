@@ -151,10 +151,10 @@ impl WebhookChannel {
         let app = build_webhook_router(&self.listen_path, state);
 
         axum::serve(listener, app).await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Webhook server error"
             );
@@ -342,10 +342,10 @@ async fn handle_webhook(
         };
 
         if !valid {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "invalid signature, rejecting request"
             );
             return StatusCode::UNAUTHORIZED;
@@ -355,10 +355,10 @@ async fn handle_webhook(
     let payload: IncomingWebhook = match serde_json::from_slice(&body) {
         Ok(p) => p,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "invalid JSON payload"
             );
@@ -414,9 +414,9 @@ impl Channel for WebhookChannel {
 
     async fn send(&self, message: &SendMessage) -> Result<()> {
         let Some(ref send_url) = self.send_url else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "channel: no send_url configured, skipping outbound message"
             );
             return Ok(());
@@ -448,9 +448,9 @@ impl Channel for WebhookChannel {
                         );
                     }
                     let capped = delay.min(Duration::from_millis(self.retry_max_delay_ms));
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!(
                             "Webhook send: server requested retry after {}ms (attempt {}/{}), waiting...",
                             capped.as_millis(),
@@ -467,9 +467,9 @@ impl Channel for WebhookChannel {
                         );
                     }
                     let delay = self.compute_backoff(attempt);
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!(
                             "Webhook send failed (attempt {}/{}): {}; retrying in {}ms",
                             attempt + 1,
@@ -500,9 +500,9 @@ impl Channel for WebhookChannel {
         }
 
         let addr = std::net::SocketAddr::from(([0, 0, 0, 0], self.listen_port));
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "Webhook channel listening on http://0.0.0.0:{}{} ...",
                 self.listen_port, self.listen_path

@@ -877,10 +877,10 @@ pub async fn handle_section_select(
             if created {
                 let enabled_path = format!("channels.{key}.{alias}.enabled");
                 if let Err(e) = working.set_prop_persistent(&enabled_path, "true") {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"path": enabled_path, "error": format!("{}", e)})
                             ),
@@ -956,7 +956,7 @@ pub async fn handle_section_select(
                         .seed_default_personality(&key, &workspace_dir, include_memory)
                         .await
                     {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"agent": key, "workspace": workspace_dir.display().to_string(), "err": err.to_string()})), "agent workspace scaffolded but personality seed failed (continuing)");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"agent": key, "workspace": workspace_dir.display().to_string(), "err": err.to_string()})), "agent workspace scaffolded but personality seed failed (continuing)");
                     }
                 }
             }

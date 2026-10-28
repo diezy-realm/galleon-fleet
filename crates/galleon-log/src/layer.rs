@@ -574,7 +574,7 @@ fn strip_outer_quotes(s: &str) -> String {
 
 #[cfg(test)]
 mod e2e_tests {
-    use crate as clawcrew_log;
+    use crate as galleon_log;
     use crate::{
         Action, Event, EventOutcome, subscribe_or_install, try_install_capture_subscriber,
     };
@@ -638,15 +638,15 @@ mod e2e_tests {
         };
 
         {
-            use clawcrew_log::Instrument;
+            use galleon_log::Instrument;
             async {
-                clawcrew_log::record!(
+                galleon_log::record!(
                     INFO,
                     Event::new(module_path!(), Action::Note).with_outcome(EventOutcome::Success),
                     "attribution-span e2e test"
                 );
             }
-            .instrument(clawcrew_log::attribution_span!(&thing))
+            .instrument(galleon_log::attribution_span!(&thing))
             .await;
         }
 
@@ -710,15 +710,15 @@ mod e2e_tests {
         };
 
         {
-            use clawcrew_log::Instrument;
+            use galleon_log::Instrument;
             async {
-                clawcrew_log::record!(
+                galleon_log::record!(
                     INFO,
                     Event::new(module_path!(), Action::Note).with_outcome(EventOutcome::Success),
                     "system-role attribution e2e test"
                 );
             }
-            .instrument(clawcrew_log::attribution_span!(&thing))
+            .instrument(galleon_log::attribution_span!(&thing))
             .await;
         }
 
@@ -773,7 +773,7 @@ mod e2e_tests {
         let mut rx = subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
-        clawcrew_log::record!(
+        galleon_log::record!(
             INFO,
             Event::new(module_path!(), Action::Note)
                 .with_attrs(::serde_json::json!({"login": {"state": "qr"}}))
@@ -831,7 +831,7 @@ mod e2e_tests {
         let mut rx = subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
-        clawcrew_log::record!(
+        galleon_log::record!(
             INFO,
             Event::new(module_path!(), Action::Receive)
                 .with_outcome(EventOutcome::Success)

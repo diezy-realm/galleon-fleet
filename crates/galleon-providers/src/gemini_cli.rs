@@ -131,10 +131,10 @@ impl GeminiCliModelProvider {
         cmd.stderr(std::process::Stdio::piped());
 
         let mut child = cmd.spawn().map_err(|err| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "binary": self.binary_path.display().to_string(),
                         "phase": "spawn",
@@ -151,10 +151,10 @@ impl GeminiCliModelProvider {
 
         if let Some(mut stdin) = child.stdin.take() {
             stdin.write_all(message.as_bytes()).await.map_err(|err| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "phase": "stdin_write",
                             "error": format!("{}", err),
@@ -164,10 +164,10 @@ impl GeminiCliModelProvider {
                 anyhow::Error::msg(format!("Failed to write prompt to Gemini CLI stdin: {err}"))
             })?;
             stdin.shutdown().await.map_err(|err| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "phase": "stdin_shutdown",
                             "error": format!("{}", err),
@@ -181,10 +181,10 @@ impl GeminiCliModelProvider {
         let output = timeout(GEMINI_CLI_REQUEST_TIMEOUT, child.wait_with_output())
             .await
             .map_err(|_| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Timeout)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Timeout)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "binary": self.binary_path.display().to_string(),
                             "timeout": format!("{:?}", GEMINI_CLI_REQUEST_TIMEOUT),
@@ -198,10 +198,10 @@ impl GeminiCliModelProvider {
                 ))
             })?
             .map_err(|err| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "phase": "process_wait",
                             "error": format!("{}", err),
@@ -226,10 +226,10 @@ impl GeminiCliModelProvider {
         }
 
         let text = String::from_utf8(output.stdout).map_err(|err| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "phase": "utf8_decode",
                         "error": format!("{}", err),

@@ -92,9 +92,9 @@ impl Tool for PicoFlashTool {
             }
         };
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"mount": mount.display().to_string()})),
             "RPI-RP2 volume found"
         );
@@ -144,9 +144,9 @@ impl Tool for PicoFlashTool {
             }
         };
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"port": port.display().to_string()})),
             "Pico serial port online after UF2 flash"
         );
@@ -167,13 +167,13 @@ impl Tool for PicoFlashTool {
                         reg.reconnect(&alias, Some(&port_str)).await
                     }
                     None => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"port": port_str})),
                             "no pico alias in registry; cannot reconnect transport after flash"
                         );
@@ -184,10 +184,10 @@ impl Tool for PicoFlashTool {
                 }
             }
             None => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "pico reconnect skipped: no serial port"
                 );
                 Err(anyhow::Error::msg("no serial port to reconnect"))
@@ -200,18 +200,18 @@ impl Tool for PicoFlashTool {
                 let port_str = p.display().to_string();
                 let reconnected = reconnect_result.is_ok();
                 if reconnected {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"port": port_str})),
                         "Pico online — transport reconnected"
                     );
                 } else {
                     let err = reconnect_result.unwrap_err();
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"port": port_str, "err": err.to_string()})
                             ),

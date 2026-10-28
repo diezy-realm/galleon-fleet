@@ -77,14 +77,14 @@ pub(crate) async fn gate_tool_approval(
                     Ok(Some(a)) => Some(a),
                     Ok(None) => None,
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_category(::clawcrew_log::EventCategory::Tool)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_category(::galleon_log::EventCategory::Tool)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Channel approval request failed"
                         );
@@ -169,11 +169,11 @@ pub(crate) async fn gate_tool_approval(
                      and do not speculate about why it was declined."
                 )
             };
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_category(::clawcrew_log::EventCategory::Tool)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_category(::galleon_log::EventCategory::Tool)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "model": ctx.model,
                         "iteration": iteration + 1,
@@ -225,11 +225,11 @@ pub(crate) async fn gate_tool_approval(
                     )))
                     .await;
             }
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Approve)
-                    .with_category(::clawcrew_log::EventCategory::Tool)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Approve)
+                    .with_category(::galleon_log::EventCategory::Tool)
+                    .with_outcome(::galleon_log::EventOutcome::Success)
                     .with_attrs(::serde_json::json!({
                         "model": ctx.model,
                         "iteration": iteration + 1,

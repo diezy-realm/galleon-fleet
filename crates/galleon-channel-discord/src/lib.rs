@@ -559,10 +559,10 @@ impl DiscordChannel {
         match archive_mem.get(key).await {
             Ok(entry) => entry,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "error": format!("{e}"),
                             "key": key,
@@ -591,10 +591,10 @@ impl DiscordChannel {
             )
             .await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "error": format!("{e}"),
                         "key": key,
@@ -751,9 +751,9 @@ impl DiscordChannel {
         let Some(ref archive_mem) = self.archive_memory else {
             // Nowhere to record without the archive sidecar; still useful in
             // the trace for live diagnostics.
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "event_type": event_type,
                         "emoji": emoji_display,
@@ -768,10 +768,10 @@ impl DiscordChannel {
             // A failed forget leaves the same stale entry a missed event
             // would — log it like the store path does.
             if let Err(e) = archive_mem.forget(&key).await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "error": format!("{e}"),
                             "key": key,
@@ -819,10 +819,10 @@ impl DiscordChannel {
             )
             .await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "error": format!("{e}"),
                         "key": key,
@@ -875,9 +875,9 @@ impl DiscordChannel {
         };
 
         let Some(ref archive_mem) = self.archive_memory else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "event_type": event_type,
                         "message_id": message_id,
@@ -894,10 +894,10 @@ impl DiscordChannel {
         let entries = match archive_mem.list(Some(&category), None).await {
             Ok(entries) => entries,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "error": format!("{e}"),
                             "event_type": event_type,
@@ -914,10 +914,10 @@ impl DiscordChannel {
                 continue;
             }
             if let Err(e) = archive_mem.forget(&entry.key).await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "error": format!("{e}"),
                             "key": entry.key,
@@ -968,9 +968,9 @@ impl DiscordChannel {
         };
         for emoji in reactions {
             if let Err(e) = self.add_reaction(channel_id, message_id, emoji).await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(
                             ::serde_json::json!({"emoji": emoji, "error": format!("{}", e)})
                         ),
@@ -1342,10 +1342,10 @@ pub async fn process_attachments(
             .and_then(|v| v.as_str())
             .unwrap_or("file");
         let Some(url) = att.get("url").and_then(|v| v.as_str()) else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"name": name})),
                 "attachment has no url, skipping"
             );
@@ -1360,13 +1360,13 @@ pub async fn process_attachments(
                     }
                 }
                 Ok(resp) => {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"name": name, "status": resp.status().to_string()})), "attachment fetch failed");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"name": name, "status": resp.status().to_string()})), "attachment fetch failed");
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"name": name, "error": format!("{}", e)})
                             ),
@@ -1392,11 +1392,11 @@ pub async fn process_attachments(
                 Ok(text) => {
                     let trimmed = text.trim();
                     if !trimmed.is_empty() {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             ),
                             &format!(
                                 "transcribed audio attachment {} ({} chars)",
@@ -1409,10 +1409,10 @@ pub async fn process_attachments(
                     }
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"name": name, "error": format!("{}", e)})
                             ),
@@ -1441,7 +1441,7 @@ pub async fn process_attachments(
             Some(dir) => match save_attachment_bytes_to_workspace(dir, name, &bytes).await {
                 Ok(local_path) => (local_path.display().to_string(), true),
                 Err(e) => {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"name": name, "kind": marker_label, "error": format!("{}", e)})), "attachment save failed, falling back to url");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"name": name, "kind": marker_label, "error": format!("{}", e)})), "attachment save failed, falling back to url");
                     (url.to_string(), false)
                 }
             },
@@ -1486,10 +1486,10 @@ async fn download_attachment_bytes(
         Ok(resp) if resp.status().is_success() => match resp.bytes().await {
             Ok(b) => Some(b.to_vec()),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"name": name, "error": format!("{}", e)})),
                     "failed to read attachment bytes"
                 );
@@ -1497,10 +1497,10 @@ async fn download_attachment_bytes(
             }
         },
         Ok(resp) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(
                         ::serde_json::json!({"name": name, "status": resp.status().to_string()})
                     ),
@@ -1509,10 +1509,10 @@ async fn download_attachment_bytes(
             None
         }
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"name": name, "error": format!("{}", e)})),
                 "attachment fetch error"
             );
@@ -1747,10 +1747,10 @@ async fn discord_thread_parent(
             .send()
             .await
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "request failed"
                 );
@@ -1760,10 +1760,10 @@ async fn discord_thread_parent(
             anyhow::bail!("non-success status {}", resp.status());
         }
         let body: serde_json::Value = resp.json().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "body parse failed"
             );
@@ -1785,9 +1785,9 @@ async fn discord_thread_parent(
     let result = match tokio::time::timeout(THREAD_LOOKUP_TIMEOUT, lookup).await {
         Ok(Ok(value)) => value,
         Ok(Err(e)) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(
                         ::serde_json::json!({"channel_id": channel_id, "error": format!("{}", e)})
                     ),
@@ -1796,7 +1796,7 @@ async fn discord_thread_parent(
             return None;
         }
         Err(_) => {
-            ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"channel_id": channel_id, "timeout_secs": THREAD_LOOKUP_TIMEOUT.as_secs()})), "channel lookup timed out");
+            ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"channel_id": channel_id, "timeout_secs": THREAD_LOOKUP_TIMEOUT.as_secs()})), "channel lookup timed out");
             return None;
         }
     };
@@ -1982,10 +1982,10 @@ impl Channel for DiscordChannel {
 
         // Discord accepts max 10 files per message.
         if local_files.len() > 10 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"count": local_files.len()})),
                 "truncating local attachment upload list to 10 files"
             );
@@ -2024,10 +2024,10 @@ impl Channel for DiscordChannel {
             match effective_discord_recipient(&message.recipient, &self.channel_ids) {
                 Some(r) => r,
                 None => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "discord send has no recipient: message.recipient is empty and no \
                      channel_ids are configured to fall back to"
                     );
@@ -2087,9 +2087,9 @@ impl Channel for DiscordChannel {
                     .as_ref()
                     .is_some_and(|t| t.is_cancelled())
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!(
                             "Discord delivery interrupted after chunk {}/{}",
                             i + 1,
@@ -2152,9 +2152,9 @@ impl Channel for DiscordChannel {
         };
 
         let ws_url = format!("{gw_url}/?v=10&encoding=json");
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"resume": can_resume, "gateway_url": gw_url})),
             "connecting to gateway..."
         );
@@ -2169,10 +2169,10 @@ impl Channel for DiscordChannel {
 
         // Read Hello (opcode 10)
         let hello = read.next().await.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"phase": "gateway_hello"})),
                 "discord: gateway closed before Hello"
             );
@@ -2197,9 +2197,9 @@ impl Channel for DiscordChannel {
                 }
             });
             write.send(Message::Text(resume.to_string().into())).await?;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"sequence": sequence})),
                 "sent Discord Resume"
             );
@@ -2208,10 +2208,10 @@ impl Channel for DiscordChannel {
             if intents & BASELINE_INTENTS != BASELINE_INTENTS {
                 // Only reachable via the raw `intents_mask` override — the
                 // derived path always starts from the full baseline.
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "intents": intents,
                             "missing": intent_names(BASELINE_INTENTS & !intents),
@@ -2234,9 +2234,9 @@ impl Channel for DiscordChannel {
             write
                 .send(Message::Text(identify.to_string().into()))
                 .await?;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({
                         "intents": intents,
                         "intent_names": intent_names(intents),
@@ -2276,10 +2276,10 @@ impl Channel for DiscordChannel {
         if let Some(ref wd) = watchdog {
             let stall_signal = stall_tx.clone();
             wd.start(move || {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "stall watchdog fired — no events for configured timeout, triggering reconnect"
                 );
                 let _ = stall_signal.try_send(());
@@ -2293,7 +2293,7 @@ impl Channel for DiscordChannel {
         loop {
             tokio::select! {
                 _ = stall_rx.recv() => {
-                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "breaking listen loop due to stall watchdog");
+                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "breaking listen loop due to stall watchdog");
                     break;
                 }
                 _ = hb_rx.recv() => {
@@ -2308,7 +2308,7 @@ impl Channel for DiscordChannel {
                         Some(Ok(Message::Text(t))) => t,
                         Some(Ok(Message::Ping(payload))) => {
                             if write.send(Message::Pong(payload)).await.is_err() {
-                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), "pong send failed, reconnecting");
+                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), "pong send failed, reconnecting");
                                 break;
                             }
                             continue;
@@ -2334,16 +2334,16 @@ impl Channel for DiscordChannel {
                                     }
                                     return Err(Self::fatal_listener_error(message));
                                 }
-                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"code": code, "reason": reason, "had_ready": had_ready, "sequence": sequence})), "discord gateway closed; reconnecting");
+                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"code": code, "reason": reason, "had_ready": had_ready, "sequence": sequence})), "discord gateway closed; reconnecting");
                             }
                             break;
                         }
                         None => {
-                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"had_ready": had_ready, "sequence": sequence})), "discord gateway stream ended; reconnecting");
+                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"had_ready": had_ready, "sequence": sequence})), "discord gateway stream ended; reconnecting");
                             break;
                         }
                         Some(Err(e)) => {
-                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", e), "had_ready": had_ready, "sequence": sequence})), "websocket read error, reconnecting");
+                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", e), "had_ready": had_ready, "sequence": sequence})), "websocket read error, reconnecting");
                             break;
                         }
                         _ => continue,
@@ -2388,9 +2388,9 @@ impl Channel for DiscordChannel {
                                 session.resume_gateway_url = resume_gateway_url;
                                 session.sequence = if sequence >= 0 { Some(sequence) } else { None };
                             }
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+                                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                                     ::serde_json::json!({"sequence": sequence, "session_id_present": session_id.is_some()})
                                 ),
                                 "discord READY received"
@@ -2419,7 +2419,7 @@ impl Channel for DiscordChannel {
                                                 match tokio::task::spawn_blocking(move || resolve()).await {
                                                     Ok(specs) => specs,
                                                     Err(e) => {
-                                                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "skills resolver panicked; skipping slash command reconcile");
+                                                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "skills resolver panicked; skipping slash command reconcile");
                                                         return;
                                                     }
                                                 }
@@ -2433,7 +2433,7 @@ impl Channel for DiscordChannel {
                                             galleon_config::schema::SlashCommandScope::Guild
                                                 if guild_ids.is_empty() =>
                                             {
-                                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), "slash_command_scope=guild but guild_ids is empty; falling back to global slash registration");
+                                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), "slash_command_scope=guild but guild_ids is empty; falling back to global slash registration");
                                                 SlashScope::Global
                                             }
                                             galleon_config::schema::SlashCommandScope::Guild => {
@@ -2466,46 +2466,46 @@ impl Channel for DiscordChannel {
                                         // Honour a persisted rate-limit cooldown across restarts: a
                                         // 429'd reconcile must not re-hammer Discord on the next READY.
                                         if state.rate_limited(now) {
-                                            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"retry_after_until": state.retry_after_until})), "discord slash command reconcile in rate-limit cooldown; skipping");
+                                            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"retry_after_until": state.retry_after_until})), "discord slash command reconcile in rate-limit cooldown; skipping");
                                             return;
                                         }
                                         // Skip only when the set matches the last *successful*
                                         // reconcile. The fingerprint is persisted, so an unchanged
                                         // set is skipped after a restart too (no daily-budget churn).
                                         if state.fingerprint == Some(fingerprint) {
-                                            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"commands": specs.len() + 1})), "discord slash command set unchanged; skipping re-registration");
+                                            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"commands": specs.len() + 1})), "discord slash command set unchanged; skipping re-registration");
                                             return;
                                         }
                                         match reconcile_slash_commands(&client, &bot_token, &app_id, &body, DISCORD_API_BASE, effective_scope, &guild_ids).await {
                                             Ok(ReconcileOutcome::Reconciled) => {
                                                 SlashReconcileState::record_success(workspace_dir.as_deref(), &app_id, fingerprint, now);
-                                                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"commands": specs.len() + 1})), "discord slash commands registered");
+                                                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"commands": specs.len() + 1})), "discord slash commands registered");
                                             }
                                             Ok(ReconcileOutcome::RateLimited { until }) => {
                                                 // Persist the cooldown (keeping the prior fingerprint)
                                                 // so the next READY/restart waits it out.
                                                 SlashReconcileState::record_retry_after(workspace_dir.as_deref(), &app_id, &state, until);
-                                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"retry_after_until": until})), "discord slash command reconcile rate-limited; cooldown persisted");
+                                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"retry_after_until": until})), "discord slash command reconcile rate-limited; cooldown persisted");
                                             }
                                             Err(e) => {
                                                 // Hard failure: leave persisted state untouched. The
                                                 // new fingerprint differs from the stored one, so the
                                                 // next READY retries without a forced reset.
-                                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord slash command registration failed");
+                                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord slash command registration failed");
                                             }
                                         }
                                     });
                                 } else {
-                                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), "slash_commands enabled but READY had no application.id");
+                                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), "slash_commands enabled but READY had no application.id");
                                 }
                             }
                             continue;
                         }
                         "RESUMED" => {
                             had_ready = true;
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+                                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                                     ::serde_json::json!({"sequence": sequence})
                                 ),
                                 "discord RESUMED received"
@@ -2527,7 +2527,7 @@ impl Channel for DiscordChannel {
                         }
                         // Op 7: Reconnect
                         7 => {
-                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"had_ready": had_ready, "sequence": sequence})), "received Reconnect (op 7), closing for restart");
+                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"had_ready": had_ready, "sequence": sequence})), "received Reconnect (op 7), closing for restart");
                             break;
                         }
                         // Op 9: Invalid Session
@@ -2539,7 +2539,7 @@ impl Channel for DiscordChannel {
                                 session.resume_gateway_url = None;
                                 session.sequence = None;
                             }
-                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"resumable": resumable, "had_ready": had_ready, "sequence": sequence})), "received Invalid Session (op 9), closing for restart");
+                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"resumable": resumable, "had_ready": had_ready, "sequence": sequence})), "received Invalid Session (op 9), closing for restart");
                             break;
                         }
                         _ => {}
@@ -2604,7 +2604,7 @@ impl Channel for DiscordChannel {
                                                 "channel-discord-interaction-malformed",
                                             );
                                             if let Err(e) = discord_reject_interaction(&client, &interaction_id, &interaction_token, &msg).await {
-                                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction reject failed");
+                                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction reject failed");
                                             }
                                             return;
                                         }
@@ -2614,12 +2614,12 @@ impl Channel for DiscordChannel {
                                             &user_id,
                                             allowlist::Match::Sensitive,
                                         ) {
-                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "denial": "UnauthorizedUser"})), "rejecting unauthorized slash command interaction");
+                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "denial": "UnauthorizedUser"})), "rejecting unauthorized slash command interaction");
                                             let msg = i18n::get_required_cli_string(
                                                 "channel-discord-interaction-unauthorized",
                                             );
                                             if let Err(e) = discord_reject_interaction(&client, &interaction_id, &interaction_token, &msg).await {
-                                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction reject failed");
+                                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction reject failed");
                                             }
                                             return;
                                         }
@@ -2646,12 +2646,12 @@ impl Channel for DiscordChannel {
                                             &interaction_channel,
                                             parent_id.as_deref(),
                                         ) {
-                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "denial": format!("{denial:?}")})), "rejecting unauthorized slash command interaction");
+                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "denial": format!("{denial:?}")})), "rejecting unauthorized slash command interaction");
                                             let msg = i18n::get_required_cli_string(
                                                 "channel-discord-interaction-unauthorized",
                                             );
                                             if let Err(e) = discord_reject_interaction(&client, &interaction_id, &interaction_token, &msg).await {
-                                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction reject failed");
+                                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction reject failed");
                                             }
                                             return;
                                         }
@@ -2677,7 +2677,7 @@ impl Channel for DiscordChannel {
                                         // Ack within the 3s window; only a
                                         // successful defer earns an enqueue.
                                         if let Err(e) = discord_defer_interaction(&client, &interaction_id, &interaction_token).await {
-                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction defer failed");
+                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction defer failed");
                                             pending.lock().remove(&interaction_id);
                                             return;
                                         }
@@ -2690,7 +2690,7 @@ impl Channel for DiscordChannel {
                                                     match tokio::task::spawn_blocking(move || resolve()).await {
                                                         Ok(specs) => specs,
                                                         Err(e) => {
-                                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "skills resolver panicked; treating command as unavailable");
+                                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "skills resolver panicked; treating command as unavailable");
                                                             Vec::new()
                                                         }
                                                     }
@@ -2713,7 +2713,7 @@ impl Channel for DiscordChannel {
                                                 "channel-discord-interaction-unavailable",
                                             );
                                             if let Err(e) = discord_edit_interaction_response(&client, &app_id, &interaction_token, DISCORD_API_BASE, &msg, &[], &[]).await {
-                                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction unavailable-notice failed");
+                                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction unavailable-notice failed");
                                             }
                                             pending.lock().remove(&interaction_id);
                                             return;
@@ -2737,7 +2737,7 @@ impl Channel for DiscordChannel {
 
                                             ..Default::default()};
                                         if tx.send(channel_msg).await.is_err() {
-                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), "orchestrator channel closed; dropping interaction prompt");
+                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), "orchestrator channel closed; dropping interaction prompt");
                                         }
                                     });
                                 }
@@ -2826,12 +2826,12 @@ impl Channel for DiscordChannel {
                                             if is_foreign_sop_gate {
                                                 return;
                                             }
-                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "denial": "UnauthorizedUser"})), "rejecting unauthorized component interaction");
+                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "denial": "UnauthorizedUser"})), "rejecting unauthorized component interaction");
                                             let msg = i18n::get_required_cli_string(
                                                 "channel-discord-interaction-unauthorized",
                                             );
                                             if let Err(e) = discord_reject_interaction(&client, &interaction_id, &interaction_token, &msg).await {
-                                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction reject failed");
+                                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction reject failed");
                                             }
                                             return;
                                         }
@@ -2882,12 +2882,12 @@ impl Channel for DiscordChannel {
                                             if is_foreign_sop_gate {
                                                 return;
                                             }
-                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "denial": format!("{denial:?}")})), "rejecting unauthorized component interaction");
+                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "denial": format!("{denial:?}")})), "rejecting unauthorized component interaction");
                                             let msg = i18n::get_required_cli_string(
                                                 "channel-discord-interaction-unauthorized",
                                             );
                                             if let Err(e) = discord_reject_interaction(&client, &interaction_id, &interaction_token, &msg).await {
-                                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction reject failed");
+                                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord interaction reject failed");
                                             }
                                             return;
                                         }
@@ -2934,7 +2934,7 @@ impl Channel for DiscordChannel {
                                             };
                                             let msg = i18n::get_required_cli_string(ack_key);
                                             if let Err(e) = discord_reject_interaction(&client, &interaction_id, &interaction_token, &msg).await {
-                                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord sop-gate ack failed");
+                                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord sop-gate ack failed");
                                             }
                                             return;
                                         }
@@ -2956,7 +2956,7 @@ impl Channel for DiscordChannel {
                                             else {
                                                 let msg = i18n::get_required_cli_string("channel-discord-component-expired");
                                                 if let Err(e) = discord_reject_interaction(&client, &interaction_id, &interaction_token, &msg).await {
-                                                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord sop-gate ack failed");
+                                                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord sop-gate ack failed");
                                                 }
                                                 return;
                                             };
@@ -2988,7 +2988,7 @@ impl Channel for DiscordChannel {
                                                 }],
                                             };
                                             if let Err(e) = discord_open_modal(&client, &interaction_id, &interaction_token, &modal).await {
-                                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord sop-gate modal open failed");
+                                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord sop-gate modal open failed");
                                             }
                                             return;
                                         }
@@ -3038,7 +3038,7 @@ impl Channel for DiscordChannel {
                                             };
                                             let msg = i18n::get_required_cli_string(ack_key);
                                             if let Err(e) = discord_reject_interaction(&client, &interaction_id, &interaction_token, &msg).await {
-                                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord sop-gate ack failed");
+                                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord sop-gate ack failed");
                                             }
                                             return;
                                         }
@@ -3066,7 +3066,7 @@ impl Channel for DiscordChannel {
                                                 };
                                                 let msg = i18n::get_required_cli_string(key);
                                                 if let Err(e) = discord_reject_interaction(&client, &interaction_id, &interaction_token, &msg).await {
-                                                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord approval ack failed");
+                                                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord approval ack failed");
                                                 }
                                                 return;
                                             }
@@ -3078,7 +3078,7 @@ impl Channel for DiscordChannel {
                                                     );
                                                 }
                                                 if let Err(e) = discord_open_modal(&client, &interaction_id, &interaction_token, &modal).await {
-                                                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord modal open failed");
+                                                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord modal open failed");
                                                 }
                                                 return;
                                             }
@@ -3089,7 +3089,7 @@ impl Channel for DiscordChannel {
                                                     "channel-discord-component-expired",
                                                 );
                                                 if let Err(e) = discord_reject_interaction(&client, &interaction_id, &interaction_token, &msg).await {
-                                                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord component expired-notice failed");
+                                                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord component expired-notice failed");
                                                 }
                                                 return;
                                             }
@@ -3126,7 +3126,7 @@ impl Channel for DiscordChannel {
                                             );
                                         }
                                         if let Err(e) = discord_defer_interaction(&client, &interaction_id, &interaction_token).await {
-                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord component defer failed");
+                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord component defer failed");
                                             pending.lock().remove(&interaction_id);
                                             return;
                                         }
@@ -3152,7 +3152,7 @@ impl Channel for DiscordChannel {
 
                                             ..Default::default()};
                                         if tx.send(channel_msg).await.is_err() {
-                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), "orchestrator channel closed; dropping component prompt");
+                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), "orchestrator channel closed; dropping component prompt");
                                         }
                                     });
                                 }
@@ -3212,7 +3212,7 @@ impl Channel for DiscordChannel {
                                                     Some(resolve) => match tokio::task::spawn_blocking(move || resolve()).await {
                                                         Ok(specs) => specs,
                                                         Err(e) => {
-                                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "skills resolver panicked; answering empty autocomplete");
+                                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "skills resolver panicked; answering empty autocomplete");
                                                             Vec::new()
                                                         }
                                                     },
@@ -3240,7 +3240,7 @@ impl Channel for DiscordChannel {
                                         )
                                         .await
                                         {
-                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord autocomplete answer failed");
+                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": e.to_string()})), "discord autocomplete answer failed");
                                         }
                                     });
                                 }
@@ -3314,7 +3314,7 @@ impl Channel for DiscordChannel {
 
                     // Sender validation
                     if !self.is_user_allowed(author_id) {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"author_id": author_id})), "ignoring message from unauthorized user");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"author_id": author_id})), "ignoring message from unauthorized user");
                         continue;
                     }
 
@@ -3409,7 +3409,7 @@ impl Channel for DiscordChannel {
                                 )
                                 .await
                             {
-                                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", e)})), "archive store failed");
+                                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", e)})), "archive store failed");
                             }
                         }
                     }
@@ -3488,7 +3488,7 @@ impl Channel for DiscordChannel {
                                 )
                                 .await
                             {
-                                ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"reaction_message_id": reaction_message_id, "err": err.to_string()})), "failed to add ACK reaction for message");
+                                ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"reaction_message_id": reaction_message_id, "err": err.to_string()})), "failed to add ACK reaction for message");
                             }
                         });
                     }
@@ -3709,11 +3709,11 @@ impl Channel for DiscordChannel {
                             .insert(recipient.to_string(), std::time::Instant::now());
                     }
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "draft update failed"
@@ -3786,11 +3786,11 @@ impl Channel for DiscordChannel {
                 if let Some(paragraph) = paragraph {
                     let msg = SendMessage::new(&paragraph, recipient).in_thread(thread_ts.clone());
                     if let Err(e) = self.send(&msg).await {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "multi-message paragraph send failed"
@@ -3835,11 +3835,11 @@ impl Channel for DiscordChannel {
                 if !remaining.is_empty() {
                     let msg = SendMessage::new(&remaining, recipient).in_thread(thread_ts);
                     if let Err(e) = self.send(&msg).await {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "multi-message final flush failed"
@@ -3968,10 +3968,10 @@ impl Channel for DiscordChannel {
         {
             Ok(()) => message_id.to_string(),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"e": e.to_string()})),
                     "Discord finalize_draft edit failed: ; falling back to delete+send"
                 );
@@ -4000,9 +4000,9 @@ impl Channel for DiscordChannel {
         if let Err(e) =
             delete_discord_message(&client, &self.bot_token, recipient, message_id).await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "cancel_draft delete failed"
             );

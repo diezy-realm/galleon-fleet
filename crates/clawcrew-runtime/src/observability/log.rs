@@ -26,9 +26,9 @@ impl Observer for LogObserver {
                 agent_alias: _,
                 turn_id: _,
             } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(
                             ::serde_json::json!({"model_provider": model_provider, "model": model})
                         ),
@@ -46,12 +46,12 @@ impl Observer for LogObserver {
                 turn_id: _,
             } => {
                 let ms = u64::try_from(duration.as_millis()).unwrap_or(u64::MAX);
-                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": model_provider, "model": model, "duration_ms": ms, "tokens": tokens_used, "cost_usd": cost_usd})), "agent.end");
+                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": model_provider, "model": model, "duration_ms": ms, "tokens": tokens_used, "cost_usd": cost_usd})), "agent.end");
             }
             ObserverEvent::ToolCallStart { tool, .. } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"tool": tool})),
                     "tool.start"
                 );
@@ -63,19 +63,19 @@ impl Observer for LogObserver {
                 ..
             } => {
                 let ms = u64::try_from(duration.as_millis()).unwrap_or(u64::MAX);
-                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"tool": tool, "duration_ms": ms, "success": success})), "tool.call");
+                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"tool": tool, "duration_ms": ms, "success": success})), "tool.call");
             }
             ObserverEvent::TurnComplete => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "turn.complete"
                 );
             }
             ObserverEvent::ChannelMessage { channel, direction } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(
                             ::serde_json::json!({"channel": channel, "direction": direction})
                         ),
@@ -83,9 +83,9 @@ impl Observer for LogObserver {
                 );
             }
             ObserverEvent::HeartbeatTick => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "heartbeat.tick"
                 );
             }
@@ -93,20 +93,20 @@ impl Observer for LogObserver {
                 cache_type,
                 tokens_saved,
             } => {
-                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"cache_type": cache_type, "tokens_saved": tokens_saved})), "cache.hit");
+                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"cache_type": cache_type, "tokens_saved": tokens_saved})), "cache.hit");
             }
             ObserverEvent::CacheMiss { cache_type } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"cache_type": cache_type})),
                     "cache.miss"
                 );
             }
             ObserverEvent::Error { component, message } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(
                             ::serde_json::json!({"component": component, "error": message})
                         ),
@@ -125,9 +125,9 @@ impl Observer for LogObserver {
                 // identifying user query text into structured-log sinks
                 // (Datadog, Loki) that the OD4 analysis did not cover.
                 let ms = u64::try_from(duration.as_millis()).unwrap_or(u64::MAX);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "backend": backend,
                             "num_entries": num_entries,
@@ -145,9 +145,9 @@ impl Observer for LogObserver {
                 ..
             } => {
                 let ms = u64::try_from(duration.as_millis()).unwrap_or(u64::MAX);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "category": category,
                             "backend": backend,
@@ -168,9 +168,9 @@ impl Observer for LogObserver {
                 // here would loop the event back into this observer when a
                 // bridge observer is installed.
                 let ms = u64::try_from(duration.as_millis()).unwrap_or(u64::MAX);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "memory_action": action,
                             "backend": backend,
@@ -187,9 +187,9 @@ impl Observer for LogObserver {
                 ..
             } => {
                 let ms = u64::try_from(duration.as_millis()).unwrap_or(u64::MAX);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "num_chunks": num_chunks,
                             "num_boards": num_boards,
@@ -207,7 +207,7 @@ impl Observer for LogObserver {
                 parent_agent_alias: _,
                 turn_id: _,
             } => {
-                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": model_provider, "model": model, "messages_count": messages_count})), "llm.request");
+                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": model_provider, "model": model, "messages_count": messages_count})), "llm.request");
             }
             ObserverEvent::LlmResponse {
                 model_provider,
@@ -220,7 +220,7 @@ impl Observer for LogObserver {
                 ..
             } => {
                 let ms = u64::try_from(duration.as_millis()).unwrap_or(u64::MAX);
-                ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": model_provider, "model": model, "duration_ms": ms, "success": success, "error": error_message, "input_tokens": input_tokens, "output_tokens": output_tokens})), "llm.response");
+                ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"model_provider": model_provider, "model": model, "duration_ms": ms, "success": success, "error": error_message, "input_tokens": input_tokens, "output_tokens": output_tokens})), "llm.response");
             }
             // `ObserverEvent` is `#[non_exhaustive]` — silently ignore any
             // future variant added by upstream `clawcrew-api`.
@@ -232,33 +232,33 @@ impl Observer for LogObserver {
         match metric {
             ObserverMetric::RequestLatency(d) => {
                 let ms = u64::try_from(d.as_millis()).unwrap_or(u64::MAX);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"latency_ms": ms})),
                     "metric.request_latency"
                 );
             }
             ObserverMetric::TokensUsed(t) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"tokens": t})),
                     "metric.tokens_used"
                 );
             }
             ObserverMetric::ActiveSessions(s) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"sessions": s})),
                     "metric.active_sessions"
                 );
             }
             ObserverMetric::QueueDepth(d) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"depth": d})),
                     "metric.queue_depth"
                 );

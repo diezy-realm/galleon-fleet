@@ -139,10 +139,10 @@ fn check_result_is_error(result: &serde_json::Value, op: &str, server_name: &str
         .filter(|s: &String| !s.is_empty())
         .unwrap_or_else(|| "(no error detail returned by server)".to_string());
     let detail = galleon_providers::sanitize_api_error(&detail);
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(::serde_json::json!({
                 "mcp_server": server_name,
                 "op": op,
@@ -357,10 +357,10 @@ impl McpServer {
         })??;
 
         let result = list_resp.result.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"mcp_server": &config.name})),
                 "mcp_client: tools/list returned no result"
             );
@@ -384,9 +384,9 @@ impl McpServer {
             capabilities,
         };
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "MCP server `{}` connected — {} tool(s) available",
                 inner.config.name, tool_count
@@ -527,10 +527,10 @@ impl McpServer {
         galleon_spawn::spawn!(async move {
             let result = server.reestablish(observed_epoch).await;
             if let Err(error) = &result {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reconnect)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reconnect)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "operation": operation,
                             "error": format!("{error:#}"),
@@ -651,10 +651,10 @@ impl McpServer {
                 Err(_) => {
                     let unknown_epoch = lifecycle.outcome_unknown_epoch();
                     cancellation_guard.disarm();
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Timeout)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Timeout)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "mcp_server": &server_name,
                                 "rpc_method": rpc_method,
@@ -908,10 +908,10 @@ impl McpRegistry {
                 }
                 // Non-fatal — log and continue with remaining servers
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         &format!("Failed to connect to MCP server `{}`: {:#}", config.name, e)
                     );
                 }
@@ -1171,10 +1171,10 @@ impl McpRegistry {
         arguments: serde_json::Value,
     ) -> Result<serde_json::Value> {
         let (server_idx, original_name) = self.tool_index.get(prefixed_name).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"tool": prefixed_name})),
                 "mcp_client: unknown MCP tool"
             );

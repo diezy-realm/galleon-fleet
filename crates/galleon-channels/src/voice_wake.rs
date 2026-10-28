@@ -79,10 +79,10 @@ where
             let _ = audio_tx.try_send(samples);
         },
         move |err| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                 "VoiceWake: audio stream error"
             );
@@ -237,10 +237,10 @@ impl Channel for VoiceWakeChannel {
 
             let host = cpal::default_host();
             let device = host.default_input_device().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "No default audio input device available"
                 );
                 anyhow::Error::msg("No default audio input device available")
@@ -255,7 +255,7 @@ impl Channel for VoiceWakeChannel {
                 .map(|description| description.name().to_owned())
                 .unwrap_or_default();
 
-            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"device": device_name, "sample_rate": sample_rate, "channels": channels_count})), "VoiceWake: opening audio input");
+            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"device": device_name, "sample_rate": sample_rate, "channels": channels_count})), "VoiceWake: opening audio input");
 
             let stream_config: cpal::StreamConfig = supported.into();
             let stream = match sample_format {
@@ -315,9 +315,9 @@ impl Channel for VoiceWakeChannel {
         let mut capture_start = Instant::now();
         let mut msg_counter: u64 = 0;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"wake_word": wake_word})),
             "VoiceWake: entering listen loop"
         );
@@ -328,11 +328,11 @@ impl Channel for VoiceWakeChannel {
             match state {
                 WakeState::Listening => {
                     if energy >= energy_threshold {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"energy": energy})),
                             "VoiceWake: energy spike — transitioning to Triggered"
@@ -356,11 +356,11 @@ impl Channel for VoiceWakeChannel {
 
                     // After enough silence or max time, transcribe to check for wake word.
                     if since_voice >= silence_timeout || since_start >= max_capture {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             ),
                             "VoiceWake: Triggered window closed — transcribing for wake word"
                         );
@@ -375,11 +375,11 @@ impl Channel for VoiceWakeChannel {
                             Ok(text) => {
                                 let lower = text.to_lowercase();
                                 if lower.contains(&wake_word) {
-                                    ::clawcrew_log::record!(
+                                    ::galleon_log::record!(
                                         INFO,
-                                        ::clawcrew_log::Event::new(
+                                        ::galleon_log::Event::new(
                                             module_path!(),
-                                            ::clawcrew_log::Action::Note
+                                            ::galleon_log::Action::Note
                                         )
                                         .with_attrs(::serde_json::json!({"text": text})),
                                         "VoiceWake: wake word detected — capturing utterance"
@@ -389,11 +389,11 @@ impl Channel for VoiceWakeChannel {
                                     last_voice_at = Instant::now();
                                     capture_start = Instant::now();
                                 } else {
-                                    ::clawcrew_log::record!(
+                                    ::galleon_log::record!(
                                         DEBUG,
-                                        ::clawcrew_log::Event::new(
+                                        ::galleon_log::Event::new(
                                             module_path!(),
-                                            ::clawcrew_log::Action::Note
+                                            ::galleon_log::Action::Note
                                         )
                                         .with_attrs(::serde_json::json!({"text": text})),
                                         "VoiceWake: no wake word — back to Listening"
@@ -403,13 +403,13 @@ impl Channel for VoiceWakeChannel {
                                 }
                             }
                             Err(e) => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                     "VoiceWake: transcription error during wake check"
                                 );
@@ -430,11 +430,11 @@ impl Channel for VoiceWakeChannel {
                     let since_start = capture_start.elapsed();
 
                     if since_voice >= silence_timeout || since_start >= max_capture {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             ),
                             "VoiceWake: utterance capture complete — transcribing"
                         );
@@ -472,13 +472,13 @@ impl Channel for VoiceWakeChannel {
                                     };
 
                                     if let Err(e) = tx.send(msg).await {
-                                        ::clawcrew_log::record!(
+                                        ::galleon_log::record!(
                                             WARN,
-                                            ::clawcrew_log::Event::new(
+                                            ::galleon_log::Event::new(
                                                 module_path!(),
-                                                ::clawcrew_log::Action::Note
+                                                ::galleon_log::Action::Note
                                             )
-                                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                                             .with_attrs(
                                                 ::serde_json::json!({"error": format!("{}", e)})
                                             ),
@@ -488,13 +488,13 @@ impl Channel for VoiceWakeChannel {
                                 }
                             }
                             Err(e) => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                     "VoiceWake: transcription error for utterance"
                                 );

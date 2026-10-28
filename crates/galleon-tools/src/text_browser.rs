@@ -174,10 +174,10 @@ impl TextBrowserTool {
                 if installed {
                     return Ok(preferred);
                 }
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"preferred": preferred})),
                     "Configured preferred text browser '' is not installed, falling back to auto-detect"
                 );
@@ -187,10 +187,10 @@ impl TextBrowserTool {
         // Auto-detect
         Self::detect_browser().await.ok_or_else(|| {
             let supported = SUPPORTED_BROWSERS.join(", ");
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"supported": &supported})),
                 "text_browser: no text browser installed"
             );
@@ -295,10 +295,10 @@ impl Tool for TextBrowserTool {
 
     async fn execute(&self, args: serde_json::Value) -> anyhow::Result<ToolResult> {
         let url = args.get("url").and_then(|v| v.as_str()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "url"})),
                 "text_browser: missing url parameter"
             );
@@ -350,10 +350,10 @@ impl Tool for TextBrowserTool {
         let dump_args = Self::build_dump_args(&browser, &url);
 
         let timeout = Duration::from_secs(if self.timeout_secs == 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "text_browser: timeout_secs is 0, using safe default of 30s"
             );
             30
@@ -422,10 +422,10 @@ fn validate_resolved_host_is_public(
     let ips = (host, 0)
         .to_socket_addrs()
         .map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "host": host,
                         "error": format!("{}", e),

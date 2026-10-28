@@ -79,10 +79,10 @@ impl Microsoft365Tool {
         self.security
             .enforce_tool_operation(ToolOperation::Read, "microsoft365.mail_list")
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "microsoft365: tool operation denied by policy"
                 );
@@ -111,10 +111,10 @@ impl Microsoft365Tool {
         self.security
             .enforce_tool_operation(ToolOperation::Read, "microsoft365.teams_message_list")
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "microsoft365: tool operation denied by policy"
                 );
@@ -123,19 +123,19 @@ impl Microsoft365Tool {
 
         let token = self.get_token().await?;
         let team_id = args["team_id"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: team_id is required"
             );
             anyhow::Error::msg("team_id is required")
         })?;
         let channel_id = args["channel_id"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: channel_id is required"
             );
             anyhow::Error::msg("channel_id is required")
@@ -161,10 +161,10 @@ impl Microsoft365Tool {
         self.security
             .enforce_tool_operation(ToolOperation::Read, "microsoft365.calendar_events_list")
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "microsoft365: tool operation denied by policy"
                 );
@@ -173,19 +173,19 @@ impl Microsoft365Tool {
 
         let token = self.get_token().await?;
         let start = args["start"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: start datetime is required"
             );
             anyhow::Error::msg("start datetime is required")
         })?;
         let end = args["end"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: end datetime is required"
             );
             anyhow::Error::msg("end datetime is required")
@@ -214,10 +214,10 @@ impl Microsoft365Tool {
         self.security
             .enforce_tool_operation(ToolOperation::Read, "microsoft365.onedrive_list")
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "microsoft365: tool operation denied by policy"
                 );
@@ -244,10 +244,10 @@ impl Microsoft365Tool {
         self.security
             .enforce_tool_operation(ToolOperation::Read, "microsoft365.onedrive_download")
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "microsoft365: tool operation denied by policy"
                 );
@@ -256,10 +256,10 @@ impl Microsoft365Tool {
 
         let token = self.get_token().await?;
         let item_id = args["item_id"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: item_id is required"
             );
             anyhow::Error::msg("item_id is required")
@@ -301,10 +301,10 @@ impl Microsoft365Tool {
         self.security
             .enforce_tool_operation(ToolOperation::Read, "microsoft365.sharepoint_search")
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "microsoft365: tool operation denied by policy"
                 );
@@ -313,10 +313,10 @@ impl Microsoft365Tool {
 
         let token = self.get_token().await?;
         let query = args["query"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: query is required"
             );
             anyhow::Error::msg("query is required")
@@ -339,10 +339,10 @@ impl Microsoft365Tool {
         self.security
             .enforce_tool_operation(ToolOperation::Act, "microsoft365.mail_send")
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "microsoft365: tool operation denied by policy"
                 );
@@ -353,10 +353,10 @@ impl Microsoft365Tool {
         let to: Vec<String> = args["to"]
             .as_array()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "mod: to must be an array of email addresses"
                 );
                 anyhow::Error::msg("to must be an array of email addresses")
@@ -370,19 +370,19 @@ impl Microsoft365Tool {
         }
 
         let subject = args["subject"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: subject is required"
             );
             anyhow::Error::msg("subject is required")
         })?;
         let body = args["body"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: body is required"
             );
             anyhow::Error::msg("body is required")
@@ -412,10 +412,10 @@ impl Microsoft365Tool {
         self.security
             .enforce_tool_operation(ToolOperation::Act, "microsoft365.teams_message_send")
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "microsoft365: tool operation denied by policy"
                 );
@@ -424,28 +424,28 @@ impl Microsoft365Tool {
 
         let token = self.get_token().await?;
         let team_id = args["team_id"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: team_id is required"
             );
             anyhow::Error::msg("team_id is required")
         })?;
         let channel_id = args["channel_id"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: channel_id is required"
             );
             anyhow::Error::msg("channel_id is required")
         })?;
         let body = args["body"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: body is required"
             );
             anyhow::Error::msg("body is required")
@@ -468,10 +468,10 @@ impl Microsoft365Tool {
         self.security
             .enforce_tool_operation(ToolOperation::Act, "microsoft365.calendar_event_create")
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "microsoft365: tool operation denied by policy"
                 );
@@ -480,28 +480,28 @@ impl Microsoft365Tool {
 
         let token = self.get_token().await?;
         let subject = args["subject"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: subject is required"
             );
             anyhow::Error::msg("subject is required")
         })?;
         let start = args["start"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: start datetime is required"
             );
             anyhow::Error::msg("start datetime is required")
         })?;
         let end = args["end"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: end datetime is required"
             );
             anyhow::Error::msg("end datetime is required")
@@ -542,10 +542,10 @@ impl Microsoft365Tool {
         self.security
             .enforce_tool_operation(ToolOperation::Act, "microsoft365.calendar_event_delete")
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": e.to_string()})),
                     "microsoft365: tool operation denied by policy"
                 );
@@ -554,10 +554,10 @@ impl Microsoft365Tool {
 
         let token = self.get_token().await?;
         let event_id = args["event_id"].as_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "mod: event_id is required"
             );
             anyhow::Error::msg("event_id is required")

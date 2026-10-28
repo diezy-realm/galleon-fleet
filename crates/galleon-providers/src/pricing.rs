@@ -247,10 +247,10 @@ fn enabled_pricing_groups(
             .map(str::trim)
             .filter(|m| !m.is_empty())
         else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({ "provider": format!("{ty}.{alias}") })),
                 "live pricing: provider opted in but sets no `model`; nothing to price"
             );
@@ -306,10 +306,10 @@ fn enabled_pricing_groups(
                 );
             }
             Err(error) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "provider": wanted.composite,
                             "error": format!("{error}"),
@@ -447,10 +447,10 @@ async fn refresh_once(groups: &[GatewayGroup], total_aliases_per_family: &HashMa
                 rates_catalog(models)
             }
             Err(error) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({ "error": format!("{error}") })),
                     "live pricing: refresh failed for gateway; falling back to models.dev"
                 );
@@ -493,10 +493,10 @@ async fn refresh_once(groups: &[GatewayGroup], total_aliases_per_family: &HashMa
                 }
             }
             Err(error) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({ "error": format!("{error}") })),
                     "live pricing: models.dev fallback fetch failed; keeping previous snapshot"
                 );

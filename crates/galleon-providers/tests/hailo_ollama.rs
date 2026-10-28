@@ -777,10 +777,10 @@ async fn native_hailo_rejects_incomplete_non_streaming_response() {
 
 #[tokio::test]
 async fn native_hailo_error_logs_use_stable_messages_and_structured_payload_attrs() {
-    let _writer_guard = clawcrew_log::__private_test_writer_lock();
-    let _hook_guard = clawcrew_log::__private_test_hook_lock();
-    clawcrew_log::try_install_capture_subscriber();
-    let mut rx = clawcrew_log::subscribe_or_install();
+    let _writer_guard = galleon_log::__private_test_writer_lock();
+    let _hook_guard = galleon_log::__private_test_hook_lock();
+    galleon_log::try_install_capture_subscriber();
+    let mut rx = galleon_log::subscribe_or_install();
     while rx.try_recv().is_ok() {}
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
@@ -846,15 +846,15 @@ async fn native_hailo_error_logs_use_stable_messages_and_structured_payload_attr
     );
     assert!(attrs.get("error").and_then(Value::as_str).is_some());
     server.abort();
-    clawcrew_log::clear_broadcast_hook();
+    galleon_log::clear_broadcast_hook();
 }
 
 #[tokio::test]
 async fn native_hailo_error_diagnostics_redact_configured_auth_header_values() {
-    let _writer_guard = clawcrew_log::__private_test_writer_lock();
-    let _hook_guard = clawcrew_log::__private_test_hook_lock();
-    clawcrew_log::try_install_capture_subscriber();
-    let mut rx = clawcrew_log::subscribe_or_install();
+    let _writer_guard = galleon_log::__private_test_writer_lock();
+    let _hook_guard = galleon_log::__private_test_hook_lock();
+    galleon_log::try_install_capture_subscriber();
+    let mut rx = galleon_log::subscribe_or_install();
     while rx.try_recv().is_ok() {}
 
     let options = ModelProviderRuntimeOptions {
@@ -942,7 +942,7 @@ async fn native_hailo_error_diagnostics_redact_configured_auth_header_values() {
     assert!(!body_excerpt.contains("canary"));
     assert!(body_excerpt.contains("[REDACTED]"));
     server.abort();
-    clawcrew_log::clear_broadcast_hook();
+    galleon_log::clear_broadcast_hook();
 }
 
 #[tokio::test]

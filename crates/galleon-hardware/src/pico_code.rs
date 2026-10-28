@@ -177,7 +177,7 @@ impl Tool for DeviceReadCodeTool {
             other => return Ok(unsupported_runtime(&other, "device_read_code")),
         }
 
-        ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"alias": alias, "port": port, "runtime": format!("{:?}", runtime)})), "reading main.py from device");
+        ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"alias": alias, "port": port, "runtime": format!("{:?}", runtime)})), "reading main.py from device");
 
         match run_mpremote(
             &["connect", &port, "cat", ":main.py"],
@@ -298,7 +298,7 @@ impl Tool for DeviceWriteCodeTool {
             other => return Ok(unsupported_runtime(&other, "device_write_code")),
         }
 
-        ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"alias": alias, "port": port, "runtime": format!("{:?}", runtime), "code_len": code.len()})), "writing main.py to device");
+        ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"alias": alias, "port": port, "runtime": format!("{:?}", runtime), "code_len": code.len()})), "writing main.py to device");
 
         // Write code to an atomic, owner-only temp file via tempfile crate.
         let named_tmp = match tokio::task::spawn_blocking(|| {
@@ -346,10 +346,10 @@ impl Tool for DeviceWriteCodeTool {
 
         // Explicit cleanup — log if removal fails rather than silently ignoring.
         if let Err(e) = named_tmp.close() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"path": tmp_str, "err": e.to_string()})),
                 "failed to clean up temp file"
             );
@@ -357,9 +357,9 @@ impl Tool for DeviceWriteCodeTool {
 
         match result {
             Ok((_stdout, _stderr)) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"alias": alias})),
                     "main.py deployed and device reset"
                 );
@@ -483,7 +483,7 @@ impl Tool for DeviceExecTool {
             other => return Ok(unsupported_runtime(&other, "device_exec")),
         }
 
-        ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"alias": alias, "port": port, "runtime": format!("{:?}", runtime), "code_len": code.len()})), "executing snippet on device");
+        ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"alias": alias, "port": port, "runtime": format!("{:?}", runtime), "code_len": code.len()})), "executing snippet on device");
 
         // Write snippet to an atomic, owner-only temp file via tempfile crate.
         let named_tmp = match tokio::task::spawn_blocking(|| {
@@ -528,10 +528,10 @@ impl Tool for DeviceExecTool {
 
         // Explicit cleanup — log if removal fails rather than silently ignoring.
         if let Err(e) = named_tmp.close() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"path": tmp_str, "err": e.to_string()})),
                 "failed to clean up temp file"
             );

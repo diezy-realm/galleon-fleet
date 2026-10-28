@@ -42,10 +42,10 @@ impl Drop for ChildGroupGuard {
         if pgid <= 0 {
             return;
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Kill)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Kill)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({ "pgid": pgid, "signal": "SIGKILL" })),
             "shell tool reaping child process group"
         );
@@ -202,10 +202,10 @@ impl Tool for ShellTool {
             .get("command")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"param": "command"})),
                     "tool argument validation failed"
                 );
@@ -270,10 +270,10 @@ impl Tool for ShellTool {
         // The Sandbox trait operates on std::process::Command, so use as_std_mut
         // to get a mutable reference to the underlying command.
         self.sandbox.wrap_command(cmd.as_std_mut()).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "shell tool: sandbox wrap_command failed"
             );

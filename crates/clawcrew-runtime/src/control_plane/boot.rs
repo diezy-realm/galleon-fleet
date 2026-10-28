@@ -49,9 +49,9 @@ impl ControlPlaneRecoveryOwner {
         let store: Arc<dyn TaskRegistry> = Arc::new(SqliteTaskStore::new(data_dir)?);
         let reclaimed = reaper::recovery_pass(store.as_ref(), &boot_id).await?;
         if reclaimed > 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(
                         ::serde_json::json!({ "reconciled": reclaimed, "boot_id": boot_id })
                     ),

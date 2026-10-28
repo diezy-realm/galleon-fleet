@@ -9,7 +9,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use serde::Serialize;
-use clawcrew_log::{
+use galleon_log::{
     ATTRIBUTION_FIELDS, COMPOSITE_PREFIXES, LogFilter, LogPage, is_attribution_field,
 };
 
@@ -92,7 +92,7 @@ pub async fn handle_api_logs(
         return e.into_response();
     }
 
-    let Some((active, reads_archives)) = clawcrew_log::active_log_query_scope() else {
+    let Some((active, reads_archives)) = galleon_log::active_log_query_scope() else {
         return Json(LogsResponse {
             events: Vec::new(),
             next_cursor: None,
@@ -124,12 +124,12 @@ pub async fn handle_api_logs(
     let until_line_offset = params
         .get("until_line_offset")
         .and_then(|raw| raw.parse::<u64>().ok());
-    let segment_cursor: Option<clawcrew_log::SegmentCursor> = match params
+    let segment_cursor: Option<galleon_log::SegmentCursor> = match params
         .get("until_segment_cursor")
         .map(|s| s.as_str())
     {
         None | Some("") => None,
-        Some(raw) => match clawcrew_log::SegmentCursor::from_wire(raw) {
+        Some(raw) => match galleon_log::SegmentCursor::from_wire(raw) {
             Some(c) => Some(c),
             None => {
                 return (
@@ -185,7 +185,7 @@ pub async fn handle_api_logs(
         next_segment_cursor,
         at_end,
         incomplete,
-    } = match clawcrew_log::query_log_page(
+    } = match galleon_log::query_log_page(
         &active,
         reads_archives,
         &filter,

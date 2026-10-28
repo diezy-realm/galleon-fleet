@@ -125,9 +125,9 @@ pub async fn handle_api_channel_relink(
 
     match galleon_channels::login_relink::relink(qr_channel, &config, &info.alias) {
         Ok(galleon_channels::login_relink::RelinkOutcome::Cleared { removed }) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"channel": channel, "removed": removed})),
                 "channel persisted login cleared for relink"
             );

@@ -18,4 +18,4 @@ anyhow = "1.0"
 futures = "0.3"
 async-trait = "0.1"
 galleon-plugins = { workspace = true }
-clawcrew-log = { workspace = true }
+galleon-log = { workspace = true }

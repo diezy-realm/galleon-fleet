@@ -7,5 +7,5 @@ license.workspace = true
 publish = false
 
 [dependencies]
-clawcrew-log.workspace = true
+galleon-log.workspace = true
 clawcrew-log-attribution-macro-support = { path = "../attribution-macro-support" }

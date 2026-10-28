@@ -12,7 +12,7 @@ publish = true
 [dependencies]
 clawcrew-api.workspace = true
 galleon-config = { workspace = true, default-features = false }
-clawcrew-log.workspace = true
+galleon-log.workspace = true
 async-trait = "0.1"
 anyhow = "1.0"
 reqwest = { version = "0.12", default-features = false, features = [

@@ -103,10 +103,10 @@ impl AwsCredentials {
             format!("{home}/.aws/config")
         });
         let content = std::fs::read_to_string(&config_path).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "config_path": &config_path,
                         "error": format!("{}", e),
@@ -117,10 +117,10 @@ impl AwsCredentials {
         })?;
         let profile = std::env::var("AWS_PROFILE").unwrap_or_else(|_| "default".to_string());
         let (cmd, config_region) = Self::parse_aws_config(&content, &profile).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"profile": &profile})),
                 "bedrock: no credential_process in AWS profile"
             );
@@ -128,10 +128,10 @@ impl AwsCredentials {
         })?;
 
         let output = run_credential_process_command(&cmd).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "bedrock: failed to spawn credential_process"
             );
@@ -145,10 +145,10 @@ impl AwsCredentials {
         );
 
         let json: serde_json::Value = serde_json::from_slice(&output.stdout).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "bedrock: credential_process output is not valid JSON"
             );
@@ -158,10 +158,10 @@ impl AwsCredentials {
         let access_key_id = json["AccessKeyId"]
             .as_str()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"missing": "AccessKeyId"})),
                     "bedrock: credential_process missing AccessKeyId"
                 );
@@ -171,10 +171,10 @@ impl AwsCredentials {
         let secret_access_key = json["SecretAccessKey"]
             .as_str()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"missing": "SecretAccessKey"})),
                     "bedrock: credential_process missing SecretAccessKey"
                 );
@@ -193,9 +193,9 @@ impl AwsCredentials {
             .or(config_region)
             .unwrap_or_else(|| DEFAULT_REGION.to_string());
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Loaded AWS credentials via credential_process"
         );
 
@@ -250,10 +250,10 @@ impl AwsCredentials {
         let access_key_id = creds_json["AccessKeyId"]
             .as_str()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "source": "imds",
                             "missing": "AccessKeyId",
@@ -266,10 +266,10 @@ impl AwsCredentials {
         let secret_access_key = creds_json["SecretAccessKey"]
             .as_str()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "source": "imds",
                             "missing": "SecretAccessKey",
@@ -299,9 +299,9 @@ impl AwsCredentials {
             region.trim().to_string()
         };
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "Loaded AWS credentials from EC2 instance metadata (role: {})",
                 role
@@ -358,10 +358,10 @@ fn env_required(name: &str) -> anyhow::Result<String> {
         .map(|v| v.trim().to_string())
         .filter(|v| !v.is_empty())
         .ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"env_var": name})),
                 "bedrock: required environment variable is missing"
             );
@@ -989,13 +989,13 @@ impl BedrockModelProvider {
                                 .or_else(|| Self::last_pending_tool_use_id(&converse_messages))
                                 .unwrap_or_else(|| "unknown".to_string());
 
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                                 &format!(
                                     "Failed to parse tool result message, creating error \
                                  toolResult for tool_use_id={}",
@@ -1087,10 +1087,10 @@ impl BedrockModelProvider {
             });
             let removed = before - msg.content.len();
             if removed > 0 {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({ "removed": removed })),
                     "bedrock: converter stripped orphaned toolUse block(s) from an assistant \
                      message — upstream history pruning likely missed a case"
@@ -1152,9 +1152,9 @@ impl BedrockModelProvider {
         let mut blocks: Vec<ContentBlock> = Vec::new();
         let mut remaining = content;
         let has_image = content.contains("[IMAGE:");
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "parse_user_content_blocks called, len={}, has_image={}",
                 content.len(),
@@ -1446,11 +1446,11 @@ impl BedrockModelProvider {
                             {
                                 *bytes = serde_json::json!(format!("<base64 {} chars>", s.len()));
                             }
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 ),
                                 &format!(
                                     "Bedrock image block: {}",
@@ -1603,10 +1603,10 @@ impl ModelProvider for BedrockModelProvider {
         let response = self.send_converse_request(&auth, model, &request).await?;
 
         Self::parse_converse_response(response).text.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "bedrock: empty text in response"
             );
             anyhow::Error::msg("No response from Bedrock")
@@ -1671,9 +1671,9 @@ impl ModelProvider for BedrockModelProvider {
             .thinking
         {
             Some(params) if bedrock_model_supports_native_thinking(model) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"budget_tokens": params.budget_tokens})),
                     "Bedrock native extended thinking enabled; forcing temperature=1.0"
                 );
@@ -1688,9 +1688,9 @@ impl ModelProvider for BedrockModelProvider {
                 (Some(1.0), Some(fields), max_tokens)
             }
             Some(_) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"model": model})),
                     "Native extended thinking requested but model only supports adaptive thinking; falling back to prompt-based reasoning"
                 );

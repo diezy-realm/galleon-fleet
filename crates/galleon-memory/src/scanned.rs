@@ -172,9 +172,9 @@ impl<M: Memory> ScannedMemory<M> {
                         .map(|hit| hit.category.to_string())
                         .collect::<Vec<_>>()
                         .join(",");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({
                                 "key": key,
                                 "namespace": namespace,
@@ -197,10 +197,10 @@ impl<M: Memory> ScannedMemory<M> {
                     .map(|finding| finding.kind.to_string())
                     .collect::<Vec<_>>()
                     .join(",");
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                                 "key": key,
                                 "namespace": namespace,
@@ -230,10 +230,10 @@ impl<M: Memory> ScannedMemory<M> {
         if let Err(error) =
             crate::policy_gate::validate_store(&self.inner, &enforcer, namespace, category).await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "key": key,
                         "namespace": namespace,
@@ -257,10 +257,10 @@ impl<M: Memory> ScannedMemory<M> {
             .map(|finding| finding.kind.to_string())
             .collect::<Vec<_>>()
             .join(",");
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "key": entry.key,
                     "kinds": kinds,

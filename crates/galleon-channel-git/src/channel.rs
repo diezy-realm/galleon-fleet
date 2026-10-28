@@ -65,9 +65,9 @@ fn warn_on_loose_permissions(path: &str) {
         return;
     };
     if meta.mode() & 0o077 != 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"path": path})),
             "GitHub App private key is readable by group/other; chmod 600 recommended"
         );
@@ -234,11 +234,11 @@ impl GitChannel {
                 match RepoRef::parse(entry) {
                     Some(repo) => repos.push(repo),
                     None => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"entry": entry})),
                             "ignoring malformed `repos` entry (expected owner/repo)"
@@ -362,9 +362,9 @@ impl GitChannel {
                 events::event_to_message(&event, filter, CHANNEL_KEY, &self.alias, true)
             }
             RouteAction::Sop { sop } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "sop": sop,
                             "event_type": event.event_type(),
@@ -391,17 +391,17 @@ impl GitChannel {
             // ingress" followed by nothing. Repeats stay DEBUG so a busy public
             // repo cannot turn this into log spam.
             if self.warned_unauthorized.lock().insert(msg.sender.clone()) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"sender": msg.sender})),
                     "git channel dropping events from sender outside the peer \
                      allowlist (repeats for this sender log at DEBUG)"
                 );
             } else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"sender": msg.sender})),
                     "ignoring git event from unauthorized user"
                 );
@@ -466,9 +466,9 @@ impl Channel for GitChannel {
         let interval = Duration::from_secs(self.cfg.poll_interval_secs.max(MIN_POLL_INTERVAL_SECS));
 
         for problem in router::validate_routes(&self.cfg.events) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"problem": problem})),
                 "git channel `events` routing entry can never fire"
             );
@@ -481,9 +481,9 @@ impl Channel for GitChannel {
         // was a DEBUG line per event. Resolved once here for the diagnostic;
         // per-event checks still resolve live.
         if (self.peer_resolver)().is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"alias": self.alias})),
                 "git channel peer allowlist resolves to EMPTY: every inbound event \
                  will be dropped; add a [peer_groups.<name>] with channel = \"git\" \
@@ -491,9 +491,9 @@ impl Channel for GitChannel {
             );
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "provider": self.provider.name(),
                     "bot": mention_handle,
@@ -545,11 +545,11 @@ impl Channel for GitChannel {
                             // Jitter so multiple repos/instances don't
                             // stampede the moment the window resets.
                             + Duration::from_millis(u64::from(rand::random::<u16>()) % 5_000);
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"wait_secs": wait.as_secs()})),
                             "git provider rate limited; backing off"
@@ -558,13 +558,13 @@ impl Channel for GitChannel {
                         break;
                     }
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "repo": repo.to_string(),
                                 "error": e.to_string(),

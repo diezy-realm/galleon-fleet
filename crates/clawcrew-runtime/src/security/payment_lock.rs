@@ -135,10 +135,10 @@ impl PaymentLockManager {
 
         // Emit audit record (BL-44)
         let now_str = chrono::Utc::now().to_rfc3339();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Success)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Success)
                 .with_attrs(::serde_json::json!({
                     "audit_event": "PaymentLockTransition",
                     "actor": actor,
@@ -165,10 +165,10 @@ impl PaymentLockManager {
         cfg.unlock_expires_at = None;
 
         let now_str = chrono::Utc::now().to_rfc3339();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Success)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Success)
                 .with_attrs(::serde_json::json!({
                     "audit_event": "PaymentLockTransition",
                     "actor": actor,

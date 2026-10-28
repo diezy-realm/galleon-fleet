@@ -92,9 +92,9 @@ impl ApprovalRouteAdapter for NoopRouteAdapter {
         notice: &GateNotice<'_>,
     ) -> anyhow::Result<()> {
         let (run_id, sop_name, step) = (notice.run_id, notice.sop_name, notice.step);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "notice_kind": kind.label(), "route": route, "run_id": run_id,
                     "sop_name": sop_name, "step": step
@@ -241,10 +241,10 @@ impl ApprovalBroker {
             .route
             .deliver(ApprovalNoticeKind::Escalation, route, notice)
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "route": route, "run_id": run_id, "error": e.to_string()
                     })),
@@ -303,10 +303,10 @@ impl ApprovalBroker {
             .route
             .deliver(ApprovalNoticeKind::Request, route, notice)
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "route": route, "run_id": run_id, "error": e.to_string()
                     })),

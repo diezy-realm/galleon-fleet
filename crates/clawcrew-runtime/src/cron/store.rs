@@ -396,11 +396,11 @@ pub fn remove_job_for_agent(config: &Config, id: &str, agent_alias: &str) -> Res
         anyhow::bail!("Cron job '{id}' not found");
     }
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Delete)
-            .with_category(::clawcrew_log::EventCategory::Cron)
-            .with_outcome(::clawcrew_log::EventOutcome::Success)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Delete)
+            .with_category(::galleon_log::EventCategory::Cron)
+            .with_outcome(::galleon_log::EventOutcome::Success)
             .with_attrs(::serde_json::json!({"job_id": id, "agent_alias": agent_alias})),
         "Removed cron job"
     );
@@ -417,11 +417,11 @@ pub fn remove_job(config: &Config, id: &str) -> Result<()> {
         anyhow::bail!("Cron job '{id}' not found");
     }
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Delete)
-            .with_category(::clawcrew_log::EventCategory::Cron)
-            .with_outcome(::clawcrew_log::EventOutcome::Success)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Delete)
+            .with_category(::galleon_log::EventCategory::Cron)
+            .with_outcome(::galleon_log::EventOutcome::Success)
             .with_attrs(::serde_json::json!({"job_id": id})),
         "Removed cron job"
     );
@@ -504,13 +504,13 @@ pub fn due_jobs(config: &Config, now: DateTime<Utc>) -> Result<Vec<CronJob>> {
             match row {
                 Ok(mut job) => {
                     if job.source == "declarative" && !is_valid_declarative_owner(config, &job.id) {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"job_id": job.id})),
                             "Skipping orphaned declarative cron job not present in live config"
                         );
@@ -519,10 +519,10 @@ pub fn due_jobs(config: &Config, now: DateTime<Utc>) -> Result<Vec<CronJob>> {
                     resolve_declarative_shell_output_format(config, &mut job);
                     jobs.push(job);
                 }
-                Err(e) => ::clawcrew_log::record!(
+                Err(e) => ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Skipping cron job with unparseable row data"
                 ),
@@ -555,13 +555,13 @@ pub fn all_overdue_jobs(config: &Config, now: DateTime<Utc>) -> Result<Vec<CronJ
             match row {
                 Ok(mut job) => {
                     if job.source == "declarative" && !is_valid_declarative_owner(config, &job.id) {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"job_id": job.id})),
                             "Skipping orphaned declarative cron job not present in live config"
                         );
@@ -570,10 +570,10 @@ pub fn all_overdue_jobs(config: &Config, now: DateTime<Utc>) -> Result<Vec<CronJ
                     resolve_declarative_shell_output_format(config, &mut job);
                     jobs.push(job);
                 }
-                Err(e) => ::clawcrew_log::record!(
+                Err(e) => ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Skipping cron job with unparseable row data"
                 ),
@@ -1512,9 +1512,9 @@ pub fn sync_declarative_jobs(
                 .execute("DELETE FROM cron_jobs WHERE source = 'declarative'", [])
                 .context("Failed to remove stale declarative cron jobs")?;
             if deleted > 0 {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"count": deleted})),
                     "Removed declarative cron jobs no longer in config"
                 );
@@ -1550,9 +1550,9 @@ pub fn sync_declarative_jobs(
                         .with_context(|| {
                             format!("Failed to remove stale declarative cron job '{db_id}'")
                         })?;
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"job_id": db_id})),
                         "Removed declarative cron job no longer in config"
                     );
@@ -1660,9 +1660,9 @@ pub fn sync_declarative_jobs(
                     .with_context(|| format!("Failed to update declarative cron job '{id}'"))?;
                 }
 
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"job_id": id})),
                     "Updated declarative cron job"
                 );
@@ -1672,10 +1672,10 @@ pub fn sync_declarative_jobs(
                 // entries that no agent claims are skipped with a warning
                 // rather than silently bound to a magic alias.
                 let Some(agent_alias) = config.agent_for_cron_job(id) else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"job_id": id})),
                         "Skipping declarative cron job: no [agents.<x>].cron_jobs entry claims this id"
                     );
@@ -1712,9 +1712,9 @@ pub fn sync_declarative_jobs(
                     format!("Failed to insert declarative cron job '{id}'")
                 })?;
 
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"job_id": id})),
                     "Inserted declarative cron job from config"
                 );
@@ -1823,9 +1823,9 @@ fn add_column_if_missing(conn: &Connection, name: &str, sql_type: &str) -> Resul
         Err(rusqlite::Error::SqliteFailure(err, Some(ref msg)))
             if msg.contains("duplicate column name") =>
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"error": format!("{}", err), "name": name})),
                 "Column cron_jobs. already exists (concurrent migration)"
             );
@@ -2843,10 +2843,10 @@ mod tests {
     #[allow(clippy::await_holding_lock)]
     #[tokio::test]
     async fn remove_job_emits_structured_cron_delete_event() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let tmp = TempDir::new().unwrap();

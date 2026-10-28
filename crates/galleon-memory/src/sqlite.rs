@@ -363,9 +363,9 @@ impl SqliteMemory {
         }
 
         if rewritten > 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"rewritten": rewritten})),
                 "Normalized session_id values in memories table to sanitized form"
             );
@@ -386,10 +386,10 @@ impl SqliteMemory {
         let embedding_bytes = match self.get_or_compute_embedding(content).await {
             Ok(emb) => emb.map(|emb| vector::vec_to_bytes(&emb)),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "key": key,
                             "error": format!("{e}"),
@@ -1443,10 +1443,10 @@ impl SqliteMemory {
         // of returning a stale vector. Best-effort - a cache-clear failure must
         // not block the swap.
         if let Err(e) = self.conn.lock().execute("DELETE FROM embedding_cache", []) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": e.to_string()})),
                 "memory embedder refresh: failed to clear stale embedding cache"
             );

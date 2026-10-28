@@ -521,10 +521,10 @@ impl WhatsAppWebChannel {
         if galleon_config::schema::whatsapp_empty_group_list_is_newly_closed(&mode, &group_policy)
             && allowed_groups_resolver().is_empty()
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "group_policy": format!("{group_policy:?}"),
                         "mode": format!("{mode:?}"),
@@ -542,10 +542,10 @@ impl WhatsAppWebChannel {
         }
 
         if mention_only && bot_phone.is_none() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "mention_only enabled but pair_phone not set. \
                 Bot identity will be resolved after connection. Group messages \
                 will be skipped until identity is known."
@@ -911,9 +911,9 @@ impl WhatsAppWebChannel {
         if context.mode == galleon_config::schema::WhatsAppWebMode::Business
             && info.source.is_from_me
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"chat": chat, "sender": sender})),
                 "ignoring fromMe delivery mirror in business mode"
             );
@@ -952,9 +952,9 @@ impl WhatsAppWebChannel {
             .await
             {
                 Ok(()) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"chat": reply_target})),
                         "approval reply accepted"
                     );
@@ -965,10 +965,10 @@ impl WhatsAppWebChannel {
                     // a bare 6-char word plus "yes" is plausible conversation.
                 }
                 Err(refusal) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "denial": format!("{:?}", refusal),
                                 "chat": reply_target,
@@ -983,9 +983,9 @@ impl WhatsAppWebChannel {
 
         let allowed_groups = (context.allowed_groups_resolver)();
         if is_group && !is_group_chat_allowed(&chat, &allowed_groups, &context.group_policy) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({ "chat": chat })),
                 "dropping group message: chat not in allowed_groups"
             );
@@ -1001,9 +1001,9 @@ impl WhatsAppWebChannel {
         let operator_self_chat = self_chat == SelfChatVerdict::Admitted;
         if context.mode == galleon_config::schema::WhatsAppWebMode::Personal {
             if self_chat == SelfChatVerdict::Disabled {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "ignoring self-chat message (self_chat_mode=false)"
                 );
                 return;
@@ -1017,9 +1017,9 @@ impl WhatsAppWebChannel {
                     msg.text_content().unwrap_or(""),
                 )
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"chat": chat, "sender": sender})),
                     "ignoring fromMe message outside self-chat thread (chat=, sender=)"
                 );
@@ -1042,27 +1042,27 @@ impl WhatsAppWebChannel {
         ) {
             ChatPolicyDecision::Admit => {}
             ChatPolicyDecision::DropGroupIgnored => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "ignoring group message (group_policy=ignore)"
                 );
                 return;
             }
             ChatPolicyDecision::DropDmIgnored => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "ignoring DM (dm_policy=ignore)"
                 );
                 return;
             }
             ChatPolicyDecision::DropUnrecognizedSender => {
                 let lid_diag = Self::lid_rejection_diagnostic(&sender_jid, mapped_phone.as_deref());
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "message from unrecognized sender not in allowed list (candidates_count={}){}",
                         sender_candidates.len(),
@@ -1079,9 +1079,9 @@ impl WhatsAppWebChannel {
         let text_content = msg.text_content().unwrap_or("").trim().to_string();
         let mut content = Self::media_fallback_content(text_content, msg);
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "WhatsApp Web message received (sender_len={}, chat_len={}, content_len={})",
                 sender.len(),
@@ -1089,9 +1089,9 @@ impl WhatsAppWebChannel {
                 content.len()
             )
         );
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("WhatsApp Web message content: {}", content)
         );
 
@@ -1109,17 +1109,17 @@ impl WhatsAppWebChannel {
                 ) {
                     passive_context = true;
                 } else if !addressed {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "ignoring group message not addressed to bot"
                     );
                     return;
                 }
             } else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "mention_only active but bot identity unknown, skipping group msg"
                 );
                 return;
@@ -1145,9 +1145,9 @@ impl WhatsAppWebChannel {
 
         if passive_context {
             if content.is_empty() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!("ignoring empty passive group context from {}", normalized)
                 );
                 return;
@@ -1181,9 +1181,9 @@ impl WhatsAppWebChannel {
                 )
                 .await
             } else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!("ignoring non-PTT audio message from {}", normalized)
                 );
                 None
@@ -1203,9 +1203,9 @@ impl WhatsAppWebChannel {
         content = Self::media_fallback_content(content, msg);
 
         if content.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!("ignoring empty or non-text message from {}", normalized)
             );
             return;
@@ -1220,9 +1220,9 @@ impl WhatsAppWebChannel {
             ) {
                 Some(c) => c,
                 None => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"normalized": normalized})),
                         "message from did not match mention patterns, dropping"
                     );
@@ -1296,10 +1296,10 @@ impl WhatsAppWebChannel {
         }
 
         let qr = qrcode::QrCode::new(payload.as_bytes()).map_err(|err| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                 "Failed to encode WhatsApp Web QR payload"
             );
@@ -1321,10 +1321,10 @@ impl WhatsAppWebChannel {
 
         if trimmed.contains('@') {
             return trimmed.parse::<wacore_binary::jid::Jid>().map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "trimmed": trimmed,
                             "error": format!("{}", e),
@@ -1451,9 +1451,9 @@ impl WhatsAppWebChannel {
         if let Some(seconds) = audio.seconds
             && u64::from(seconds) > config.max_duration_secs
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "skipping voice note ({}s exceeds {}s limit)",
                     seconds, config.max_duration_secs
@@ -1467,10 +1467,10 @@ impl WhatsAppWebChannel {
         let audio_data = match client.download(audio as &dyn Downloadable).await {
             Ok(data) => data,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "failed to download voice note"
                 );
@@ -1487,9 +1487,9 @@ impl WhatsAppWebChannel {
             _ => "voice.ogg", // WhatsApp default
         };
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "transcribing voice note ({} bytes, file={})",
                 audio_data.len(),
@@ -1499,26 +1499,26 @@ impl WhatsAppWebChannel {
 
         match manager.transcribe(&audio_data, file_name).await {
             Ok(text) if text.trim().is_empty() => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "voice transcription returned empty text, skipping"
                 );
                 None
             }
             Ok(text) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!("voice note transcribed ({} chars)", text.len())
                 );
                 Some(text)
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "voice transcription failed"
                 );
@@ -1611,10 +1611,10 @@ impl WhatsAppWebChannel {
         let data = match client.download(downloadable).await {
             Ok(data) => data,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "file": file_name,
                             "error": format!("{}", e),
@@ -1821,10 +1821,10 @@ impl WhatsAppWebChannel {
             })
             .await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "failed to send message to channel"
             );
@@ -1841,9 +1841,9 @@ impl WhatsAppWebChannel {
     ) -> Result<()> {
         let audio_bytes = tts_manager.synthesize_opus(text).await?;
         let audio_len = audio_bytes.len();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("TTS: synthesized {} bytes of audio", audio_len)
         );
 
@@ -1857,19 +1857,19 @@ impl WhatsAppWebChannel {
             .upload(audio_bytes, MediaType::Audio, UploadOptions::default())
             .await
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Failed to upload TTS audio"
                 );
                 anyhow::Error::msg(format!("Failed to upload TTS audio: {e}"))
             })?;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "TTS: uploaded audio (url_len={}, file_length={})",
                 upload.url.len(),
@@ -1907,18 +1907,18 @@ impl WhatsAppWebChannel {
         Box::pin(client.send_message(to.clone(), voice_msg))
             .await
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Failed to send voice note"
                 );
                 anyhow::Error::msg(format!("Failed to send voice note: {e}"))
             })?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "TTS: sent voice note ({} bytes, ~{}s)",
                 audio_len, estimated_seconds
@@ -2530,10 +2530,10 @@ fn validate_whatsapp_marker_target(
         None
     };
     if let Some(scheme) = disallowed_scheme {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"scheme": scheme})),
             "whatsapp-web: marker target uses disallowed scheme"
         );
@@ -2543,10 +2543,10 @@ fn validate_whatsapp_marker_target(
     }
 
     let workspace = workspace_dir.ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"reason": "no_workspace_dir"})),
             "whatsapp-web: local marker target has no workspace_dir"
         );
@@ -2566,10 +2566,10 @@ fn validate_whatsapp_marker_target(
     let target_canon = match std::fs::canonicalize(&absolute) {
         Ok(path) => path,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"reason": "not_found"})),
                 "whatsapp-web: marker target not found on disk"
             );
@@ -2585,10 +2585,10 @@ fn validate_whatsapp_marker_target(
     };
 
     if !target_canon.starts_with(&workspace_canon) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"reason": "outside_workspace"})),
             "whatsapp-web: marker target escapes workspace_dir"
         );
@@ -2604,10 +2604,10 @@ fn validate_whatsapp_location_target(
     target: &str,
 ) -> std::result::Result<WhatsAppLocation, WhatsAppMarkerError> {
     WhatsAppLocation::parse(target).ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"reason": "invalid_location"})),
             "whatsapp-web: location marker target is malformed or outside WGS84 range"
         );
@@ -2671,10 +2671,10 @@ impl Channel for WhatsAppWebChannel {
         if !Self::is_jid(&message.recipient) {
             let normalized = self.normalize_phone(&message.recipient);
             if !self.is_number_allowed(&normalized) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!("recipient {} not in allowed list", message.recipient)
                 );
                 return Ok(());
@@ -2730,9 +2730,9 @@ impl Channel for WhatsAppWebChannel {
             if let Some(reason) = skip_reason {
                 // Stable literal per the logging contract: the classification
                 // and per-event measurements ride solely in `attributes` above.
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Skip)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Skip)
                         .with_attrs(::serde_json::json!({
                             "recipient": message.recipient,
                             "reason": reason,
@@ -2783,23 +2783,23 @@ impl Channel for WhatsAppWebChannel {
                         .await
                         {
                             Ok(()) => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     INFO,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     ),
                                     &format!("voice reply sent ({} chars)", text.len())
                                 );
                             }
                             Err(e) => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                     "TTS voice reply failed"
                                 );
@@ -2823,13 +2823,13 @@ impl Channel for WhatsAppWebChannel {
                     match validate_whatsapp_location_target(target) {
                         Ok(loc) => Self::send_location(&client, &to, &loc).await,
                         Err(err) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({
                                     "kind": "Location",
                                     "reason": "invalid coordinates",
@@ -2853,13 +2853,13 @@ impl Channel for WhatsAppWebChannel {
                                 WhatsAppMarkerFailure::Refused => "trust boundary",
                                 WhatsAppMarkerFailure::Failed => "not found",
                             };
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({
                                     "kind": format!("{:?}", media.kind),
                                     "reason": reason,
@@ -2877,10 +2877,10 @@ impl Channel for WhatsAppWebChannel {
             match result {
                 Ok(()) => delivered_markers += 1,
                 Err(err) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "kind": marker.kind_label(),
                                 "error": err.to_string(),
@@ -2916,9 +2916,9 @@ impl Channel for WhatsAppWebChannel {
         // whatsapp-rust 0.6: send_message returns `SendResult { message_id, to }`
         // instead of a bare `String` (oxidezap/whatsapp-rust
         let send_result = Box::pin(client.send_message(to, outgoing)).await?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "sent text to {} (id: {})",
                 message.recipient, send_result.message_id
@@ -2951,9 +2951,9 @@ impl Channel for WhatsAppWebChannel {
         loop {
             let expanded_session_path = Self::expand_session_path(&self.session_path);
 
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!("channel starting (session: {})", expanded_session_path)
             );
 
@@ -2964,9 +2964,9 @@ impl Channel for WhatsAppWebChannel {
             // Check if we have a saved device to load
             let mut device = Device::new(backend.clone());
             if backend.exists().await? {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "found existing session, loading device"
                 );
                 if let Some(core_device) = backend.load().await? {
@@ -2977,25 +2977,25 @@ impl Channel for WhatsAppWebChannel {
                 if let Some(ref pn) = device.pn
                     && let Some(digits) = Self::store_jid_digits(&self.bot_phone, pn.user())
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!("pre-resolved bot phone from saved session: +{}", digits)
                     );
                 }
                 if let Some(ref lid) = device.lid
                     && let Some(digits) = Self::store_jid_digits(&self.bot_lid, lid.user())
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!("pre-resolved bot LID from saved session: {}", digits)
                     );
                 }
             } else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "no existing session, new device will be created during pairing"
                 );
             };
@@ -3096,13 +3096,13 @@ impl Channel for WhatsAppWebChannel {
                                         && let Some(digits) =
                                             Self::store_jid_digits(&bot_phone_inner, pn.user())
                                     {
-                                        ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), &format!("resolved bot identity from device: +{}", digits));
+                                        ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), &format!("resolved bot identity from device: +{}", digits));
                                     }
                                     if let Some(ref lid) = device.lid
                                         && let Some(digits) =
                                             Self::store_jid_digits(&bot_lid_inner, lid.user())
                                     {
-                                        ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), &format!("resolved bot LID from device: {}", digits));
+                                        ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), &format!("resolved bot LID from device: {}", digits));
                                     }
                                 }
                                 // `Bot::builder().with_push_name()` is not used: it writes
@@ -3117,10 +3117,10 @@ impl Channel for WhatsAppWebChannel {
                                 ) {
                                     match client.profile().set_push_name(desired).await {
                                         Ok(()) => {
-                                            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), &format!("set WhatsApp push name (configured len={}, previous len={})", desired.len(), device.push_name.len()));
+                                            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), &format!("set WhatsApp push name (configured len={}, previous len={})", desired.len(), device.push_name.len()));
                                         }
                                         Err(e) => {
-                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), &format!("failed to set WhatsApp push name (configured len={}); keeping the account's current name: {e}", desired.len()));
+                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), &format!("failed to set WhatsApp push name (configured len={}); keeping the account's current name: {e}", desired.len()));
                                         }
                                     }
                                 }
@@ -3141,7 +3141,7 @@ impl Channel for WhatsAppWebChannel {
                                             )
                                             .await
                                     {
-                                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), &format!("failed to persist linked WhatsApp identity: {e}"));
+                                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), &format!("failed to persist linked WhatsApp identity: {e}"));
                                     }
                                 }
                             }
@@ -3155,7 +3155,7 @@ impl Channel for WhatsAppWebChannel {
                                 let _ = logout_tx.send(());
                             }
                             Event::StreamError(stream_error) => {
-                                ::clawcrew_log::record!(ERROR, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_outcome(::clawcrew_log::EventOutcome::Failure), &format!("stream error: {:?}", stream_error));
+                                ::galleon_log::record!(ERROR, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_outcome(::galleon_log::EventOutcome::Failure), &format!("stream error: {:?}", stream_error));
                             }
                             Event::PairingCode(pairing) => {
                                 let code = &pairing.code;
@@ -3192,7 +3192,7 @@ impl Channel for WhatsAppWebChannel {
                                         eprintln!();
                                     }
                                     Err(err) => {
-                                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), &format!("failed to render pairing QR in terminal: {}", err));
+                                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), &format!("failed to render pairing QR in terminal: {}", err));
                                         eprintln!();
                                         eprintln!("WhatsApp Web QR payload: {code}");
                                         eprintln!();
@@ -3206,9 +3206,9 @@ impl Channel for WhatsAppWebChannel {
 
             // Configure pair-code flow when a phone number is provided.
             if let Some(ref phone) = self.pair_phone {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "pair-code flow enabled for configured phone number"
                 );
                 let options = PairCodeOptions {
@@ -3244,10 +3244,10 @@ impl Channel for WhatsAppWebChannel {
                         }
                     });
             } else if self.pair_code.is_some() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "pair_code is set but pair_phone is missing; pair code config is ignored"
                 );
             }
@@ -3274,7 +3274,7 @@ impl Channel for WhatsAppWebChannel {
                     true
                 }
                 _ = tokio::signal::ctrl_c() => {
-                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "channel received Ctrl+C");
+                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "channel received Ctrl+C");
                     false
                 }
             };
@@ -3290,10 +3290,10 @@ impl Channel for WhatsAppWebChannel {
                     .await
                     .is_err()
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail,)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail,)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "graceful WhatsApp Web shutdown timed out; bot task aborted"
                     );
                 }
@@ -3319,35 +3319,35 @@ impl Channel for WhatsAppWebChannel {
                         match tokio::fs::remove_file(&path).await {
                             Ok(()) => {}
                             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-                            Err(e) => ::clawcrew_log::record!(
+                            Err(e) => ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                                 &format!("failed to remove session file {}: {e}", path)
                             ),
                         }
                     }
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "session files removed, restarting for QR pairing"
                     );
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "bot stopped without LoggedOut; reconnecting with existing session"
                     );
                 }
 
                 let delay = Self::compute_retry_delay(attempts);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!(
                         "reconnecting in {}s (attempt {}/{})",
                         delay,
@@ -3379,10 +3379,10 @@ impl Channel for WhatsAppWebChannel {
         if !Self::is_jid(recipient) {
             let normalized = self.normalize_phone(recipient);
             if !self.is_number_allowed(&normalized) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!("typing target {} not in allowed list", recipient)
                 );
                 return Ok(());
@@ -3392,19 +3392,19 @@ impl Channel for WhatsAppWebChannel {
         let deliverable_recipient = Self::resolve_outbound_recipient(recipient);
         let to = self.recipient_to_jid(&deliverable_recipient)?;
         client.chatstate().send_composing(&to).await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Failed to send typing state (composing)"
             );
             anyhow::Error::msg(format!("Failed to send typing state (composing): {e}"))
         })?;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("start typing for {}", recipient)
         );
         Ok(())
@@ -3419,10 +3419,10 @@ impl Channel for WhatsAppWebChannel {
         if !Self::is_jid(recipient) {
             let normalized = self.normalize_phone(recipient);
             if !self.is_number_allowed(&normalized) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!("typing target {} not in allowed list", recipient)
                 );
                 return Ok(());
@@ -3432,19 +3432,19 @@ impl Channel for WhatsAppWebChannel {
         let deliverable_recipient = Self::resolve_outbound_recipient(recipient);
         let to = self.recipient_to_jid(&deliverable_recipient)?;
         client.chatstate().send_paused(&to).await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Failed to send typing state (paused)"
             );
             anyhow::Error::msg(format!("Failed to send typing state (paused): {e}"))
         })?;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("stop typing for {}", recipient)
         );
         Ok(())
@@ -3541,10 +3541,10 @@ impl Channel for WhatsAppWebChannel {
                 // branch above: by the time this fires, the entry may already
                 // belong to a different request that reused the code.
                 remove_pending_approval_if_matches(&token, guard.registration_id).await;
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "tool": request.tool_name,
                             "timeout_secs": self.approval_timeout_secs,

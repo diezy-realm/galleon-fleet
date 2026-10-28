@@ -210,9 +210,9 @@ pub async fn run_peer_discovery(
     let mut buf = [0u8; MAX_DATAGRAM];
     let mut last_receive_error_log = None;
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "node_name": node_name,
                 "instance_id": instance_id,
@@ -242,10 +242,10 @@ pub async fn run_peer_discovery(
                     }
                     Err(err) => {
                         if should_log_receive_error(&mut last_receive_error_log, Instant::now()) {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                                    .with_outcome(::galleon_log::EventOutcome::Failure)
                                     .with_attrs(::serde_json::json!({"error": format!("{err}")})),
                                 "LAN peer discovery receive failed; retrying with backoff"
                             );
@@ -313,20 +313,20 @@ async fn broadcast_announcement(
         Ok(payload) => {
             let dest = SocketAddrV4::new(LAN_DISCOVERY_GROUP, DISCOVERY_PORT);
             if let Err(err) = socket.send_to(&payload, dest).await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{err}")})),
                     "LAN peer discovery announcement send failed"
                 );
             }
         }
         Err(err) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{err}")})),
                 "LAN peer discovery announcement serialization failed"
             );
@@ -340,20 +340,20 @@ async fn broadcast_bye(socket: &UdpSocket, id: &str) {
         Ok(payload) => {
             let dest = SocketAddrV4::new(LAN_DISCOVERY_GROUP, DISCOVERY_PORT);
             if let Err(err) = socket.send_to(&payload, dest).await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{err}")})),
                     "LAN peer discovery goodbye send failed"
                 );
             }
         }
         Err(err) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{err}")})),
                 "LAN peer discovery goodbye serialization failed"
             );

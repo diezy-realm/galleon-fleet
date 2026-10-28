@@ -414,10 +414,10 @@ impl AcpServer {
     /// Run the ACP server, reading JSON-RPC requests from stdin and writing
     /// responses/notifications to stdout.
     pub async fn run(self: Arc<Self>) -> Result<()> {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_category(::clawcrew_log::EventCategory::Channel),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_category(::galleon_log::EventCategory::Channel),
             &format!(
                 "ACP server starting (max_sessions={}, timeout={}s)",
                 self.acp_config.max_sessions, self.acp_config.session_timeout_secs
@@ -433,11 +433,11 @@ impl AcpServer {
             .unwrap_or_else(|e| e.into_inner())
             .take()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "ACP server writer already started"
                 );
                 anyhow::Error::msg("ACP server writer already started")
@@ -460,13 +460,13 @@ impl AcpServer {
                         Ok(session) => {
                             let expired = session.last_active.elapsed() > timeout;
                             if expired {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     DEBUG,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_category(::clawcrew_log::EventCategory::Channel)
+                                    .with_category(::galleon_log::EventCategory::Channel)
                                     .with_attrs(
                                         ::serde_json::json!({
                                             "id": id,
@@ -485,10 +485,10 @@ impl AcpServer {
                 });
                 let reaped = before - sessions.len();
                 if reaped > 0 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_category(::clawcrew_log::EventCategory::Channel)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_category(::galleon_log::EventCategory::Channel)
                             .with_attrs(::serde_json::json!({"reaped": reaped})),
                         "Reaped expired session(s)"
                     );
@@ -501,10 +501,10 @@ impl AcpServer {
         // framing loop with an in-memory pipe instead of the stdin handle.
         self.serve_reader(tokio::io::stdin()).await?;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_category(::clawcrew_log::EventCategory::Channel),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_category(::galleon_log::EventCategory::Channel),
             "ACP server: stdin closed, shutting down"
         );
 
@@ -538,10 +538,10 @@ impl AcpServer {
     }
 
     pub async fn run_messages(self: Arc<Self>, mut input_rx: mpsc::Receiver<String>) -> Result<()> {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_category(::clawcrew_log::EventCategory::Channel),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_category(::galleon_log::EventCategory::Channel),
             "ACP server starting (WebSocket/framed mode)"
         );
         while let Some(line) = input_rx.recv().await {
@@ -591,11 +591,11 @@ impl AcpServer {
                 });
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Failed to parse JSON-RPC request"
                 );
@@ -620,11 +620,11 @@ impl AcpServer {
             "session/cancel" => self.handle_session_cancel(&request.params).await,
             "session/event" | "session/update" => self.handle_session_event(&request.params).await,
             _ => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"method": request.method})),
                     "ACP method not found"
                 );
@@ -641,11 +641,11 @@ impl AcpServer {
             match result {
                 Ok(value) => self.write_result(id, value).await,
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_category(::clawcrew_log::EventCategory::Channel)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_category(::galleon_log::EventCategory::Channel)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "method": request.method,
                                 "error_code": e.code,
@@ -866,11 +866,11 @@ impl AcpServer {
             let sessions = self.sessions.lock().await;
             let mut loading = self.loading_sessions.lock().await;
             if sessions.len() + loading.len() >= self.acp_config.max_sessions {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "active": sessions.len(),
                             "loading": loading.len(),
@@ -922,21 +922,21 @@ impl AcpServer {
                 let error = galleon_security_scrub::scrub(
                     &galleon_providers::sanitize_api_error(&e.to_string()),
                 );
-                ::clawcrew_log::scope!(
+                ::galleon_log::scope!(
                     session_key: session_id.as_str(),
                     agent_alias: agent_alias.as_str(),
                     model_provider: model_provider.as_str(),
                     model: model.as_str(),
                     channel: "acp",
                     => async {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail,
+                                ::galleon_log::Action::Fail,
                             )
-                            .with_category(::clawcrew_log::EventCategory::Channel)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_category(::galleon_log::EventCategory::Channel)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "workspace_dir": workspace_dir,
                                 "error": error.as_str(),
@@ -1027,11 +1027,11 @@ impl AcpServer {
             .model_provider_for_agent(&agent_alias)
             .and_then(|mp| mp.model.clone())
             .unwrap_or_default();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Start)
-                .with_category(::clawcrew_log::EventCategory::Channel)
-                .with_outcome(::clawcrew_log::EventOutcome::Success)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Start)
+                .with_category(::galleon_log::EventCategory::Channel)
+                .with_outcome(::galleon_log::EventOutcome::Success)
                 .with_attrs(::serde_json::json!({
                     "session_id": session_id,
                     "workspace_dir": workspace_dir,
@@ -1082,11 +1082,11 @@ impl AcpServer {
             let sessions = self.sessions.lock().await;
             let mut loading = self.loading_sessions.lock().await;
             if sessions.len() + loading.len() >= self.acp_config.max_sessions {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "session_id": session_id,
                             "active": sessions.len(),
@@ -1105,11 +1105,11 @@ impl AcpServer {
                 });
             }
             if sessions.contains_key(&session_id) || loading.contains(&session_id) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"session_id": session_id})),
                     "ACP session/load rejected: session already active"
                 );
@@ -1194,11 +1194,11 @@ impl AcpServer {
         let (stored_messages, seed_pairs, repaired_tool_calls) =
             Self::sanitize_restored_history(data.messages);
         if repaired_tool_calls > 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Delete)
-                    .with_category(::clawcrew_log::EventCategory::Channel)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Delete)
+                    .with_category(::galleon_log::EventCategory::Channel)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "session_id": session_id,
                         "assistant_messages_repaired": repaired_tool_calls,
@@ -1355,11 +1355,11 @@ impl AcpServer {
             .model_provider_for_agent(&restore_alias)
             .and_then(|mp| mp.model.clone())
             .unwrap_or_default();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Start)
-                .with_category(::clawcrew_log::EventCategory::Channel)
-                .with_outcome(::clawcrew_log::EventOutcome::Success)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Start)
+                .with_category(::galleon_log::EventCategory::Channel)
+                .with_outcome(::galleon_log::EventOutcome::Success)
                 .with_attrs(::serde_json::json!({
                     "session_id": session_id,
                     "message_count": replayed_messages,
@@ -1401,11 +1401,11 @@ impl AcpServer {
             let sessions = self.sessions.lock().await;
             let mut loading = self.loading_sessions.lock().await;
             if sessions.len() + loading.len() >= self.acp_config.max_sessions {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "session_id": session_id,
                             "active": sessions.len(),
@@ -1424,11 +1424,11 @@ impl AcpServer {
                 });
             }
             if sessions.contains_key(&session_id) || loading.contains(&session_id) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"session_id": session_id})),
                     "ACP session/resume rejected: session already active"
                 );
@@ -1510,11 +1510,11 @@ impl AcpServer {
             .map(|(message, _)| message.clone())
             .collect();
         if repaired_tool_calls > 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Delete)
-                    .with_category(::clawcrew_log::EventCategory::Channel)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Delete)
+                    .with_category(::galleon_log::EventCategory::Channel)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "session_id": session_id,
                         "assistant_messages_repaired": repaired_tool_calls,
@@ -1619,11 +1619,11 @@ impl AcpServer {
             }
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Start)
-                .with_category(::clawcrew_log::EventCategory::Channel)
-                .with_outcome(::clawcrew_log::EventOutcome::Success)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Start)
+                .with_category(::galleon_log::EventCategory::Channel)
+                .with_outcome(::galleon_log::EventOutcome::Success)
                 .with_attrs(::serde_json::json!({
                     "session_id": session_id,
                     "agent_alias": restore_alias,
@@ -1654,10 +1654,10 @@ impl AcpServer {
             .cloned();
         if let Some(token) = token {
             token.cancel();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_category(::clawcrew_log::EventCategory::Channel)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_category(::galleon_log::EventCategory::Channel)
                     .with_attrs(::serde_json::json!({"session_id": session_id})),
                 "ACP session/close: cancelled active turn"
             );
@@ -1704,11 +1704,11 @@ impl AcpServer {
         let model_provider = session.model_provider.clone();
         let model = session.model.clone();
         session.agent.channel_handles().unregister_channel("acp");
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Complete)
-                .with_category(::clawcrew_log::EventCategory::Channel)
-                .with_outcome(::clawcrew_log::EventOutcome::Success)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Complete)
+                .with_category(::galleon_log::EventCategory::Channel)
+                .with_outcome(::galleon_log::EventOutcome::Success)
                 .with_attrs(::serde_json::json!({
                     "session_id": session_id,
                     "agent_alias": agent_alias,
@@ -1846,7 +1846,7 @@ impl AcpServer {
         let agent_alias_s = agent_alias.clone();
         let model_provider_s = model_provider.clone();
         let model_s = model.clone();
-        ::clawcrew_log::scope!(
+        ::galleon_log::scope!(
             agent_alias: agent_alias_s.as_str(),
             model_provider: model_provider_s.as_str(),
             model: model_s.as_str(),
@@ -1854,9 +1854,9 @@ impl AcpServer {
             channel: "acp",
         => async move {
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Start).with_category(::clawcrew_log::EventCategory::Channel)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Start).with_category(::galleon_log::EventCategory::Channel)
                 .with_attrs(::serde_json::json!({
                     "prompt_len": prompt.len(),
                 })),
@@ -1900,8 +1900,8 @@ impl AcpServer {
             });
             let span_session = session_id_for_task.clone();
             let result = {
-                use ::clawcrew_log::Instrument as _;
-                let span = ::clawcrew_log::info_span!(
+                use ::galleon_log::Instrument as _;
+                let span = ::galleon_log::info_span!(
                     target: "clawcrew_log_internal_scope",
                     "clawcrew_scope",
                     session_key = %span_session,
@@ -2039,10 +2039,10 @@ impl AcpServer {
                         let trim_breadcrumb = session.agent.history_has_trim_breadcrumb();
                         let degraded = session.agent.degrade_trailing_turn_media();
                         if degraded > 0 {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Write).with_category(::clawcrew_log::EventCategory::Channel)
-                                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Write).with_category(::galleon_log::EventCategory::Channel)
+                                    .with_outcome(::galleon_log::EventOutcome::Success)
                                     .with_attrs(::serde_json::json!({
                                         "session_id": persist_session_id,
                                         "degraded_image_refs": degraded,
@@ -2108,9 +2108,9 @@ impl AcpServer {
             match &event {
                 TurnEvent::ToolCall { id, name, args } => {
                     tool_call_count += 1;
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Start).with_category(::clawcrew_log::EventCategory::Channel)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Start).with_category(::galleon_log::EventCategory::Channel)
                             .with_attrs(::serde_json::json!({
                                 "tool_call_id": id,
                                 "tool": name,
@@ -2122,10 +2122,10 @@ impl AcpServer {
                 TurnEvent::ToolResult {
                     id, name, output, ..
                 } => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Complete).with_category(::clawcrew_log::EventCategory::Channel)
-                            .with_outcome(::clawcrew_log::EventOutcome::Success)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Complete).with_category(::galleon_log::EventCategory::Channel)
+                            .with_outcome(::galleon_log::EventOutcome::Success)
                             .with_attrs(::serde_json::json!({
                                 "tool_call_id": id,
                                 "tool": name,
@@ -2165,10 +2165,10 @@ impl AcpServer {
         let result_text = match outcome {
             TerminalOutcome::Success { response } => response,
             TerminalOutcome::Cancelled { persist_error } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Complete).with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Complete).with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "tool_calls": tool_call_count,
                             "stop_reason": "cancelled",
@@ -2196,10 +2196,10 @@ impl AcpServer {
                 mut rpc_error,
                 persist_error,
             } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "error": error,
                         })),
@@ -2235,21 +2235,21 @@ impl AcpServer {
                 Err(join) => Some(join.to_string()),
             };
             if let Some(detail) = error {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({ "error": detail })),
                     "Failed to persist TodoWrite plan; session continues in memory"
                 );
             }
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Complete).with_category(::clawcrew_log::EventCategory::Channel)
-                .with_outcome(::clawcrew_log::EventOutcome::Success)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Complete).with_category(::galleon_log::EventCategory::Channel)
+                .with_outcome(::galleon_log::EventOutcome::Success)
                 .with_attrs(::serde_json::json!({
                     "tool_calls": tool_call_count,
                     "response_len": result_text.len(),
@@ -2273,11 +2273,11 @@ impl AcpServer {
             .lock()
             .expect("cancel_tokens lock poisoned — invariant: all guarded critical sections are short, infallible HashMap ops");
         if tokens.contains_key(session_id) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_category(::clawcrew_log::EventCategory::Channel)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_category(::galleon_log::EventCategory::Channel)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"session_id": session_id})),
                 "ACP session/prompt rejected: session already has an active turn"
             );
@@ -2658,11 +2658,11 @@ impl AcpServer {
         match error {
             None => Ok(()),
             Some(detail) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "error": detail,
                         })),
@@ -2717,11 +2717,11 @@ impl AcpServer {
         match error {
             None => Ok(()),
             Some(detail) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "error": detail,
                         })),
@@ -2895,10 +2895,10 @@ impl AcpServer {
             .cloned();
         if let Some(token) = token {
             token.cancel();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_category(::clawcrew_log::EventCategory::Channel)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_category(::galleon_log::EventCategory::Channel)
                     .with_attrs(::serde_json::json!({"session_id": session_id})),
                 "ACP session/stop: cancelled active turn"
             );
@@ -2940,11 +2940,11 @@ impl AcpServer {
         // Drop the ACP back-channel from each tool's channel map so the
         // session's RpcOutbound clone isn't kept alive by stale entries.
         session.agent.channel_handles().unregister_channel("acp");
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Complete)
-                .with_category(::clawcrew_log::EventCategory::Channel)
-                .with_outcome(::clawcrew_log::EventOutcome::Success)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Complete)
+                .with_category(::galleon_log::EventCategory::Channel)
+                .with_outcome(::galleon_log::EventOutcome::Success)
                 .with_attrs(::serde_json::json!({
                     "session_id": session_id,
                     "agent_alias": agent_alias,
@@ -2985,10 +2985,10 @@ impl AcpServer {
 
         if let Some(token) = token {
             token.cancel();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_category(::clawcrew_log::EventCategory::Channel)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_category(::galleon_log::EventCategory::Channel)
                     .with_attrs(::serde_json::json!({"session_id": session_id})),
                 "ACP session/cancel: fired cancel token for active turn"
             );
@@ -3016,10 +3016,10 @@ impl AcpServer {
             .unwrap_or("unknown")
             .to_string();
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_category(::clawcrew_log::EventCategory::Channel)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_category(::galleon_log::EventCategory::Channel)
                 .with_attrs(
                     ::serde_json::json!({"event_type": event_type, "session_id": session_id})
                 ),
@@ -3085,21 +3085,21 @@ impl AcpServer {
         match serde_json::to_string(value) {
             Ok(json) => {
                 if !self.rpc.send_raw(json).await {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_category(::clawcrew_log::EventCategory::Channel)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_category(::galleon_log::EventCategory::Channel)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "ACP writer task closed; dropping outbound message"
                     );
                 }
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_category(::galleon_log::EventCategory::Channel)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Failed to serialize JSON-RPC message"
                 );
@@ -3115,33 +3115,33 @@ async fn writer_task(mut rx: mpsc::Receiver<String>) {
     let mut stdout = tokio::io::stdout();
     while let Some(line) = rx.recv().await {
         if let Err(e) = stdout.write_all(line.as_bytes()).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_category(::clawcrew_log::EventCategory::Channel)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_category(::galleon_log::EventCategory::Channel)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Failed to write to stdout"
             );
             continue;
         }
         if let Err(e) = stdout.write_all(b"\n").await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_category(::clawcrew_log::EventCategory::Channel)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_category(::galleon_log::EventCategory::Channel)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Failed to write newline to stdout"
             );
             continue;
         }
         if let Err(e) = stdout.flush().await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_category(::clawcrew_log::EventCategory::Channel)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_category(::galleon_log::EventCategory::Channel)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Failed to flush stdout"
             );
@@ -3327,10 +3327,10 @@ async fn persist_acp_usage_snapshot_ordered(
         Err(join) => Some(join.to_string()),
     };
     if let Some(error) = error {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Write,)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Write,)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "input_tokens": input_tokens,
                     "accepted": accepted,
@@ -4491,10 +4491,10 @@ mod tests {
     #[allow(clippy::await_holding_lock)]
     #[tokio::test]
     async fn session_new_agent_init_failure_log_is_attributed_and_redacted() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         const EXPOSED_PREFIX: &str = "sk-ant-z";

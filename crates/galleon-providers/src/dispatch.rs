@@ -597,10 +597,10 @@ impl ProviderDispatch {
         model: &str,
         temperature: Option<f64>,
     ) -> anyhow::Result<ChatResponse> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(&*self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(&*self.inner);
         accounted_chat_call(&*self.inner, model, async move {
-            clawcrew_log::scope!(
+            galleon_log::scope!(
                 model: model,
                 => self.inner.chat(request, model, temperature)
             )
@@ -654,13 +654,13 @@ impl ProviderDispatch {
         temperature: Option<f64>,
         options: StreamOptions,
     ) -> stream::BoxStream<'static, StreamResult<StreamEvent>> {
-        let attribution = clawcrew_log::attribution_span!(&*self.inner);
+        let attribution = galleon_log::attribution_span!(&*self.inner);
         // Enter the attribution span synchronously so the model_scope
         // info_span! constructs with attribution as its parent. Drop
         // the guard before returning; the attribution span lives on
         // via model_scope's parent pointer.
         let _attribution_enter = attribution.enter();
-        let model_scope = clawcrew_log::info_span!(
+        let model_scope = galleon_log::info_span!(
             target: "clawcrew_log_internal_scope",
             "clawcrew_scope",
             model = %model,
@@ -767,10 +767,10 @@ impl ProviderDispatch {
         model: &str,
         temperature: Option<f64>,
     ) -> anyhow::Result<String> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(&*self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(&*self.inner);
         accounted_string_call(&*self.inner, model, async move {
-            clawcrew_log::scope!(
+            galleon_log::scope!(
                 model: model,
                 => (*self.inner).simple_chat(message, model, temperature)
             )
@@ -788,10 +788,10 @@ impl ProviderDispatch {
         model: &str,
         temperature: Option<f64>,
     ) -> anyhow::Result<String> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(&*self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(&*self.inner);
         accounted_string_call(&*self.inner, model, async move {
-            clawcrew_log::scope!(
+            galleon_log::scope!(
                 model: model,
                 => self.inner.chat_with_system(system_prompt, message, model, temperature)
             )
@@ -808,10 +808,10 @@ impl ProviderDispatch {
         model: &str,
         temperature: Option<f64>,
     ) -> anyhow::Result<String> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(&*self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(&*self.inner);
         accounted_string_call(&*self.inner, model, async move {
-            clawcrew_log::scope!(
+            galleon_log::scope!(
                 model: model,
                 => self.inner.chat_with_history(messages, model, temperature)
             )
@@ -829,10 +829,10 @@ impl ProviderDispatch {
         model: &str,
         temperature: Option<f64>,
     ) -> anyhow::Result<ChatResponse> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(&*self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(&*self.inner);
         accounted_chat_call(&*self.inner, model, async move {
-            clawcrew_log::scope!(
+            galleon_log::scope!(
                 model: model,
                 => self.inner.chat_with_tools(messages, tools, model, temperature)
             )
@@ -867,16 +867,16 @@ impl ProviderDispatch {
     }
 
     pub async fn list_models(&self) -> anyhow::Result<Vec<String>> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(&*self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(&*self.inner);
         (*self.inner).list_models().instrument(span).await
     }
 
     /// Wrap the inner provider's `list_models_with_pricing`. Same
     /// `&*self.inner` rationale as `list_models`.
     pub async fn list_models_with_pricing(&self) -> anyhow::Result<Vec<ModelInfo>> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(&*self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(&*self.inner);
         (*self.inner)
             .list_models_with_pricing()
             .instrument(span)
@@ -886,8 +886,8 @@ impl ProviderDispatch {
     /// Wrap the inner provider's `warmup`. No `model` parameter, so
     /// attribution only.
     pub async fn warmup(&self) -> anyhow::Result<()> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(&*self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(&*self.inner);
         self.inner.warmup().instrument(span).await
     }
 }
@@ -901,10 +901,10 @@ impl<'a> ProviderDispatchRef<'a> {
         model: &str,
         temperature: Option<f64>,
     ) -> anyhow::Result<ChatResponse> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(self.inner);
         accounted_chat_call(self.inner, model, async move {
-            clawcrew_log::scope!(
+            galleon_log::scope!(
                 model: model,
                 => self.inner.chat(request, model, temperature)
             )
@@ -981,9 +981,9 @@ impl<'a> ProviderDispatchRef<'a> {
         temperature: Option<f64>,
         options: StreamOptions,
     ) -> stream::BoxStream<'static, StreamResult<StreamEvent>> {
-        let attribution = clawcrew_log::attribution_span!(self.inner);
+        let attribution = galleon_log::attribution_span!(self.inner);
         let _attribution_enter = attribution.enter();
-        let model_scope = clawcrew_log::info_span!(
+        let model_scope = galleon_log::info_span!(
             target: "clawcrew_log_internal_scope",
             "clawcrew_scope",
             model = %model,
@@ -1092,10 +1092,10 @@ impl<'a> ProviderDispatchRef<'a> {
         model: &str,
         temperature: Option<f64>,
     ) -> anyhow::Result<String> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(self.inner);
         accounted_string_call(self.inner, model, async move {
-            clawcrew_log::scope!(
+            galleon_log::scope!(
                 model: model,
                 => self.inner.simple_chat(message, model, temperature)
             )
@@ -1113,10 +1113,10 @@ impl<'a> ProviderDispatchRef<'a> {
         model: &str,
         temperature: Option<f64>,
     ) -> anyhow::Result<String> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(self.inner);
         accounted_string_call(self.inner, model, async move {
-            clawcrew_log::scope!(
+            galleon_log::scope!(
                 model: model,
                 => self.inner.chat_with_system(system_prompt, message, model, temperature)
             )
@@ -1133,10 +1133,10 @@ impl<'a> ProviderDispatchRef<'a> {
         model: &str,
         temperature: Option<f64>,
     ) -> anyhow::Result<String> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(self.inner);
         accounted_string_call(self.inner, model, async move {
-            clawcrew_log::scope!(
+            galleon_log::scope!(
                 model: model,
                 => self.inner.chat_with_history(messages, model, temperature)
             )
@@ -1154,10 +1154,10 @@ impl<'a> ProviderDispatchRef<'a> {
         model: &str,
         temperature: Option<f64>,
     ) -> anyhow::Result<ChatResponse> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(self.inner);
         accounted_chat_call(self.inner, model, async move {
-            clawcrew_log::scope!(
+            galleon_log::scope!(
                 model: model,
                 => self.inner.chat_with_tools(messages, tools, model, temperature)
             )
@@ -1194,23 +1194,23 @@ impl<'a> ProviderDispatchRef<'a> {
     /// Wrap the inner provider's `list_models`. No `model` parameter,
     /// so attribution only.
     pub async fn list_models(&self) -> anyhow::Result<Vec<String>> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(self.inner);
         self.inner.list_models().instrument(span).await
     }
 
     /// Wrap the inner provider's `list_models_with_pricing`.
     pub async fn list_models_with_pricing(&self) -> anyhow::Result<Vec<ModelInfo>> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(self.inner);
         self.inner.list_models_with_pricing().instrument(span).await
     }
 
     /// Wrap the inner provider's `warmup`. No `model` parameter, so
     /// attribution only.
     pub async fn warmup(&self) -> anyhow::Result<()> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(self.inner);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(self.inner);
         self.inner.warmup().instrument(span).await
     }
 
@@ -1262,9 +1262,9 @@ mod tests {
             _model: &str,
             _temperature: Option<f64>,
         ) -> anyhow::Result<ChatResponse> {
-            clawcrew_log::record!(
+            galleon_log::record!(
                 INFO,
-                clawcrew_log::Event::new(module_path!(), clawcrew_log::Action::Note),
+                galleon_log::Event::new(module_path!(), galleon_log::Action::Note),
                 "fake-anthropic chat called"
             );
             Ok(ChatResponse {
@@ -1562,10 +1562,10 @@ mod tests {
 
     #[tokio::test]
     async fn dispatch_chat_attaches_inner_provider_attribution() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let fake: Arc<dyn ModelProvider> = Arc::new(FakeAnthropic {
@@ -1619,7 +1619,7 @@ mod tests {
             }
         }
         assert!(found, "did not capture the fake-anthropic event");
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
     }
 
     struct StreamingFake {
@@ -1657,9 +1657,9 @@ mod tests {
             futures_util::stream::unfold(0u8, |state| async move {
                 match state {
                     0 => {
-                        clawcrew_log::record!(
+                        galleon_log::record!(
                             INFO,
-                            clawcrew_log::Event::new(module_path!(), clawcrew_log::Action::Note,),
+                            galleon_log::Event::new(module_path!(), galleon_log::Action::Note,),
                             "streaming-fake chunk"
                         );
                         Some((Ok(StreamEvent::TextDelta(StreamChunk::delta("hi"))), 1u8))
@@ -1811,10 +1811,10 @@ mod tests {
 
     #[tokio::test]
     async fn dispatch_stream_chunk_records_carry_attribution() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let fake: Arc<dyn ModelProvider> = Arc::new(StreamingFake {
@@ -1866,15 +1866,15 @@ mod tests {
             }
         }
         assert!(found, "stream chunk record was not attributed");
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
     }
 
     #[tokio::test]
     async fn dispatch_ref_chat_attaches_inner_provider_attribution() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         // Hold the fake by ownership but pass &dyn to the borrowed
@@ -1929,6 +1929,6 @@ mod tests {
             found,
             "did not capture the fake-anthropic event via borrowed dispatcher",
         );
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
     }
 }

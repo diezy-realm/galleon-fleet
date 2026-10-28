@@ -204,10 +204,10 @@ impl ModelProvider for GlmModelProvider {
             .next()
             .map(|c| c.message.content)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "glm: empty choices in response"
                 );
                 anyhow::Error::msg("No response from GLM")
@@ -259,10 +259,10 @@ impl ModelProvider for GlmModelProvider {
             .next()
             .map(|c| c.message.content)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "glm: empty choices in response"
                 );
                 anyhow::Error::msg("No response from GLM")

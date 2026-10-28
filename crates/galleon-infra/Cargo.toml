@@ -10,7 +10,7 @@ homepage.workspace = true
 publish = true
 
 [dependencies]
-clawcrew-log.workspace = true
+galleon-log.workspace = true
 clawcrew-api.workspace = true
 galleon-spawn.workspace = true
 anyhow = "1.0"

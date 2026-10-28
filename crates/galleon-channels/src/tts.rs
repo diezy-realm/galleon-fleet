@@ -1141,10 +1141,10 @@ impl TtsManager {
                 }
                 Err(e) => {
                     let config_path = format!("[providers.tts.{dotted}]");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"error": e.to_string(), "config_path": config_path})
                             ),
@@ -1272,10 +1272,10 @@ impl TtsManager {
 
         let tts = self.tts_providers.get(provider_alias).ok_or_else(|| {
             let available = self.available_providers().join(", ");
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "tts_provider": provider_alias,
                         "available": available,
@@ -1288,9 +1288,9 @@ impl TtsManager {
             ))
         })?;
 
-        use ::clawcrew_log::Instrument;
-        let span = ::clawcrew_log::attribution_span!(tts.as_ref());
-        ::clawcrew_log::scope!(voice: voice, => tts.synthesize(text, voice))
+        use ::galleon_log::Instrument;
+        let span = ::galleon_log::attribution_span!(tts.as_ref());
+        ::galleon_log::scope!(voice: voice, => tts.synthesize(text, voice))
             .instrument(span)
             .await
     }
@@ -2071,10 +2071,10 @@ mod tests {
 
     #[test]
     fn typed_registration_logs_config_path_for_keyless_uri_only_provider() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         // The exact real-world failure mode this diagnostic exists for: a

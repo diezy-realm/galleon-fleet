@@ -22,10 +22,10 @@ pub async fn build_pinned_resources_section(
             if let Some(p) = policy
                 && !p.is_tool_allowed(&prefixed)
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"pinned_uri": &prefixed})),
                     "mcp_context: pinned resource denied by access policy"
                 );
@@ -37,10 +37,10 @@ pub async fn build_pinned_resources_section(
                     blocks.push('\n');
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"pinned_uri": &prefixed})),
                         &format!("mcp_context: skipping pinned resource: {e}")
                     );

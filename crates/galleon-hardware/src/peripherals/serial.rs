@@ -87,10 +87,10 @@ impl SerialTransport {
         )
         .await
         .map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Timeout)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Timeout)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "command": cmd,
                         "timeout_secs": SERIAL_TIMEOUT_SECS,
@@ -134,10 +134,10 @@ impl SerialPeripheral {
     #[allow(clippy::unused_async)]
     pub async fn connect(config: &PeripheralBoardConfig) -> anyhow::Result<Self> {
         let path = config.path.as_deref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"board": config.board})),
                 "serial peripheral connect refused: config missing 'path'"
             );
@@ -160,10 +160,10 @@ impl SerialPeripheral {
             builder
         };
         let port = builder.open_native_async().map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": path,
                         "baud": config.baud,
@@ -262,10 +262,10 @@ impl Tool for GpioReadTool {
 
     async fn execute(&self, args: Value) -> anyhow::Result<ToolResult> {
         let pin = args.get("pin").and_then(|v| v.as_u64()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"tool": "gpio_read", "param": "pin"})),
                 "tool argument validation failed: missing parameter"
             );
@@ -311,20 +311,20 @@ impl Tool for GpioWriteTool {
 
     async fn execute(&self, args: Value) -> anyhow::Result<ToolResult> {
         let pin = args.get("pin").and_then(|v| v.as_u64()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"tool": "gpio_write", "param": "pin"})),
                 "tool argument validation failed: missing parameter"
             );
             anyhow::Error::msg("Missing 'pin' parameter")
         })?;
         let value = args.get("value").and_then(|v| v.as_u64()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"tool": "gpio_write", "param": "value"})),
                 "tool argument validation failed: missing parameter"
             );

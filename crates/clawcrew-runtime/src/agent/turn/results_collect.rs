@@ -72,11 +72,11 @@ pub(crate) fn collect_tool_results(
             match det_result {
                 crate::agent::loop_detector::LoopDetectionResult::Ok => {}
                 crate::agent::loop_detector::LoopDetectionResult::Warning(ref msg) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_category(::clawcrew_log::EventCategory::Tool)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_category(::galleon_log::EventCategory::Tool)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"tool": tool_name, "msg": msg.to_string()})
                             ),
@@ -85,11 +85,11 @@ pub(crate) fn collect_tool_results(
                     append_or_merge_system_message(history, format!("[Loop Detection] {msg}"));
                 }
                 crate::agent::loop_detector::LoopDetectionResult::Block(ref msg) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_category(::clawcrew_log::EventCategory::Tool)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_category(::galleon_log::EventCategory::Tool)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(
                                 ::serde_json::json!({"tool": tool_name, "msg": msg.to_string()})
                             ),
@@ -103,11 +103,11 @@ pub(crate) fn collect_tool_results(
                     );
                 }
                 crate::agent::loop_detector::LoopDetectionResult::Break(msg) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_category(::clawcrew_log::EventCategory::Tool)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_category(::galleon_log::EventCategory::Tool)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "model": model,
                                 "iteration": iteration + 1,
@@ -126,11 +126,11 @@ pub(crate) fn collect_tool_results(
         let truncation =
             truncate_tool_result_with_metadata(&canonical_output, max_tool_result_chars);
         if truncation.was_truncated() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_category(::clawcrew_log::EventCategory::Tool)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_category(::galleon_log::EventCategory::Tool)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "tool_call_id": tool_call_id,
                         "original_bytes": truncation.original_bytes,
@@ -144,10 +144,10 @@ pub(crate) fn collect_tool_results(
         let mut result_output = truncation.output;
         // Append HMAC receipt to tool result when receipts are enabled
         if let Some(ref receipt) = outcome.receipt {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_category(::clawcrew_log::EventCategory::Tool)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_category(::galleon_log::EventCategory::Tool)
                     .with_attrs(::serde_json::json!({"tool": tool_name, "receipt": receipt})),
                 "Tool receipt generated"
             );
@@ -207,11 +207,11 @@ pub(crate) fn check_identical_output_abort(
 
         // Bail if we see 3+ consecutive identical tool outputs (clear runaway).
         if *consecutive_identical_outputs >= 3 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_category(::clawcrew_log::EventCategory::Tool)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_category(::galleon_log::EventCategory::Tool)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "model": model,
                         "iteration": iteration + 1,
@@ -301,10 +301,10 @@ mod tests {
     #[allow(clippy::await_holding_lock)]
     #[tokio::test]
     async fn truncation_emits_content_free_measurements() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
 
         while rx.try_recv().is_ok() {}
         run_with_limit(1, &"x".repeat(100), true, 30).unwrap();

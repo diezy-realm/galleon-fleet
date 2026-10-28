@@ -2656,8 +2656,8 @@ enabled = true
     }
 
     fn capture_log_events() -> tokio::sync::broadcast::Receiver<serde_json::Value> {
-        ::clawcrew_log::try_install_capture_subscriber();
-        ::clawcrew_log::subscribe_or_install()
+        ::galleon_log::try_install_capture_subscriber();
+        ::galleon_log::subscribe_or_install()
     }
 
     fn drain_captured(rx: &mut tokio::sync::broadcast::Receiver<serde_json::Value>) -> String {

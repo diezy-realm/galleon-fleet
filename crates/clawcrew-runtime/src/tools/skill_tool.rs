@@ -387,10 +387,10 @@ impl Tool for SkillBuiltinTool {
         // Audit: elevated skill tools delegate to a target that may be blocked
         // by SecurityPolicy or hidden from the model. Record every invocation
         // at INFO with the delegation target and the locked scope keys.
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Invoke)
-                .with_category(::clawcrew_log::EventCategory::Tool)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Invoke)
+                .with_category(::galleon_log::EventCategory::Tool)
                 .with_attrs(::serde_json::json!({
                     "skill_tool": self.tool_name,
                     "delegates_to": self.target_tool.name(),

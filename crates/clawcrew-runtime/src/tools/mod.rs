@@ -400,10 +400,10 @@ pub(crate) fn register_skill_tools_with_context_and_runtime_optional_nat64(
         .collect();
     for tool in skill_tools {
         if existing_names.contains(tool.name()) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "Skill tool '{}' shadows built-in tool, skipping",
                     tool.name()
@@ -414,18 +414,18 @@ pub(crate) fn register_skill_tools_with_context_and_runtime_optional_nat64(
             .as_ref()
             .is_some_and(|list| list.is_empty())
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "Skill tool '{}' denied by empty allowed_tools (deny-all), skipping",
                     tool.name()
                 )
             );
         } else if policy.is_tool_excluded(tool.name()) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "Skill tool '{}' denied by excluded_tools, skipping",
                     tool.name()
@@ -437,9 +437,9 @@ pub(crate) fn register_skill_tools_with_context_and_runtime_optional_nat64(
     }
     let registered = tools_registry.len() - before;
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
         &format!(
             "Registered {} skill tool(s) from {} skill(s): {}",
             registered,
@@ -1211,10 +1211,10 @@ fn all_tools_with_runtime_on_thread(
                 tool_arcs.push(Arc::new(DiscordSearchTool::new(Arc::new(discord_mem))));
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "discord_search: failed to open discord.db"
                 );
@@ -1301,10 +1301,10 @@ fn all_tools_with_runtime_on_thread(
                 tool_arcs.push(Arc::new(tool));
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "browser_open: failed to construct tool, skipping registration"
                 );
@@ -1340,10 +1340,10 @@ fn all_tools_with_runtime_on_thread(
                 tool_arcs.push(Arc::new(RateLimitedTool::new(tool, security.clone())));
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "browser: failed to construct tool, skipping registration"
                 );
@@ -1359,10 +1359,10 @@ fn all_tools_with_runtime_on_thread(
                 root_config.browser_delegate.clone(),
             )));
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "browser_delegate: skipped registration because the current runtime does not allow shell access"
             );
         }
@@ -1384,10 +1384,10 @@ fn all_tools_with_runtime_on_thread(
                 tool_arcs.push(Arc::new(RateLimitedTool::new(tool, security.clone())));
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "http_request: failed to construct tool, skipping registration"
                 );
@@ -1458,10 +1458,10 @@ fn all_tools_with_runtime_on_thread(
                 )));
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "a2a_client: failed to construct client, skipping registration of a2a_* tools"
                 );
@@ -1484,10 +1484,10 @@ fn all_tools_with_runtime_on_thread(
                 tool_arcs.push(Arc::new(RateLimitedTool::new(tool, security.clone())));
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "web_fetch: failed to construct tool, skipping registration"
                 );
@@ -1508,10 +1508,10 @@ fn all_tools_with_runtime_on_thread(
                 tool_arcs.push(Arc::new(tool));
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "text_browser: failed to construct tool, skipping registration"
                 );
@@ -1562,10 +1562,10 @@ fn all_tools_with_runtime_on_thread(
             root_config.notion.api_key.trim().to_string()
         };
         if notion_api_key.trim().is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Notion tool enabled but no API key found (set notion.api_key or NOTION_API_KEY env var)"
             );
         } else {
@@ -1581,17 +1581,17 @@ fn all_tools_with_runtime_on_thread(
             root_config.jira.api_token.trim().to_string()
         };
         if api_token.trim().is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Jira tool enabled but no API token found (set jira.api_token or JIRA_API_TOKEN env var)"
             );
         } else if root_config.jira.base_url.trim().is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Jira tool enabled but jira.base_url is empty — skipping registration"
             );
         } else {
@@ -1603,15 +1603,15 @@ fn all_tools_with_runtime_on_thread(
                 .filter(|s| !s.is_empty())
                 .map(String::from);
             if email.is_some() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "Jira tool: Cloud mode (API v3, Basic auth)"
                 );
             } else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "Jira tool: Server/DC mode (API v2, Bearer auth)"
                 );
             }
@@ -1679,19 +1679,19 @@ fn all_tools_with_runtime_on_thread(
             root_config.google_workspace.audit_log,
         )));
     } else if root_config.google_workspace.enabled {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "google_workspace: skipped registration because shell access is unavailable"
         );
     }
 
     if any_coding_cli_tool_enabled(root_config) && !register_coding_cli_tools {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "coding_cli: skipped registration because runtime shell or filesystem access is unavailable"
         );
     }
@@ -1823,10 +1823,10 @@ fn all_tools_with_runtime_on_thread(
         ) {
             Ok(tool) => tool_arcs.push(Arc::new(tool)),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "image_gen: failed to construct tool, skipping registration"
                 );
@@ -1996,10 +1996,10 @@ fn all_tools_with_runtime_on_thread(
                     .as_deref()
                     .is_none_or(|s| s.trim().is_empty())
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "microsoft365: client_credentials auth_flow requires a non-empty client_secret"
                 );
                 return AllToolsResult {
@@ -2032,20 +2032,20 @@ fn all_tools_with_runtime_on_thread(
             match Microsoft365Tool::new(resolved, security.clone(), cache_dir) {
                 Ok(tool) => tool_arcs.push(Arc::new(tool)),
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "microsoft365: failed to initialize tool"
                     );
                 }
             }
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "microsoft365: skipped registration because tenant_id or client_id is empty"
             );
         }
@@ -2062,10 +2062,10 @@ fn all_tools_with_runtime_on_thread(
                 tool_arcs.push(Arc::new(KnowledgeTool::new(Arc::new(graph))));
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "error": format!("{}", e),
                             "db_path": db_path.display().to_string(),
@@ -2200,10 +2200,10 @@ fn all_tools_with_runtime_on_thread(
                     );
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "Failed to load WASM plugins"
                     );
@@ -2215,10 +2215,10 @@ fn all_tools_with_runtime_on_thread(
         // silently ignored — the user can relocate them with `plugin migrate`.
         if config.plugins.enabled {
             for legacy in galleon_config::schema::legacy_plugin_dirs_with_entries(&config) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "legacy_dir": legacy.display().to_string()
                         })),
@@ -2286,10 +2286,10 @@ fn register_plugin_tools(
     let plan = match crate::plugin_runtime::PluginActivationPlan::build(config, host) {
         Ok(plan) => plan,
         Err(error) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{error}")})),
                 "Failed to admit logical plugin tool instances"
             );
@@ -2317,10 +2317,10 @@ fn register_plugin_tools(
         // the reservation set holds callable tool names, and a package name is
         // not one until its guest declares it.
         if registered_names.contains(&manifest.name) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "plugin": manifest.name,
                         "error_key": "plugin_package_name_conflict",
@@ -2341,10 +2341,10 @@ fn register_plugin_tools(
         match tool {
             Ok(tool) => {
                 if !claim_plugin_tool_name(registered_names, tool.name()) {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "plugin": manifest.name,
                                 "tool": tool.name(),
@@ -2358,10 +2358,10 @@ fn register_plugin_tools(
                 registered_count += 1;
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "plugin": manifest.name,
                             "error": format!("{e:#}"),
@@ -2372,9 +2372,9 @@ fn register_plugin_tools(
         }
     }
 
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         INFO,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "discovered": discovered_count,
                 "admitted": admitted_count,

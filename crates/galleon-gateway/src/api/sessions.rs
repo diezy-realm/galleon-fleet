@@ -301,9 +301,9 @@ pub async fn handle_api_session_delete(
     };
     if let Some((cancel_key, token)) = cancellation {
         token.cancel();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "session_key": session_key,
                     "cancel_key": cancel_key,
@@ -538,9 +538,9 @@ pub async fn handle_api_session_abort(
 
     if let (Some(cancel_key), Some(token)) = (cancel_key, token) {
         token.cancel();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"cancel_key": cancel_key})),
             "session abort requested"
         );

@@ -148,10 +148,10 @@ fn probe_read_memory(chip: &str, address: u64, length: usize) -> anyhow::Result<
     use probe_rs::SessionConfig;
 
     let mut session = Session::auto_attach(chip, SessionConfig::default()).map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "chip": chip,
                     "error": format!("{}", e),
@@ -164,10 +164,10 @@ fn probe_read_memory(chip: &str, address: u64, length: usize) -> anyhow::Result<
     let mut core = session.core(0)?;
     let mut buf = vec![0u8; length];
     core.read_8(address, &mut buf).map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "chip": chip,
                     "address": address,

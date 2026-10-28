@@ -35,9 +35,9 @@ pub struct DynamicRouter {
 impl DynamicRouter {
     /// Creates a new empty DynamicRouter.
     pub fn new() -> Self {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Creating new DynamicRouter"
         );
         Self {
@@ -57,18 +57,18 @@ impl DynamicRouter {
 
         if routes.contains_key(&path) {
             let err = format!("Route collision: handler '{}' for '{}' already registered", name, path);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 err.clone()
             );
             return Err(err);
         }
 
         routes.insert(path.clone(), handler);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             format!("Registered handler '{name}' for '{path}'")
         );
         Ok(())
@@ -77,9 +77,9 @@ impl DynamicRouter {
     /// Sets a fallback handler for unmatched routes.
     pub async fn set_fallback(&mut self, handler: Box<dyn RouteHandler>) {
         self.fallback = Some(handler);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Fallback handler set"
         );
     }
@@ -94,9 +94,9 @@ impl DynamicRouter {
         {
             let routes = self.routes.read().await;
             if let Some(handler) = routes.get(&path) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     format!("Dispatching {method} {path} to handler '{}'", handler.name())
                 );
                 return handler.handle(req).await;
@@ -105,18 +105,18 @@ impl DynamicRouter {
 
         // No exact match found
         if let Some(ref fallback) = self.fallback {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 format!("No handler for '{path}', using fallback '{}'", fallback.name())
             );
             return fallback.handle(req).await;
         }
 
         let err = format!("No handler registered for path '{}'", path);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             err.clone()
         );
         Err(err)

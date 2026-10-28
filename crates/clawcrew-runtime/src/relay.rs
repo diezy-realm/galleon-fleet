@@ -388,10 +388,10 @@ pub async fn run_relay_bridge(cfg: RelayBridgeConfig, cancel: CancellationToken)
             RotationRegistration::Unavailable => {
                 new_cancel.cancel();
                 let _ = new_link.await;
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({ "old": current_id, "new": new_id })),
                     "relay node-id rotation: new link never registered; keeping the old route"
                 );
@@ -404,10 +404,10 @@ pub async fn run_relay_bridge(cfg: RelayBridgeConfig, cancel: CancellationToken)
         if let Err(e) = persist_node_id(&cfg.data_dir, &new_id) {
             new_cancel.cancel();
             let _ = new_link.await;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "old": current_id,
                         "new": new_id,
@@ -417,9 +417,9 @@ pub async fn run_relay_bridge(cfg: RelayBridgeConfig, cancel: CancellationToken)
             );
             continue;
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({ "old": current_id, "new": new_id })),
             "relay node-id rotating (old id kept alive for the grace window)"
         );
@@ -509,10 +509,10 @@ async fn serve_link(
         match serve_once(&cfg, &cancel, &mut registered).await {
             Ok(()) => return Ok(()), // clean cancellation
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "relay": cfg.relay_addr,
                             "node_id": cfg.node_id,
@@ -605,10 +605,10 @@ async fn connect_and_register(
     if let Some(observed) = pin_verifier.as_ref().and_then(|v| v.observed_pin())
         && let Err(e) = persist_relay_pin(&cfg.data_dir, &observed)
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({ "error": format!("{e:#}") })),
             "relay outer-cert TOFU: failed to persist the observed pin"
         );

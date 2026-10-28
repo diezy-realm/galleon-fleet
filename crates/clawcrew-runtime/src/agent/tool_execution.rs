@@ -208,14 +208,14 @@ pub(crate) async fn execute_one_tool(
                 let activated_tools = match at.lock() {
                     Ok(guard) => guard,
                     Err(poisoned) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_category(::clawcrew_log::EventCategory::Tool)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_category(::galleon_log::EventCategory::Tool)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "tool": call_name,
                                 "tool_call_id": tool_call_id,
@@ -293,12 +293,12 @@ pub(crate) async fn execute_one_tool(
         });
     }
 
-    let resolved_policy = ::clawcrew_log::active_resolved_policy();
+    let resolved_policy = ::galleon_log::active_resolved_policy();
     let captured_input =
-        ::clawcrew_log::capture_tool_input(&resolved_policy, call_name, &scrubbed_full_args);
+        ::galleon_log::capture_tool_input(&resolved_policy, call_name, &scrubbed_full_args);
 
-    use ::clawcrew_log::Instrument;
-    let tool_span = ::clawcrew_log::info_span!(
+    use ::galleon_log::Instrument;
+    let tool_span = ::galleon_log::info_span!(
         target: "clawcrew_log_internal_scope",
         "clawcrew_scope",
         tool = %call_name,
@@ -319,10 +319,10 @@ pub(crate) async fn execute_one_tool(
             invoke_attrs["input_original_bytes"] = ::serde_json::Value::from(cap.original_bytes);
         }
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         DEBUG,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Invoke)
-            .with_category(::clawcrew_log::EventCategory::Tool)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Invoke)
+            .with_category(::galleon_log::EventCategory::Tool)
             .with_attrs(invoke_attrs),
         format!("tool call: {call_name}")
     );
@@ -371,7 +371,7 @@ pub(crate) async fn execute_one_tool(
             Ok(r) => {
                 let duration = start.elapsed();
                 let scrubbed_output = scrub_credentials(r.output.as_str());
-                let captured_output = ::clawcrew_log::capture_tool_output(
+                let captured_output = ::galleon_log::capture_tool_output(
                     &resolved_policy,
                     call_name,
                     &scrubbed_output,
@@ -397,14 +397,14 @@ pub(crate) async fn execute_one_tool(
                                 ::serde_json::Value::from(cap.original_bytes);
                         }
                     }
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(
+                        ::galleon_log::Event::new(
                             module_path!(),
-                            ::clawcrew_log::Action::Complete
+                            ::galleon_log::Action::Complete
                         )
-                        .with_category(::clawcrew_log::EventCategory::Tool)
-                        .with_outcome(::clawcrew_log::EventOutcome::Success)
+                        .with_category(::galleon_log::EventCategory::Tool)
+                        .with_outcome(::galleon_log::EventOutcome::Success)
                         .with_duration(duration.as_millis() as u64)
                         .with_attrs(success_attrs),
                         format!("tool result: {call_name}")
@@ -436,11 +436,11 @@ pub(crate) async fn execute_one_tool(
                                 ::serde_json::Value::from(cap.original_bytes);
                         }
                     }
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_category(::clawcrew_log::EventCategory::Tool)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_category(::galleon_log::EventCategory::Tool)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_duration(duration.as_millis() as u64)
                             .with_attrs(fail_attrs),
                         format!("tool failed: {call_name}")
@@ -543,11 +543,11 @@ pub(crate) async fn execute_one_tool(
                             ::serde_json::Value::from(cap.original_bytes);
                     }
                 }
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_category(::clawcrew_log::EventCategory::Tool)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_category(::galleon_log::EventCategory::Tool)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_duration(duration.as_millis() as u64)
                         .with_attrs(err_attrs),
                     format!("tool error: {call_name}")
@@ -1637,19 +1637,19 @@ mod tests {
 
     #[tokio::test]
     async fn tool_io_capture_redacts_and_truncates_in_debug_log() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
 
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
 
-        let cfg = clawcrew_log::LogConfig {
+        let cfg = galleon_log::LogConfig {
             log_tool_io: "redacted".into(),
             log_tool_io_truncate_bytes: 40,
             log_persistence: "none".into(),
-            ..clawcrew_log::LogConfig::default()
+            ..galleon_log::LogConfig::default()
         };
-        clawcrew_log::init_from_config(&cfg, std::path::Path::new("/"));
+        galleon_log::init_from_config(&cfg, std::path::Path::new("/"));
         while rx.try_recv().is_ok() {}
 
         struct EchoTestTool;

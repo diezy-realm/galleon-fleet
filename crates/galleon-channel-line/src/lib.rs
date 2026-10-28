@@ -134,18 +134,18 @@ async fn send_loading_indicator(
         .await
     {
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("loading indicator failed: {e}")
             );
         }
         Ok(resp) if !resp.status().is_success() => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"status": resp.status().as_u16()})),
                 "loading indicator returned non-2xx from LINE"
             );
@@ -178,18 +178,18 @@ async fn send_bind_reply(
         .await
     {
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("bind reply failed: {e}")
             );
         }
         Ok(resp) if !resp.status().is_success() => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"status": resp.status().as_u16()})),
                 "bind reply returned non-2xx from LINE"
             );
@@ -271,10 +271,10 @@ fn line_pairing_deny_conflict(state: &LineState, user_id: &str) -> Option<String
 
 async fn persist_line_paired_identity(state: &LineState, user_id: &str) -> anyhow::Result<()> {
     let Some(config) = &state.persist else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"user_id": user_id})),
             "paired userId not persisted (no persistence handle wired)"
         );
@@ -325,10 +325,10 @@ async fn handle_webhook(
     };
 
     if !sig_valid {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "rejected request with invalid signature"
         );
         return StatusCode::UNAUTHORIZED;
@@ -338,10 +338,10 @@ async fn handle_webhook(
     let payload: serde_json::Value = match serde_json::from_slice(&body) {
         Ok(v) => v,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "invalid JSON payload"
             );
@@ -388,9 +388,9 @@ async fn handle_webhook(
             }
             "audio" => {
                 let Some(ref manager) = state.transcription_manager else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "audio message ignored (transcription not configured)"
                     );
                     continue;
@@ -405,13 +405,13 @@ async fn handle_webhook(
                 {
                     Ok(b) => b,
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"error": format!("{}", e), "msg_id": msg_id})
                             ),
@@ -423,11 +423,11 @@ async fn handle_webhook(
                 let transcript = match manager.transcribe(&audio, "audio.m4a").await {
                     Ok(t) if !t.trim().is_empty() => t,
                     Ok(_) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(::serde_json::json!({"msg_id": msg_id})),
                             "empty transcript for"
@@ -435,13 +435,13 @@ async fn handle_webhook(
                         continue;
                     }
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"error": format!("{}", e), "msg_id": msg_id})
                             ),
@@ -476,11 +476,11 @@ async fn handle_webhook(
                 LineGroupPolicy::Mention => {
                     let mention_span = LineChannel::find_bot_mention(msg_obj, &state.bot_user_id);
                     if mention_span.is_none() {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             ),
                             &format!(
                                 "skipping group message without bot mention (userId: {})",
@@ -499,13 +499,13 @@ async fn handle_webhook(
                 LineDmPolicy::Open => {}
                 LineDmPolicy::Allowlist => {
                     if !is_line_user_allowed(&*state, user_id) {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"user_id": user_id})),
                             "ignoring DM from unauthorized user: . Add to the channel peer group or use dm_policy = pairing."
                         );
@@ -542,13 +542,13 @@ async fn handle_webhook(
                                 // operator's only code to reach that verdict.
                                 if let Some(conflict) = line_pairing_deny_conflict(&state, user_id)
                                 {
-                                    ::clawcrew_log::record!(
+                                    ::galleon_log::record!(
                                         WARN,
-                                        ::clawcrew_log::Event::new(
+                                        ::galleon_log::Event::new(
                                             module_path!(),
-                                            ::clawcrew_log::Action::Note
+                                            ::galleon_log::Action::Note
                                         )
-                                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                        .with_outcome(::galleon_log::EventOutcome::Failure)
                                         .with_attrs(::serde_json::json!({"conflict": conflict})),
                                         "refusing bind before consuming pairing code"
                                     );
@@ -581,7 +581,7 @@ async fn handle_webhook(
                                             // and the spent code was their only
                                             // retry.
                                             drop(reservation);
-                                            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"user_id": user_id, "e": e.to_string()})), "rolled back bind: could not persist paired userId=");
+                                            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"user_id": user_id, "e": e.to_string()})), "rolled back bind: could not persist paired userId=");
                                             if let Some(ref token) = bind_reply_token {
                                                 send_bind_reply(
                                                     &state.client,
@@ -600,11 +600,11 @@ async fn handle_webhook(
                                             // Durable write landed, so the
                                             // pairing may consume the code.
                                             let _ = reservation.commit();
-                                            ::clawcrew_log::record!(
+                                            ::galleon_log::record!(
                                                 INFO,
-                                                ::clawcrew_log::Event::new(
+                                                ::galleon_log::Event::new(
                                                     module_path!(),
-                                                    ::clawcrew_log::Action::Note
+                                                    ::galleon_log::Action::Note
                                                 )
                                                 .with_attrs(
                                                     ::serde_json::json!({"user_id": user_id})
@@ -627,13 +627,13 @@ async fn handle_webhook(
                                         }
                                     }
                                     Ok(None) => {
-                                        ::clawcrew_log::record!(
+                                        ::galleon_log::record!(
                                             WARN,
-                                            ::clawcrew_log::Event::new(
+                                            ::galleon_log::Event::new(
                                                 module_path!(),
-                                                ::clawcrew_log::Action::Note
+                                                ::galleon_log::Action::Note
                                             )
-                                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                                             .with_attrs(::serde_json::json!({"user_id": user_id})),
                                             "invalid bind code from userId="
                                         );
@@ -652,7 +652,7 @@ async fn handle_webhook(
                                         }
                                     }
                                     Err(wait_ms) => {
-                                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "wait_ms": wait_ms})), "bind rate-limited for userId=, retry after ms");
+                                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "wait_ms": wait_ms})), "bind rate-limited for userId=, retry after ms");
                                         if let Some(ref token) = bind_reply_token {
                                             let secs = (wait_ms / 1000).to_string();
                                             send_bind_reply(
@@ -674,7 +674,7 @@ async fn handle_webhook(
                             continue; // bind commands are not forwarded to agent
                         }
 
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "LINE_BIND_COMMAND": LINE_BIND_COMMAND})), "ignoring message from unpaired user: . Send ` <code>` to pair.");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "LINE_BIND_COMMAND": LINE_BIND_COMMAND})), "ignoring message from unpaired user: . Send ` <code>` to pair.");
                         continue;
                     }
                 }
@@ -754,10 +754,10 @@ async fn handle_webhook(
         };
 
         if state.tx.send(channel_msg).await.is_err() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "receiver dropped, shutting down webhook server"
             );
             return StatusCode::SERVICE_UNAVAILABLE;
@@ -813,10 +813,10 @@ impl LineChannel {
                 // can find it. Tag it `Channel` so the web Logs page shows it
                 // by default (an untagged event defaults to `Internal` and is
                 // hidden behind the filter).
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_category(::clawcrew_log::EventCategory::Channel)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_category(::galleon_log::EventCategory::Channel)
                         .with_attrs(::serde_json::json!({
                             "alias": alias.as_str(),
                             "pairing_code": code.as_str(),
@@ -1175,10 +1175,10 @@ impl LineChannel {
 
         let app = build_webhook_router(state);
         axum::serve(listener, app).await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "phase": "webhook_server",
                         "error": format!("{}", e),
@@ -1212,10 +1212,10 @@ impl Channel for LineChannel {
             match self.send_reply(&token, &message.content).await {
                 Ok(()) => return Ok(()),
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"e": e.to_string()})),
                         "Reply API failed (token may be expired), falling back to Push"
                     );
@@ -1230,9 +1230,9 @@ impl Channel for LineChannel {
     async fn listen(&self, tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
         let bot_info = self.fetch_bot_info().await?;
         *self.sender_icon.write() = bot_info.picture_url;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "connected as '{}' (userId: {})",
                 bot_info.display_name, bot_info.user_id
@@ -1240,9 +1240,9 @@ impl Channel for LineChannel {
         );
 
         let addr = std::net::SocketAddr::from(([0, 0, 0, 0], self.webhook_port));
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "webhook server listening on http://0.0.0.0:{}/line/webhook",
                 self.webhook_port

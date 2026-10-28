@@ -384,9 +384,9 @@ impl DatasheetManager {
         }
         let written = pending.commit(&identity, &display_path).await?;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "device": device_name,
                     "path": dest.display().to_string(),

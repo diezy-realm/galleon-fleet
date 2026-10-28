@@ -191,10 +191,10 @@ pub async fn reaper_loop(
             _ = cancel.cancelled() => break,
             _ = tick.tick() => {
                 if let Err(e) = sweep(store.as_ref(), &boot_id, max_runtime_secs).await {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({ "error": format!("{e}") })),
                         "control-plane reaper sweep failed"
                     );

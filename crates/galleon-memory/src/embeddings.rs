@@ -33,10 +33,10 @@ pub trait EmbeddingProvider: Send + Sync {
     async fn embed_one(&self, text: &str) -> anyhow::Result<Vec<f32>> {
         let mut results = self.embed(&[text]).await?;
         results.pop().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "embed_one: provider returned no embedding"
             );
             anyhow::Error::msg("Empty embedding result")
@@ -153,10 +153,10 @@ impl EmbeddingProvider for OpenAiEmbedding {
 
         let json: serde_json::Value = resp.json().await?;
         let data = json.get("data").and_then(|d| d.as_array()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "embedding response missing 'data' field"
             );
             anyhow::Error::msg("Invalid embedding response: missing 'data'")
@@ -168,10 +168,10 @@ impl EmbeddingProvider for OpenAiEmbedding {
                 .get("embedding")
                 .and_then(|e| e.as_array())
                 .ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "embedding response item missing 'embedding' array"
                     );
                     anyhow::Error::msg("Invalid embedding item")

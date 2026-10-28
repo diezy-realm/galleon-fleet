@@ -26,7 +26,7 @@
 //!
 //! One coupling remains fully a local simplification:
 //!
-//! * **Structured logging + env proxy.** Upstream uses the `clawcrew_log`
+//! * **Structured logging + env proxy.** Upstream uses the `galleon_log`
 //!    structured-event macro and `galleon_config` env-proxy fallback. Here
 //!    logging is dropped (a proof crate needs no event bus) and only an
 //!    EXPLICIT per-channel `proxy_url` is honoured (plain `reqwest::Proxy`);

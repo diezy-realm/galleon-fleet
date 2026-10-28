@@ -96,10 +96,10 @@ pub fn validate_shell_command_with_security(
         .validate_command_execution_for_shell(command, approved, runtime.shell_dialect())
         .map(|_| ())
         .map_err(|reason| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"reason": reason.to_string()})),
                 "cron shell command rejected by security policy"
             );

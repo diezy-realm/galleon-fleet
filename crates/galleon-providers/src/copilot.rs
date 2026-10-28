@@ -116,10 +116,10 @@ fn cache_failure_attrs(operation: &'static str, failure: CacheFailure) -> serde_
 }
 
 fn warn_cache_failure(operation: &'static str, failure: CacheFailure) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Failure)
             .with_attrs(cache_failure_attrs(operation, failure)),
         "Copilot credential cache operation failed; continuing without persisted credentials"
     );
@@ -486,10 +486,10 @@ impl CopilotModelProvider {
             cache_creation_input_tokens: None,
         });
         let choice = api_response.choices.into_iter().next().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "copilot: empty choices in response"
             );
             anyhow::Error::msg("No response from GitHub Copilot")

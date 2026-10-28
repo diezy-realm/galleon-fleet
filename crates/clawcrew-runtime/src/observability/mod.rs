@@ -106,10 +106,10 @@ fn warn_otel_content_policy(config: OtelContentConfig) {
             }
             _ => unreachable!(),
         };
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             msg
         );
     }
@@ -123,10 +123,10 @@ fn warn_otel_content_policy(config: OtelContentConfig) {
             }
             _ => unreachable!(),
         };
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             msg
         );
     }
@@ -148,10 +148,10 @@ fn create_primary_observer(config: &ObservabilityConfig) -> Box<dyn Observer> {
             }
             #[cfg(not(feature = "observability-prometheus"))]
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "Prometheus backend requested but this build was compiled without `observability-prometheus`; falling back to noop."
                 );
                 Box::new(NoopObserver)
@@ -171,11 +171,11 @@ fn create_primary_observer(config: &ObservabilityConfig) -> Box<dyn Observer> {
                     Ok(obs) => {
                         warn_otel_content_policy(content_config);
 
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
                             .with_attrs(
                                 ::serde_json::json!({"endpoint": config
@@ -188,13 +188,13 @@ fn create_primary_observer(config: &ObservabilityConfig) -> Box<dyn Observer> {
                         Box::new(obs)
                     }
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Fail
+                                ::galleon_log::Action::Fail
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Failed to create OTel observer. Falling back to noop."
                         );
@@ -204,10 +204,10 @@ fn create_primary_observer(config: &ObservabilityConfig) -> Box<dyn Observer> {
             }
             #[cfg(not(feature = "observability-otel"))]
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "OpenTelemetry backend requested but this build was compiled without `observability-otel`; falling back to noop."
                 );
                 Box::new(NoopObserver)

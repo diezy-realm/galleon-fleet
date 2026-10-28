@@ -47,9 +47,9 @@ const WECOM_EMOJIS: &[&str] = &[
 const WECOM_FILE_CLEANUP_INTERVAL_SECS: u64 = 1800;
 macro_rules! wecom_log_debug {
     ($($arg:tt)*) => {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             format!($($arg)*),
         )
     };
@@ -65,9 +65,9 @@ fn wecom_ws_cli_string_with_args(key: &str, args: &[(&str, &str)]) -> String {
 
 macro_rules! wecom_log_info {
     ($($arg:tt)*) => {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             format!($($arg)*),
         )
     };
@@ -75,10 +75,10 @@ macro_rules! wecom_log_info {
 
 macro_rules! wecom_log_warn {
     ($($arg:tt)*) => {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             format!($($arg)*),
         )
     };
@@ -86,10 +86,10 @@ macro_rules! wecom_log_warn {
 
 macro_rules! wecom_log_error {
     ($($arg:tt)*) => {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure),
             format!($($arg)*),
         )
     };

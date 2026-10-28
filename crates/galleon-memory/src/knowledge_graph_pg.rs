@@ -41,10 +41,10 @@ where
     T: Send + 'static,
 {
     let permit = operation_gate.acquire_owned().await.map_err(|error| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure),
             "pg knowledge graph operation gate closed"
         );
         anyhow::Error::msg(format!("pg knowledge graph operation gate closed: {error}"))
@@ -56,10 +56,10 @@ where
     })
     .await
     .map_err(|error| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure),
             "pg knowledge graph blocking task terminated unexpectedly"
         );
         anyhow::Error::msg(format!(

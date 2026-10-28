@@ -144,10 +144,10 @@ pub(crate) struct NativeToolFunctionSpec {
 
 pub(crate) fn parse_native_tool_spec(value: serde_json::Value) -> anyhow::Result<NativeToolSpec> {
     let spec: NativeToolSpec = serde_json::from_value(value).map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "openai: invalid tool spec"
         );
@@ -477,10 +477,10 @@ impl ModelProvider for OpenAiModelProvider {
         temperature: Option<f64>,
     ) -> anyhow::Result<String> {
         let credential = self.credential.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "credentials"})),
                 "openai: API key not configured"
             );
@@ -532,10 +532,10 @@ impl ModelProvider for OpenAiModelProvider {
             .map(|c| require_terminal_text(c.message.effective_content()))
             .transpose()?
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "openai: empty choices in response"
                 );
                 anyhow::Error::msg("No response from OpenAI")
@@ -549,10 +549,10 @@ impl ModelProvider for OpenAiModelProvider {
         temperature: Option<f64>,
     ) -> anyhow::Result<ProviderChatResponse> {
         let credential = self.credential.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "credentials"})),
                 "openai: API key not configured"
             );
@@ -574,10 +574,10 @@ impl ModelProvider for OpenAiModelProvider {
             tools,
             max_tokens: self.max_tokens,
         };
-        if ::clawcrew_log::debug_enabled() {
-            ::clawcrew_log::record!(
+        if ::galleon_log::debug_enabled() {
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
                     .with_attrs(::serde_json::json!({
                         "provider": "openai",
                         "alias": &self.alias,
@@ -616,10 +616,10 @@ impl ModelProvider for OpenAiModelProvider {
             .next()
             .map(|c| c.message)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "openai: empty choices in response"
                 );
                 anyhow::Error::msg("No response from OpenAI")
@@ -641,10 +641,10 @@ impl ModelProvider for OpenAiModelProvider {
         temperature: Option<f64>,
     ) -> anyhow::Result<ProviderChatResponse> {
         let credential = self.credential.as_ref().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"missing": "credentials"})),
                 "openai: API key not configured"
             );
@@ -703,10 +703,10 @@ impl ModelProvider for OpenAiModelProvider {
             .next()
             .map(|c| c.message)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "openai: empty choices in response"
                 );
                 anyhow::Error::msg("No response from OpenAI")
@@ -1134,10 +1134,10 @@ impl OpenAiResponsesModelProvider {
         let mut headers = HeaderMap::new();
         for (key, value) in &self.extra_headers {
             if key.eq_ignore_ascii_case("authorization") {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "header": key,
                             "reason": "reserved_authorization_overridden_by_provider_credential",
@@ -1154,10 +1154,10 @@ impl OpenAiResponsesModelProvider {
                     headers.insert(name, val);
                 }
                 _ => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"header": key})),
                         "Skipping invalid extra header name or value"
                     );
@@ -1319,10 +1319,10 @@ impl ModelProvider for OpenAiResponsesModelProvider {
         let tools = convert_tools(request.tools);
         let tools_count = tools.as_ref().map_or(0, Vec::len);
         let req = self.build_request(instructions, input, tools, model, temperature, false);
-        if ::clawcrew_log::debug_enabled() {
-            ::clawcrew_log::record!(
+        if ::galleon_log::debug_enabled() {
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
                     .with_attrs(::serde_json::json!({
                         "provider": "openai",
                         "alias": &self.alias,
@@ -1388,7 +1388,7 @@ impl ModelProvider for OpenAiResponsesModelProvider {
         let max_tokens = self.max_tokens;
         let client = self.streaming_client();
         let idle_timeout = super::stream_idle_timeout(self.timeout_secs);
-        let alias = ::clawcrew_log::debug_enabled().then(|| self.alias.clone());
+        let alias = ::galleon_log::debug_enabled().then(|| self.alias.clone());
 
         let (tx, rx) = tokio::sync::mpsc::channel::<StreamResult<StreamEvent>>(100);
         let handle = ::galleon_spawn::spawn!(async move {
@@ -1419,9 +1419,9 @@ impl ModelProvider for OpenAiResponsesModelProvider {
                 reasoning,
             };
             if let Some(alias) = alias.as_deref() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
                         .with_attrs(::serde_json::json!({
                             "provider": "openai",
                             "alias": alias,

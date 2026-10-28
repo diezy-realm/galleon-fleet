@@ -14,7 +14,7 @@ galleon-channel-core.workspace = true
 clawcrew-api.workspace = true
 galleon-infra.workspace = true
 galleon-config = { workspace = true, default-features = false }
-clawcrew-log.workspace = true
+galleon-log.workspace = true
 async-trait = "0.1"
 anyhow = "1.0"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }

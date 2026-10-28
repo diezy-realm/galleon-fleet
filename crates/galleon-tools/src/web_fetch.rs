@@ -226,10 +226,10 @@ impl WebFetchTool {
     /// Fetch content via the Firecrawl API.
     async fn fetch_via_firecrawl(&self, url: &str) -> anyhow::Result<ToolResult> {
         let api_key = std::env::var(&self.firecrawl.api_key_env).map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "env_var": &self.firecrawl.api_key_env,
                     })),
@@ -247,10 +247,10 @@ impl WebFetchTool {
             .timeout(Duration::from_secs(60))
             .build()
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "web_fetch: failed to build Firecrawl HTTP client"
                 );
@@ -270,10 +270,10 @@ impl WebFetchTool {
             .send()
             .await
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "phase": "firecrawl_request",
                             "error": format!("{}", e),
@@ -298,10 +298,10 @@ impl WebFetchTool {
         }
 
         let resp_json: serde_json::Value = response.json().await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "phase": "firecrawl_response_parse",
                         "error": format!("{}", e),
@@ -446,10 +446,10 @@ impl Tool for WebFetchTool {
 
     async fn execute(&self, args: serde_json::Value) -> anyhow::Result<ToolResult> {
         let url = args.get("url").and_then(|v| v.as_str()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"param": "url"})),
                 "web_fetch: missing url parameter"
             );
@@ -469,10 +469,10 @@ impl Tool for WebFetchTool {
 
         let proxy_config = galleon_config::schema::runtime_proxy_config();
         if proxy_conflicts_with_dns_pinning(&proxy_config) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"service": "tool.web_fetch"})),
                 "web_fetch: configured runtime proxy rejected to preserve validated DNS pin"
             );
@@ -485,10 +485,10 @@ impl Tool for WebFetchTool {
 
         let ignored_environment_proxy = galleon_config::schema::environment_proxy_for_url(url);
         if let Some(variable) = ignored_environment_proxy {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"proxy_variable": variable})),
                 "web_fetch: standard fetch ignores environment proxy to preserve validated DNS pin"
             );
@@ -508,10 +508,10 @@ impl Tool for WebFetchTool {
 
         // Build client: follow redirects, set timeout, set User-Agent
         let timeout_secs = if self.timeout_secs == 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "web_fetch: timeout_secs is 0, using safe default of 30s"
             );
             30
@@ -551,9 +551,9 @@ impl Tool for WebFetchTool {
             &standard_result,
             redirect_policy_rejected.load(Ordering::Relaxed),
         ) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"url": url})),
                 "web_fetch: standard fetch insufficient for , attempting Firecrawl fallback"
             );
@@ -562,10 +562,10 @@ impl Tool for WebFetchTool {
                     return Ok(firecrawl_result);
                 }
                 Ok(firecrawl_result) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!(
                             "web_fetch: Firecrawl fallback also failed: {:?}",
                             firecrawl_result.error
@@ -574,10 +574,10 @@ impl Tool for WebFetchTool {
                     // Return original standard result if Firecrawl also failed
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "web_fetch: Firecrawl fallback error"
                     );
@@ -755,10 +755,10 @@ fn validate_target_url_with_dns_check(
     }
 
     if private_explicit || (private_tolerated && host_is_private_or_local) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"tool_name": tool_name, "host": host})),
             "web_fetch: allowing host via allowed_private_hosts"
         );
@@ -779,10 +779,10 @@ fn validate_target_url_with_dns_check(
 
 fn extract_host(url: &str) -> anyhow::Result<String> {
     let parsed = reqwest::Url::parse(url).map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"url": url, "error": format!("{e}")})),
             "web_fetch: invalid URL"
         );
@@ -790,10 +790,10 @@ fn extract_host(url: &str) -> anyhow::Result<String> {
     })?;
 
     if !matches!(parsed.scheme(), "http" | "https") {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"url": url})),
             "web_fetch: non-http(s) URL rejected"
         );
@@ -861,10 +861,10 @@ fn resolve_validated_host(
     let addrs = (host, 0)
         .to_socket_addrs()
         .map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "host": host,
                         "error": format!("{}", e),

@@ -643,7 +643,7 @@ mod tests {
             // It must land in both sinks and be excluded from every count
             // below; see `own_records`.
             tracing::warn!(
-                target: "clawcrew_log::migrate",
+                target: "galleon_log::migrate",
                 "{FOREIGN_MESSAGE}"
             );
         });

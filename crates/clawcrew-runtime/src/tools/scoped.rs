@@ -256,10 +256,10 @@ impl ScopedToolRegistry {
         if connect_peripherals {
             let peripheral_tools = load_peripheral_tools(config.peripherals.clone()).await;
             if emit_assembly_logs && !peripheral_tools.is_empty() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                        .with_category(::clawcrew_log::EventCategory::Tool)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                        .with_category(::galleon_log::EventCategory::Tool)
                         .with_attrs(::serde_json::json!({"count": peripheral_tools.len()})),
                     "Peripheral tools added"
                 );
@@ -295,10 +295,10 @@ impl ScopedToolRegistry {
         let before_filter = tools_registry.len();
         apply_policy_tool_filter(&mut tools_registry, Some(security.as_ref()), caller_allowed);
         if emit_assembly_logs && tools_registry.len() != before_filter {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                    .with_category(::clawcrew_log::EventCategory::Agent)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                    .with_category(::galleon_log::EventCategory::Agent)
                     .with_attrs(::serde_json::json!({
                         "before": before_filter,
                         "retained": tools_registry.len(),
@@ -337,10 +337,10 @@ impl ScopedToolRegistry {
         };
         if !agent_mcp_servers.is_empty() {
             if emit_assembly_logs {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Load)
-                        .with_category(::clawcrew_log::EventCategory::Tool),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Load)
+                        .with_category(::galleon_log::EventCategory::Tool),
                     &format!(
                         "Initializing MCP client - {} server(s) granted via mcp_bundles",
                         agent_mcp_servers.len()
@@ -362,14 +362,14 @@ impl ScopedToolRegistry {
                             // Non-fatal (the assembly proceeds without MCP), but an ERROR
                             // with structured attrs - parity with the run/process_message
                             // connect-failure logging.
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 ERROR,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Fail
+                                    ::galleon_log::Action::Fail
                                 )
-                                .with_category(::clawcrew_log::EventCategory::Tool)
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                .with_category(::galleon_log::EventCategory::Tool)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({
                                     "agent_alias": agent_alias,
                                     "error": format!("{err}"),
@@ -423,13 +423,13 @@ impl ScopedToolRegistry {
                     )
                     .await;
                     if emit_assembly_logs {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Load
+                                ::galleon_log::Action::Load
                             )
-                            .with_category(::clawcrew_log::EventCategory::Tool),
+                            .with_category(::galleon_log::EventCategory::Tool),
                             &format!(
                                 "MCP deferred: {} tool stub(s) from {} server(s)",
                                 deferred_set.len(),
@@ -500,13 +500,13 @@ impl ScopedToolRegistry {
                             delegate_handle.as_ref(),
                         );
                         if emit_assembly_logs && !preactivated_names.is_empty() {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Register
+                                    ::galleon_log::Action::Register
                                 )
-                                .with_category(::clawcrew_log::EventCategory::Tool)
+                                .with_category(::galleon_log::EventCategory::Tool)
                                 .with_attrs(::serde_json::json!({
                                     "agent_alias": agent_alias,
                                     "count": preactivated_names.len(),
@@ -572,13 +572,13 @@ impl ScopedToolRegistry {
                         }
                     }
                     if emit_assembly_logs {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Register
+                                ::galleon_log::Action::Register
                             )
-                            .with_category(::clawcrew_log::EventCategory::Tool),
+                            .with_category(::galleon_log::EventCategory::Tool),
                             &format!(
                                 "MCP: {} tool(s) registered from {} server(s), {} skipped by policy",
                                 registered,
@@ -605,11 +605,11 @@ impl ScopedToolRegistry {
         ) {
             Ok(prefixes) => Some(prefixes),
             Err(error) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_category(::clawcrew_log::EventCategory::Tool)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_category(::galleon_log::EventCategory::Tool)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": error.to_string()})),
                     "Skipping skill HTTP tools because security.nat64_prefixes is invalid"
                 );

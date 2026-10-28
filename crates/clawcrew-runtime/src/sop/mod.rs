@@ -148,10 +148,10 @@ pub fn build_sop_engine(
     // at the daemon data dir, so a durable store lands at `<data_dir>/sop/runs.db`
     // unless `[sop] run_state_dir` overrides it.
     let store = store::build_run_store(&config, data_dir).unwrap_or_else(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"error": e.to_string()})),
             "SOP: run-store init failed; falling back to in-memory"
         );
@@ -450,10 +450,10 @@ pub fn load_sops_from_directory(
         match load_sop(&path, default_execution_mode) {
             Ok(sop) => sops.push(sop),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     &format!("Failed to load SOP from {}", path.display().to_string())
                 );

@@ -313,10 +313,10 @@ impl BrowserTool {
         }
 
         let parsed = reqwest::Url::parse(endpoint).map_err(|_| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"endpoint": endpoint})),
                 "browser: invalid computer_use endpoint URL"
             );
@@ -331,10 +331,10 @@ impl BrowserTool {
         }
 
         let host = parsed.host_str().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "browser: browser.computer_use.endpoint must include host"
             );
             anyhow::Error::msg("browser.computer_use.endpoint must include host")
@@ -508,9 +508,9 @@ impl BrowserTool {
         // Add --json for machine-readable output
         cmd.args(args).arg("--json");
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("Running: agent-browser {} --json", args.join(" "))
         );
 
@@ -524,9 +524,9 @@ impl BrowserTool {
         let stderr = String::from_utf8_lossy(&output.stderr);
 
         if !stderr.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!("agent-browser stderr: {}", stderr)
             );
         }
@@ -801,10 +801,10 @@ impl BrowserTool {
         key: &str,
     ) -> anyhow::Result<i64> {
         params.get(key).and_then(Value::as_i64).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "browser: Missing or invalid '{key}' parameter"
             );
             anyhow::Error::msg("Missing or invalid '{key}' parameter")
@@ -955,10 +955,10 @@ impl BrowserTool {
         match action {
             "open" => {
                 let url = params.get("url").and_then(Value::as_str).ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "browser: Missing 'url' for open action"
                     );
                     anyhow::Error::msg("Missing 'url' for open action")
@@ -1072,10 +1072,10 @@ impl BrowserTool {
 
         // Build params without the path - sidecar should return PNG bytes
         let mut params = args.as_object().cloned().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "browser: screenshot args must be a JSON object"
             );
             anyhow::Error::msg(crate::i18n::get_required_tool_string(
@@ -1460,10 +1460,10 @@ impl Tool for BrowserTool {
 
         // Parse action from args
         let action_str = args.get("action").and_then(|v| v.as_str()).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "browser: Missing 'action' parameter"
             );
             anyhow::Error::msg("Missing 'action' parameter")
@@ -1811,13 +1811,13 @@ mod native_backend {
                         }
                         "fill" => {
                             let fill = fill_value.ok_or_else(|| {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Reject
+                                        ::galleon_log::Action::Reject
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                    .with_outcome(::galleon_log::EventOutcome::Failure)
                                     .with_attrs(
                                         ::serde_json::json!({
                                             "find_action": "fill",
@@ -1941,10 +1941,10 @@ mod native_backend {
 
         fn active_client(&self) -> Result<&Client> {
             self.client.as_ref().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "browser: no active native browser session"
                 );
                 anyhow::Error::msg(
@@ -2280,10 +2280,10 @@ fn parse_browser_action(action_str: &str, args: &Value) -> anyhow::Result<Browse
     match action_str {
         "open" => {
             let url = args.get("url").and_then(|v| v.as_str()).ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "browser: Missing 'url' for open action"
                 );
                 anyhow::Error::msg("Missing 'url' for open action")
@@ -2309,10 +2309,10 @@ fn parse_browser_action(action_str: &str, args: &Value) -> anyhow::Result<Browse
                 .get("selector")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "browser: Missing 'selector' for click"
                     );
                     anyhow::Error::msg("Missing 'selector' for click")
@@ -2326,19 +2326,19 @@ fn parse_browser_action(action_str: &str, args: &Value) -> anyhow::Result<Browse
                 .get("selector")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "browser: Missing 'selector' for fill"
                     );
                     anyhow::Error::msg("Missing 'selector' for fill")
                 })?;
             let value = args.get("value").and_then(|v| v.as_str()).ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "browser: Missing 'value' for fill"
                 );
                 anyhow::Error::msg("Missing 'value' for fill")
@@ -2353,19 +2353,19 @@ fn parse_browser_action(action_str: &str, args: &Value) -> anyhow::Result<Browse
                 .get("selector")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "browser: Missing 'selector' for type"
                     );
                     anyhow::Error::msg("Missing 'selector' for type")
                 })?;
             let text = args.get("text").and_then(|v| v.as_str()).ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "browser: Missing 'text' for type"
                 );
                 anyhow::Error::msg("Missing 'text' for type")
@@ -2380,10 +2380,10 @@ fn parse_browser_action(action_str: &str, args: &Value) -> anyhow::Result<Browse
                 .get("selector")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "browser: Missing 'selector' for get_text"
                     );
                     anyhow::Error::msg("Missing 'selector' for get_text")
@@ -2442,10 +2442,10 @@ fn parse_browser_action(action_str: &str, args: &Value) -> anyhow::Result<Browse
         }),
         "press" => {
             let key = args.get("key").and_then(|v| v.as_str()).ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "browser: Missing 'key' for press"
                 );
                 anyhow::Error::msg("Missing 'key' for press")
@@ -2457,10 +2457,10 @@ fn parse_browser_action(action_str: &str, args: &Value) -> anyhow::Result<Browse
                 .get("selector")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "browser: Missing 'selector' for hover"
                     );
                     anyhow::Error::msg("Missing 'selector' for hover")
@@ -2474,10 +2474,10 @@ fn parse_browser_action(action_str: &str, args: &Value) -> anyhow::Result<Browse
                 .get("direction")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "browser: Missing 'direction' for scroll"
                     );
                     anyhow::Error::msg("Missing 'direction' for scroll")
@@ -2495,10 +2495,10 @@ fn parse_browser_action(action_str: &str, args: &Value) -> anyhow::Result<Browse
                 .get("selector")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "browser: Missing 'selector' for is_visible"
                     );
                     anyhow::Error::msg("Missing 'selector' for is_visible")
@@ -2510,19 +2510,19 @@ fn parse_browser_action(action_str: &str, args: &Value) -> anyhow::Result<Browse
         "close" => Ok(BrowserAction::Close),
         "find" => {
             let by = args.get("by").and_then(|v| v.as_str()).ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "browser: Missing 'by' for find"
                 );
                 anyhow::Error::msg("Missing 'by' for find")
             })?;
             let value = args.get("value").and_then(|v| v.as_str()).ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "browser: Missing 'value' for find"
                 );
                 anyhow::Error::msg("Missing 'value' for find")
@@ -2531,10 +2531,10 @@ fn parse_browser_action(action_str: &str, args: &Value) -> anyhow::Result<Browse
                 .get("find_action")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "browser: Missing 'find_action' for find"
                     );
                     anyhow::Error::msg("Missing 'find_action' for find")

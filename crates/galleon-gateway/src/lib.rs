@@ -185,9 +185,9 @@ pub(crate) fn register_cancel_token(
     let mut guard = match cancel_tokens.lock() {
         Ok(guard) => guard,
         Err(poisoned) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "cancel_tokens mutex was poisoned, recovering guard"
             );
             poisoned.into_inner()
@@ -212,9 +212,9 @@ pub(crate) fn remove_cancel_token_if_current(
     let mut tokens = match cancel_tokens.lock() {
         Ok(guard) => guard,
         Err(poisoned) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "cancel_tokens mutex was poisoned, recovering guard"
             );
             poisoned.into_inner()
@@ -649,9 +649,9 @@ async fn handle_whatsapp_verify_impl(
         .is_some_and(|t| constant_time_eq(t, wa.verify_token()));
     let resp = if params.mode.as_deref() == Some("subscribe") && token_matches {
         if let Some(ch) = params.challenge {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"channel": "whatsapp"})),
                 "webhook verified successfully"
             );
@@ -660,10 +660,10 @@ async fn handle_whatsapp_verify_impl(
             (StatusCode::BAD_REQUEST, "Missing hub.challenge".to_string()).into_response()
         }
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"channel": "whatsapp"})),
             "webhook verification failed — token mismatch"
         );
@@ -892,10 +892,10 @@ async fn process_linq_webhook(
         )
     };
     if agent_override.is_none() && has_channel_bindings {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"channel": "linq", "alias": alias})),
             "Linq webhook ignored because no enabled agent owns the channel alias"
         );
@@ -1067,10 +1067,10 @@ pub(crate) async fn handle_gmail_push_webhook(
             .unwrap_or("");
 
         if provided != secret {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"channel": "gmail_push"})),
                 "webhook: unauthorized request"
             );
@@ -1086,10 +1086,10 @@ pub(crate) async fn handle_gmail_push_webhook(
         match serde_json::from_str(&body_str) {
             Ok(e) => e,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(
                         ::serde_json::json!({"error": format!("{}", e), "channel": "gmail_push"})
                     ),
@@ -1105,10 +1105,10 @@ pub(crate) async fn handle_gmail_push_webhook(
     let channel = Arc::clone(gmail_push);
     galleon_spawn::spawn!(async move {
         if let Err(e) = channel.handle_notification(&envelope).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(
                         ::serde_json::json!({"channel": "gmail_push", "error": format!("{}", e)})
                     ),

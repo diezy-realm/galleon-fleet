@@ -118,10 +118,10 @@ impl ResolverPolicy {
             }
         }
         if roster_conflict {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "Two [users] entries share an effective principal_id; rejecting the whole roster (fail closed) rather than authorizing one arbitrarily. Repair the duplicate principal_id/entry name."
             );
             roster.clear();
@@ -219,10 +219,10 @@ impl PrincipalResolver {
         // against the last valid policy until the config is repaired. This does
         // not trust the caller to have validated: installation is the boundary.
         if let Err(e) = config.validate() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({ "error": format!("{e}") })),
                 "Refusing to install an authorization policy from a config that failed validation; keeping the previous policy. Repair the config and reload."
             );
@@ -230,10 +230,10 @@ impl PrincipalResolver {
         }
         let policy = ResolverPolicy::from_config(config);
         if policy.roster_conflict {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "Refusing to install an authorization policy with a duplicate effective principal_id; keeping the previous policy. Repair the [users] roster and reload."
             );
             return self.generation();

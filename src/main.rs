@@ -740,10 +740,10 @@ fn json_value_to_setprop_string(
     match galleon_config::typed_value::coerce_for_set_prop(value, kind) {
         Ok(value_str) => Ok(value_str),
         Err(err) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"path": path, "error": err.message.clone()})),
                 "config patch coercion rejected JSON value"
             );
@@ -4430,7 +4430,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
     let default_filter =
         format!("{default_floor},matrix_sdk=warn,matrix_sdk_base=warn,matrix_sdk_crypto=warn");
 
-    clawcrew_log::install_global_subscriber(
+    galleon_log::install_global_subscriber(
         recording_filter.as_deref(),
         &default_filter,
         cli.verbose,
@@ -4632,13 +4632,13 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         .models
                         .ensure(type_key, alias_key)
                         .ok_or_else(|| {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Reject
+                                    ::galleon_log::Action::Reject
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({"family": type_key})),
                                 "ask CLI refused: --model-provider names an unknown family"
                             );
@@ -4849,13 +4849,13 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     galleon_infra::acp_session_store::AcpSessionStore::new(&config.data_dir)
                         .map(std::sync::Arc::new)
                         .inspect_err(|e| {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({"error": e.to_string()})),
                                 "Failed to open ACP session store"
                             );
@@ -4886,9 +4886,9 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     let _nag = gate_security_posture(&config, allow_degraded_security)?;
                     let (port, host) = resolve_gateway_addr(&config, port, host);
                     let addr = format!("{host}:{port}");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"addr": addr})),
                         "🔄 Restarting ClawCrew Gateway on"
                     );
@@ -4897,11 +4897,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     match shutdown_gateway(&host, port, config.gateway.path_prefix.as_deref()).await
                     {
                         Ok(()) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({"addr": addr})),
                                 "✓ Existing gateway on shut down gracefully"
@@ -4913,13 +4913,13 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 match tokio::net::TcpStream::connect(&addr).await {
                                     Err(_) => break, // port is free
                                     Ok(_) if tokio::time::Instant::now() >= deadline => {
-                                        ::clawcrew_log::record!(
+                                        ::galleon_log::record!(
                                             WARN,
-                                            ::clawcrew_log::Event::new(
+                                            ::galleon_log::Event::new(
                                                 module_path!(),
-                                                ::clawcrew_log::Action::Note
+                                                ::galleon_log::Action::Note
                                             )
-                                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                                             .with_attrs(::serde_json::json!({"port": port})),
                                             "Timed out waiting for port to be released"
                                         );
@@ -4933,11 +4933,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             }
                         }
                         Err(e) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "   No existing gateway to shut down"
@@ -5098,10 +5098,10 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     } else {
                         "Consider installing to /usr/local/bin for system-wide service."
                     };
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!(
                             "Daemon running from user home directory: {}. {install_hint}",
                             exe.display()
@@ -5112,16 +5112,16 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
             let port = port.unwrap_or(config.gateway.port);
             let host = host.unwrap_or_else(|| config.gateway.host.clone());
             if port == 0 {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"host": host})),
                     "🧠 Starting ClawCrew Daemon on (random port)"
                 );
             } else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"host": host, "port": port})),
                     "🧠 Starting ClawCrew Daemon on"
                 );
@@ -5156,10 +5156,10 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         (true, false) => "security.sandbox.backend = \"docker\"",
                         _ => "runtime.kind = \"docker\"",
                     };
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"which": which})),
                         "Docker memory limits are configured but the Linux kernel has no memcg support. Affected config: . Consequence: --memory limits are silently ignored; agents can OOM the host. Fix: add 'cgroup_memory=1 cgroup_enable=memory' to /boot/firmware/cmdline.txt (Raspberry Pi) or enable CONFIG_MEMCG in your kernel, then reboot."
                     );
@@ -5356,11 +5356,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 // No SOPs directory configured — this is a valid
                                 // user state, not a misconfiguration. Skip the
                                 // listener gracefully.
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     INFO,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Skip
+                                        ::galleon_log::Action::Skip
                                     ),
                                     "MQTT SOP listener skipped — no SOPs directory configured"
                                 );
@@ -5421,11 +5421,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             &data_dir,
                             &relay_cfg.node_id,
                         )?;
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note,
+                                ::galleon_log::Action::Note,
                             )
                             .with_attrs(::serde_json::json!({
                                 "node_id": node_id,
@@ -5530,11 +5530,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             .map(|c| !c.ca_cert_path.is_empty())
                             .unwrap_or(false);
                         if byo_ca {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note,
+                                    ::galleon_log::Action::Note,
                                 ),
                                 "enrollment endpoint disabled: a bring-your-own CA has no signing \
                                  key; provision client certs out of band"
@@ -5557,11 +5557,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             &server_sans,
                             &protection,
                         )?;
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note,
+                                ::galleon_log::Action::Note,
                             ),
                             if ca_provided {
                                 "enrollment signing against an operator-provided CA \
@@ -5723,11 +5723,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 match exit {
                     daemon::DaemonExit::Shutdown => break,
                     daemon::DaemonExit::Reload => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             ),
                             "🔄 Daemon reload — re-reading config from disk"
                         );
@@ -7052,10 +7052,10 @@ Add pricing to the active provider profile or supply a catalog entry."
                 }
                 if no_interactive {
                     let val = value.ok_or_else(|| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({"path": path})),
                             "config set --no-interactive refused: positional value missing"
                         );
@@ -7467,13 +7467,13 @@ Add pricing to the active provider profile or supply a catalog entry."
                             let value = match op.get("value") {
                                 Some(value) => value,
                                 None => {
-                                    ::clawcrew_log::record!(
+                                    ::galleon_log::record!(
                                         WARN,
-                                        ::clawcrew_log::Event::new(
+                                        ::galleon_log::Event::new(
                                             module_path!(),
-                                            ::clawcrew_log::Action::Reject
+                                            ::galleon_log::Action::Reject
                                         )
-                                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                        .with_outcome(::galleon_log::EventOutcome::Failure)
                                         .with_attrs(
                                             ::serde_json::json!({
                                                 "op": op_name,
@@ -8265,16 +8265,16 @@ fn resolve_gateway_addr(config: &Config, port: Option<u16>, host: Option<String>
 #[cfg(feature = "agent-runtime")]
 fn log_gateway_start(host: &str, port: u16) {
     if port == 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"host": host})),
             "🚀 Starting ClawCrew Gateway on (random port)"
         );
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"host": host, "port": port})),
             "🚀 Starting ClawCrew Gateway on"
         );
@@ -8296,10 +8296,10 @@ async fn shutdown_gateway(host: &str, port: u16, path_prefix: Option<&str>) -> R
         Ok(response) if response.status().is_success() => Ok(()),
         Ok(response) => {
             let status = response.status();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"endpoint": url, "status": status.as_u16()})),
                 "gateway admin shutdown returned non-success status"
             );
@@ -8308,10 +8308,10 @@ async fn shutdown_gateway(host: &str, port: u16, path_prefix: Option<&str>) -> R
             )))
         }
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"endpoint": url, "error": format!("{}", e)})),
                 "gateway admin shutdown: connect failed"
             );
@@ -8535,10 +8535,10 @@ async fn fetch_paircode(
     };
 
     let response = response.map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "gateway paircode fetch: connect failed"
         );
@@ -8547,10 +8547,10 @@ async fn fetch_paircode(
 
     let status = response.status();
     let json: serde_json::Value = response.json().await.map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(
                     ::serde_json::json!({"error": format!("{}", e), "status": status.as_u16()})
                 ),
@@ -8566,10 +8566,10 @@ async fn fetch_paircode(
 
     if json.get("success").and_then(|v| v.as_bool()) != Some(true) {
         if !status.is_success() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"status": status.as_u16()})),
                 "gateway paircode fetch returned non-success status"
             );
@@ -9302,10 +9302,10 @@ fn gate_security_posture(
         let mut ticker = tokio::time::interval(std::time::Duration::from_secs(30));
         loop {
             ticker.tick().await;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({ "degraded_security": sections })),
                 &format!(
                     "Running with DEGRADED security: sections ({sections}) were reset to \
@@ -9364,13 +9364,13 @@ fn build_sop_adapters(config: &Config) -> clawcrew_runtime::sop::SopEngineAdapte
                 ) {
                     Ok(p) => p,
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": e.to_string()})),
                             "SOP llm.generate adapter unavailable: default model provider failed to build"
                         );
@@ -9412,10 +9412,10 @@ fn build_sop_adapters(config: &Config) -> clawcrew_runtime::sop::SopEngineAdapte
                 route_kind,
                 route,
             } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "policy": policy,
                             "route_kind": route_kind,
@@ -9430,10 +9430,10 @@ fn build_sop_adapters(config: &Config) -> clawcrew_runtime::sop::SopEngineAdapte
                 route,
                 channel_key,
             } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "policy": policy,
                             "route_kind": route_kind,
@@ -9514,9 +9514,9 @@ fn spawn_sop_maintenance(
                 continue;
             };
             if !report.is_empty() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "timed_out": report.maintenance.timed_out,
                             "reaped_claims": report.maintenance.reaped_claims,
@@ -9563,10 +9563,10 @@ async fn run_sop_maintenance_tick(
     let maintenance = match engine.lock() {
         Ok(mut e) => e.run_maintenance_tick(),
         Err(_) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "SOP maintenance tick: engine lock poisoned; skipping this pass"
             );
             return None;

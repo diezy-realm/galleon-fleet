@@ -75,10 +75,10 @@ fn resolve_audio_format(file_name: &str) -> Result<(String, &'static str)> {
         .map(|(_, e)| e)
         .unwrap_or("");
     let mime = mime_for_audio(extension).ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"extension": extension})),
             "transcription: unsupported audio format"
         );
@@ -1060,10 +1060,10 @@ impl TranscriptionManager {
                     transcription_providers.insert("local_whisper".to_string(), Box::new(p));
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "local_whisper config invalid, provider skipped"
                     );
@@ -1114,10 +1114,10 @@ impl TranscriptionManager {
                 }
                 Err(e) => {
                     let config_path = format!("[providers.transcription.{dotted}]");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"error": e.to_string(), "config_path": config_path})
                             ),
@@ -1168,10 +1168,10 @@ impl TranscriptionManager {
     ) -> Result<String> {
         let p = self.transcription_providers.get(transcription_provider).ok_or_else(|| {
             let available: Vec<&str> = self.transcription_providers.keys().map(|k| k.as_str()).collect();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "transcription_provider": transcription_provider,
                         "available": available,
@@ -1185,8 +1185,8 @@ impl TranscriptionManager {
 
         self.enforce_global_audio_limit(audio_data)?;
 
-        use ::clawcrew_log::Instrument;
-        let span = ::clawcrew_log::attribution_span!(p.as_ref());
+        use ::galleon_log::Instrument;
+        let span = ::galleon_log::attribution_span!(p.as_ref());
         p.transcribe(audio_data, file_name).instrument(span).await
     }
 
@@ -1411,10 +1411,10 @@ pub(crate) fn manager_from_snapshot(
     match TranscriptionManager::new(config) {
         Ok(manager) => Some(std::sync::Arc::new(bind_channel_provider(manager, ""))),
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"e": e.to_string()})),
                 "transcription manager init failed, voice transcription disabled"
             );
@@ -1825,10 +1825,10 @@ mod tests {
 
     #[test]
     fn typed_registration_logs_all_family_errors_across_entry_points() {
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let mut typed = TranscriptionProviders::default();

@@ -479,8 +479,8 @@ pub(crate) async fn process_chat_message(
     // alongside the undecorated transcript. This transport only renders the
     // typed result as a standalone WS frame.
     let turn_fut = Box::pin(async {
-        use ::clawcrew_log::Instrument as _;
-        let span = ::clawcrew_log::info_span!(
+        use ::galleon_log::Instrument as _;
+        let span = ::galleon_log::info_span!(
             target: "clawcrew_log_internal_scope",
             "clawcrew_scope",
             session_key = %session_key_owned,
@@ -592,7 +592,7 @@ pub(crate) async fn process_chat_message(
                                         if let (Some(decision), Some(tx)) = (decision, pending_approvals.lock().remove(request_id)) {
                                             let _ = tx.send(decision);
                                         } else {
-                                            ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"request_id": request_id})), "approval_response with no matching pending request (mid-turn)");
+                                            ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"request_id": request_id})), "approval_response with no matching pending request (mid-turn)");
                                         }
                                     }
                                     Some("message") => {
@@ -802,10 +802,10 @@ pub(crate) async fn process_chat_message(
 
         // Trace the cancelled turn so the doctor / replay tool sees it
         // alongside successful turns.follow-through.
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Cancel)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Cancel)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({
                     "model_provider": &provider_label,
                     "model": cancel_model,
@@ -849,11 +849,11 @@ pub(crate) async fn process_chat_message(
                         )
                         .await
                         {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 DEBUG,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "WS memory consolidation skipped"
@@ -861,9 +861,9 @@ pub(crate) async fn process_chat_message(
                         }
                     });
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "WS memory consolidation skipped"
                     );
                 }
@@ -991,10 +991,10 @@ pub(crate) async fn process_chat_message(
             // Append a runtime-trace.jsonl record so a `clawcrew doctor`
             // sweep sees gateway WS turns alongside channel and CLI turns.
             // Closes the gateway-side trace gap from
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Complete)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Complete)
+                    .with_outcome(::galleon_log::EventOutcome::Success)
                     .with_attrs(::serde_json::json!({
                         "model_provider": &provider_label,
                         "model": effective_model,
@@ -1020,10 +1020,10 @@ pub(crate) async fn process_chat_message(
                 let _ = backend.set_session_state(session_key, "error", Some(&turn_id));
             }
 
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e.error)})),
                 "Agent turn failed"
             );
@@ -1045,10 +1045,10 @@ pub(crate) async fn process_chat_message(
             // Trace the failed turn so the doctor / replay tool sees the
             // failure mode and the turn_id can be cross-referenced with
             // costs.jsonl.follow-through.
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "model_provider": provider_label,
                         "model": turn_model,

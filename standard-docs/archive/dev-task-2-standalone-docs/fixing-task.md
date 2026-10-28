@@ -27,7 +27,7 @@ Namun, dari sudut pandang **Principle Quality Gatekeeper**, PR ini **DITOLAK (RE
 | Gate / Invariant | Standar Acuan | Status | Catatan Temuan |
 |---|---|---|---|
 | **Zero `unwrap()` / `expect()`** | `rust-conventions.md` | ✅ **PASSED** | Diverifikasi dengan script checker Principle: **0 temuan / KOSONG**. |
-| **Rust Mutex Poisoning** | `rust-conventions.md` | ✅ **PASSED** | Digantikan dengan poison recovery (`poisoned.into_inner()`) & `clawcrew_log::record!(WARN, ...)`. |
+| **Rust Mutex Poisoning** | `rust-conventions.md` | ✅ **PASSED** | Digantikan dengan poison recovery (`poisoned.into_inner()`) & `galleon_log::record!(WARN, ...)`. |
 | **Branding Standard (`galleon-`)** | `rust-conventions.md` | ⚠️ **PARTIAL** | Mayoritas crate baru sudah memakai `galleon-`, tapi masih ada path legacy `clawcrew-` yang disentuh. |
 | **4-Tier Boundary (ADR 0001)** | `01-boundary-policy.md` | ✅ **PASSED** | Go engine sukses mendelegasikan LLM & Tool execution ke Rust via gRPC. |
 | **Tool Path Traversal Prevention** | OWASP Top 10 | ✅ **PASSED** | Added `path_containment_test.go` dan verifikasi sandbox path di Go engine. |
@@ -86,7 +86,7 @@ Namun, dari sudut pandang **Principle Quality Gatekeeper**, PR ini **DITOLAK (RE
 Berikut daftar tugas terperinci yang wajib diselesaikan sebelum PR #16 dapat di-approve dan di-merge ke branch `testing`:
 
 ### Task 1: Rust Invariant Cleanup (P0 - Blocker)
-- [x] **1.1:** Ganti `.expect("cancel_tokens lock poisoned")` di `crates/galleon-gateway/src/lib.rs` dengan poison recovery (`poisoned.into_inner()`) serta logging `::clawcrew_log::record!(WARN, ...)`. *(Selesai - Verified)*
+- [x] **1.1:** Ganti `.expect("cancel_tokens lock poisoned")` di `crates/galleon-gateway/src/lib.rs` dengan poison recovery (`poisoned.into_inner()`) serta logging `::galleon_log::record!(WARN, ...)`. *(Selesai - Verified)*
 - [x] **1.2:** Audit `crates/galleon-gateway/src/handlers/mod.rs` dan ganti semua `.unwrap()` pada axum/http routing dengan error propagation `?` atau `StatusCode::INTERNAL_SERVER_ERROR`. *(Selesai - Verified)*
 - [x] **1.3:** Pastikan seluruh fungsi di `crates/galleon-gateway/src/grpc_system_gateway.rs` (di luar test) mengembalikan `Result<T, tonic::Status>` tanpa unwrap. *(Selesai - Verified)*
 

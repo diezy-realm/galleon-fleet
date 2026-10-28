@@ -6153,10 +6153,10 @@ async fn process_channel_message_does_not_recreate_cache_after_provider_error_an
 #[allow(clippy::await_holding_lock)]
 #[tokio::test]
 async fn provider_query_secret_is_absent_from_channel_error_log_and_reply() {
-    let _writer_guard = clawcrew_log::__private_test_writer_lock();
-    let _hook_guard = clawcrew_log::__private_test_hook_lock();
-    clawcrew_log::try_install_capture_subscriber();
-    let mut rx = clawcrew_log::subscribe_or_install();
+    let _writer_guard = galleon_log::__private_test_writer_lock();
+    let _hook_guard = galleon_log::__private_test_hook_lock();
+    galleon_log::try_install_capture_subscriber();
+    let mut rx = galleon_log::subscribe_or_install();
     while rx.try_recv().is_ok() {}
 
     let channel_impl = Arc::new(RecordingChannel::default());
@@ -10658,10 +10658,10 @@ async fn process_channel_message_uses_classifier_provider_for_precheck_model_sel
 #[allow(clippy::await_holding_lock)]
 #[tokio::test]
 async fn process_channel_message_precheck_log_uses_span_attribution_not_attrs() {
-    let _writer_guard = clawcrew_log::__private_test_writer_lock();
-    let _hook_guard = clawcrew_log::__private_test_hook_lock();
-    clawcrew_log::try_install_capture_subscriber();
-    let mut rx = clawcrew_log::subscribe_or_install();
+    let _writer_guard = galleon_log::__private_test_writer_lock();
+    let _hook_guard = galleon_log::__private_test_hook_lock();
+    galleon_log::try_install_capture_subscriber();
+    let mut rx = galleon_log::subscribe_or_install();
     while rx.try_recv().is_ok() {}
 
     let channel_impl = Arc::new(RecordingChannel::default());

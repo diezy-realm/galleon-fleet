@@ -197,24 +197,24 @@ async fn debounced_bucket_rejects_when_combined_attachments_exceed_cap() {
 
 #### Detail Eksekusi — BL-37 Tahap 1
 
-**Koreksi lokasi (penting):** `capture_tool_input`/`capture_tool_output` **TIDAK ada** di `tool_execution.rs` — definisinya di crate yang BERBEDA: `crates/clawcrew-log/src/tool_io.rs:23` (`capture_tool_input(policy: &ResolvedPolicy, tool: &str, redacted: &str) -> Option<ToolIoCapture>`) dan `:32` (`capture_tool_output`, signature identik). Dokumen lama benar bahwa fungsi ini "dirancang benar tapi nol dipanggil produksi" — grep `tool_execution.rs` untuk nama fungsi ini = 0 match, mengkonfirmasi gap wiring.
+**Koreksi lokasi (penting):** `capture_tool_input`/`capture_tool_output` **TIDAK ada** di `tool_execution.rs` — definisinya di crate yang BERBEDA: `crates/galleon-log/src/tool_io.rs:23` (`capture_tool_input(policy: &ResolvedPolicy, tool: &str, redacted: &str) -> Option<ToolIoCapture>`) dan `:32` (`capture_tool_output`, signature identik). Dokumen lama benar bahwa fungsi ini "dirancang benar tapi nol dipanggil produksi" — grep `tool_execution.rs` untuk nama fungsi ini = 0 match, mengkonfirmasi gap wiring.
 
-**Koreksi baris:** Baris persis di `tool_execution.rs` tempat raw value ditulis ke log (padanan dari klaim dokumen `166-262`) adalah **baris ~259** (`"input": call_arguments` di dalam `::clawcrew_log::record!(DEBUG, ...)`, fungsi `execute_one_tool`) — nomor baris SUDAH BERGESER dari dokumen lama, verifikasi ulang nomor persis saat eksekusi (`grep -n '"input": call_arguments'`) karena file terus berubah.
+**Koreksi baris:** Baris persis di `tool_execution.rs` tempat raw value ditulis ke log (padanan dari klaim dokumen `166-262`) adalah **baris ~259** (`"input": call_arguments` di dalam `::galleon_log::record!(DEBUG, ...)`, fungsi `execute_one_tool`) — nomor baris SUDAH BERGESER dari dokumen lama, verifikasi ulang nomor persis saat eksekusi (`grep -n '"input": call_arguments'`) karena file terus berubah.
 
 **Signature `capture_tool_input`/`capture_tool_output` butuh `redacted: &str`** — ARTINYA caller WAJIB men-scrub/leak-scan INPUT terlebih dahulu SEBELUM memanggil fungsi ini (dokumentasi fungsi sendiri: *"the input string AFTER the runtime has scanned it for credential leaks (using `clawcrew_runtime::security::LeakDetector`)"*). Ini urutan 2 langkah: (1) leak-scan via `LeakDetector` (`crates/clawcrew-runtime/src/security/` — cari exact path, kemungkinan dekat `landlock.rs`/`seatbelt.rs` di modul `security`), (2) `capture_tool_input(policy, tool, redacted)` untuk truncation+denylist.
 
 **File & simbol spesifik:**
-- Baca: `crates/clawcrew-log/src/tool_io.rs` (sudah dibaca penuh sesi ini) — `ToolIoCapture { text, original_bytes, truncated }`, `ResolvedPolicy`, `ToolIoPolicy::{Off,Full,Redacted}`.
+- Baca: `crates/galleon-log/src/tool_io.rs` (sudah dibaca penuh sesi ini) — `ToolIoCapture { text, original_bytes, truncated }`, `ResolvedPolicy`, `ToolIoPolicy::{Off,Full,Redacted}`.
 - Cari: `crates/clawcrew-runtime/src/security/` untuk `LeakDetector` exact path dan signature method scan-nya (BELUM diverifikasi sesi ini — WAJIB sebagai langkah pertama tim eksekusi).
 - Ubah: `crates/clawcrew-runtime/src/agent/tool_execution.rs` baris ~259 (titik `"input": call_arguments`) dan titik serupa untuk output (grep `r.output`/`result.output` di sekitar baris ini untuk titik kedua).
 
 **Spesifikasi API (pola integrasi):**
 ```rust
 // Sebelum (saat ini, tool_execution.rs ~baris 254-261):
-::clawcrew_log::record!(
+::galleon_log::record!(
     DEBUG,
-    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Invoke)
-        .with_category(::clawcrew_log::EventCategory::Tool)
+    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Invoke)
+        .with_category(::galleon_log::EventCategory::Tool)
         .with_attrs(::serde_json::json!({
             "tool": call_name,
             "tool_call_id": tool_call_id,
@@ -225,11 +225,11 @@ async fn debounced_bucket_rejects_when_combined_attachments_exceed_cap() {
 
 // Sesudah:
 let leak_scanned_input = security::LeakDetector::scan(&full_args); // verifikasi API persis sebelum pakai
-let captured_input = clawcrew_log::capture_tool_input(&resolved_policy, call_name, &leak_scanned_input);
-::clawcrew_log::record!(
+let captured_input = galleon_log::capture_tool_input(&resolved_policy, call_name, &leak_scanned_input);
+::galleon_log::record!(
     DEBUG,
-    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Invoke)
-        .with_category(::clawcrew_log::EventCategory::Tool)
+    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Invoke)
+        .with_category(::galleon_log::EventCategory::Tool)
         .with_attrs(::serde_json::json!({
             "tool": call_name,
             "tool_call_id": tool_call_id,
@@ -254,11 +254,11 @@ let captured_input = clawcrew_log::capture_tool_input(&resolved_policy, call_nam
 
 **JANGAN DIUBAH:** `ToolIoCapture`/`capture_tool_input`/`capture_tool_output`/`capture_with_policy` di `tool_io.rs` — API ini sudah benar sesuai dokumentasinya sendiri, tiket ini murni WIRING caller, bukan mengubah fungsi itu.
 
-- [x] **BL-37 Tahap 2 (SETELAH Tahap 1)** Pisah axis policy: technical tool I/O (default truncated) vs conversational tool I/O (default `Off`). File: `crates/galleon-config/src/schema.rs`, `crates/clawcrew-log/src/{tool_io.rs,config.rs}`. Status: COMPLETED (`conversational_tool_io_defaults_to_off_while_technical_is_captured` passed).
+- [x] **BL-37 Tahap 2 (SETELAH Tahap 1)** Pisah axis policy: technical tool I/O (default truncated) vs conversational tool I/O (default `Off`). File: `crates/galleon-config/src/schema.rs`, `crates/galleon-log/src/{tool_io.rs,config.rs}`. Status: COMPLETED (`conversational_tool_io_defaults_to_off_while_technical_is_captured` passed).
 
 #### Detail Eksekusi — BL-37 Tahap 2
 
-**File & simbol spesifik:** `ToolIoPolicy` enum (dipakai di `tool_io.rs`, didefinisikan kemungkinan di `clawcrew-log/src/config.rs` — BELUM diverifikasi sesi ini, WAJIB cek sebelum eksekusi) saat ini SATU axis (`Off|Full|Redacted`) berlaku untuk SEMUA tool. Tiket ini minta DUA axis terpisah: tool teknis (file-write, shell, dll — default `Redacted`/truncated) vs tool conversational (kirim pesan ke user/channel — default `Off`, karena isi percakapan user adalah data sensitif yang berbeda kelas dari argumen command teknis).
+**File & simbol spesifik:** `ToolIoPolicy` enum (dipakai di `tool_io.rs`, didefinisikan kemungkinan di `galleon-log/src/config.rs` — BELUM diverifikasi sesi ini, WAJIB cek sebelum eksekusi) saat ini SATU axis (`Off|Full|Redacted`) berlaku untuk SEMUA tool. Tiket ini minta DUA axis terpisah: tool teknis (file-write, shell, dll — default `Redacted`/truncated) vs tool conversational (kirim pesan ke user/channel — default `Off`, karena isi percakapan user adalah data sensitif yang berbeda kelas dari argumen command teknis).
 
 **Langkah pengerjaan:**
 1. Baca `crates/galleon-config/src/schema.rs` untuk struktur `ResolvedPolicy`/`ToolIoPolicy` existing persis.
@@ -287,11 +287,11 @@ let captured_input = clawcrew_log::capture_tool_input(&resolved_policy, call_nam
 
 **JANGAN DIUBAH:** `scrub_credentials` function itu sendiri (`super::loop_::scrub_credentials`) — tiket ini murni WIRING ke titik tambahan, bukan mengubah logic scrub.
 
-- [x] **BL-39 (P2, MEDIUM)** Proteksi ACL file log Windows (`writer.rs:403-420` hanya punya branch `#[cfg(unix)]`). Status: COMPLETED (SetNamedSecurityInfoW private DACL diterapkan di `writer.rs` & `migrate.rs`; `windows_log_file_has_restricted_acl` passed, 159 tests `clawcrew-log` passed).
+- [x] **BL-39 (P2, MEDIUM)** Proteksi ACL file log Windows (`writer.rs:403-420` hanya punya branch `#[cfg(unix)]`). Status: COMPLETED (SetNamedSecurityInfoW private DACL diterapkan di `writer.rs` & `migrate.rs`; `windows_log_file_has_restricted_acl` passed, 159 tests `galleon-log` passed).
 
 #### Detail Eksekusi — BL-39
 
-**TIDAK DIVERIFIKASI sesi ini** (file `writer.rs` di luar budget baca sesi ini — kemungkinan `crates/clawcrew-log/src/writer.rs`, belum dikonfirmasi). **Langkah pertama WAJIB:** baca file ini, konfirmasi baris persis `#[cfg(unix)]` yang disebut (nomor baris bisa sudah bergeser seperti ditemukan di tiket-tiket lain sprint ini), dan cek APA yang dilakukan branch unix (chmod 600? ACL POSIX?) sebagai referensi perilaku yang harus disetarakan di Windows.
+**TIDAK DIVERIFIKASI sesi ini** (file `writer.rs` di luar budget baca sesi ini — kemungkinan `crates/galleon-log/src/writer.rs`, belum dikonfirmasi). **Langkah pertama WAJIB:** baca file ini, konfirmasi baris persis `#[cfg(unix)]` yang disebut (nomor baris bisa sudah bergeser seperti ditemukan di tiket-tiket lain sprint ini), dan cek APA yang dilakukan branch unix (chmod 600? ACL POSIX?) sebagai referensi perilaku yang harus disetarakan di Windows.
 
 **Spesifikasi API (pola umum, verifikasi API Windows persis saat eksekusi):**
 ```rust
@@ -306,7 +306,7 @@ fn restrict_log_file_acl(path: &Path) -> std::io::Result<()> {
 ```
 
 **Langkah pengerjaan:**
-1. Baca `writer.rs` (lokasi exact path perlu dikonfirmasi — grep `#[cfg(unix)]` di `crates/clawcrew-log/`).
+1. Baca `writer.rs` (lokasi exact path perlu dikonfirmasi — grep `#[cfg(unix)]` di `crates/galleon-log/`).
 2. Pahami perilaku unix branch persis (permission mode apa yang di-set).
 3. Cek dependency Cargo.toml workspace untuk Windows ACL crate yang sudah terpasang (`windows`/`windows-sys` crate sudah dipakai luas di codebase ini untuk fitur Windows lain — kemungkinan besar reuse, bukan dependency baru).
 4. Implementasi branch `#[cfg(windows)]` setara.
@@ -321,7 +321,7 @@ fn restrict_log_file_acl(path: &Path) -> std::io::Result<()> {
 |---|---|---|---|
 | A (BL-52) | `galleon-infra/src/debounce.rs`, `galleon-channels/src/orchestrator/mod.rs` | Backend-Rust | **Tunggu BL-14 (Sprint 0) merge dulu** |
 | B (BL-53/54/55) | `clawcrew-api/src/media.rs`, Front App entry point per-channel, Core agregasi | Backend-Rust + Frontend (per-channel) | BL-55 tunggu BL-52 merge |
-| C (BL-37/38/39) | `clawcrew-runtime/src/agent/tool_execution.rs`, `galleon-config/src/schema.rs`, `clawcrew-log/src/*` | Backend-Rust (crew berbeda dari A/B, file tidak beririsan) | Bisa paralel penuh dengan A/B |
+| C (BL-37/38/39) | `clawcrew-runtime/src/agent/tool_execution.rs`, `galleon-config/src/schema.rs`, `galleon-log/src/*` | Backend-Rust (crew berbeda dari A/B, file tidak beririsan) | Bisa paralel penuh dengan A/B |
 
 ## Keluaran Sprint
 

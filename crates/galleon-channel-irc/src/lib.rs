@@ -405,10 +405,10 @@ impl Channel for IrcChannel {
     async fn send(&self, message: &SendMessage) -> anyhow::Result<()> {
         let mut guard = self.writer.lock().await;
         let writer = guard.as_mut().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "IRC not connected"
             );
             anyhow::Error::msg("IRC not connected")
@@ -429,9 +429,9 @@ impl Channel for IrcChannel {
 
     async fn listen(&self, tx: mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
         let mut current_nick = self.nickname.clone();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "IRC channel connecting to {}:{} as {}...",
                 self.server, self.port, current_nick
@@ -475,10 +475,10 @@ impl Channel for IrcChannel {
             let n = tokio::time::timeout(READ_TIMEOUT, buf_reader.read_line(&mut line))
                 .await
                 .map_err(|_| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Timeout)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Timeout)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "timeout": format!("{:?}", READ_TIMEOUT),
                             })),
@@ -513,13 +513,13 @@ impl Channel for IrcChannel {
                         }
                     } else if msg.params.iter().any(|p| p.contains("NAK")) {
                         // CAP * NAK :sasl — server rejected SASL, proceed without it
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                             "server does not support SASL, continuing without it"
                         );
                         sasl_pending = false;
@@ -541,13 +541,13 @@ impl Channel for IrcChannel {
                         }
                     } else {
                         // SASL was requested but no password is configured; abort SASL
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                             "SASL authentication requested but no SASL password is configured; aborting SASL"
                         );
                         sasl_pending = false;
@@ -569,10 +569,10 @@ impl Channel for IrcChannel {
 
                 // SASL failure (904, 905, 906, 907)
                 "904" | "905" | "906" | "907" => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!("SASL authentication failed ({})", msg.command)
                     );
                     sasl_pending = false;
@@ -585,9 +585,9 @@ impl Channel for IrcChannel {
                 // RPL_WELCOME — registration complete
                 "001" => {
                     registered = true;
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!("registered as {}", current_nick)
                     );
 
@@ -612,10 +612,10 @@ impl Channel for IrcChannel {
                 // ERR_NICKNAMEINUSE (433)
                 "433" => {
                     let alt = format!("{current_nick}_");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"current_nick": current_nick, "alt": alt})
                             ),

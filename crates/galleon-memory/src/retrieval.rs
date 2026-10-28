@@ -224,9 +224,9 @@ impl RetrievalPipeline {
 
         let ck = Self::cache_key(query, limit, session_id, namespace, since, until);
         if let Some(cached) = self.check_cache(&ck) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"query": query})),
                 "retrieval pipeline: cache hit for ''"
             );

@@ -45,17 +45,17 @@ pub async fn maybe_run_skill_review(
         return;
     }
     if SKILL_REVIEW_ACTIVE.try_with(|()| ()).is_ok() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Skill review: recursion guard tripped, skipping nested review"
         );
         return;
     }
     if !should_trigger(&history, config.nudge_interval_iterations) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "iters": count_tool_iterations(&history),
                     "threshold": config.nudge_interval_iterations,
@@ -216,10 +216,10 @@ pub async fn maybe_run_skill_review(
             }
         }
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{e}")})),
                 "Skill review fork failed"
             );
