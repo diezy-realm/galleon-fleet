@@ -2,10 +2,10 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_channel_irc::{IrcChannel, IrcChannelConfig};
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
 const TWITCH_IRC_HOST: &str = "irc.chat.twitch.tv";
 const TWITCH_IRC_PORT: u16 = 6697;
@@ -55,9 +55,9 @@ impl TwitchChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for TwitchChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Twitch)
+impl ::galleon_api::attribution::Attributable for TwitchChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Twitch)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -77,7 +77,7 @@ impl Channel for TwitchChannel {
     async fn listen(&self, tx: mpsc::Sender<ChannelMessage>) -> Result<()> {
         let (inner_tx, mut inner_rx) = mpsc::channel::<ChannelMessage>(FORWARD_BUFFER);
         let inner = self.inner.clone();
-        let listen_task = clawcrew_spawn::spawn!(async move { inner.listen(inner_tx).await });
+        let listen_task = galleon_spawn::spawn!(async move { inner.listen(inner_tx).await });
 
         // Drain inner_rx, rewrite the channel field, forward to outer tx.
         while let Some(mut msg) = inner_rx.recv().await {
@@ -105,7 +105,7 @@ impl Channel for TwitchChannel {
     /// Forward the inner channel's passive observation; see the note on
     /// `PacedChannel::listener_health`. The trait default would otherwise
     /// answer `None` for the wrapper and hide a signal the inner channel has.
-    fn listener_health(&self) -> Option<clawcrew_api::channel::ListenerHealth> {
+    fn listener_health(&self) -> Option<galleon_api::channel::ListenerHealth> {
         self.inner.listener_health()
     }
 

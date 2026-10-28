@@ -8,9 +8,9 @@ use notify::{Event, EventKind, RecursiveMode, Watcher};
 use sha2::{Digest, Sha256};
 use tokio::sync::mpsc;
 
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_api::sop::{FilesystemEventKind, SopFanInDispatcher, SopTriggerSource};
-use clawcrew_config::schema::FilesystemConfig;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::sop::{FilesystemEventKind, SopFanInDispatcher, SopTriggerSource};
+use galleon_config::schema::FilesystemConfig;
 
 /// Filesystem change source as a `Channel`.
 ///
@@ -46,8 +46,8 @@ impl FilesystemChannel {
     }
 
     async fn watch_and_dispatch(&self, tx: &mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
-        use clawcrew_log::Instrument;
-        let span = clawcrew_log::attribution_span!(self);
+        use galleon_log::Instrument;
+        let span = galleon_log::attribution_span!(self);
         self.watch_and_dispatch_inner(tx).instrument(span).await
     }
 
@@ -57,9 +57,9 @@ impl FilesystemChannel {
         list: &str,
     ) -> anyhow::Result<Vec<glob::Pattern>> {
         compile_globs(patterns).inspect_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({ "list": list, "error": e.to_string() })),
                 "Filesystem channel: invalid glob pattern, refusing to start listener"
             );
@@ -94,15 +94,15 @@ impl FilesystemChannel {
         };
         for path in &config.paths {
             watcher.watch(Path::new(path), mode)?;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({ "path": path })),
                 "Filesystem channel: watching ''"
             );
         }
 
-        clawcrew_infra::health::mark_component_ok("filesystem");
+        galleon_infra::health::mark_component_ok("filesystem");
 
         self.dispatch_loop(raw_rx, tx, &include, &exclude).await
     }
@@ -169,12 +169,11 @@ impl FilesystemChannel {
 
             let payload = build_payload(kind, &path, old_path.as_deref(), config);
 
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_attrs(
-                        ::serde_json::json!({ "path": path_str, "event": kind.to_string() })
-                    ),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({ "path": path_str, "event": kind.to_string() })
+                ),
                 "Filesystem channel: dispatching '' ''"
             );
 
@@ -225,10 +224,10 @@ impl Channel for FilesystemChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for FilesystemChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Filesystem,
+impl ::galleon_api::attribution::Attributable for FilesystemChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Filesystem,
         )
     }
     fn alias(&self) -> &str {
@@ -381,9 +380,9 @@ fn symlink_path_admitted(path: &Path, config: &FilesystemConfig) -> bool {
         return true;
     }
     if !config.follow_symlinks {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({ "path": path.to_string_lossy() })),
             "Filesystem channel: rejecting symlink event path (follow_symlinks is off)"
         );
@@ -395,9 +394,9 @@ fn symlink_path_admitted(path: &Path, config: &FilesystemConfig) -> bool {
     if canonical_target_within_roots(&target, &config.paths) {
         return true;
     }
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
             ::serde_json::json!({
                 "path": path.to_string_lossy(),
                 "target": target.to_string_lossy(),
@@ -892,8 +891,8 @@ mod tests {
             _payload: Option<&str>,
             _target_sop: Option<&str>,
             _dedup: Option<(String, bool)>,
-        ) -> clawcrew_api::sop::SopFanInResult {
-            clawcrew_api::sop::SopFanInResult::default()
+        ) -> galleon_api::sop::SopFanInResult {
+            galleon_api::sop::SopFanInResult::default()
         }
     }
 
@@ -923,7 +922,7 @@ mod tests {
         );
 
         let (tx, rx) = mpsc::channel(1);
-        let listener = ::clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+        let listener = ::galleon_spawn::spawn!(async move { channel.listen(tx).await });
 
         // Close the supervisor side while the watcher is completely idle.
         drop(rx);
@@ -977,10 +976,10 @@ mod tests {
     async fn invalid_glob_rejection_is_span_attributed() {
         use std::sync::Arc;
 
-        let _writer_guard = clawcrew_log::__private_test_writer_lock();
-        let _hook_guard = clawcrew_log::__private_test_hook_lock();
-        clawcrew_log::try_install_capture_subscriber();
-        let mut rx = clawcrew_log::subscribe_or_install();
+        let _writer_guard = galleon_log::__private_test_writer_lock();
+        let _hook_guard = galleon_log::__private_test_hook_lock();
+        galleon_log::try_install_capture_subscriber();
+        let mut rx = galleon_log::subscribe_or_install();
         while rx.try_recv().is_ok() {}
 
         let watched = tempfile::tempdir().unwrap();

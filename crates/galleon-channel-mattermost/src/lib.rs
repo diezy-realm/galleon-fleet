@@ -1,8 +1,8 @@
 use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
-use clawcrew_api::channel::{Channel, ChannelApprovalResponse, ChannelMessage, SendMessage};
-pub use clawcrew_config::schema::MattermostListenMode;
 use futures_util::{SinkExt, StreamExt, stream::SplitSink, stream::SplitStream};
+use galleon_api::channel::{Channel, ChannelApprovalResponse, ChannelMessage, SendMessage};
+pub use galleon_config::schema::MattermostListenMode;
 use parking_lot::Mutex;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -48,7 +48,6 @@ pub(crate) async fn read_response_body_limited(
 
     Ok(body)
 }
-
 
 pub(crate) fn build_yesno_approval_prompt(
     token: &str,
@@ -409,7 +408,7 @@ pub struct MattermostChannel {
     typing_handle: Mutex<Option<tokio::task::JoinHandle<()>>>,
     /// Per-channel proxy URL override.
     proxy_url: Option<String>,
-    transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
+    transcription: Option<galleon_config::schema::TranscriptionConfig>,
     transcription_manager: Option<Arc<dyn AudioTranscriber>>,
     /// How this channel receives inbound messages. Defaults to `Polling`.
     listen_mode: MattermostListenMode,
@@ -475,7 +474,7 @@ impl MattermostChannel {
             // Sourced from the config type so the in-Rust default cannot drift
             // from the serde one. `0` here would be an already-elapsed
             // deadline that denies every approval.
-            approval_timeout_secs: clawcrew_config::schema::MattermostConfig::default()
+            approval_timeout_secs: galleon_config::schema::MattermostConfig::default()
                 .approval_timeout_secs,
             purpose_as_instructions: false,
             room_purposes: Arc::new(Mutex::new(HashMap::new())),
@@ -520,9 +519,9 @@ impl MattermostChannel {
         // looks exactly like a room that has none. Report what discovery
         // actually found so an operator can tell "no purpose set" from "the
         // purpose never reached us".
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "alias": self.alias,
                     "rooms_discovered": targets.len(),
@@ -645,10 +644,10 @@ impl MattermostChannel {
                     return Ok::<String, anyhow::Error>(t.clone());
                 }
                 let login_id = self.login_id.as_deref().ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "missing": "login_id",
                                 "reason": "no_bot_token",
@@ -660,10 +659,10 @@ impl MattermostChannel {
                     )
                 })?;
                 let password = self.password.as_deref().ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "missing": "password",
                                 "reason": "no_bot_token",
@@ -704,18 +703,18 @@ impl MattermostChannel {
             .get("Token")
             .and_then(|v| v.to_str().ok())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "login succeeded but the response had no Token header"
                 );
                 anyhow::Error::msg("login succeeded but the response had no Token header")
             })?
             .to_string();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "login succeeded; session token cached"
         );
         Ok(token)
@@ -736,7 +735,10 @@ impl MattermostChannel {
     /// otherwise leaves the choice unbound (see
     /// `transcription::manager_from_snapshot`).
     /// Configure voice transcription from a `[transcription]` snapshot (no-op stub without provider manager).
-    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(
+        mut self,
+        config: galleon_config::schema::TranscriptionConfig,
+    ) -> Self {
         self.transcription = Some(config);
         self
     }
@@ -746,7 +748,7 @@ impl MattermostChannel {
     /// transcription it cannot perform.
     pub fn with_transcription_manager(
         mut self,
-        config: clawcrew_config::schema::TranscriptionConfig,
+        config: galleon_config::schema::TranscriptionConfig,
         manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
@@ -772,7 +774,7 @@ impl MattermostChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_channel_proxy_client_with_timeouts(
+        galleon_config::schema::build_channel_proxy_client_with_timeouts(
             "channel.mattermost",
             self.proxy_url.as_deref(),
             30,
@@ -927,10 +929,10 @@ impl MattermostChannel {
         let token = match self.token().await {
             Ok(t) => t.to_string(),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "auth failed in get_bot_identity"
                 );
@@ -988,7 +990,7 @@ impl MattermostChannel {
         if let Some(duration_ms) = audio_file.get("duration").and_then(|d| d.as_u64()) {
             let duration_secs = duration_ms / 1000;
             if duration_secs > config.max_duration_secs {
-                ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"duration_secs": duration_secs, "max": config.max_duration_secs})), "audio attachment exceeds max duration, skipping");
+                ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"duration_secs": duration_secs, "max": config.max_duration_secs})), "audio attachment exceeds max duration, skipping");
                 return None;
             }
         }
@@ -1002,10 +1004,10 @@ impl MattermostChannel {
         let token = match self.token().await {
             Ok(t) => t.to_string(),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": format!("{}", e), "file_id": file_id})
                         ),
@@ -1023,10 +1025,10 @@ impl MattermostChannel {
         {
             Ok(r) => r,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": format!("{}", e), "file_id": file_id})
                         ),
@@ -1037,41 +1039,38 @@ impl MattermostChannel {
         };
 
         if !response.status().is_success() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("audio download returned {}: {file_id}", response.status())
             );
             return None;
         }
 
-        let bytes =
-            match read_response_body_limited(response, MAX_MATTERMOST_AUDIO_BYTES)
-                .await
-            {
-                Ok(b) => b,
-                Err(e) => {
-                    ::clawcrew_log::record!(
-                        WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(
-                                ::serde_json::json!({"error": format!("{}", e), "file_id": file_id})
-                            ),
-                        "failed to read audio bytes for"
-                    );
-                    return None;
-                }
-            };
+        let bytes = match read_response_body_limited(response, MAX_MATTERMOST_AUDIO_BYTES).await {
+            Ok(b) => b,
+            Err(e) => {
+                ::galleon_log::record!(
+                    WARN,
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
+                        .with_attrs(
+                            ::serde_json::json!({"error": format!("{}", e), "file_id": file_id})
+                        ),
+                    "failed to read audio bytes for"
+                );
+                return None;
+            }
+        };
 
         match manager.transcribe(&bytes, file_name).await {
             Ok(text) => {
                 let trimmed = text.trim();
                 if trimmed.is_empty() {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "transcription returned empty text, skipping"
                     );
                     None
@@ -1080,10 +1079,10 @@ impl MattermostChannel {
                 }
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "audio transcription failed"
                 );
@@ -1187,10 +1186,10 @@ impl MattermostChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for MattermostChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Mattermost,
+impl ::galleon_api::attribution::Attributable for MattermostChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::Mattermost,
         )
     }
     fn alias(&self) -> &str {
@@ -1257,7 +1256,7 @@ impl Channel for MattermostChannel {
             None => (recipient.to_string(), None),
         };
 
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             let url = format!("{base_url}/api/v4/users/me/typing");
             loop {
                 let mut body = serde_json::json!({ "channel_id": channel_id });
@@ -1275,9 +1274,9 @@ impl Channel for MattermostChannel {
                     .await
                     && !r.status().is_success()
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"status": r.status().to_string()})),
                         "typing indicator failed"
                     );
@@ -1302,7 +1301,7 @@ impl Channel for MattermostChannel {
         Ok(())
     }
 
-    fn room_context(&self, room_id: &str) -> Option<clawcrew_api::channel::ChannelRoomContext> {
+    fn room_context(&self, room_id: &str) -> Option<galleon_api::channel::ChannelRoomContext> {
         if !self.purpose_as_instructions {
             return None;
         }
@@ -1311,7 +1310,7 @@ impl Channel for MattermostChannel {
         // per thread, so strip the thread half before looking one up.
         let room_id = recipient_channel_id(room_id);
         let purpose = self.room_purposes.lock().get(room_id).cloned()?;
-        let context = clawcrew_api::channel::ChannelRoomContext {
+        let context = galleon_api::channel::ChannelRoomContext {
             purpose: Some(purpose),
         };
         (!context.is_empty()).then_some(context)
@@ -1320,7 +1319,7 @@ impl Channel for MattermostChannel {
     async fn request_approval(
         &self,
         recipient: &str,
-        request: &clawcrew_api::channel::ChannelApprovalRequest,
+        request: &galleon_api::channel::ChannelApprovalRequest,
     ) -> Result<Option<ChannelApprovalResponse>> {
         Ok(self
             .request_approval_attributed(recipient, request)
@@ -1343,8 +1342,8 @@ impl Channel for MattermostChannel {
     async fn request_approval_attributed(
         &self,
         recipient: &str,
-        request: &clawcrew_api::channel::ChannelApprovalRequest,
-    ) -> Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+        request: &galleon_api::channel::ChannelApprovalRequest,
+    ) -> Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         let (tx, rx) = tokio::sync::oneshot::channel();
         // Allocation and registration are one critical section, and the token is
         // drawn so it collides with neither a live prompt nor one still inside
@@ -1389,7 +1388,7 @@ impl Channel for MattermostChannel {
         // Reactions reach us as `reaction_added` WebSocket events; the polling
         // listener reads posts and never sees them, so seeding the emoji there
         // would put two buttons on the prompt that silently do nothing.
-        if self.listen_mode == clawcrew_config::schema::MattermostListenMode::Websocket
+        if self.listen_mode == galleon_config::schema::MattermostListenMode::Websocket
             && !post_id.is_empty()
         {
             // `create_post` awaited, so confirm this registration still owns the
@@ -1415,15 +1414,15 @@ impl Channel for MattermostChannel {
         let attributed =
             match tokio::time::timeout(Duration::from_secs(self.approval_timeout_secs), rx).await {
                 Ok(Ok(response)) => {
-                    clawcrew_api::channel::AttributedApprovalResponse::operator(response)
+                    galleon_api::channel::AttributedApprovalResponse::operator(response)
                 }
-                Ok(Err(_)) => clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                Ok(Err(_)) => galleon_api::channel::AttributedApprovalResponse::from_runtime(
                     ChannelApprovalResponse::Deny,
-                    clawcrew_api::channel::ApprovalSource::Unreachable,
+                    galleon_api::channel::ApprovalSource::Unreachable,
                 ),
-                Err(_) => clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                Err(_) => galleon_api::channel::AttributedApprovalResponse::from_runtime(
                     ChannelApprovalResponse::Deny,
-                    clawcrew_api::channel::ApprovalSource::TimedOut,
+                    galleon_api::channel::ApprovalSource::TimedOut,
                 ),
             };
         // One retirement for every outcome. The resolving path already removed
@@ -1447,9 +1446,9 @@ impl MattermostChannel {
         let mut last_discovery = Instant::now();
         let mut last_create_at_by_channel: HashMap<String, i64> = HashMap::new();
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "alias": self.alias,
                     "channel_count": target_channels.len(),
@@ -1481,11 +1480,11 @@ impl MattermostChannel {
                         // explicit `channel_ids` scope is the operator's, not
                         // ours to widen.
                         if auto_discover && refreshed != target_channels {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note,
+                                    ::galleon_log::Action::Note,
                                 )
                                 .with_attrs(::serde_json::json!({
                                     "alias": self.alias,
@@ -1498,17 +1497,14 @@ impl MattermostChannel {
                         }
                     }
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note,
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({
-                                "alias": self.alias,
-                                "error": format!("{}", e),
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note,)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({
+                                    "alias": self.alias,
+                                    "error": format!("{}", e),
+                                })),
                             "Mattermost auto-discovery refresh failed; keeping previous channel list"
                         );
                     }
@@ -1556,9 +1552,9 @@ impl MattermostChannel {
             .map(|target| (target.id, target.is_direct))
             .collect();
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "alias": self.alias,
                     "channel_count": channel_direct_map.len(),
@@ -1570,7 +1566,7 @@ impl MattermostChannel {
         );
 
         let ws_url = self.ws_url();
-        let (ws_stream, _) = clawcrew_config::schema::ws_connect_with_proxy(
+        let (ws_stream, _) = galleon_config::schema::ws_connect_with_proxy(
             &ws_url,
             "channel.mattermost",
             self.proxy_url.as_deref(),
@@ -1578,9 +1574,9 @@ impl MattermostChannel {
         .await
         .with_context(|| format!("Mattermost WebSocket connect failed: {ws_url}"))?;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "alias": self.alias,
                     "ws_url": &ws_url,
@@ -1600,9 +1596,9 @@ impl MattermostChannel {
         )
         .await?;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "alias": self.alias,
                     "server_version": server_version,
@@ -1639,11 +1635,11 @@ impl MattermostChannel {
                             // As in the polling loop: only auto-discovery may
                             // replace the operator's explicit scope.
                             if auto_discover && refreshed_map != channel_direct_map {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     INFO,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note,
+                                        ::galleon_log::Action::Note,
                                     )
                                     .with_attrs(::serde_json::json!({
                                         "alias": self.alias,
@@ -1656,13 +1652,13 @@ impl MattermostChannel {
                             }
                         }
                         Err(error) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note,
+                                    ::galleon_log::Action::Note,
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({
                                     "alias": self.alias,
                                     "error": error.to_string(),
@@ -1714,13 +1710,13 @@ impl MattermostChannel {
                     let event: serde_json::Value = match serde_json::from_str(text.as_ref()) {
                         Ok(event) => event,
                         Err(error) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note,
+                                    ::galleon_log::Action::Note,
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({
                                     "alias": self.alias,
                                     "error": error.to_string(),
@@ -1858,10 +1854,10 @@ impl MattermostChannel {
     async fn seed_approval_reactions(&self, post_id: &str) {
         for emoji in [APPROVAL_EMOJI_APPROVE, APPROVAL_EMOJI_DENY] {
             if let Err(error) = self.react_to_post(post_id, emoji).await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "alias": self.alias,
                             "post_id": post_id,
@@ -1988,10 +1984,10 @@ impl MattermostChannel {
             None
         };
         if let Some(reason) = reason {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"token": token, "reason": reason})),
                 "refusing to decide an approval without a trustworthy bot identity"
             );
@@ -1999,10 +1995,10 @@ impl MattermostChannel {
         }
 
         if !self.is_user_allowed(user_id) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "user_id": user_id,
                         "token": token,
@@ -2044,8 +2040,7 @@ impl MattermostChannel {
             .get("message")
             .and_then(|message| message.as_str())
             .unwrap_or("");
-        let Some((token, response)) =
-            galleon_channel_core::approval::parse_approval_reply(text)
+        let Some((token, response)) = galleon_channel_core::approval::parse_approval_reply(text)
         else {
             return ApprovalReplyOutcome::NotFound;
         };
@@ -2115,10 +2110,10 @@ impl MattermostChannel {
             None
         };
         if let Some(reason) = reason {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"token": token, "reason": reason})),
                 "refusing to decide an approval without a trustworthy author identity"
             );
@@ -2150,10 +2145,10 @@ impl MattermostChannel {
             // awaited. The reply is still approval traffic, so it is swallowed,
             // but it must not answer a prompt it was never shown.
             if observed_generation != Some(pending.generation) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"token": token})),
                     "ignoring approval reply whose prompt was replaced by a newer request"
                 );
@@ -2168,10 +2163,10 @@ impl MattermostChannel {
             // condition: it says *who* may decide, not *where*.
             if pending.channel_id != reply_channel {
                 let origin_channel = pending.channel_id.clone();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "token": token,
                             "reply_channel": reply_channel,
@@ -2185,10 +2180,10 @@ impl MattermostChannel {
             }
 
             if !self.is_user_allowed(user_id) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"user_id": user_id, "token": token})),
                     "ignoring approval reply from unauthorized user"
                 );
@@ -2239,10 +2234,10 @@ impl MattermostChannel {
         {
             Ok(r) => r,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "alias": self.alias,
                             "channel_id": target.id,
@@ -2257,10 +2252,10 @@ impl MattermostChannel {
         let data: serde_json::Value = match resp.json().await {
             Ok(d) => d,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "alias": self.alias,
                             "channel_id": target.id,
@@ -2334,10 +2329,10 @@ impl MattermostChannel {
         // admission path itself rather than to a precondition a future caller
         // might bypass.
         if bot_user_id.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"alias": self.alias, "post_id": id})),
                 "refusing to admit a Mattermost post without a known bot identity"
             );
@@ -2355,10 +2350,10 @@ impl MattermostChannel {
         };
 
         if !self.is_user_allowed(user_id) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"user_id": user_id})),
                 "ignoring message from unauthorized user"
             );
@@ -2526,7 +2521,5 @@ fn normalize_mattermost_content(
     Some(trimmed.to_string())
 }
 
-
 #[cfg(test)]
 include!("tests.rs");
-

@@ -210,7 +210,7 @@ jobs:
       # modules. Compile-only `ci-all` coverage cannot exercise their process,
       # timeout, cleanup, and validation regressions.
       - name: Run hardware feature lib unit tests
-        run: cargo nextest run --locked --no-fail-fast -p clawcrew-hardware --features hardware --lib
+        run: cargo nextest run --locked --no-fail-fast -p galleon-hardware --features hardware --lib
         env:
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: clang
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS: "-C link-arg=-fuse-ld=mold"

@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use clawcrew_config::schema::GitEventRoute;
+use galleon_config::schema::GitEventRoute;
 
 use super::types::{
     EVT_ISSUE_COMMENT_CREATED, EVT_ISSUES_OPENED, EVT_PR_REVIEW_COMMENT_CREATED,

@@ -3,10 +3,10 @@
 
 use anyhow::{Context, Result, bail};
 use clawcrew::{AgentsCommands, ChannelsCommands, ProvidersCommands};
-use clawcrew_config::alias_refs::{
+use galleon_config::alias_refs::{
     self, AliasKind, CascadeError, CascadePolicy, ProviderCategory, RenameError,
 };
-use clawcrew_config::schema::Config;
+use galleon_config::schema::Config;
 
 /// Resolve a `cli-*` Fluent key for alias-CRUD CLI output. Under `agent-runtime`
 /// (default + what CI/release build) this routes through Fluent; without it the
@@ -15,7 +15,7 @@ use clawcrew_config::schema::Config;
 fn mt(key: &str, fallback: &str) -> String {
     #[cfg(feature = "agent-runtime")]
     {
-        clawcrew_runtime::i18n::get_required_cli_string(key)
+        galleon_runtime::i18n::get_required_cli_string(key)
     }
     #[cfg(not(feature = "agent-runtime"))]
     {
@@ -28,7 +28,7 @@ fn mt(key: &str, fallback: &str) -> String {
 fn mta(key: &str, args: &[(&str, &str)], fallback: &str) -> String {
     #[cfg(feature = "agent-runtime")]
     {
-        clawcrew_runtime::i18n::get_required_cli_string_with_args(key, args)
+        galleon_runtime::i18n::get_required_cli_string_with_args(key, args)
     }
     #[cfg(not(feature = "agent-runtime"))]
     {
@@ -421,28 +421,25 @@ pub async fn handle_agents(cmd: AgentsCommands, config: &mut Config) -> Result<(
 /// owned-state cascade.
 #[cfg(all(feature = "gateway", feature = "agent-runtime"))]
 type OwnedStateHandles = (
-    std::sync::Arc<dyn clawcrew_memory::Memory>,
-    Option<std::sync::Arc<dyn clawcrew_infra::session_backend::SessionBackend>>,
+    std::sync::Arc<dyn galleon_memory::Memory>,
+    Option<std::sync::Arc<dyn galleon_infra::session_backend::SessionBackend>>,
 );
 
 #[cfg(all(feature = "gateway", feature = "agent-runtime"))]
 fn build_owned_state_handles(config: &Config) -> Result<OwnedStateHandles> {
     use std::sync::Arc;
-    let mem: Arc<dyn clawcrew_memory::Memory> = if config.agents.is_empty() {
-        Arc::new(clawcrew_memory::NoneMemory::new("none"))
+    let mem: Arc<dyn galleon_memory::Memory> = if config.agents.is_empty() {
+        Arc::new(galleon_memory::NoneMemory::new("none"))
     } else {
         Arc::from(
-            clawcrew_memory::create_memory_from_config(config, None)
+            galleon_memory::create_memory_from_config(config, None)
                 .context("open memory backend for the owned-state cascade")?,
         )
     };
     let session_backend = if config.gateway.session_persistence {
         Some(
-            clawcrew_infra::make_session_backend(
-                &config.data_dir,
-                &config.channels.session_backend,
-            )
-            .context("open session backend for the owned-state cascade")?,
+            galleon_infra::make_session_backend(&config.data_dir, &config.channels.session_backend)
+                .context("open session backend for the owned-state cascade")?,
         )
     } else {
         None
@@ -736,7 +733,7 @@ pub async fn handle_channels(cmd: ChannelsCommands, config: &mut Config) -> Resu
             // no filter we walk the canonical channel-type list.
             let types: Vec<String> = match channel_type {
                 Some(t) => vec![t],
-                None => clawcrew_config::schema::v2::V3_CHANNEL_TYPES
+                None => galleon_config::schema::v2::V3_CHANNEL_TYPES
                     .iter()
                     .map(|s| (*s).to_string())
                     .collect(),

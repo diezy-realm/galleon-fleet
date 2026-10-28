@@ -368,7 +368,7 @@ fn risk_profile_workspace_only_round_trips_through_toml() {
     let mut config = Config::default();
     config.risk_profiles.insert(
         "clamps".into(),
-        clawcrew_config::schema::RiskProfileConfig {
+        galleon_config::schema::RiskProfileConfig {
             workspace_only: false,
             ..Default::default()
         },
@@ -384,7 +384,7 @@ fn runtime_profile_max_actions_per_hour_round_trips_through_toml() {
     let mut config = Config::default();
     config.runtime_profiles.insert(
         "clamps".into(),
-        clawcrew_config::schema::RuntimeProfileConfig {
+        galleon_config::schema::RuntimeProfileConfig {
             max_actions_per_hour: 50,
             ..Default::default()
         },

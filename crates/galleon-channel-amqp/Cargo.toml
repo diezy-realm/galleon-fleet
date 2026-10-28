@@ -4,17 +4,17 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "AMQP channel feature-crate (RF-B1 split; RabbitMQ/AMQP messaging ported from clawcrew-channels)."
+description = "AMQP channel feature-crate (RF-B1 split; RabbitMQ/AMQP messaging ported from galleon-channels)."
 repository.workspace = true
 homepage.workspace = true
 publish = true
 
 [dependencies]
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
-clawcrew-config = { workspace = true, default-features = false }
-clawcrew-infra.workspace = true
-clawcrew-log.workspace = true
+galleon-api.workspace = true
+galleon-config = { workspace = true, default-features = false }
+galleon-infra.workspace = true
+galleon-log.workspace = true
 async-trait = "0.1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 anyhow = "1.0"

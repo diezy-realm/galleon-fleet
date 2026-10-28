@@ -117,7 +117,7 @@ fn discard_until_newline<R: std::io::BufRead>(reader: &mut R) -> std::io::Result
 }
 
 #[cfg(feature = "agent-runtime")]
-use clawcrew_config::api_error::{ConfigApiCode, ConfigApiError};
+use galleon_config::api_error::{ConfigApiCode, ConfigApiError};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -128,7 +128,7 @@ use std::sync::Arc;
 fn t(key: &str, fallback: &str) -> String {
     #[cfg(feature = "agent-runtime")]
     {
-        clawcrew_runtime::i18n::get_required_cli_string(key)
+        galleon_runtime::i18n::get_required_cli_string(key)
     }
     #[cfg(not(feature = "agent-runtime"))]
     {
@@ -141,7 +141,7 @@ fn t(key: &str, fallback: &str) -> String {
 fn ta(key: &str, args: &[(&str, &str)], fallback: impl Into<String>) -> String {
     #[cfg(feature = "agent-runtime")]
     {
-        clawcrew_runtime::i18n::get_required_cli_string_with_args(key, args)
+        galleon_runtime::i18n::get_required_cli_string_with_args(key, args)
     }
     #[cfg(not(feature = "agent-runtime"))]
     {
@@ -177,7 +177,7 @@ fn secret_prompt(prompt_text: &str, allow_empty: bool) -> Result<String> {
 
 #[cfg(feature = "agent-runtime")]
 fn qta(key: &str, args: &[(&str, &str)]) -> String {
-    clawcrew_runtime::i18n::get_required_cli_string_with_args(key, args)
+    galleon_runtime::i18n::get_required_cli_string_with_args(key, args)
 }
 
 #[cfg(feature = "agent-runtime")]
@@ -697,7 +697,7 @@ fn quickstart_action_for_pick(
 }
 
 #[cfg(feature = "agent-runtime")]
-fn quickstart_step_label(step: clawcrew_runtime::quickstart::QuickstartStep) -> String {
+fn quickstart_step_label(step: galleon_runtime::quickstart::QuickstartStep) -> String {
     t(step.label_key(), step.label())
 }
 
@@ -711,7 +711,7 @@ async fn apply_comment_inline(
     path: &str,
     comment: &str,
 ) -> Result<()> {
-    clawcrew_config::comment_writer::apply_comments(
+    galleon_config::comment_writer::apply_comments(
         config_path,
         &[(path.to_string(), comment.to_string())],
     )
@@ -737,13 +737,13 @@ fn json_value_to_setprop_string(
     json: bool,
 ) -> Result<String> {
     let kind = config_patch_prop_kind(config, path);
-    match clawcrew_config::typed_value::coerce_for_set_prop(value, kind) {
+    match galleon_config::typed_value::coerce_for_set_prop(value, kind) {
         Ok(value_str) => Ok(value_str),
         Err(err) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"path": path, "error": err.message.clone()})),
                 "config patch coercion rejected JSON value"
             );
@@ -971,7 +971,7 @@ pub use clawcrew::{
 #[cfg(feature = "agent-runtime")]
 fn quickstart_runtime_profile_for_provider(
     provider_type: &str,
-    providers: &[clawcrew_runtime::quickstart::QuickstartTypeOption],
+    providers: &[galleon_runtime::quickstart::QuickstartTypeOption],
     default_runtime_profile: &str,
 ) -> String {
     providers
@@ -995,9 +995,9 @@ fn quickstart_runtime_profile_for_provider(
 /// "Create new" entry).
 ///
 /// All option lists, field shapes, presets, and the apply path come
-/// directly from `clawcrew_runtime::quickstart` — the same module the
+/// directly from `galleon_runtime::quickstart` — the same module the
 /// gateway and TUI surfaces consume. No RPC, no daemon: the CLI is
-/// compiled in-process with `clawcrew-runtime` and calls
+/// compiled in-process with `galleon-runtime` and calls
 /// `snapshot_state` / `field_shape` / `apply_with_surface` as plain
 /// functions.
 ///
@@ -1012,15 +1012,15 @@ async fn run_quickstart_cli(
     api_key: Option<String>,
     agent: Option<String>,
 ) -> anyhow::Result<()> {
-    use clawcrew_config::presets::{
+    use dialoguer::{Confirm, Editor, FuzzySelect, Input};
+    use galleon_config::presets::{
         AgentIdentity, BuilderSubmission, ChannelQuickStart, MemoryChoice, ModelProviderChoice,
         RISK_PRESETS, SelectorChoice,
     };
-    use clawcrew_runtime::quickstart::{
+    use galleon_runtime::quickstart::{
         FieldSection, QuickstartTypeOption, Surface, apply_with_surface, field_shape,
         snapshot_state,
     };
-    use dialoguer::{Confirm, Editor, FuzzySelect, Input};
 
     if !std::io::IsTerminal::is_terminal(&std::io::stdin())
         || !std::io::IsTerminal::is_terminal(&std::io::stderr())
@@ -1047,7 +1047,7 @@ async fn run_quickstart_cli(
         // `channels_visited == false` is *not* satisfied — the
         // selector still shows `[ ]`.
         channels_visited: bool,
-        peer_groups: Vec<clawcrew_config::presets::QuickstartPeerGroup>,
+        peer_groups: Vec<galleon_config::presets::QuickstartPeerGroup>,
         // Mirrors `channels_visited`: peer groups are optional, so an
         // empty `peer_groups` Vec only counts as satisfied once the
         // user has actually opened the selector and left it. Until
@@ -1088,7 +1088,7 @@ async fn run_quickstart_cli(
     struct AgentChoice {
         name: String,
         system_prompt: String,
-        personality_files: Vec<clawcrew_config::presets::QuickstartPersonalityFile>,
+        personality_files: Vec<galleon_config::presets::QuickstartPersonalityFile>,
     }
 
     impl Form {
@@ -1130,7 +1130,7 @@ async fn run_quickstart_cli(
     if providers.is_empty() {
         anyhow::bail!(
             "Quickstart could not enumerate model providers — \
-             clawcrew_providers::list_model_providers() returned no entries."
+             galleon_providers::list_model_providers() returned no entries."
         );
     }
 
@@ -1138,7 +1138,7 @@ async fn run_quickstart_cli(
 
     if let (Some(mp), Some(m)) = (model_provider.as_deref(), model.as_deref())
         && let Some((canonical_provider, codex_auth)) =
-            clawcrew_runtime::quickstart::resolve_model_provider_type(mp)
+            galleon_runtime::quickstart::resolve_model_provider_type(mp)
         && let Some(found) = providers
             .iter()
             .find(|p| p.kind.eq_ignore_ascii_case(canonical_provider))
@@ -1481,7 +1481,7 @@ async fn run_quickstart_cli(
                     .default("default".to_string())
                     .allow_empty(false)
                     .validate_with(|input: &String| {
-                        clawcrew_config::helpers::validate_alias_key(input)
+                        galleon_config::helpers::validate_alias_key(input)
                     })
                     .interact_text()
                 else {
@@ -1514,10 +1514,10 @@ async fn run_quickstart_cli(
                     let upgraded;
                     let d_used = if d.key.eq_ignore_ascii_case("model") {
                         let (models, _pricing, live) =
-                            clawcrew_runtime::quickstart::model_catalog(&chosen.kind).await;
+                            galleon_runtime::quickstart::model_catalog(&chosen.kind).await;
                         if live && !models.is_empty() {
-                            upgraded = clawcrew_runtime::quickstart::FieldDescriptor {
-                                kind: clawcrew_config::traits::PropKind::Enum,
+                            upgraded = galleon_runtime::quickstart::FieldDescriptor {
+                                kind: galleon_config::traits::PropKind::Enum,
                                 enum_variants: Some(models),
                                 ..d.clone()
                             };
@@ -1539,7 +1539,7 @@ async fn run_quickstart_cli(
                     // its schema identifier — no cherry-picking.
                     if d.key.eq_ignore_ascii_case("model") {
                         model = value;
-                    } else if !value.is_empty() && value != clawcrew_config::traits::UNSET_DISPLAY {
+                    } else if !value.is_empty() && value != galleon_config::traits::UNSET_DISPLAY {
                         field_buf.insert(d.key.clone(), value);
                     }
                 }
@@ -1763,8 +1763,7 @@ async fn run_quickstart_cli(
                                 aborted = true;
                                 break;
                             };
-                            if !value.is_empty() && value != clawcrew_config::traits::UNSET_DISPLAY
-                            {
+                            if !value.is_empty() && value != galleon_config::traits::UNSET_DISPLAY {
                                 extras.insert(d.key.clone(), value);
                             }
                         }
@@ -1878,7 +1877,7 @@ async fn run_quickstart_cli(
                             .filter(|s| !s.is_empty())
                             .collect();
                         form.peer_groups
-                            .push(clawcrew_config::presets::QuickstartPeerGroup {
+                            .push(galleon_config::presets::QuickstartPeerGroup {
                                 name,
                                 channel,
                                 external_peers,
@@ -1909,7 +1908,7 @@ async fn run_quickstart_cli(
                     .with_prompt(t("cli-quickstart-agent-alias-prompt", "Agent alias"))
                     .allow_empty(false)
                     .validate_with(|input: &String| {
-                        clawcrew_config::helpers::validate_alias_key(input)
+                        galleon_config::helpers::validate_alias_key(input)
                     });
                 if !default_name.is_empty() {
                     input = input.default(default_name);
@@ -1950,15 +1949,14 @@ async fn run_quickstart_cli(
                     .unwrap_or_default();
                 // Pre-render the default template set once; the per-file
                 // [t] Use template option seeds the editor from this map.
-                let template_ctx =
-                    clawcrew_runtime::agent::personality_templates::TemplateContext {
-                        agent: trimmed_agent_name_for_templates(
-                            form.agent.as_ref().map(|a| a.name.as_str()),
-                        ),
-                        ..Default::default()
-                    };
+                let template_ctx = galleon_runtime::agent::personality_templates::TemplateContext {
+                    agent: trimmed_agent_name_for_templates(
+                        form.agent.as_ref().map(|a| a.name.as_str()),
+                    ),
+                    ..Default::default()
+                };
                 let templates: std::collections::HashMap<String, String> =
-                    clawcrew_runtime::agent::personality_templates::render_preset_default(
+                    galleon_runtime::agent::personality_templates::render_preset_default(
                         &template_ctx,
                     )
                     .into_iter()
@@ -2092,12 +2090,12 @@ async fn run_quickstart_cli(
                     continue;
                 }
                 // Materialize in canonical file order; only files with content.
-                let personality_files: Vec<clawcrew_config::presets::QuickstartPersonalityFile> =
+                let personality_files: Vec<galleon_config::presets::QuickstartPersonalityFile> =
                     files
                         .iter()
                         .filter_map(|filename| {
                             personality_results.get(*filename).map(|content| {
-                                clawcrew_config::presets::QuickstartPersonalityFile {
+                                galleon_config::presets::QuickstartPersonalityFile {
                                     filename: (*filename).to_string(),
                                     content: content.clone(),
                                 }
@@ -2257,7 +2255,7 @@ fn model_path_provider_type(path: &str) -> Option<&'static str> {
         return None;
     }
     let family = parts[2];
-    clawcrew_providers::list_model_providers()
+    galleon_providers::list_model_providers()
         .iter()
         .find(|p| p.name == family)
         .map(|p| p.name)
@@ -2291,7 +2289,7 @@ fn alias_target_for_path<'a>(
 ) -> Option<(&'static str, &'a str)> {
     Config::map_key_sections()
         .into_iter()
-        .filter(|section| section.kind == clawcrew_config::traits::MapKeyKind::Map)
+        .filter(|section| section.kind == galleon_config::traits::MapKeyKind::Map)
         .filter(|section| !section.resource_key)
         .filter_map(|section| split(section.path, path).map(|key| (section.path, key)))
         .max_by_key(|(section_path, _)| section_path.len())
@@ -2309,7 +2307,7 @@ fn init_map_alias(config: &mut Config, section_arg: &str) -> Result<Option<Strin
     else {
         return Ok(None);
     };
-    match clawcrew_config::alias_refs::create_map_key_checked(config, section_path, alias) {
+    match galleon_config::alias_refs::create_map_key_checked(config, section_path, alias) {
         Ok(true) => Ok(Some(format!("{section_path}.{alias}"))),
         Ok(false) => Ok(None),
         Err(e) => Err(anyhow::Error::msg(e.to_string())),
@@ -2363,9 +2361,9 @@ fn ensure_map_key_for_prop_path(config: &mut Config, prop_path: &str) -> Result<
     // agents.default.enabled ...` auto-create the reserved runtime-fallback
     // agent alias, which the rename guard then refuses to ever rename.
     let created =
-        match clawcrew_config::alias_refs::create_map_key_checked(config, section_path, key) {
+        match galleon_config::alias_refs::create_map_key_checked(config, section_path, key) {
             Ok(created) => created,
-            Err(clawcrew_config::alias_refs::CreateError::Reserved(_)) => return Ok(false),
+            Err(galleon_config::alias_refs::CreateError::Reserved(_)) => return Ok(false),
             Err(e) => return Err(anyhow::Error::msg(e.to_string())),
         };
     if created {
@@ -2397,17 +2395,17 @@ fn trimmed_agent_name_for_templates(prior_name: Option<&str>) -> String {
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| {
-            clawcrew_runtime::agent::personality_templates::TemplateContext::default().agent
+            galleon_runtime::agent::personality_templates::TemplateContext::default().agent
         })
 }
 
 #[cfg(feature = "agent-runtime")]
 fn prompt_for_field(
-    desc: &clawcrew_runtime::quickstart::FieldDescriptor,
+    desc: &galleon_runtime::quickstart::FieldDescriptor,
     seed: Option<&str>,
 ) -> anyhow::Result<Option<String>> {
-    use clawcrew_config::traits::PropKind;
     use dialoguer::{FuzzySelect, Input};
+    use galleon_config::traits::PropKind;
     if !desc.help.is_empty() {
         println!("  {}", desc.help);
     }
@@ -2449,7 +2447,7 @@ fn prompt_for_field(
         input = input.default(s.to_string());
     } else if let Some(d) = desc.default.as_deref()
         && !d.is_empty()
-        && d != clawcrew_config::traits::UNSET_DISPLAY
+        && d != galleon_config::traits::UNSET_DISPLAY
     {
         // `<unset>` is a display placeholder for an unset Option, not a
         // real default. Seeding it pre-fills the prompt so a bare Enter
@@ -2864,8 +2862,8 @@ enum SecurityCommands {
 /// identically at CA generation (the WSS path) and at every CA read (enrollment
 /// + this CLI), so the on-disk form always matches.
 #[cfg(feature = "agent-runtime")]
-fn ca_key_protection_from_env() -> clawcrew_tls::CaKeyProtection {
-    clawcrew_tls::CaKeyProtection::from_env()
+fn ca_key_protection_from_env() -> galleon_tls::CaKeyProtection {
+    galleon_tls::CaKeyProtection::from_env()
 }
 
 /// Resolve the WSS mTLS policy without conflating the auto-CA and BYO-CA modes.
@@ -2874,7 +2872,7 @@ fn ca_key_protection_from_env() -> clawcrew_tls::CaKeyProtection {
 /// CA replaces the daemon-generated CA; certificate pins apply in either mode.
 #[cfg(all(test, feature = "agent-runtime"))]
 fn resolve_wss_client_auth(
-    client_auth: Option<&clawcrew_config::schema::WssClientAuthConfig>,
+    client_auth: Option<&galleon_config::schema::WssClientAuthConfig>,
 ) -> Result<(Option<String>, Vec<String>)> {
     if let Some(config) = client_auth
         && !config.ca_cert_path.is_empty()
@@ -2896,7 +2894,7 @@ fn resolve_wss_client_auth(
 }
 
 #[cfg(feature = "agent-runtime")]
-fn wss_server_sans(wss_cfg: &clawcrew_config::schema::WssConfig) -> Vec<String> {
+fn wss_server_sans(wss_cfg: &galleon_config::schema::WssConfig) -> Vec<String> {
     if wss_cfg.sans.is_empty() {
         return Vec::new();
     }
@@ -2918,7 +2916,7 @@ mod wss_client_auth_tests {
 
     #[test]
     fn auto_ca_honors_configured_client_certificate_pins() {
-        let auth = clawcrew_config::schema::WssClientAuthConfig {
+        let auth = galleon_config::schema::WssClientAuthConfig {
             pinned_certs: vec!["a".repeat(64)],
             ..Default::default()
         };
@@ -2933,7 +2931,7 @@ mod wss_client_auth_tests {
 
     #[test]
     fn disabled_byo_ca_is_rejected_before_listener_startup() {
-        let auth = clawcrew_config::schema::WssClientAuthConfig {
+        let auth = galleon_config::schema::WssClientAuthConfig {
             ca_cert_path: "/etc/clawcrew/client-ca.pem".into(),
             ..Default::default()
         };
@@ -2945,7 +2943,7 @@ mod wss_client_auth_tests {
 
     #[test]
     fn wss_server_sans_adds_local_and_configured_sans() {
-        let cfg = clawcrew_config::schema::WssConfig {
+        let cfg = galleon_config::schema::WssConfig {
             sans: vec!["relay.example.test".into(), " ".into()],
             ..Default::default()
         };
@@ -2958,7 +2956,7 @@ mod wss_client_auth_tests {
                 "relay.example.test".to_string(),
             ]
         );
-        assert!(wss_server_sans(&clawcrew_config::schema::WssConfig::default()).is_empty());
+        assert!(wss_server_sans(&galleon_config::schema::WssConfig::default()).is_empty());
     }
 }
 
@@ -3007,8 +3005,8 @@ fn issue_wss_client_cert(
     let ca_cert_pem = std::fs::read_to_string(&ca_cert)?;
     // Read the CA key honoring any at-rest passphrase, so an encrypted CA still
     // signs from the CLI (the key never leaves this process).
-    let ca_key_pem = clawcrew_tls::load_ca_key_pem(&ca_key, &ca_key_protection_from_env())?;
-    let issued = clawcrew_tls::issue_client_cert(&ca_cert_pem, &ca_key_pem, name)?;
+    let ca_key_pem = galleon_tls::load_ca_key_pem(&ca_key, &ca_key_protection_from_env())?;
+    let issued = galleon_tls::issue_client_cert(&ca_cert_pem, &ca_key_pem, name)?;
 
     // Directory 0700, private key written 0600 atomically (no world-readable window).
     if let Some(parent) = key_path.parent() {
@@ -3021,7 +3019,7 @@ fn issue_wss_client_cert(
     }
     std::fs::write(&cert_tmp_path, issued.cert_pem.as_bytes())
         .with_context(|| format!("write staged certificate {}", cert_tmp_path.display()))?;
-    if let Err(e) = clawcrew_tls::certgen::write_private_pem(&key_tmp_path, &issued.key_pem) {
+    if let Err(e) = galleon_tls::certgen::write_private_pem(&key_tmp_path, &issued.key_pem) {
         let _ = std::fs::remove_file(&cert_tmp_path);
         return Err(e)
             .with_context(|| format!("write staged private key {}", key_tmp_path.display()));
@@ -3035,11 +3033,11 @@ fn issue_wss_client_cert(
     // over-recorded credential is recoverable where an unrecorded one is not
     // (see CertLedger::record_issued). The row is therefore active-but-
     // undelivered until the renames below succeed.
-    use clawcrew_runtime::security::cert_ledger::{
+    use galleon_runtime::security::cert_ledger::{
         CertLedger, CertStatus, IssuanceActor, LedgerEntry,
     };
     let ledger_result = (|| -> Result<(CertLedger, String)> {
-        let fingerprint = clawcrew_tls::single_cert_pem_sha256_fingerprint(&issued.cert_pem)
+        let fingerprint = galleon_tls::single_cert_pem_sha256_fingerprint(&issued.cert_pem)
             .context("parse staged issued certificate")?;
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -3136,7 +3134,7 @@ fn issue_wss_client_cert(
                 dest.display()
             )
         })?;
-        clawcrew_tls::certgen::write_private_pem(&dest.join("client.key"), &issued.key_pem)
+        galleon_tls::certgen::write_private_pem(&dest.join("client.key"), &issued.key_pem)
             .with_context(|| {
                 format!(
                     "write client.key into {}; the primary credentials were issued but \
@@ -3183,7 +3181,7 @@ fn issue_wss_client_cert(
     // the guidance rather than requiring the operator to have pinned it.
     let relay_ready = relay.enabled && !relay.url.is_empty();
     let relay_node = if relay_ready {
-        clawcrew_runtime::relay::ensure_node_id(&config.data_dir, &relay.node_id)
+        galleon_runtime::relay::ensure_node_id(&config.data_dir, &relay.node_id)
             .unwrap_or_else(|_| relay.node_id.clone())
     } else {
         relay.node_id.clone()
@@ -3255,7 +3253,7 @@ fn revoke_wss_client_cert(
     fingerprint: Option<String>,
     device: Option<String>,
 ) -> Result<()> {
-    use clawcrew_runtime::security::cert_ledger::CertLedger;
+    use galleon_runtime::security::cert_ledger::CertLedger;
     // `operator` matches the issuance actor `issue-client-cert` records.
     const ACTOR: &str = "operator";
     let ledger = CertLedger::open_at(&config.data_dir, None, effective_crl_path(config))?;
@@ -3323,7 +3321,7 @@ fn revoke_wss_client_cert(
 /// enforced.
 #[cfg(feature = "agent-runtime")]
 fn effective_crl_path(config: &Config) -> std::path::PathBuf {
-    clawcrew_runtime::security::cert_ledger::effective_revoked_list_path(
+    galleon_runtime::security::cert_ledger::effective_revoked_list_path(
         &config.data_dir,
         config.wss.client_auth.as_ref().map(|c| c.crl_path.as_str()),
     )
@@ -3334,7 +3332,7 @@ fn effective_crl_path(config: &Config) -> std::path::PathBuf {
 /// live certificate.
 #[cfg(feature = "agent-runtime")]
 fn list_wss_client_certs(config: &Config, json: bool) -> Result<()> {
-    use clawcrew_runtime::security::cert_ledger::CertLedger;
+    use galleon_runtime::security::cert_ledger::CertLedger;
     let ledger = CertLedger::open_at(&config.data_dir, None, effective_crl_path(config))?;
     let active = ledger.list_active()?;
     if json {
@@ -3692,7 +3690,7 @@ fn validated_locale(locale: &str) -> Result<String> {
     if !ok_shape {
         bail!("invalid locale code '{locale}'");
     }
-    let known = clawcrew_runtime::i18n::available_locales();
+    let known = galleon_runtime::i18n::available_locales();
     if !known.iter().any(|o| o.code == locale) {
         let codes: Vec<&str> = known.iter().map(|o| o.code.as_str()).collect();
         bail!(
@@ -3708,7 +3706,7 @@ async fn fetch_locales(locale: &str, catalog: Option<&str>) -> Result<()> {
     let locale = validated_locale(locale)?;
 
     let selected: Vec<&(&str, &str, &str)> = match catalog {
-        None => clawcrew_config::schema::FTL_CATALOGS.iter().collect(),
+        None => galleon_config::schema::FTL_CATALOGS.iter().collect(),
         Some(list) => {
             let names: Vec<&str> = list
                 .split(',')
@@ -3717,13 +3715,13 @@ async fn fetch_locales(locale: &str, catalog: Option<&str>) -> Result<()> {
                 .collect();
             let mut out = Vec::new();
             for name in &names {
-                match clawcrew_config::schema::FTL_CATALOGS
+                match galleon_config::schema::FTL_CATALOGS
                     .iter()
                     .find(|(n, _, _)| n == name)
                 {
                     Some(entry) => out.push(entry),
                     None => {
-                        let valid = clawcrew_config::schema::FTL_CATALOGS
+                        let valid = galleon_config::schema::FTL_CATALOGS
                             .iter()
                             .map(|(n, _, _)| *n)
                             .collect::<Vec<_>>()
@@ -3736,7 +3734,7 @@ async fn fetch_locales(locale: &str, catalog: Option<&str>) -> Result<()> {
         }
     };
 
-    let dest = clawcrew_config::schema::ftl_locale_dir(&locale)?;
+    let dest = galleon_config::schema::ftl_locale_dir(&locale)?;
     std::fs::create_dir_all(&dest).with_context(|| format!("creating {}", dest.display()))?;
     // Confinement check: the resolved dest must live under the data-dir FTL root.
     let ftl_root = dest
@@ -4400,7 +4398,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 let schema = schemars::schema_for!(config::Config);
                 print!(
                     "{}",
-                    clawcrew_config::schema_markdown::generate(&schema.to_value())
+                    galleon_config::schema_markdown::generate(&schema.to_value())
                 );
                 return Ok(());
             }
@@ -4430,7 +4428,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
     let default_filter =
         format!("{default_floor},matrix_sdk=warn,matrix_sdk_base=warn,matrix_sdk_crypto=warn");
 
-    clawcrew_log::install_global_subscriber(
+    galleon_log::install_global_subscriber(
         recording_filter.as_deref(),
         &default_filter,
         cli.verbose,
@@ -4632,13 +4630,13 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         .models
                         .ensure(type_key, alias_key)
                         .ok_or_else(|| {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Reject
+                                    ::galleon_log::Action::Reject
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({"family": type_key})),
                                 "ask CLI refused: --model-provider names an unknown family"
                             );
@@ -4676,7 +4674,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 match message {
                     Some(msg) => {
                         let response =
-                            clawcrew_providers::ProviderDispatch::from_ref(&*model_provider)
+                            galleon_providers::ProviderDispatch::from_ref(&*model_provider)
                                 .simple_chat(&msg, model_name, Some(final_temperature))
                                 .await?;
                         println!("{response}");
@@ -4705,7 +4703,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 }
                             };
                             let response =
-                                clawcrew_providers::ProviderDispatch::from_ref(&*model_provider)
+                                galleon_providers::ProviderDispatch::from_ref(&*model_provider)
                                     .simple_chat(line.trim(), model_name, Some(final_temperature))
                                     .await?;
                             println!("{response}");
@@ -4735,10 +4733,10 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
 
     #[cfg(feature = "agent-runtime")]
     {
-        clawcrew_runtime::cron::scheduler::register_delivery_fn(Box::new(
+        galleon_runtime::cron::scheduler::register_delivery_fn(Box::new(
             |config, channel, target, thread_id, output| {
                 Box::pin(async move {
-                    clawcrew_channels::orchestrator::deliver_announcement(
+                    galleon_channels::orchestrator::deliver_announcement(
                         &config, &channel, &target, thread_id, &output,
                     )
                     .await
@@ -4791,23 +4789,23 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
             }
 
             // Wire CLI channel for interactive mode
-            clawcrew_runtime::agent::loop_::register_cli_channel_fn(Box::new(|| {
-                Box::new(clawcrew_channels::cli::CliChannel::new("cli"))
+            galleon_runtime::agent::loop_::register_cli_channel_fn(Box::new(|| {
+                Box::new(galleon_channels::cli::CliChannel::new("cli"))
             }));
 
             // Wire peripheral tools (gpio_read/gpio_write etc.) for `clawcrew agent`.
             // Mirrors the registration done for the daemon command.
             #[cfg(feature = "hardware")]
-            clawcrew_runtime::agent::loop_::register_peripheral_tools_fn(Box::new(|config| {
+            galleon_runtime::agent::loop_::register_peripheral_tools_fn(Box::new(|config| {
                 Box::pin(async move {
-                    clawcrew_hardware::peripherals::create_peripheral_tools(&config).await
+                    galleon_hardware::peripherals::create_peripheral_tools(&config).await
                 })
             }));
 
             // Register channel map factory for late-bound tool handle population.
-            clawcrew_runtime::agent::loop_::register_channel_map_fn(Box::new({
+            galleon_runtime::agent::loop_::register_channel_map_fn(Box::new({
                 let config_clone = config.clone();
-                move || clawcrew_channels::orchestrator::build_channel_map(&config_clone)
+                move || galleon_channels::orchestrator::build_channel_map(&config_clone)
             }));
 
             Box::pin(agent::run(
@@ -4821,8 +4819,8 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 true,
                 session_state_file,
                 None,
-                clawcrew_api::ingress::TurnOrigin::Interactive,
-                clawcrew_runtime::agent::loop_::AgentRunOverrides::default(),
+                galleon_api::ingress::TurnOrigin::Interactive,
+                galleon_runtime::agent::loop_::AgentRunOverrides::default(),
             ))
             .await
             .map(|_| ())
@@ -4835,7 +4833,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
         } => {
             #[cfg(feature = "channel-acp-server")]
             {
-                let mut acp_config = clawcrew_runtime::acp::AcpServerConfig {
+                let mut acp_config = galleon_runtime::acp::AcpServerConfig {
                     max_sessions: config.acp.max_sessions,
                     session_timeout_secs: config.acp.session_timeout_secs,
                 };
@@ -4846,25 +4844,25 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     acp_config.session_timeout_secs = timeout;
                 }
                 let store =
-                    clawcrew_infra::acp_session_store::AcpSessionStore::new(&config.data_dir)
+                    galleon_infra::acp_session_store::AcpSessionStore::new(&config.data_dir)
                         .map(std::sync::Arc::new)
                         .inspect_err(|e| {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({"error": e.to_string()})),
                                 "Failed to open ACP session store"
                             );
                         })
                         .ok();
                 let server = if let Some(store) = store {
-                    clawcrew_runtime::acp::AcpServer::new_with_store(config, acp_config, store)
+                    galleon_runtime::acp::AcpServer::new_with_store(config, acp_config, store)
                 } else {
-                    clawcrew_runtime::acp::AcpServer::new(config, acp_config)
+                    galleon_runtime::acp::AcpServer::new(config, acp_config)
                 }
                 .with_connection_default_agent(agent);
                 std::sync::Arc::new(server).run().await
@@ -4886,9 +4884,9 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     let _nag = gate_security_posture(&config, allow_degraded_security)?;
                     let (port, host) = resolve_gateway_addr(&config, port, host);
                     let addr = format!("{host}:{port}");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"addr": addr})),
                         "🔄 Restarting ClawCrew Gateway on"
                     );
@@ -4897,11 +4895,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     match shutdown_gateway(&host, port, config.gateway.path_prefix.as_deref()).await
                     {
                         Ok(()) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({"addr": addr})),
                                 "✓ Existing gateway on shut down gracefully"
@@ -4913,13 +4911,13 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 match tokio::net::TcpStream::connect(&addr).await {
                                     Err(_) => break, // port is free
                                     Ok(_) if tokio::time::Instant::now() >= deadline => {
-                                        ::clawcrew_log::record!(
+                                        ::galleon_log::record!(
                                             WARN,
-                                            ::clawcrew_log::Event::new(
+                                            ::galleon_log::Event::new(
                                                 module_path!(),
-                                                ::clawcrew_log::Action::Note
+                                                ::galleon_log::Action::Note
                                             )
-                                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                                             .with_attrs(::serde_json::json!({"port": port})),
                                             "Timed out waiting for port to be released"
                                         );
@@ -4933,11 +4931,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             }
                         }
                         Err(e) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "   No existing gateway to shut down"
@@ -5098,10 +5096,10 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     } else {
                         "Consider installing to /usr/local/bin for system-wide service."
                     };
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!(
                             "Daemon running from user home directory: {}. {install_hint}",
                             exe.display()
@@ -5112,16 +5110,16 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
             let port = port.unwrap_or(config.gateway.port);
             let host = host.unwrap_or_else(|| config.gateway.host.clone());
             if port == 0 {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"host": host})),
                     "🧠 Starting ClawCrew Daemon on (random port)"
                 );
             } else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"host": host, "port": port})),
                     "🧠 Starting ClawCrew Daemon on"
                 );
@@ -5129,7 +5127,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
 
             #[cfg(target_os = "linux")]
             {
-                use clawcrew_config::schema::SandboxBackend;
+                use galleon_config::schema::SandboxBackend;
                 // Any enabled agent whose risk_profile uses the docker
                 // sandbox triggers the warning — we just need to know
                 // *some* agent is using it.
@@ -5140,14 +5138,14 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     .filter_map(|(alias, _)| config.risk_profile_for_agent(alias))
                     .any(|p| matches!(p.sandbox_config().backend, SandboxBackend::Docker));
                 let runtime_docker_mem = config.runtime.kind
-                    == clawcrew_config::schema::RuntimeKind::Docker
+                    == galleon_config::schema::RuntimeKind::Docker
                     && config
                         .runtime
                         .docker
                         .memory_limit_mb
                         .is_some_and(|mb| mb > 0);
                 if (sandbox_docker || runtime_docker_mem)
-                    && !clawcrew_runtime::security::linux_memcg_available()
+                    && !galleon_runtime::security::linux_memcg_available()
                 {
                     let which = match (sandbox_docker, runtime_docker_mem) {
                         (true, true) => {
@@ -5156,10 +5154,10 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         (true, false) => "security.sandbox.backend = \"docker\"",
                         _ => "runtime.kind = \"docker\"",
                     };
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"which": which})),
                         "Docker memory limits are configured but the Linux kernel has no memcg support. Affected config: . Consequence: --memory limits are silently ignored; agents can OOM the host. Fix: add 'cgroup_memory=1 cgroup_enable=memory' to /boot/firmware/cmdline.txt (Raspberry Pi) or enable CONFIG_MEMCG in your kernel, then reboot."
                     );
@@ -5168,29 +5166,29 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
 
             // Wire CLI channel for interactive mode
             #[cfg(feature = "agent-runtime")]
-            clawcrew_runtime::agent::loop_::register_cli_channel_fn(Box::new(|| {
-                Box::new(clawcrew_channels::cli::CliChannel::new("cli"))
+            galleon_runtime::agent::loop_::register_cli_channel_fn(Box::new(|| {
+                Box::new(galleon_channels::cli::CliChannel::new("cli"))
             }));
 
-            // Wire peripheral tools from clawcrew-hardware
+            // Wire peripheral tools from galleon-hardware
             #[cfg(feature = "hardware")]
-            clawcrew_runtime::agent::loop_::register_peripheral_tools_fn(Box::new(|config| {
+            galleon_runtime::agent::loop_::register_peripheral_tools_fn(Box::new(|config| {
                 Box::pin(async move {
-                    clawcrew_hardware::peripherals::create_peripheral_tools(&config).await
+                    galleon_hardware::peripherals::create_peripheral_tools(&config).await
                 })
             }));
 
             // Cron delivery is registered earlier (before the command match)
             // so it works for both `daemon` and `gateway start`.
 
-            let canvas_store = clawcrew_runtime::tools::CanvasStore::new();
+            let canvas_store = galleon_runtime::tools::CanvasStore::new();
             let canvas_store_for_gateway = canvas_store.clone();
             let canvas_store_for_channels = canvas_store.clone();
 
             // Capture the launch command now, before any in-app upgrade can
             // swap the binary on disk (after which `current_exe()` resolves to a
             // "(deleted)" path on Linux). Used by the post-loop self-respawn.
-            clawcrew_runtime::restart::record_launch();
+            galleon_runtime::restart::record_launch();
 
             // Reload loop. `daemon::run` returns DaemonExit::Shutdown on
             // SIGINT/SIGTERM (loop ends) or DaemonExit::Reload after a
@@ -5217,23 +5215,23 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 let canvas_store_for_channels = canvas_store_for_channels.clone();
                 let mut registry = daemon::DaemonRegistry::new();
                 #[cfg(feature = "gateway")]
-                let plugin_webhooks = Arc::new(clawcrew_api::webhook::PluginWebhookRegistry::new());
+                let plugin_webhooks = Arc::new(galleon_api::webhook::PluginWebhookRegistry::new());
                 #[cfg(feature = "gateway")]
                 let channel_plugin_webhooks = Some(Arc::clone(&plugin_webhooks));
                 #[cfg(not(feature = "gateway"))]
                 let channel_plugin_webhooks: Option<
-                    Arc<clawcrew_api::webhook::PluginWebhookRegistry>,
+                    Arc<galleon_api::webhook::PluginWebhookRegistry>,
                 > = None;
 
                 // SOP loading is gated on `runtime_enabled()`: `sops_dir` is unset
                 // (or empty) by default, so SOP runtime behavior is off until an
                 // operator opts in by setting a directory.
                 let (sop_engine, sop_audit) = if current_config.sop.runtime_enabled() {
-                    let mem: Arc<dyn clawcrew_memory::Memory> = Arc::from(
-                        clawcrew_memory::create_memory_from_config(&current_config, None)?,
+                    let mem: Arc<dyn galleon_memory::Memory> = Arc::from(
+                        galleon_memory::create_memory_from_config(&current_config, None)?,
                     );
                     let sop_adapters = build_sop_adapters(&current_config);
-                    let (engine, audit) = clawcrew_runtime::sop::build_sop_engine(
+                    let (engine, audit) = galleon_runtime::sop::build_sop_engine(
                         current_config.sop.clone(),
                         &current_config.data_dir,
                         &current_config.install_root_dir(),
@@ -5263,24 +5261,20 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         let sop_engine = sop_e.clone();
                         let sop_audit = sop_a.clone();
                         let plugin_webhooks = Arc::clone(&plugin_webhooks);
-                        let sop_runner: Option<std::sync::Arc<dyn clawcrew_api::sop::SopRunner>> =
+                        let sop_runner: Option<std::sync::Arc<dyn galleon_api::sop::SopRunner>> =
                             if sop_engine.is_some() {
                                 let install_root = config.install_root_dir();
-                                Some(std::sync::Arc::new(
-                                    clawcrew_runtime::RuntimeSopRunner::new(
-                                        sop_engine,
-                                        sop_audit,
-                                        std::sync::Arc::new(parking_lot::RwLock::new(
-                                            config.clone(),
-                                        )),
-                                        install_root,
-                                    ),
-                                ))
+                                Some(std::sync::Arc::new(galleon_runtime::RuntimeSopRunner::new(
+                                    sop_engine,
+                                    sop_audit,
+                                    std::sync::Arc::new(parking_lot::RwLock::new(config.clone())),
+                                    install_root,
+                                )))
                             } else {
                                 None
                             };
                         Box::pin(async move {
-                            Box::pin(clawcrew_gateway::run_gateway_with_plugin_webhooks(
+                            Box::pin(galleon_gateway::run_gateway_with_plugin_webhooks(
                                 &host,
                                 port,
                                 config,
@@ -5288,15 +5282,12 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 reload_controls,
                                 tui_registry.map(|r| {
                                     r as std::sync::Arc<
-                                        dyn clawcrew_api::runtime_traits::TuiConnectionRegistry,
+                                        dyn galleon_api::runtime_traits::TuiConnectionRegistry,
                                     >
                                 }),
                                 Some(canvas_store),
                                 sop_runner,
-                                clawcrew_gateway::GatewaySupervision::new(
-                                    ready_tx,
-                                    plugin_webhooks,
-                                ),
+                                galleon_gateway::GatewaySupervision::new(ready_tx, plugin_webhooks),
                             ))
                             .await
                         })
@@ -5312,24 +5303,24 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         let sop_audit = sop_a.clone();
                         let plugin_webhooks = plugin_webhooks.clone();
                         Box::pin(async move {
-                            let sop_dispatcher: Option<std::sync::Arc<dyn clawcrew_api::sop::SopFanInDispatcher>> =
-                                match (sop_engine, sop_audit) {
-                                    (Some(engine), Some(audit)) => Some(std::sync::Arc::new(
-                                        clawcrew_runtime::sop::SopRuntimeDispatcher::new(
-                                            engine, audit,
-                                        ),
-                                    )),
-                                    _ => None,
-                                };
+                            let sop_dispatcher: Option<
+                                std::sync::Arc<dyn galleon_api::sop::SopFanInDispatcher>,
+                            > = match (sop_engine, sop_audit) {
+                                (Some(engine), Some(audit)) => Some(std::sync::Arc::new(
+                                    galleon_runtime::sop::SopRuntimeDispatcher::new(engine, audit),
+                                )),
+                                _ => None,
+                            };
                             let turn_runner =
-                                std::sync::Arc::new(clawcrew_api::channel::NoopChannelTurnRunner);
-                            let channels = clawcrew_channels::orchestrator::start_channels_with_plugin_webhooks(
-                                config,
-                                turn_runner,
-                                cancel,
-                                sop_dispatcher,
-                                plugin_webhooks,
-                            );
+                                std::sync::Arc::new(galleon_api::channel::NoopChannelTurnRunner);
+                            let channels =
+                                galleon_channels::orchestrator::start_channels_with_plugin_webhooks(
+                                    config,
+                                    turn_runner,
+                                    cancel,
+                                    sop_dispatcher,
+                                    plugin_webhooks,
+                                );
                             Box::pin(channels).await
                         })
                     }
@@ -5345,9 +5336,9 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         Box::pin(async move {
                             if let (Some(engine), Some(audit)) = (engine, audit) {
                                 let dispatcher = std::sync::Arc::new(
-                                    clawcrew_runtime::sop::SopRuntimeDispatcher::new(engine, audit),
+                                    galleon_runtime::sop::SopRuntimeDispatcher::new(engine, audit),
                                 );
-                                clawcrew_channels::orchestrator::mqtt::run_mqtt_sop_listener(
+                                galleon_channels::orchestrator::mqtt::run_mqtt_sop_listener(
                                     &mqtt_config,
                                     dispatcher,
                                 )
@@ -5356,11 +5347,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 // No SOPs directory configured — this is a valid
                                 // user state, not a misconfiguration. Skip the
                                 // listener gracefully.
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     INFO,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Skip
+                                        ::galleon_log::Action::Skip
                                     ),
                                     "MQTT SOP listener skipped — no SOPs directory configured"
                                 );
@@ -5376,7 +5367,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 // relay-routed rather than direct (finding: relay enrollment
                 // collapsed every client to the bridge's loopback identity, so
                 // one hostile client's failures locked out all relay enrollees).
-                let enroll_bridge_ports: clawcrew_runtime::enroll::BridgePortSet =
+                let enroll_bridge_ports: galleon_runtime::enroll::BridgePortSet =
                     std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashSet::new()));
                 let enroll_bridge_ports_for_bridge = enroll_bridge_ports.clone();
                 let enroll_bridge_ports_for_endpoint = enroll_bridge_ports.clone();
@@ -5414,18 +5405,18 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         }
                         // Persistent Ed25519 identity the relay binds the node-id to.
                         let signing_key_pkcs8 =
-                            clawcrew_runtime::relay::ensure_signing_key(&data_dir)?;
+                            galleon_runtime::relay::ensure_signing_key(&data_dir)?;
                         // node_id is an unguessable 128-bit capability: auto-minted +
                         // persisted unless the operator pinned one in [relay].node_id.
-                        let node_id = clawcrew_runtime::relay::ensure_node_id(
+                        let node_id = galleon_runtime::relay::ensure_node_id(
                             &data_dir,
                             &relay_cfg.node_id,
                         )?;
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note,
+                                ::galleon_log::Action::Note,
                             )
                             .with_attrs(::serde_json::json!({
                                 "node_id": node_id,
@@ -5447,7 +5438,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         // pinned [relay].node_id is fixed).
                         let rotation_allowed = relay_cfg.node_id.trim().is_empty();
                         let node_id_rotation_days = relay_cfg.node_id_rotation_days;
-                        let bridge_cfg = clawcrew_runtime::relay::RelayBridgeConfig {
+                        let bridge_cfg = galleon_runtime::relay::RelayBridgeConfig {
                             relay_addr: relay_cfg.url,
                             relay_host,
                             node_id,
@@ -5476,7 +5467,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             node_id_rotation_days,
                             rotation_allowed,
                         };
-                        clawcrew_runtime::relay::run_relay_bridge(bridge_cfg, cancel).await
+                        galleon_runtime::relay::run_relay_bridge(bridge_cfg, cancel).await
                     })
                 }));
 
@@ -5530,11 +5521,11 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             .map(|c| !c.ca_cert_path.is_empty())
                             .unwrap_or(false);
                         if byo_ca {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note,
+                                    ::galleon_log::Action::Note,
                                 ),
                                 "enrollment endpoint disabled: a bring-your-own CA has no signing \
                                  key; provision client certs out of band"
@@ -5552,16 +5543,16 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             tls_dir.join("ca.crt").exists() && tls_dir.join("ca.key").exists();
                         let protection = ca_key_protection_from_env();
                         let server_sans = wss_server_sans(&wss_cfg);
-                        let mats = clawcrew_tls::ensure_server_materials_protected(
+                        let mats = galleon_tls::ensure_server_materials_protected(
                             &tls_dir,
                             &server_sans,
                             &protection,
                         )?;
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note,
+                                ::galleon_log::Action::Note,
                             ),
                             if ca_provided {
                                 "enrollment signing against an operator-provided CA \
@@ -5572,17 +5563,17 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         );
                         let ca_cert_pem = std::fs::read_to_string(&mats.ca_cert_path)?;
                         let ca_key_pem =
-                            clawcrew_tls::load_ca_key_pem(&mats.ca_key_path, &protection)?;
+                            galleon_tls::load_ca_key_pem(&mats.ca_key_path, &protection)?;
                         let ca_fingerprint = {
                             let ders =
-                                clawcrew_tls::load_certs(&mats.ca_cert_path.to_string_lossy())?;
-                            clawcrew_tls::cert_sha256_fingerprint(ders[0].as_ref())
+                                galleon_tls::load_certs(&mats.ca_cert_path.to_string_lossy())?;
+                            galleon_tls::cert_sha256_fingerprint(ders[0].as_ref())
                         };
 
                         // Server-authentication-only TLS (no client cert; this is
                         // the bootstrap surface, explicitly not the mTLS plane).
                         let acceptor =
-                            clawcrew_tls::build_tls_acceptor(&clawcrew_tls::ServerConfigParams {
+                            galleon_tls::build_tls_acceptor(&galleon_tls::ServerConfigParams {
                                 cert_path: mats.server_cert_path.to_string_lossy().into_owned(),
                                 key_path: mats.server_key_path.to_string_lossy().into_owned(),
                                 client_auth: None,
@@ -5592,18 +5583,18 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         // with the renew path). The pin (relay LEAF sha256) is
                         // sourced from the relay bridge's pin store when present.
                         let relay_profile =
-                            clawcrew_runtime::enroll::relay_profile(&data_dir, &relay_cfg);
+                            galleon_runtime::enroll::relay_profile(&data_dir, &relay_cfg);
 
                         // One-time pairing code gates enrollment. Print it AND the
                         // CA-bound short-auth-string so the operator reads both to
                         // the client out of band (no blind trust-on-first-use).
-                        let pairing = std::sync::Arc::new(clawcrew_config::pairing::PairingGuard::new(
+                        let pairing = std::sync::Arc::new(galleon_config::pairing::PairingGuard::new(
                             true,
                             &[],
                             startup_pairing_code_policy,
                         ));
                         if let Some(code) = pairing.pairing_code() {
-                            let sas = clawcrew_tls::enrollment_sas(&code, &ca_fingerprint);
+                            let sas = galleon_tls::enrollment_sas(&code, &ca_fingerprint);
                             let enroll_bind = enroll_cfg.bind.to_string();
                             let enroll_port = enroll_cfg.port.to_string();
                             println!();
@@ -5668,10 +5659,10 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         // reading an unchanged operator-managed file: revoked in
                         // SQLite, still accepted at the handshake.
                         let ledger = std::sync::Arc::new(
-                            clawcrew_runtime::security::cert_ledger::CertLedger::open_at(
+                            galleon_runtime::security::cert_ledger::CertLedger::open_at(
                                 &data_dir,
                                 Some(audit),
-                                clawcrew_runtime::security::cert_ledger::effective_revoked_list_path(
+                                galleon_runtime::security::cert_ledger::effective_revoked_list_path(
                                     &data_dir,
                                     wss_cfg.client_auth.as_ref().map(|c| c.crl_path.as_str()),
                                 ),
@@ -5680,7 +5671,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
 
                         let bind_addr: std::net::SocketAddr =
                             format!("{}:{}", enroll_cfg.bind, enroll_cfg.port).parse()?;
-                        let server = std::sync::Arc::new(clawcrew_runtime::enroll::EnrollServer {
+                        let server = std::sync::Arc::new(galleon_runtime::enroll::EnrollServer {
                             bind_addr,
                             acceptor,
                             ca_cert_pem,
@@ -5700,10 +5691,10 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             relay_profile,
                             bridge_ports: Some(enroll_bridge_ports.clone()),
                             relay_attempt_bucket:
-                                clawcrew_runtime::enroll::RelayAttemptBucket::default(),
+                                galleon_runtime::enroll::RelayAttemptBucket::default(),
                             paircode_admin_data_dir: Some(data_dir.clone()),
                         });
-                        clawcrew_runtime::enroll::serve(server, cancel).await
+                        galleon_runtime::enroll::serve(server, cancel).await
                     })
                 }));
 
@@ -5723,12 +5714,9 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 match exit {
                     daemon::DaemonExit::Shutdown => break,
                     daemon::DaemonExit::Reload => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             "🔄 Daemon reload — re-reading config from disk"
                         );
                         current_config = Box::pin(Config::load_or_init()).await?;
@@ -5749,14 +5737,14 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
             if let Some(handle) = degraded_nag.take() {
                 handle.abort();
             }
-            if clawcrew_runtime::restart::desktop_restart_requested() {
-                std::process::exit(clawcrew_runtime::restart::DESKTOP_RESTART_EXIT_CODE);
+            if galleon_runtime::restart::desktop_restart_requested() {
+                std::process::exit(galleon_runtime::restart::DESKTOP_RESTART_EXIT_CODE);
             }
             // Bare-process auto-restart: the daemon has now torn down (the
             // gateway listener is released), so launch the upgraded binary as a
             // detached child before we exit. No-op unless an in-app upgrade
             // requested a self-respawn.
-            clawcrew_runtime::restart::respawn_if_requested();
+            galleon_runtime::restart::respawn_if_requested();
             Ok(())
         }
 
@@ -5934,8 +5922,8 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
             }
             #[cfg(feature = "gateway")]
             {
-                match clawcrew_gateway::resolve_web_dashboard_availability(&config) {
-                    Some(clawcrew_gateway::WebDashboardAvailability::Embedded) => {
+                match galleon_gateway::resolve_web_dashboard_availability(&config) {
+                    Some(galleon_gateway::WebDashboardAvailability::Embedded) => {
                         let path = "embedded";
                         let fallback = format!("🌐 Web UI:        FOUND ({path})");
                         println!(
@@ -5943,7 +5931,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             ta("cli-status-web-ui-found", &[("path", path)], &fallback)
                         );
                     }
-                    Some(clawcrew_gateway::WebDashboardAvailability::Filesystem(web_dist_dir)) => {
+                    Some(galleon_gateway::WebDashboardAvailability::Filesystem(web_dist_dir)) => {
                         let path = web_dist_dir.display().to_string();
                         let fallback = format!("🌐 Web UI:        FOUND ({path})");
                         println!(
@@ -6149,10 +6137,9 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                     std::collections::HashMap::new()
                                 }
                             };
-                            let unpriced =
-                                clawcrew_runtime::agent::cost::unpriced_models_in_summary(
-                                    &month_by_model,
-                                );
+                            let unpriced = galleon_runtime::agent::cost::unpriced_models_in_summary(
+                                &month_by_model,
+                            );
                             if !unpriced.is_empty() {
                                 let uncosted_tokens: u64 =
                                     unpriced.iter().map(|m| m.unpriced_tokens).sum();
@@ -6224,7 +6211,7 @@ Add pricing to the active provider profile or supply a catalog entry."
             println!();
             println!("{}", t("cli-status-channels", "Channels:"));
             println!("{}", t("cli-status-cli-always", "  CLI:      ✅ always"));
-            for entry in clawcrew_channels::listing::compiled_channels(&config.channels) {
+            for entry in galleon_channels::listing::compiled_channels(&config.channels) {
                 let channel_status = if entry.configured {
                     t("cli-status-word-configured", "configured")
                 } else {
@@ -6246,7 +6233,7 @@ Add pricing to the active provider profile or supply a catalog entry."
                 println!("  {:9} {}", entry.name, status);
             }
             let uncompiled =
-                clawcrew_channels::listing::configured_uncompiled_channels(&config.channels);
+                galleon_channels::listing::configured_uncompiled_channels(&config.channels);
             if !uncompiled.is_empty() {
                 println!(
                     "{}",
@@ -6323,7 +6310,7 @@ Add pricing to the active provider profile or supply a catalog entry."
                 if !new {
                     anyhow::bail!("pass --new to mint a fresh enrollment pairing code");
                 }
-                let generated = clawcrew_runtime::enroll::request_new_paircode(
+                let generated = galleon_runtime::enroll::request_new_paircode(
                     &config.data_dir,
                     std::time::Duration::from_secs(timeout_secs),
                 )
@@ -6349,7 +6336,7 @@ Add pricing to the active provider profile or supply a catalog entry."
                          Clear it to auto-mint (and enable rotation)."
                     );
                 }
-                clawcrew_runtime::relay::request_node_id_rotation(&config.data_dir)?;
+                galleon_runtime::relay::request_node_id_rotation(&config.data_dir)?;
                 let rotate_secs = 15.to_string();
                 println!(
                     "{}",
@@ -6398,7 +6385,7 @@ Add pricing to the active provider profile or supply a catalog entry."
         Commands::Providers {
             providers_command: None,
         } => {
-            let model_providers = clawcrew_providers::list_model_providers();
+            let model_providers = galleon_providers::list_model_providers();
             let configured_types: std::collections::HashSet<&str> = config
                 .providers
                 .models
@@ -6411,7 +6398,7 @@ Add pricing to the active provider profile or supply a catalog entry."
             );
             println!("  ID (use in config)  DESCRIPTION"); // i18n-exempt: literal command/identifier example
             println!("  ─────────────────── ───────────");
-            for category in clawcrew_providers::ModelProviderCategory::all() {
+            for category in galleon_providers::ModelProviderCategory::all() {
                 let in_category: Vec<_> = model_providers
                     .iter()
                     .filter(|p| p.category == *category)
@@ -6483,18 +6470,18 @@ Add pricing to the active provider profile or supply a catalog entry."
         Commands::Channel { channel_command } => match channel_command {
             ChannelCommands::Start => {
                 #[cfg(feature = "hardware")]
-                clawcrew_runtime::agent::loop_::register_peripheral_tools_fn(Box::new(|config| {
+                galleon_runtime::agent::loop_::register_peripheral_tools_fn(Box::new(|config| {
                     Box::pin(async move {
-                        clawcrew_hardware::peripherals::create_peripheral_tools(&config).await
+                        galleon_hardware::peripherals::create_peripheral_tools(&config).await
                     })
                 }));
 
                 let cancel = tokio_util::sync::CancellationToken::new();
                 let (sop_engine, sop_audit) = if config.sop.runtime_enabled() {
-                    let mem: Arc<dyn clawcrew_memory::Memory> =
-                        Arc::from(clawcrew_memory::create_memory_from_config(&config, None)?);
+                    let mem: Arc<dyn galleon_memory::Memory> =
+                        Arc::from(galleon_memory::create_memory_from_config(&config, None)?);
                     let sop_adapters = build_sop_adapters(&config);
-                    let (engine, audit) = clawcrew_runtime::sop::build_sop_engine(
+                    let (engine, audit) = galleon_runtime::sop::build_sop_engine(
                         config.sop.clone(),
                         &config.data_dir,
                         &config.install_root_dir(),
@@ -6512,14 +6499,14 @@ Add pricing to the active provider profile or supply a catalog entry."
                     config.sop.maintenance_interval_secs,
                 );
                 let sop_dispatcher: Option<
-                    std::sync::Arc<dyn clawcrew_api::sop::SopFanInDispatcher>,
+                    std::sync::Arc<dyn galleon_api::sop::SopFanInDispatcher>,
                 > = match (sop_engine, sop_audit) {
                     (Some(engine), Some(audit)) => Some(std::sync::Arc::new(
-                        clawcrew_runtime::sop::SopRuntimeDispatcher::new(engine, audit),
+                        galleon_runtime::sop::SopRuntimeDispatcher::new(engine, audit),
                     )),
                     _ => None,
                 };
-                let turn_runner = std::sync::Arc::new(clawcrew_api::channel::NoopChannelTurnRunner);
+                let turn_runner = std::sync::Arc::new(galleon_api::channel::NoopChannelTurnRunner);
                 let result = Box::pin(channels::start_channels(
                     config,
                     turn_runner,
@@ -6878,7 +6865,7 @@ Add pricing to the active provider profile or supply a catalog entry."
                 format,
             } => {
                 let suite_dir = suite.unwrap_or_else(|| config.eval.suite_dir.clone());
-                let mode: clawcrew_eval::Mode =
+                let mode: galleon_eval::Mode =
                     mode.unwrap_or_else(|| config.eval.mode.clone()).parse()?;
                 let report = commands::eval::run(std::path::PathBuf::from(suite_dir), mode).await?;
                 commands::eval::print_report(&report, format);
@@ -6964,7 +6951,7 @@ Add pricing to the active provider profile or supply a catalog entry."
             ConfigCommands::Get { path, json } => {
                 let known_paths: Vec<String> =
                     config.prop_fields().into_iter().map(|f| f.name).collect();
-                let path = clawcrew_config::helpers::resolve_field_path(&known_paths, &path);
+                let path = galleon_config::helpers::resolve_field_path(&known_paths, &path);
                 if Config::prop_is_secret(&path) {
                     let entries = config.prop_fields();
                     let populated = entries
@@ -7020,7 +7007,7 @@ Add pricing to the active provider profile or supply a catalog entry."
                             // Same single-source-of-truth helper the gateway
                             // uses; never hardcode a code at the call site.
                             let api_err =
-                                clawcrew_config::api_error::ConfigApiError::from_validation(
+                                galleon_config::api_error::ConfigApiError::from_validation(
                                     anyhow::Error::msg(e.to_string()),
                                 )
                                 .with_path(&path);
@@ -7044,18 +7031,18 @@ Add pricing to the active provider profile or supply a catalog entry."
                 crate::config::migration::ensure_disk_at_current_version(&config.config_path)?;
                 let known_paths: Vec<String> =
                     config.prop_fields().into_iter().map(|f| f.name).collect();
-                let mut path = clawcrew_config::helpers::resolve_field_path(&known_paths, &path);
+                let mut path = galleon_config::helpers::resolve_field_path(&known_paths, &path);
                 if ensure_map_key_for_prop_path(&mut config, &path)? {
                     let known_paths: Vec<String> =
                         config.prop_fields().into_iter().map(|f| f.name).collect();
-                    path = clawcrew_config::helpers::resolve_field_path(&known_paths, &path);
+                    path = galleon_config::helpers::resolve_field_path(&known_paths, &path);
                 }
                 if no_interactive {
                     let val = value.ok_or_else(|| {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({"path": path})),
                             "config set --no-interactive refused: positional value missing"
                         );
@@ -7090,7 +7077,7 @@ Add pricing to the active provider profile or supply a catalog entry."
                         .map(|alias| format!("{provider_type}.{alias}"));
                     let catalog_selector = provider_ref.as_deref().unwrap_or(provider_type);
                     let (models, _pricing, live) =
-                        clawcrew_runtime::quickstart::model_catalog_with_config(
+                        galleon_runtime::quickstart::model_catalog_with_config(
                             Some(&config),
                             catalog_selector,
                         )
@@ -7467,13 +7454,13 @@ Add pricing to the active provider profile or supply a catalog entry."
                             let value = match op.get("value") {
                                 Some(value) => value,
                                 None => {
-                                    ::clawcrew_log::record!(
+                                    ::galleon_log::record!(
                                         WARN,
-                                        ::clawcrew_log::Event::new(
+                                        ::galleon_log::Event::new(
                                             module_path!(),
-                                            ::clawcrew_log::Action::Reject
+                                            ::galleon_log::Action::Reject
                                         )
-                                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                        .with_outcome(::galleon_log::EventOutcome::Failure)
                                         .with_attrs(
                                             ::serde_json::json!({
                                                 "op": op_name,
@@ -7582,7 +7569,7 @@ Add pricing to the active provider profile or supply a catalog entry."
                                     config_patch_fail_json_or_human(json, api_err, human)?
                                 }
                             };
-                            let want_str = match clawcrew_config::typed_value::coerce_for_set_prop(
+                            let want_str = match galleon_config::typed_value::coerce_for_set_prop(
                                 want,
                                 config_patch_prop_kind(&config, &path),
                             ) {
@@ -8265,16 +8252,16 @@ fn resolve_gateway_addr(config: &Config, port: Option<u16>, host: Option<String>
 #[cfg(feature = "agent-runtime")]
 fn log_gateway_start(host: &str, port: u16) {
     if port == 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"host": host})),
             "🚀 Starting ClawCrew Gateway on (random port)"
         );
     } else {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"host": host, "port": port})),
             "🚀 Starting ClawCrew Gateway on"
         );
@@ -8296,10 +8283,10 @@ async fn shutdown_gateway(host: &str, port: u16, path_prefix: Option<&str>) -> R
         Ok(response) if response.status().is_success() => Ok(()),
         Ok(response) => {
             let status = response.status();
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"endpoint": url, "status": status.as_u16()})),
                 "gateway admin shutdown returned non-success status"
             );
@@ -8308,10 +8295,10 @@ async fn shutdown_gateway(host: &str, port: u16, path_prefix: Option<&str>) -> R
             )))
         }
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"endpoint": url, "error": format!("{}", e)})),
                 "gateway admin shutdown: connect failed"
             );
@@ -8535,10 +8522,10 @@ async fn fetch_paircode(
     };
 
     let response = response.map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
             "gateway paircode fetch: connect failed"
         );
@@ -8547,10 +8534,10 @@ async fn fetch_paircode(
 
     let status = response.status();
     let json: serde_json::Value = response.json().await.map_err(|e| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(
                     ::serde_json::json!({"error": format!("{}", e), "status": status.as_u16()})
                 ),
@@ -8566,10 +8553,10 @@ async fn fetch_paircode(
 
     if json.get("success").and_then(|v| v.as_bool()) != Some(true) {
         if !status.is_success() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"status": status.as_u16()})),
                 "gateway paircode fetch returned non-success status"
             );
@@ -8742,7 +8729,7 @@ fn indent_paircode_lines(lines: Vec<String>) -> String {
 
 // Interactive CLI input helpers used by `auth paste-token` /
 // `auth setup-token` / `auth paste-redirect`. The dialoguer dep belongs
-// to the binary; auth/mod.rs in clawcrew-providers shouldn't pull it in,
+// to the binary; auth/mod.rs in galleon-providers shouldn't pull it in,
 // so reads live here and trait flows accept the resulting string.
 
 #[cfg(feature = "agent-runtime")]
@@ -9247,10 +9234,10 @@ async fn handle_auth_command(auth_command: AuthCommands, config: &Config) -> Res
 fn running_executable_for_remediation() -> Option<std::path::PathBuf> {
     #[cfg(feature = "agent-runtime")]
     {
-        if let Some(executable) = clawcrew_runtime::restart::recorded_launch_executable() {
+        if let Some(executable) = galleon_runtime::restart::recorded_launch_executable() {
             return Some(executable.to_path_buf());
         }
-        if clawcrew_runtime::restart::launch_command_recorded() {
+        if galleon_runtime::restart::launch_command_recorded() {
             return None;
         }
         std::env::current_exe().ok()
@@ -9298,14 +9285,14 @@ fn gate_security_posture(
         );
     }
     let config_path = config.config_path.display().to_string();
-    let handle = ::clawcrew_spawn::spawn!(async move {
+    let handle = ::galleon_spawn::spawn!(async move {
         let mut ticker = tokio::time::interval(std::time::Duration::from_secs(30));
         loop {
             ticker.tick().await;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({ "degraded_security": sections })),
                 &format!(
                     "Running with DEGRADED security: sections ({sections}) were reset to \
@@ -9338,10 +9325,10 @@ fn gate_security_posture(
 /// `Handle::current()` so the sync, under-the-engine-lock adapter calls can bridge
 /// to the async channel/provider calls.
 #[cfg(feature = "agent-runtime")]
-fn build_sop_adapters(config: &Config) -> clawcrew_runtime::sop::SopEngineAdapters {
+fn build_sop_adapters(config: &Config) -> galleon_runtime::sop::SopEngineAdapters {
     // `llm.generate` runs on the DEFAULT agent's resolved model provider — the
     // daemon-level model of record. No resolvable provider = fail-closed.
-    let llm: Option<std::sync::Arc<dyn clawcrew_runtime::sop::capability::LlmGenerateAdapter>> =
+    let llm: Option<std::sync::Arc<dyn galleon_runtime::sop::capability::LlmGenerateAdapter>> =
         config
             .resolved_model_provider_for_agent("default")
             .and_then(|(provider_type, alias, entry)| {
@@ -9364,13 +9351,13 @@ fn build_sop_adapters(config: &Config) -> clawcrew_runtime::sop::SopEngineAdapte
                 ) {
                     Ok(p) => p,
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
+                            ::galleon_log::Event::new(
                                 module_path!(),
-                                ::clawcrew_log::Action::Note
+                                ::galleon_log::Action::Note
                             )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": e.to_string()})),
                             "SOP llm.generate adapter unavailable: default model provider failed to build"
                         );
@@ -9379,14 +9366,14 @@ fn build_sop_adapters(config: &Config) -> clawcrew_runtime::sop::SopEngineAdapte
                 };
                 let model = entry.model.clone().unwrap_or_else(|| "default".to_string());
                 Some(std::sync::Arc::new(
-                    clawcrew_runtime::sop::capability::ProviderLlmAdapter::new(
+                    galleon_runtime::sop::capability::ProviderLlmAdapter::new(
                         std::sync::Arc::from(provider),
                         model,
                     ),
                 ) as _)
             });
 
-    let channels = clawcrew_channels::orchestrator::build_channel_map(config);
+    let channels = galleon_channels::orchestrator::build_channel_map(config);
     // Startup validation: this send-only adapter's channel map omits channels that
     // need runtime SOP handles (e.g. AMQP SOP-dispatch channels). Surface at BOOT any
     // configured approval route whose channel is absent here, so a `request_route` /
@@ -9402,20 +9389,20 @@ fn build_sop_adapters(config: &Config) -> clawcrew_runtime::sop::SopEngineAdapte
         .filter(|(_, ch)| ch.supports_outbound_send())
         .map(|(key, _)| key.clone())
         .collect();
-    for issue in clawcrew_runtime::sop::approval::unresolvable_approval_routes(
+    for issue in galleon_runtime::sop::approval::unresolvable_approval_routes(
         &config.sop.approval,
         &deliverable_keys,
     ) {
         match issue {
-            clawcrew_runtime::sop::approval::ApprovalRouteIssue::Malformed {
+            galleon_runtime::sop::approval::ApprovalRouteIssue::Malformed {
                 policy,
                 route_kind,
                 route,
             } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "policy": policy,
                             "route_kind": route_kind,
@@ -9424,16 +9411,16 @@ fn build_sop_adapters(config: &Config) -> clawcrew_runtime::sop::SopEngineAdapte
                     "SOP approval route is malformed; use the required channel:recipient format"
                 );
             }
-            clawcrew_runtime::sop::approval::ApprovalRouteIssue::UndeliverableChannel {
+            galleon_runtime::sop::approval::ApprovalRouteIssue::UndeliverableChannel {
                 policy,
                 route_kind,
                 route,
                 channel_key,
             } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "policy": policy,
                             "route_kind": route_kind,
@@ -9448,27 +9435,27 @@ fn build_sop_adapters(config: &Config) -> clawcrew_runtime::sop::SopEngineAdapte
         }
     }
     if channels.is_empty() {
-        return clawcrew_runtime::sop::SopEngineAdapters {
+        return galleon_runtime::sop::SopEngineAdapters {
             llm,
             ..Default::default()
         };
     }
     let handle = tokio::runtime::Handle::current();
-    let route: std::sync::Arc<dyn clawcrew_runtime::sop::approval::ApprovalRouteAdapter> =
-        std::sync::Arc::new(clawcrew_runtime::sop::approval::ChannelRouteAdapter::new(
+    let route: std::sync::Arc<dyn galleon_runtime::sop::approval::ApprovalRouteAdapter> =
+        std::sync::Arc::new(galleon_runtime::sop::approval::ChannelRouteAdapter::new(
             channels.clone(),
             handle.clone(),
         ));
     // Only offer the forge adapter when a git channel actually exists, so
     // `forge.comment` stays fail-closed on daemons without a forge.
     let has_git = channels.keys().any(|k| k == "git" || k.starts_with("git."));
-    let forge: Option<std::sync::Arc<dyn clawcrew_runtime::sop::capability::ForgeCommentAdapter>> =
+    let forge: Option<std::sync::Arc<dyn galleon_runtime::sop::capability::ForgeCommentAdapter>> =
         has_git.then(|| {
-            std::sync::Arc::new(clawcrew_runtime::sop::capability::ChannelForgeAdapter::new(
+            std::sync::Arc::new(galleon_runtime::sop::capability::ChannelForgeAdapter::new(
                 channels,
             )) as _
         });
-    clawcrew_runtime::sop::SopEngineAdapters {
+    galleon_runtime::sop::SopEngineAdapters {
         route: Some(route),
         forge,
         llm,
@@ -9485,8 +9472,8 @@ fn build_sop_adapters(config: &Config) -> clawcrew_runtime::sop::SopEngineAdapte
 /// `approval_timeout_action` (default `escalate`, fail-closed).
 #[cfg(feature = "agent-runtime")]
 fn spawn_sop_maintenance(
-    sop_engine: Option<&std::sync::Arc<std::sync::Mutex<clawcrew_runtime::sop::SopEngine>>>,
-    sop_audit: Option<&std::sync::Arc<clawcrew_runtime::sop::SopAuditLogger>>,
+    sop_engine: Option<&std::sync::Arc<std::sync::Mutex<galleon_runtime::sop::SopEngine>>>,
+    sop_audit: Option<&std::sync::Arc<galleon_runtime::sop::SopAuditLogger>>,
     interval_secs: u64,
 ) -> Option<tokio::task::JoinHandle<()>> {
     if interval_secs == 0 {
@@ -9496,8 +9483,8 @@ fn spawn_sop_maintenance(
     let audit = sop_audit.cloned();
     let cron_cache = audit
         .as_ref()
-        .map(|_| clawcrew_runtime::sop::dispatch::SopCronCache::from_engine(&engine));
-    Some(::clawcrew_spawn::spawn!(async move {
+        .map(|_| galleon_runtime::sop::dispatch::SopCronCache::from_engine(&engine));
+    Some(::galleon_spawn::spawn!(async move {
         let mut ticker = tokio::time::interval(std::time::Duration::from_secs(interval_secs));
         ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
         let mut last_cron_check = chrono::Utc::now();
@@ -9514,9 +9501,9 @@ fn spawn_sop_maintenance(
                 continue;
             };
             if !report.is_empty() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "timed_out": report.maintenance.timed_out,
                             "reaped_claims": report.maintenance.reaped_claims,
@@ -9535,7 +9522,7 @@ fn spawn_sop_maintenance(
 #[cfg(feature = "agent-runtime")]
 #[derive(Default)]
 struct SopMaintenanceTickReport {
-    maintenance: clawcrew_runtime::sop::MaintenanceSummary,
+    maintenance: galleon_runtime::sop::MaintenanceSummary,
     cron_started: usize,
     cron_skipped: usize,
     cron_blocked_unsafe: usize,
@@ -9555,18 +9542,18 @@ impl SopMaintenanceTickReport {
 
 #[cfg(feature = "agent-runtime")]
 async fn run_sop_maintenance_tick(
-    engine: &std::sync::Arc<std::sync::Mutex<clawcrew_runtime::sop::SopEngine>>,
-    audit: Option<&std::sync::Arc<clawcrew_runtime::sop::SopAuditLogger>>,
-    cron_cache: Option<&clawcrew_runtime::sop::dispatch::SopCronCache>,
+    engine: &std::sync::Arc<std::sync::Mutex<galleon_runtime::sop::SopEngine>>,
+    audit: Option<&std::sync::Arc<galleon_runtime::sop::SopAuditLogger>>,
+    cron_cache: Option<&galleon_runtime::sop::dispatch::SopCronCache>,
     last_cron_check: &mut chrono::DateTime<chrono::Utc>,
 ) -> Option<SopMaintenanceTickReport> {
     let maintenance = match engine.lock() {
         Ok(mut e) => e.run_maintenance_tick(),
         Err(_) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "SOP maintenance tick: engine lock poisoned; skipping this pass"
             );
             return None;
@@ -9579,7 +9566,7 @@ async fn run_sop_maintenance_tick(
     };
 
     if let (Some(audit), Some(cache)) = (audit, cron_cache) {
-        let results = clawcrew_runtime::sop::dispatch::check_sop_cron_triggers(
+        let results = galleon_runtime::sop::dispatch::check_sop_cron_triggers(
             engine,
             audit,
             cache,
@@ -9588,26 +9575,26 @@ async fn run_sop_maintenance_tick(
         .await;
         for result in &results {
             match result {
-                clawcrew_runtime::sop::dispatch::DispatchResult::Started { .. } => {
+                galleon_runtime::sop::dispatch::DispatchResult::Started { .. } => {
                     report.cron_started += 1;
                 }
-                clawcrew_runtime::sop::dispatch::DispatchResult::Skipped { .. }
-                | clawcrew_runtime::sop::dispatch::DispatchResult::Deferred { .. }
-                | clawcrew_runtime::sop::dispatch::DispatchResult::Coalesced { .. } => {
+                galleon_runtime::sop::dispatch::DispatchResult::Skipped { .. }
+                | galleon_runtime::sop::dispatch::DispatchResult::Deferred { .. }
+                | galleon_runtime::sop::dispatch::DispatchResult::Coalesced { .. } => {
                     // A2: deferred (backpressure) / coalesced triggers did not start a
                     // run this tick; the cron schedule re-fires them next pass. The
                     // precise outcome is logged by process_headless_results below.
                     report.cron_skipped += 1;
                 }
-                clawcrew_runtime::sop::dispatch::DispatchResult::BlockedUnsafe { .. } => {
+                galleon_runtime::sop::dispatch::DispatchResult::BlockedUnsafe { .. } => {
                     report.cron_blocked_unsafe += 1;
                 }
-                clawcrew_runtime::sop::dispatch::DispatchResult::NoMatch => {
+                galleon_runtime::sop::dispatch::DispatchResult::NoMatch => {
                     report.cron_no_match += 1;
                 }
             }
         }
-        clawcrew_runtime::sop::dispatch::process_headless_results(&results);
+        galleon_runtime::sop::dispatch::process_headless_results(&results);
     }
 
     Some(report)
@@ -9625,7 +9612,7 @@ async fn run_gateway_if_enabled(
     // Capture the launch command before the gateway starts so in-app upgrade
     // can self-respawn after the listener is released. Must mirror the same
     // call in the Daemon branch.
-    clawcrew_runtime::restart::record_launch();
+    galleon_runtime::restart::record_launch();
     // Standalone gateway (no daemon supervisor): pass None for reload_tx so
     // /admin/reload returns 503 with a clear "no supervisor; restart
     // manually" message, None for tui_registry (no TUI socket), and None
@@ -9637,7 +9624,7 @@ async fn run_gateway_if_enabled(
     // Self-respawn after the listener is released, if an in-app upgrade
     // requested it. No-op when no respawn was requested or on supervised
     // restart modes.
-    clawcrew_runtime::restart::respawn_if_requested();
+    galleon_runtime::restart::respawn_if_requested();
     match result {
         Err(err) if is_addr_in_use_error(&err) => {
             let restart_port = available_gateway_restart_hint_port(host, port);
@@ -9763,7 +9750,7 @@ fn available_gateway_restart_hint_port(host: &str, port: u16) -> Option<u16> {
         let Some(candidate) = port.checked_add(offset) else {
             break;
         };
-        if std::net::TcpListener::bind(clawcrew_infra::effective_gateway_bind_socket_addr(
+        if std::net::TcpListener::bind(galleon_infra::effective_gateway_bind_socket_addr(
             host, candidate,
         ))
         .is_ok()

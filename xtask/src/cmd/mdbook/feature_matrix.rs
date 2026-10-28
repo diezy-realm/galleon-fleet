@@ -9,9 +9,9 @@ use std::fmt::Write as _;
 use std::path::Path;
 use std::sync::Arc;
 
+use galleon_config::schema::ChannelsConfig;
+use galleon_runtime::tools::default_tools;
 use serde::Deserialize;
-use clawcrew_config::schema::ChannelsConfig;
-use clawcrew_runtime::tools::default_tools;
 
 const SNIPPET_DIR: &str = "docs/book/src/_snippets";
 const PARITY_FILE: &str = "docs/book/feature-matrix-parity.toml";
@@ -132,7 +132,7 @@ fn channels_rows(parity: &Parity) -> Result<Vec<Row>> {
 fn providers_rows(parity: &Parity) -> Result<Vec<Row>> {
     let mut rows = Vec::new();
     let mut walked = std::collections::BTreeSet::new();
-    for slot in clawcrew_providers::canonical_model_provider_slots() {
+    for slot in galleon_providers::canonical_model_provider_slots() {
         walked.insert(slot.to_string());
         let (openclaw, hermes) = external_cells(parity.providers.get(slot));
         rows.push(Row {
@@ -147,7 +147,7 @@ fn providers_rows(parity: &Parity) -> Result<Vec<Row>> {
 }
 
 fn tools_rows(parity: &Parity) -> Result<Vec<Row>> {
-    let security = Arc::new(clawcrew_config::policy::SecurityPolicy::default());
+    let security = Arc::new(galleon_config::policy::SecurityPolicy::default());
     let mut rows = Vec::new();
     let mut walked = std::collections::BTreeSet::new();
     for tool in default_tools(security) {

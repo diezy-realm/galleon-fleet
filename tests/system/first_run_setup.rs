@@ -14,7 +14,7 @@
 //! # What is and is not covered
 //!
 //! **Covered.** The shared Quickstart apply core
-//! (`clawcrew_runtime::quickstart::apply_with_surface`) driven with a
+//! (`galleon_runtime::quickstart::apply_with_surface`) driven with a
 //! hand-built [`BuilderSubmission`] into a hermetic temp install root; the
 //! persisted `config.toml`; and — in
 //! [`first_run_config_loads_through_the_real_binary`] — the real
@@ -25,7 +25,7 @@
 //! surface and none of them run here: the zerocode TUI form
 //! (`apps/zerocode/src/quickstart_pane.rs::to_submission`), the interactive CLI
 //! quickstart (`src/main.rs`), and the gateway HTTP handler
-//! (`crates/clawcrew-gateway/src/api_quickstart.rs`). A bug that lives purely
+//! (`crates/galleon-gateway/src/api_quickstart.rs`). A bug that lives purely
 //! in one of those adapters — a field the form never collects, a key the HTTP
 //! layer renames — is invisible to this file. Those are follow-up matrix rows,
 //! not something to fake here with a hand-built submission that would only
@@ -66,13 +66,13 @@
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
-use clawcrew_config::presets::{
+use galleon_config::presets::{
     AgentIdentity, BuilderSubmission, ChannelQuickStart, MemoryChoice, ModelProviderChoice,
     SelectorChoice,
 };
-use clawcrew_config::schema::{Config, DEFAULT_WEBHOOK_CHANNEL_PORT};
-use clawcrew_config::secrets::SecretStore;
-use clawcrew_runtime::quickstart::{self, FieldSection, Surface};
+use galleon_config::schema::{Config, DEFAULT_WEBHOOK_CHANNEL_PORT};
+use galleon_config::secrets::SecretStore;
+use galleon_runtime::quickstart::{self, FieldSection, Surface};
 use tempfile::TempDir;
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -115,7 +115,7 @@ impl FirstRun {
         // The daemon's loader (`Config::load_or_init`) parses through the
         // migration chain rather than plain serde; use the same entry point so
         // this test sees what a real second launch would see.
-        let reloaded = clawcrew_config::migration::migrate_to_current(&raw_text)
+        let reloaded = galleon_config::migration::migrate_to_current(&raw_text)
             .expect("persisted config must load through the normal loader");
         let raw: toml::Value = toml::from_str(&raw_text).expect("persisted config must be TOML");
 
@@ -170,7 +170,7 @@ impl FirstRun {
         let raw_text = toml::to_string(&doc).expect("corrupted config must re-serialize");
         std::fs::write(self.dir.path().join("config.toml"), &raw_text)
             .expect("corrupted config must be writable");
-        self.reloaded = clawcrew_config::migration::migrate_to_current(&raw_text)
+        self.reloaded = galleon_config::migration::migrate_to_current(&raw_text)
             .expect("corrupted config must still parse");
         self.raw = toml::Value::Table(doc);
         self
@@ -714,7 +714,7 @@ async fn first_run_doctor_agrees_the_channel_is_configured() {
     ))
     .await;
 
-    let report = clawcrew_runtime::doctor::diagnose(&run.reloaded_with_paths());
+    let report = galleon_runtime::doctor::diagnose(&run.reloaded_with_paths());
     let config_items: Vec<&str> = report
         .iter()
         .filter(|item| item.category == "config")
@@ -1045,7 +1045,7 @@ async fn guard_doctor_reports_an_enabled_channel_with_no_credential() {
             .insert("bot_token".into(), toml::Value::String(String::new()));
     });
 
-    let report = clawcrew_runtime::doctor::diagnose(&run.reloaded_with_paths());
+    let report = galleon_runtime::doctor::diagnose(&run.reloaded_with_paths());
     let config_items: Vec<&str> = report
         .iter()
         .filter(|item| item.category == "config")

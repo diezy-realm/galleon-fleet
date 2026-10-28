@@ -13,8 +13,8 @@ from pathlib import PurePosixPath
 
 
 DESKTOP_PACKAGE = "clawcrew-desktop"
-PLUGIN_HOST_PACKAGE = "clawcrew-plugins"
-PLUGIN_FEATURE_OWNER_PACKAGES = {"clawcrew", "clawcrew-gateway", "clawcrew-providers"}
+PLUGIN_HOST_PACKAGE = "galleon-plugins"
+PLUGIN_FEATURE_OWNER_PACKAGES = {"clawcrew", "galleon-gateway", "galleon-providers"}
 SAFE_PACKAGE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.+-]*$")
 DOC_SUFFIXES = {".md", ".mdx", ".markdown", ".rst"}
 FULL_PATHS = {
@@ -29,9 +29,9 @@ IRRELEVANT_WORKFLOW_PATHS = {
 }
 FULL_PATH_PREFIXES = (".github/actions/", "wit/")
 PLUGIN_HOST_PATH_PREFIXES = (
-    "crates/clawcrew-plugins/",
-    "crates/clawcrew-runtime/",
-    "crates/clawcrew-config/",
+    "crates/galleon-plugins/",
+    "crates/galleon-runtime/",
+    "crates/galleon-config/",
     "wit/",
 )
 PLUGIN_HOST_EXACT_PATHS = {
@@ -48,7 +48,7 @@ PLUGIN_HOST_CONTROL_PREFIXES = (
     ".cargo/",
     ".github/actions/",
 )
-DYNAMIC_TEST_FIXTURE_PREFIX = "crates/clawcrew-plugins/tests/fixtures/"
+DYNAMIC_TEST_FIXTURE_PREFIX = "crates/galleon-plugins/tests/fixtures/"
 
 
 @dataclass(frozen=True)

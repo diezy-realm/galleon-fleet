@@ -2,7 +2,7 @@
 // It speaks JSON-RPC to whatever ClawCrew daemon is at the configured
 // address; the daemon owns attribution, the TUI owns its session id.
 // Bare `tokio::spawn` is the right primitive here — the workspace-wide
-// `clawcrew_spawn::spawn!` rule is daemon-path only (see `clippy.toml`'s
+// `galleon_spawn::spawn!` rule is daemon-path only (see `clippy.toml`'s
 // commentary, which records this crate as the sole exemption).
 #![allow(clippy::disallowed_methods)]
 
@@ -1965,7 +1965,7 @@ mod connection_tests {
         let mut cmd = std::process::Command::new("clawcrew");
         configure_ephemeral_daemon_command(
             &mut cmd,
-            std::path::Path::new("/tmp/clawcrew-config"),
+            std::path::Path::new("/tmp/galleon-config"),
             std::path::Path::new("/tmp/clawcrew.sock"),
         );
 
@@ -1977,7 +1977,7 @@ mod connection_tests {
                 "daemon",
                 "--ephemeral",
                 "--config-dir",
-                "/tmp/clawcrew-config",
+                "/tmp/galleon-config",
             ]
         );
         assert_eq!(

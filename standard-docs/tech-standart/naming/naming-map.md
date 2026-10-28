@@ -21,13 +21,13 @@ Aturan: `clawcrew-X` → `galleon-X`. Crate yang sudah `galleon-*` tetap. Urutan
 
 | Lama | Baru | Catatan |
 |---|---|---|
-| `clawcrew-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | `galleon-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | rename langsung |
-| `clawcrew-config` `-memory` `-providers` `-tools` `-tool-call-parser` `-routing` `-eval` `-sop-graph` | `galleon-*` | `sop-graph` & `eval` menunggu hasil R-00 (mungkin dihapus/dipindah) |
-| `clawcrew-channels` | `galleon-channels` | lalu dipecah per channel (R-15) menjadi `galleon-channel-<nama>` |
-| `clawcrew-runtime` | `galleon-runtime` | **rename ditunda sampai R-00/R-16** (isi akan menyusut/dipindah) |
-| `clawcrew-gateway` | `galleon-gateway` | setelah R-14 |
-| `clawcrew-plugins` | `galleon-plugins` | |
-| `clawcrew-relay-proto` | `galleon-relay-proto` | ikut `galleonrelay` |
+| `galleon-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | `galleon-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | rename langsung |
+| `galleon-config` `-memory` `-providers` `-tools` `-tool-call-parser` `-routing` `-eval` `-sop-graph` | `galleon-*` | `sop-graph` & `eval` menunggu hasil R-00 (mungkin dihapus/dipindah) |
+| `galleon-channels` | `galleon-channels` | lalu dipecah per channel (R-15) menjadi `galleon-channel-<nama>` |
+| `galleon-runtime` | `galleon-runtime` | **rename ditunda sampai R-00/R-16** (isi akan menyusut/dipindah) |
+| `galleon-gateway` | `galleon-gateway` | setelah R-14 |
+| `galleon-plugins` | `galleon-plugins` | |
+| `galleon-relay-proto` | `galleon-relay-proto` | ikut `galleonrelay` |
 | `galleon-channel-{core,signal,bluesky,imessage}`, `galleon-i18n` | tetap | sudah sesuai |
 
 Identifier Rust: `clawcrew_*` → `galleon_*`; tipe `ClawCrew*` → `Galleon*`.
@@ -46,7 +46,7 @@ Identifier Rust: `clawcrew_*` → `galleon_*`; tipe `ClawCrew*` → `Galleon*`.
 | Lama | Baru | Strategi |
 |---|---|---|
 | `~/.clawcrew/` (+ `config`) | `~/.config/galleon/` (Windows: `%APPDATA%\galleon\`) | pada boot: bila baru kosong & lama ada → salin atomik + tanda `.migrated`; **tidak menghapus** lama; vault sudah di `~/.config/galleon/vault/` |
-| `.clawcrew_config`, `.clawcrew_plugin_channel`, `.clawcrew_plugin_memory`, `.clawcrew_pane` (nama file/dir internal/fixture) | `.galleon_*` | rename; cek apakah on-disk persisten (butuh migrasi) atau hanya test |
+| `.galleon_config`, `.clawcrew_plugin_channel`, `.clawcrew_plugin_memory`, `.clawcrew_pane` (nama file/dir internal/fixture) | `.galleon_*` | rename; cek apakah on-disk persisten (butuh migrasi) atau hanya test |
 | Socket/IPC (`CLAWCREW_SOCKET`) | `GALLEON_SOCKET` | rename + fallback |
 
 ## 5. Kontrak & identitas teknis
@@ -96,5 +96,5 @@ Tidak ada alias/fallback nama lama. Satu-satunya jembatan: migrasi data pengguna
 | Org GHCR | `diezy-realm`, produk `galleon-fleet` | Owner; `git remote` = `diezy-realm/galleon-fleet` |
 | `sop-graph` & `eval` | **Tetap; hanya rename → `galleon-sop-graph`, `galleon-eval`** | lihat di bawah |
 
-**Fakta `clawcrew-sop-graph`:** 442 LOC, tipe proyeksi serde murni; satu-satunya pemakai kode = `runtime/src/sop/graph.rs` (+ fitur `schema-export` runtime). Tidak dipakai `apps/zerocode` (deskripsi crate usang). Ikut nasib modul `sop` di R-00 (bila SOP pindah ke Go, tipe wire ini menjadi kontrak/proto, bukan hilang).
-**Fakta `clawcrew-eval`:** 2.470 LOC, dipakai CLI root (`src/commands/eval.rs`, `src/main.rs`) dan `tests/support/trace.rs`; `runner.rs` membangun `clawcrew_runtime::agent::agent::Agent` untuk replay deterministik trace LLM. **Ketergantungan keras pada otak agent Rust** → bila `agent` pindah ke Go (R-00), harness harus diarahkan ulang ke Go (replay lewat `StartTurn` + mock `ExecuteTurn`). Bukan alasan menghapus; jadi sub-tiket R-37.
+**Fakta `galleon-sop-graph`:** 442 LOC, tipe proyeksi serde murni; satu-satunya pemakai kode = `runtime/src/sop/graph.rs` (+ fitur `schema-export` runtime). Tidak dipakai `apps/zerocode` (deskripsi crate usang). Ikut nasib modul `sop` di R-00 (bila SOP pindah ke Go, tipe wire ini menjadi kontrak/proto, bukan hilang).
+**Fakta `galleon-eval`:** 2.470 LOC, dipakai CLI root (`src/commands/eval.rs`, `src/main.rs`) dan `tests/support/trace.rs`; `runner.rs` membangun `galleon_runtime::agent::agent::Agent` untuk replay deterministik trace LLM. **Ketergantungan keras pada otak agent Rust** → bila `agent` pindah ke Go (R-00), harness harus diarahkan ulang ke Go (replay lewat `StartTurn` + mock `ExecuteTurn`). Bukan alasan menghapus; jadi sub-tiket R-37.

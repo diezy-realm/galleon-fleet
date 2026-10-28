@@ -74,7 +74,7 @@ Live, deny+audit (both files):
 - **`imbl-sized-chunks` (`RUSTSEC-2026-0292`)**: double free /
   use-after-free when an element's `Drop` panics during a `Chunk` or
   `InlineArray` removal. Fixed in 0.2.0, but unreachable from here:
-  `crates/clawcrew-channels/Cargo.toml` pins `matrix-sdk` 0.18, whose
+  `crates/galleon-channels/Cargo.toml` pins `matrix-sdk` 0.18, whose
   `imbl` 6.1.0 requires `imbl-sized-chunks ^0.1.3`. Reached only through
   `matrix-sdk -> imbl -> imbl-sized-chunks`, the same stack as the
   `bitmaps` waiver below; `matrix-sdk` 0.19+ clears both at once. Remove
@@ -115,7 +115,7 @@ Live, deny+audit (both files):
   Present in both `deny.toml` and `audit.toml`.
 - **`proc-macro-error2` (`RUSTSEC-2026-0173`)**: unmaintained
   derive/attribute macro helper. Still in `cargo deny`'s resolved graph
-  via `matrix-sdk` dev-deps (`aquamarine`) in `clawcrew-channels`, so it
+  via `matrix-sdk` dev-deps (`aquamarine`) in `galleon-channels`, so it
   needs the ignore in both files.
 - **`bitmaps` (`RUSTSEC-2026-0247`)**: unmaintained; all versions are
   affected and no patched version is available. Locked `matrix-sdk`
@@ -290,7 +290,7 @@ two tools have drifted again. Open or update the tracking issue.
   remains an audit-only ignore here.
 - 2026-07-31: Corrected the 07-19 pass for `proc-macro-error2`
   (`RUSTSEC-2026-0173`): it is still in `cargo deny`'s resolved graph
-  via `matrix-sdk` dev-deps (`aquamarine`) in `clawcrew-channels`, so it
+  via `matrix-sdk` dev-deps (`aquamarine`) in `galleon-channels`, so it
   is a live deny+audit ignore, not audit-only drift — removed from
   `deny.toml` in the 07-06/07-19 passes, it re-fails `cargo deny check`.
   Restored it in `deny.toml`. Also moved `wasmtime` (`RUSTSEC-2026-0222`)

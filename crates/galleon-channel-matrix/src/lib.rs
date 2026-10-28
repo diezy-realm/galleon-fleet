@@ -30,12 +30,12 @@ use matrix_sdk::{
     },
 };
 
-use clawcrew_api::channel::DRAFT_PLACEHOLDER;
-use clawcrew_api::channel::{
+use galleon_api::channel::DRAFT_PLACEHOLDER;
+use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, DraftProgress,
     DraftProgressKind, RoomCreationOptions, RoomVisibility, SendMessage,
 };
-use clawcrew_config::schema::{MatrixConfig, MatrixStreamMode};
+use galleon_config::schema::{MatrixConfig, MatrixStreamMode};
 
 /// Pluggable audio transcription backend for Matrix voice messages.
 #[async_trait]
@@ -333,7 +333,7 @@ mod allowlist {
 
 // ─── approval ──────────────────────────────────────────────────────────────
 mod approval {
-    use clawcrew_api::channel::{ChannelApprovalResponse, SendMessage};
+    use galleon_api::channel::{ChannelApprovalResponse, SendMessage};
     use rand::{Rng, RngExt};
 
     pub(super) const TOKEN_LEN: usize = 8;
@@ -509,7 +509,7 @@ mod streaming {
     };
 
     use anyhow::{Result, bail};
-    use clawcrew_api::channel::{
+    use galleon_api::channel::{
         DRAFT_PLACEHOLDER, REASONING_FULL_PREFIX, is_thinking_status_text, thinking_status_round,
     };
     use matrix_sdk::ruma::{OwnedEventId, OwnedRoomId};
@@ -1289,10 +1289,10 @@ mod session {
             return Ok(None);
         }
         let bytes = std::fs::read(&p).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": p.display().to_string(),
                         "error": format!("{}", e),
@@ -1304,10 +1304,10 @@ mod session {
         match serde_json::from_slice::<SessionBlob>(&bytes) {
             Ok(blob) => Ok(Some(blob)),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "matrix: session blob {} is corrupt JSON ({e}); treating as missing so auto-recovery can re-login",
                         p.display()
@@ -1320,10 +1320,10 @@ mod session {
 
     pub(super) fn save(state_dir: &Path, blob: &SessionBlob) -> anyhow::Result<()> {
         std::fs::create_dir_all(state_dir).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": state_dir.display().to_string(),
                         "error": format!("{}", e),
@@ -1338,10 +1338,10 @@ mod session {
         let p = path(state_dir);
         let json = serde_json::to_vec_pretty(blob)?;
         write_with_owner_only(&p, &json).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": p.display().to_string(),
                         "error": format!("{}", e),
@@ -1395,7 +1395,7 @@ mod client {
     use tokio::sync::RwLock;
 
     use super::session;
-    use clawcrew_config::schema::MatrixConfig;
+    use galleon_config::schema::MatrixConfig;
 
     const WHOAMI_ENDPOINT: &str = "_matrix/client/v3/account/whoami";
 
@@ -1438,10 +1438,10 @@ mod client {
         if session.exists()
             && let Err(e) = std::fs::remove_file(&session)
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": session.display().to_string(),
                         "phase": "corruption_recovery",
@@ -1458,10 +1458,10 @@ mod client {
         if store.exists()
             && let Err(e) = std::fs::remove_dir_all(&store)
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": store.display().to_string(),
                         "phase": "corruption_recovery",
@@ -1551,10 +1551,10 @@ mod client {
             config.device_id.as_deref().filter(|s| !s.is_empty()),
         ) && want != blob.device_id
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "matrix: configured channels.matrix.device-id ({want}) differs from the saved session ({}). \
                  Honoring the saved device_id (canonical, assigned by the homeserver). \
@@ -1609,9 +1609,9 @@ mod client {
                 .restore_session(session, matrix_sdk::store::RoomLoadSettings::default())
                 .await
             {
-                Ok(()) => ::clawcrew_log::record!(
+                Ok(()) => ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "matrix: restored session from session.json"
                 ),
                 Err(e) => {
@@ -1654,10 +1654,10 @@ mod client {
             if let Some(blob) = session_blob_from(&client)
                 && let Err(e) = session::save(state_dir, &blob)
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "matrix: failed to persist session.json"
                 );
@@ -1682,10 +1682,10 @@ mod client {
         reason: &str,
     ) -> Result<Client> {
         if can_password_relogin(config) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "matrix: {reason} Auto-recovering: wiping {} and re-authenticating with password.",
                     state_dir.display()
@@ -1727,10 +1727,10 @@ mod client {
             .clone()
             .filter(|s| !s.is_empty())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "matrix.user_id is required for password login"
                 );
                 anyhow::Error::msg("matrix.user_id is required for password login")
@@ -1745,9 +1745,9 @@ mod client {
             login = login.device_id(d);
         }
         login.send().await.context("password login failed")?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "matrix: logged in via password"
         );
         Ok(())
@@ -1757,10 +1757,10 @@ mod client {
         let identity = resolve_access_token_identity(config, &client.homeserver()).await?;
         let user_id = identity.user_id.parse().context("parse matrix.user_id")?;
         let device_id = identity.device_id.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "matrix: access-token login requires a Matrix device_id"
             );
             anyhow::Error::msg("matrix: access-token login requires a Matrix device_id")
@@ -1772,10 +1772,10 @@ mod client {
             },
             tokens: SessionTokens {
                 access_token: config.access_token.clone().ok_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         "matrix.access_token is required for token login"
                     );
                     anyhow::Error::msg("matrix.access_token is required for token login")
@@ -1788,9 +1788,9 @@ mod client {
             .restore_session(session, matrix_sdk::store::RoomLoadSettings::default())
             .await
             .context("attach matrix session via access_token")?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "matrix: logged in via access_token"
         );
         Ok(())
@@ -1859,7 +1859,7 @@ mod client {
             .as_deref()
             .context("matrix: whoami requires access_token")?;
         let url = matrix_client_api_url(homeserver, WHOAMI_ENDPOINT);
-        let response = clawcrew_config::schema::apply_runtime_proxy_to_builder(
+        let response = galleon_config::schema::apply_runtime_proxy_to_builder(
             reqwest::Client::builder().timeout(WHOAMI_TIMEOUT),
             "channel.matrix",
         )
@@ -1992,9 +1992,9 @@ mod client {
 
         let recovery = client.encryption().recovery();
         if matches!(recovery.state(), RecoveryState::Enabled) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "matrix: recovery already enabled, skipping recover()"
             );
             return;
@@ -2004,15 +2004,15 @@ mod client {
         diagnose_secret_storage(client, stripped_len).await;
 
         match recovery.recover_and_fix_backup(key).await {
-            Ok(()) => ::clawcrew_log::record!(
+            Ok(()) => ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "matrix: E2EE recovery completed (cross-signing + room keys imported; key backup repaired if inconsistent)"
             ),
-            Err(e) => ::clawcrew_log::record!(
+            Err(e) => ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"e": e.to_string()})),
                 "matrix: E2EE recovery failed: ; full error chain = . If the input length above is unexpected (base58 keys are typically ~58 chars, passphrases vary), the wrong value may be in channels.matrix.recovery-key."
             ),
@@ -2033,10 +2033,10 @@ mod client {
             Ok(Some(raw)) => match raw.deserialize() {
                 Ok(content) => Some(content),
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "matrix: cannot deserialize default secret-storage key event"
                     );
@@ -2044,20 +2044,20 @@ mod client {
                 }
             },
             Ok(None) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"input_len": input_len})),
                     "matrix: server has no m.secret_storage.default_key set; recovery cannot proceed (input_len=). Set up Secure Backup in Element first."
                 );
                 return;
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "matrix: failed to fetch default secret-storage key event"
                 );
@@ -2078,9 +2078,9 @@ mod client {
                 let json = raw.json().get();
                 let has_passphrase =
                     json.contains("\"passphrase\"") && json.contains("\"iterations\"");
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!(
                         "matrix: secret-storage diagnostics: default_key_id={key_id}, \
                      has_passphrase_info={has_passphrase}, input_len={input_len}. \
@@ -2095,19 +2095,19 @@ mod client {
                 let _ = SecretStorageKeyEventContent::TYPE; // keep import live
             }
             Ok(None) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"key_id": key_id})),
                     "matrix: default key id has no corresponding key event on the account — secret storage is in an inconsistent state. Re-running Secure Backup setup in Element will repair this."
                 );
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": format!("{}", e), "key_id": key_id})
                         ),
@@ -2137,10 +2137,10 @@ mod client {
     ) -> Result<OwnedRoomId> {
         let (id_or_alias, normalized) = normalize_recipient(id_or_alias);
         if normalized {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"id_or_alias": id_or_alias})),
                 "matrix: recipient contains `||`; using as the room target. Update channels.matrix or cron `delivery.to` to a plain room id/alias to silence this warning."
             );
@@ -2204,8 +2204,8 @@ mod inbound {
     use tokio::sync::{Mutex as TokioMutex, RwLock as TokioRwLock, mpsc};
 
     use super::{allowlist, approval, context as ctx_mod, mention};
-    use clawcrew_api::{channel::ChannelMessage, media::MediaAttachment};
-    use clawcrew_config::schema::MatrixConfig;
+    use galleon_api::{channel::ChannelMessage, media::MediaAttachment};
+    use galleon_config::schema::MatrixConfig;
 
     pub(super) const SYNC_LONGPOLL_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -2248,14 +2248,11 @@ mod inbound {
                 let ctx = handler_ctx.clone();
                 async move {
                     if let Err(e) = handle_message(ctx, ev, room, raw).await {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "matrix: handle_message failed"
                         );
                     }
@@ -2285,17 +2282,17 @@ mod inbound {
         let (_message_handler_guard, _encrypted_handler_guard) =
             register_event_handlers(&client, &ctx);
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "matrix: starting sync loop"
         );
         let sync_settings = SyncSettings::default().timeout(SYNC_LONGPOLL_TIMEOUT);
         if let Err(e) = client.sync_once(sync_settings.clone()).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "phase": "initial_sync",
                         "error": format!("{}", e),
@@ -2308,10 +2305,10 @@ mod inbound {
         }
         ctx.initial_sync_done.store(true, Ordering::SeqCst);
         client.sync(sync_settings).await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "phase": "sync_loop",
                         "error": format!("{}", e),
@@ -2341,9 +2338,9 @@ mod inbound {
         if already {
             return;
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "matrix: reacting ❓ to undecryptable event {} from {}",
                 event_id, ev.sender
@@ -2352,10 +2349,10 @@ mod inbound {
         let content =
             ReactionEventContent::new(Annotation::new(event_id.clone(), "❓".to_string()));
         if let Err(e) = room.send(content).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(
                         ::serde_json::json!({"error": format!("{}", e), "event_id": event_id})
                     ),
@@ -2399,18 +2396,18 @@ mod inbound {
         }
 
         if !sender_allowed {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"sender": sender})),
                 "matrix: drop message from non-allowed sender"
             );
             return Ok(());
         }
         if !room_allowed {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"room_id": room_id})),
                 "matrix: drop message from non-allowed room"
             );
@@ -2446,16 +2443,13 @@ mod inbound {
                         is_bot
                     }
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({
-                                "error": format!("{e}"),
-                                "reply_id": reply_id,
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({
+                                    "error": format!("{e}"),
+                                    "reply_id": reply_id,
+                                })),
                             "matrix: failed to fetch reply parent for mention_only gate"
                         );
                         false
@@ -2465,9 +2459,9 @@ mod inbound {
                 false
             };
             if !mention::admit_group_message(mentioned, reply_to_bot) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"sender": sender})),
                     "matrix: drop unmentioned message from"
                 );
@@ -2492,10 +2486,10 @@ mod inbound {
                         );
                     }
                 }
-                Err(e) => ::clawcrew_log::record!(
+                Err(e) => ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e), "tid": tid})),
                     "matrix: failed to fetch thread root"
                 ),
@@ -2575,7 +2569,7 @@ mod inbound {
                     }
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"error": format!("{}", e), "reply_target": reply_id})), "matrix: could not fetch in_reply_to parent")
+                    ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"error": format!("{}", e), "reply_target": reply_id})), "matrix: could not fetch in_reply_to parent")
                 }
             }
         }
@@ -2614,10 +2608,10 @@ mod inbound {
         };
 
         if let Err(e) = ctx.tx.send(msg).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "matrix: failed to forward inbound message"
             );
@@ -2765,24 +2759,21 @@ mod inbound {
                             content = format!("[voice transcript]: {text}\n\n{content}");
                         }
                         Ok(_) => {}
-                        Err(e) => ::clawcrew_log::record!(
+                        Err(e) => ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "matrix: voice transcription failed"
                         ),
                     }
                 }
             }
             Ok(None) => {}
-            Err(e) => ::clawcrew_log::record!(
+            Err(e) => ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "matrix: media handling failed"
             ),
@@ -2867,10 +2858,10 @@ mod inbound {
         workspace: Option<&std::path::PathBuf>,
     ) -> anyhow::Result<Option<std::path::PathBuf>> {
         let Some(workspace) = workspace else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "matrix: cannot persist {} — channels.matrix workspace_dir not configured. Set CLAWCREW_DIR or run via the orchestrator.",
                     info.file_name
@@ -2880,10 +2871,10 @@ mod inbound {
         };
         let dir = workspace.join("matrix_files");
         std::fs::create_dir_all(&dir).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": dir.display().to_string(),
                         "phase": "media_dir_create",
@@ -2907,10 +2898,10 @@ mod inbound {
             .get_media_content(&request, true)
             .await
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "get_media_content ()"
                 );
@@ -2922,10 +2913,10 @@ mod inbound {
         let unique = format!("{}_{safe_name}", uuid::Uuid::new_v4().simple());
         let path = dir.join(unique);
         std::fs::write(&path, &bytes).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": path.display().to_string(),
                         "phase": "media_write",
@@ -2935,9 +2926,9 @@ mod inbound {
             );
             anyhow::Error::msg(format!("write {}: {e}", path.display()))
         })?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "matrix: saved {} bytes ({}) to {}",
                 bytes.len(),
@@ -3041,10 +3032,10 @@ mod inbound {
         };
         let manager = manager?;
         let bytes = std::fs::read(path).map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "path": path.display().to_string(),
                         "phase": "transcription_read",
@@ -3084,7 +3075,7 @@ pub type TranscriptionResolver =
 /// resolver; this exists to drive the inbound tests from a bare section.
 #[cfg(test)]
 pub(crate) fn legacy_transcription_resolver(
-    transcription: clawcrew_config::schema::TranscriptionConfig,
+    transcription: galleon_config::schema::TranscriptionConfig,
 ) -> TranscriptionResolver {
     let config = Arc::new(transcription);
     Arc::new(move || {
@@ -3159,7 +3150,7 @@ mod outbound {
     use tokio::sync::{Mutex as TokioMutex, RwLock as TokioRwLock};
 
     use super::{client, context as ctx_mod, markers};
-    use clawcrew_api::{channel::SendMessage, media::MediaAttachment};
+    use galleon_api::{channel::SendMessage, media::MediaAttachment};
 
     pub(super) type ReactionKey = (OwnedRoomId, OwnedEventId, String);
 
@@ -3329,7 +3320,7 @@ mod outbound {
     }
 
     /// 8 MiB cap on the body of an HTTP marker fetch. Matches WebFetchTool's
-    /// streaming-cap pattern in `crates/clawcrew-tools/src/web_fetch.rs`.
+    /// streaming-cap pattern in `crates/galleon-tools/src/web_fetch.rs`.
     const MAX_MARKER_BYTES: usize = 8 * 1024 * 1024;
     /// 30-second connect+request timeout for HTTP marker fetches. Bounds the
     /// agent-driven fetch path so a hung target cannot stall the channel.
@@ -3382,11 +3373,11 @@ mod outbound {
                 .with_context(|| format!("parse marker URL {target}"))
                 .map_err(ValidateError::Refused)?;
             let host_str = url.host_str().unwrap_or("");
-            if clawcrew_infra::net_guard::is_private_or_local_host(host_str) {
-                ::clawcrew_log::record!(
+            if galleon_infra::net_guard::is_private_or_local_host(host_str) {
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "target": target,
                             "host": host_str,
@@ -3403,10 +3394,10 @@ mod outbound {
         }
         if target.contains("://") {
             let scheme = target.split("://").next().unwrap_or("?");
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "scheme": scheme,
                         "target": target,
@@ -3418,10 +3409,10 @@ mod outbound {
             ))));
         }
         if target.starts_with("data:") || target.starts_with("file:") {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "target": target,
                     })),
@@ -3433,10 +3424,10 @@ mod outbound {
         }
 
         let workspace = workspace_dir.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "target": target,
                         "reason": "no_workspace_dir",
@@ -3460,10 +3451,10 @@ mod outbound {
         let target_canon = match std::fs::canonicalize(&absolute) {
             Ok(p) => p,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "target": target,
                             "reason": "not_found",
@@ -3482,10 +3473,10 @@ mod outbound {
         };
 
         if !target_canon.starts_with(&workspace_canon) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "target": target,
                         "target_canon": target_canon.display().to_string(),
@@ -3523,11 +3514,11 @@ mod outbound {
                 // which moves the attempt, can run.
                 let target_str = attempt.url().as_str().to_string();
                 let host = attempt.url().host_str().unwrap_or("").to_string();
-                if clawcrew_infra::net_guard::is_private_or_local_host(&host) {
-                    ::clawcrew_log::record!(
+                if galleon_infra::net_guard::is_private_or_local_host(&host) {
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "target": target_str,
                                 "host": host,
@@ -3546,7 +3537,7 @@ mod outbound {
                 }
                 attempt.follow()
             });
-            clawcrew_config::schema::apply_runtime_proxy_to_builder(
+            galleon_config::schema::apply_runtime_proxy_to_builder(
                 reqwest::Client::builder()
                     .timeout(MARKER_HTTP_TIMEOUT)
                     .redirect(redirect_policy)
@@ -3631,10 +3622,10 @@ mod outbound {
                         MarkerFailure::Refused => "trust boundary",
                         MarkerFailure::Failed => "not found",
                     };
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!(
                             "matrix: skipping outbound marker for {} ({label}): {e}",
                             marker.target
@@ -3648,13 +3639,10 @@ mod outbound {
                 MarkerTarget::Local(path) => match tokio::fs::read(&path).await {
                     Ok(b) => b,
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                             &format!(
                                 "matrix: skipping outbound marker for {} (read failed): {e}",
                                 marker.target
@@ -3667,13 +3655,10 @@ mod outbound {
                 MarkerTarget::Http(url) => match fetch_http(url).await {
                     Ok(b) => b,
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                             &format!(
                                 "matrix: skipping outbound marker for {} (http failed): {e}",
                                 marker.target
@@ -3695,10 +3680,10 @@ mod outbound {
             match upload_attachment(room, &att, kind, thread_anchor).await {
                 Ok(id) => last_attachment_id = Some(id),
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!(
                             "matrix: skipping outbound marker for {} (upload failed): {e}",
                             marker.target
@@ -3772,10 +3757,10 @@ mod outbound {
                 return Ok(attachment_id);
             }
             SendOutcome::EmptyError => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"phase": "send"})),
                     "matrix: empty message body and no successful attachment"
                 );
@@ -3822,10 +3807,10 @@ mod outbound {
             let content =
                 ReactionEventContent::new(Annotation::new(event_id.clone(), emoji.to_string()));
             if let Err(e) = room.send(content).await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": format!("{}", e), "emoji": emoji})
                         ),
@@ -3861,10 +3846,10 @@ mod outbound {
                 )
                 .await
                 .map_err(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "make_reply_event failed"
                     );
@@ -3901,10 +3886,10 @@ mod outbound {
         let room = client
             .get_room(&room_id.parse::<OwnedRoomId>()?)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"room_id": room_id})),
                     "matrix: room not joined"
                 );
@@ -3919,10 +3904,10 @@ mod outbound {
                 .make_edit_event(event_id, EditedContent::RoomMessage(new_content))
                 .await
                 .map_err(|e| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "make_edit_event failed"
                     );
@@ -3952,10 +3937,10 @@ mod outbound {
         let room = client
             .get_room(&room_id.parse::<OwnedRoomId>()?)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"room_id": room_id})),
                     "matrix: room not joined"
                 );
@@ -4012,10 +3997,10 @@ mod outbound {
     ) -> Result<Room> {
         let id = client::resolve_room(client, cache, recipient).await?;
         let room = client.get_room(&id).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"recipient": recipient})),
                 "matrix: bot is not in room"
             );
@@ -4049,10 +4034,10 @@ mod outbound {
             .send_attachment(att.file_name.clone(), &mime, att.data.clone(), config)
             .await
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "send_attachment failed"
                 );
@@ -4527,7 +4512,7 @@ impl MatrixChannel {
     }
 
     async fn ensure_client(&self) -> Result<&Client> {
-        use ::clawcrew_log::__private::tracing::Instrument;
+        use ::galleon_log::__private::tracing::Instrument;
         self.client
             .get_or_try_init(|| {
                 async {
@@ -4537,7 +4522,7 @@ impl MatrixChannel {
                     }
                     Ok::<_, anyhow::Error>(c)
                 }
-                .instrument(::clawcrew_log::attribution_span!(self))
+                .instrument(::galleon_log::attribution_span!(self))
             })
             .await
     }
@@ -4668,10 +4653,10 @@ impl MatrixChannel {
         .await;
 
         if let Err(e) = delivered {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "matrix: voice reply failed; the text reply was already delivered"
             );
@@ -4858,10 +4843,10 @@ impl MatrixChannel {
                 let mut msg = SendMessage::new(paragraph, recipient);
                 msg.thread_ts = thread_anchor.as_ref().map(|e| e.to_string());
                 if let Err(e) = outbound::send(&self.outbox(client), &msg).await {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "matrix: multi-message paragraph send failed"
                     );
@@ -4882,10 +4867,10 @@ impl MatrixChannel {
         if let Err(err) =
             outbound::redact(client, recipient, event_id, Some(reason.to_string())).await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"err": err.to_string()})),
                 "matrix: single-message draft cleanup failed before final send; sending final response anyway"
             );
@@ -4893,9 +4878,9 @@ impl MatrixChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for MatrixChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Matrix)
+impl ::galleon_api::attribution::Attributable for MatrixChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Matrix)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -4945,10 +4930,10 @@ impl Channel for MatrixChannel {
         let user_id = client
             .user_id()
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "matrix: client has no user_id after login"
                 );
                 anyhow::Error::msg("matrix: client has no user_id after login")
@@ -5205,13 +5190,13 @@ impl Channel for MatrixChannel {
                             )
                             .await
                             {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(
                                         ::serde_json::json!({"edit_err": edit_err.to_string()})
                                     ),
@@ -5230,7 +5215,7 @@ impl Channel for MatrixChannel {
                                         .await;
                                     }
                                     Err(send_err) if any_attachment_landed => {
-                                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"send_err": send_err.to_string()})), "matrix: partial finalize cleaned text fallback failed after attachment upload: ; suppressing error to avoid duplicate attachment retry");
+                                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"send_err": send_err.to_string()})), "matrix: partial finalize cleaned text fallback failed after attachment upload: ; suppressing error to avoid duplicate attachment retry");
                                     }
                                     Err(send_err) => {
                                         return Err(edit_err).with_context(|| {
@@ -5254,26 +5239,26 @@ impl Channel for MatrixChannel {
                             )
                             .await
                             {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(::serde_json::json!({"err": err.to_string()})),
                                     "matrix: partial finalize redaction failed after attachment-only upload: ; leaving placeholder to avoid duplicate attachment retry"
                                 );
                             }
                         }
                         streaming::PartialFinalizeAction::EmptyError => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Reject
+                                    ::galleon_log::Action::Reject
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({"phase": "partial_finalize"})),
                                 "matrix: empty partial draft body and no successful attachment"
                             );
@@ -5338,13 +5323,13 @@ impl Channel for MatrixChannel {
                             )
                             .await
                             {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(::serde_json::json!({"err": edit_err.to_string()})),
                                     "matrix: single-message retained draft flush failed before final send"
                                 );
@@ -5533,7 +5518,7 @@ impl Channel for MatrixChannel {
         &self,
         recipient: &str,
         request: &ChannelApprovalRequest,
-    ) -> Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+    ) -> Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         let client = self.ensure_client().await?;
         let destination = client::resolve_room(client, &self.alias_cache, recipient)
             .await?
@@ -5571,18 +5556,18 @@ impl Channel for MatrixChannel {
         // runtime denying because nobody replied, and must say so.
         match result {
             Ok(Ok(resp)) => Ok(Some(
-                clawcrew_api::channel::AttributedApprovalResponse::operator(resp),
+                galleon_api::channel::AttributedApprovalResponse::operator(resp),
             )),
             Ok(Err(_)) => Ok(Some(
-                clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                galleon_api::channel::AttributedApprovalResponse::from_runtime(
                     ChannelApprovalResponse::Deny,
-                    clawcrew_api::channel::ApprovalSource::Unreachable,
+                    galleon_api::channel::ApprovalSource::Unreachable,
                 ),
             )),
             Err(_) => Ok(Some(
-                clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                galleon_api::channel::AttributedApprovalResponse::from_runtime(
                     ChannelApprovalResponse::Deny,
-                    clawcrew_api::channel::ApprovalSource::TimedOut,
+                    galleon_api::channel::ApprovalSource::TimedOut,
                 ),
             )),
         }

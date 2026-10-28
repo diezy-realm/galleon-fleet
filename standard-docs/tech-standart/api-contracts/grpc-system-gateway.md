@@ -4,7 +4,7 @@
 **Last updated:** 2026-10-03  
 **Protocol:** gRPC (protobuf)  
 **Port:** :50052  
-**Server:** Rust `clawcrew-gateway`  
+**Server:** Rust `galleon-gateway`  
 **Client:** Go `engine` (internal-only, NOT exposed to frontend)
 
 ---

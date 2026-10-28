@@ -150,10 +150,10 @@ Start with [how to contribute](docs/book/src/contributing/how-to.md). Larger cha
 
 Good places to start:
 
-- New channel → `crates/clawcrew-channels/`
-- New provider → `crates/clawcrew-providers/`
-- New tool → `crates/clawcrew-tools/`
-- Hardware support → `crates/clawcrew-hardware/`
+- New channel → `crates/galleon-channels/`
+- New provider → `crates/galleon-providers/`
+- New tool → `crates/galleon-tools/`
+- Hardware support → `crates/galleon-hardware/`
 - Docs → `docs/book/src/`
 
 AI-assisted PRs are welcome; see [Contribution culture (RFC #5615)](https://github.com/clawcrew-labs/clawcrew/issues/5615) for the co-authorship norms.

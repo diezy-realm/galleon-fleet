@@ -1,20 +1,20 @@
 //! `galleon-channel-irc` — RF-B1 IRC channel feature-crate.
 //!
-//! Ported from `clawcrew-channels::irc` following the RF-B1 pattern established
+//! Ported from `galleon-channels::irc` following the RF-B1 pattern established
 //! by `galleon-channel-signal` and `galleon-channel-bluesky`.
 //!
 //! ## Seams closed by `galleon-channel-core`
 //!
 //! * **Allowlist policy.** Peer-policy allowlist checks call
 //!   [`galleon_channel_core::allowlist::is_user_allowed`] using the SSOT
-//!   peer-policy from `clawcrew_config::schema` without pulling `clawcrew-runtime`.
+//!   peer-policy from `galleon_config::schema` without pulling `galleon-runtime`.
 
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use portable_atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::{Mutex, mpsc};
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
 // Use tokio_rustls's re-export of rustls types
 use tokio_rustls::rustls;
@@ -274,7 +274,11 @@ impl IrcChannel {
 
     fn is_user_allowed(&self, nick: &str) -> bool {
         let peers = (self.peer_resolver)();
-        galleon_channel_core::allowlist::is_user_allowed(&peers, nick, galleon_channel_core::allowlist::Match::CaseInsensitive)
+        galleon_channel_core::allowlist::is_user_allowed(
+            &peers,
+            nick,
+            galleon_channel_core::allowlist::Match::CaseInsensitive,
+        )
     }
 
     fn is_mentioned(my_nick: &str, text: &str) -> bool {
@@ -375,9 +379,9 @@ impl rustls::client::danger::ServerCertVerifier for NoVerify {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for IrcChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Irc)
+impl ::galleon_api::attribution::Attributable for IrcChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Irc)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -405,10 +409,10 @@ impl Channel for IrcChannel {
     async fn send(&self, message: &SendMessage) -> anyhow::Result<()> {
         let mut guard = self.writer.lock().await;
         let writer = guard.as_mut().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "IRC not connected"
             );
             anyhow::Error::msg("IRC not connected")
@@ -429,9 +433,9 @@ impl Channel for IrcChannel {
 
     async fn listen(&self, tx: mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
         let mut current_nick = self.nickname.clone();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "IRC channel connecting to {}:{} as {}...",
                 self.server, self.port, current_nick
@@ -475,10 +479,10 @@ impl Channel for IrcChannel {
             let n = tokio::time::timeout(READ_TIMEOUT, buf_reader.read_line(&mut line))
                 .await
                 .map_err(|_| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Timeout)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Timeout)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "timeout": format!("{:?}", READ_TIMEOUT),
                             })),
@@ -513,13 +517,10 @@ impl Channel for IrcChannel {
                         }
                     } else if msg.params.iter().any(|p| p.contains("NAK")) {
                         // CAP * NAK :sasl — server rejected SASL, proceed without it
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                             "server does not support SASL, continuing without it"
                         );
                         sasl_pending = false;
@@ -541,13 +542,10 @@ impl Channel for IrcChannel {
                         }
                     } else {
                         // SASL was requested but no password is configured; abort SASL
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                             "SASL authentication requested but no SASL password is configured; aborting SASL"
                         );
                         sasl_pending = false;
@@ -569,10 +567,10 @@ impl Channel for IrcChannel {
 
                 // SASL failure (904, 905, 906, 907)
                 "904" | "905" | "906" | "907" => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!("SASL authentication failed ({})", msg.command)
                     );
                     sasl_pending = false;
@@ -585,9 +583,9 @@ impl Channel for IrcChannel {
                 // RPL_WELCOME — registration complete
                 "001" => {
                     registered = true;
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!("registered as {}", current_nick)
                     );
 
@@ -612,10 +610,10 @@ impl Channel for IrcChannel {
                 // ERR_NICKNAMEINUSE (433)
                 "433" => {
                     let alt = format!("{current_nick}_");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"current_nick": current_nick, "alt": alt})
                             ),
@@ -1157,7 +1155,7 @@ mod tests {
 
     #[test]
     fn irc_config_serde_roundtrip() {
-        use clawcrew_config::schema::IrcConfig;
+        use galleon_config::schema::IrcConfig;
 
         let config = IrcConfig {
             enabled: true,
@@ -1190,7 +1188,7 @@ mod tests {
 
     #[test]
     fn irc_config_minimal_toml() {
-        use clawcrew_config::schema::IrcConfig;
+        use galleon_config::schema::IrcConfig;
 
         let toml_str = r#"
 server = "irc.example.com"
@@ -1211,7 +1209,7 @@ nickname = "bot"
 
     #[test]
     fn irc_config_default_port() {
-        use clawcrew_config::schema::IrcConfig;
+        use galleon_config::schema::IrcConfig;
 
         let json = r#"{"server":"irc.test","nickname":"bot"}"#;
         let parsed: IrcConfig = serde_json::from_str(json).unwrap();

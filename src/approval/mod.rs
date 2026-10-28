@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-pub use clawcrew_runtime::approval::*;
+pub use galleon_runtime::approval::*;
 
 #[cfg(test)]
 mod tests {

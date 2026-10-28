@@ -52,35 +52,35 @@ The v0.8.0 branch grows the repo by **+17,660 lines total**, of which:
 
 | area                       | master logic | branch logic | Δ      |
 |----------------------------|--------------|--------------|--------|
-| clawcrew-config            | 12,980       | 17,377       | **+4,397** |
-| clawcrew-runtime           | 38,480       | 39,373       | +893   |
+| galleon-config            | 12,980       | 17,377       | **+4,397** |
+| galleon-runtime           | 38,480       | 39,373       | +893   |
 | web                        | 20,742       | 21,518       | +776   |
-| clawcrew-macros            | 912          | 1,581        | +669   |
-| clawcrew-memory            | 5,789        | 6,856        | +1,067 |
-| clawcrew-gateway           | 8,759        | 9,323        | +564   |
-| clawcrew-channels          | 34,556       | 34,576       | +20    |
-| clawcrew-api               | 1,511        | 1,536        | +25    |
+| galleon-macros            | 912          | 1,581        | +669   |
+| galleon-memory            | 5,789        | 6,856        | +1,067 |
+| galleon-gateway           | 8,759        | 9,323        | +564   |
+| galleon-channels          | 34,556       | 34,576       | +20    |
+| galleon-api               | 1,511        | 1,536        | +25    |
 | zerocode               | 704          | 705          | +1     |
-| clawcrew-tool-call-parser  | 1,168        | 1,168        | 0      |
-| clawcrew-hardware          | 5,760        | 5,760        | 0      |
-| clawcrew-plugins           | 954          | 954          | 0      |
+| galleon-tool-call-parser  | 1,168        | 1,168        | 0      |
+| galleon-hardware          | 5,760        | 5,760        | 0      |
+| galleon-plugins           | 954          | 954          | 0      |
 | robot-kit                  | 1,951        | 1,940        | −11    |
-| clawcrew-infra             | 1,024        | 1,021        | −3     |
+| galleon-infra             | 1,024        | 1,021        | −3     |
 | src (root binary)          | 6,326        | 5,956        | −370   |
-| clawcrew-tools             | 24,106       | 23,311       | **−795** |
-| clawcrew-providers         | 17,582       | 16,152       | **−1,430** |
+| galleon-tools             | 24,106       | 23,311       | **−795** |
+| galleon-providers         | 17,582       | 16,152       | **−1,430** |
 
 ## Per-area test growth
 
 | area                       | master tests | branch tests | Δ      |
 |----------------------------|--------------|--------------|--------|
-| clawcrew-channels          | 24,825       | 27,392       | +2,567 |
-| clawcrew-config            | 9,673        | 11,562       | +1,889 |
-| clawcrew-runtime           | 30,665       | 31,493       | +828   |
-| clawcrew-memory            | 4,217        | 4,801        | +584   |
+| galleon-channels          | 24,825       | 27,392       | +2,567 |
+| galleon-config            | 9,673        | 11,562       | +1,889 |
+| galleon-runtime           | 30,665       | 31,493       | +828   |
+| galleon-memory            | 4,217        | 4,801        | +584   |
 | tests (workspace)          | 8,275        | 8,162        | −113   |
-| clawcrew-providers         | 12,140       | 10,838       | **−1,302** |
-| clawcrew-tools             | 15,831       | 15,446       | −385   |
+| galleon-providers         | 12,140       | 10,838       | **−1,302** |
+| galleon-tools             | 15,831       | 15,446       | −385   |
 | src (root binary)          | 3,975        | 3,614        | −361   |
 | (others < 200 Δ)           |              |              |        |
 
@@ -93,7 +93,7 @@ By category, the excision pass:
 - Deleted ~−1,500 lines of dead-on-arrival files, WIP stubs, dead provider helpers + tests, channel-WIP clusters, schema bloat (FeishuConfig fold), Claude Code residue, and dead config sections.
 - Added ~+150 lines of new code: V2→V3 migration step for the FeishuConfig fold, three new migration tests, and the audit trail under `docs/maintainers/excision-v0.8.0-incidents.md`.
 
-The deletions explain the negative deltas in `clawcrew-providers` (−1,430), `clawcrew-tools` (−795), and the test reductions in providers (−1,302). The +669 in `clawcrew-macros` is non-excision V3 work (Configurable derive extensions for the schema overhaul).
+The deletions explain the negative deltas in `galleon-providers` (−1,430), `galleon-tools` (−795), and the test reductions in providers (−1,302). The +669 in `galleon-macros` is non-excision V3 work (Configurable derive extensions for the schema overhaul).
 
 ## Headline
 

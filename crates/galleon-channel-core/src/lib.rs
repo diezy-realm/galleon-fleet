@@ -2,18 +2,18 @@
 //! RF-B1 channel feature-crates (Signal first).
 //!
 //! The split pulls one channel at a time out of the monolithic
-//! `clawcrew-channels` crate. Two couplings every channel needs — the allowlist
+//! `galleon-channels` crate. Two couplings every channel needs — the allowlist
 //! policy and the text-reply approval prompt — are provided here so a feature
 //! crate does not have to reimplement them or reach back into
-//! `clawcrew-channels` internals. Neither helper drags `clawcrew-runtime`:
-//! `clawcrew-config` depends only on api/log/infra/macros, and the approval
+//! `galleon-channels` internals. Neither helper drags `galleon-runtime`:
+//! `galleon-config` depends only on api/log/infra/macros, and the approval
 //! helper here is the i18n-free half.
 //!
 //! ## [`allowlist`] — seam #1, closed
 //!
 //! The grant / deny / `!name` / wildcard peer-policy is security-critical and
-//! has a single source of truth in `clawcrew_config::schema`
-//! (`peer_policy_admits` and friends). `clawcrew-channels::allowlist` is a thin
+//! has a single source of truth in `galleon_config::schema`
+//! (`peer_policy_admits` and friends). `galleon-channels::allowlist` is a thin
 //! wrapper over it. This module **re-exports that same policy** rather than
 //! reimplementing the precedence rules — reuse over a second copy that could
 //! drift. A channel crate gets the full policy (not just exact-match) by
@@ -23,17 +23,17 @@
 //!
 //! [`approval::parse_approval_reply`], [`approval::new_approval_token`] and
 //! [`approval::build_yesno_prompt`] are the parts of the upstream
-//! `clawcrew-channels::util` approval helper that depend only on
-//! `clawcrew-api`. The upstream prompt localizes its heading/labels through
-//! `clawcrew_runtime::i18n`; porting that would drag the runtime, so the prompt
+//! `galleon-channels::util` approval helper that depend only on
+//! `galleon-api`. The upstream prompt localizes its heading/labels through
+//! `galleon_runtime::i18n`; porting that would drag the runtime, so the prompt
 //! here is plain English of the IDENTICAL wire shape (`<token> yes|no|always`),
 //! and the reply parser is shared verbatim. Localization stays the documented
 //! ceiling (`APPROVAL_I18N_CEILING`) — the one part of seam #2 that cannot
 //! close without the runtime.
 
-/// Peer-policy allowlist — re-exported from the `clawcrew_config::schema` SSOT.
+/// Peer-policy allowlist — re-exported from the `galleon_config::schema` SSOT.
 ///
-/// `clawcrew-channels::allowlist` wraps the same functions; sharing them here
+/// `galleon-channels::allowlist` wraps the same functions; sharing them here
 /// keeps the grant/deny/precedence rules defined once. See the crate-level docs
 /// for why this is a re-export and not a reimplementation.
 pub mod allowlist {
@@ -48,8 +48,8 @@ pub mod allowlist {
     }
 
     /// `!`-prefix that marks a resolved peer entry as a deny rule.
-    pub use clawcrew_config::schema::PEER_DENY_PREFIX as DENY_PREFIX;
-    use clawcrew_config::schema::{
+    pub use galleon_config::schema::PEER_DENY_PREFIX as DENY_PREFIX;
+    use galleon_config::schema::{
         peer_deny_identity, peer_deny_names, peer_grant_identity, peer_is_wildcard,
         peer_policy_admits, peer_policy_denies,
     };
@@ -156,7 +156,11 @@ pub mod allowlist {
         #[test]
         fn reexports_full_deny_and_wildcard_policy() {
             // Wildcard grants anyone...
-            assert!(is_user_allowed(&["*".to_string()], "anyone", Match::Sensitive));
+            assert!(is_user_allowed(
+                &["*".to_string()],
+                "anyone",
+                Match::Sensitive
+            ));
             // ...but a `!name` deny outranks it (the policy the signal crate's
             // exact-match ceiling could not express).
             let denied = vec!["*".to_string(), "!alice".to_string()];
@@ -178,9 +182,9 @@ pub mod allowlist {
 }
 
 /// Text-reply approval helper (i18n-free half of the upstream
-/// `clawcrew-channels::util` prompt). See crate docs.
+/// `galleon-channels::util` prompt). See crate docs.
 pub mod approval {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
 
     pub const APPROVAL_REPLY_YES: &str = "yes";
     pub const APPROVAL_REPLY_YES_SHORT: &str = "y";
@@ -191,7 +195,7 @@ pub mod approval {
     pub const APPROVAL_REPLY_ALWAYS: &str = "always";
 
     /// Parse a `<token> <action>` approval reply. Depends only on
-    /// `clawcrew-api`; the wire shape is identical to upstream so prompts built
+    /// `galleon-api`; the wire shape is identical to upstream so prompts built
     /// by [`build_yesno_prompt`] round-trip through it.
     #[must_use]
     pub fn parse_approval_reply(text: &str) -> Option<(String, ChannelApprovalResponse)> {
@@ -230,7 +234,7 @@ pub mod approval {
     /// [`parse_approval_reply`] expects.
     ///
     /// APPROVAL_I18N_CEILING: the upstream prompt localizes heading/labels via
-    /// `clawcrew_runtime::i18n`. Porting the Fluent catalogue would drag the
+    /// `galleon_runtime::i18n`. Porting the Fluent catalogue would drag the
     /// runtime, so this stays plain English. `token`/`tool_name`/`args` are the
     /// protocol-exact values echoed verbatim — never localized — so the ceiling
     /// cannot desync the prompt from the parser.
@@ -252,7 +256,7 @@ pub mod approval {
     }
 
     pub struct PendingApproval {
-        pub sender: tokio::sync::oneshot::Sender<clawcrew_api::channel::ChannelApprovalResponse>,
+        pub sender: tokio::sync::oneshot::Sender<galleon_api::channel::ChannelApprovalResponse>,
         pub destination: String,
         pub tool_name: String,
     }
@@ -274,7 +278,7 @@ pub mod approval {
     pub async fn resolve_pending_approval(
         pending_approvals: &tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>,
         token: &str,
-        response: clawcrew_api::channel::ChannelApprovalResponse,
+        response: galleon_api::channel::ChannelApprovalResponse,
         responder_allowed: bool,
         destination: &str,
     ) -> PendingApprovalResolution {
@@ -292,7 +296,7 @@ pub mod approval {
     pub async fn resolve_pending_approval_with_tool(
         pending_approvals: &tokio::sync::Mutex<std::collections::HashMap<String, PendingApproval>>,
         token: &str,
-        response: clawcrew_api::channel::ChannelApprovalResponse,
+        response: galleon_api::channel::ChannelApprovalResponse,
         responder_allowed: bool,
         destination: &str,
     ) -> (PendingApprovalResolution, Option<String>) {
@@ -315,7 +319,6 @@ pub mod approval {
         }
     }
 
-
     #[cfg(test)]
     mod tests {
         use super::*;
@@ -327,8 +330,7 @@ pub mod approval {
             let prompt = build_yesno_prompt(&token, "shell", "ls -la", Some((2, 3)));
             assert!(prompt.contains(&format!("[{token}]")));
             assert!(prompt.contains("Tool call 2 of 3"));
-            let (parsed, resp) =
-                parse_approval_reply(&format!("{token} yes")).expect("yes parses");
+            let (parsed, resp) = parse_approval_reply(&format!("{token} yes")).expect("yes parses");
             assert_eq!(parsed, token);
             assert!(matches!(resp, ChannelApprovalResponse::Approve));
             assert!(matches!(

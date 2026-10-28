@@ -42,9 +42,9 @@ Verifikasi cepat: Rust `cargo nextest run -p <crate>` + `cargo clippy -p <crate>
 | Tauri `get_system_metrics` sudah memanggil `engine_get`; `execute_terminal_command` masih **simulasi palsu**; `get_collection/save_collection` masih lokal | FD-A2/FD-A3b terbuka |
 | `apps/tauri/tauri.conf.json` masih `frontendDist=../../web-2/dist`, CSP masih `unsafe-eval` & `connect-src https:` | FD-A1, FD-A4 terbuka |
 | `web/server.ts` (Express) masih ada; QR sudah dihapus dari server, tapi `qrcode`/`better-sqlite3`/`@google/genai` masih di `package.json`; skrip `dev=tsx watch server.ts`; `lint=tsc --noEmit` | FW-A1/A2 terbuka |
-| `galleon-i18n` sudah diekstrak, namun `clawcrew-channels` masih 87 ref ke `runtime::i18n` | BR-C1 sisa: repoint ref |
+| `galleon-i18n` sudah diekstrak, namun `galleon-channels` masih 87 ref ke `runtime::i18n` | BR-C1 sisa: repoint ref |
 | `galleon-channel-{core,imessage,signal,bluesky}` ada; fixture pilot `channel-nostr-pilot` ada; `wit/v0/.frozen` ada | T-7.1..7.3 selesai; BR-F5 tinggal ukur `wasi:http`+e2e |
-| `clawcrew-routing` sudah dipasang di gateway; 5 core handler migrasi selesai | T-6.5..6.10 bentrok dengan keputusan hapus REST/WS lama — lihat 08 §C |
+| `galleon-routing` sudah dipasang di gateway; 5 core handler migrasi selesai | T-6.5..6.10 bentrok dengan keputusan hapus REST/WS lama — lihat 08 §C |
 
 ## Urutan Kerja yang Disarankan
 

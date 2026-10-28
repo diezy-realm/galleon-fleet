@@ -1,7 +1,7 @@
 # Lane N — Rebrand ke Galleon & Pembersihan Legacy
 
 Ref: ODR-16. Pola yang dicari: `zeroclaw`, `zerocode`, `zerorelay`, `claw-crew`, `clawcrew`, `ClawCrew`, `FleetAI`/`Fleet AI`/`fleet-ai`.
-**Skala terukur (file tracked, di luar docs/ADR/lock/i18n):** ±1.656 file, ±40.000 kemunculan. Terbesar: `clawcrew-channels` 9,1k, `clawcrew-runtime` 8,9k, `docs/_archive` 3,6k (216 file), `providers` 2,2k, `tools` 2,1k, `gateway` 1,8k, `config` 1,3k, **`bin/engine.exe` (biner ter-commit)**, `apps/zerocode` 627, `src/main.rs` 487, `scripts/ci` 439, `.claude/skills` 368, `xtask` 354, `.github/workflows` 294.
+**Skala terukur (file tracked, di luar docs/ADR/lock/i18n):** ±1.656 file, ±40.000 kemunculan. Terbesar: `galleon-channels` 9,1k, `galleon-runtime` 8,9k, `docs/_archive` 3,6k (216 file), `providers` 2,2k, `tools` 2,1k, `gateway` 1,8k, `config` 1,3k, **`bin/engine.exe` (biner ter-commit)**, `apps/zerocode` 627, `src/main.rs` 487, `scripts/ci` 439, `.claude/skills` 368, `xtask` 354, `.github/workflows` 294.
 
 **Aturan umum**
 - Satu PR = satu lapisan; tiap PR hijau (`cargo check/clippy/nextest`, `go test -race`, `npm run build`).

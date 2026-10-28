@@ -197,7 +197,7 @@ struct Include {
 ///
 /// Handles the four spellings that appear in this workspace. The naive "first
 /// string literal" scan this replaced silently missed the `concat!` form and let
-/// seven escaping includes through in `clawcrew-hardware`; `bindgen!` was missed
+/// seven escaping includes through in `galleon-hardware`; `bindgen!` was missed
 /// in turn because it is not an `include_*` macro at all, yet reads a directory
 /// from disk at compile time exactly like one:
 ///
@@ -694,18 +694,18 @@ fn published_build_scripts_never_read_outside_their_package() {
 ///
 /// Do not add entries here to silence a new violation — fix the include instead.
 const ESCAPE_EXCEPTIONS: &[(&str, &str)] = &[(
-    "crates/clawcrew-gateway/src/static_files.rs",
+    "crates/galleon-gateway/src/static_files.rs",
     "../../web/dist",
 )];
 
 #[test]
 fn repo_relative_key_normalizes_windows_separators() {
     let root = Path::new("repository");
-    let source = root.join(r"crates\clawcrew-gateway\src\static_files.rs");
+    let source = root.join(r"crates\galleon-gateway\src\static_files.rs");
 
     assert_eq!(
         repo_relative_key(&source, root),
-        "crates/clawcrew-gateway/src/static_files.rs"
+        "crates/galleon-gateway/src/static_files.rs"
     );
 }
 
@@ -790,8 +790,8 @@ fn published_crates_never_include_files_outside_their_own_directory() {
          and then fails from the published tarball. Feature-gated ones are especially dangerous: \
          `cargo publish --dry-run` verifies default features only, so they pass preflight and \
          ship broken.\n\
-         Fix by including through an in-crate symlink (see crates/clawcrew-hardware/firmware \
-         and crates/clawcrew-tools/locales) rather than reaching up out of the crate.",
+         Fix by including through an in-crate symlink (see crates/galleon-hardware/firmware \
+         and crates/galleon-tools/locales) rather than reaching up out of the crate.",
         violations.join("\n"),
     );
 }

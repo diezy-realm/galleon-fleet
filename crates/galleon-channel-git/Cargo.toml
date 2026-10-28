@@ -4,7 +4,7 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Git channel feature-crate (GitHub and Gitea polling and webhook integration ported from clawcrew-channels)."
+description = "Git channel feature-crate (GitHub and Gitea polling and webhook integration ported from galleon-channels)."
 repository.workspace = true
 homepage.workspace = true
 publish = true
@@ -16,10 +16,10 @@ provider-gitea = []
 
 [dependencies]
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
-clawcrew-config.workspace = true
-clawcrew-log.workspace = true
-clawcrew-providers.workspace = true
+galleon-api.workspace = true
+galleon-config.workspace = true
+galleon-log.workspace = true
+galleon-providers.workspace = true
 parking_lot = "0.12"
 rand = "0.8"
 anyhow = "1.0"

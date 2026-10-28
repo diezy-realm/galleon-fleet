@@ -4,15 +4,15 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Nostr channel feature-crate (RF-B1 split; NIP-04/NIP-17 private messages ported from clawcrew-channels)."
+description = "Nostr channel feature-crate (RF-B1 split; NIP-04/NIP-17 private messages ported from galleon-channels)."
 repository.workspace = true
 homepage.workspace = true
 publish = true
 
 [dependencies]
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
-clawcrew-log.workspace = true
+galleon-api.workspace = true
+galleon-log.workspace = true
 async-trait = "0.1"
 anyhow = "1.0"
 tokio = { version = "1.50", default-features = false, features = ["sync"] }

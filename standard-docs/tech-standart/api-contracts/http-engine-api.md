@@ -351,7 +351,7 @@ List endpoints return:
 
 ## WebSocket (Real-Time Streaming)
 
-**NOT HTTP :9090** — WebSocket handled by Rust `clawcrew-gateway/ws.rs` on :50052.
+**NOT HTTP :9090** — WebSocket handled by Rust `galleon-gateway/ws.rs` on :50052.
 
 Frontend connects:
 ```typescript

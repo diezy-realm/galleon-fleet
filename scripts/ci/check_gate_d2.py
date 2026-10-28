@@ -2,17 +2,17 @@
 """
 Galleon Fleet — Gate D-2 Governance Coupling Verifier (T-CI-03)
 ==============================================================
-Verifies that `crates/clawcrew-channels/src/util.rs` does not couple
+Verifies that `crates/galleon-channels/src/util.rs` does not couple
 channel transport helpers with genuine governance policy primitives.
 
 Two-Layer Detection:
 1. Candidate Layer: Identifies `feature = "channel-"` conditional gates.
 2. Architecture Boundary Layer:
    - Legitimate: Pure transport I/O (PendingApproval, response limiting, token parsing)
-     with zero dependency on `clawcrew-runtime`.
+     with zero dependency on `galleon-runtime`.
    - Violation (REJECT): Presence of policy decision symbols (RiskTier,
-     should_auto_approve, playbook::, clawcrew_runtime::) OR crate dependency
-     from `clawcrew-channels` to `clawcrew-runtime`.
+     should_auto_approve, playbook::, galleon_runtime::) OR crate dependency
+     from `galleon-channels` to `galleon-runtime`.
 
 Normative Reference:
 - standard-docs/decisions/refactoring-rust/RF-D-principle-gateway-checklist.md (§Gate D-2)
@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 POLICY_SYMBOLS_REGEX = re.compile(
-    r"\b(RiskTier|should_auto_approve|playbook::|clawcrew_runtime::)\b"
+    r"\b(RiskTier|should_auto_approve|playbook::|galleon_runtime::)\b"
 )
 
 def check_gate_d2(util_path: Path) -> tuple[bool, list[str]]:
@@ -54,12 +54,12 @@ def check_gate_d2(util_path: Path) -> tuple[bool, list[str]]:
         if POLICY_SYMBOLS_REGEX.search(line):
             policy_matches.append(f"Line {idx}: {line.strip()}")
 
-    # Layer 2: Check for dependency to clawcrew-runtime
+    # Layer 2: Check for dependency to galleon-runtime
     has_runtime_dep = False
     runtime_dep_output = ""
     try:
         res = subprocess.run(
-            ["cargo", "tree", "-p", "clawcrew-channels", "-e", "normal", "--prefix", "none"],
+            ["cargo", "tree", "-p", "galleon-channels", "-e", "normal", "--prefix", "none"],
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -67,7 +67,7 @@ def check_gate_d2(util_path: Path) -> tuple[bool, list[str]]:
         )
         if res.returncode == 0:
             for dep_line in res.stdout.splitlines():
-                if re.match(r"^clawcrew-runtime\b", dep_line.strip()):
+                if re.match(r"^galleon-runtime\b", dep_line.strip()):
                     has_runtime_dep = True
                     runtime_dep_output = dep_line.strip()
                     break
@@ -80,7 +80,7 @@ def check_gate_d2(util_path: Path) -> tuple[bool, list[str]]:
         violations.append(f"Policy decision symbols detected in util.rs ({len(policy_matches)} occurrences):")
         violations.extend(policy_matches[:5])
     if has_runtime_dep:
-        violations.append(f"Architectural boundary violation: clawcrew-channels depends on clawcrew-runtime ({runtime_dep_output})")
+        violations.append(f"Architectural boundary violation: galleon-channels depends on galleon-runtime ({runtime_dep_output})")
 
     if violations:
         return False, violations
@@ -92,7 +92,7 @@ def check_gate_d2(util_path: Path) -> tuple[bool, list[str]]:
 
 def main():
     parser = argparse.ArgumentParser(description="Verify Gate D-2 governance decoupling in util.rs.")
-    parser.add_argument("--path", default="crates/clawcrew-channels/src/util.rs", help="Path to util.rs")
+    parser.add_argument("--path", default="crates/galleon-channels/src/util.rs", help="Path to util.rs")
     args = parser.parse_args()
 
     passed, messages = check_gate_d2(Path(args.path))

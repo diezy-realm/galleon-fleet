@@ -72,7 +72,7 @@ runtime_profile = "default"
     .expect("clawcrew agent process must not panic");
 
     let stderr = String::from_utf8_lossy(&output.stderr);
-    let expected = clawcrew_runtime::agent::semantic_empty_terminal_completion_message(None);
+    let expected = galleon_runtime::agent::semantic_empty_terminal_completion_message(None);
     assert!(
         !output.status.success(),
         "semantic-empty terminal completion must fail\nstdout:\n{}\nstderr:\n{stderr}",
@@ -168,7 +168,7 @@ runtime_profile = "default"
     .expect("interactive clawcrew agent process must not panic");
 
     let stderr = String::from_utf8_lossy(&output.stderr);
-    let expected = clawcrew_runtime::agent::semantic_empty_terminal_completion_message(None);
+    let expected = galleon_runtime::agent::semantic_empty_terminal_completion_message(None);
     assert!(
         output.status.success(),
         "interactive CLI handles the terminal error then exits on /quit\nstdout:\n{}\nstderr:\n{stderr}",

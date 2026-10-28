@@ -1,6 +1,6 @@
 //! CLI front-door proof for the ACP stdio surface.
 //!
-//! The unit tests in `crates/clawcrew-channels/.../acp_server.rs` drive
+//! The unit tests in `crates/galleon-channels/.../acp_server.rs` drive
 //! `handle_session_new` / `serve_reader` directly; this test crosses the real
 //! `clawcrew acp` **process boundary** required by the repository's
 //! User-boundary-proof contract: it launches the shipped binary, feeds

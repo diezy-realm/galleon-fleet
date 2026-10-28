@@ -1,11 +1,11 @@
 use anyhow::{Context, Result};
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_channel_core::allowlist;
 use nostr_sdk::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
 /// Protocol used by a sender, tracked so replies use the same protocol.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -90,17 +90,13 @@ impl NostrChannel {
                 format!("{prefix}{key}")
             })
             .collect();
-        allowlist::is_user_allowed(
-            &peers,
-            &pubkey.to_hex(),
-            allowlist::Match::Sensitive,
-        )
+        allowlist::is_user_allowed(&peers, &pubkey.to_hex(), allowlist::Match::Sensitive)
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for NostrChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Nostr)
+impl ::galleon_api::attribution::Attributable for NostrChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Nostr)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -130,9 +126,9 @@ impl Channel for NostrChannel {
                     .send_private_msg(recipient, &message.content, None)
                     .await
                     .context("Failed to send NIP-17 message")?;
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!(
                         "Sent NIP-17 message to {}",
                         recipient.to_bech32().unwrap_or_default()
@@ -152,9 +148,9 @@ impl Channel for NostrChannel {
                     .send_event_builder(builder)
                     .await
                     .context("Failed to send NIP-04 message")?;
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!(
                         "Sent NIP-04 message to {}",
                         recipient.to_bech32().unwrap_or_default()
@@ -183,9 +179,9 @@ impl Channel for NostrChannel {
             .await
             .context("Failed to subscribe to Nostr events")?;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "channel listening as {}",
                 self.public_key.to_bech32().unwrap_or_default()
@@ -212,13 +208,13 @@ impl Channel for NostrChannel {
                                 continue;
                             }
                             if !self.is_pubkey_allowed(&event.pubkey) {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                                     &format!(
                                         "Nostr: ignoring NIP-04 message from unauthorized pubkey: {}",
                                         event.pubkey.to_hex()
@@ -241,13 +237,13 @@ impl Channel for NostrChannel {
                                     ))
                                 }
                                 Err(e) => {
-                                    ::clawcrew_log::record!(
+                                    ::galleon_log::record!(
                                         WARN,
-                                        ::clawcrew_log::Event::new(
+                                        ::galleon_log::Event::new(
                                             module_path!(),
-                                            ::clawcrew_log::Action::Note
+                                            ::galleon_log::Action::Note
                                         )
-                                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                                         .with_attrs(
                                             ::serde_json::json!({"error": format!("{}", e)})
                                         ),
@@ -268,13 +264,13 @@ impl Channel for NostrChannel {
                                     }
                                     let sender = rumor.pubkey;
                                     if !self.is_pubkey_allowed(&sender) {
-                                        ::clawcrew_log::record!(
+                                        ::galleon_log::record!(
                                             WARN,
-                                            ::clawcrew_log::Event::new(
+                                            ::galleon_log::Event::new(
                                                 module_path!(),
-                                                ::clawcrew_log::Action::Note
+                                                ::galleon_log::Action::Note
                                             )
-                                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                                             &format!(
                                                 "Nostr: ignoring NIP-17 message from unauthorized pubkey: {}",
                                                 sender.to_hex()
@@ -294,13 +290,13 @@ impl Channel for NostrChannel {
                                     ))
                                 }
                                 Err(e) => {
-                                    ::clawcrew_log::record!(
+                                    ::galleon_log::record!(
                                         WARN,
-                                        ::clawcrew_log::Event::new(
+                                        ::galleon_log::Event::new(
                                             module_path!(),
-                                            ::clawcrew_log::Action::Note
+                                            ::galleon_log::Action::Note
                                         )
-                                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                                         .with_attrs(
                                             ::serde_json::json!({"error": format!("{}", e)})
                                         ),
@@ -330,11 +326,11 @@ impl Channel for NostrChannel {
                             ..Default::default()
                         };
                         if tx.send(msg).await.is_err() {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 ),
                                 "listener: message bus closed, stopping"
                             );
@@ -343,9 +339,9 @@ impl Channel for NostrChannel {
                     }
                 }
                 RelayPoolNotification::Shutdown => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "relay pool shut down"
                     );
                     break;

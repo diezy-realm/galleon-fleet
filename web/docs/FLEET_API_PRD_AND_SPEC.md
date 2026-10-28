@@ -1,7 +1,7 @@
 # Fleet AI (Galleon) — API Gap Analysis, PRD, and Technical Specification
 
 > **Repository Reference:** `https://github.com/diezy-realm/galleon-fleet/tree/feat/enhance-agent-phase2`  
-> **Workspace Subsystem:** Fleet AI Orchestration Layer (`web-2` / `crates/clawcrew-gateway`)  
+> **Workspace Subsystem:** Fleet AI Orchestration Layer (`web-2` / `crates/galleon-gateway`)  
 > **Document Version:** `2.0.0-phase2`  
 > **Status:** Architecture Blueprint, PRD, and Production API Specification  
 
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary & Bidirectional Gap Analysis
 
-An exhaustive audit of the `galleon-fleet` codebase on branch `feat/enhance-agent-phase2` reveals a functional bifurcation between the **Rust Gateway Daemon (`crates/clawcrew-gateway`)** and the modern **Sovereign Fleet UI (`web-2`)**:
+An exhaustive audit of the `galleon-fleet` codebase on branch `feat/enhance-agent-phase2` reveals a functional bifurcation between the **Rust Gateway Daemon (`crates/galleon-gateway`)** and the modern **Sovereign Fleet UI (`web-2`)**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -43,7 +43,7 @@ An exhaustive audit of the `galleon-fleet` codebase on branch `feat/enhance-agen
 
 ## 2. Part I: Features with Available Backend APIs but Missing UI
 
-The following capabilities are already compiled and active in the Rust daemon (`clawcrew-gateway`), but lack a first-class visual interface in the `web-2` application:
+The following capabilities are already compiled and active in the Rust daemon (`galleon-gateway`), but lack a first-class visual interface in the `web-2` application:
 
 ### 2.1. Agent-to-Agent (A2A) Mesh Network & Peer Discovery
 * **Active Backend Routes:**
@@ -107,7 +107,7 @@ The following capabilities are already compiled and active in the Rust daemon (`
 
 ## 3. Part II: Product Requirements Document (PRD) — Sovereign Fleet APIs
 
-This PRD formalizes the requirements to elevate the simulated client-side concepts in `web-2` into first-class, persistent, and secure backend REST and WebSocket APIs in `clawcrew-gateway`.
+This PRD formalizes the requirements to elevate the simulated client-side concepts in `web-2` into first-class, persistent, and secure backend REST and WebSocket APIs in `galleon-gateway`.
 
 ### 3.1. Problem Statement
 The modern Fleet UI (`web-2`) presents high-value sovereign abstractions:
@@ -333,7 +333,7 @@ Currently, these exist as in-memory state in `fleetStore.ts`. When the page relo
         "type": "risk",
         "title": "Socket Teardown Hang",
         "detail": "Test goroutines leak socket handles without context timeout cancellation.",
-        "evidenceSource": "crates/clawcrew-gateway/src/ws.rs:142"
+        "evidenceSource": "crates/galleon-gateway/src/ws.rs:142"
       }
     ],
     "evidenceCount": 6,
@@ -477,7 +477,7 @@ Currently, these exist as in-memory state in `fleetStore.ts`. When the page relo
 
 | Phase | Milestone | Scope | Deliverables |
 |---|---|---|---|
-| **Phase 2.1** | **Core Fleet REST Engine** | Ships, Crew Berths, and Charters | Axum router integration in `crates/clawcrew-gateway/src/api_fleet.rs`, SQLite table migration, and full TypeScript SDK client. |
+| **Phase 2.1** | **Core Fleet REST Engine** | Ships, Crew Berths, and Charters | Axum router integration in `crates/galleon-gateway/src/api_fleet.rs`, SQLite table migration, and full TypeScript SDK client. |
 | **Phase 2.2** | **Quests & Artifact Pipeline** | Living Map Steps & Treasure Registry | Quest state machine, voyage execution goroutine, artifact storage, and SSE streaming pipeline. |
 | **Phase 2.3** | **Sovereign Governance** | Captain's Desk & Hard Treasury Enforcement | Risk tier cryptographic gating, Voyage budget limiter middleware, and Drop Anchor kill-switch. |
 | **Phase 2.4** | **Backend-Exposed UI Surfaces** | A2A Explorer, Voice Orb, Live Canvas | React views in `web-2` connecting directly to existing `/a2a`, `/ws/voice`, `/api/canvas`, and `/api/doctor` endpoints. |

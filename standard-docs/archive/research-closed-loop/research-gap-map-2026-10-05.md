@@ -39,7 +39,7 @@ depends_on: null
 
 Hasil penyisiran `crates/` (27 crate) dan `standard-docs/product/` — area dengan infrastruktur SUBSTANSIAL (bukan skeleton) yang belum pernah diaudit sepanjang sesi ini:
 
-### 2.1 `clawcrew-providers` — LLM Provider SSOT (CRATE TERBESAR, BELUM TERSENTUH SAMA SEKALI)
+### 2.1 `galleon-providers` — LLM Provider SSOT (CRATE TERBESAR, BELUM TERSENTUH SAMA SEKALI)
 Crate ini adalah **jantung arsitektur** menurut ADR 0001 (LLM SSOT di Rust) — tapi belum pernah diriset sedikit pun di sesi ini. Temuan permukaan dari penyisiran cepat:
 - `lib.rs` 238KB, `openai_codex.rs` 104KB, `openai.rs` 109KB, `bedrock.rs` 108KB, `multimodal.rs` 149KB — ukuran file yang jauh melebihi standar (`rust-module-size-and-decomposition-standard.md` sudah dicatat di roadmap R-17 sebagai technical debt umum, tapi belum ada audit KHUSUS provider).
 - `reliable/mod.rs` (302 match retry/fallback/rate_limit) — mekanisme reliability yang KOMPLEKS, belum diverifikasi apakah testing-nya memadai untuk production (ironisnya file test-nya `reliable/tests.rs` punya 522 match — rasio test:kode yang tinggi, kemungkinan sudah matang, tapi belum pernah dibaca).
@@ -48,16 +48,16 @@ Crate ini adalah **jantung arsitektur** menurut ADR 0001 (LLM SSOT di Rust) — 
 - **Kenapa layak diriset**: ini SSOT yang menurut ADR 0001 adalah keputusan arsitektur eksplisit (Go TIDAK boleh punya LLM call sendiri) — kegagalan/kerentanan di sini berdampak ke SELURUH sistem, bukan satu fitur. Rasio effort:dampak sangat tinggi.
 
 ### 2.2 Identity, Pairing & Vault — Lintas-Tier Credential Lifecycle (BELUM TERSENTUH)
-- `crates/clawcrew-runtime/src/enroll/` (`mod.rs`, `paircode_admin.rs`) — mekanisme pairing/QR code yang menghubungkan Tauri Desktop Shell ↔ Go Engine ↔ Rust Core. Ini jalur ONBOARDING pengguna baru — belum pernah diverifikasi keamanannya (apakah pairing code bisa di-brute-force, expiry, replay protection).
-- `crates/clawcrew-config/src/secrets.rs` (`SecretStore`) — SUDAH disinggung berulang di riset lain (BL-21 MCP, cron secrets) sebagai "pola yang lebih matang," tapi **belum pernah diaudit langsung** sebagai subjek utama. Apakah benar-benar matang, atau asumsi berulang yang belum diverifikasi?
+- `crates/galleon-runtime/src/enroll/` (`mod.rs`, `paircode_admin.rs`) — mekanisme pairing/QR code yang menghubungkan Tauri Desktop Shell ↔ Go Engine ↔ Rust Core. Ini jalur ONBOARDING pengguna baru — belum pernah diverifikasi keamanannya (apakah pairing code bisa di-brute-force, expiry, replay protection).
+- `crates/galleon-config/src/secrets.rs` (`SecretStore`) — SUDAH disinggung berulang di riset lain (BL-21 MCP, cron secrets) sebagai "pola yang lebih matang," tapi **belum pernah diaudit langsung** sebagai subjek utama. Apakah benar-benar matang, atau asumsi berulang yang belum diverifikasi?
 - **Kenapa layak diriset**: pairing/vault adalah titik SATU-SATUNYA yang menghubungkan ke-4 tier (Tauri/Rust/Go/Web) secara otentikasi — kerentanan di sini = kompromi seluruh sistem. Sering diasumsikan "sudah matang" di riset lain tanpa pernah diverifikasi langsung.
 
 ### 2.3 Data Governance Memory — Retention, Privacy, Right-to-Delete (SEBAGIAN TERSENTUH, PERLU DIPERDALAM)
-`capabilities-skills-lessons-steering-audit.md` sudah menyentuh memory TAPI fokusnya ke "Go in-memory vs Rust persistent" (temuan arsitektur), BUKAN ke governance data personal. Penyisiran baru menemukan `clawcrew-memory` punya modul `hygiene.rs`, `policy.rs`, `audit.rs` yang **belum pernah dibaca isinya** — ini kemungkinan jawaban untuk pertanyaan privasi (user minta hapus semua data, retention otomatis, dll) yang relevan untuk produk yang menyimpan percakapan + "deepening model of who you are" (istilah dari riset Hermes Agent sebelumnya — pola umum di seluruh kompetitor, termasuk Galleon).
+`capabilities-skills-lessons-steering-audit.md` sudah menyentuh memory TAPI fokusnya ke "Go in-memory vs Rust persistent" (temuan arsitektur), BUKAN ke governance data personal. Penyisiran baru menemukan `galleon-memory` punya modul `hygiene.rs`, `policy.rs`, `audit.rs` yang **belum pernah dibaca isinya** — ini kemungkinan jawaban untuk pertanyaan privasi (user minta hapus semua data, retention otomatis, dll) yang relevan untuk produk yang menyimpan percakapan + "deepening model of who you are" (istilah dari riset Hermes Agent sebelumnya — pola umum di seluruh kompetitor, termasuk Galleon).
 - **Kenapa layak diriset**: produk yang menyimpan memori personal LINTAS SESI punya kewajiban privasi (mirip prinsip GDPR "right to erasure") yang belum pernah diverifikasi punya mekanisme nyata di Galleon.
 
 ### 2.4 Channel Tier A/B/C — Keamanan Spesifik per-Protokol (TERSENTUH SEPINTAS, BELUM MENDALAM)
-Riset automation/cron menemukan gap sanitasi di `process_channel_message_body` (BL-14, sudah tertutup satu titik perbaikan untuk semua channel). TAPI belum ada riset KHUSUS yang membandingkan risiko SPESIFIK per-protokol channel: `clawcrew-channels` adalah crate 198k LOC (menurut roadmap R-15) dengan puluhan channel (Telegram, Discord, WhatsApp, QQ, WeChat, Signal, iMessage, Bluesky, dll) — masing-masing punya model keamanan native BERBEDA (contoh: WhatsApp Business API webhook signature vs Telegram bot token vs Matrix E2E encryption). Riset BL-14 menutup gap SATU TITIK (prompt-injection), tapi tidak membahas apakah tiap channel plugin memverifikasi signature/origin request dari provider masing-masing dengan benar.
+Riset automation/cron menemukan gap sanitasi di `process_channel_message_body` (BL-14, sudah tertutup satu titik perbaikan untuk semua channel). TAPI belum ada riset KHUSUS yang membandingkan risiko SPESIFIK per-protokol channel: `galleon-channels` adalah crate 198k LOC (menurut roadmap R-15) dengan puluhan channel (Telegram, Discord, WhatsApp, QQ, WeChat, Signal, iMessage, Bluesky, dll) — masing-masing punya model keamanan native BERBEDA (contoh: WhatsApp Business API webhook signature vs Telegram bot token vs Matrix E2E encryption). Riset BL-14 menutup gap SATU TITIK (prompt-injection), tapi tidak membahas apakah tiap channel plugin memverifikasi signature/origin request dari provider masing-masing dengan benar.
 - **Kenapa layak diriset**: permukaan serangan TERBESAR secara LOC (198k) tapi granularitas riset sejauh ini masih di level "satu titik orchestrator," belum per-channel.
 
 ### 2.5 CI/CD, Build Supply-Chain & Dependency Security (BELUM TERSENTUH SAMA SEKALI)
@@ -65,7 +65,7 @@ Tidak ada satu pun riset sesi ini yang menyentuh: bagaimana release dibuat (`cla
 - **Kenapa layak diriset**: supply-chain attack terhadap tooling AI-agent adalah vektor yang makin disorot industri (mirip insiden xz-utils) — belum ada verifikasi bagaimana Galleon sendiri melindungi rantai build→distribusi.
 
 ### 2.6 Observability/Telemetry — Siapa Melihat Apa (BELUM TERSENTUH)
-Riset resource-management menyentuh `process_stats`/dashboard Tasks-view SECARA SEMPIT (untuk kasus loop-detector). Belum ada riset menyeluruh soal: apa yang di-log/di-trace secara default, apakah ada PII yang bocor ke log (`clawcrew-log` crate ada scrubbing kredensial menurut `rust-conventions`/roadmap R-23, tapi belum diverifikasi langsung), siapa yang punya akses ke log tersebut lintas-tier.
+Riset resource-management menyentuh `process_stats`/dashboard Tasks-view SECARA SEMPIT (untuk kasus loop-detector). Belum ada riset menyeluruh soal: apa yang di-log/di-trace secara default, apakah ada PII yang bocor ke log (`galleon-log` crate ada scrubbing kredensial menurut `rust-conventions`/roadmap R-23, tapi belum diverifikasi langsung), siapa yang punya akses ke log tersebut lintas-tier.
 
 ---
 
@@ -73,12 +73,12 @@ Riset resource-management menyentuh `process_stats`/dashboard Tasks-view SECARA 
 
 | Prioritas | Topik | Alasan Ranking |
 |---|---|---|
-| **1** | **`clawcrew-providers` LLM SSOT** | Crate terbesar, SSOT inti arsitektur (ADR 0001), belum tersentuh SAMA SEKALI meski jadi dependency SETIAP fitur lain yang sudah diriset (semua turn/sub-agent akhirnya lewat sini). Auth/OAuth lifecycle di dalamnya adalah credential-handling berisiko tinggi. |
+| **1** | **`galleon-providers` LLM SSOT** | Crate terbesar, SSOT inti arsitektur (ADR 0001), belum tersentuh SAMA SEKALI meski jadi dependency SETIAP fitur lain yang sudah diriset (semua turn/sub-agent akhirnya lewat sini). Auth/OAuth lifecycle di dalamnya adalah credential-handling berisiko tinggi. |
 | **2** | **Identity/Pairing/Vault lintas-tier** | Satu-satunya titik yang menghubungkan otentikasi ke-4 tier; sering diasumsikan "sudah matang" di riset lain (secrets, cron, MCP) TANPA PERNAH diverifikasi langsung — risiko "asumsi berantai" tanpa dasar. |
 | **3** | **Data governance memory (retention/privacy)** | Modul `hygiene.rs`/`policy.rs`/`audit.rs` sudah ADA tapi isinya belum dibaca — kemungkinan quick-win (infrastruktur sudah dibangun, tinggal diverifikasi dan didokumentasikan) dibanding topik lain yang mungkin dari nol. |
 | **4** | **Channel Tier A/B/C keamanan per-protokol** | Permukaan serangan terbesar (198k LOC), tapi granularitas riset BL-14 sudah menutup gap PALING kritis (prompt-injection) — sisanya adalah hardening lanjutan, bukan gap darurat. |
 | **5** | **CI/CD & supply-chain** | Penting untuk kematangan produk jangka panjang, tapi dampak langsung ke runtime risk lebih rendah dibanding 1-3 (ini soal "bagaimana Galleon dibangun," bukan "apa yang Galleon lakukan saat berjalan"). |
-| **6** | **Observability/log PII scrubbing** | Scope lebih kecil, kemungkinan besar sudah tertutup pola `clawcrew-log` yang konsisten (sudah terlihat sepintas di riset lain) — perlu verifikasi tapi effort lebih kecil dari 1-4. |
+| **6** | **Observability/log PII scrubbing** | Scope lebih kecil, kemungkinan besar sudah tertutup pola `galleon-log` yang konsisten (sudah terlihat sepintas di riset lain) — perlu verifikasi tapi effort lebih kecil dari 1-4. |
 
 ---
 
@@ -86,7 +86,7 @@ Riset resource-management menyentuh `process_stats`/dashboard Tasks-view SECARA 
 
 Bukan semua topik di atas perlu riset mendalam SEKARANG — mengikuti pola sesi ini (satu topik per sesi, audit kode mendalam, bukan permukaan), saya sarankan:
 
-1. **Mulai dari #1 (`clawcrew-providers`)** kalau Owner ingin topik dengan dampak arsitektur terluas — tapi scope-nya BESAR (238KB `lib.rs` saja), kemungkinan perlu dipecah jadi beberapa sesi (reliability/retry dulu, lalu auth/OAuth, lalu pricing/cost).
+1. **Mulai dari #1 (`galleon-providers`)** kalau Owner ingin topik dengan dampak arsitektur terluas — tapi scope-nya BESAR (238KB `lib.rs` saja), kemungkinan perlu dipecah jadi beberapa sesi (reliability/retry dulu, lalu auth/OAuth, lalu pricing/cost).
 2. **Atau mulai dari #2 (Identity/Pairing/Vault)** kalau Owner ingin menutup "asumsi berantai" yang sudah berulang kali disebut tapi belum diverifikasi — scope lebih terkontain (2-3 file inti), kemungkinan selesai 1 sesi.
 3. **#3 (data governance memory)** adalah **quick-win candidate** — infrastrukturnya sudah ada (`hygiene.rs`/`policy.rs`/`audit.rs`), riset ini mungkin lebih cepat dari yang lain karena tinggal MEMBACA dan MENDOKUMENTASIKAN, bukan menemukan gap dari nol.
 
@@ -108,7 +108,7 @@ Dibaca `01-be-go-engine.md`, `02-be-rust-core.md`, `03-fe-web.md`, `08-carryover
 
 **Kesimpulan: topik ini DICABUT dari rekomendasi riset lanjutan.** Bukan karena tidak penting (justru temuan `/api/network/qrcode` tanpa token itu sendiri signifikan), tapi karena breakdown-nya sudah ada dan cukup rinci — riset ulang di sini berisiko 100% duplikasi kerja tim dev-tasks. Kalau Owner ingin "memperdalam" topik ini, bentuknya BUKAN riset baru, tapi VERIFIKASI apakah implementasi BG-C1/C2/C3 (saat nanti dikerjakan) benar-benar menutup gap yang disebutkan — itu kerja REVIEW, bukan riset discovery.
 
-### 6.2 Topik #1 (`clawcrew-providers`) — HANYA TERSENTUH PERMUKAAN, MASIH LAYAK DIRISET
+### 6.2 Topik #1 (`galleon-providers`) — HANYA TERSENTUH PERMUKAAN, MASIH LAYAK DIRISET
 
 Satu-satunya referensi: **BR-C8** (P3, M) — *"Audit `tools`/`config`/`providers` — tanpa pemecahan spekulatif."* Ini task GENERIK level-tinggi (bahkan judulnya cakup 3 crate sekaligus) yang isinya hanya "jangan pecah spekulatif" (prinsip YAGNI) — BUKAN audit reliability/retry/auth-OAuth/pricing yang saya usulkan di §2.1. Tidak ada satu pun item dev-tasks yang menyentuh `reliable/mod.rs`, OAuth lifecycle per-provider, atau `pricing.rs` secara spesifik.
 
@@ -118,7 +118,7 @@ Satu-satunya referensi: **BR-C8** (P3, M) — *"Audit `tools`/`config`/`provider
 
 `BG-F4` (P2, L): *"Learning by consent lanjutan: tipe `MemoryProposal` sudah ada (T-3.2 ✔); tinggal alur umpan balik → persetujuan Owner → versi/rollback di atas store baru."* Plus `FW-C5` (UI persetujuan `MemoryProposal`).
 
-**Ini topik yang BERBEDA dari yang saya usulkan.** `BG-F4` adalah tentang mekanisme CONSENT untuk Agent mengusulkan pembelajaran baru (sudah diriset mendalam di `capabilities-skills-lessons-steering-audit.md` sesi ini — "Learning by Consent" di `engine/src/memory/proposal.go`). Yang saya usulkan di §2.3 adalah **retention/right-to-delete/privacy** untuk data yang SUDAH tersimpan (`hygiene.rs`/`policy.rs`/`audit.rs` di `clawcrew-memory` Rust) — ini sudut yang BERBEDA, tidak tumpang tindih.
+**Ini topik yang BERBEDA dari yang saya usulkan.** `BG-F4` adalah tentang mekanisme CONSENT untuk Agent mengusulkan pembelajaran baru (sudah diriset mendalam di `capabilities-skills-lessons-steering-audit.md` sesi ini — "Learning by Consent" di `engine/src/memory/proposal.go`). Yang saya usulkan di §2.3 adalah **retention/right-to-delete/privacy** untuk data yang SUDAH tersimpan (`hygiene.rs`/`policy.rs`/`audit.rs` di `galleon-memory` Rust) — ini sudut yang BERBEDA, tidak tumpang tindih.
 
 **Kesimpulan: topik ini TETAP LAYAK, tidak ada overlap.** `BG-F4` adalah "bagaimana data BARU masuk dengan consent," bukan "bagaimana data LAMA dihapus/dipertahankan sesuai privasi." Dua pertanyaan berbeda, dev-tasks hanya menjawab yang pertama.
 
@@ -126,7 +126,7 @@ Satu-satunya referensi: **BR-C8** (P3, M) — *"Audit `tools`/`config`/`provider
 
 | Prioritas | Topik | Status setelah cross-check |
 |---|---|---|
-| **1** | **`clawcrew-providers` reliability + auth/OAuth lifecycle** | ✅ Gap genuine, dev-tasks hanya placeholder P3 generik |
+| **1** | **`galleon-providers` reliability + auth/OAuth lifecycle** | ✅ Gap genuine, dev-tasks hanya placeholder P3 generik |
 | **2** | **Data governance memory (`hygiene.rs`/`policy.rs`/`audit.rs`) — retention/privacy, BUKAN consent** | ✅ Gap genuine, berbeda dari `BG-F4` yang sudah ada |
 | ~~~~ | ~~Identity/Pairing/Vault lintas-tier~~ | ❌ **DICABUT** — sudah ada breakdown rinci BG-C1/C2/C3, riset ulang = duplikasi |
 | 3 | Channel Tier A/B/C keamanan per-protokol | Belum di-cross-check — perlu verifikasi lanjutan sebelum masuk rencana final |

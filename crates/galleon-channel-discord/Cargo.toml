@@ -4,19 +4,19 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Discord channel feature-crate (RF-B1 split; Gateway WebSocket, slash commands, components, and media integration ported from clawcrew-channels)."
+description = "Discord channel feature-crate (RF-B1 split; Gateway WebSocket, slash commands, components, and media integration ported from galleon-channels)."
 repository.workspace = true
 homepage.workspace = true
 publish = true
 
 [dependencies]
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
-clawcrew-config = { workspace = true, default-features = false, features = ["ws-transport"] }
-clawcrew-infra.workspace = true
-clawcrew-log.workspace = true
-clawcrew-memory.workspace = true
-clawcrew-spawn.workspace = true
+galleon-api.workspace = true
+galleon-config = { workspace = true, default-features = false, features = ["ws-transport"] }
+galleon-infra.workspace = true
+galleon-log.workspace = true
+galleon-memory.workspace = true
+galleon-spawn.workspace = true
 galleon-i18n.workspace = true
 galleon-security-scrub.workspace = true
 anyhow = "1.0"
@@ -52,7 +52,7 @@ uuid = { version = "1.22", default-features = false, features = ["std", "v4"] }
 axum = { version = "0.8", default-features = false }
 tempfile = "3.26"
 wiremock = "0.6"
-clawcrew-providers.workspace = true
+galleon-providers.workspace = true
 tokio = { version = "1.50", default-features = false, features = [
   "macros",
   "rt-multi-thread",

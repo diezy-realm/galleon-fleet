@@ -12,8 +12,8 @@ Prerequisites: All code compiles without errors or warnings.
 
 ### Rust Build Verification (Refactoring RF-A: 3 crates)
 - [ ] `cargo check -p clawcrew-orchestrator` passes (RF-A1: module extraction)
-- [ ] `cargo check -p clawcrew-runtime` passes (RF-A2: core types)
-- [ ] `cargo check -p clawcrew-gateway` passes (RF-A3: gRPC gateway)
+- [ ] `cargo check -p galleon-runtime` passes (RF-A2: core types)
+- [ ] `cargo check -p galleon-gateway` passes (RF-A3: gRPC gateway)
 - [ ] All Rust tests compile with `cargo test --no-run -p <crate>` (no execution yet)
 - [ ] No clippy warnings: `cargo clippy --all -- -D warnings`
 
@@ -78,7 +78,7 @@ Manual verification of key files (no build execution):
 - [ ] Request/response types marshaled in proto
 
 ### D1: Rust Gateway Integration
-- [ ] Rust service: `clawcrew-gateway` crate exists
+- [ ] Rust service: `galleon-gateway` crate exists
 - [ ] Main entry point (`main.rs` or `lib.rs`) starts gRPC listener
 - [ ] Port configuration: 50052 for Rust gateway
 
@@ -98,7 +98,7 @@ Quick sanity checks (manual, before live traffic):
 - [ ] Start Go engine server: `go run ./cmd/engine`
   - [ ] Server listens on port 9090
   - [ ] Server logs startup message
-- [ ] Start Rust gateway: `cargo run -p clawcrew-gateway --release`
+- [ ] Start Rust gateway: `cargo run -p galleon-gateway --release`
   - [ ] Rust server listens on port 50052
   - [ ] Rust server logs startup message
 

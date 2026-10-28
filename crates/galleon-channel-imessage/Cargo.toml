@@ -4,15 +4,15 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "iMessage channel feature-crate (RF-C1 split; AppleScript bridge + Messages.app SQLite polling, ported from clawcrew-channels)."
+description = "iMessage channel feature-crate (RF-C1 split; AppleScript bridge + Messages.app SQLite polling, ported from galleon-channels)."
 repository.workspace = true
 homepage.workspace = true
 publish = true
 
 [dependencies]
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
-clawcrew-log.workspace = true
+galleon-api.workspace = true
+galleon-log.workspace = true
 async-trait = "0.1"
 directories = "6.0"
 rusqlite = { version = "0.37", features = ["bundled"] }

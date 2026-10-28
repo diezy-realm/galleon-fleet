@@ -130,7 +130,7 @@ pub(crate) enum Commands {
     Onboard {
         /// Configure a specific section only. Omit to run the full flow.
         #[command(subcommand)]
-        section: Option<clawcrew_config::sections::Section>,
+        section: Option<galleon_config::sections::Section>,
 
         /// Skip interactive prompts; read from --api-key/--model-provider/--model/--memory.
         #[arg(long, hide = true)]

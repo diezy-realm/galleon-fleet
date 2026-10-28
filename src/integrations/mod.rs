@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-pub use clawcrew_runtime::integrations::*;
+pub use galleon_runtime::integrations::*;
 
 use crate::config::Config;
 use anyhow::Result;

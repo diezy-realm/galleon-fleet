@@ -319,13 +319,13 @@ fn protected_terms() -> &'static [String] {
             .map(|term| (*term).to_string())
             .collect();
 
-        for provider in clawcrew_providers::list_model_providers() {
+        for provider in galleon_providers::list_model_providers() {
             if is_protected_registry_term(provider.display_name) {
                 terms.insert(provider.display_name.to_string());
             }
         }
 
-        for channel in clawcrew_config::schema::Config::default()
+        for channel in galleon_config::schema::Config::default()
             .channels
             .channels()
         {

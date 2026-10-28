@@ -22,10 +22,10 @@ esac
 
 case "$scope" in
     all)
-        crates=(clawcrew-runtime clawcrew-channels)
+        crates=(galleon-runtime galleon-channels)
         ;;
     channels)
-        crates=(clawcrew-channels)
+        crates=(galleon-channels)
         ;;
     *)
         echo "CLAWCREW_PARALLEL_TEST_SCOPE must be 'channels' or 'all' (got: $scope)."

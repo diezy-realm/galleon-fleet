@@ -1,7 +1,7 @@
 import os
 import re
 
-directories = ["crates/clawcrew-runtime/src"]
+directories = ["crates/galleon-runtime/src"]
 
 def process_file(filepath):
     with open(filepath, "r", encoding="utf-8") as f:
@@ -32,7 +32,7 @@ for root, _, files in os.walk(directories[0]):
             process_file(os.path.join(root, file))
 
 # Fix AppManifest
-compat_path = "crates/clawcrew-runtime/src/platform/compat.rs"
+compat_path = "crates/galleon-runtime/src/platform/compat.rs"
 with open(compat_path, "r", encoding="utf-8") as f:
     c = f.read()
 c = re.sub(r'(AppManifest\s*\{)(?![^\}]*mcp_server)', r'\1\n        mcp_server: None,', c, flags=re.DOTALL)

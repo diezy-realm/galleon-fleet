@@ -1,10 +1,10 @@
 use anyhow::{Result, bail};
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use parking_lot::Mutex;
 use serde::Deserialize;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
 /// Reddit channel — polls for mentions, DMs, and comment replies via Reddit OAuth2 API.
 pub struct RedditChannel {
@@ -100,7 +100,7 @@ impl RedditChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_runtime_proxy_client("channel.reddit")
+        galleon_config::schema::build_runtime_proxy_client("channel.reddit")
     }
 
     /// Strip the `u/` prefix an operator is likely to paste, so a peer entry
@@ -185,10 +185,10 @@ impl RedditChannel {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("<failed to read response: {e}>"));
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"status": status.to_string(), "body": body})),
                 "inbox fetch failed"
             );
@@ -217,10 +217,10 @@ impl RedditChannel {
             .await?;
 
         if !resp.status().is_success() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("mark_read failed: {}", resp.status())
             );
         }
@@ -242,9 +242,9 @@ impl RedditChannel {
         // are consent to be driven. An empty peer group denies everyone; `"*"`
         // is the explicit opt-in for a public bot.
         if !self.is_user_allowed(author) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"author": author})),
                 "ignoring inbox item from unauthorized sender"
             );
@@ -296,9 +296,9 @@ impl RedditChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for RedditChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Reddit)
+impl ::galleon_api::attribution::Attributable for RedditChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Reddit)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -388,9 +388,9 @@ impl Channel for RedditChannel {
                     .join(", ")
             )
         };
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("channel listening as u/{} {}...", self.username, scope)
         );
 
@@ -400,10 +400,10 @@ impl Channel for RedditChannel {
             let items = match self.fetch_inbox().await {
                 Ok(items) => items,
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "poll error"
                     );
@@ -424,10 +424,10 @@ impl Channel for RedditChannel {
             }
 
             if let Err(e) = self.mark_read(&read_ids).await {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "mark_read error"
                 );
@@ -685,7 +685,7 @@ mod tests {
     /// Resolve peers the way the daemon does, from config, so the test covers
     /// the config-to-adapter boundary rather than a hand-built vector.
     fn peers_from_config(toml_src: &str, alias: &str) -> Vec<String> {
-        let config: clawcrew_config::schema::Config =
+        let config: galleon_config::schema::Config =
             toml::from_str(toml_src).expect("peer-group config should parse");
 
         config.channel_external_peers("reddit", alias)

@@ -4,17 +4,17 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "WeChat personal iLink Bot channel feature-crate (RF-B1 split; AES-128-ECB and MD5 CDN media integration ported from clawcrew-channels)."
+description = "WeChat personal iLink Bot channel feature-crate (RF-B1 split; AES-128-ECB and MD5 CDN media integration ported from galleon-channels)."
 repository.workspace = true
 homepage.workspace = true
 publish = true
 
 [dependencies]
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
-clawcrew-config.workspace = true
-clawcrew-log.workspace = true
-clawcrew-spawn.workspace = true
+galleon-api.workspace = true
+galleon-config.workspace = true
+galleon-log.workspace = true
+galleon-spawn.workspace = true
 galleon-i18n.workspace = true
 aes = "0.8"
 ecb = "0.1"

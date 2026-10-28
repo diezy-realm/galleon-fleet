@@ -43,4 +43,4 @@ echo "Then send the printed /bind code to Telegram, paste the primer from demo/P
 echo
 
 # Default to localhost bind for host-mode safety (user can override with extra args if wanted).
-exec cargo run -p clawcrew-hardware --example esp32_sim --features "hardware dev-sim" -- "${bind_addr}" "$@"
+exec cargo run -p galleon-hardware --example esp32_sim --features "hardware dev-sim" -- "${bind_addr}" "$@"

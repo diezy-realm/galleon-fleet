@@ -29,12 +29,12 @@ UI aktif di **`web/`**, desktop aktif di **`apps/tauri/`**. Kode lama ClawCrew d
 | `web/` | aktif | melanggar ADR 0002 (`server.ts`) → U-02/U-03 |
 | `apps/tauri/` | aktif | melanggar ODR-07 (`execute_terminal_command`) + data palsu → U-06/U-07 |
 | `engine/` (Go) | aktif | otak tunggal |
-| `crates/*` (Rust) | aktif | sebagian besar `clawcrew-runtime` & REST gateway adalah fungsi era ClawCrew (§4) |
+| `crates/*` (Rust) | aktif | sebagian besar `galleon-runtime` & REST gateway adalah fungsi era ClawCrew (§4) |
 | `src/` binary, `apps/zerocode`, `apps/zerorelay` | perlu klasifikasi | asumsi A1: CLI = klien tipis ke Go → R-00 |
 
 ## 4. Risiko arsitektur terbesar: "dua otak"
 
-`clawcrew-runtime` (286k LOC) memuat agent loop, SOP, subagents, cron, memory strategy, skills. Menurut boundary dan ODR-03, otak agent adalah **Go**; Rust adalah **System Core**. Dua otak berarti state ganda (melanggar SSOT), kerja memecah kode yang seharusnya dihapus/dipindah, dan permukaan serangan lebih besar.
+`galleon-runtime` (286k LOC) memuat agent loop, SOP, subagents, cron, memory strategy, skills. Menurut boundary dan ODR-03, otak agent adalah **Go**; Rust adalah **System Core**. Dua otak berarti state ganda (melanggar SSOT), kerja memecah kode yang seharusnya dihapus/dipindah, dan permukaan serangan lebih besar.
 
 **Tiket pertama jalur Rust = R-00: klasifikasi modul runtime (keep / move-to-Go / delete / feature-gate)** sebelum pemecahan crate lanjutan. Tidak ada penghapusan tanpa sign-off Owner.
 

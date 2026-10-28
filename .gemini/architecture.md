@@ -87,7 +87,7 @@ Galleon Fleet is strictly structured into four distinct operational tiers:
 3. Go Orchestrator (`engine/src/crew/services.go`)
    ↓ Menyusun turn context (history pesan, tools allowlist, memory)
    ↓ Membuka gRPC stream ke Rust SystemGateway.ExecuteTurn (ADR 0001)
-4. Rust Turn Executor (`crates/clawcrew-providers/`)
+4. Rust Turn Executor (`crates/galleon-providers/`)
    ↓ Memanggil vendor LLM (OpenAI / Gemini / Bedrock / Anthropic)
    ↓ Streaming tokens kembali ke Go melalui gRPC
 5. Go Engine

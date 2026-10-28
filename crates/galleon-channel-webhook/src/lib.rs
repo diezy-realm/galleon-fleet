@@ -1,7 +1,7 @@
 use anyhow::{Result, bail};
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDateTime, Utc};
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use portable_atomic::{AtomicU64, Ordering};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -90,7 +90,7 @@ impl WebhookChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_runtime_proxy_client("channel.webhook")
+        galleon_config::schema::build_runtime_proxy_client("channel.webhook")
     }
 
     /// Compute the backoff delay for a given attempt, bounded by `retry_max_delay_ms`
@@ -151,10 +151,10 @@ impl WebhookChannel {
         let app = build_webhook_router(&self.listen_path, state);
 
         axum::serve(listener, app).await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Webhook server error"
             );
@@ -219,11 +219,9 @@ impl WebhookChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for WebhookChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
-        )
+impl ::galleon_api::attribution::Attributable for WebhookChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -342,10 +340,10 @@ async fn handle_webhook(
         };
 
         if !valid {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "invalid signature, rejecting request"
             );
             return StatusCode::UNAUTHORIZED;
@@ -355,10 +353,10 @@ async fn handle_webhook(
     let payload: IncomingWebhook = match serde_json::from_slice(&body) {
         Ok(p) => p,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "invalid JSON payload"
             );
@@ -414,9 +412,9 @@ impl Channel for WebhookChannel {
 
     async fn send(&self, message: &SendMessage) -> Result<()> {
         let Some(ref send_url) = self.send_url else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "channel: no send_url configured, skipping outbound message"
             );
             return Ok(());
@@ -448,9 +446,9 @@ impl Channel for WebhookChannel {
                         );
                     }
                     let capped = delay.min(Duration::from_millis(self.retry_max_delay_ms));
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!(
                             "Webhook send: server requested retry after {}ms (attempt {}/{}), waiting...",
                             capped.as_millis(),
@@ -467,9 +465,9 @@ impl Channel for WebhookChannel {
                         );
                     }
                     let delay = self.compute_backoff(attempt);
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!(
                             "Webhook send failed (attempt {}/{}): {}; retrying in {}ms",
                             attempt + 1,
@@ -500,9 +498,9 @@ impl Channel for WebhookChannel {
         }
 
         let addr = std::net::SocketAddr::from(([0, 0, 0, 0], self.listen_port));
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "Webhook channel listening on http://0.0.0.0:{}{} ...",
                 self.listen_port, self.listen_path
@@ -867,7 +865,7 @@ mod tests {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let port = listener.local_addr().unwrap().port();
         let (tx, rx) = tokio::sync::mpsc::channel(16);
-        let jh = clawcrew_spawn::spawn!(async move {
+        let jh = galleon_spawn::spawn!(async move {
             ch.listen_with_listener(listener, tx).await.ok();
         });
         // Give the server a moment to begin accepting connections.

@@ -2,9 +2,9 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use std::sync::{Arc, Mutex};
 use clawcrew::providers::traits::{ChatMessage, TokenUsage};
 use clawcrew::providers::{ChatRequest, ChatResponse, ModelProvider, ToolCall};
+use std::sync::{Arc, Mutex};
 
 use super::trace::{LlmTrace, TraceResponse};
 
@@ -56,13 +56,11 @@ impl ModelProvider for MockModelProvider {
         Ok(guard.remove(0))
     }
 }
-impl ::clawcrew_api::attribution::Attributable for MockModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+impl ::galleon_api::attribution::Attributable for MockModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "MockModelProvider"
@@ -121,13 +119,11 @@ impl ModelProvider for RecordingModelProvider {
         Ok(guard.remove(0))
     }
 }
-impl ::clawcrew_api::attribution::Attributable for RecordingModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+impl ::galleon_api::attribution::Attributable for RecordingModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "RecordingModelProvider"
@@ -228,13 +224,11 @@ impl ModelProvider for TraceLlmModelProvider {
         }
     }
 }
-impl ::clawcrew_api::attribution::Attributable for TraceLlmModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+impl ::galleon_api::attribution::Attributable for TraceLlmModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "TraceLlmModelProvider"

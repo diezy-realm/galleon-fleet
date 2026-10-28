@@ -4,17 +4,17 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Mattermost channel feature-crate (RF-B1 split; WebSocket and REST polling integration ported from clawcrew-channels)."
+description = "Mattermost channel feature-crate (RF-B1 split; WebSocket and REST polling integration ported from galleon-channels)."
 repository.workspace = true
 homepage.workspace = true
 publish = true
 
 [dependencies]
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
-clawcrew-config = { workspace = true, default-features = false, features = ["ws-transport"] }
-clawcrew-log.workspace = true
-clawcrew-spawn.workspace = true
+galleon-api.workspace = true
+galleon-config = { workspace = true, default-features = false, features = ["ws-transport"] }
+galleon-log.workspace = true
+galleon-spawn.workspace = true
 galleon-i18n.workspace = true
 anyhow = "1.0"
 async-trait = "0.1"

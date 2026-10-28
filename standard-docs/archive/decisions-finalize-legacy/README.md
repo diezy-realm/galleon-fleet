@@ -17,7 +17,7 @@ Asesmen crate Rust, roadmap pemecahan kode besar, dan standar plugin ada di
 [`../refactoring-rust/phase-5-production-hardening/README.md`](../refactoring-rust/phase-5-production-hardening/README.md).
 Standar normatif baru: [`code-quality/`](../../tech-standart/code-quality/rust-module-size-and-decomposition-standard.md) dan
 [`plugin-standard/`](../../tech-standart/plugin-standard/plugin-codebase-standard.md).
-Koreksi drift: Phase 4 berada di `decisions/refactoring-rust/phase-4/`; `clawcrew-routing` kini sudah masuk dependency gateway (uncommitted); `galleon-channel-{core,imessage,signal,bluesky}` sudah ada.
+Koreksi drift: Phase 4 berada di `decisions/refactoring-rust/phase-4/`; `galleon-routing` kini sudah masuk dependency gateway (uncommitted); `galleon-channel-{core,imessage,signal,bluesky}` sudah ada.
 
 ## Scope Observasi
 

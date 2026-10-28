@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-pub use clawcrew_runtime::tunnel::*;
+pub use galleon_runtime::tunnel::*;
 
 #[cfg(test)]
 mod tests {

@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use clawcrew_api::channel::{
+use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, SendMessage,
 };
 use regex::Regex;
@@ -65,7 +65,7 @@ impl Drop for PendingApprovalGuard {
         // the decision itself: a reply arriving inside that window still finds a
         // receiver whose sender was dropped with this future, so it cannot be
         // reported as an accepted decision.
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             PENDING_APPROVALS.lock().await.remove(&token);
         });
     }
@@ -107,7 +107,7 @@ async fn run_approval_lifecycle<F, Fut>(
     token: String,
     approval_timeout_secs: u64,
     send: F,
-) -> anyhow::Result<clawcrew_api::channel::AttributedApprovalResponse>
+) -> anyhow::Result<galleon_api::channel::AttributedApprovalResponse>
 where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = anyhow::Result<()>>,
@@ -135,20 +135,20 @@ where
             // Nothing awaits between here and the disarm, so there is no
             // cancellation window to cover.
             guard.disarm();
-            clawcrew_api::channel::AttributedApprovalResponse::operator(response)
+            galleon_api::channel::AttributedApprovalResponse::operator(response)
         }
         Ok(Err(_)) => {
             remove_pending_and_disarm(&token, &mut guard).await;
-            clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+            galleon_api::channel::AttributedApprovalResponse::from_runtime(
                 ChannelApprovalResponse::Deny,
-                clawcrew_api::channel::ApprovalSource::Unreachable,
+                galleon_api::channel::ApprovalSource::Unreachable,
             )
         }
         Err(_) => {
             remove_pending_and_disarm(&token, &mut guard).await;
-            clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+            galleon_api::channel::AttributedApprovalResponse::from_runtime(
                 ChannelApprovalResponse::Deny,
-                clawcrew_api::channel::ApprovalSource::TimedOut,
+                galleon_api::channel::ApprovalSource::TimedOut,
             )
         }
     };
@@ -303,16 +303,13 @@ impl WhatsAppChannel {
                 {
                     Ok(re) => Some(re),
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(
-                                ::serde_json::json!({"trimmed": trimmed, "e": e.to_string()})
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(
+                                    ::serde_json::json!({"trimmed": trimmed, "e": e.to_string()})
+                                ),
                             "ignoring invalid mention_pattern"
                         );
                         None
@@ -358,7 +355,7 @@ impl WhatsAppChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_channel_proxy_client(
+        galleon_config::schema::build_channel_proxy_client(
             "channel.whatsapp",
             self.proxy_url.as_deref(),
         )
@@ -419,14 +416,13 @@ impl WhatsAppChannel {
                     };
 
                     if !self.is_number_allowed(&normalized_from) {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"normalized_from": normalized_from})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(
+                                    ::serde_json::json!({"normalized_from": normalized_from})
+                                ),
                             "ignoring message from unauthorized number: . Add to channels.whatsapp.allowed_numbers in config.toml, or run `clawcrew config set channels.whatsapp.allowed-numbers='[\"<msisdn>\"]'`."
                         );
                         continue;
@@ -461,11 +457,11 @@ impl WhatsAppChannel {
                             ),
                             // Missing coordinates — drop rather than fabricate 0,0.
                             _ => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     DEBUG,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
                                     .with_attrs(::serde_json::json!({"from": from})),
                                     "skipping location message without coordinates"
@@ -486,11 +482,11 @@ impl WhatsAppChannel {
                         match reply.and_then(|r| r.get("id")).and_then(|i| i.as_str()) {
                             Some(id) if !id.is_empty() => format!("[choice]{id}"),
                             _ => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     DEBUG,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
                                     .with_attrs(::serde_json::json!({"from": from})),
                                     "WhatsApp interactive reply missing id, dropping"
@@ -500,13 +496,10 @@ impl WhatsAppChannel {
                         }
                     } else {
                         // Could be image, audio, etc. — skip for now
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"from": from})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"from": from})),
                             "skipping non-text message from"
                         );
                         continue;
@@ -538,11 +531,11 @@ impl WhatsAppChannel {
                         ) {
                             Some(c) => c,
                             None => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     DEBUG,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
                                     .with_attrs(::serde_json::json!({"from": from})),
                                     "WhatsApp message did not match mention patterns, dropping"
@@ -730,7 +723,7 @@ impl WhatsAppChannel {
         if !resp.status().is_success() {
             let status = resp.status();
             let error_body = resp.text().await.unwrap_or_default();
-            ::clawcrew_log::record!(ERROR, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"status": status.to_string(), "error_body": error_body})), "WhatsApp interactive send failed:");
+            ::galleon_log::record!(ERROR, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"status": status.to_string(), "error_body": error_body})), "WhatsApp interactive send failed:");
             anyhow::bail!("WhatsApp API error: {status}");
         }
         Ok(())
@@ -782,7 +775,7 @@ impl WhatsAppChannel {
             let status = resp.status();
             // `None` when the error body itself could not be read.
             let error_body = resp.text().await.ok();
-            ::clawcrew_log::record!(ERROR, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"status": status.to_string(), "error_body": error_body})), "send failed:");
+            ::galleon_log::record!(ERROR, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"status": status.to_string(), "error_body": error_body})), "send failed:");
             anyhow::bail!("WhatsApp API error: {status}");
         }
 
@@ -829,10 +822,10 @@ fn location_message_body(to: &str, loc: &crate::util::WhatsAppLocation) -> serde
     })
 }
 
-impl ::clawcrew_api::attribution::Attributable for WhatsAppChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::WhatsappBusiness,
+impl ::galleon_api::attribution::Attributable for WhatsAppChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::WhatsappBusiness,
         )
     }
     fn alias(&self) -> &str {
@@ -874,10 +867,10 @@ impl Channel for WhatsAppChannel {
             match crate::util::WhatsAppLocation::parse(target) {
                 Some(loc) => self.post_message(location_message_body(to, &loc)).await?,
                 None => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"reason": "invalid_location"})),
                         "whatsapp: location marker target is malformed or outside WGS84 range"
                     );
@@ -998,7 +991,7 @@ impl Channel for WhatsAppChannel {
         &self,
         recipient: &str,
         request: &ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+    ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         let token = galleon_channel_core::approval::new_approval_token();
         let text = crate::util::build_yesno_approval_prompt(
             &token,
@@ -1017,9 +1010,9 @@ impl Channel for WhatsAppChannel {
         // WhatsApp uses webhooks (push-based), not polling.
         // Messages are received via the gateway's /whatsapp endpoint.
         // This method keeps the channel "alive" but doesn't actively poll.
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "WhatsApp channel active (webhook mode). \
             Configure Meta webhook to POST to your gateway's /whatsapp endpoint."
         );
@@ -1137,7 +1130,7 @@ mod tests {
     /// Resolve peers the way the gateway does, from config, so these cover the
     /// config-to-webhook boundary rather than a hand-built vector.
     fn peers_from_config(toml_src: &str, alias: &str) -> Vec<String> {
-        let config: clawcrew_config::schema::Config =
+        let config: galleon_config::schema::Config =
             toml::from_str(toml_src).expect("peer-group config should parse");
 
         config.channel_external_peers("whatsapp", alias)
@@ -3083,7 +3076,7 @@ mod tests {
     async fn cancelled_request_leaves_no_live_token() {
         let token = "cancel";
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             // A send that succeeds, then a wait long enough that the abort
             // below lands while the lifecycle is parked on the receiver.
             run_approval_lifecycle("cancel".to_string(), 300, || async { Ok(()) }).await
@@ -3118,7 +3111,7 @@ mod tests {
         // Hold the map lock so the helper cannot get past its first await.
         let held = PENDING_APPROVALS.lock().await;
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             let mut guard = guard;
             remove_pending_and_disarm("lockct", &mut guard).await;
         });
@@ -3172,7 +3165,7 @@ mod tests {
     async fn an_operator_reply_is_attributed_to_the_operator() {
         let token = "opappr";
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             run_approval_lifecycle("opappr".to_string(), 300, || async { Ok(()) }).await
         });
 
@@ -3193,7 +3186,7 @@ mod tests {
         assert_eq!(attributed.response, ChannelApprovalResponse::Approve);
         assert_eq!(
             attributed.source,
-            clawcrew_api::channel::ApprovalSource::Operator,
+            galleon_api::channel::ApprovalSource::Operator,
             "a human answered, so this must not be reported as a runtime fail-closed"
         );
         assert!(
@@ -3222,7 +3215,7 @@ mod tests {
     async fn a_resolved_approval_does_not_delete_a_later_registration() {
         let token = "reuse1";
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             run_approval_lifecycle("reuse1".to_string(), 300, || async { Ok(()) }).await
         });
         wait_until_registered(token).await;
@@ -3259,7 +3252,7 @@ mod tests {
     async fn a_dropped_sender_is_attributed_unreachable() {
         let token = "unrch";
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             run_approval_lifecycle("unrch".to_string(), 300, || async { Ok(()) }).await
         });
 
@@ -3277,7 +3270,7 @@ mod tests {
         assert_eq!(attributed.response, ChannelApprovalResponse::Deny);
         assert_eq!(
             attributed.source,
-            clawcrew_api::channel::ApprovalSource::Unreachable
+            galleon_api::channel::ApprovalSource::Unreachable
         );
         assert_token_cleared(token).await;
     }
@@ -3295,7 +3288,7 @@ mod tests {
         assert_eq!(attributed.response, ChannelApprovalResponse::Deny);
         assert_eq!(
             attributed.source,
-            clawcrew_api::channel::ApprovalSource::TimedOut
+            galleon_api::channel::ApprovalSource::TimedOut
         );
         assert_token_cleared(token).await;
     }

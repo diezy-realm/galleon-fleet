@@ -1,1 +1,1 @@
-pub use clawcrew_tools::proxy_config::*;
+pub use galleon_tools::proxy_config::*;

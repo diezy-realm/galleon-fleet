@@ -59,7 +59,7 @@ impl GithubApi {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_channel_proxy_client_with_timeouts(
+        galleon_config::schema::build_channel_proxy_client_with_timeouts(
             "channel.git.github",
             self.proxy_url.as_deref(),
             30,
@@ -137,9 +137,9 @@ impl GithubApi {
             pages += 1;
             if pages >= MAX_PAGES_PER_POLL {
                 if following.is_some() {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({
                                 "endpoint": endpoint,
                                 "pages": pages,
@@ -185,7 +185,7 @@ impl GithubApi {
         GitChannelError::Api {
             endpoint: endpoint.to_string(),
             status: status.as_u16(),
-            body: clawcrew_providers::sanitize_api_error(&body),
+            body: galleon_providers::sanitize_api_error(&body),
         }
     }
 
@@ -256,13 +256,14 @@ impl GithubApi {
             )
             .await?;
         if page.total_count as usize > page.repositories.len() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "total": page.total_count,
                         "polled": page.repositories.len(),
-                    })),
+                    })
+                ),
                 "installation has more than 100 repositories; only the first page is polled — \
                  set `repos` explicitly to choose"
             );

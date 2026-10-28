@@ -135,7 +135,7 @@
   grep -r "SystemGateway\|ExecuteNativeTool" engine/src/tool/
   → No matches in builtin_*.go; tools appear to execute locally
   ```
-- **Rust side:** `crates/clawcrew-gateway/` exists but no gRPC server binding on port 50052 found in search
+- **Rust side:** `crates/galleon-gateway/` exists but no gRPC server binding on port 50052 found in search
 - **Finding:** 🔴 **GATE BLOCKED.** Task D1 depends on RF-A3 (Rust SystemGateway.ExecuteNativeTool), which is not yet verified to exist. Document marks it `GATE: Blocked on Rust SystemGateway.ExecuteNativeTool implementation`.
   - **Recommendation:** RF-A3 must complete first before D1 can proceed.
 
@@ -249,7 +249,7 @@ All tests are stubbed and discoverable; actual execution deferred until B2/C2/D1
 ## Recommendations for Go-Live
 
 1. **Before merging B3/C3/C4/C5:** Verify task-doc status is current (no stale [ ] marks that are actually done).
-2. **Before unblocking D1/D2:** Confirm RF-A3 (Rust SystemGateway.ExecuteNativeTool) is complete and wired in clawcrew-gateway.
+2. **Before unblocking D1/D2:** Confirm RF-A3 (Rust SystemGateway.ExecuteNativeTool) is complete and wired in galleon-gateway.
 3. **Before E2/E3 sprint:** Run full TS compile (`npm install && tsc --noEmit`) to catch type errors.
 4. **Before A2 merge:** Either complete orchestrator wiring to wire_gen or re-mark task as [ ] if PO gate not passed.
 5. **Integration tests:** All test skeletons are ready; unblock them once B2/C2/D1 code is merge-ready.

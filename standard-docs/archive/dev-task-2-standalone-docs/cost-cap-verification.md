@@ -4,9 +4,9 @@
 **Tanggal**: 2026-10-07  
 **Area**: Sprint 3 — Area D: Execution Model  
 **Referensi**:
-- `crates/clawcrew-config/src/policy.rs:349-350`
-- `crates/clawcrew-runtime/src/agent/cost.rs`
-- `crates/clawcrew-runtime/src/tools/delegate/mod.rs`
+- `crates/galleon-config/src/policy.rs:349-350`
+- `crates/galleon-runtime/src/agent/cost.rs`
+- `crates/galleon-runtime/src/tools/delegate/mod.rs`
 - `standard-docs/decisions/finalize/dev-task-2/sprint-3-sop-constraint-and-raci.md`
 
 ---
@@ -27,7 +27,7 @@ Tujuan:
 Berdasarkan audit faktual codebase pada repositori:
 
 ### 2.1. `max_actions_per_hour` (Rate & Frequency Cap)
-- **Definisi**: Dideklarasikan pada `crates/clawcrew-config/src/policy.rs:349`:
+- **Definisi**: Dideklarasikan pada `crates/galleon-config/src/policy.rs:349`:
   ```rust
   pub max_actions_per_hour: u32,
   pub max_cost_per_day_cents: u32,
@@ -35,7 +35,7 @@ Berdasarkan audit faktual codebase pada repositori:
 - **Penegakan**:
   - Ditegakkan per-sender dan per-agent pada runtime loop.
   - Nilai `0` diinterpretasikan sebagai strict zero budget (hard deny).
-  - Pada hirarki delegasi (`crates/clawcrew-runtime/src/tools/delegate/mod.rs`), target policy di-clamp secara fail-closed:
+  - Pada hirarki delegasi (`crates/galleon-runtime/src/tools/delegate/mod.rs`), target policy di-clamp secara fail-closed:
     ```rust
     target_policy.max_actions_per_hour = target_policy
         .max_actions_per_hour
@@ -44,10 +44,10 @@ Berdasarkan audit faktual codebase pada repositori:
     Hal ini menjamin bahwa subagent atau delegasi tidak dapat digunakan untuk membypass batas aksi per jam.
 
 ### 2.2. `max_cost_per_day_cents` & `CostTracker` (Financial Spend Cap)
-- **Definisi**: Didefinisikan pada `SecurityPolicy` dan terintegrasi dengan subsistem biaya (`crates/clawcrew-runtime/src/agent/cost.rs`).
+- **Definisi**: Didefinisikan pada `SecurityPolicy` dan terintegrasi dengan subsistem biaya (`crates/galleon-runtime/src/agent/cost.rs`).
 - **Penegakan**:
   - `CostTracker` menghitung biaya riil berdasarkan pricing tabel per model (`ModelRates`: prompt, completion, cache hit/miss).
-  - Di dalam `crates/clawcrew-runtime/src/tools/delegate/mod.rs`, pemanggilan delegasi mengevaluasi:
+  - Di dalam `crates/galleon-runtime/src/tools/delegate/mod.rs`, pemanggilan delegasi mengevaluasi:
     ```rust
     if Self::exceeds_cost_cap(summary.daily_cost_usd, max_cost_per_day_cents) {
         return self.cost_budget_refusal(target_alias, max_cost_per_day_cents);

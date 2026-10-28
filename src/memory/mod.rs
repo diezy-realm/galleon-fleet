@@ -1,4 +1,4 @@
-pub use clawcrew_memory::*;
+pub use galleon_memory::*;
 
 // These stay in root (depend on root crate types).
 pub mod cli;

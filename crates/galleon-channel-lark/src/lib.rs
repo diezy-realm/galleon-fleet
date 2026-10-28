@@ -2,10 +2,10 @@ use aes::Aes256;
 use async_trait::async_trait;
 use base64::Engine as _;
 use cbc::cipher::{BlockDecryptMut, KeyIvInit, block_padding::Pkcs7};
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_config::pairing::constant_time_eq;
-use clawcrew_config::schema::StreamMode;
 use futures_util::{SinkExt, StreamExt};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_config::pairing::constant_time_eq;
+use galleon_config::schema::StreamMode;
 use prost::Message as ProstMessage;
 use reqwest::multipart::{Form, Part};
 use sha2::{Digest, Sha256};
@@ -382,9 +382,9 @@ fn build_approval_card(
 fn build_resolved_approval_card(
     tool_name: &str,
     arguments_summary: &str,
-    decision: clawcrew_api::channel::ChannelApprovalResponse,
+    decision: galleon_api::channel::ChannelApprovalResponse,
 ) -> serde_json::Value {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
 
     let (banner_emoji, banner_text, header_template) = match decision {
         ChannelApprovalResponse::Approve => ("✅", "Approved", "green"),
@@ -658,9 +658,9 @@ fn validate_lark_marker_target(
         || lower.starts_with("file:")
         || lower.contains("://")
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"reason": "disallowed_scheme"})),
             "lark: marker target uses disallowed scheme"
         );
@@ -668,9 +668,9 @@ fn validate_lark_marker_target(
     }
 
     let workspace = workspace_dir.ok_or_else(|| {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"reason": "no_workspace_dir"})),
             "lark: local marker target has no workspace_dir"
         );
@@ -691,9 +691,9 @@ fn validate_lark_marker_target(
 
     let candidate = std::fs::canonicalize(&candidate).map_err(|err| {
         if err.kind() == std::io::ErrorKind::NotFound {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"reason": "not_found"})),
                 "lark: marker target not found on disk"
             );
@@ -706,9 +706,9 @@ fn validate_lark_marker_target(
     })?;
 
     if !candidate.starts_with(&workspace) {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"reason": "outside_workspace"})),
             "lark: marker target escapes workspace_dir"
         );
@@ -779,7 +779,7 @@ async fn build_lark_file_upload_form(
 /// Used to (a) wake the awaiting future via `sender` and (b) re-render
 /// the card after the click so the buttons disappear.
 struct PendingApproval {
-    sender: tokio::sync::oneshot::Sender<clawcrew_api::channel::ChannelApprovalResponse>,
+    sender: tokio::sync::oneshot::Sender<galleon_api::channel::ChannelApprovalResponse>,
     destination: String,
     /// `data.message_id` returned by the send-card POST. Empty string is a
     /// sentinel meaning "card was sent but message_id was missing from the
@@ -809,7 +809,7 @@ pub struct LarkChannel {
     /// Platform variant: Lark (international) or Feishu (CN).
     platform: LarkPlatform,
     /// How to receive events: WebSocket long-connection or HTTP webhook.
-    receive_mode: clawcrew_config::schema::LarkReceiveMode,
+    receive_mode: galleon_config::schema::LarkReceiveMode,
     /// Cached tenant access token
     tenant_token: Arc<RwLock<Option<CachedTenantToken>>>,
     /// Dedup set: WS message_ids seen in last ~30 min to prevent double-dispatch
@@ -819,7 +819,7 @@ pub struct LarkChannel {
     /// Workspace root that bounds outbound media marker reads. Resolved by
     /// the orchestrator from `Config::channel_workspace_dir("lark.<alias>")`.
     workspace_dir: Option<PathBuf>,
-    transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
+    transcription: Option<galleon_config::schema::TranscriptionConfig>,
     transcription_manager: Option<Arc<dyn AudioTranscriber>>,
     /// In-flight approval requests keyed by `approval_id` (UUID v4).
     /// Populated by `request_approval`, drained by `handle_card_action_event`.
@@ -994,10 +994,10 @@ async fn handle_lark_http_event(
     let raw_payload: serde_json::Value = match serde_json::from_slice(&body) {
         Ok(payload) => payload,
         Err(error) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": error.to_string()})),
                 "Lark webhook: invalid or undecryptable payload"
             );
@@ -1014,10 +1014,10 @@ async fn handle_lark_http_event(
             &raw_payload,
         )
     {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Lark webhook: invalid authentication"
         );
         return (StatusCode::UNAUTHORIZED, "invalid authentication").into_response();
@@ -1027,10 +1027,10 @@ async fn handle_lark_http_event(
         match decrypt_lark_webhook_body(&body, state.channel.encrypt_key.as_deref()) {
             Ok(body) => body,
             Err(error) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": error.to_string()})),
                     "Lark webhook: invalid or undecryptable payload"
                 );
@@ -1041,10 +1041,10 @@ async fn handle_lark_http_event(
     let payload: serde_json::Value = match serde_json::from_slice(&decrypted_body) {
         Ok(payload) => payload,
         Err(error) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": error.to_string()})),
                 "Lark webhook: invalid decrypted JSON payload"
             );
@@ -1074,10 +1074,10 @@ async fn handle_lark_http_event(
     }
 
     if !authenticated {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "Lark webhook: invalid authentication"
         );
         return (StatusCode::UNAUTHORIZED, "invalid authentication").into_response();
@@ -1111,7 +1111,7 @@ async fn handle_lark_http_event(
         // ack target; parse_event_payload_async already filtered
         // out unauthorized senders and non-text payloads.
         let reaction_reply_target = messages[0].reply_target.clone();
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             if let Err(e) = <LarkChannel as Channel>::add_reaction(
                 &reaction_channel,
                 &reaction_reply_target,
@@ -1120,9 +1120,9 @@ async fn handle_lark_http_event(
             )
             .await
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "message_id": reaction_message_id,
                             "error": format!("{e}"),
@@ -1136,10 +1136,10 @@ async fn handle_lark_http_event(
 
     for msg in messages {
         if state.tx.send(msg).await.is_err() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "message channel closed"
             );
             break;
@@ -1204,7 +1204,7 @@ impl LarkChannel {
             resolved_bot_open_id: Arc::new(StdRwLock::new(None)),
             mention_only,
             platform,
-            receive_mode: clawcrew_config::schema::LarkReceiveMode::default(),
+            receive_mode: galleon_config::schema::LarkReceiveMode::default(),
             tenant_token: Arc::new(RwLock::new(None)),
             ws_seen_ids: Arc::new(RwLock::new(HashMap::new())),
             proxy_url: None,
@@ -1227,7 +1227,7 @@ impl LarkChannel {
     /// Build from `LarkConfig` using legacy compatibility:
     /// when `use_feishu=true`, this instance routes to Feishu endpoints.
     pub fn from_config(
-        config: &clawcrew_config::schema::LarkConfig,
+        config: &galleon_config::schema::LarkConfig,
         alias: impl Into<String>,
         peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
     ) -> Self {
@@ -1287,9 +1287,9 @@ impl LarkChannel {
     ) -> Self {
         let effective_stream_mode = match stream_mode {
             StreamMode::MultiMessage => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note,),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note,),
                     "lark: stream_mode=multi_message is not supported by Feishu's editable-card surface; falling back to off (no draft streaming). Use stream_mode=partial for incremental card edits."
                 );
                 StreamMode::Off
@@ -1321,7 +1321,7 @@ impl LarkChannel {
     /// otherwise leaves the choice unbound (see
     /// `transcription::manager_from_snapshot`).
     /// Configure voice transcription from a `[transcription]` snapshot (no-op stub without provider manager).
-    pub fn with_transcription(self, _config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(self, _config: galleon_config::schema::TranscriptionConfig) -> Self {
         self
     }
 
@@ -1330,7 +1330,7 @@ impl LarkChannel {
     /// transcription it cannot perform.
     pub fn with_transcription_manager(
         mut self,
-        config: clawcrew_config::schema::TranscriptionConfig,
+        config: galleon_config::schema::TranscriptionConfig,
         manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
@@ -1350,7 +1350,7 @@ impl LarkChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_channel_proxy_client(
+        galleon_config::schema::build_channel_proxy_client(
             self.platform.proxy_service_key(),
             self.proxy_url.as_deref(),
         )
@@ -1480,10 +1480,10 @@ impl LarkChannel {
             );
         }
         let ep = resp.data.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "WS endpoint: empty data"
             );
             anyhow::Error::msg("WS endpoint: empty data")
@@ -1507,23 +1507,23 @@ impl LarkChannel {
                     .and_then(|v| v.parse::<i32>().ok())
             })
             .unwrap_or(0);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"wss_url": wss_url})),
             "connecting to"
         );
 
-        let (ws_stream, _) = clawcrew_config::schema::ws_connect_with_proxy(
+        let (ws_stream, _) = galleon_config::schema::ws_connect_with_proxy(
             &wss_url,
             "channel.lark",
             self.proxy_url.as_deref(),
         )
         .await?;
         let (mut write, mut read) = ws_stream.split();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"service_id": service_id})),
             "WS connected (service_id=)"
         );
@@ -1573,7 +1573,7 @@ impl LarkChannel {
                         payload: None,
                     };
                     if write.send(WsMsg::Binary(ping.encode_to_vec().into())).await.is_err() {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), "ping failed, reconnecting");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), "ping failed, reconnecting");
                         break;
                     }
                     // GC stale fragments > 5 min
@@ -1583,7 +1583,7 @@ impl LarkChannel {
 
                 _ = timeout_check.tick() => {
                     if last_recv.elapsed() > WS_HEARTBEAT_TIMEOUT {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), "heartbeat timeout, reconnecting");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), "heartbeat timeout, reconnecting");
                         break;
                     }
                 }
@@ -1597,17 +1597,17 @@ impl LarkChannel {
                             match ws_msg {
                                 WsMsg::Binary(b) => b,
                                 WsMsg::Ping(d) => { let _ = write.send(WsMsg::Pong(d)).await; continue; }
-                                WsMsg::Close(_) => { ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "WS closed — reconnecting"); break; }
+                                WsMsg::Close(_) => { ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "WS closed — reconnecting"); break; }
                                 _ => continue,
                             }
                         }
-                        None => { ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "WS closed — reconnecting"); break; }
-                        Some(Err(e)) => { ::clawcrew_log::record!(ERROR, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"error": format!("{}", e)})), "WS read error"); break; }
+                        None => { ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "WS closed — reconnecting"); break; }
+                        Some(Err(e)) => { ::galleon_log::record!(ERROR, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"error": format!("{}", e)})), "WS read error"); break; }
                     };
 
                     let frame = match PbFrame::decode(&raw[..]) {
                         Ok(f) => f,
-                        Err(e) => { ::clawcrew_log::record!(ERROR, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"error": format!("{}", e)})), "proto decode"); continue; }
+                        Err(e) => { ::galleon_log::record!(ERROR, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"error": format!("{}", e)})), "proto decode"); continue; }
                     };
 
                     // CONTROL frame
@@ -1620,7 +1620,7 @@ impl LarkChannel {
                                         if secs != ping_secs {
                                             ping_secs = secs;
                                             hb_interval = tokio::time::interval(Duration::from_secs(ping_secs));
-                                            ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"ping_secs": ping_secs})), "ping_interval → s");
+                                            ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"ping_secs": ping_secs})), "ping_interval → s");
                                         }
                                     }
                         continue;
@@ -1662,7 +1662,7 @@ impl LarkChannel {
 
                     let event: LarkEvent = match serde_json::from_slice(&payload) {
                         Ok(e) => e,
-                        Err(e) => { ::clawcrew_log::record!(ERROR, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"error": format!("{}", e)})), "event JSON"); continue; }
+                        Err(e) => { ::galleon_log::record!(ERROR, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"error": format!("{}", e)})), "event JSON"); continue; }
                     };
                     if self
                         .handle_card_action_ingress(&event.header.event_type, Some(&event.event))
@@ -1678,14 +1678,14 @@ impl LarkChannel {
 
                     let recv: MsgReceivePayload = match serde_json::from_value(event_payload.clone()) {
                         Ok(r) => r,
-                        Err(e) => { ::clawcrew_log::record!(ERROR, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail).with_outcome(::clawcrew_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"error": format!("{}", e)})), "payload parse"); continue; }
+                        Err(e) => { ::galleon_log::record!(ERROR, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail).with_outcome(::galleon_log::EventOutcome::Failure).with_attrs(::serde_json::json!({"error": format!("{}", e)})), "payload parse"); continue; }
                     };
 
                     if recv.sender.sender_type == "app" || recv.sender.sender_type == "bot" { continue; }
 
                     let sender_open_id = recv.sender.sender_id.open_id.as_deref().unwrap_or("");
                     if !self.is_user_allowed(sender_open_id) {
-                        ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"sender_open_id": sender_open_id})), "WS: ignoring (not in peer group)");
+                        ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"sender_open_id": sender_open_id})), "WS: ignoring (not in peer group)");
                         continue;
                     }
 
@@ -1698,7 +1698,7 @@ impl LarkChannel {
                         // GC
                         seen.retain(|_, t| now.duration_since(*t) < Duration::from_secs(30 * 60));
                         if seen.contains_key(&lark_msg.message_id) {
-                            ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), &format!("WS: dup {}", lark_msg.message_id));
+                            ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), &format!("WS: dup {}", lark_msg.message_id));
                             continue;
                         }
                         seen.insert(lark_msg.message_id.clone(), now);
@@ -1727,12 +1727,12 @@ impl LarkChannel {
                             };
                             let image_key = match v.get("image_key").and_then(|k| k.as_str()) {
                                 Some(k) => k.to_string(),
-                                None => { ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "WS: image message missing image_key"); continue; }
+                                None => { ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "WS: image message missing image_key"); continue; }
                             };
                             match self.download_image_as_marker(&lark_msg.message_id, &image_key).await {
                                 Some(marker) => (marker, Vec::new()),
                                 None => {
-                                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"image_key": image_key})), "WS: failed to download image");
+                                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"image_key": image_key})), "WS: failed to download image");
                                     (format!("[IMAGE:{image_key} | download failed]"), Vec::new())
                                 }
                             }
@@ -1744,7 +1744,7 @@ impl LarkChannel {
                             };
                             let file_key = match v.get("file_key").and_then(|k| k.as_str()) {
                                 Some(k) => k.to_string(),
-                                None => { ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "WS: file message missing file_key"); continue; }
+                                None => { ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "WS: file message missing file_key"); continue; }
                             };
                             let file_name = v.get("file_name")
                                 .and_then(|n| n.as_str())
@@ -1753,14 +1753,14 @@ impl LarkChannel {
                             match self.download_file_as_content(&lark_msg.message_id, &file_key, &file_name).await {
                                 Some(content) => (content, Vec::new()),
                                 None => {
-                                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"file_key": file_key})), "WS: failed to download file");
+                                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"file_key": file_key})), "WS: failed to download file");
                                     (format!("[ATTACHMENT:{file_name} | download failed]"), Vec::new())
                                 }
                             }
                         }
                         "audio" => {
                             let Some(manager) = self.transcription_manager.as_deref() else {
-                                ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), &format!("WS: audio message in {} (transcription not configured)", lark_msg.chat_id));
+                                ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), &format!("WS: audio message in {} (transcription not configured)", lark_msg.chat_id));
                                 continue;
                             };
                             let transcript = self.try_transcribe_audio_message(
@@ -1773,9 +1773,9 @@ impl LarkChannel {
                         }
                         "list" => match parse_list_content(&lark_msg.content) {
                             Some(t) => (t, Vec::new()),
-                            None => { ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), "WS: list message with no extractable text"); continue; }
+                            None => { ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), "WS: list message with no extractable text"); continue; }
                         },
-                        _ => { ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), &format!("WS: skipping unsupported type '{}'", lark_msg.message_type)); continue; }
+                        _ => { ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), &format!("WS: skipping unsupported type '{}'", lark_msg.message_type)); continue; }
                     };
 
                     let text = text.trim().to_string();
@@ -1798,7 +1798,7 @@ impl LarkChannel {
                         let reaction_channel = self.clone();
                         let reaction_message_id = lark_msg.message_id.clone();
                         let reaction_reply_target = lark_msg.chat_id.clone();
-                        clawcrew_spawn::spawn!(async move {
+                        galleon_spawn::spawn!(async move {
                             if let Err(e) = <LarkChannel as Channel>::add_reaction(
                                 &reaction_channel,
                                 &reaction_reply_target,
@@ -1807,11 +1807,11 @@ impl LarkChannel {
                             )
                             .await
                         {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 DEBUG,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note,
+                                    ::galleon_log::Action::Note,
                                 )
                                 .with_attrs(::serde_json::json!({
                                     "message_id": reaction_message_id,
@@ -1844,7 +1844,7 @@ impl LarkChannel {
 
                         ..Default::default()};
 
-                    ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note), &format!("WS: message in {}", lark_msg.chat_id));
+                    ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note), &format!("WS: message in {}", lark_msg.chat_id));
                     if tx.send(channel_msg).await.is_err() { break; }
                 }
             }
@@ -1901,10 +1901,10 @@ impl LarkChannel {
             .get("tenant_access_token")
             .and_then(|t| t.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "missing tenant_access_token in response"
                 );
                 anyhow::Error::msg("missing tenant_access_token in response")
@@ -1941,10 +1941,10 @@ impl LarkChannel {
             let token = match self.get_tenant_access_token().await {
                 Ok(t) => t,
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "failed to get token for image download"
                     );
@@ -1961,10 +1961,10 @@ impl LarkChannel {
             {
                 Ok(r) => r,
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"error": format!("{}", e), "image_key": image_key})
                             ),
@@ -1975,10 +1975,10 @@ impl LarkChannel {
             };
 
             if resp.status() == reqwest::StatusCode::UNAUTHORIZED && !retried_token {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"image_key": image_key})),
                     "image download 401, refreshing token and retrying once"
                 );
@@ -1989,10 +1989,10 @@ impl LarkChannel {
             }
 
             if !resp.status().is_success() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "image download failed for {image_key}: status={}",
                         resp.status()
@@ -2004,10 +2004,10 @@ impl LarkChannel {
             if let Some(cl) = resp.content_length()
                 && cl > LARK_IMAGE_MAX_BYTES as u64
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"image_key": image_key, "cl": cl})),
                     "image too large for : bytes exceeds limit"
                 );
@@ -2023,10 +2023,10 @@ impl LarkChannel {
             let bytes = match resp.bytes().await {
                 Ok(b) => b,
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(
                                 ::serde_json::json!({"error": format!("{}", e), "image_key": image_key})
                             ),
@@ -2037,10 +2037,10 @@ impl LarkChannel {
             };
 
             if bytes.is_empty() || bytes.len() > LARK_IMAGE_MAX_BYTES {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "image body empty or too large for {image_key}: {} bytes",
                         bytes.len()
@@ -2051,10 +2051,10 @@ impl LarkChannel {
 
             let mime = lark_detect_image_mime(content_type.as_deref(), &bytes)?;
             if !LARK_SUPPORTED_IMAGE_MIMES.contains(&mime.as_str()) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"image_key": image_key, "mime": mime})),
                     "unsupported image MIME for"
                 );
@@ -2077,10 +2077,10 @@ impl LarkChannel {
         let token = match self.get_tenant_access_token().await {
             Ok(t) => t,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "failed to get token for file download"
                 );
@@ -2098,10 +2098,10 @@ impl LarkChannel {
         {
             Ok(r) => r,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": format!("{}", e), "file_key": file_key})
                         ),
@@ -2112,10 +2112,10 @@ impl LarkChannel {
         };
 
         if !resp.status().is_success() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "file download failed for {file_key}: status={}",
                     resp.status()
@@ -2127,10 +2127,10 @@ impl LarkChannel {
         if let Some(cl) = resp.content_length()
             && cl > LARK_FILE_MAX_BYTES as u64
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"file_key": file_key, "cl": cl})),
                 "file too large for : bytes exceeds limit"
             );
@@ -2149,10 +2149,10 @@ impl LarkChannel {
         let bytes = match resp.bytes().await {
             Ok(b) => b,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": format!("{}", e), "file_key": file_key})
                         ),
@@ -2163,10 +2163,10 @@ impl LarkChannel {
         };
 
         if bytes.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"file_key": file_key})),
                 "file body is empty for"
             );
@@ -2269,26 +2269,26 @@ impl LarkChannel {
 
         match self.refresh_bot_open_id().await {
             Ok(Some(open_id)) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"open_id": open_id})),
                     "resolved bot open_id"
                 );
             }
             Ok(None) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "bot open_id missing from /bot/v3/info response; mention_only group messages will be ignored"
                 );
             }
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"err": err.to_string()})),
                     "failed to resolve bot open_id: ; mention_only group messages will be ignored"
                 );
@@ -2373,10 +2373,10 @@ impl LarkChannel {
         {
             Ok(result) => result,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": format!("{}", e), "message_id": message_id})
                         ),
@@ -2388,19 +2388,19 @@ impl LarkChannel {
 
         match manager.transcribe(&audio_data, &filename).await {
             Ok(transcript) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"message_id": message_id})),
                     "audio transcribed for"
                 );
                 Some(transcript)
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": format!("{}", e), "message_id": message_id})
                         ),
@@ -2433,9 +2433,9 @@ impl LarkChannel {
         }
 
         let Some(manager) = self.transcription_manager.as_deref() else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "webhook: audio message (transcription not configured)"
             );
             return vec![];
@@ -2446,10 +2446,10 @@ impl LarkChannel {
             .and_then(|v| v.as_str())
             .unwrap_or("");
         if !self.is_user_allowed(open_id) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"open_id": open_id})),
                 "ignoring audio from unauthorized user"
             );
@@ -2732,10 +2732,10 @@ impl LarkChannel {
 
         // Check allowlist
         if !self.is_user_allowed(open_id) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"open_id": open_id})),
                 "ignoring message from unauthorized user"
             );
@@ -2802,13 +2802,13 @@ impl LarkChannel {
                         {
                             Some(m) => m,
                             None => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(::serde_json::json!({"key": key})),
                                     "failed to download image"
                                 );
@@ -2818,12 +2818,9 @@ impl LarkChannel {
                         (marker, Vec::new())
                     }
                     None => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             "image message missing image_key"
                         );
                         return messages;
@@ -2849,13 +2846,13 @@ impl LarkChannel {
                         {
                             Some(c) => c,
                             None => {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                                     .with_attrs(::serde_json::json!({"key": key})),
                                     "failed to download file"
                                 );
@@ -2865,12 +2862,9 @@ impl LarkChannel {
                         (content, Vec::new())
                     }
                     None => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             "file message missing file_key"
                         );
                         return messages;
@@ -2880,18 +2874,18 @@ impl LarkChannel {
             "list" => match parse_list_content(content_str) {
                 Some(t) => (t, Vec::new()),
                 None => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "list message with no extractable text"
                     );
                     return messages;
                 }
             },
             _ => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"msg_type": msg_type})),
                     "skipping unsupported message type"
                 );
@@ -2949,9 +2943,9 @@ impl LarkChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for LarkChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Lark)
+impl ::galleon_api::attribution::Attributable for LarkChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Lark)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -2999,7 +2993,7 @@ impl Channel for LarkChannel {
     }
 
     async fn listen(&self, tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
-        use clawcrew_config::schema::LarkReceiveMode;
+        use galleon_config::schema::LarkReceiveMode;
         match self.receive_mode {
             LarkReceiveMode::Websocket => self.listen_ws(tx).await,
             LarkReceiveMode::Webhook => self.listen_http(tx).await,
@@ -3040,9 +3034,9 @@ impl Channel for LarkChannel {
         {
             let cache = self.reaction_ids.lock().await;
             if cache.contains_key(&(message_id.to_string(), emoji.to_string())) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "message_id": message_id,
                             "emoji": emoji,
@@ -3057,10 +3051,10 @@ impl Channel for LarkChannel {
         let emoji_type = match unicode_to_lark_emoji_type(emoji) {
             Some(t) => t,
             None => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "message_id": message_id,
                             "emoji": emoji,
@@ -3102,10 +3096,10 @@ impl Channel for LarkChannel {
                     .get("msg")
                     .and_then(|v| v.as_str())
                     .unwrap_or("unknown error");
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "code": code,
                             "message_id": message_id,
@@ -3148,13 +3142,14 @@ impl Channel for LarkChannel {
             cache.remove(&(message_id.to_string(), emoji.to_string()))
         };
         let Some(reaction_id) = reaction_id else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "message_id": message_id,
                         "emoji": emoji,
-                    })),
+                    })
+                ),
                 "Lark remove_reaction: cache miss, skipping"
             );
             return Ok(());
@@ -3182,10 +3177,10 @@ impl Channel for LarkChannel {
             if !response.status().is_success() {
                 let status = response.status();
                 let err_body = response.text().await.unwrap_or_default();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "message_id": message_id,
                             "reaction_id": reaction_id,
@@ -3207,9 +3202,9 @@ impl Channel for LarkChannel {
                         .get("msg")
                         .and_then(|v| v.as_str())
                         .unwrap_or("unknown error");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({
                                 "code": code,
                                 "msg": msg,
@@ -3223,10 +3218,10 @@ impl Channel for LarkChannel {
                         .get("msg")
                         .and_then(|v| v.as_str())
                         .unwrap_or("unknown error");
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "code": code,
                                 "message_id": message_id,
@@ -3246,8 +3241,8 @@ impl Channel for LarkChannel {
     async fn request_approval(
         &self,
         recipient: &str,
-        request: &clawcrew_api::channel::ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::ChannelApprovalResponse>> {
+        request: &galleon_api::channel::ChannelApprovalRequest,
+    ) -> anyhow::Result<Option<galleon_api::channel::ChannelApprovalResponse>> {
         Ok(self
             .request_approval_attributed(recipient, request)
             .await?
@@ -3257,8 +3252,8 @@ impl Channel for LarkChannel {
     async fn request_approval_attributed(
         &self,
         recipient: &str,
-        request: &clawcrew_api::channel::ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+        request: &galleon_api::channel::ChannelApprovalRequest,
+    ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         let approval_id = Uuid::new_v4().to_string();
         let card = build_approval_card(
             &approval_id,
@@ -3308,13 +3303,13 @@ impl Channel for LarkChannel {
                 .and_then(|v| v.as_str())
                 .map(str::to_string)
                 .unwrap_or_else(|| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(
+                        ::galleon_log::Event::new(
                             module_path!(),
-                            ::clawcrew_log::Action::Note
+                            ::galleon_log::Action::Note
                         )
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"approval_id": approval_id})),
                         "Lark: approval card sent but no data.message_id in response — post-click card update will be skipped"
                     );
@@ -3362,10 +3357,10 @@ impl Channel for LarkChannel {
         let (status, response) = match self.patch_or_send_once(&url, &body, false).await {
             Ok(r) => r,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"err": format!("{err}")})),
                     "Lark: send_draft failed, falling back to send()"
                 );
@@ -3374,10 +3369,10 @@ impl Channel for LarkChannel {
         };
 
         if !status.is_success() || extract_lark_response_code(&response).unwrap_or(0) != 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "status": status.as_u16(),
                         "body": response,
@@ -3507,10 +3502,10 @@ impl LarkChannel {
         let (status, response) = match self.patch_or_send_once(&url, &body, true).await {
             Ok(pair) => pair,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "message_id": message_id,
                             "error": format!("{err}"),
@@ -3526,31 +3521,29 @@ impl LarkChannel {
             self.invalidate_token().await;
             // Retry PATCH after token refresh — same soft-fail discipline:
             // a transport error on the retry must not propagate.
-            let (retry_status, retry_response) = match self
-                .patch_or_send_once(&url, &body, true)
-                .await
-            {
-                Ok(pair) => pair,
-                Err(err) => {
-                    ::clawcrew_log::record!(
-                        WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note,)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
-                            .with_attrs(::serde_json::json!({
-                                "message_id": message_id,
-                                "error": format!("{err}"),
-                                "error_key": "lark.draft_patch.transport_failure_on_retry",
-                            })),
-                        "Lark: draft PATCH retry transport-failed (soft)"
-                    );
-                    return Ok(());
-                }
-            };
+            let (retry_status, retry_response) =
+                match self.patch_or_send_once(&url, &body, true).await {
+                    Ok(pair) => pair,
+                    Err(err) => {
+                        ::galleon_log::record!(
+                            WARN,
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note,)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
+                                .with_attrs(::serde_json::json!({
+                                    "message_id": message_id,
+                                    "error": format!("{err}"),
+                                    "error_key": "lark.draft_patch.transport_failure_on_retry",
+                                })),
+                            "Lark: draft PATCH retry transport-failed (soft)"
+                        );
+                        return Ok(());
+                    }
+                };
             if should_refresh_lark_tenant_token(retry_status, &retry_response) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "message_id": message_id,
                             "body": retry_response,
@@ -3567,22 +3560,23 @@ impl LarkChannel {
 
         let code = extract_lark_response_code(&body_for_inspect).unwrap_or(0);
         if code == LARK_DRAFT_RATE_LIMIT_CODE {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "message_id": message_id,
                         "error_key": "lark.draft_patch.rate_limited",
-                    })),
+                    })
+                ),
                 "Lark: draft PATCH rate-limited (code=230020)"
             );
             return Ok(());
         }
         if code != 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "message_id": message_id,
                         "code": code,
@@ -3604,10 +3598,10 @@ impl LarkChannel {
     /// deny, so the caller does not report an operator refusal nobody made.
     async fn wait_for_decision(
         &self,
-        rx: tokio::sync::oneshot::Receiver<clawcrew_api::channel::ChannelApprovalResponse>,
+        rx: tokio::sync::oneshot::Receiver<galleon_api::channel::ChannelApprovalResponse>,
         approval_id: &str,
-    ) -> clawcrew_api::channel::AttributedApprovalResponse {
-        use clawcrew_api::channel::{
+    ) -> galleon_api::channel::AttributedApprovalResponse {
+        use galleon_api::channel::{
             ApprovalSource, AttributedApprovalResponse, ChannelApprovalResponse,
         };
         match tokio::time::timeout(Duration::from_secs(self.approval_timeout_secs), rx).await {
@@ -3638,7 +3632,7 @@ impl LarkChannel {
         message_id: &str,
         tool_name: &str,
         arguments_summary: &str,
-        decision: clawcrew_api::channel::ChannelApprovalResponse,
+        decision: galleon_api::channel::ChannelApprovalResponse,
     ) {
         let card = build_resolved_approval_card(tool_name, arguments_summary, decision.clone());
         let url = self.patch_message_url(message_id);
@@ -3646,10 +3640,10 @@ impl LarkChannel {
             "content": card.to_string(),
         });
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({
                     "message_id": message_id,
                     "decision": format!("{decision:?}"),
@@ -3660,10 +3654,10 @@ impl LarkChannel {
         let (status, response) = match self.patch_or_send_once(&url, &body, true).await {
             Ok(pair) => pair,
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "message_id": message_id,
                             "error": e.to_string(),
@@ -3679,17 +3673,14 @@ impl LarkChannel {
             match self.patch_or_send_once(&url, &body, true).await {
                 Ok((retry_status, retry_response)) => {
                     if should_refresh_lark_tenant_token(retry_status, &retry_response) {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Send
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
-                            .with_attrs(::serde_json::json!({
-                                "message_id": message_id,
-                                "body": retry_response.to_string(),
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
+                                .with_attrs(::serde_json::json!({
+                                    "message_id": message_id,
+                                    "body": retry_response.to_string(),
+                                })),
                             "Lark: approval card PATCH still unauthorized after token refresh"
                         );
                         return;
@@ -3697,10 +3688,10 @@ impl LarkChannel {
                     retry_response
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "message_id": message_id,
                                 "error": e.to_string(),
@@ -3716,10 +3707,10 @@ impl LarkChannel {
 
         let code = extract_lark_response_code(&final_body).unwrap_or(0);
         if code == LARK_DRAFT_RATE_LIMIT_CODE {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "message_id": message_id,
                         "code": LARK_DRAFT_RATE_LIMIT_CODE,
@@ -3727,10 +3718,10 @@ impl LarkChannel {
                 "Lark: approval card PATCH rate-limited"
             );
         } else if code != 0 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "message_id": message_id,
                         "code": code,
@@ -3740,10 +3731,10 @@ impl LarkChannel {
                 "Lark: approval card PATCH soft-failed"
             );
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Send)
-                    .with_outcome(::clawcrew_log::EventOutcome::Success)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Send)
+                    .with_outcome(::galleon_log::EventOutcome::Success)
                     .with_attrs(::serde_json::json!({
                         "message_id": message_id,
                         "status": status.to_string(),
@@ -3793,19 +3784,19 @@ impl LarkChannel {
             return false;
         }
         let Some(event_payload) = event_payload else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Dispatch)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Dispatch)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "Lark card action ingress: missing event payload"
             );
             return true;
         };
         if let Err(e) = self.handle_card_action_event(event_payload).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Dispatch)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Dispatch)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": e.to_string()})),
                 "Lark card action ingress: callback rejected"
             );
@@ -3817,11 +3808,11 @@ impl LarkChannel {
         &self,
         event_payload: &serde_json::Value,
     ) -> anyhow::Result<()> {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Receive).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Receive).with_attrs(
                 ::serde_json::json!({
                     "sanitized_payload": sanitize_card_action_payload(event_payload),
                 })
@@ -3833,10 +3824,10 @@ impl LarkChannel {
             .pointer("/action/value")
             .or_else(|| event_payload.pointer("/action/behaviors/0/value"))
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "card.action.trigger: missing event.action.value or event.action.behaviors[0].value"
                 );
                 anyhow::Error::msg(
@@ -3848,10 +3839,10 @@ impl LarkChannel {
             .get("approval_id")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "card.action.trigger: missing approval_id in value"
                 );
                 anyhow::Error::msg("card.action.trigger: missing approval_id in value")
@@ -3861,10 +3852,10 @@ impl LarkChannel {
             .get("decision")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "card.action.trigger: missing decision in value"
                 );
                 anyhow::Error::msg("card.action.trigger: missing decision in value")
@@ -3882,10 +3873,10 @@ impl LarkChannel {
                 // operator ever took -- the exact false attribution this change
                 // exists to remove. Leaving the approval pending lets it resolve
                 // through the timeout path, which carries runtime provenance.
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"decision_str": other})),
                     "Lark: unknown approval decision — rejecting the callback without resolving the approval"
                 );
@@ -3908,10 +3899,10 @@ impl LarkChannel {
             .take_pending_approval(approval_id, responder, destination)
             .await;
         let Some(pending) = pending else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "approval_id": approval_id,
                         "decision": format!("{decision:?}"),
@@ -3921,10 +3912,10 @@ impl LarkChannel {
             return Ok(());
         };
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Receive)
-                .with_outcome(::clawcrew_log::EventOutcome::Success)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Receive)
+                .with_outcome(::galleon_log::EventOutcome::Success)
                 .with_attrs(::serde_json::json!({
                     "approval_id": approval_id,
                     "decision": format!("{decision:?}"),
@@ -3978,10 +3969,10 @@ impl LarkChannel {
         tx: tokio::sync::mpsc::Sender<ChannelMessage>,
     ) -> anyhow::Result<()> {
         if !lark_webhook_auth_configured(&self.verification_token, self.encrypt_key.as_deref()) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "mode": "webhook",
                         "missing": "verification_token_or_encrypt_key"
@@ -3995,10 +3986,10 @@ impl LarkChannel {
 
         self.ensure_bot_open_id().await;
         let port = self.port.ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"mode": "webhook", "missing": "port"})),
                 "lark: webhook mode requires port"
             );
@@ -4013,9 +4004,9 @@ impl LarkChannel {
         let app = build_lark_http_router(state);
 
         let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"addr": addr})),
             "event callback server listening on"
         );
@@ -4368,7 +4359,8 @@ mod tests {
             &'a self,
             _audio_data: &'a [u8],
             _file_name: &'a str,
-        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>> {
+        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<String>> + Send + 'a>>
+        {
             Box::pin(async move { Ok(self.0.to_string()) })
         }
     }
@@ -5272,7 +5264,7 @@ mod tests {
 
     #[test]
     fn lark_config_serde() {
-        use clawcrew_config::schema::{LarkConfig, LarkReceiveMode};
+        use galleon_config::schema::{LarkConfig, LarkReceiveMode};
         let lc = LarkConfig {
             enabled: true,
             app_id: "cli_app123".into(),
@@ -5300,7 +5292,7 @@ mod tests {
 
     #[test]
     fn lark_config_toml_roundtrip() {
-        use clawcrew_config::schema::{LarkConfig, LarkReceiveMode};
+        use galleon_config::schema::{LarkConfig, LarkReceiveMode};
         let lc = LarkConfig {
             enabled: true,
             app_id: "app".into(),
@@ -5327,7 +5319,7 @@ mod tests {
 
     #[test]
     fn lark_config_defaults_optional_fields() {
-        use clawcrew_config::schema::{LarkConfig, LarkReceiveMode};
+        use galleon_config::schema::{LarkConfig, LarkReceiveMode};
         let json = r#"{"app_id":"a","app_secret":"s"}"#;
         let parsed: LarkConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.verification_token.is_none());
@@ -5338,7 +5330,7 @@ mod tests {
 
     #[test]
     fn lark_from_config_preserves_mode_and_region() {
-        use clawcrew_config::schema::{LarkConfig, LarkReceiveMode};
+        use galleon_config::schema::{LarkConfig, LarkReceiveMode};
 
         let cfg = LarkConfig {
             enabled: true,
@@ -5370,7 +5362,7 @@ mod tests {
 
     #[test]
     fn lark_from_config_with_use_feishu_routes_to_feishu() {
-        use clawcrew_config::schema::{LarkConfig, LarkReceiveMode};
+        use galleon_config::schema::{LarkConfig, LarkReceiveMode};
 
         let cfg = LarkConfig {
             enabled: true,
@@ -5401,7 +5393,7 @@ mod tests {
 
     #[test]
     fn lark_with_approval_timeout_secs_propagates_value() {
-        use clawcrew_config::schema::{LarkConfig, LarkReceiveMode};
+        use galleon_config::schema::{LarkConfig, LarkReceiveMode};
 
         let cfg = LarkConfig {
             enabled: true,
@@ -5723,7 +5715,7 @@ mod tests {
             "https://open.larksuite.com/open-apis/im/v1/messages/om_test_message_id/reactions"
         );
 
-        let feishu_cfg = clawcrew_config::schema::LarkConfig {
+        let feishu_cfg = galleon_config::schema::LarkConfig {
             enabled: true,
             app_id: "cli_app123".into(),
             app_secret: "secret456".into(),
@@ -5731,7 +5723,7 @@ mod tests {
             verification_token: Some("vtoken789".into()),
             mention_only: false,
             use_feishu: true,
-            receive_mode: clawcrew_config::schema::LarkReceiveMode::Webhook,
+            receive_mode: galleon_config::schema::LarkReceiveMode::Webhook,
             port: Some(9898),
             proxy_url: None,
             excluded_tools: vec![],
@@ -5890,7 +5882,7 @@ mod tests {
 
     #[test]
     fn lark_manager_none_when_disabled() {
-        let tc = clawcrew_config::schema::TranscriptionConfig {
+        let tc = galleon_config::schema::TranscriptionConfig {
             enabled: false,
             ..Default::default()
         };
@@ -5904,7 +5896,7 @@ mod tests {
     /// channel could not perform, which is the drift this shared path removed.
     #[test]
     fn lark_manager_none_and_warn_on_init_failure() {
-        let tc = clawcrew_config::schema::TranscriptionConfig {
+        let tc = galleon_config::schema::TranscriptionConfig {
             enabled: true,
             api_key: Some(String::new()),
             ..Default::default()
@@ -6036,9 +6028,9 @@ mod tests {
     #[tokio::test]
     async fn lark_audio_file_key_missing_returns_none() {
         let ch = make_channel();
-        let tc = clawcrew_config::schema::TranscriptionConfig {
+        let tc = galleon_config::schema::TranscriptionConfig {
             enabled: true,
-            local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
+            local_whisper: Some(galleon_config::schema::LocalWhisperConfig {
                 url: "http://localhost:0/v1/transcribe".to_string(),
                 bearer_token: Some("unused".to_string()),
                 max_audio_bytes: 10 * 1024 * 1024,
@@ -6122,9 +6114,9 @@ mod tests {
             .mount(&whisper_server)
             .await;
 
-        let config = clawcrew_config::schema::TranscriptionConfig {
+        let config = galleon_config::schema::TranscriptionConfig {
             enabled: true,
-            local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
+            local_whisper: Some(galleon_config::schema::LocalWhisperConfig {
                 url: format!("{}/v1/transcribe", whisper_server.uri()),
                 bearer_token: Some("test-token".to_string()),
                 max_audio_bytes: 10 * 1024 * 1024,
@@ -6286,7 +6278,7 @@ mod tests {
 
     #[test]
     fn build_approval_card_and_resolved_card_share_schema_version() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         let send_card = build_approval_card("id", "shell", "args", None);
         let patch_card =
@@ -6306,7 +6298,7 @@ mod tests {
 
     #[test]
     fn build_resolved_approval_card_uses_decision_specific_banner() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         for (decision, expected_template, expected_text_fragment) in [
             (ChannelApprovalResponse::Approve, "green", "Approved"),
@@ -6470,7 +6462,7 @@ mod tests {
 
     #[tokio::test]
     async fn handle_card_action_event_routes_committed_fixtures() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         let fixtures = [
             (
@@ -6535,7 +6527,7 @@ mod tests {
 
     #[tokio::test]
     async fn handle_card_action_event_parses_card_v2_behaviors_value_payload() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         // Card 2.0 button click events MAY round-trip via
         // event.action.behaviors[0].value instead of event.action.value.
@@ -6574,7 +6566,7 @@ mod tests {
 
     #[tokio::test]
     async fn card_action_ingress_suppresses_rejected_approval_envelopes() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         let ch = make_channel();
         let (approved_tx, approved_rx) = tokio::sync::oneshot::channel();
@@ -6676,7 +6668,7 @@ mod tests {
             extract::State,
             http::{HeaderMap, HeaderValue, StatusCode},
         };
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         fn signed_headers(body: &[u8], encrypt_key: &str) -> HeaderMap {
             let timestamp = "1720000000";
@@ -6957,7 +6949,7 @@ mod tests {
     }
     #[tokio::test]
     async fn pending_approval_requires_allowed_user_and_origin_chat() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         let ch = make_channel();
         let approval_id = "approval-test".to_string();
@@ -7031,7 +7023,7 @@ mod tests {
 
     #[tokio::test]
     async fn request_approval_registers_before_send_so_early_callback_resolves() {
-        use clawcrew_api::channel::{
+        use galleon_api::channel::{
             ApprovalSource, ChannelApprovalRequest, ChannelApprovalResponse,
         };
         use std::time::Duration;
@@ -7159,7 +7151,7 @@ mod tests {
         let mock_server = wiremock::MockServer::start().await;
         mount_lark_token_and_send_mocks(&mock_server, "chat_id").await;
 
-        let config = clawcrew_config::schema::LarkConfig {
+        let config = galleon_config::schema::LarkConfig {
             enabled: true,
             use_feishu: false,
             app_id: "cli_test_app_id".to_string(),
@@ -7195,7 +7187,7 @@ mod tests {
         let mock_server = wiremock::MockServer::start().await;
         mount_lark_token_and_send_mocks(&mock_server, "chat_id").await;
 
-        let config = clawcrew_config::schema::LarkConfig {
+        let config = galleon_config::schema::LarkConfig {
             enabled: true,
             use_feishu: true,
             app_id: "cli_test_app_id".to_string(),
@@ -7232,7 +7224,7 @@ mod tests {
         let mock_server = wiremock::MockServer::start().await;
         mount_lark_token_and_send_mocks(&mock_server, "open_id").await;
 
-        let config = clawcrew_config::schema::LarkConfig {
+        let config = galleon_config::schema::LarkConfig {
             enabled: true,
             use_feishu: false,
             app_id: "cli_test_app_id".to_string(),
@@ -7295,7 +7287,7 @@ mod tests {
         let workspace = tempfile::tempdir().expect("workspace");
         std::fs::write(workspace.path().join("photo.png"), b"\x89PNG\r\n\x1a\n")
             .expect("write image");
-        let config = clawcrew_config::schema::LarkConfig {
+        let config = galleon_config::schema::LarkConfig {
             enabled: true,
             use_feishu: false,
             app_id: "cli_test_app_id".to_string(),
@@ -7384,7 +7376,7 @@ mod tests {
 
         let workspace = tempfile::tempdir().expect("workspace");
         std::fs::write(workspace.path().join("brief.txt"), b"brief").expect("write document");
-        let config = clawcrew_config::schema::LarkConfig {
+        let config = galleon_config::schema::LarkConfig {
             enabled: true,
             use_feishu: false,
             app_id: "cli_test_app_id".to_string(),
@@ -7596,7 +7588,7 @@ mod tests {
 
     #[tokio::test]
     async fn remove_reaction_caches_id_from_add_and_deletes() {
-        use clawcrew_api::channel::Channel;
+        use galleon_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7658,7 +7650,7 @@ mod tests {
 
     #[tokio::test]
     async fn remove_reaction_silent_on_cache_miss() {
-        use clawcrew_api::channel::Channel;
+        use galleon_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7692,7 +7684,7 @@ mod tests {
 
     #[tokio::test]
     async fn remove_reaction_tolerates_server_stale_codes() {
-        use clawcrew_api::channel::Channel;
+        use galleon_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7752,7 +7744,7 @@ mod tests {
 
     #[tokio::test]
     async fn add_reaction_caches_glance_under_unicode_key() {
-        use clawcrew_api::channel::Channel;
+        use galleon_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7810,7 +7802,7 @@ mod tests {
 
     #[tokio::test]
     async fn lark_inbound_ack_lifecycle_swaps_glance_to_done_with_no_orphan() {
-        use clawcrew_api::channel::Channel;
+        use galleon_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -7926,7 +7918,7 @@ mod tests {
 
     #[tokio::test]
     async fn lark_fast_ack_and_generic_path_dedupe_on_cache_hit() {
-        use clawcrew_api::channel::Channel;
+        use galleon_api::channel::Channel;
         use wiremock::matchers::{method, path_regex};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 

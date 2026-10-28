@@ -101,7 +101,7 @@ message GitToolArgs {
    - `TestNativeToolSSOT_WriteFileContentSchema`: Memastikan skema Go menggunakan `content` dan bukan `contents`.
    - `TestNativeToolSSOT_WorkspacePathPopulated`: Memastikan `workspace_path` selalu terisi di gRPC `ToolCallRequest`.
    - `TestNativeToolSSOT_CatalogQuery`: Memverifikasi kueri `GetNativeToolCatalog`.
-2. **Rust Integration Test:** `crates/clawcrew-gateway/tests/system_gateway_integration_test.rs`
+2. **Rust Integration Test:** `crates/galleon-gateway/tests/system_gateway_integration_test.rs`
    - `go_callable_grpc_surface_executes_write_file_with_content_key`: Lolos uji roundtrip tulis file dengan `"content"` melalui wire gRPC nyata.
    - `go_callable_grpc_surface_accepts_alias_execute_command`: Lolos uji alias eksekusi perintah shell.
    - `go_callable_grpc_surface_returns_native_tool_catalog`: Lolos uji pemanggilan `GetNativeToolCatalog`.

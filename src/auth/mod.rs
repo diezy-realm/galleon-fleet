@@ -1,30 +1,30 @@
 #[allow(unused_imports)]
-pub use clawcrew_providers::auth::*;
+pub use galleon_providers::auth::*;
 pub mod anthropic_token {
     #[allow(unused_imports)]
-    pub use clawcrew_providers::auth::anthropic_token::*;
+    pub use galleon_providers::auth::anthropic_token::*;
 }
 pub mod email_oauth2 {
     #[allow(unused_imports)]
-    pub use clawcrew_providers::auth::email_oauth2::*;
+    pub use galleon_providers::auth::email_oauth2::*;
 }
 pub mod gemini_oauth {
     #[allow(unused_imports)]
-    pub use clawcrew_providers::auth::gemini_oauth::*;
+    pub use galleon_providers::auth::gemini_oauth::*;
 }
 pub mod oauth_common {
     #[allow(unused_imports)]
-    pub use clawcrew_providers::auth::oauth_common::*;
+    pub use galleon_providers::auth::oauth_common::*;
 }
 pub mod openai_oauth {
     #[allow(unused_imports)]
-    pub use clawcrew_providers::auth::openai_oauth::*;
+    pub use galleon_providers::auth::openai_oauth::*;
 }
 pub mod profiles {
     #[allow(unused_imports)]
-    pub use clawcrew_providers::auth::profiles::*;
+    pub use galleon_providers::auth::profiles::*;
 }
 pub mod xai_oauth {
     #[allow(unused_imports)]
-    pub use clawcrew_providers::auth::xai_oauth::*;
+    pub use galleon_providers::auth::xai_oauth::*;
 }

@@ -4,20 +4,17 @@
 //! and sending messages through its HTTP endpoints.
 
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use serde_json::json;
 use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
 /// Deduplication set capacity — evict half of entries when full.
 const DEDUP_CAPACITY: usize = 10_000;
 
-async fn ensure_success(
-    resp: reqwest::Response,
-    what: &str,
-) -> anyhow::Result<reqwest::Response> {
+async fn ensure_success(resp: reqwest::Response, what: &str) -> anyhow::Result<reqwest::Response> {
     if resp.status().is_success() {
         return Ok(resp);
     }
@@ -68,7 +65,7 @@ impl MochatChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_runtime_proxy_client("channel.mochat")
+        galleon_config::schema::build_runtime_proxy_client("channel.mochat")
     }
 
     fn is_user_allowed(&self, user_id: &str) -> bool {
@@ -104,9 +101,9 @@ impl MochatChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for MochatChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::MoChat)
+impl ::galleon_api::attribution::Attributable for MochatChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::MoChat)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -153,9 +150,9 @@ impl Channel for MochatChannel {
     }
 
     async fn listen(&self, tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "starting message poller"
         );
 
@@ -180,13 +177,13 @@ impl Channel for MochatChannel {
                     let data: serde_json::Value = match resp.json().await {
                         Ok(d) => d,
                         Err(e) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "failed to parse response"
                             );
@@ -219,11 +216,11 @@ impl Channel for MochatChannel {
                                 .unwrap_or("unknown");
 
                             if !self.is_user_allowed(sender) {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     DEBUG,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
                                     .with_attrs(::serde_json::json!({"sender": sender})),
                                     "ignoring message from unauthorized user"
@@ -237,7 +234,7 @@ impl Channel for MochatChannel {
                                     c.get("text")
                                         .and_then(|t| t.as_str())
                                         .or_else(|| c.as_str())
-                                    })
+                                })
                                 .unwrap_or("")
                                 .trim();
 
@@ -265,13 +262,13 @@ impl Channel for MochatChannel {
                             };
 
                             if tx.send(channel_msg).await.is_err() {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     WARN,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     )
-                                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                                     "message channel closed"
                                 );
                                 return Ok(());
@@ -286,13 +283,13 @@ impl Channel for MochatChannel {
                 Ok(resp) => {
                     let status = resp.status();
                     let err = resp.text().await.unwrap_or_default();
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", err), "status": status.to_string()})), "poll request failed");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", err), "status": status.to_string()})), "poll request failed");
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "poll request error"
                     );
@@ -433,7 +430,7 @@ api_url = "https://mochat.example.com"
 api_token = "secret"
 allowed_users = ["user1"]
 "#;
-        let cfg = clawcrew_config::migration::migrate_to_current(v2_toml)
+        let cfg = galleon_config::migration::migrate_to_current(v2_toml)
             .expect("V2 mochat config migrates to V3");
         let mochat = cfg
             .channels
@@ -464,7 +461,7 @@ enabled = true
 api_url = "https://mochat.example.com"
 api_token = "secret"
 "#;
-        let cfg = clawcrew_config::migration::migrate_to_current(v2_toml)
+        let cfg = galleon_config::migration::migrate_to_current(v2_toml)
             .expect("V2 mochat config without allowed_users migrates");
         assert!(
             !cfg.peer_groups.contains_key("mochat_default"),

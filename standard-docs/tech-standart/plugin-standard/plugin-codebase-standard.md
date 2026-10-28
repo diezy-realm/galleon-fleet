@@ -1,19 +1,19 @@
 # Plugin & Channel Codebase Standard
 
 > **Status:** Normatif (Proposed → berlaku setelah sign-off Lead + PO)
-> **Berdasarkan:** `ADR-001-channel-plugin-distribution.md`, `wit/v0/*.wit` (beku, `wit/v0/.frozen`), `crates/clawcrew-plugins`, fixture di `crates/clawcrew-plugins/tests/fixtures/`.
+> **Berdasarkan:** `ADR-001-channel-plugin-distribution.md`, `wit/v0/*.wit` (beku, `wit/v0/.frozen`), `crates/galleon-plugins`, fixture di `crates/galleon-plugins/tests/fixtures/`.
 > **Catatan:** ADR tidak diedit; koreksi fakta ada di `phase-5-production-hardening/README.md` §1.4.
 
 ## 1. Pilih tier dengan pohon keputusan
 
 ```
 Channel/ekstensi baru
- ├─ Identitas inti produk / berbagi governance primitive (approval queue) dgn Tier A? ──► Tier A: embed di clawcrew-channels
+ ├─ Identitas inti produk / berbagi governance primitive (approval queue) dgn Tier A? ──► Tier A: embed di galleon-channels
  ├─ Butuh socket 2-arah native / native crypto / SDK berat / HTTP outbound aktif / OS-spesifik? ──► Tier B: crate galleon-channel-<name> (compiled-in, Cargo feature)
  └─ Cukup inbound webhook/polling, niche/regional, boleh di-sandbox? ──► Tier C: WASI plugin (signed, hot-load)
 ```
 
-Tool, memory backend, observer, skill: default **Tier C (WASI)** bila tidak butuh akses native; selain itu feature-crate. Mengacu ke `PluginCapability` (`Tool | Channel | Memory | Observer | Skill`) di `clawcrew-plugins`.
+Tool, memory backend, observer, skill: default **Tier C (WASI)** bila tidak butuh akses native; selain itu feature-crate. Mengacu ke `PluginCapability` (`Tool | Channel | Memory | Observer | Skill`) di `galleon-plugins`.
 
 ## 2. Aturan umum (semua tier)
 
@@ -64,15 +64,15 @@ Pola referensi: `galleon-channel-signal`, `-imessage`, `-bluesky` (1 file, < 1.3
 
 ```
 crates/galleon-channel-<name>/
-├── Cargo.toml     # name = "galleon-channel-<name>"; deps hanya: clawcrew-api, galleon-channel-core, clawcrew-log, + SDK
+├── Cargo.toml     # name = "galleon-channel-<name>"; deps hanya: galleon-api, galleon-channel-core, galleon-log, + SDK
 ├── src/lib.rs     # impl trait Channel dari galleon-channel-core; fasad kecil
 └── src/{transport,codec,auth,config,error}.rs   # pecah bila > 800 baris
 ```
 
 Aturan tambahan:
-- **Dilarang** mengimpor `clawcrew-runtime` atau `clawcrew-channels` (arah dependency; dikunci CI). Kebutuhan runtime lewat trait di crate kontrak/`galleon-channel-core`.
-- Registrasi mandiri (self-register) via `galleon-channel-core`; `clawcrew-channels` hanya meng-*aggregate* di balik Cargo feature `channel-<name>`.
-- Feature flag di bin/`clawcrew-channels`: `channel-<name>`; masuk `default-channels` **hanya** jika Tier A.
+- **Dilarang** mengimpor `galleon-runtime` atau `galleon-channels` (arah dependency; dikunci CI). Kebutuhan runtime lewat trait di crate kontrak/`galleon-channel-core`.
+- Registrasi mandiri (self-register) via `galleon-channel-core`; `galleon-channels` hanya meng-*aggregate* di balik Cargo feature `channel-<name>`.
+- Feature flag di bin/`galleon-channels`: `channel-<name>`; masuk `default-channels` **hanya** jika Tier A.
 - Platform-spesifik dengan `#[cfg(target_os = "...")]` dan target `compile_error!`/stub yang jelas; tidak ada kode mati.
 - Test: unit tanpa jaringan (mock transport) + 1 contract test terhadap trait `Channel`.
 - Ambang pecah: bila crate > 5k baris, pisahkan `-protocol` (pure codec) dari `-transport`.

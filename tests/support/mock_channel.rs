@@ -3,8 +3,8 @@
 //! injection and response capture for race-free testing.
 
 use async_trait::async_trait;
-use std::sync::{Arc, Mutex};
 use clawcrew::channels::{Channel, ChannelMessage, SendMessage};
+use std::sync::{Arc, Mutex};
 
 /// A test channel that captures sent messages and supports message injection.
 pub struct TestChannel {
@@ -45,11 +45,9 @@ impl TestChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for TestChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Webhook,
-        )
+impl ::galleon_api::attribution::Attributable for TestChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Webhook)
     }
     fn alias(&self) -> &str {
         "test"

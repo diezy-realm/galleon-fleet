@@ -17,13 +17,13 @@
 
 ## T-06 — BL-20/21/22 (MCP client host)
 
-**Keputusan: Bukan keputusan arsitektur — audit awal yang salah.** MCP client host genuinely ADA di `crates/clawcrew-tools/src/mcp_*.rs` (10 file), terpisah total dari WASM plugin host (`clawcrew-plugins/`). Dokumen gap-analysis-nya (`mcp-sandbox-gap-and-vault-mediation.md`) sudah ditulis solid 2026-10-07, ADR WASM-vs-MCP (`decisions/adr-wasm-plugin-vs-mcp.md`) sudah `Accepted`.
+**Keputusan: Bukan keputusan arsitektur — audit awal yang salah.** MCP client host genuinely ADA di `crates/galleon-tools/src/mcp_*.rs` (10 file), terpisah total dari WASM plugin host (`galleon-plugins/`). Dokumen gap-analysis-nya (`mcp-sandbox-gap-and-vault-mediation.md`) sudah ditulis solid 2026-10-07, ADR WASM-vs-MCP (`decisions/adr-wasm-plugin-vs-mcp.md`) sudah `Accepted`.
 
 **Tindakan:** BL-20/21/22 checkbox dipertahankan `[x]` di `sprint-5-mcp-plugin-and-subagent-resource.md`. **T-06 dihapus dari daftar kerja — tidak ada yang perlu dieksekusi tim.**
 
 ## T-08 — BG-C2 (dua device-registry paralel: Go `TokenStore` vs Rust `DeviceRegistry`)
 
-**Keputusan: Opsi A.** Rust `DeviceRegistry` (`crates/clawcrew-gateway/src/api_pairing.rs`, SQLite-persistent) jadi Single Source of Truth. Go `memoryPairingService`/`TokenStore` (`engine/src/identity/`, in-memory) menjadi cache sinkron di atas Rust via gRPC `SystemGateway` existing — bukan sumber kebenaran independen.
+**Keputusan: Opsi A.** Rust `DeviceRegistry` (`crates/galleon-gateway/src/api_pairing.rs`, SQLite-persistent) jadi Single Source of Truth. Go `memoryPairingService`/`TokenStore` (`engine/src/identity/`, in-memory) menjadi cache sinkron di atas Rust via gRPC `SystemGateway` existing — bukan sumber kebenaran independen.
 
 **Rasional:** field keduanya hampir identik (DeviceID↔id, PairedAt↔paired_at, dst), Rust sudah persistent (survive restart), Go in-memory tidak (restart Go = device hilang dari sisi Go meski masih ada di Rust) — risiko drift nyata di produksi.
 

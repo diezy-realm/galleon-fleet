@@ -4,7 +4,7 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Bluesky channel feature-crate (RF-B1 split; AT Protocol session/record + notification-poll body ported from clawcrew-channels::bluesky)."
+description = "Bluesky channel feature-crate (RF-B1 split; AT Protocol session/record + notification-poll body ported from galleon-channels::bluesky)."
 repository.workspace = true
 homepage.workspace = true
 publish = true
@@ -12,13 +12,13 @@ publish = true
 [dependencies]
 # RF-B1: the ported AT Protocol body is a `com.atproto` HTTP client over
 # reqwest with serde record/notification types, so it carries the HTTP + serde
-# + chrono deps upstream `clawcrew-channels` uses for this channel. Seam #1
+# + chrono deps upstream `galleon-channels` uses for this channel. Seam #1
 # (allowlist peer-policy) comes from `galleon-channel-core`, which shares the
-# real `clawcrew_config` peer-policy SSOT WITHOUT dragging clawcrew-runtime.
+# real `clawcrew_config` peer-policy SSOT WITHOUT dragging galleon-runtime.
 # The remaining ceilings are env-proxy client + structured logging (both need
-# clawcrew-config/clawcrew-log) — documented in lib.rs.
+# galleon-config/galleon-log) — documented in lib.rs.
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 anyhow = "1.0"
 async-trait = "0.1"
 chrono = { version = "0.4", default-features = false, features = [

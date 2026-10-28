@@ -30,14 +30,14 @@ use tokio::sync::{Mutex, mpsc};
 use tokio::time::{sleep, timeout};
 use tokio_rustls::TlsConnector;
 
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_tools::email_imap::{ImapSession, TlsStreamTolerant};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_tools::email_imap::{ImapSession, TlsStreamTolerant};
 
-pub use clawcrew_config::scattered_types::EmailConfig;
+pub use galleon_config::scattered_types::EmailConfig;
 
 // `TlsStreamTolerant` (the rustls wrapper that turns Exchange's missing
 // `close_notify` into a graceful EOF) and the `ImapSession` alias live in
-// `clawcrew_tools::email_imap`, the canonical IMAP utility shared by the
+// `galleon_tools::email_imap`, the canonical IMAP utility shared by the
 // read-only email tools. Imported here so there is a single definition.
 
 pub struct EmailChannel {
@@ -49,7 +49,7 @@ pub struct EmailChannel {
     /// No cache (see AGENTS.md "ABSOLUTE RULE — SINGLE SOURCE OF TRUTH").
     pub peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
     seen_messages: Arc<Mutex<HashSet<String>>>,
-    auth_service: Option<Arc<clawcrew_providers::auth::AuthService>>,
+    auth_service: Option<Arc<galleon_providers::auth::AuthService>>,
 }
 
 impl EmailChannel {
@@ -71,7 +71,7 @@ impl EmailChannel {
     /// channels configured with `[channels.email.<alias>.oauth2]`.
     pub fn with_auth_service(
         mut self,
-        auth_service: Arc<clawcrew_providers::auth::AuthService>,
+        auth_service: Arc<galleon_providers::auth::AuthService>,
     ) -> Self {
         self.auth_service = Some(auth_service);
         self
@@ -182,7 +182,7 @@ impl EmailChannel {
     fn extract_attachments(
         &self,
         parsed: &mail_parser::Message,
-    ) -> Vec<clawcrew_api::media::MediaAttachment> {
+    ) -> Vec<galleon_api::media::MediaAttachment> {
         let mut attachments = Vec::new();
         let mut total_size = 0;
 
@@ -207,10 +207,10 @@ impl EmailChannel {
             // Check size limit
             total_size += data.len();
             if total_size > self.config.max_attachment_bytes {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "Attachment size limit exceeded ({} bytes), dropping remaining attachments",
                         self.config.max_attachment_bytes
@@ -223,7 +223,7 @@ impl EmailChannel {
                 .unwrap_or("attachment")
                 .to_string();
 
-            attachments.push(clawcrew_api::media::MediaAttachment {
+            attachments.push(galleon_api::media::MediaAttachment {
                 file_name,
                 data,
                 mime_type: mime_str,
@@ -260,9 +260,9 @@ impl EmailChannel {
     /// Connect to IMAP server with TLS and authenticate
     async fn connect_imap(&self) -> Result<ImapSession> {
         let addr = format!("{}:{}", self.config.imap_host, self.config.imap_port);
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("Connecting to IMAP server at {}", addr)
         );
 
@@ -309,10 +309,10 @@ impl EmailChannel {
                 )
                 .await
                 .map_err(|(e, _)| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "phase": "imap_xoauth2",
                                 "error": format!("{}", e),
@@ -326,10 +326,10 @@ impl EmailChannel {
                 .login(&self.config.username, &self.config.password)
                 .await
                 .map_err(|(e, _)| {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "phase": "imap_login",
                                 "error": format!("{}", e),
@@ -340,9 +340,9 @@ impl EmailChannel {
                 })?
         };
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "IMAP login successful"
         );
         Ok(session)
@@ -355,7 +355,7 @@ impl EmailChannel {
     fn sanitize_subject(subject: &str) -> String {
         let mut cleaned = subject;
         while let Some(rest) =
-            cleaned.strip_prefix(clawcrew_api::channel::CHANNEL_SOP_SUBJECT_PREFIX)
+            cleaned.strip_prefix(galleon_api::channel::CHANNEL_SOP_SUBJECT_PREFIX)
         {
             cleaned = rest;
         }
@@ -522,9 +522,9 @@ impl EmailChannel {
         uid_list.sort_unstable();
         let new_threshold = uid_list.last().copied().unwrap_or(uid_threshold) + 1;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("New message(s) arrived: {} uid(s)", uid_list.len())
         );
 
@@ -569,9 +569,9 @@ impl EmailChannel {
         let mut idle = session.idle();
         idle.init().await?;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "Entering IMAP IDLE mode"
         );
 
@@ -583,9 +583,9 @@ impl EmailChannel {
 
         match result {
             Ok(Ok(response)) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!("IDLE response: {:?}", response)
                 );
                 // Done with IDLE, return session to normal mode
@@ -600,10 +600,10 @@ impl EmailChannel {
             Ok(Err(e)) => {
                 // Try to clean up IDLE state
                 let _ = idle.done().await;
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({
                             "phase": "idle_wait",
                             "error": format!("{}", e),
@@ -614,9 +614,9 @@ impl EmailChannel {
             }
             Err(_) => {
                 // Timeout - RFC 2177 recommends restarting IDLE every 29 minutes
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "IDLE timeout reached, will re-establish"
                 );
                 let session = idle.done().await?;
@@ -636,10 +636,10 @@ impl EmailChannel {
                     return Ok(());
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         &format!(
                             "IMAP session error: {}. Reconnecting in {:?}...",
                             e, backoff
@@ -662,9 +662,9 @@ impl EmailChannel {
 
         let uid_threshold = if self.config.observer_mode {
             let threshold = mailbox.uid_next.unwrap_or(1);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "Email channel observer mode: will only process messages with UID >= {} (no flag changes ever)",
                     threshold
@@ -689,9 +689,9 @@ impl EmailChannel {
         };
 
         if has_idle {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "Email channel listening on {} (IMAP IDLE, instant push, uid_threshold={})",
                     self.config.imap_folder, uid_threshold
@@ -701,9 +701,9 @@ impl EmailChannel {
                 .await
         } else {
             let poll_interval = Duration::from_secs(self.config.poll_interval_secs);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "Email channel listening on {} (IMAP polling, interval: {:?}, uid_threshold={})",
                     self.config.imap_folder, poll_interval, uid_threshold
@@ -725,9 +725,9 @@ impl EmailChannel {
         loop {
             match self.wait_for_changes(session).await {
                 Ok((IdleWaitResult::NewMail, returned_session)) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "New mail notification received"
                     );
                     session = returned_session;
@@ -742,9 +742,9 @@ impl EmailChannel {
                         .await?;
                 }
                 Ok((IdleWaitResult::Interrupted, _)) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "IDLE interrupted, exiting"
                     );
                     return Ok(());
@@ -780,10 +780,10 @@ impl EmailChannel {
         tx: &mpsc::Sender<ChannelMessage>,
     ) -> Result<bool> {
         if !self.is_sender_allowed(&email.sender) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("Blocked email from {}", email.sender)
             );
             return Ok(true);
@@ -798,10 +798,10 @@ impl EmailChannel {
         let reply_target = match email.reply_to.as_ref() {
             Some(reply_to) if self.is_sender_allowed(reply_to) => reply_to.clone(),
             Some(_) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     "Ignoring email Reply-To because the destination is not allowlisted"
                 );
                 email.sender.clone()
@@ -953,7 +953,7 @@ struct ParsedEmail {
     subject: String,
     content: String,
     timestamp: u64,
-    attachments: Vec<clawcrew_api::media::MediaAttachment>,
+    attachments: Vec<galleon_api::media::MediaAttachment>,
 }
 
 /// Result from waiting on IDLE
@@ -963,9 +963,9 @@ enum IdleWaitResult {
     Interrupted,
 }
 
-impl ::clawcrew_api::attribution::Attributable for EmailChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Email)
+impl ::galleon_api::attribution::Attributable for EmailChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Email)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -1024,9 +1024,9 @@ impl Channel for EmailChannel {
         let email = self.build_email_message(message)?;
         let transport = self.create_smtp_transport()?;
         transport.send(&email)?;
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "Email sent to {} ({} attachments)",
                 message.recipient,
@@ -1037,9 +1037,9 @@ impl Channel for EmailChannel {
     }
 
     async fn listen(&self, tx: mpsc::Sender<ChannelMessage>) -> Result<()> {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!(
                 "Starting email channel on {} (IDLE preferred, polling fallback)",
                 self.config.imap_folder
@@ -1057,17 +1057,17 @@ impl Channel for EmailChannel {
                 true
             }
             Ok(Err(e)) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     &format!("Health check failed: {}", e)
                 );
                 false
             }
             Err(_) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "Health check timed out"
                 );
                 false
@@ -1076,7 +1076,7 @@ impl Channel for EmailChannel {
     }
 }
 
-fn build_attachment_parts(attachments: &[clawcrew_api::media::MediaAttachment]) -> Vec<SinglePart> {
+fn build_attachment_parts(attachments: &[galleon_api::media::MediaAttachment]) -> Vec<SinglePart> {
     attachments
         .iter()
         .map(|attachment| {
@@ -1126,7 +1126,7 @@ mod tests {
         let forged = "clawcrew:sop-event:git.main:pull_request.opened";
         let cleaned = super::EmailChannel::sanitize_subject(forged);
         assert!(
-            !cleaned.starts_with(clawcrew_api::channel::CHANNEL_SOP_SUBJECT_PREFIX),
+            !cleaned.starts_with(galleon_api::channel::CHANNEL_SOP_SUBJECT_PREFIX),
             "reserved prefix must be stripped, got: {cleaned}"
         );
         assert_eq!(cleaned, "git.main:pull_request.opened");
@@ -1171,8 +1171,8 @@ mod tests {
     fn outbound_attachment(
         file_name: impl Into<String>,
         data: Vec<u8>,
-    ) -> clawcrew_api::media::MediaAttachment {
-        clawcrew_api::media::MediaAttachment {
+    ) -> galleon_api::media::MediaAttachment {
+        galleon_api::media::MediaAttachment {
             file_name: file_name.into(),
             data,
             mime_type: None,
@@ -1180,7 +1180,7 @@ mod tests {
         }
     }
 
-    fn rendered_attachment(attachment: clawcrew_api::media::MediaAttachment) -> Vec<u8> {
+    fn rendered_attachment(attachment: galleon_api::media::MediaAttachment) -> Vec<u8> {
         let mut parts = build_attachment_parts(&[attachment]);
         let email = Message::builder()
             .from("sender@example.invalid".parse().unwrap())

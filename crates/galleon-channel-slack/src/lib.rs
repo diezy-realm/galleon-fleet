@@ -2,12 +2,12 @@ use anyhow::Context;
 use async_trait::async_trait;
 use base64::Engine as _;
 use chrono::Utc;
-use clawcrew_api::channel::{
+use futures_util::{SinkExt, StreamExt};
+use galleon_api::channel::{
     Channel, ChannelApprovalRequest, ChannelApprovalResponse, ChannelMessage, ProgressEvent,
     SendMessage,
 };
-use clawcrew_api::media::MediaAttachment;
-use futures_util::{SinkExt, StreamExt};
+use galleon_api::media::MediaAttachment;
 use galleon_i18n as i18n;
 use reqwest::header::HeaderMap;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -47,8 +47,10 @@ pub fn approval_position_line(position: Option<(u32, u32)>) -> String {
                     ("total", total.to_string().as_str()),
                 ],
             );
-            format!("{text}
-")
+            format!(
+                "{text}
+"
+            )
         }
         None => String::new(),
     }
@@ -102,7 +104,10 @@ pub fn localized_lifecycle_progress(event: ProgressEvent) -> String {
 #[cfg(test)]
 pub fn conversation_history_key(msg: &ChannelMessage) -> String {
     match &msg.thread_ts {
-        Some(tid) => format!("{}_{}_{}_{}", msg.channel, msg.reply_target, tid, msg.sender),
+        Some(tid) => format!(
+            "{}_{}_{}_{}",
+            msg.channel, msg.reply_target, tid, msg.sender
+        ),
         None => format!("{}_{}_{}", msg.channel, msg.reply_target, msg.sender),
     }
 }
@@ -313,7 +318,7 @@ pub struct SlackChannel {
     api_base_url: Option<String>,
     /// Voice transcription config — when set, audio file attachments are
     /// downloaded, transcribed, and their text inlined into the message.
-    transcription: Option<clawcrew_config::schema::TranscriptionConfig>,
+    transcription: Option<galleon_config::schema::TranscriptionConfig>,
     transcription_manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     /// Enable progressive draft message updates via `chat.update`.
     stream_drafts: bool,
@@ -573,7 +578,7 @@ impl SlackChannel {
             seen_threads: Mutex::new(HashSet::new()),
             api_method_cooldowns,
             thread_context_max_messages_resolver: Arc::new(|| {
-                clawcrew_config::schema::DEFAULT_SLACK_THREAD_CONTEXT_MAX_MESSAGES
+                galleon_config::schema::DEFAULT_SLACK_THREAD_CONTEXT_MAX_MESSAGES
             }),
             use_markdown_blocks: false,
             proxy_url: None,
@@ -700,7 +705,10 @@ impl SlackChannel {
     /// the legacy section, so it binds a lone registered provider and
     /// otherwise leaves the choice unbound (see
     /// `transcription::manager_from_snapshot`).
-    pub fn with_transcription(mut self, config: clawcrew_config::schema::TranscriptionConfig) -> Self {
+    pub fn with_transcription(
+        mut self,
+        config: galleon_config::schema::TranscriptionConfig,
+    ) -> Self {
         #[cfg(test)]
         {
             if config.enabled {
@@ -722,7 +730,7 @@ impl SlackChannel {
     /// transcription it cannot perform.
     pub fn with_transcription_manager(
         mut self,
-        config: clawcrew_config::schema::TranscriptionConfig,
+        config: galleon_config::schema::TranscriptionConfig,
         manager: Option<std::sync::Arc<dyn AudioTranscriber>>,
     ) -> Self {
         if let Some(manager) = manager {
@@ -768,9 +776,9 @@ impl SlackChannel {
                 .get("error")
                 .and_then(|e| e.as_str())
                 .unwrap_or("unknown");
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                 "chat.delete failed"
             );
@@ -912,10 +920,10 @@ impl SlackChannel {
             // may still be showing status in Slack and nothing owns clearing it
             // any more. Bounding memory must not silently orphan external
             // state, so record it with the target and how long it was held.
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "channel_id": victim.channel_id,
                         "thread_ts": victim.thread_ts,
@@ -1027,10 +1035,10 @@ impl SlackChannel {
                 }
                 Err(e) => {
                     let last = attempt + 1 == ASSISTANT_STATUS_CLEAR_ATTEMPTS;
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "channel_id": target.channel_id,
                                 "thread_ts": target.thread_ts,
@@ -1087,14 +1095,15 @@ impl SlackChannel {
                 .map(|(target, _)| target.clone())
         {
             threads.remove(&victim);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "channel_id": victim.channel_id,
                         "thread_ts": victim.thread_ts,
                         "cap": ASSISTANT_THREAD_REGISTRY_CAP,
-                    })),
+                    })
+                ),
                 "Dropped the least recently seen Assistant thread at cap; a new \
                  event for it will re-register it"
             );
@@ -1134,7 +1143,7 @@ impl SlackChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_channel_proxy_client_with_timeouts(
+        galleon_config::schema::build_channel_proxy_client_with_timeouts(
             "channel.slack",
             self.proxy_url.as_deref(),
             30,
@@ -1294,7 +1303,7 @@ impl SlackChannel {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
-            let sanitized = clawcrew_providers::sanitize_api_error(&raw);
+            let sanitized = galleon_providers::sanitize_api_error(&raw);
             anyhow::bail!("Slack file byte upload failed ({status}): {sanitized}");
         }
 
@@ -1341,10 +1350,10 @@ impl SlackChannel {
                 .await?;
         }
         if attachments.len() > SLACK_ATTACHMENT_MAX_FILES_PER_MESSAGE {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"count": attachments.len()})),
                 "truncated Slack outbound attachment list"
             );
@@ -1373,7 +1382,7 @@ impl SlackChannel {
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&raw);
+            let sanitized = galleon_providers::sanitize_api_error(&raw);
             anyhow::bail!("chat.postMessage failed ({status}): {sanitized}");
         }
 
@@ -1391,10 +1400,10 @@ impl SlackChannel {
             .and_then(|v| v.as_str())
             .map(String::from)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(
                             ::serde_json::json!({"field": "ts", "api": "chat.postMessage"})
                         ),
@@ -1429,7 +1438,7 @@ impl SlackChannel {
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&raw);
+            let sanitized = galleon_providers::sanitize_api_error(&raw);
             anyhow::bail!("chat.update failed ({status}): {sanitized}");
         }
 
@@ -1638,10 +1647,10 @@ impl SlackChannel {
         {
             Ok(response) => response,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": format!("{}", err), "user_id": user_id})
                         ),
@@ -1658,8 +1667,8 @@ impl SlackChannel {
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "status": status.to_string(), "sanitized": sanitized})), "users.info failed for");
+            let sanitized = galleon_providers::sanitize_api_error(&body);
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"user_id": user_id, "status": status.to_string(), "sanitized": sanitized})), "users.info failed for");
             return None;
         }
 
@@ -1669,10 +1678,10 @@ impl SlackChannel {
                 .get("error")
                 .and_then(|e| e.as_str())
                 .unwrap_or("unknown");
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(
                         ::serde_json::json!({"error": format!("{}", err), "user_id": user_id})
                     ),
@@ -2139,10 +2148,10 @@ impl SlackChannel {
         {
             Ok(response) => response,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "Slack permalink resolver: conversations.history request failed for channel={} ts={}: {}",
                         channel_id, message_ts, err
@@ -2158,11 +2167,11 @@ impl SlackChannel {
             .await
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
-            ::clawcrew_log::record!(
+            let sanitized = galleon_providers::sanitize_api_error(&body);
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "Slack permalink resolver: conversations.history failed for channel={} ts={} ({}): {}",
                     channel_id, message_ts, status, sanitized
@@ -2187,7 +2196,7 @@ impl SlackChannel {
                         .to_string(),
                 ),
                 _ => {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown), &format!("Slack permalink resolver: conversations.history returned error for channel={} ts={}: {}", channel_id, message_ts, err));
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown), &format!("Slack permalink resolver: conversations.history returned error for channel={} ts={}: {}", channel_id, message_ts, err));
                     SlackPermalinkLookup::NotFound
                 }
             };
@@ -2324,10 +2333,10 @@ impl SlackChannel {
         loop {
             if requests_made == SLACK_THREAD_BACKFILL_MAX_REQUESTS {
                 fetch_budget_exhausted = true;
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "channel_id": channel_id,
                             "thread_ts": thread_ts,
@@ -2349,10 +2358,10 @@ impl SlackChannel {
                 )
                 .await
             else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "channel_id": channel_id,
                             "thread_ts": thread_ts,
@@ -2367,10 +2376,10 @@ impl SlackChannel {
                 .and_then(serde_json::Value::as_array)
                 .map(Vec::as_slice)
             else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "channel_id": channel_id,
                             "thread_ts": thread_ts,
@@ -2398,10 +2407,10 @@ impl SlackChannel {
                 Some(serde_json::Value::String(value)) if value.is_empty() => break,
                 Some(serde_json::Value::String(value)) => value.as_str(),
                 Some(_) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "channel_id": channel_id,
                                 "thread_ts": thread_ts,
@@ -2412,10 +2421,10 @@ impl SlackChannel {
                 }
             };
             if !seen_cursors.insert(next_cursor.to_string()) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "channel_id": channel_id,
                             "thread_ts": thread_ts,
@@ -2443,10 +2452,10 @@ impl SlackChannel {
             fetch_budget_exhausted,
         );
         if block.is_some() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "channel_id": channel_id,
                         "thread_ts": thread_ts,
                         "rendered": total_allowed.saturating_sub(reply_cap_omitted),
@@ -2454,7 +2463,8 @@ impl SlackChannel {
                         "reply_cap_omitted": reply_cap_omitted,
                         "requests_made": requests_made,
                         "fetch_budget_exhausted": fetch_budget_exhausted,
-                    })),
+                    })
+                ),
                 "Slack: thread-context backfill prepended"
             );
         }
@@ -2525,10 +2535,10 @@ impl SlackChannel {
         };
 
         if files.len() > SLACK_ATTACHMENT_MAX_FILES_PER_MESSAGE {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "message has {} files; processing first {} only",
                     files.len(),
@@ -2627,10 +2637,10 @@ impl SlackChannel {
         {
             Ok(response) => response,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(
                             ::serde_json::json!({"error": format!("{}", err), "file_id": file_id})
                         ),
@@ -2646,8 +2656,8 @@ impl SlackChannel {
             .await
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
-            ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"file_id": file_id, "status": status.to_string(), "sanitized": sanitized})), "files.info failed for");
+            let sanitized = galleon_providers::sanitize_api_error(&body);
+            ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"file_id": file_id, "status": status.to_string(), "sanitized": sanitized})), "files.info failed for");
             return None;
         }
 
@@ -2657,10 +2667,10 @@ impl SlackChannel {
                 .get("error")
                 .and_then(|value| value.as_str())
                 .unwrap_or("unknown");
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(
                         ::serde_json::json!({"error": format!("{}", err), "file_id": file_id})
                     ),
@@ -2784,17 +2794,17 @@ impl SlackChannel {
             Ok(url) => url,
             Err(err) => {
                 let redacted_raw = Self::redact_raw_slack_url(raw_url);
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", err), "redacted_raw": redacted_raw})), "file URL parse failed for");
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", err), "redacted_raw": redacted_raw})), "file URL parse failed for");
                 return None;
             }
         };
         let redacted = Self::redact_slack_url(&parsed);
 
         if parsed.scheme() != "https" {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "file URL rejected due to non-HTTPS scheme for {}: {}",
                     redacted,
@@ -2805,20 +2815,20 @@ impl SlackChannel {
         }
 
         let Some(host) = parsed.host_str() else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"redacted": redacted})),
                 "file URL rejected due to missing host"
             );
             return None;
         };
         if !Self::is_allowed_slack_media_hostname(host) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"redacted": redacted})),
                 "file URL rejected due to non-Slack host"
             );
@@ -2834,10 +2844,10 @@ impl SlackChannel {
         let target = match base.join(location) {
             Ok(url) => url,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "file redirect URL parse failed for base {} and location {}: {}",
                         redacted_base, redacted_location, err
@@ -2848,10 +2858,10 @@ impl SlackChannel {
         };
         let redacted_target = Self::redact_slack_url(&target);
         if target.scheme() != "https" {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "file redirect rejected due to non-HTTPS scheme for {}",
                     redacted_target
@@ -2860,10 +2870,10 @@ impl SlackChannel {
             return None;
         }
         let Some(host) = target.host_str() else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "file redirect rejected due to missing host for {}",
                     redacted_target
@@ -2872,10 +2882,10 @@ impl SlackChannel {
             return None;
         };
         if !Self::is_allowed_slack_media_hostname(host) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "file redirect rejected due to non-Slack host for {}",
                     redacted_target
@@ -2887,7 +2897,7 @@ impl SlackChannel {
     }
 
     fn slack_media_http_client_no_redirect(&self) -> anyhow::Result<reqwest::Client> {
-        let builder = clawcrew_config::schema::apply_channel_proxy_to_builder(
+        let builder = galleon_config::schema::apply_channel_proxy_to_builder(
             reqwest::Client::builder()
                 .redirect(reqwest::redirect::Policy::none())
                 .timeout(Duration::from_secs(30))
@@ -2906,10 +2916,10 @@ impl SlackChannel {
         let client = match self.slack_media_http_client_no_redirect() {
             Ok(client) => client,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!("file fetch failed for {}: {}", redacted_parsed, err)
                 );
                 return None;
@@ -2926,10 +2936,10 @@ impl SlackChannel {
             let response = match req.send().await {
                 Ok(response) => response,
                 Err(err) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!("file fetch failed for {}: {}", redacted_current, err)
                     );
                     return None;
@@ -2941,10 +2951,10 @@ impl SlackChannel {
             }
 
             if redirect_hop == SLACK_MEDIA_REDIRECT_MAX_HOPS {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "file redirect limit exceeded for {} after {} hops",
                         redacted_current, SLACK_MEDIA_REDIRECT_MAX_HOPS
@@ -2957,10 +2967,10 @@ impl SlackChannel {
                 return Some(response);
             };
             let Ok(location) = location.to_str() else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "file redirect location header is not valid UTF-8 for {}",
                         redacted_current
@@ -2981,10 +2991,10 @@ impl SlackChannel {
         let file_name = Self::slack_file_name(file);
         let image_urls = Self::slack_image_candidate_urls(file);
         if image_urls.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "file attachment is image-like but has no downloadable URL: {}",
                     file_name
@@ -2999,10 +3009,10 @@ impl SlackChannel {
             }
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"file_name": file_name})),
             "image attachment download failed for"
         );
@@ -3023,11 +3033,11 @@ impl SlackChannel {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
-            ::clawcrew_log::record!(
+            let sanitized = galleon_providers::sanitize_api_error(&body);
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "image fetch failed for {} ({status}): {sanitized}",
                     redacted_url
@@ -3044,10 +3054,10 @@ impl SlackChannel {
         if let Some(content_length) = resp.content_length() {
             let content_length = usize::try_from(content_length).unwrap_or(usize::MAX);
             if content_length > SLACK_ATTACHMENT_IMAGE_MAX_BYTES {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "image fetch skipped for {}: content-length {} exceeds {} bytes",
                         redacted_url, content_length, SLACK_ATTACHMENT_IMAGE_MAX_BYTES
@@ -3060,10 +3070,10 @@ impl SlackChannel {
         let bytes = match resp.bytes().await {
             Ok(bytes) => bytes,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                     &format!("image body read failed for {}", redacted_url)
                 );
@@ -3071,19 +3081,19 @@ impl SlackChannel {
             }
         };
         if bytes.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("image body is empty for {}", redacted_url)
             );
             return None;
         }
         if bytes.len() > SLACK_ATTACHMENT_IMAGE_MAX_BYTES {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "image body too large for {}: {} bytes exceeds {} bytes",
                     redacted_url,
@@ -3097,19 +3107,19 @@ impl SlackChannel {
         let Some(mime) =
             Self::detect_image_mime(content_type.as_deref(), file, bytes.as_ref(), url)
         else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("image MIME detection failed for {}", redacted_url)
             );
             return None;
         };
         if !Self::is_supported_image_mime(&mime) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("image MIME not supported for {}: {mime}", redacted_url)
             );
             return None;
@@ -3124,10 +3134,10 @@ impl SlackChannel {
         }
 
         if bytes.len() > SLACK_ATTACHMENT_IMAGE_INLINE_FALLBACK_MAX_BYTES {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "image inline fallback skipped for {}: {} bytes exceeds {} bytes",
                     redacted_url,
@@ -3157,10 +3167,10 @@ impl SlackChannel {
             .and_then(Self::normalized_content_type)
             .filter(|mime| mime.starts_with("image/"))
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "image MIME mismatch for {}: HTTP header claims {}, but bytes do not match a supported image signature",
                     redacted_source, header_mime
@@ -3171,10 +3181,10 @@ impl SlackChannel {
         if let Some(file_mime) =
             Self::slack_file_mime(file).filter(|mime| mime.starts_with("image/"))
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "image MIME mismatch for {}: file metadata claims {}, but bytes do not match a supported image signature",
                     redacted_source, file_mime
@@ -3186,10 +3196,10 @@ impl SlackChannel {
             .or_else(|| Self::file_extension(&Self::slack_file_name(file)))
             && let Some(mime) = Self::mime_from_extension(&ext)
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "image MIME mismatch for {}: filename extension implies {}, but bytes do not match a supported image signature",
                     redacted_source, mime
@@ -3276,10 +3286,10 @@ impl SlackChannel {
         {
             Ok(path) => path,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "image attachment path resolution failed for {}: {err}",
                         file_name
@@ -3290,10 +3300,10 @@ impl SlackChannel {
         };
 
         let Some(parent_dir) = output_path.parent() else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "image attachment write failed for {}: missing parent directory",
                     output_path.display()
@@ -3320,10 +3330,10 @@ impl SlackChannel {
         {
             Ok(file) => file,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "image attachment temp open failed for {}: {err}",
                         temp_path.display()
@@ -3334,10 +3344,10 @@ impl SlackChannel {
         };
 
         if let Err(err) = temp_file.write_all(bytes).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "image attachment temp write failed for {}: {err}",
                     temp_path.display()
@@ -3347,10 +3357,10 @@ impl SlackChannel {
             return None;
         }
         if let Err(err) = temp_file.sync_all().await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "image attachment temp sync failed for {}: {err}",
                     temp_path.display()
@@ -3366,10 +3376,10 @@ impl SlackChannel {
         // outside the workspace.
         match tokio::fs::symlink_metadata(&output_path).await {
             Ok(meta) if meta.file_type().is_symlink() => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "image attachment refused: output path is a symlink: {}",
                         output_path.display()
@@ -3382,10 +3392,10 @@ impl SlackChannel {
         }
 
         if let Err(err) = tokio::fs::rename(&temp_path, &output_path).await {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "image attachment finalize failed for {}: {err}",
                     output_path.display()
@@ -3403,10 +3413,10 @@ impl SlackChannel {
         file_name: &str,
     ) -> anyhow::Result<PathBuf> {
         let safe_name = Self::sanitize_attachment_filename(file_name).ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"file_name": file_name})),
                 "invalid attachment filename"
             );
@@ -3682,10 +3692,10 @@ impl SlackChannel {
         let resp = self.fetch_slack_private_file(url).await?;
         let status = resp.status();
         if !status.is_success() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("voice file download failed for {} ({status})", redacted_url)
             );
             return None;
@@ -3694,10 +3704,10 @@ impl SlackChannel {
         let audio_data = match resp.bytes().await {
             Ok(bytes) => bytes.to_vec(),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     &format!("voice file read failed for {}", redacted_url)
                 );
@@ -3723,16 +3733,16 @@ impl SlackChannel {
             Ok(text) => {
                 let trimmed = text.trim();
                 if trimmed.is_empty() {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         "voice transcription returned empty text, skipping"
                     );
                     None
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!(
                             "transcribed voice file {} ({} chars)",
                             file_name,
@@ -3743,10 +3753,10 @@ impl SlackChannel {
                 }
             }
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     &format!("voice transcription failed for {}", file_name)
                 );
@@ -3766,11 +3776,11 @@ impl SlackChannel {
                 .text()
                 .await
                 .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
-            ::clawcrew_log::record!(
+            let sanitized = galleon_providers::sanitize_api_error(&body);
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "snippet fetch failed for {} ({status}): {sanitized}",
                     redacted_url
@@ -3782,10 +3792,10 @@ impl SlackChannel {
         if let Some(content_length) = resp.content_length() {
             let content_length = usize::try_from(content_length).unwrap_or(usize::MAX);
             if content_length > SLACK_ATTACHMENT_TEXT_DOWNLOAD_MAX_BYTES {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "snippet download skipped for {}: content-length {} exceeds {} bytes",
                         redacted_url, content_length, SLACK_ATTACHMENT_TEXT_DOWNLOAD_MAX_BYTES
@@ -3798,10 +3808,10 @@ impl SlackChannel {
         let bytes = match resp.bytes().await {
             Ok(bytes) => bytes,
             Err(err) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                     &format!("snippet body read failed for {}", redacted_url)
                 );
@@ -3812,10 +3822,10 @@ impl SlackChannel {
             return None;
         }
         if bytes.len() > SLACK_ATTACHMENT_TEXT_DOWNLOAD_MAX_BYTES {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "snippet body too large for {}: {} bytes exceeds {} bytes",
                     redacted_url,
@@ -3826,10 +3836,10 @@ impl SlackChannel {
             return None;
         }
         if bytes.contains(&0) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("snippet body appears binary for {}", redacted_url)
             );
             return None;
@@ -3938,7 +3948,7 @@ impl SlackChannel {
                 .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
 
             if !status.is_success() {
-                let sanitized = clawcrew_providers::sanitize_api_error(&body);
+                let sanitized = galleon_providers::sanitize_api_error(&body);
                 anyhow::bail!("Slack conversations.list failed ({status}): {sanitized}");
             }
 
@@ -4106,10 +4116,10 @@ impl SlackChannel {
             .unwrap_or_default();
 
         if channel_id.is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "block_actions: missing channel ID in interactive payload"
             );
             return None;
@@ -4147,10 +4157,10 @@ impl SlackChannel {
 
     async fn open_socket_mode_url(&self) -> anyhow::Result<String> {
         let app_token = self.configured_app_token().ok_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "Slack Socket Mode requires app_token"
             );
             anyhow::Error::msg("Slack Socket Mode requires app_token")
@@ -4170,7 +4180,7 @@ impl SlackChannel {
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
+            let sanitized = galleon_providers::sanitize_api_error(&body);
             anyhow::bail!("Slack apps.connections.open failed ({status}): {sanitized}");
         }
 
@@ -4188,10 +4198,10 @@ impl SlackChannel {
             .and_then(|v| v.as_str())
             .map(ToOwned::to_owned)
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(
                             ::serde_json::json!({"field": "url", "api": "apps.connections.open"})
                         ),
@@ -4219,10 +4229,10 @@ impl SlackChannel {
                 }
                 Err(e) => {
                     let wait = Self::compute_socket_mode_retry_delay(open_url_attempt);
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!(
                             "Socket Mode: failed to open websocket URL: {e}; retrying in {:.3}s (attempt #{})",
                             wait.as_secs_f64(),
@@ -4235,7 +4245,7 @@ impl SlackChannel {
                 }
             };
 
-            let (ws_stream, _) = match clawcrew_config::schema::ws_connect_with_proxy(
+            let (ws_stream, _) = match galleon_config::schema::ws_connect_with_proxy(
                 &ws_url,
                 "channel.slack",
                 self.proxy_url.as_deref(),
@@ -4248,10 +4258,10 @@ impl SlackChannel {
                 }
                 Err(e) => {
                     let wait = Self::compute_socket_mode_retry_delay(socket_reconnect_attempt);
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         &format!(
                             "Socket Mode: websocket connect failed: {e}; retrying in {:.3}s (attempt #{})",
                             wait.as_secs_f64(),
@@ -4263,9 +4273,9 @@ impl SlackChannel {
                     continue;
                 }
             };
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Socket Mode: websocket connected"
             );
 
@@ -4276,13 +4286,13 @@ impl SlackChannel {
                     Ok(WsMessage::Text(text)) => text,
                     Ok(WsMessage::Ping(payload)) => {
                         if let Err(e) = write.send(WsMessage::Pong(payload)).await {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "Socket Mode: pong send failed"
                             );
@@ -4291,27 +4301,21 @@ impl SlackChannel {
                         continue;
                     }
                     Ok(WsMessage::Close(_)) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                             "Socket Mode: websocket closed by server"
                         );
                         break;
                     }
                     Ok(_) => continue,
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Socket Mode: websocket read failed"
                         );
                         break;
@@ -4321,14 +4325,11 @@ impl SlackChannel {
                 let envelope: serde_json::Value = match serde_json::from_str(text.as_ref()) {
                     Ok(value) => value,
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Socket Mode: invalid JSON payload"
                         );
                         continue;
@@ -4338,14 +4339,11 @@ impl SlackChannel {
                 if let Some(envelope_id) = envelope.get("envelope_id").and_then(|v| v.as_str()) {
                     let ack = serde_json::json!({ "envelope_id": envelope_id });
                     if let Err(e) = write.send(WsMessage::Text(ack.to_string().into())).await {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Socket Mode: ack send failed"
                         );
                         break;
@@ -4357,10 +4355,10 @@ impl SlackChannel {
                     .and_then(|v| v.as_str())
                     .unwrap_or_default();
                 if envelope_type == "disconnect" {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "Socket Mode: received disconnect event"
                     );
                     break;
@@ -4462,7 +4460,7 @@ impl SlackChannel {
 
                                         ..Default::default()
                                     };
-                                    ::clawcrew_log::record!(INFO, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"cancel_emoji": cancel_emoji, "user": user, "item_channel": item_channel, "item_ts": item_ts})), ":: reaction from on / — sending /stop");
+                                    ::galleon_log::record!(INFO, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"cancel_emoji": cancel_emoji, "user": user, "item_channel": item_channel, "item_ts": item_ts})), ":: reaction from on / — sending /stop");
                                     if tx.send(cancel_msg).await.is_err() {
                                         return Ok(());
                                     }
@@ -4503,15 +4501,11 @@ impl SlackChannel {
                     continue;
                 }
                 let allowed_peers = (self.peer_resolver)();
-                if !allowlist::is_user_allowed(
-                    &allowed_peers,
-                    user,
-                    allowlist::Match::Sensitive,
-                ) {
-                    ::clawcrew_log::record!(
+                if !allowlist::is_user_allowed(&allowed_peers, user, allowlist::Match::Sensitive) {
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({
                                 "user": user,
                                 "alias": self.alias,
@@ -4594,10 +4588,10 @@ impl SlackChannel {
             }
 
             let wait = Self::compute_socket_mode_retry_delay(socket_reconnect_attempt);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "Socket Mode: reconnecting in {:.3}s (attempt #{})...",
                     wait.as_secs_f64(),
@@ -4720,7 +4714,7 @@ impl SlackChannel {
             {
                 Ok(r) => r,
                 Err(e) => {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", e), "channel_id": channel_id})), "poll error for channel");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", e), "channel_id": channel_id})), "poll error for channel");
                     return None;
                 }
             };
@@ -4742,10 +4736,10 @@ impl SlackChannel {
 
             if is_ratelimited_http || is_ratelimited_payload {
                 if attempt >= SLACK_HISTORY_MAX_RETRIES {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         &format!(
                             "Slack rate limit retries exhausted for conversations.history on channel {}. Total wait: {}s across {} attempts. Proceeding without channel history.",
                             channel_id,
@@ -4762,10 +4756,10 @@ impl SlackChannel {
                 let wait = Self::compute_retry_delay(retry_after_secs, attempt, jitter_ms);
                 total_wait += wait;
                 let next_retry_at = Self::next_retry_timestamp(wait);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "Slack conversations.history rate limited for channel {}. Retry-After: {}s. Attempt {}/{}. Next retry at {}.",
                         channel_id,
@@ -4780,11 +4774,11 @@ impl SlackChannel {
             }
 
             if !status.is_success() {
-                let sanitized = clawcrew_providers::sanitize_api_error(&body);
-                ::clawcrew_log::record!(
+                let sanitized = galleon_providers::sanitize_api_error(&body);
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "history request failed for channel {} ({}): {}",
                         channel_id, status, sanitized
@@ -4798,7 +4792,7 @@ impl SlackChannel {
                     .get("error")
                     .and_then(|e| e.as_str())
                     .unwrap_or("unknown");
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", err), "channel_id": channel_id})), "history error for channel");
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", err), "channel_id": channel_id})), "history error for channel");
                 return None;
             }
 
@@ -4918,7 +4912,7 @@ impl SlackChannel {
             {
                 Ok(r) => r,
                 Err(e) => {
-                    ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"thread_ts": thread_ts, "channel_id": channel_id, "e": e.to_string()})), "Slack conversations.replies error for thread in");
+                    ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"thread_ts": thread_ts, "channel_id": channel_id, "e": e.to_string()})), "Slack conversations.replies error for thread in");
                     return None;
                 }
             };
@@ -4940,18 +4934,15 @@ impl SlackChannel {
                 match serde_json::from_str(&body) {
                     Ok(payload) => payload,
                     Err(error) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({
-                                "channel_id": channel_id,
-                                "thread_ts": thread_ts,
-                                "error": error.to_string(),
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({
+                                    "channel_id": channel_id,
+                                    "thread_ts": thread_ts,
+                                    "error": error.to_string(),
+                                })),
                             "Slack conversations.replies returned malformed JSON"
                         );
                         return None;
@@ -4976,10 +4967,10 @@ impl SlackChannel {
                 self.retain_api_method_cooldown("conversations.replies", wait)
                     .await;
                 if *requests_made >= request_budget {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure),
                         &format!(
                             "Slack rate limit retries exhausted for conversations.replies on thread {} in channel {}. Total wait: {}s across {} attempts.",
                             thread_ts,
@@ -4993,10 +4984,10 @@ impl SlackChannel {
 
                 total_wait += wait;
                 let next_retry_at = Self::next_retry_timestamp(wait);
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "Slack conversations.replies rate limited for thread {} in channel {}. Retry-After: {}s. Attempt {}/{}. Next retry at {}.",
                         thread_ts,
@@ -5013,11 +5004,11 @@ impl SlackChannel {
             }
 
             if !status.is_success() {
-                let sanitized = clawcrew_providers::sanitize_api_error(&body);
-                ::clawcrew_log::record!(
+                let sanitized = galleon_providers::sanitize_api_error(&body);
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "Slack conversations.replies failed for thread {} in channel {} ({}): {}",
                         thread_ts, channel_id, status, sanitized
@@ -5031,10 +5022,10 @@ impl SlackChannel {
                     .get("error")
                     .and_then(|e| e.as_str())
                     .unwrap_or("unknown");
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown),
                     &format!(
                         "Slack conversations.replies error for thread {} in channel {}: {}",
                         thread_ts, channel_id, err
@@ -5044,10 +5035,10 @@ impl SlackChannel {
             }
 
             if payload.get("ok") != Some(&serde_json::Value::Bool(true)) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "channel_id": channel_id,
                             "thread_ts": thread_ts,
@@ -5221,9 +5212,9 @@ fn split_text_into_chunks(text: &str, max_chars: usize, max_chunks: usize) -> Ve
     chunks
 }
 
-impl ::clawcrew_api::attribution::Attributable for SlackChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Slack)
+impl ::galleon_api::attribution::Attributable for SlackChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Slack)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -5251,7 +5242,7 @@ impl Channel for SlackChannel {
         self.self_handle().map(|id| format!("<@{id}>"))
     }
 
-    fn is_direct_message(&self, msg: &clawcrew_api::channel::ChannelMessage) -> bool {
+    fn is_direct_message(&self, msg: &galleon_api::channel::ChannelMessage) -> bool {
         !Self::is_group_channel_id(&msg.reply_target)
     }
 
@@ -5260,9 +5251,7 @@ impl Channel for SlackChannel {
         let mut outbound_attachments = message.attachments.clone();
 
         // Detect Block Kit payloads produced by the `/config` command.
-        let body = if let Some(blocks_json) =
-            message.content.strip_prefix(BLOCK_KIT_PREFIX)
-        {
+        let body = if let Some(blocks_json) = message.content.strip_prefix(BLOCK_KIT_PREFIX) {
             let blocks: serde_json::Value = serde_json::from_str(blocks_json)
                 .context("invalid Block Kit JSON in runtime command response")?;
             let mut body = serde_json::json!({
@@ -5353,7 +5342,7 @@ impl Channel for SlackChannel {
             .unwrap_or_else(|e| format!("<failed to read response body: {e}>"));
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&body);
+            let sanitized = galleon_providers::sanitize_api_error(&body);
             anyhow::bail!("chat.postMessage failed ({status}): {sanitized}");
         }
 
@@ -5464,7 +5453,7 @@ impl Channel for SlackChannel {
         let token = self.bot_token.clone();
         let channel = recipient.to_string();
         let update_url = self.slack_api_url("chat.update");
-        let update_task = clawcrew_spawn::spawn!(async move {
+        let update_task = galleon_spawn::spawn!(async move {
             let mut body = serde_json::json!({
                 "channel": channel,
                 "ts": real_ts,
@@ -5491,21 +5480,18 @@ impl Channel for SlackChannel {
                             .get("error")
                             .and_then(|e| e.as_str())
                             .unwrap_or("unknown");
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             DEBUG,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
                             "chat.update (draft) failed"
                         );
                     }
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "chat.update (draft) HTTP error"
                     );
@@ -5644,9 +5630,9 @@ impl Channel for SlackChannel {
             .get("error")
             .and_then(|e| e.as_str())
             .unwrap_or("unknown");
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"error": format!("{}", err)})),
             "chat.update (finalize) failed; falling back to delete+send"
         );
@@ -5705,7 +5691,7 @@ impl Channel for SlackChannel {
         let text = resp.text().await.unwrap_or_default();
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&text);
+            let sanitized = galleon_providers::sanitize_api_error(&text);
             anyhow::bail!("Slack reactions.add failed ({status}): {sanitized}");
         }
 
@@ -5750,7 +5736,7 @@ impl Channel for SlackChannel {
         let text = resp.text().await.unwrap_or_default();
 
         if !status.is_success() {
-            let sanitized = clawcrew_providers::sanitize_api_error(&text);
+            let sanitized = galleon_providers::sanitize_api_error(&text);
             anyhow::bail!("Slack reactions.remove failed ({status}): {sanitized}");
         }
 
@@ -5776,9 +5762,9 @@ impl Channel for SlackChannel {
         let bot_user_id = self.get_bot_user_id().await.unwrap_or_default();
         let scoped_channels = self.scoped_channel_ids();
         if self.configured_app_token().is_some() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "channel listening in Socket Mode"
             );
             return self
@@ -5793,9 +5779,9 @@ impl Channel for SlackChannel {
         let mut active_threads: HashMap<String, (String, String, Instant)> = HashMap::new();
 
         if let Some(ref channel_ids) = scoped_channels {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 &format!(
                     "channel listening on {} configured channel(s): {}",
                     channel_ids.len(),
@@ -5803,9 +5789,9 @@ impl Channel for SlackChannel {
                 )
             );
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                 "Slack channel_id/channel_ids not set (or wildcard only); listening across all accessible channels."
             );
         }
@@ -5822,11 +5808,11 @@ impl Channel for SlackChannel {
                     match self.list_accessible_channels().await {
                         Ok(channels) => {
                             if channels != discovered_channels {
-                                ::clawcrew_log::record!(
+                                ::galleon_log::record!(
                                     INFO,
-                                    ::clawcrew_log::Event::new(
+                                    ::galleon_log::Event::new(
                                         module_path!(),
-                                        ::clawcrew_log::Action::Note
+                                        ::galleon_log::Action::Note
                                     ),
                                     &format!(
                                         "Slack auto-discovery refreshed: listening on {} channel(s).",
@@ -5837,13 +5823,13 @@ impl Channel for SlackChannel {
                             discovered_channels = channels;
                         }
                         Err(e) => {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "channel discovery failed"
                             );
@@ -5856,9 +5842,9 @@ impl Channel for SlackChannel {
             };
 
             if target_channels.is_empty() {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                     "no accessible channels discovered yet"
                 );
                 continue;
@@ -5870,9 +5856,9 @@ impl Channel for SlackChannel {
                 let cursor_ts =
                     Self::ensure_poll_cursor(&mut last_ts_by_channel, &channel_id, &bootstrap_ts);
                 if !had_cursor {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         DEBUG,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                         &format!(
                             "initialized cursor for channel {} at {} to prevent historical replay",
                             channel_id, cursor_ts
@@ -5932,13 +5918,13 @@ impl Channel for SlackChannel {
                             user,
                             allowlist::Match::Sensitive,
                         ) {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
                                 .with_attrs(::serde_json::json!({
                                     "user": user,
                                     "alias": self.alias,
@@ -5971,8 +5957,7 @@ impl Channel for SlackChannel {
 
                         let sender = self.resolve_sender_identity(user).await;
 
-                        if let Some((token, response)) =
-                            parse_approval_reply(&normalized_text)
+                        if let Some((token, response)) = parse_approval_reply(&normalized_text)
                             && resolve_pending_approval(
                                 &self.pending_approvals,
                                 &token,
@@ -6078,8 +6063,7 @@ impl Channel for SlackChannel {
 
                     let sender = self.resolve_sender_identity(user).await;
 
-                    if let Some((token, response)) =
-                        parse_approval_reply(&normalized_text)
+                    if let Some((token, response)) = parse_approval_reply(&normalized_text)
                         && resolve_pending_approval(
                             &self.pending_approvals,
                             &token,
@@ -6169,7 +6153,7 @@ impl Channel for SlackChannel {
         &self,
         recipient: &str,
         request: &ChannelApprovalRequest,
-    ) -> anyhow::Result<Option<clawcrew_api::channel::AttributedApprovalResponse>> {
+    ) -> anyhow::Result<Option<galleon_api::channel::AttributedApprovalResponse>> {
         let token = new_approval_token();
 
         let (tx, rx) = oneshot::channel();
@@ -6222,19 +6206,19 @@ impl Channel for SlackChannel {
         // dropped-sender and timeout arms are the runtime denying on its own.
         let attributed =
             match tokio::time::timeout(Duration::from_secs(self.approval_timeout_secs), rx).await {
-                Ok(Ok(resp)) => clawcrew_api::channel::AttributedApprovalResponse::operator(resp),
+                Ok(Ok(resp)) => galleon_api::channel::AttributedApprovalResponse::operator(resp),
                 Ok(Err(_)) => {
                     self.pending_approvals.lock().await.remove(&token);
-                    clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                    galleon_api::channel::AttributedApprovalResponse::from_runtime(
                         ChannelApprovalResponse::Deny,
-                        clawcrew_api::channel::ApprovalSource::Unreachable,
+                        galleon_api::channel::ApprovalSource::Unreachable,
                     )
                 }
                 Err(_) => {
                     self.pending_approvals.lock().await.remove(&token);
-                    clawcrew_api::channel::AttributedApprovalResponse::from_runtime(
+                    galleon_api::channel::AttributedApprovalResponse::from_runtime(
                         ChannelApprovalResponse::Deny,
-                        clawcrew_api::channel::ApprovalSource::TimedOut,
+                        galleon_api::channel::ApprovalSource::TimedOut,
                     )
                 }
             };
@@ -6295,7 +6279,7 @@ mod tests {
     /// path binds the lone provider; the daemon path binds the owning agent's.
     #[test]
     fn with_transcription_binds_the_sole_provider() {
-        let tc = clawcrew_config::schema::TranscriptionConfig {
+        let tc = galleon_config::schema::TranscriptionConfig {
             enabled: true,
             api_key: Some("test_key".to_string()),
             ..Default::default()
@@ -6577,12 +6561,12 @@ mod tests {
             "slack_test_alias",
             Arc::new(Vec::new),
         );
-        let dm = clawcrew_api::channel::ChannelMessage {
+        let dm = galleon_api::channel::ChannelMessage {
             reply_target: "D0B189MTELX".into(),
             channel: "slack".into(),
             ..Default::default()
         };
-        let group = clawcrew_api::channel::ChannelMessage {
+        let group = galleon_api::channel::ChannelMessage {
             reply_target: "C12345".into(),
             ..dm.clone()
         };
@@ -7759,7 +7743,7 @@ mod tests {
     fn session_key_stable_without_thread_replies() {
         // When thread_replies=false, top-level messages from the same user should
         // produce the same conversation_history_key (thread_ts=None).
-        use clawcrew_api::channel::ChannelMessage;
+        use galleon_api::channel::ChannelMessage;
 
         let make_msg = |ts: &str| ChannelMessage {
             id: format!("slack_C123_{ts}"),
@@ -7789,7 +7773,7 @@ mod tests {
     fn session_key_varies_with_thread_replies() {
         // When thread_replies=true, top-level messages get thread_ts=Some(ts),
         // giving each its own session key (thread isolation).
-        use clawcrew_api::channel::ChannelMessage;
+        use galleon_api::channel::ChannelMessage;
 
         let make_msg = |ts: &str| ChannelMessage {
             id: format!("slack_C123_{ts}"),
@@ -8760,7 +8744,7 @@ mod tests {
         let a_id = turn_a.clone();
         let started = Arc::new(AtomicUsize::new(0));
         let started_a = Arc::clone(&started);
-        let a_task = clawcrew_spawn::spawn!(async move {
+        let a_task = galleon_spawn::spawn!(async move {
             started_a.fetch_add(1, Ordering::SeqCst);
             a_ch.update_draft_lifecycle("C123", &a_id, ProgressEvent::RunningTool)
                 .await
@@ -9133,7 +9117,7 @@ mod tests {
         }
 
         let (tx, mut inbound_rx) = tokio::sync::mpsc::channel(4);
-        let listener = clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+        let listener = galleon_spawn::spawn!(async move { channel.listen(tx).await });
 
         assert_eq!(
             tokio::time::timeout(Duration::from_secs(6), approved_rx)
@@ -9168,7 +9152,7 @@ mod tests {
 
     #[tokio::test]
     async fn socket_mode_interactive_ingress_suppresses_rejected_approval_replies() {
-        use clawcrew_api::channel::ChannelApprovalResponse;
+        use galleon_api::channel::ChannelApprovalResponse;
 
         let channel = SlackChannel::new(
             "xoxb-token".into(),
@@ -9576,7 +9560,7 @@ mod tests {
             "text": "<@U_BOT> summarize",
         });
         let task_ch = Arc::clone(&ch);
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             task_ch
                 .build_incoming_content(&mention, "C_ONE", true, "U_BOT")
                 .await
@@ -9735,7 +9719,7 @@ mod tests {
             "text": "<@U_BOT> second",
         });
         let task_b = Arc::clone(&alias_b);
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             task_b
                 .build_incoming_content(&second, "C_ONE", true, "U_BOT")
                 .await
@@ -9817,7 +9801,7 @@ mod tests {
             "text": "<@U_BOT> second",
         });
         let task_ch = Arc::clone(&ch);
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             task_ch
                 .build_incoming_content(&second, "C_ONE", true, "U_BOT")
                 .await

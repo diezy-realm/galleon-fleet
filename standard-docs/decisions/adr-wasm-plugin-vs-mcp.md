@@ -7,14 +7,14 @@
 ## Context
 
 ClawCrew menyediakan dua mekanisme ekstensi eksternal untuk mengintegrasikan alat (tools), channel, dan sumber daya komputasi pihak ketiga ke dalam siklus hidup agen:
-1. **WASM Plugin Host (`crates/clawcrew-plugins/`)**: Berbasis WebAssembly Component Model (WIT v0/v1) yang dijalankan in-process melalui runtime Wasmtime dengan sandboxing deterministik berbasis capability.
-2. **MCP Client Host (`crates/clawcrew-tools/`)**: Berbasis Model Context Protocol (MCP) stdio/HTTP/SSE subprocess yang menjalankan executable biner atau skrip eksternal melalui protokol JSON-RPC.
+1. **WASM Plugin Host (`crates/galleon-plugins/`)**: Berbasis WebAssembly Component Model (WIT v0/v1) yang dijalankan in-process melalui runtime Wasmtime dengan sandboxing deterministik berbasis capability.
+2. **MCP Client Host (`crates/galleon-tools/`)**: Berbasis Model Context Protocol (MCP) stdio/HTTP/SSE subprocess yang menjalankan executable biner atau skrip eksternal melalui protokol JSON-RPC.
 
 Terdapat kebutuhan untuk mendefinisikan batas arsitektural, perbandingan keamanan, trade-offs, dan panduan keputusan ("kapan menggunakan yang mana") bagi kontributor dan pengguna ekosistem.
 
 ## Perbandingan Arsitektural & Trade-Offs
 
-| Karakteristik | WASM Plugin Host (`clawcrew-plugins`) | MCP Client Host (`clawcrew-tools`) |
+| Karakteristik | WASM Plugin Host (`galleon-plugins`) | MCP Client Host (`galleon-tools`) |
 |---|---|---|
 | **Model Eksekusi** | In-process WebAssembly component model via Wasmtime engine. | Out-of-process OS subprocess (`tokio::process::Command`) via JSON-RPC stdio/HTTP. |
 | **Batas Isolasi Memori** | Hardware-enforced sandboxing virtual memory (linear memory bounded per store, `PluginLimits`). | Isolasi proses OS level (bergantung pada boundary eksternal seperti Landlock/Seatbelt). |
@@ -34,7 +34,7 @@ Terdapat kebutuhan untuk mendefinisikan batas arsitektural, perbandingan keamana
 2. **MCP sebagai Bridge Integrasi Eksternal Fleksibel**:
    - Digunakan untuk memanfaatkan ekosistem open-source MCP yang sudah ada (alat CLI, bridge database, integrasi sistem operasi).
    - Seluruh eksekusi MCP stdio **wajib** melalui `apply_default_mcp_sandbox` dan dianjurkan menggunakan `McpCommandBoundary` pada lingkungan produksi terisolasi.
-   - Rahasia wajib dimediasi melalui config vault (`clawcrew-config::secrets`).
+   - Rahasia wajib dimediasi melalui config vault (`galleon-config::secrets`).
 
 ## Konsekuensi
 

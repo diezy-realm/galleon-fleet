@@ -113,12 +113,12 @@ pub(crate) fn split_message_for_discord_multi(content: &str, max_len: usize) -> 
 
 pub(crate) fn chunks_for_send(
     content: &str,
-    stream_mode: clawcrew_config::schema::StreamMode,
+    stream_mode: galleon_config::schema::StreamMode,
     max_len: usize,
     has_local_files: bool,
 ) -> Vec<String> {
     let mut chunks = match stream_mode {
-        clawcrew_config::schema::StreamMode::MultiMessage => {
+        galleon_config::schema::StreamMode::MultiMessage => {
             split_message_for_discord_multi(content, max_len)
         }
         _ => split_message_for_discord(content),

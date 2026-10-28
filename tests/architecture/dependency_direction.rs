@@ -2,9 +2,9 @@
 //!
 //! Enforces the layered dependency direction rules defined in
 //! standard-docs/tech-standart/code-quality/rust-module-size-and-decomposition-standard.md §5:
-//! - clawcrew-api is a leaf: must not depend on higher-level workspace crates (runtime, gateway, channels, tools, providers).
-//! - clawcrew-plugins must not depend on clawcrew-runtime.
-//! - galleon-channel-* must not depend on clawcrew-runtime directly.
+//! - galleon-api is a leaf: must not depend on higher-level workspace crates (runtime, gateway, channels, tools, providers).
+//! - galleon-plugins must not depend on galleon-runtime.
+//! - galleon-channel-* must not depend on galleon-runtime directly.
 
 use std::{fs, path::Path};
 
@@ -28,38 +28,38 @@ fn has_active_dependency(content: &str, dep_name: &str) -> bool {
 fn crate_dependency_direction_strictly_enforced() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
 
-    // 1. Check clawcrew-api is a leaf
-    let api_cargo = root.join("crates/clawcrew-api/Cargo.toml");
+    // 1. Check galleon-api is a leaf
+    let api_cargo = root.join("crates/galleon-api/Cargo.toml");
     if api_cargo.exists() {
-        let content = fs::read_to_string(&api_cargo).expect("clawcrew-api/Cargo.toml readable");
+        let content = fs::read_to_string(&api_cargo).expect("galleon-api/Cargo.toml readable");
         for forbidden in [
-            "clawcrew-runtime",
-            "clawcrew-gateway",
-            "clawcrew-channels",
-            "clawcrew-tools",
-            "clawcrew-providers",
+            "galleon-runtime",
+            "galleon-gateway",
+            "galleon-channels",
+            "galleon-tools",
+            "galleon-providers",
         ] {
             assert!(
                 !has_active_dependency(&content, forbidden),
-                "clawcrew-api is a leaf crate and must not depend on {forbidden}"
+                "galleon-api is a leaf crate and must not depend on {forbidden}"
             );
         }
     }
 
-    // 2. Check clawcrew-plugins does not depend on clawcrew-runtime
-    let plugins_cargo = root.join("crates/clawcrew-plugins/Cargo.toml");
+    // 2. Check galleon-plugins does not depend on galleon-runtime
+    let plugins_cargo = root.join("crates/galleon-plugins/Cargo.toml");
     if plugins_cargo.exists() {
         let content =
-            fs::read_to_string(&plugins_cargo).expect("clawcrew-plugins/Cargo.toml readable");
+            fs::read_to_string(&plugins_cargo).expect("galleon-plugins/Cargo.toml readable");
         assert!(
-            !has_active_dependency(&content, "clawcrew-runtime"),
-            "clawcrew-plugins must not depend on clawcrew-runtime"
+            !has_active_dependency(&content, "galleon-runtime"),
+            "galleon-plugins must not depend on galleon-runtime"
         );
     }
 
-    // 3. Check channel crates do not depend on clawcrew-runtime
+    // 3. Check channel crates do not depend on galleon-runtime
     for channel_crate in [
-        "crates/clawcrew-channels",
+        "crates/galleon-channels",
         "crates/galleon-channel-core",
         "crates/galleon-channel-signal",
         "crates/galleon-channel-bluesky",
@@ -99,8 +99,8 @@ fn crate_dependency_direction_strictly_enforced() {
             let content = fs::read_to_string(&cargo_path)
                 .unwrap_or_else(|_| panic!("Failed to read {channel_crate}/Cargo.toml"));
             assert!(
-                !has_active_dependency(&content, "clawcrew-runtime"),
-                "Channel crate {channel_crate} must not depend on clawcrew-runtime"
+                !has_active_dependency(&content, "galleon-runtime"),
+                "Channel crate {channel_crate} must not depend on galleon-runtime"
             );
         }
     }

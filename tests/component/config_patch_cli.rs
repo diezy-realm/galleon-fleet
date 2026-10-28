@@ -9,14 +9,14 @@ use axum::{Router, routing::patch};
 #[cfg(feature = "gateway")]
 use clawcrew::gateway::{self, AppState};
 #[cfg(feature = "gateway")]
-use clawcrew_api::attribution::Attributable;
-use clawcrew_config::schema::Config;
+use galleon_api::attribution::Attributable;
+use galleon_config::schema::Config;
 #[cfg(feature = "gateway")]
-use clawcrew_memory::NoneMemory;
+use galleon_memory::NoneMemory;
 #[cfg(feature = "gateway")]
-use clawcrew_providers::ModelProvider;
+use galleon_providers::ModelProvider;
 #[cfg(feature = "gateway")]
-use clawcrew_runtime::security::PairingGuard;
+use galleon_runtime::security::PairingGuard;
 #[cfg(feature = "gateway")]
 use parking_lot::RwLock;
 #[cfg(feature = "gateway")]
@@ -49,9 +49,9 @@ impl ModelProvider for MockModelProvider {
 
 #[cfg(feature = "gateway")]
 impl Attributable for MockModelProvider {
-    fn role(&self) -> clawcrew_api::attribution::Role {
-        clawcrew_api::attribution::Role::Provider(clawcrew_api::attribution::ProviderKind::Model(
-            clawcrew_api::attribution::ModelProviderKind::Custom,
+    fn role(&self) -> galleon_api::attribution::Role {
+        galleon_api::attribution::Role::Provider(galleon_api::attribution::ProviderKind::Model(
+            galleon_api::attribution::ModelProviderKind::Custom,
         ))
     }
 
@@ -62,7 +62,7 @@ impl Attributable for MockModelProvider {
 
 #[cfg(feature = "gateway")]
 fn test_state(config: Config) -> AppState {
-    let memory: Arc<dyn clawcrew_memory::Memory> =
+    let memory: Arc<dyn galleon_memory::Memory> =
         Arc::new(NoneMemory::new("config-patch-cli-test"));
     AppState {
         config: Arc::new(RwLock::new(config)),
@@ -72,9 +72,9 @@ fn test_state(config: Config) -> AppState {
         temperature: None,
         mem: memory.clone(),
         memory_strategy: Arc::new(
-            clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+            galleon_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
                 memory,
-                clawcrew_config::schema::MemoryConfig::default(),
+                galleon_config::schema::MemoryConfig::default(),
                 std::path::PathBuf::new(),
             ),
         ),
@@ -82,7 +82,7 @@ fn test_state(config: Config) -> AppState {
         pairing: Arc::new(PairingGuard::new(
             false,
             &[],
-            clawcrew_config::pairing::PairingCodePolicy::default(),
+            galleon_config::pairing::PairingCodePolicy::default(),
         )),
         trust_forwarded_headers: false,
         rate_limiter: Arc::new(gateway::GatewayRateLimiter::new(100, 100, 100)),
@@ -105,7 +105,7 @@ fn test_state(config: Config) -> AppState {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+        observer: Arc::new(galleon_runtime::observability::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(HashMap::new()),
         cost_tracker: None,
@@ -121,7 +121,7 @@ fn test_state(config: Config) -> AppState {
         session_queue: Arc::new(gateway::session_queue::SessionActorQueue::new(8, 30, 600)),
         device_registry: None,
         pending_pairings: None,
-        canvas_store: clawcrew_runtime::tools::CanvasStore::new(),
+        canvas_store: galleon_runtime::tools::CanvasStore::new(),
         #[cfg(feature = "webauthn")]
         webauthn: None,
         cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
@@ -760,7 +760,7 @@ fn config_patch_add_does_not_materialize_resource_keyed_rate_alias() {
 #[test]
 fn config_patch_replace_on_dotted_resource_id_does_not_plant_phantom_sibling() {
     let config_dir = tempfile::tempdir().expect("temp config dir");
-    let version = clawcrew_config::migration::CURRENT_SCHEMA_VERSION;
+    let version = galleon_config::migration::CURRENT_SCHEMA_VERSION;
     std::fs::write(
         config_dir.path().join("config.toml"),
         format!(

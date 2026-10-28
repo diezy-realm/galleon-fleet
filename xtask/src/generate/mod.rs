@@ -54,12 +54,12 @@ fn registry() -> Vec<Surface> {
         },
         Surface {
             name: "runtime-locales",
-            file: "crates/clawcrew-runtime/src/generated_locales.rs",
+            file: "crates/galleon-runtime/src/generated_locales.rs",
             render: runtime_locales::render_file,
         },
         Surface {
             name: "tools-en-ftl",
-            file: "crates/clawcrew-tools/locales/en/tools.ftl",
+            file: "crates/galleon-tools/locales/en/tools.ftl",
             render: tools_ftl::render_file,
         },
         Surface {

@@ -31,7 +31,7 @@ impl GiteaApi {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_channel_proxy_client_with_timeouts(
+        galleon_config::schema::build_channel_proxy_client_with_timeouts(
             "channel.git.gitea",
             self.proxy_url.as_deref(),
             30,
@@ -93,7 +93,7 @@ impl GiteaApi {
         GitChannelError::Api {
             endpoint: endpoint.to_string(),
             status: status.as_u16(),
-            body: clawcrew_providers::sanitize_api_error(&body),
+            body: galleon_providers::sanitize_api_error(&body),
         }
     }
 

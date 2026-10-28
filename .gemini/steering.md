@@ -50,13 +50,13 @@ Galleon beroperasi dalam **4 tier ketat** dengan batas tanggung jawab tegas ([`0
 | Tier | Path Aktif | Port / Protokol | Tanggung Jawab Resmi (Owned) | Hal Terlarang (FORBIDDEN) |
 |---|---|---|---|---|
 | **Tier 1: Desktop Shell** | `apps/tauri/` | Tauri IPC (`invoke`) | Window lifecycle, tray icon, dialog native OS, bundling installer (`.exe`/`.dmg`). | ❌ Business logic, eksekusi terminal langsung (ODR-07), data palsu (ADR 0003). |
-| **Tier 2: System Core** | `crates/` | gRPC Server `:50052` (`SystemGateway`) | Security microkernel, sandbox (Landlock/Seatbelt), **LLM Execution SSOT** (`clawcrew-providers`), secrets Vault (AES-256-GCM), native tools, WASI host, channel adapters. | ❌ Fleet governance, turn orchestration, RAG vector memory (milik Go). Rust = leaf service. |
+| **Tier 2: System Core** | `crates/` | gRPC Server `:50052` (`SystemGateway`) | Security microkernel, sandbox (Landlock/Seatbelt), **LLM Execution SSOT** (`galleon-providers`), secrets Vault (AES-256-GCM), native tools, WASI host, channel adapters. | ❌ Fleet governance, turn orchestration, RAG vector memory (milik Go). Rust = leaf service. |
 | **Tier 3: AI Orchestrator** | `engine/` | gRPC Server `:50051`, HTTP `:9090` | **Agent Brain**: turn state machine (`StartTurn`), task graph, fleet policies & approval gate, memori persisten (SQLite/Postgres), pairing/QR gateway. | ❌ Eksekusi shell/fs lokal tanpa Rust (wajib fail-closed), direct vendor LLM call (wajib delegasi ke Rust via gRPC). |
 | **Tier 4: UI Layer** | `web/` | HTTP proxy ke Go `:9090` | Rendering komponen, view model Zustand, client routing. | ❌ Backend logic di Express (`server.ts` harus dibersihkan, ADR 0002), direct LLM SDK (`@google/genai` dilarang, ODR-08). |
 
 ### Invarian Keras (Hard Invariants):
 1. **Frontend → Go → Rust (Dilarang Frontend → Rust):** Go engine adalah satu-satunya gerbang kebijakan (*governance & anti-injection*). Frontend dilarang memanggil Rust gRPC `:50052` langsung.
-2. **LLM SSOT = Rust `clawcrew-providers` (ADR 0001):** Semua vendor LLM dijalankan di Rust. Go engine menyusun konteks pesan dan mendelegasikan inferensi ke Rust via gRPC `ExecuteTurn`.
+2. **LLM SSOT = Rust `galleon-providers` (ADR 0001):** Semua vendor LLM dijalankan di Rust. Go engine menyusun konteks pesan dan mendelegasikan inferensi ke Rust via gRPC `ExecuteTurn`.
 3. **Eksekusi Terminal Terproteksi (ODR-07):** Alur terminal wajib: `Tauri/Web` $\rightarrow$ `Go Engine (Policy & Approval)` $\rightarrow$ `Rust SystemGateway (Sandbox)`.
 4. **Secrets SSOT = Rust Vault:** API key dan kredensial tersimpan di `~/.config/galleon/vault/` (AES-256-GCM terenkripsi). Wajib credential scrubbing di log.
 5. **No Shared Database:** Tiap tier mengisolasi storage-nya sendiri. Komunikasi lintas tier hanya via API.
@@ -118,7 +118,7 @@ Galleon beroperasi dalam **4 tier ketat** dengan batas tanggung jawab tegas ([`0
 Berdasarkan investigasi konkrit CI PR #18 (`ci-infra-fix/`), 4 pilar tata kelola CI/Infra berikut mengikat seluruh agent dan PR:
 1. **Zero-Unwrap Invariant Scoping:** Pengecekan CI diff wajib mengecualikan file `tests.rs` (`':!crates/**/tests.rs'`, `':!crates/**/*/tests.rs'`) dan blok `#[cfg(test)] mod tests`. Dilarang menandai helper unit test sebagai pelanggaran produksi.
 2. **Compiler Toolchain & sccache Isolation:** Karena `rustc-wrapper = "sccache"` aktif di `.cargo/config.toml`, setiap job CI yang memanggil `cargo` wajib menginstal binary `sccache` di runner PATH terlebih dahulu (misal via `mozilla-actions/sccache-action`), atau meng-override dengan `RUSTC_WRAPPER=""`. Dilarang menghapus konfigurasi caching dari `.cargo/config.toml`.
-3. **Pemisahan Channel Transport vs Governance (Gate D-2):** Conditional compilation `#[cfg(feature = "channel-*")]` pada fungsi utilitas murni di `crates/clawcrew-channels/src/util.rs` (HTTP limiter, string formatter, breadcrumbs) adalah SAH. **Koreksi 2026-10-09:** `util.rs` genuinely berisi `PendingApproval`/`resolve_pending_approval`/`new_approval_token` (bukan tidak ada sama sekali seperti klaim versi steering sebelumnya) — tapi ini SAH karena murni I/O/transport (generate token, tunggu balasan teks user per-channel), terbukti `clawcrew-channels` tidak depend ke `clawcrew-runtime` tempat logic kebijakan sungguhan (`approval/mod.rs`, `security/playbook.rs`) berada. Yang tetap dilarang keras: menaruh KEPUTUSAN kebijakan (risk-tier threshold, RACI, auto-approve criteria) atau dependency langsung ke `clawcrew-runtime`/Go policy di utilitas channel. Script gate D-2 wajib mendeteksi coupling tata kelola nyata (simbol kebijakan + dependency graph), bukan sekadar grep nama fitur channel ATAU grep nama simbol approval I/O semata.
+3. **Pemisahan Channel Transport vs Governance (Gate D-2):** Conditional compilation `#[cfg(feature = "channel-*")]` pada fungsi utilitas murni di `crates/galleon-channels/src/util.rs` (HTTP limiter, string formatter, breadcrumbs) adalah SAH. **Koreksi 2026-10-09:** `util.rs` genuinely berisi `PendingApproval`/`resolve_pending_approval`/`new_approval_token` (bukan tidak ada sama sekali seperti klaim versi steering sebelumnya) — tapi ini SAH karena murni I/O/transport (generate token, tunggu balasan teks user per-channel), terbukti `galleon-channels` tidak depend ke `galleon-runtime` tempat logic kebijakan sungguhan (`approval/mod.rs`, `security/playbook.rs`) berada. Yang tetap dilarang keras: menaruh KEPUTUSAN kebijakan (risk-tier threshold, RACI, auto-approve criteria) atau dependency langsung ke `galleon-runtime`/Go policy di utilitas channel. Script gate D-2 wajib mendeteksi coupling tata kelola nyata (simbol kebijakan + dependency graph), bukan sekadar grep nama fitur channel ATAU grep nama simbol approval I/O semata.
 4. **Clean Web Packaging:** Seluruh dependensi web wajib resolvable dengan `npm ci` / `npm install` murni tanpa konflik `ERESOLVE`.
 
 ---
@@ -141,7 +141,7 @@ Semua pencarian simbol, penelusuran dependensi, pemahaman arsitektur, dan flow p
 3. **Targeted Grep:** Gunakan `Select-String` baris demi baris HANYA setelah file target diidentifikasi oleh Graphify:
    ```powershell
    # BENAR: Graphify menemukan file, lakukan pencarian presisi
-   Select-String -Pattern "pub struct SystemGateway" crates/clawcrew-gateway/src/grpc_system_gateway.rs
+   Select-String -Pattern "pub struct SystemGateway" crates/galleon-gateway/src/grpc_system_gateway.rs
    ```
 4. **Direct File Read:** Buka file hanya pada baris yang relevan dari hasil langkah 2 & 3.
 5. **Dilarang keras:** Melakukan recursive grep buta (`Get-ChildItem -Recurse | Select-String`) ke seluruh repo tanpa memanfaatkan graph.

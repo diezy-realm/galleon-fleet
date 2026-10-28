@@ -1,8 +1,8 @@
 //! TG5: Memory Restart Resilience Tests
 
-use std::sync::Arc;
 use clawcrew::memory::sqlite::SqliteMemory;
 use clawcrew::memory::traits::{Memory, MemoryCategory};
+use std::sync::Arc;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Deduplication: same key overwrites instead of duplicating
@@ -312,7 +312,7 @@ async fn sqlite_memory_concurrent_stores_no_data_loss() {
     let mut handles = Vec::new();
     for i in 0..5 {
         let mem_clone = mem.clone();
-        handles.push(clawcrew_spawn::spawn!(async move {
+        handles.push(galleon_spawn::spawn!(async move {
             mem_clone
                 .store(
                     &format!("concurrent_{i}"),

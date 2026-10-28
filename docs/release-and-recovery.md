@@ -15,7 +15,7 @@ recommended for production.
 
 ## Supported versions
 
-`clawcrew_runtime::platform::backup::schema_versions()` is the canonical,
+`galleon_runtime::platform::backup::schema_versions()` is the canonical,
 operator-readable list of the durable schema versions a build understands:
 
 | Store | Meaning |
@@ -32,7 +32,7 @@ version is refused (downgrade is unsafe) — see
 
 ## Backup
 
-`clawcrew_runtime::platform::backup::create_backup(data_dir, dest, stores)`
+`galleon_runtime::platform::backup::create_backup(data_dir, dest, stores)`
 copies the known durable stores into `dest` and writes `manifest.json`
 (per-store size + SHA-256). `default_store_paths()` lists the stores currently
 covered; add new durable store paths there as they land.

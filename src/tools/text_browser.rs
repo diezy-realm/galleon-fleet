@@ -1,1 +1,1 @@
-pub use clawcrew_tools::text_browser::*;
+pub use galleon_tools::text_browser::*;

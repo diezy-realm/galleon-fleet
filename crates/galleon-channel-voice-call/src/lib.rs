@@ -8,9 +8,9 @@ use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, mpsc};
 
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 
-pub use clawcrew_config::scattered_types::{VoiceCallConfig, VoiceProvider};
+pub use galleon_config::scattered_types::{VoiceCallConfig, VoiceProvider};
 
 // ── Call state ────────────────────────────────────────────────────
 
@@ -105,7 +105,7 @@ impl VoiceCallChannel {
             config,
             alias: alias.into(),
             active_calls: Arc::new(Mutex::new(HashMap::new())),
-            client: clawcrew_config::schema::build_runtime_proxy_client("channel.voice_call"),
+            client: galleon_config::schema::build_runtime_proxy_client("channel.voice_call"),
         }
     }
 
@@ -121,9 +121,9 @@ impl VoiceCallChannel {
     /// Place an outbound call via the configured model_provider.
     pub async fn place_call(&self, to_number: &str) -> Result<String> {
         if self.config.require_outbound_approval {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"to": to_number})),
                 "outbound call requires approval"
             );
@@ -162,9 +162,9 @@ impl VoiceCallChannel {
 
                 let json: serde_json::Value = serde_json::from_str(&resp.text().await?)?;
                 let call_sid = json["sid"].as_str().unwrap_or("unknown").to_string();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"call_sid": call_sid, "to": to_number})),
                     "outbound call placed via Twilio"
                 );
@@ -196,9 +196,9 @@ impl VoiceCallChannel {
                     .as_str()
                     .unwrap_or("unknown")
                     .to_string();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"call_id": call_id, "to": to_number})),
                     "outbound call placed via Telnyx"
                 );
@@ -234,9 +234,9 @@ impl VoiceCallChannel {
                     .as_str()
                     .unwrap_or("unknown")
                     .to_string();
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"call_uuid": call_uuid, "to": to_number})),
                     "outbound call placed via Plivo"
                 );
@@ -302,9 +302,9 @@ impl VoiceCallChannel {
             calls.insert(call_id.to_string(), record);
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"call_id": call_id, "from": from_number})),
             "inbound call received"
         );
@@ -326,10 +326,10 @@ impl VoiceCallChannel {
             ..Default::default()
         };
         tx.send(msg).await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Failed to send call event"
             );
@@ -352,7 +352,7 @@ impl VoiceCallChannel {
                 record.ended_at = Some(chrono::Utc::now().to_rfc3339());
             }
 
-            ::clawcrew_log::record!(DEBUG, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(::serde_json::json!({"call_id": call_id, "old_state": old_state, "new_state": new_state})), "call state transition");
+            ::galleon_log::record!(DEBUG, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(::serde_json::json!({"call_id": call_id, "old_state": old_state, "new_state": new_state})), "call state transition");
         }
     }
 
@@ -379,9 +379,9 @@ impl VoiceCallChannel {
         let json = serde_json::to_string_pretty(record)?;
         std::fs::write(&path, json)?;
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({"call_id": call_id, "path": path.display().to_string()})
             ),
             "call transcript saved"
@@ -392,10 +392,10 @@ impl VoiceCallChannel {
 
 // ── Channel trait implementation ─────────────────────────────────
 
-impl ::clawcrew_api::attribution::Attributable for VoiceCallChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::VoiceCall,
+impl ::galleon_api::attribution::Attributable for VoiceCallChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::VoiceCall,
         )
     }
     fn alias(&self) -> &str {
@@ -416,9 +416,9 @@ impl Channel for VoiceCallChannel {
             if let Some(record) = calls.get(thread_ts)
                 && record.state == CallState::InProgress
             {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"call_id": thread_ts})),
                     &format!("would TTS message to active call: {}", message.content)
                 );
@@ -428,9 +428,9 @@ impl Channel for VoiceCallChannel {
             }
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             &format!("voice_call send (no active call): {}", message.content)
         );
         Ok(())
@@ -441,9 +441,9 @@ impl Channel for VoiceCallChannel {
         let active_calls = self.active_calls.clone();
         let _tx = tx.clone();
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({"port": port, "model_provider": self.config.model_provider})
             ),
             "voice call webhook server starting"
@@ -456,10 +456,10 @@ impl Channel for VoiceCallChannel {
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))
             .await
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Failed to bind voice webhook server"
                 );
@@ -467,10 +467,10 @@ impl Channel for VoiceCallChannel {
             })?;
 
         axum::serve(listener, app).await.map_err(|e| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "Voice webhook server error"
             );
@@ -506,7 +506,7 @@ impl Channel for VoiceCallChannel {
                 resp.status().is_success() || resp.status().as_u16() == 401
             }
             Err(e) => {
-                ::clawcrew_log::record!(WARN, ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_outcome(::clawcrew_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", e), "model_provider": self.config.model_provider})), "voice call health check failed");
+                ::galleon_log::record!(WARN, ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_outcome(::galleon_log::EventOutcome::Unknown).with_attrs(::serde_json::json!({"error": format!("{}", e), "model_provider": self.config.model_provider})), "voice call health check failed");
                 false
             }
         }

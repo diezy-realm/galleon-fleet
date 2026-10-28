@@ -15,7 +15,7 @@ Phase 2b implementation complete and QA verified:
 ## Verification
 
 ```
-Test Suite: clawcrew-gateway
+Test Suite: galleon-gateway
 Result: 562/562 PASS ✅
 Duration: 19.36s
 Status: GREEN
@@ -47,7 +47,7 @@ Status: GREEN
 
 ## Testing & QA
 
-- ✅ Cargo test -p clawcrew-gateway: 562/562 pass
+- ✅ Cargo test -p galleon-gateway: 562/562 pass
 - ✅ Protoc 36.2 verified on PATH
 - ✅ Build clean, no regressions
 - ✅ Integration tests cover all builtin handlers + approval gate flow

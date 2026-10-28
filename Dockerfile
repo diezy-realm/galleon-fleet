@@ -83,12 +83,12 @@ COPY wit/ wit/
 # no longer requires editing this file.  --parents preserves the
 # crates/<name>/Cargo.toml directory structure.
 COPY --parents crates/*/Cargo.toml ./
-# clawcrew-macros is a proc-macro crate, compiled for the host even on a cross
+# galleon-macros is a proc-macro crate, compiled for the host even on a cross
 # build. If only a stub lib.rs is present during the pre-fetch, its host-cached
 # artifact is reused in the real build under the target-triple dir, leaving
-# `clawcrew_macros::Configurable` unresolved. Copy its real source now so the
+# `galleon_macros::Configurable` unresolved. Copy its real source now so the
 # proc-macro is built from the genuine implementation during the pre-fetch.
-COPY --parents crates/clawcrew-macros/src/ ./
+COPY --parents crates/galleon-macros/src/ ./
 # Nested workspace members (test fixture crates) are not matched by the
 # single-level crates/*/Cargo.toml glob above, so match them with their own
 # glob to keep workspace manifest parsing intact during the pre-fetch. A glob
@@ -128,11 +128,11 @@ RUN mkdir -p src src/bin benches apps/galleoncode/src apps/galleonrelay/src tool
     && echo "fn main() {}" > xtask/src/bin/mdbook.rs \
     && echo "fn main() {}" > xtask/src/bin/fluent.rs \
     && echo "fn main() {}" > xtask/src/bin/web.rs \
-    && mkdir -p crates/clawcrew-hardware/examples \
-    && echo "fn main() {}" > crates/clawcrew-hardware/examples/esp32_sim.rs \
-    && for d in crates/*/; do [ "$d" = "crates/clawcrew-macros/" ] && continue; mkdir -p "${d}src" && printf '' > "${d}src/lib.rs"; done \
+    && mkdir -p crates/galleon-hardware/examples \
+    && echo "fn main() {}" > crates/galleon-hardware/examples/esp32_sim.rs \
+    && for d in crates/*/; do [ "$d" = "crates/galleon-macros/" ] && continue; mkdir -p "${d}src" && printf '' > "${d}src/lib.rs"; done \
     && for d in crates/*/tests/fixtures/*/; do [ -f "${d}Cargo.toml" ] || continue; mkdir -p "${d}src" && printf '' > "${d}src/lib.rs"; done \
-    && printf 'fn main() {}' > crates/clawcrew-log/tests/fixtures/attribution-macro-consumer/src/main.rs
+    && printf 'fn main() {}' > crates/galleon-log/tests/fixtures/attribution-macro-consumer/src/main.rs
 RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/registry,sharing=locked \
     --mount=type=cache,id=clawcrew-cargo-git,target=/usr/local/cargo/git,sharing=locked \
     --mount=type=cache,id=clawcrew-target,target=/app/target,sharing=locked \
@@ -163,7 +163,7 @@ COPY tools/fill-translations/ tools/fill-translations/
 # dashboard theme registry under web/src/contexts, so that path must be present.
 COPY apps/galleoncode/ apps/galleoncode/
 COPY web/src/ web/src/
-# locales.toml lives at repo root and is embedded by clawcrew-runtime via
+# locales.toml lives at repo root and is embedded by galleon-runtime via
 # include_str!("../../../locales.toml"); the real build needs it present.
 COPY locales.toml .
 COPY *.rs .

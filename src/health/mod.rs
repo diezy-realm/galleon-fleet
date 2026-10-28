@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-pub use clawcrew_runtime::health::*;
+pub use galleon_runtime::health::*;
 
 #[cfg(test)]
 mod tests {

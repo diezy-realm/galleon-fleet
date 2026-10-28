@@ -1,4 +1,4 @@
-pub use clawcrew_runtime::migration::*;
+pub use galleon_runtime::migration::*;
 
 use crate::config::Config;
 use crate::memory::{self, Memory, MemoryCategory};

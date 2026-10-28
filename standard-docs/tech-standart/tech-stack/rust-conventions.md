@@ -11,9 +11,9 @@
 
 ```
 crates/
-├── clawcrew-gateway/         # gRPC server, vault, secret management
-├── clawcrew-runtime/         # Agent turn execution, tool dispatch
-├── clawcrew-providers/       # LLM vendor APIs (SSOT ADR 0001)
+├── galleon-gateway/         # gRPC server, vault, secret management
+├── galleon-runtime/         # Agent turn execution, tool dispatch
+├── galleon-providers/       # LLM vendor APIs (SSOT ADR 0001)
 ├── clawcrew-channel-*/       # Channel plugins (Discord, Telegram, etc.)
 ├── clawcrew-tools-*/         # Native tools (filesystem, shell, network)
 └── [33 core workspace crates + fixtures & tools; limit: <50]
@@ -23,11 +23,11 @@ crates/
 ```toml
 [workspace]
 members = [
-    "crates/clawcrew-gateway",
-    "crates/clawcrew-runtime",
-    "crates/clawcrew-providers",
+    "crates/galleon-gateway",
+    "crates/galleon-runtime",
+    "crates/galleon-providers",
     "crates/clawcrew-channel-*",
-    "crates/clawcrew-tools-*",
+    "crates/galleon-tools-*",
 ]
 resolver = "2"
 
@@ -49,7 +49,7 @@ serde = { version = "1.0", features = ["derive"] }
 
 ## Crate Boundaries (Clean Architecture)
 
-### Gateway Crate (`clawcrew-gateway`)
+### Gateway Crate (`galleon-gateway`)
 
 **Owns:**
 - gRPC server `SystemGatewayService` :50052
@@ -61,7 +61,7 @@ serde = { version = "1.0", features = ["derive"] }
 ```rust
 pub struct Gateway {
     vault: Arc<Vault>,
-    runtime: Arc<Runtime>, // clawcrew-runtime
+    runtime: Arc<Runtime>, // galleon-runtime
 }
 
 pub trait VaultService {
@@ -73,15 +73,15 @@ pub trait VaultService {
 **Dependencies:**
 ```toml
 [dependencies]
-clawcrew-runtime.workspace = true
-clawcrew-providers.workspace = true
+galleon-runtime.workspace = true
+galleon-providers.workspace = true
 tonic.workspace = true
 tokio.workspace = true
 ```
 
 ---
 
-### Runtime Crate (`clawcrew-runtime`)
+### Runtime Crate (`galleon-runtime`)
 
 **Owns:**
 - Agent turn execution (`execute_turn`)
@@ -105,7 +105,7 @@ pub trait ToolExecutor {
 **Dependencies:**
 ```toml
 [dependencies]
-clawcrew-providers.workspace = true
+galleon-providers.workspace = true
 clawcrew-tools-shell.workspace = true
 clawcrew-tools-filesystem.workspace = true
 tokio.workspace = true
@@ -114,7 +114,7 @@ serde_json.workspace = true
 
 ---
 
-### Providers Crate (`clawcrew-providers`)
+### Providers Crate (`galleon-providers`)
 
 **Owns:**
 - LLM vendor APIs (OpenAI, Gemini, Bedrock, Anthropic) — **SSOT (ADR 0001)**
@@ -150,7 +150,7 @@ impl ProviderDispatch {
 reqwest = { version = "0.12", features = ["json", "stream"] }
 tokio.workspace = true
 serde.workspace = true
-# NO dependency on clawcrew-runtime (providers = leaf crate)
+# NO dependency on galleon-runtime (providers = leaf crate)
 ```
 
 **Convention:** Providers crate is **leaf** (no internal crate deps), runtime calls it.
@@ -220,7 +220,7 @@ impl ToolExecutor for ShellTool {
 ### Example: Provider Trait
 
 ```rust
-// clawcrew-providers/src/lib.rs
+// galleon-providers/src/lib.rs
 #[async_trait]
 pub trait Provider: Send + Sync {
     async fn stream_chat(
@@ -233,7 +233,7 @@ pub trait Provider: Send + Sync {
     fn supports_tools(&self) -> bool { true }
 }
 
-// clawcrew-providers/src/openai.rs
+// galleon-providers/src/openai.rs
 pub struct OpenAIProvider {
     api_key: String,
     client: reqwest::Client,
@@ -283,7 +283,7 @@ service SystemGatewayService {
 ### Server Implementation
 
 ```rust
-// clawcrew-gateway/src/grpc_server.rs
+// galleon-gateway/src/grpc_server.rs
 use tonic::{Request, Response, Status};
 use proto::system_gateway_service_server::SystemGatewayService;
 
@@ -530,7 +530,7 @@ mod tests {
 
 ```rust
 // tests/integration_test.rs
-use clawcrew_runtime::execute_turn;
+use galleon_runtime::execute_turn;
 
 #[tokio::test]
 async fn test_turn_execution_e2e() {
@@ -551,7 +551,7 @@ async fn test_turn_execution_e2e() {
 
 | Type | Pattern | Example |
 |------|---------|---------|
-| Crate | `snake_case` | `clawcrew_gateway`, `clawcrew_providers` |
+| Crate | `snake_case` | `galleon_gateway`, `galleon_providers` |
 | Module | `snake_case` | `mod grpc_server;`, `mod vault;` |
 | Struct | `PascalCase` | `Gateway`, `OpenAIProvider` |
 | Trait | `PascalCase` | `Provider`, `ToolExecutor` |
@@ -566,7 +566,7 @@ async fn test_turn_execution_e2e() {
 ### Crate Layout
 
 ```
-clawcrew-gateway/
+galleon-gateway/
 ├── src/
 │   ├── lib.rs            # Public API exports
 │   ├── grpc_server.rs    # gRPC server implementation

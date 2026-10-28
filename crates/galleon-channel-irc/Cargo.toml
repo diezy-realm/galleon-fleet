@@ -4,14 +4,14 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "IRC channel feature-crate (RF-B1 split; persistent TLS connection and message loop ported from clawcrew-channels)."
+description = "IRC channel feature-crate (RF-B1 split; persistent TLS connection and message loop ported from galleon-channels)."
 repository.workspace = true
 homepage.workspace = true
 publish = true
 
 [dependencies]
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
+galleon-api.workspace = true
 async-trait = "0.1"
 portable-atomic = "1"
 tokio = { version = "1.50", default-features = false, features = [
@@ -20,7 +20,7 @@ tokio = { version = "1.50", default-features = false, features = [
   "sync",
   "time",
 ] }
-clawcrew-log.workspace = true
+galleon-log.workspace = true
 anyhow = "1.0"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 webpki-roots = "1.0.6"
@@ -32,7 +32,7 @@ tokio-rustls = { version = "0.26.4", default-features = false, features = [
 ] }
 
 [dev-dependencies]
-clawcrew-config = { workspace = true, default-features = false }
+galleon-config = { workspace = true, default-features = false }
 toml = "1.0"
 tokio = { version = "1.50", default-features = false, features = [
   "macros",

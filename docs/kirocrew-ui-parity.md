@@ -51,7 +51,7 @@ sebelum menambah backend baru.
 - Backend baru diperlukan (proyeksi Apps + endpoints). *Effort: M.*
 
 ### UI.2 — Instances / Crews page (`/instances`)
-- Sumber data: P2.3 instance registry (`clawcrew_api::instance`) via gateway.
+- Sumber data: P2.3 instance registry (`galleon_api::instance`) via gateway.
 - Tampilkan: instance id, capabilities, health, reconnect/offline, ownership,
   audit remote.
 - Backend proyeksi kemungkinan sudah ada di kontrak P2.3. *Effort: M.*

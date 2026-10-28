@@ -3,11 +3,11 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use base64::Engine as _;
 use cbc::cipher::{BlockDecryptMut, KeyIvInit, block_padding::NoPadding};
-use clawcrew_api::channel::{Channel, ChannelConversationScope, ChannelMessage, SendMessage};
-use clawcrew_config::schema::{StreamMode, WeComWsConfig};
-use clawcrew_tool_call_parser::TERMINAL_MARKERS;
 use futures_util::{SinkExt, StreamExt};
+use galleon_api::channel::{Channel, ChannelConversationScope, ChannelMessage, SendMessage};
+use galleon_config::schema::{StreamMode, WeComWsConfig};
 use galleon_i18n as i18n;
+use galleon_tool_call_parser::TERMINAL_MARKERS;
 use parking_lot::Mutex;
 use rand::Rng;
 use serde_json::Value;
@@ -47,9 +47,9 @@ const WECOM_EMOJIS: &[&str] = &[
 const WECOM_FILE_CLEANUP_INTERVAL_SECS: u64 = 1800;
 macro_rules! wecom_log_debug {
     ($($arg:tt)*) => {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             DEBUG,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             format!($($arg)*),
         )
     };
@@ -65,9 +65,9 @@ fn wecom_ws_cli_string_with_args(key: &str, args: &[(&str, &str)]) -> String {
 
 macro_rules! wecom_log_info {
     ($($arg:tt)*) => {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             format!($($arg)*),
         )
     };
@@ -75,10 +75,10 @@ macro_rules! wecom_log_info {
 
 macro_rules! wecom_log_warn {
     ($($arg:tt)*) => {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             format!($($arg)*),
         )
     };
@@ -86,10 +86,10 @@ macro_rules! wecom_log_warn {
 
 macro_rules! wecom_log_error {
     ($($arg:tt)*) => {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             ERROR,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                .with_outcome(::galleon_log::EventOutcome::Failure),
             format!($($arg)*),
         )
     };
@@ -328,7 +328,7 @@ impl WeComWsChannel {
             );
         }
 
-        let client = clawcrew_config::schema::build_channel_proxy_client_with_timeouts(
+        let client = galleon_config::schema::build_channel_proxy_client_with_timeouts(
             "channel.wecom_ws",
             config.proxy_url.as_deref(),
             WECOM_HTTP_TIMEOUT_SECS,
@@ -616,7 +616,7 @@ impl WeComWsChannel {
 
         let retention = Duration::from_secs(u64::from(self.cfg.file_retention_days) * 86_400);
         let root = self.cfg.workspace_dir.join("wecom_ws_files");
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             cleanup_inbox_files(root, retention).await;
         });
     }
@@ -635,7 +635,7 @@ impl WeComWsChannel {
             "aibot_msg_callback" => {
                 let channel = self.clone();
                 let tx = tx.clone();
-                clawcrew_spawn::spawn!(async move {
+                galleon_spawn::spawn!(async move {
                     channel.handle_msg_callback(frame, &tx).await;
                 });
                 false
@@ -685,7 +685,8 @@ impl WeComWsChannel {
         let scopes = compute_scopes(&parsed);
 
         // Log inbound info
-        let preview = galleon_channel_core::truncate_with_ellipsis(&inbound_content_preview(&parsed), 80);
+        let preview =
+            galleon_channel_core::truncate_with_ellipsis(&inbound_content_preview(&parsed), 80);
         let msg_id_str = if parsed.msg_id.trim().is_empty() {
             "-"
         } else {
@@ -820,7 +821,7 @@ impl WeComWsChannel {
 
         let channel_self = self.clone();
         let tx = tx.clone();
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             let mut inbound = parsed;
             channel_self
                 .materialize_quote_attachments(&mut inbound)
@@ -1485,11 +1486,9 @@ impl WeComWsChannel {
 
 // ── Channel trait impl ───────────────────────────────────────────────
 
-impl ::clawcrew_api::attribution::Attributable for WeComWsChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::WeComWs,
-        )
+impl ::galleon_api::attribution::Attributable for WeComWsChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::WeComWs)
     }
 
     fn alias(&self) -> &str {
@@ -1556,7 +1555,7 @@ impl Channel for WeComWsChannel {
         loop {
             wecom_log_info!("[wecom_ws] connecting to {WECOM_WS_URL}");
 
-            let ws_stream = match clawcrew_config::schema::ws_connect_with_proxy(
+            let ws_stream = match galleon_config::schema::ws_connect_with_proxy(
                 WECOM_WS_URL,
                 "channel.wecom_ws",
                 self.cfg.proxy_url.as_deref(),
@@ -2757,14 +2756,8 @@ mod tests {
         };
 
         let first_key = conversation_history_key(&first);
-        assert_eq!(
-            first_key,
-            conversation_history_key(&second)
-        );
-        assert_eq!(
-            first_key,
-            conversation_history_key(&clear)
-        );
+        assert_eq!(first_key, conversation_history_key(&second));
+        assert_eq!(first_key, conversation_history_key(&clear));
         assert!(!first_key.contains("req-"));
     }
 
@@ -3187,7 +3180,7 @@ mod tests {
         // and concatenated them, so a wildcard under `wecom-ws` never met an
         // `ignore` under `wecom_ws` and the ignored sender was admitted. Both
         // startup paths now share `wecom_ws_external_peers`, which this uses.
-        let config: clawcrew_config::schema::Config = toml::from_str(
+        let config: galleon_config::schema::Config = toml::from_str(
             r#"
             [peer_groups.wecom_grant]
             channel = "wecom-ws.ops"
@@ -3422,7 +3415,7 @@ mod tests {
         *channel.ws_tx.lock().await = Some(ws_tx);
 
         let responder_channel = channel.clone();
-        let responder = clawcrew_spawn::spawn!(async move {
+        let responder = galleon_spawn::spawn!(async move {
             let Some(WsOutbound::Frame(frame)) = ws_rx.recv().await else {
                 panic!("expected respond_msg frame");
             };
@@ -3484,7 +3477,7 @@ mod tests {
         *channel.ws_tx.lock().await = Some(ws_tx);
 
         let responder_channel = channel.clone();
-        let responder = clawcrew_spawn::spawn!(async move {
+        let responder = galleon_spawn::spawn!(async move {
             let Some(WsOutbound::Frame(frame)) = ws_rx.recv().await else {
                 panic!("expected send_msg frame");
             };
@@ -3711,7 +3704,7 @@ mod tests {
         *channel.ws_tx.lock().await = Some(ws_tx);
 
         let responder_channel = channel.clone();
-        let responder = clawcrew_spawn::spawn!(async move {
+        let responder = galleon_spawn::spawn!(async move {
             let Some(WsOutbound::Frame(frame)) = ws_rx.recv().await else {
                 panic!("expected access-denied response frame");
             };
@@ -3844,7 +3837,7 @@ mod tests {
         let attempts = Arc::new(std::sync::atomic::AtomicUsize::new(0));
         let responder_channel = channel.clone();
         let responder_attempts = Arc::clone(&attempts);
-        let responder = clawcrew_spawn::spawn!(async move {
+        let responder = galleon_spawn::spawn!(async move {
             while let Some(WsOutbound::Frame(frame)) = rx.recv().await {
                 let attempt = responder_attempts.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
                 let req_id = frame
@@ -3892,14 +3885,14 @@ mod tests {
         *channel.ws_tx.lock().await = Some(tx);
 
         let first_channel = channel.clone();
-        let first = clawcrew_spawn::spawn!(async move {
+        let first = galleon_spawn::spawn!(async move {
             first_channel
                 .ws_send_respond_msg("req-serial", "stream-1", "first", false)
                 .await
         });
 
         let second_channel = channel.clone();
-        let second = clawcrew_spawn::spawn!(async move {
+        let second = galleon_spawn::spawn!(async move {
             second_channel
                 .ws_send_respond_msg("req-serial", "stream-1", "second", false)
                 .await

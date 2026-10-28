@@ -10,7 +10,7 @@ mod tests {
 
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             let (mut socket, _) = listener.accept().await.unwrap();
             let mut request = [0_u8; 1024];
             let _ = socket.read(&mut request).await.unwrap();
@@ -863,7 +863,7 @@ mod tests {
             thread_replies,
             mention_only,
         )
-        .with_transcription(clawcrew_config::schema::TranscriptionConfig {
+        .with_transcription(galleon_config::schema::TranscriptionConfig {
             enabled: true,
             api_key: Some(String::new()),
             api_url: "https://api.groq.com/openai/v1/audio/transcriptions".to_string(),
@@ -1055,7 +1055,7 @@ mod tests {
             thread_replies,
             mention_only,
         )
-        .with_transcription(clawcrew_config::schema::TranscriptionConfig {
+        .with_transcription(galleon_config::schema::TranscriptionConfig {
             enabled: true,
             api_key: Some("test_key".to_string()),
             api_url: "https://api.groq.com/openai/v1/audio/transcriptions".to_string(),
@@ -1127,7 +1127,7 @@ mod tests {
                 thread_replies,
                 mention_only,
             )
-            .with_transcription(clawcrew_config::schema::TranscriptionConfig {
+            .with_transcription(galleon_config::schema::TranscriptionConfig {
                 enabled: true,
                 api_key: None,
                 api_url: "https://api.groq.com/openai/v1/audio/transcriptions".to_string(),
@@ -1140,7 +1140,7 @@ mod tests {
                 deepgram: None,
                 assemblyai: None,
                 google: None,
-                local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
+                local_whisper: Some(galleon_config::schema::LocalWhisperConfig {
                     url: whisper_url,
                     bearer_token: Some("test_token".to_string()),
                     max_audio_bytes: 25_000_000,
@@ -1195,7 +1195,7 @@ mod tests {
                 false,
                 false,
             )
-            .with_transcription(clawcrew_config::schema::TranscriptionConfig {
+            .with_transcription(galleon_config::schema::TranscriptionConfig {
                 enabled: true,
                 api_key: None,
                 api_url: "https://api.groq.com/openai/v1/audio/transcriptions".to_string(),
@@ -1208,7 +1208,7 @@ mod tests {
                 deepgram: None,
                 assemblyai: None,
                 google: None,
-                local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
+                local_whisper: Some(galleon_config::schema::LocalWhisperConfig {
                     url: format!("{}/v1/audio/transcriptions", mock_server.uri()),
                     bearer_token: Some("test_token".to_string()),
                     max_audio_bytes: 25_000_000,
@@ -1254,7 +1254,7 @@ mod tests {
                 thread_replies,
                 mention_only,
             )
-            .with_transcription(clawcrew_config::schema::TranscriptionConfig {
+            .with_transcription(galleon_config::schema::TranscriptionConfig {
                 enabled: true,
                 api_key: None,
                 api_url: "https://api.groq.com/openai/v1/audio/transcriptions".to_string(),
@@ -1267,7 +1267,7 @@ mod tests {
                 deepgram: None,
                 assemblyai: None,
                 google: None,
-                local_whisper: Some(clawcrew_config::schema::LocalWhisperConfig {
+                local_whisper: Some(galleon_config::schema::LocalWhisperConfig {
                     url: mock_server.uri(),
                     bearer_token: Some("test_token".to_string()),
                     max_audio_bytes: 25_000_000,
@@ -1820,7 +1820,7 @@ mod tests {
         let mut server = WebSocketStream::from_raw_socket(server_io, Role::Server, None).await;
         let (mut write, mut read) = client.split();
 
-        let server_task = clawcrew_spawn::spawn!(async move {
+        let server_task = galleon_spawn::spawn!(async move {
             let first = server
                 .next()
                 .await
@@ -1873,7 +1873,7 @@ mod tests {
         let mut server = WebSocketStream::from_raw_socket(server_io, Role::Server, None).await;
         let (mut write, mut read) = client.split();
 
-        let server_task = clawcrew_spawn::spawn!(async move {
+        let server_task = galleon_spawn::spawn!(async move {
             server
                 .next()
                 .await
@@ -1910,7 +1910,7 @@ mod tests {
         let mut server = WebSocketStream::from_raw_socket(server_io, Role::Server, None).await;
         let (mut write, mut read) = client.split();
 
-        let server_task = clawcrew_spawn::spawn!(async move {
+        let server_task = galleon_spawn::spawn!(async move {
             server
                 .next()
                 .await
@@ -1942,7 +1942,7 @@ mod tests {
         let mut server = WebSocketStream::from_raw_socket(server_io, Role::Server, None).await;
         let (mut write, mut read) = client.split();
 
-        let server_task = clawcrew_spawn::spawn!(async move {
+        let server_task = galleon_spawn::spawn!(async move {
             server
                 .next()
                 .await
@@ -1980,7 +1980,7 @@ mod tests {
         let mut server = WebSocketStream::from_raw_socket(server_io, Role::Server, None).await;
         let (mut write, mut read) = client.split();
 
-        let server_task = clawcrew_spawn::spawn!(async move {
+        let server_task = galleon_spawn::spawn!(async move {
             server
                 .next()
                 .await
@@ -2449,8 +2449,8 @@ mod approval_tests {
         )
     }
 
-    fn approval_request() -> clawcrew_api::channel::ChannelApprovalRequest {
-        clawcrew_api::channel::ChannelApprovalRequest {
+    fn approval_request() -> galleon_api::channel::ChannelApprovalRequest {
+        galleon_api::channel::ChannelApprovalRequest {
             tool_name: "shell".into(),
             arguments_summary: "rm -rf /".into(),
             raw_arguments: None,
@@ -2487,7 +2487,7 @@ mod approval_tests {
         assert_eq!(attributed.response, ChannelApprovalResponse::Deny);
         assert_eq!(
             attributed.source,
-            clawcrew_api::channel::ApprovalSource::TimedOut,
+            galleon_api::channel::ApprovalSource::TimedOut,
             "an unanswered prompt is the runtime denying, not an operator refusing"
         );
         assert!(
@@ -2549,7 +2549,7 @@ mod approval_tests {
             .await;
 
         let ch = channel_at(&server.uri(), vec![ALLOWED_USER.to_string()])
-            .with_listen_mode(clawcrew_config::schema::MattermostListenMode::Websocket)
+            .with_listen_mode(galleon_config::schema::MattermostListenMode::Websocket)
             .with_approval_timeout_secs(0);
 
         let _ = ch
@@ -2639,7 +2639,7 @@ mod approval_tests {
         let ch = channel_with_peers(Vec::new());
         assert_eq!(
             ch.approval_timeout_secs,
-            clawcrew_config::schema::MattermostConfig::default().approval_timeout_secs,
+            galleon_config::schema::MattermostConfig::default().approval_timeout_secs,
         );
         assert!(ch.approval_timeout_secs > 0);
     }
@@ -2654,7 +2654,7 @@ mod approval_tests {
     #[tokio::test]
     async fn failed_prompt_post_is_an_error_not_an_operator_decision() {
         let ch = channel_with_peers(vec![ALLOWED_USER.to_string()]).with_approval_timeout_secs(0);
-        let request = clawcrew_api::channel::ChannelApprovalRequest {
+        let request = galleon_api::channel::ChannelApprovalRequest {
             tool_name: "shell".into(),
             arguments_summary: "rm -rf /".into(),
             raw_arguments: None,

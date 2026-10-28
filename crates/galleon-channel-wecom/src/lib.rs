@@ -1,11 +1,8 @@
-use std::sync::Arc;
 use async_trait::async_trait;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
+use std::sync::Arc;
 
-async fn ensure_success(
-    resp: reqwest::Response,
-    what: &str,
-) -> anyhow::Result<reqwest::Response> {
+async fn ensure_success(resp: reqwest::Response, what: &str) -> anyhow::Result<reqwest::Response> {
     if resp.status().is_success() {
         return Ok(resp);
     }
@@ -41,7 +38,7 @@ impl WeComChannel {
     }
 
     fn http_client(&self) -> reqwest::Client {
-        clawcrew_config::schema::build_runtime_proxy_client("channel.wecom")
+        galleon_config::schema::build_runtime_proxy_client("channel.wecom")
     }
 
     fn webhook_url(&self) -> String {
@@ -58,9 +55,9 @@ impl WeComChannel {
             user_id,
             galleon_channel_core::allowlist::Match::Sensitive,
         );
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             TRACE,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "channel": "wecom",
                     "alias": self.alias,
@@ -74,9 +71,9 @@ impl WeComChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for WeComChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::WeCom)
+impl ::galleon_api::attribution::Attributable for WeComChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::WeCom)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -131,9 +128,9 @@ impl Channel for WeComChannel {
     }
 
     async fn listen(&self, tx: tokio::sync::mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "channel ready (send-only via Bot Webhook)"
         );
         tx.closed().await;
@@ -221,7 +218,7 @@ enabled = true
 webhook_key = "key-abc-123"
 allowed_users = ["user1", "*"]
 "#;
-        let cfg = clawcrew_config::migration::migrate_to_current(v2_toml)
+        let cfg = galleon_config::migration::migrate_to_current(v2_toml)
             .expect("V2 wecom config migrates to V3");
         let wecom = cfg
             .channels
@@ -249,7 +246,7 @@ schema_version = 2
 enabled = true
 webhook_key = "key"
 "#;
-        let cfg = clawcrew_config::migration::migrate_to_current(v2_toml)
+        let cfg = galleon_config::migration::migrate_to_current(v2_toml)
             .expect("V2 wecom config without allowed_users migrates");
         assert!(
             !cfg.peer_groups.contains_key("wecom_default"),

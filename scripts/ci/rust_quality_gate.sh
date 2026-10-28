@@ -43,7 +43,7 @@ PROTECTED_METHODS='\.(chat|stream_chat|simple_chat|chat_with_system|chat_with_hi
 #   - `self.<method>(...)` self-calls (same Attributable instance;
 #     dispatcher wrap would be a redundant attribution layer).
 #   - `self.as_ref().<method>(...)` blanket-impl forwarders (used by
-#     `impl ModelProvider for Arc<T>` in clawcrew-api — must call
+#     `impl ModelProvider for Arc<T>` in galleon-api — must call
 #     inner directly to avoid infinite recursion through the dispatcher).
 #   - Method calls that follow a ProviderDispatch construction within
 #     the prior 3 lines. The dispatcher's borrowed/owned variants
@@ -65,8 +65,8 @@ fi
 
 VIOLATIONS=$(printf '%s\n' "$RG_OUTPUT" | awk -F: '
     BEGIN {
-        allowed["crates/clawcrew-providers/src/dispatch.rs"] = 1
-        allowed["crates/clawcrew-providers/tests/dispatch_integration.rs"] = 1
+        allowed["crates/galleon-providers/src/dispatch.rs"] = 1
+        allowed["crates/galleon-providers/tests/dispatch_integration.rs"] = 1
     }
     function read_file_lines(file,    cmd, raw_line, lineno) {
         cmd = "cat " file " 2>/dev/null"
@@ -177,7 +177,7 @@ if [ -n "$VIOLATIONS" ]; then
     echo "❌ Direct ModelProvider method calls found outside the dispatcher:"
     echo "$VIOLATIONS"
     echo
-    echo "Route the call through clawcrew_providers::ProviderDispatch:"
+    echo "Route the call through galleon_providers::ProviderDispatch:"
     echo "    ProviderDispatch::new(provider.clone()).<method>(...)        // Arc<dyn ModelProvider>"
     echo "    ProviderDispatch::from_ref(&*provider).<method>(...)         // &dyn ModelProvider"
     echo

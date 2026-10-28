@@ -23,21 +23,21 @@
 
 | Komponen | Jumlah File | Total Kemunculan | Kategori Utama |
 |---|---|---|---|
-| `crates/clawcrew-channels` | 79 | 9,123 | `rename` / `delete` |
-| `crates/clawcrew-runtime` | 245 | 8,868 | `rename` / `delete` |
+| `crates/galleon-channels` | 79 | 9,123 | `rename` / `delete` |
+| `crates/galleon-runtime` | 245 | 8,868 | `rename` / `delete` |
 | `docs` | 238 | 3,836 | `rename` / `delete` |
-| `crates/clawcrew-providers` | 44 | 2,223 | `rename` / `delete` |
-| `crates/clawcrew-tools` | 88 | 2,101 | `rename` / `delete` |
-| `crates/clawcrew-gateway` | 53 | 1,758 | `rename` / `delete` |
+| `crates/galleon-providers` | 44 | 2,223 | `rename` / `delete` |
+| `crates/galleon-tools` | 88 | 2,101 | `rename` / `delete` |
+| `crates/galleon-gateway` | 53 | 1,758 | `rename` / `delete` |
 | `src` | 125 | 1,508 | `rename` / `delete` |
-| `crates/clawcrew-config` | 34 | 1,290 | `rename` / `delete` |
+| `crates/galleon-config` | 34 | 1,290 | `rename` / `delete` |
 | `root` | 42 | 1,222 | `rename` / `delete` |
 | `apps/zerocode` | 33 | 1,067 | `rename` / `delete` |
 | `crates/galleon-i18n` | 12 | 785 | `rename` / `delete` |
 | `scripts` | 60 | 671 | `rename` / `delete` |
 | `standard-docs` | 72 | 660 | `rename` / `delete` |
 | `tests` | 64 | 657 | `rename` / `delete` |
-| `crates/clawcrew-hardware` | 33 | 547 | `rename` / `delete` |
+| `crates/galleon-hardware` | 33 | 547 | `rename` / `delete` |
 
 ---
 

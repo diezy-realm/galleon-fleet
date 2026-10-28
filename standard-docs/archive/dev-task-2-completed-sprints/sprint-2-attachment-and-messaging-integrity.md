@@ -7,24 +7,24 @@ depends_on: Sprint 0 §C (BL-14 harus merge dulu — file overlap orchestrator/m
 
 # Sprint 2 — Attachment & Messaging Integrity
 
-> **PRASYARAT KERAS:** BL-14 (Sprint 0) harus sudah merge sebelum sprint ini menyentuh `clawcrew-channels/src/orchestrator/mod.rs`. Jangan mulai BL-52 di file ini sebelum BL-14 selesai — dua crew menulis file yang sama secara paralel menghasilkan merge conflict/regresi silang.
+> **PRASYARAT KERAS:** BL-14 (Sprint 0) harus sudah merge sebelum sprint ini menyentuh `galleon-channels/src/orchestrator/mod.rs`. Jangan mulai BL-52 di file ini sebelum BL-14 selesai — dua crew menulis file yang sama secara paralel menghasilkan merge conflict/regresi silang.
 
 ## A. Bug Data-Loss (PRIORITASKAN — P0, mempengaruhi semua channel messaging hari ini)
 
-- [x] **BL-52 (P0 — bug data-loss nyata, PRIORITASKAN di atas semua item lain sprint ini)** Perbaiki bug attachment hilang di `MessageDebouncer`. **Masalah terverifikasi sampai baris kode:** saat pesan rapid digabung, hanya `turn` PERTAMA yang dipertahankan strukturnya (komentar kode sendiri: *"the combined turn keeps the place of the sender's first message"*), attachment dari pesan ke-2/3/dst HILANG diam-diam — hanya teksnya yang ikut digabung. File: `crates/clawcrew-infra/src/debounce.rs`, `crates/clawcrew-channels/src/orchestrator/mod.rs:1370-1372` (titik overwrite `turn.turn.msg.content = combined`). Status: COMPLETED (`debounced_messages_preserve_all_attachments` passed).
+- [x] **BL-52 (P0 — bug data-loss nyata, PRIORITASKAN di atas semua item lain sprint ini)** Perbaiki bug attachment hilang di `MessageDebouncer`. **Masalah terverifikasi sampai baris kode:** saat pesan rapid digabung, hanya `turn` PERTAMA yang dipertahankan strukturnya (komentar kode sendiri: *"the combined turn keeps the place of the sender's first message"*), attachment dari pesan ke-2/3/dst HILANG diam-diam — hanya teksnya yang ikut digabung. File: `crates/galleon-infra/src/debounce.rs`, `crates/galleon-channels/src/orchestrator/mod.rs:1370-1372` (titik overwrite `turn.turn.msg.content = combined`). Status: COMPLETED (`debounced_messages_preserve_all_attachments` passed).
 
 #### Detail Eksekusi — BL-52
 
-**Koreksi baris (verifikasi 2026-10-06):** Titik overwrite `turn.turn.msg.content = combined` ada di `crates/clawcrew-channels/src/orchestrator/mod.rs:1662` (bergeser dari `1370-1372` di dokumen lama — kode telah berubah sejak dicatat), di dalam fungsi `route_inbound_slot`. Verifikasi akar masalah LENGKAP (bukan hanya titik overwrite, tapi seluruh jalur):
+**Koreksi baris (verifikasi 2026-10-06):** Titik overwrite `turn.turn.msg.content = combined` ada di `crates/galleon-channels/src/orchestrator/mod.rs:1662` (bergeser dari `1370-1372` di dokumen lama — kode telah berubah sejak dicatat), di dalam fungsi `route_inbound_slot`. Verifikasi akar masalah LENGKAP (bukan hanya titik overwrite, tapi seluruh jalur):
 
-1. `crates/clawcrew-infra/src/debounce.rs` — `MessageDebouncer::debounce_with_window(sender_key: &str, message: &str, window: Duration)` HANYA menerima `message: &str` (teks polos). `DebouncerEntry.messages: Vec<String>` menyimpan teks saja. `fire_debounced()` menggabung via `entry.messages.join("\n")` — SATU `String`, tidak ada tempat untuk attachment sama sekali di level debouncer ini.
-2. `crates/clawcrew-channels/src/orchestrator/mod.rs` sekitar baris 11316 (fungsi pemanggil, nama fungsi tempatnya belum dikonfirmasi persis — baca ~11250-11320 untuk nama fungsi pembungkus): panggilan `ctx.debouncer.debounce_with_window(&debounce_key, &msg.content, debounce_window)` hanya mengirim `&msg.content` (String) — **`msg.attachments` (field `Vec<MediaAttachment>` di `clawcrew-api/src/channel.rs:423`) TIDAK PERNAH disertakan dalam pemanggilan ini**. Attachment pesan ke-2/3/dst genuinely tidak pernah disalurkan ke mana pun, bukan "ditimpa" — ini presisi penting untuk desain fix.
+1. `crates/galleon-infra/src/debounce.rs` — `MessageDebouncer::debounce_with_window(sender_key: &str, message: &str, window: Duration)` HANYA menerima `message: &str` (teks polos). `DebouncerEntry.messages: Vec<String>` menyimpan teks saja. `fire_debounced()` menggabung via `entry.messages.join("\n")` — SATU `String`, tidak ada tempat untuk attachment sama sekali di level debouncer ini.
+2. `crates/galleon-channels/src/orchestrator/mod.rs` sekitar baris 11316 (fungsi pemanggil, nama fungsi tempatnya belum dikonfirmasi persis — baca ~11250-11320 untuk nama fungsi pembungkus): panggilan `ctx.debouncer.debounce_with_window(&debounce_key, &msg.content, debounce_window)` hanya mengirim `&msg.content` (String) — **`msg.attachments` (field `Vec<MediaAttachment>` di `galleon-api/src/channel.rs:423`) TIDAK PERNAH disertakan dalam pemanggilan ini**. Attachment pesan ke-2/3/dst genuinely tidak pernah disalurkan ke mana pun, bukan "ditimpa" — ini presisi penting untuk desain fix.
 3. `InboundTurn { turn: Box<PendingTurn> }` dibuat SEKALI saat bucket debounce PERTAMA kali dibuka (`msg` lengkap dengan attachment pesan pertama tersimpan di `PendingTurn.msg`). Pesan susulan dalam window yang sama HANYA memperbarui bucket teks di debouncer (langkah 1), tidak pernah menyentuh `PendingTurn` yang sudah dibuat.
 4. Di `route_inbound_slot` (baris 1662), saat window selesai: `turn.turn.msg.content = combined` — mengganti teks `PendingTurn` pertama dengan gabungan teks SEMUA pesan, TAPI `turn.turn.msg.attachments` tetap attachment pesan PERTAMA saja (field ini tidak pernah disentuh ulang).
 
 **Spesifikasi API — perubahan diperlukan di 2 layer:**
 ```rust
-// crates/clawcrew-infra/src/debounce.rs — tambah payload generik, bukan String murni.
+// crates/galleon-infra/src/debounce.rs — tambah payload generik, bukan String murni.
 // Opsi desain (pilih salah satu, DIPUTUSKAN saat implementasi berdasarkan dampak minimal):
 
 // OPSI A (lebih kecil diff): debouncer tetap String-only untuk teks,
@@ -66,7 +66,7 @@ InboundSlot::Debounced { mut turn, content, attachments_key } => match content.a
 **Konvensi penamaan:** `attachments_key`/`take_accumulated_attachments` — nama contoh, ikuti pola existing `debounce_key`/`debounce_buckets` di file yang sama persis gaya snake_case Rust yang sudah dipakai.
 
 **Langkah pengerjaan:**
-1. Baca `crates/clawcrew-channels/src/orchestrator/mod.rs` baris 11250-11450 PENUH (bagian yang memanggil `debouncer.debounce_with_window` dan menangani `DebounceResult`) — pahami variable `debounce_buckets`, `debounce_bucket_owners` yang sudah ada sebagai pola accumulator serupa yang bisa ditiru untuk attachment.
+1. Baca `crates/galleon-channels/src/orchestrator/mod.rs` baris 11250-11450 PENUH (bagian yang memanggil `debouncer.debounce_with_window` dan menangani `DebounceResult`) — pahami variable `debounce_buckets`, `debounce_bucket_owners` yang sudah ada sebagai pola accumulator serupa yang bisa ditiru untuk attachment.
 2. **TUNGGU BL-14 (Sprint 0) merge dulu** — PRASYARAT KERAS sudah tercatat di header file ini, file yang sama (`orchestrator/mod.rs`) sedang disentuh BL-14.
 3. Tambah struktur akumulasi attachment terpisah (pola di atas, OPSI A) — JANGAN ubah `MessageDebouncer` di `debounce.rs` kecuali OPSI A terbukti tidak mungkin saat implementasi (baru pindah ke OPSI B dengan konfirmasi Lead).
 4. Update titik `turn.turn.msg.content = combined` (baris 1662) menjadi juga mengisi `attachments`.
@@ -92,14 +92,14 @@ Plus test regresi: pesan TANPA attachment yang didebounce tetap bekerja seperti 
 
 ## B. Perluasan Skema & Layer Validasi (paralel dengan A setelah A mulai, TIDAK sebelum)
 
-- [x] **BL-53 (LOW-MEDIUM, paralel dengan A)** Perluas `MediaKind` dengan `Document`/`Archive`/`Link` (saat ini hanya `Audio|Image|Video|Unknown`). File: `clawcrew-api/src/media.rs`. Referensi skema: Claude `source.type: base64|url|file` (seragam, lebih bersih ditiru) vs Gemini union-field-per-jenis. Status: COMPLETED (273/273 tests pass).
+- [x] **BL-53 (LOW-MEDIUM, paralel dengan A)** Perluas `MediaKind` dengan `Document`/`Archive`/`Link` (saat ini hanya `Audio|Image|Video|Unknown`). File: `galleon-api/src/media.rs`. Referensi skema: Claude `source.type: base64|url|file` (seragam, lebih bersih ditiru) vs Gemini union-field-per-jenis. Status: COMPLETED (273/273 tests pass).
 
 #### Detail Eksekusi — BL-53
 
-**Verifikasi:** `crates/clawcrew-api/src/media.rs:27` — `pub enum MediaKind { Audio, Image, Video, Unknown }`, dengan `#[derive(Debug, Clone, Copy, PartialEq, Eq)]` — PENTING: enum ini `Copy`, jadi penambahan variant TIDAK memerlukan perubahan derive, tapi SEMUA `match` exhaustive terhadap `MediaKind` di seluruh codebase akan gagal compile sampai ditambah arm baru (ini FITUR bukan bug — compiler akan menunjukkan tepat semua titik yang perlu diupdate).
+**Verifikasi:** `crates/galleon-api/src/media.rs:27` — `pub enum MediaKind { Audio, Image, Video, Unknown }`, dengan `#[derive(Debug, Clone, Copy, PartialEq, Eq)]` — PENTING: enum ini `Copy`, jadi penambahan variant TIDAK memerlukan perubahan derive, tapi SEMUA `match` exhaustive terhadap `MediaKind` di seluruh codebase akan gagal compile sampai ditambah arm baru (ini FITUR bukan bug — compiler akan menunjukkan tepat semua titik yang perlu diupdate).
 
 **File & simbol spesifik:**
-- Ubah: `crates/clawcrew-api/src/media.rs:27` — tambah variant `Document`, `Archive`, `Link`.
+- Ubah: `crates/galleon-api/src/media.rs:27` — tambah variant `Document`, `Archive`, `Link`.
 - WAJIB cari semua consumer: jalankan `code` tool `find_references` pada `MediaKind` SEBELUM menambah variant, untuk inventarisasi semua `match` yang akan pecah — JANGAN tambah variant lalu "fix compile error satu-satu tanpa rencana", baca dulu SEMUA titik match untuk desain respons yang konsisten (misal: apakah `Document`/`Archive` punya perlakuan sama dengan `Unknown` di beberapa titik, atau genuinely baru).
 
 **Spesifikasi API:**
@@ -132,7 +132,7 @@ pub enum MediaKind {
 
 #### Detail Eksekusi — BL-54
 
-**TIDAK DIVERIFIKASI sesi ini** — "Front App entry point" mencakup banyak permukaan (desktop Tauri, web React, tiap channel messaging) yang di luar budget grep sesi ini. **Langkah pertama WAJIB bagi tim eksekusi:** inventarisasi semua titik upload/attach di `apps/tauri/`, `web/src/`, dan tiap `crates/galleon-channel-*`/`clawcrew-channels/src/` yang menerima attachment dari user sebelum menulis kode — tiket ini genuinely tersebar, bukan satu titik.
+**TIDAK DIVERIFIKASI sesi ini** — "Front App entry point" mencakup banyak permukaan (desktop Tauri, web React, tiap channel messaging) yang di luar budget grep sesi ini. **Langkah pertama WAJIB bagi tim eksekusi:** inventarisasi semua titik upload/attach di `apps/tauri/`, `web/src/`, dan tiap `crates/galleon-channel-*`/`galleon-channels/src/` yang menerima attachment dari user sebelum menulis kode — tiket ini genuinely tersebar, bukan satu titik.
 
 **Acceptance criteria testable:** Upload percobaan ke-11 attachment dalam satu pesan → ditolak di level Front App (UI menampilkan pesan error), request TIDAK terkirim ke Core sama sekali (verifikasi via network trace/mock, bukan hanya UI state).
 
@@ -169,7 +169,7 @@ fn enforce_attachment_limits(msg: &mut ChannelMessage) -> Result<(), AttachmentL
 
 **Langkah pengerjaan:**
 1. **Tunggu BL-52 selesai dan merge** (hard dependency — tidak bisa mulai lebih awal, enforcement butuh attachment yang sudah lengkap).
-2. Cek apakah `MediaAttachment` (`clawcrew-api/src/media.rs` atau `channel.rs`) sudah punya method untuk ukuran byte (`byte_size()`/`len()`/sejenis) — kalau belum, tambahkan sebagai bagian tiket ini.
+2. Cek apakah `MediaAttachment` (`galleon-api/src/media.rs` atau `channel.rs`) sudah punya method untuk ukuran byte (`byte_size()`/`len()`/sejenis) — kalau belum, tambahkan sebagai bagian tiket ini.
 3. Tentukan titik pemanggilan `enforce_attachment_limits` — SETELAH `route_inbound_slot` mengisi attachment lengkap, SEBELUM turn diteruskan ke lane admission (`turn.registration`/`enqueue` yang sudah ada).
 4. Response ke user saat limit terlampaui: pesan error yang jelas (bukan silent drop) — konsisten pola `send_notice_with_timeout`/busy notice yang sudah ada di file ini untuk notifikasi best-effort.
 
@@ -193,28 +193,28 @@ async fn debounced_bucket_rejects_when_combined_attachments_exceed_cap() {
 
 ## C. Redaksi & Scrub Tool I/O (independen, file berbeda, bisa paralel penuh dengan A/B)
 
-- [x] **BL-37 Tahap 1 (P1, HIGH — bug wiring, bukan desain, PRIORITASKAN)** Sambungkan `capture_tool_input`/`capture_tool_output` yang sudah dirancang benar tapi NOL dipanggil produksi. Ganti `call_arguments`/`r.output` mentah di `tool_execution.rs:166-262`. File: `crates/clawcrew-runtime/src/agent/tool_execution.rs`. Status: COMPLETED (31 tests pass termasuk `tool_io_capture_redacts_and_truncates_in_debug_log`).
+- [x] **BL-37 Tahap 1 (P1, HIGH — bug wiring, bukan desain, PRIORITASKAN)** Sambungkan `capture_tool_input`/`capture_tool_output` yang sudah dirancang benar tapi NOL dipanggil produksi. Ganti `call_arguments`/`r.output` mentah di `tool_execution.rs:166-262`. File: `crates/galleon-runtime/src/agent/tool_execution.rs`. Status: COMPLETED (31 tests pass termasuk `tool_io_capture_redacts_and_truncates_in_debug_log`).
 
 #### Detail Eksekusi — BL-37 Tahap 1
 
-**Koreksi lokasi (penting):** `capture_tool_input`/`capture_tool_output` **TIDAK ada** di `tool_execution.rs` — definisinya di crate yang BERBEDA: `crates/clawcrew-log/src/tool_io.rs:23` (`capture_tool_input(policy: &ResolvedPolicy, tool: &str, redacted: &str) -> Option<ToolIoCapture>`) dan `:32` (`capture_tool_output`, signature identik). Dokumen lama benar bahwa fungsi ini "dirancang benar tapi nol dipanggil produksi" — grep `tool_execution.rs` untuk nama fungsi ini = 0 match, mengkonfirmasi gap wiring.
+**Koreksi lokasi (penting):** `capture_tool_input`/`capture_tool_output` **TIDAK ada** di `tool_execution.rs` — definisinya di crate yang BERBEDA: `crates/galleon-log/src/tool_io.rs:23` (`capture_tool_input(policy: &ResolvedPolicy, tool: &str, redacted: &str) -> Option<ToolIoCapture>`) dan `:32` (`capture_tool_output`, signature identik). Dokumen lama benar bahwa fungsi ini "dirancang benar tapi nol dipanggil produksi" — grep `tool_execution.rs` untuk nama fungsi ini = 0 match, mengkonfirmasi gap wiring.
 
-**Koreksi baris:** Baris persis di `tool_execution.rs` tempat raw value ditulis ke log (padanan dari klaim dokumen `166-262`) adalah **baris ~259** (`"input": call_arguments` di dalam `::clawcrew_log::record!(DEBUG, ...)`, fungsi `execute_one_tool`) — nomor baris SUDAH BERGESER dari dokumen lama, verifikasi ulang nomor persis saat eksekusi (`grep -n '"input": call_arguments'`) karena file terus berubah.
+**Koreksi baris:** Baris persis di `tool_execution.rs` tempat raw value ditulis ke log (padanan dari klaim dokumen `166-262`) adalah **baris ~259** (`"input": call_arguments` di dalam `::galleon_log::record!(DEBUG, ...)`, fungsi `execute_one_tool`) — nomor baris SUDAH BERGESER dari dokumen lama, verifikasi ulang nomor persis saat eksekusi (`grep -n '"input": call_arguments'`) karena file terus berubah.
 
-**Signature `capture_tool_input`/`capture_tool_output` butuh `redacted: &str`** — ARTINYA caller WAJIB men-scrub/leak-scan INPUT terlebih dahulu SEBELUM memanggil fungsi ini (dokumentasi fungsi sendiri: *"the input string AFTER the runtime has scanned it for credential leaks (using `clawcrew_runtime::security::LeakDetector`)"*). Ini urutan 2 langkah: (1) leak-scan via `LeakDetector` (`crates/clawcrew-runtime/src/security/` — cari exact path, kemungkinan dekat `landlock.rs`/`seatbelt.rs` di modul `security`), (2) `capture_tool_input(policy, tool, redacted)` untuk truncation+denylist.
+**Signature `capture_tool_input`/`capture_tool_output` butuh `redacted: &str`** — ARTINYA caller WAJIB men-scrub/leak-scan INPUT terlebih dahulu SEBELUM memanggil fungsi ini (dokumentasi fungsi sendiri: *"the input string AFTER the runtime has scanned it for credential leaks (using `galleon_runtime::security::LeakDetector`)"*). Ini urutan 2 langkah: (1) leak-scan via `LeakDetector` (`crates/galleon-runtime/src/security/` — cari exact path, kemungkinan dekat `landlock.rs`/`seatbelt.rs` di modul `security`), (2) `capture_tool_input(policy, tool, redacted)` untuk truncation+denylist.
 
 **File & simbol spesifik:**
-- Baca: `crates/clawcrew-log/src/tool_io.rs` (sudah dibaca penuh sesi ini) — `ToolIoCapture { text, original_bytes, truncated }`, `ResolvedPolicy`, `ToolIoPolicy::{Off,Full,Redacted}`.
-- Cari: `crates/clawcrew-runtime/src/security/` untuk `LeakDetector` exact path dan signature method scan-nya (BELUM diverifikasi sesi ini — WAJIB sebagai langkah pertama tim eksekusi).
-- Ubah: `crates/clawcrew-runtime/src/agent/tool_execution.rs` baris ~259 (titik `"input": call_arguments`) dan titik serupa untuk output (grep `r.output`/`result.output` di sekitar baris ini untuk titik kedua).
+- Baca: `crates/galleon-log/src/tool_io.rs` (sudah dibaca penuh sesi ini) — `ToolIoCapture { text, original_bytes, truncated }`, `ResolvedPolicy`, `ToolIoPolicy::{Off,Full,Redacted}`.
+- Cari: `crates/galleon-runtime/src/security/` untuk `LeakDetector` exact path dan signature method scan-nya (BELUM diverifikasi sesi ini — WAJIB sebagai langkah pertama tim eksekusi).
+- Ubah: `crates/galleon-runtime/src/agent/tool_execution.rs` baris ~259 (titik `"input": call_arguments`) dan titik serupa untuk output (grep `r.output`/`result.output` di sekitar baris ini untuk titik kedua).
 
 **Spesifikasi API (pola integrasi):**
 ```rust
 // Sebelum (saat ini, tool_execution.rs ~baris 254-261):
-::clawcrew_log::record!(
+::galleon_log::record!(
     DEBUG,
-    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Invoke)
-        .with_category(::clawcrew_log::EventCategory::Tool)
+    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Invoke)
+        .with_category(::galleon_log::EventCategory::Tool)
         .with_attrs(::serde_json::json!({
             "tool": call_name,
             "tool_call_id": tool_call_id,
@@ -225,11 +225,11 @@ async fn debounced_bucket_rejects_when_combined_attachments_exceed_cap() {
 
 // Sesudah:
 let leak_scanned_input = security::LeakDetector::scan(&full_args); // verifikasi API persis sebelum pakai
-let captured_input = clawcrew_log::capture_tool_input(&resolved_policy, call_name, &leak_scanned_input);
-::clawcrew_log::record!(
+let captured_input = galleon_log::capture_tool_input(&resolved_policy, call_name, &leak_scanned_input);
+::galleon_log::record!(
     DEBUG,
-    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Invoke)
-        .with_category(::clawcrew_log::EventCategory::Tool)
+    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Invoke)
+        .with_category(::galleon_log::EventCategory::Tool)
         .with_attrs(::serde_json::json!({
             "tool": call_name,
             "tool_call_id": tool_call_id,
@@ -254,14 +254,14 @@ let captured_input = clawcrew_log::capture_tool_input(&resolved_policy, call_nam
 
 **JANGAN DIUBAH:** `ToolIoCapture`/`capture_tool_input`/`capture_tool_output`/`capture_with_policy` di `tool_io.rs` — API ini sudah benar sesuai dokumentasinya sendiri, tiket ini murni WIRING caller, bukan mengubah fungsi itu.
 
-- [x] **BL-37 Tahap 2 (SETELAH Tahap 1)** Pisah axis policy: technical tool I/O (default truncated) vs conversational tool I/O (default `Off`). File: `crates/clawcrew-config/src/schema.rs`, `crates/clawcrew-log/src/{tool_io.rs,config.rs}`. Status: COMPLETED (`conversational_tool_io_defaults_to_off_while_technical_is_captured` passed).
+- [x] **BL-37 Tahap 2 (SETELAH Tahap 1)** Pisah axis policy: technical tool I/O (default truncated) vs conversational tool I/O (default `Off`). File: `crates/galleon-config/src/schema.rs`, `crates/galleon-log/src/{tool_io.rs,config.rs}`. Status: COMPLETED (`conversational_tool_io_defaults_to_off_while_technical_is_captured` passed).
 
 #### Detail Eksekusi — BL-37 Tahap 2
 
-**File & simbol spesifik:** `ToolIoPolicy` enum (dipakai di `tool_io.rs`, didefinisikan kemungkinan di `clawcrew-log/src/config.rs` — BELUM diverifikasi sesi ini, WAJIB cek sebelum eksekusi) saat ini SATU axis (`Off|Full|Redacted`) berlaku untuk SEMUA tool. Tiket ini minta DUA axis terpisah: tool teknis (file-write, shell, dll — default `Redacted`/truncated) vs tool conversational (kirim pesan ke user/channel — default `Off`, karena isi percakapan user adalah data sensitif yang berbeda kelas dari argumen command teknis).
+**File & simbol spesifik:** `ToolIoPolicy` enum (dipakai di `tool_io.rs`, didefinisikan kemungkinan di `galleon-log/src/config.rs` — BELUM diverifikasi sesi ini, WAJIB cek sebelum eksekusi) saat ini SATU axis (`Off|Full|Redacted`) berlaku untuk SEMUA tool. Tiket ini minta DUA axis terpisah: tool teknis (file-write, shell, dll — default `Redacted`/truncated) vs tool conversational (kirim pesan ke user/channel — default `Off`, karena isi percakapan user adalah data sensitif yang berbeda kelas dari argumen command teknis).
 
 **Langkah pengerjaan:**
-1. Baca `crates/clawcrew-config/src/schema.rs` untuk struktur `ResolvedPolicy`/`ToolIoPolicy` existing persis.
+1. Baca `crates/galleon-config/src/schema.rs` untuk struktur `ResolvedPolicy`/`ToolIoPolicy` existing persis.
 2. Tentukan cara membedakan "tool teknis" vs "tool conversational" — kemungkinan via klasifikasi existing di tool registry (`ToolManifest`? — cek apakah ada field kategori tool yang sudah ada, JANGAN buat klasifikasi baru kalau sudah ada yang bisa direuse).
 3. Tambah field policy baru (`technical_tool_io: ToolIoPolicy`, `conversational_tool_io: ToolIoPolicy`) dengan default berbeda, atau skema lain yang konsisten dengan pola existing — baca dulu bagaimana field policy lain di `schema.rs` didefinisikan (default value, serde attribute) untuk konsistensi.
 4. Update `capture_with_policy`/callsite BL-37 Tahap 1 untuk memilih axis yang tepat berdasarkan kategori tool.
@@ -277,7 +277,7 @@ let captured_input = clawcrew_log::capture_tool_input(&resolved_policy, call_nam
 **Verifikasi:** `scrub_credentials` SUDAH diimport di `tool_execution.rs:16` (`use super::loop_::{..., scrub_credentials};`) dan SUDAH dipakai minimal 1 titik: baris ~96 (`result: Some(scrub_credentials(&reason))` — di cabang "Unknown tool" error path). **Ini KOREKSI terhadap dokumen**: `scrub_credentials` BUKAN nol dipakai — sudah dipakai di jalur ERROR, tapi (sesuai klaim dokumen) kemungkinan BELUM dipakai konsisten di jalur SUCCESS/semua `record!` call lain di file ini. Perlu inventarisasi SEMUA titik `record!`/`ObserverEvent` di `tool_execution.rs` yang membawa data mentah (`full_args`, hasil tool, dll.) dan cek mana yang SUDAH vs BELUM di-scrub.
 
 **Langkah pengerjaan:**
-1. `grep -n "record!\|ObserverEvent::" crates/clawcrew-runtime/src/agent/tool_execution.rs` — list SEMUA titik emit log/observer event.
+1. `grep -n "record!\|ObserverEvent::" crates/galleon-runtime/src/agent/tool_execution.rs` — list SEMUA titik emit log/observer event.
 2. Untuk tiap titik, cek apakah data yang dibawa (`full_args`, `result`, `output`) sudah lewat `scrub_credentials` — baris 96 sudah benar (contoh pola yang ditiru), titik lain (termasuk baris ~259 yang jadi fokus BL-37 Tahap 1 — KOORDINASIKAN dua tiket ini, mereka menyentuh titik yang SAMA) kemungkinan belum.
 3. Tambahkan `scrub_credentials(...)` di setiap titik yang belum, konsisten pola baris 96.
 
@@ -287,11 +287,11 @@ let captured_input = clawcrew_log::capture_tool_input(&resolved_policy, call_nam
 
 **JANGAN DIUBAH:** `scrub_credentials` function itu sendiri (`super::loop_::scrub_credentials`) — tiket ini murni WIRING ke titik tambahan, bukan mengubah logic scrub.
 
-- [x] **BL-39 (P2, MEDIUM)** Proteksi ACL file log Windows (`writer.rs:403-420` hanya punya branch `#[cfg(unix)]`). Status: COMPLETED (SetNamedSecurityInfoW private DACL diterapkan di `writer.rs` & `migrate.rs`; `windows_log_file_has_restricted_acl` passed, 159 tests `clawcrew-log` passed).
+- [x] **BL-39 (P2, MEDIUM)** Proteksi ACL file log Windows (`writer.rs:403-420` hanya punya branch `#[cfg(unix)]`). Status: COMPLETED (SetNamedSecurityInfoW private DACL diterapkan di `writer.rs` & `migrate.rs`; `windows_log_file_has_restricted_acl` passed, 159 tests `galleon-log` passed).
 
 #### Detail Eksekusi — BL-39
 
-**TIDAK DIVERIFIKASI sesi ini** (file `writer.rs` di luar budget baca sesi ini — kemungkinan `crates/clawcrew-log/src/writer.rs`, belum dikonfirmasi). **Langkah pertama WAJIB:** baca file ini, konfirmasi baris persis `#[cfg(unix)]` yang disebut (nomor baris bisa sudah bergeser seperti ditemukan di tiket-tiket lain sprint ini), dan cek APA yang dilakukan branch unix (chmod 600? ACL POSIX?) sebagai referensi perilaku yang harus disetarakan di Windows.
+**TIDAK DIVERIFIKASI sesi ini** (file `writer.rs` di luar budget baca sesi ini — kemungkinan `crates/galleon-log/src/writer.rs`, belum dikonfirmasi). **Langkah pertama WAJIB:** baca file ini, konfirmasi baris persis `#[cfg(unix)]` yang disebut (nomor baris bisa sudah bergeser seperti ditemukan di tiket-tiket lain sprint ini), dan cek APA yang dilakukan branch unix (chmod 600? ACL POSIX?) sebagai referensi perilaku yang harus disetarakan di Windows.
 
 **Spesifikasi API (pola umum, verifikasi API Windows persis saat eksekusi):**
 ```rust
@@ -306,7 +306,7 @@ fn restrict_log_file_acl(path: &Path) -> std::io::Result<()> {
 ```
 
 **Langkah pengerjaan:**
-1. Baca `writer.rs` (lokasi exact path perlu dikonfirmasi — grep `#[cfg(unix)]` di `crates/clawcrew-log/`).
+1. Baca `writer.rs` (lokasi exact path perlu dikonfirmasi — grep `#[cfg(unix)]` di `crates/galleon-log/`).
 2. Pahami perilaku unix branch persis (permission mode apa yang di-set).
 3. Cek dependency Cargo.toml workspace untuk Windows ACL crate yang sudah terpasang (`windows`/`windows-sys` crate sudah dipakai luas di codebase ini untuk fitur Windows lain — kemungkinan besar reuse, bukan dependency baru).
 4. Implementasi branch `#[cfg(windows)]` setara.
@@ -319,9 +319,9 @@ fn restrict_log_file_acl(path: &Path) -> std::io::Result<()> {
 
 | Area | File | Penulis | Catatan serialisasi |
 |---|---|---|---|
-| A (BL-52) | `clawcrew-infra/src/debounce.rs`, `clawcrew-channels/src/orchestrator/mod.rs` | Backend-Rust | **Tunggu BL-14 (Sprint 0) merge dulu** |
-| B (BL-53/54/55) | `clawcrew-api/src/media.rs`, Front App entry point per-channel, Core agregasi | Backend-Rust + Frontend (per-channel) | BL-55 tunggu BL-52 merge |
-| C (BL-37/38/39) | `clawcrew-runtime/src/agent/tool_execution.rs`, `clawcrew-config/src/schema.rs`, `clawcrew-log/src/*` | Backend-Rust (crew berbeda dari A/B, file tidak beririsan) | Bisa paralel penuh dengan A/B |
+| A (BL-52) | `galleon-infra/src/debounce.rs`, `galleon-channels/src/orchestrator/mod.rs` | Backend-Rust | **Tunggu BL-14 (Sprint 0) merge dulu** |
+| B (BL-53/54/55) | `galleon-api/src/media.rs`, Front App entry point per-channel, Core agregasi | Backend-Rust + Frontend (per-channel) | BL-55 tunggu BL-52 merge |
+| C (BL-37/38/39) | `galleon-runtime/src/agent/tool_execution.rs`, `galleon-config/src/schema.rs`, `galleon-log/src/*` | Backend-Rust (crew berbeda dari A/B, file tidak beririsan) | Bisa paralel penuh dengan A/B |
 
 ## Keluaran Sprint
 

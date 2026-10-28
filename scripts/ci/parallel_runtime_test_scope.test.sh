@@ -45,9 +45,9 @@ expect_skip() {
 }
 
 expect_run "runtime source" "all" \
-    "crates/clawcrew-runtime/src/agent/loop_.rs"
+    "crates/galleon-runtime/src/agent/loop_.rs"
 expect_run "channel source" "channels" \
-    "crates/clawcrew-channels/src/orchestrator/mod.rs"
+    "crates/galleon-channels/src/orchestrator/mod.rs"
 expect_run "workspace manifest" "all" "Cargo.toml"
 expect_run "workspace lockfile" "all" "Cargo.lock"
 expect_run "quality workflow" "all" ".github/workflows/ci.yml"
@@ -58,16 +58,16 @@ expect_run "scope classifier" "all" \
 expect_run "scope fixture" "all" \
     "scripts/ci/parallel_runtime_test_scope.test.sh"
 expect_run "channel then runtime" "all" \
-    "crates/clawcrew-channels/src/orchestrator/mod.rs" \
-    "crates/clawcrew-runtime/src/lib.rs"
+    "crates/galleon-channels/src/orchestrator/mod.rs" \
+    "crates/galleon-runtime/src/lib.rs"
 expect_run "runtime then channel" "all" \
-    "crates/clawcrew-runtime/src/lib.rs" \
-    "crates/clawcrew-channels/src/orchestrator/mod.rs"
+    "crates/galleon-runtime/src/lib.rs" \
+    "crates/galleon-channels/src/orchestrator/mod.rs"
 
 expect_skip "ZeroCode-only changes" "apps/zerocode/src/app.rs"
 expect_skip "web-only changes" "web/src/pages/AgentChat.tsx"
 expect_skip "docs-only changes" "docs/book/src/contributing/testing.md"
-expect_skip "unrelated crate changes" "crates/clawcrew-providers/src/openai.rs"
+expect_skip "unrelated crate changes" "crates/galleon-providers/src/openai.rs"
 expect_skip "empty input"
 
 mock_dir="$(mktemp -d)"
@@ -102,7 +102,7 @@ PATH="${mock_dir}:$PATH" \
     bash "$gate" >/dev/null
 
 expect_cargo_log "channels scope" \
-    'test --locked --quiet -p clawcrew-channels --lib -- --test-threads=16'
+    'test --locked --quiet -p galleon-channels --lib -- --test-threads=16'
 
 : > "$cargo_log"
 PATH="${mock_dir}:$PATH" \
@@ -111,8 +111,8 @@ PATH="${mock_dir}:$PATH" \
     bash "$gate" >/dev/null
 
 expect_cargo_log "default scope" \
-    'test --locked --quiet -p clawcrew-runtime --lib -- --test-threads=16' \
-    'test --locked --quiet -p clawcrew-channels --lib -- --test-threads=16'
+    'test --locked --quiet -p galleon-runtime --lib -- --test-threads=16' \
+    'test --locked --quiet -p galleon-channels --lib -- --test-threads=16'
 
 : > "$cargo_log"
 PATH="${mock_dir}:$PATH" \
@@ -122,8 +122,8 @@ PATH="${mock_dir}:$PATH" \
     bash "$gate" >/dev/null
 
 expect_cargo_log "empty scope" \
-    'test --locked --quiet -p clawcrew-runtime --lib -- --test-threads=16' \
-    'test --locked --quiet -p clawcrew-channels --lib -- --test-threads=16'
+    'test --locked --quiet -p galleon-runtime --lib -- --test-threads=16' \
+    'test --locked --quiet -p galleon-channels --lib -- --test-threads=16'
 
 : > "$cargo_log"
 set +e

@@ -5,6 +5,9 @@ use std::sync::Arc;
 use tokio::sync::mpsc;
 
 use futures_util::StreamExt;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::sop::{SopFanInDispatcher, SopTriggerSource};
+use galleon_config::schema::SopDispatch;
 use lapin::{
     Connection, ConnectionProperties,
     options::{
@@ -14,9 +17,6 @@ use lapin::{
     tcp::{OwnedIdentity, OwnedTLSConfig},
     types::FieldTable,
 };
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_api::sop::{SopFanInDispatcher, SopTriggerSource};
-use clawcrew_config::schema::SopDispatch;
 
 static MSG_SEQ: AtomicU64 = AtomicU64::new(0);
 
@@ -221,10 +221,10 @@ impl AmqpChannel {
                     // rather than a broker-level redelivery: the broker-redelivery
                     // safety net is reserved for SOP-only dispatch, where there is no
                     // agent handoff to double-run.
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "alias": self.alias,
                                 "routing_key": routing_key,
@@ -406,9 +406,9 @@ fn pem_to_pkcs12_der(cert_pem: &[u8], key_pem: &[u8], alias: &str) -> anyhow::Re
     })
 }
 
-impl ::clawcrew_api::attribution::Attributable for AmqpChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Amqp)
+impl ::galleon_api::attribution::Attributable for AmqpChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Amqp)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -438,7 +438,7 @@ impl Channel for AmqpChannel {
     async fn listen(&self, tx: mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
         let (_conn, mut consumer) = self.establish_consumer().await?;
 
-        clawcrew_infra::health::mark_component_ok("amqp");
+        galleon_infra::health::mark_component_ok("amqp");
         let _peers = (self.peer_resolver)();
 
         while let Some(delivery) = consumer.next().await {
@@ -763,7 +763,7 @@ tr7J6RKtO4OsZS/2KoYL8M+o
             _payload: Option<&str>,
             _target_sop: Option<&str>,
             dedup: Option<(String, bool)>,
-        ) -> clawcrew_api::sop::SopFanInResult {
+        ) -> galleon_api::sop::SopFanInResult {
             let mut runs = self.runs.lock().unwrap();
             match dedup {
                 Some((key, true)) => {
@@ -779,7 +779,7 @@ tr7J6RKtO4OsZS/2KoYL8M+o
                     runs.push(next);
                 }
             }
-            clawcrew_api::sop::SopFanInResult {
+            galleon_api::sop::SopFanInResult {
                 needs_redelivery: self.needs_redelivery,
             }
         }
@@ -857,13 +857,8 @@ tr7J6RKtO4OsZS/2KoYL8M+o
             needs_redelivery: true,
             ..Default::default()
         });
-        let ch = try_channel_with(
-            "{name}",
-            "name",
-            SopDispatch::Sop,
-            Some(dispatcher),
-        )
-        .expect("sop-only channel with handles constructs");
+        let ch = try_channel_with("{name}", "name", SopDispatch::Sop, Some(dispatcher))
+            .expect("sop-only channel with handles constructs");
         let (tx, _rx) = mpsc::channel::<ChannelMessage>(1);
 
         let outcome = ch
@@ -882,13 +877,8 @@ tr7J6RKtO4OsZS/2KoYL8M+o
             needs_redelivery: true,
             ..Default::default()
         });
-        let ch = try_channel_with(
-            "{name}",
-            "name",
-            SopDispatch::Sop,
-            Some(dispatcher),
-        )
-        .expect("sop-only channel with handles constructs");
+        let ch = try_channel_with("{name}", "name", SopDispatch::Sop, Some(dispatcher))
+            .expect("sop-only channel with handles constructs");
         let (tx, _rx) = mpsc::channel::<ChannelMessage>(1);
 
         let outcome = ch
@@ -909,13 +899,8 @@ tr7J6RKtO4OsZS/2KoYL8M+o
             needs_redelivery: false,
             runs: Arc::clone(&runs),
         });
-        let ch = try_channel_with(
-            "{name}",
-            "name",
-            SopDispatch::Sop,
-            Some(dispatcher),
-        )
-        .expect("sop channel constructs");
+        let ch = try_channel_with("{name}", "name", SopDispatch::Sop, Some(dispatcher))
+            .expect("sop channel constructs");
         let (tx, _rx) = mpsc::channel::<ChannelMessage>(4);
         let body = br#"{"name":"curl"}"#;
 
@@ -953,13 +938,8 @@ tr7J6RKtO4OsZS/2KoYL8M+o
             needs_redelivery: false,
             runs: Arc::clone(&runs),
         });
-        let ch = try_channel_with(
-            "{name}",
-            "name",
-            SopDispatch::Sop,
-            Some(dispatcher),
-        )
-        .expect("sop channel constructs");
+        let ch = try_channel_with("{name}", "name", SopDispatch::Sop, Some(dispatcher))
+            .expect("sop channel constructs");
         let (tx, _rx) = mpsc::channel::<ChannelMessage>(8);
         let body = br#"{"name":"curl"}"#;
 
@@ -984,13 +964,8 @@ tr7J6RKtO4OsZS/2KoYL8M+o
             needs_redelivery: false,
             runs: Arc::clone(&runs),
         });
-        let ch = try_channel_with(
-            "{name}",
-            "name",
-            SopDispatch::Sop,
-            Some(dispatcher),
-        )
-        .expect("sop channel constructs");
+        let ch = try_channel_with("{name}", "name", SopDispatch::Sop, Some(dispatcher))
+            .expect("sop channel constructs");
         let (tx, _rx) = mpsc::channel::<ChannelMessage>(8);
         let body = br#"{"name":"curl"}"#;
 

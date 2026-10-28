@@ -1,6 +1,6 @@
 //! `galleon-channel-bluesky` — RF-B1 Bluesky channel feature-crate.
 //!
-//! The AT Protocol body is ported here from `clawcrew-channels::bluesky`,
+//! The AT Protocol body is ported here from `galleon-channels::bluesky`,
 //! mirroring the shape already proven by [`galleon-channel-signal`]: the
 //! `com.atproto` session + record calls, the newest-first notification poll
 //! loop with its partial-walk watermark discipline, and the full
@@ -10,18 +10,18 @@
 //!
 //! * **Allowlist policy.** [`is_author_allowed`](BlueskyChannel::is_author_allowed)
 //!   calls [`galleon_channel_core::allowlist::is_identity_allowed_by`], the
-//!   same `clawcrew_config::schema` peer-policy SSOT upstream uses — reused, not
-//!   reimplemented, and WITHOUT dragging `clawcrew-runtime`. Handle and DID are
+//!   same `galleon_config::schema` peer-policy SSOT upstream uses — reused, not
+//!   reimplemented, and WITHOUT dragging `galleon-runtime`. Handle and DID are
 //!   judged together against one snapshot of the peer list.
 //!
 //! ## Documented ceilings (ponytail: cut corners with a known upgrade path)
 //!
 //! * **Env-proxy client.** Upstream `http_client` calls
-//!   `clawcrew_config::schema::build_runtime_proxy_client`, which honours the
-//!   environment proxy fallback. That drags `clawcrew-config`; here only an
+//!   `galleon_config::schema::build_runtime_proxy_client`, which honours the
+//!   environment proxy fallback. That drags `galleon-config`; here only an
 //!   EXPLICIT per-channel `proxy_url` is honoured (plain `reqwest::Proxy`),
 //!   mirroring the signal crate. The env-proxy fallback is the ceiling.
-//! * **Structured logging.** Upstream emits `clawcrew_log` structured events on
+//! * **Structured logging.** Upstream emits `galleon_log` structured events on
 //!   auth/poll/parse/updateSeen failures. Porting that drags the log crate;
 //!   here those paths keep their control flow (continue / fall back to re-auth /
 //!   return `None`) but emit no structured event. Observability is the ceiling.
@@ -37,7 +37,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use galleon_channel_core::allowlist;
 
 /// Bluesky channel — polls for mentions via AT Protocol and replies as posts.
@@ -49,7 +49,7 @@ pub struct BlueskyChannel {
     /// The resolver reads live configuration and is not cached.
     peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
     /// Per-channel explicit proxy URL. `None` = direct connection.
-    /// ponytail: env-proxy fallback (upstream `clawcrew_config` runtime proxy)
+    /// ponytail: env-proxy fallback (upstream `galleon_config` runtime proxy)
     /// is the documented ceiling — only an explicit URL is honoured here.
     proxy_url: Option<String>,
     auth: Mutex<BlueskyAuth>,
@@ -269,7 +269,7 @@ impl BlueskyChannel {
 
         if !resp.status().is_success() {
             // Refresh failed — fall back to full re-auth.
-            // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
+            // ceiling: upstream emits a `galleon_log` WARN here; dropped.
             return self.create_session().await;
         }
 
@@ -321,7 +321,7 @@ impl BlueskyChannel {
         // opt-in for a public bot. Either identifier may carry the grant, so
         // the deny is checked across both before the grants are.
         if !self.is_author_allowed(&notif.author.handle, &notif.author.did) {
-            // ceiling: upstream emits a `clawcrew_log` DEBUG here; dropped.
+            // ceiling: upstream emits a `galleon_log` DEBUG here; dropped.
             return None;
         }
 
@@ -433,7 +433,7 @@ impl BlueskyChannel {
                 });
             };
             if !seen_cursors.insert(next_cursor.clone()) {
-                // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
+                // ceiling: upstream emits a `galleon_log` WARN here; dropped.
                 // A repeated cursor means pagination looped — abandon the walk.
                 return None;
             }
@@ -454,18 +454,16 @@ impl BlueskyChannel {
             .await?;
 
         if !resp.status().is_success() {
-            // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
+            // ceiling: upstream emits a `galleon_log` WARN here; dropped.
             // updateSeen is best-effort — a failure retries on the next poll.
         }
         Ok(())
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for BlueskyChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::Bluesky,
-        )
+impl ::galleon_api::attribution::Attributable for BlueskyChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Bluesky)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -557,7 +555,7 @@ impl Channel for BlueskyChannel {
             let token = match self.get_access_jwt().await {
                 Ok(t) => t,
                 Err(_e) => {
-                    // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
+                    // ceiling: upstream emits a `galleon_log` WARN here; dropped.
                     continue;
                 }
             };
@@ -592,20 +590,20 @@ impl Channel for BlueskyChannel {
                         {
                             Ok(response) => response,
                             Err(_error) => {
-                                // ceiling: upstream emits a `clawcrew_log` WARN; dropped.
+                                // ceiling: upstream emits a `galleon_log` WARN; dropped.
                                 return None;
                             }
                         };
 
                         if !resp.status().is_success() {
-                            // ceiling: upstream emits a `clawcrew_log` WARN; dropped.
+                            // ceiling: upstream emits a `galleon_log` WARN; dropped.
                             return None;
                         }
 
                         match resp.json::<NotificationListResponse>().await {
                             Ok(listing) => Some(listing),
                             Err(_error) => {
-                                // ceiling: upstream emits a `clawcrew_log` WARN; dropped.
+                                // ceiling: upstream emits a `galleon_log` WARN; dropped.
                                 None
                             }
                         }
@@ -630,7 +628,7 @@ impl Channel for BlueskyChannel {
             if let Some(ref seen_at) = walk.newest_unread
                 && let Err(_e) = self.update_seen(seen_at).await
             {
-                // ceiling: upstream emits a `clawcrew_log` WARN here; dropped.
+                // ceiling: upstream emits a `galleon_log` WARN here; dropped.
             }
         }
     }

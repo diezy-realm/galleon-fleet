@@ -5,12 +5,12 @@
 //! global SIP network for low-latency, high-quality calls.
 
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
-pub use clawcrew_config::scattered_types::ClawdTalkConfig;
+pub use galleon_config::scattered_types::ClawdTalkConfig;
 
 /// ClawdTalk channel configuration
 pub struct ClawdTalkChannel {
@@ -38,7 +38,7 @@ impl ClawdTalkChannel {
             from_number: config.from_number,
             allowed_destinations: config.allowed_destinations,
             alias: alias.into(),
-            client: clawcrew_config::schema::apply_runtime_proxy_to_builder(
+            client: galleon_config::schema::apply_runtime_proxy_to_builder(
                 Client::builder().timeout(std::time::Duration::from_secs(30)),
                 "channel.clawdtalk",
             )
@@ -151,10 +151,10 @@ impl ClawdTalkChannel {
 
         if !response.status().is_success() {
             let error = response.text().await?;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!("Failed to hangup call: {}", error)
             );
         }
@@ -259,10 +259,10 @@ struct VoiceSettings {
     speed: f32,
 }
 
-impl ::clawcrew_api::attribution::Attributable for ClawdTalkChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::ClawdTalk,
+impl ::galleon_api::attribution::Attributable for ClawdTalkChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(
+            ::galleon_api::attribution::ChannelKind::ClawdTalk,
         )
     }
     fn alias(&self) -> &str {
@@ -308,9 +308,9 @@ impl Channel for ClawdTalkChannel {
         // ClawdTalk listens for incoming calls via webhooks
         // This would typically be handled by the gateway module
         // For now, we signal that this channel is ready and wait indefinitely
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "channel listening for incoming calls"
         );
 
@@ -339,10 +339,10 @@ impl Channel for ClawdTalkChannel {
         match response {
             Ok(resp) => resp.status().is_success(),
             Err(e) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "health check failed"
                 );

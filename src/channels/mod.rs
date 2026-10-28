@@ -1,19 +1,19 @@
-pub use clawcrew_channels::orchestrator::*;
+pub use galleon_channels::orchestrator::*;
 #[cfg(feature = "channel-matrix")]
 pub mod matrix;
 #[cfg(feature = "channel-telegram")]
 pub mod telegram;
 pub mod session_backend {
-    pub use clawcrew_infra::session_backend::*;
+    pub use galleon_infra::session_backend::*;
 }
 pub mod session_sqlite {
-    pub use clawcrew_infra::session_sqlite::*;
+    pub use galleon_infra::session_sqlite::*;
 }
 
 use crate::config::Config;
 use anyhow::Result;
-use clawcrew_runtime::i18n::get_required_cli_string;
-use clawcrew_runtime::i18n::get_required_cli_string_with_args;
+use galleon_runtime::i18n::get_required_cli_string;
+use galleon_runtime::i18n::get_required_cli_string_with_args;
 
 pub async fn handle_command(command: crate::ChannelCommands, config: &Config) -> Result<()> {
     match command {
@@ -26,7 +26,7 @@ pub async fn handle_command(command: crate::ChannelCommands, config: &Config) ->
         crate::ChannelCommands::List => {
             println!("{}", get_required_cli_string("cli-channels-header"));
             println!("{}", get_required_cli_string("cli-channels-cli-always"));
-            for entry in clawcrew_channels::listing::compiled_channels(&config.channels) {
+            for entry in galleon_channels::listing::compiled_channels(&config.channels) {
                 println!(
                     "  {} {}",
                     if entry.configured { "✅" } else { "❌" },
@@ -34,7 +34,7 @@ pub async fn handle_command(command: crate::ChannelCommands, config: &Config) ->
                 );
             }
             let uncompiled =
-                clawcrew_channels::listing::configured_uncompiled_channels(&config.channels);
+                galleon_channels::listing::configured_uncompiled_channels(&config.channels);
             if !uncompiled.is_empty() {
                 println!();
                 println!(

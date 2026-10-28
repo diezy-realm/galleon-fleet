@@ -234,7 +234,7 @@ say "self-check B: daemon DEMANDS a client certificate (mandatory mTLS)"
 # the server's post-handshake rejection alert in a greppable way, so we assert
 # the deterministic signal instead: the server sends a CertificateRequest naming
 # the daemon CA. The actual certless REJECTION is proven authoritatively by:
-#   cargo test -p clawcrew-runtime --test wss_mtls_transport (missing_client_cert_is_rejected)
+#   cargo test -p galleon-runtime --test wss_mtls_transport (missing_client_cert_is_rejected)
 out="$(printf 'Q' | openssl s_client -connect "127.0.0.1:$WSS_PORT" -tls1_3 \
   -CAfile "$CA" 2>&1 || true)"
 echo "$out" | grep -qi "Acceptable client certificate CA names" \
@@ -246,7 +246,7 @@ ok "daemon requires a client certificate (mandatory mTLS; rejection proven by ca
 # and multiplexes binary DATA frames - too much to re-implement faithfully in a
 # shell probe. The authoritative inner-mTLS-end-to-end-through-the-relay proof
 # (real RelayServer + real daemon bridge) is the integration test:
-#     cargo test -p clawcrew-runtime --test relay_full_path
+#     cargo test -p galleon-runtime --test relay_full_path
 # Here we assert the relay's OUTER TLS plane is live and the daemon bridge is up,
 # then hand you the exact zerocode command for the relay route.
 say "self-check C: relay outer TLS verifies against its self-provisioned CA"

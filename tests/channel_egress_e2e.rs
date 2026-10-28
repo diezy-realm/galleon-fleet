@@ -13,7 +13,7 @@ use std::net::{SocketAddr, TcpListener};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use clawcrew_infra::net_guard::{
+use galleon_infra::net_guard::{
     NetworkGuardError, PrivateNetworkAccess, ResolvedDestination, egress_host_matches,
     normalize_egress_patterns,
 };
@@ -183,7 +183,7 @@ fn verify_webhook_signature_with_timestamp(
 #[tokio::test]
 async fn webhook_ingress_accepts_valid_hmac_signature() {
     let secret = "valid-secret-token-e2e-testing-key-123";
-    let channel = clawcrew_channels::webhook::WebhookChannel::new(
+    let channel = galleon_channels::webhook::WebhookChannel::new(
         "test_ingress_channel".to_string(),
         0,
         Some("/inbound".to_string()),
@@ -242,7 +242,7 @@ async fn webhook_ingress_accepts_valid_hmac_signature() {
 #[tokio::test]
 async fn webhook_ingress_rejects_corrupted_signature_with_401() {
     let secret = "valid-secret-token-e2e-testing-key-123";
-    let channel = clawcrew_channels::webhook::WebhookChannel::new(
+    let channel = galleon_channels::webhook::WebhookChannel::new(
         "test_ingress_channel".to_string(),
         0,
         Some("/inbound".to_string()),
@@ -295,7 +295,7 @@ async fn webhook_ingress_rejects_corrupted_signature_with_401() {
 #[tokio::test]
 async fn webhook_ingress_rejects_missing_signature_with_401() {
     let secret = "valid-secret-token-e2e-testing-key-123";
-    let channel = clawcrew_channels::webhook::WebhookChannel::new(
+    let channel = galleon_channels::webhook::WebhookChannel::new(
         "test_ingress_channel".to_string(),
         0,
         Some("/inbound".to_string()),
@@ -339,7 +339,7 @@ async fn webhook_ingress_rejects_missing_signature_with_401() {
 #[tokio::test]
 async fn webhook_ingress_rejects_tampered_payload_with_401() {
     let secret = "valid-secret-token-e2e-testing-key-123";
-    let channel = clawcrew_channels::webhook::WebhookChannel::new(
+    let channel = galleon_channels::webhook::WebhookChannel::new(
         "test_ingress_channel".to_string(),
         0,
         Some("/inbound".to_string()),
@@ -532,14 +532,14 @@ async fn egress_sandbox_blocks_invalid_port_destination() {
 #[cfg(feature = "plugins-wasm-cranelift")]
 mod wasm_cranelift_e2e {
     use super::*;
-    use clawcrew_config::providers::{ChannelRef, ModelProviderRef};
-    use clawcrew_config::schema::{
+    use galleon_config::providers::{ChannelRef, ModelProviderRef};
+    use galleon_config::schema::{
         AliasedAgentConfig, AnthropicModelProviderConfig, Config, PluginChannelConfig,
         PluginEntryConfig, RiskProfileConfig,
     };
-    use clawcrew_plugins::PluginCapability;
-    use clawcrew_plugins::host::PluginHost;
-    use clawcrew_plugins::instance::PluginInstanceScope;
+    use galleon_plugins::PluginCapability;
+    use galleon_plugins::host::PluginHost;
+    use galleon_plugins::instance::PluginInstanceScope;
     use std::collections::HashMap;
     use std::path::PathBuf;
     use std::process::Command;
@@ -547,14 +547,14 @@ mod wasm_cranelift_e2e {
     use tempfile::TempDir;
 
     const MANIFEST: &str =
-        "crates/clawcrew-plugins/tests/fixtures/channel-egress-fixture/plugin-manifest.toml";
+        "crates/galleon-plugins/tests/fixtures/channel-egress-fixture/plugin-manifest.toml";
 
     fn fixture() -> PathBuf {
         static FIXTURE: OnceLock<PathBuf> = OnceLock::new();
         FIXTURE
             .get_or_init(|| {
                 let fixture_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                    .join("crates/clawcrew-plugins/tests/fixtures/channel-egress-fixture");
+                    .join("crates/galleon-plugins/tests/fixtures/channel-egress-fixture");
                 let target_dir =
                     PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("channel-egress-fixture");
                 let status = Command::new(env!("CARGO"))
@@ -673,7 +673,7 @@ mod wasm_cranelift_e2e {
             .validate()
             .expect("the activation declaration is valid operator config");
         let channels =
-            clawcrew_runtime::plugin_runtime::configured_plugin_channels(Arc::new(config), None)
+            galleon_runtime::plugin_runtime::configured_plugin_channels(Arc::new(config), None)
                 .await;
         assert_eq!(
             channels.len(),

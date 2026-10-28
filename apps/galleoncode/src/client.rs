@@ -2488,7 +2488,7 @@ impl RpcClient {
     //
     // Thin wire mirror of the gateway's `/api/quickstart/*` HTTP routes.
     // Same shapes both ways; the daemon-side handlers live in the gateway
-    // and call into `clawcrew_runtime::quickstart::{validate_only,apply}_with_surface`.
+    // and call into `galleon_runtime::quickstart::{validate_only,apply}_with_surface`.
 
     pub async fn quickstart_state(&self) -> Result<QuickstartStateResult> {
         self.call(method::QUICKSTART_STATE, serde_json::json!({}))
@@ -3293,7 +3293,7 @@ pub struct ConfigSectionEntry {
     pub help: String,
     pub completed: bool,
     /// Display group label (`"Foundation"`, `"Tools"`, …) from
-    /// `clawcrew_config::sections::SectionGroup::label()`. Empty when
+    /// `galleon_config::sections::SectionGroup::label()`. Empty when
     /// the daemon predates group plumbing — the sections pane falls
     /// back to the flat ungrouped list.
     #[serde(default)]
@@ -3328,7 +3328,7 @@ pub struct CatalogModelsResult {
 }
 
 /// Per-token USD pricing strings as emitted by the catalog RPC. Field names
-/// match `clawcrew_api::model_provider::ModelPricing`; only the rates the
+/// match `galleon_api::model_provider::ModelPricing`; only the rates the
 /// cost-rate sheet consumes are kept.
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -3465,7 +3465,7 @@ mod skill_frontmatter_tests {
 // shape here; the integration drift test enforces equality across
 // surfaces, so divergence is a CI failure rather than a silent bug.
 
-/// Mirror of `clawcrew_runtime::quickstart::Surface` (`snake_case` on the wire).
+/// Mirror of `galleon_runtime::quickstart::Surface` (`snake_case` on the wire).
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum QuickstartSurface {
@@ -3475,7 +3475,7 @@ pub enum QuickstartSurface {
     Test,
 }
 
-/// Mirror of `clawcrew_runtime::quickstart::QuickstartStep`.
+/// Mirror of `galleon_runtime::quickstart::QuickstartStep`.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum QuickstartStep {
@@ -3488,7 +3488,7 @@ pub enum QuickstartStep {
     Agent,
 }
 
-/// Mirror of `clawcrew_runtime::quickstart::QuickstartError`.
+/// Mirror of `galleon_runtime::quickstart::QuickstartError`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub struct QuickstartError {
@@ -3497,7 +3497,7 @@ pub struct QuickstartError {
     pub message: String,
 }
 
-/// Mirror of `clawcrew_runtime::quickstart::AppliedAgent`.
+/// Mirror of `galleon_runtime::quickstart::AppliedAgent`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub struct AppliedAgent {
@@ -3509,7 +3509,7 @@ pub struct AppliedAgent {
     pub memory_backend: String,
 }
 
-/// Mirror of `clawcrew_runtime::quickstart::FieldSection`.
+/// Mirror of `galleon_runtime::quickstart::FieldSection`.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum QuickstartFieldSection {
@@ -3517,7 +3517,7 @@ pub enum QuickstartFieldSection {
     Channel,
 }
 
-/// Mirror of `clawcrew_config::traits::PropKind` (wire form).
+/// Mirror of `galleon_config::traits::PropKind` (wire form).
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum QuickstartFieldKind {
@@ -3531,7 +3531,7 @@ pub enum QuickstartFieldKind {
     Object,
 }
 
-/// Mirror of `clawcrew_runtime::quickstart::FieldDescriptor`.
+/// Mirror of `galleon_runtime::quickstart::FieldDescriptor`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct QuickstartFieldDescriptor {
@@ -3551,7 +3551,7 @@ pub struct QuickstartFieldsResult {
     pub fields: Vec<QuickstartFieldDescriptor>,
 }
 
-/// Mirror of `clawcrew_runtime::quickstart::QuickstartState`.
+/// Mirror of `galleon_runtime::quickstart::QuickstartState`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct QuickstartStateResult {
@@ -3586,7 +3586,7 @@ pub struct QuickstartStateResult {
     pub personality_files: Vec<String>,
 }
 
-/// Mirror of `clawcrew_config::presets::RiskPreset` / `RuntimePreset`.
+/// Mirror of `galleon_config::presets::RiskPreset` / `RuntimePreset`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct QuickstartPresetMirror {
     pub preset_name: String,
@@ -3660,7 +3660,7 @@ impl SopStepKind {
 
 // SOP graph wire types. zerocode is an RPC-only surface: it deserializes these
 // off `sops/graph` rather than linking the backend crate that produces them.
-// The shape here MUST match `clawcrew-sop-graph`'s serde projection byte for
+// The shape here MUST match `galleon-sop-graph`'s serde projection byte for
 // byte (field names, snake_case renames, defaults) or RPC decoding drifts.
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -4797,7 +4797,7 @@ mod sop_method_tests {
     }
 
     /// Wire fixture mirrored by `sop::graph` serialization tests in
-    /// clawcrew-runtime. If this shape drifts, fix both sides together.
+    /// galleon-runtime. If this shape drifts, fix both sides together.
     fn graph_fixture() -> serde_json::Value {
         json!({
             "nodes": [
@@ -6555,7 +6555,7 @@ mod plan_parse_tests {
 }
 
 /// Parser limits for the RELAY-PROTOCOL plane (client <-> relay outer session),
-/// derived from `clawcrew-relay-proto` so transport and application bounds
+/// derived from `galleon-relay-proto` so transport and application bounds
 /// cannot drift apart.
 fn relay_ws_config() -> tokio_tungstenite::tungstenite::protocol::WebSocketConfig {
     let mut cfg = tokio_tungstenite::tungstenite::protocol::WebSocketConfig::default();

@@ -1,9 +1,9 @@
 //! `galleon-i18n` — Fluent-based i18n for tool descriptions and CLI strings.
 //!
-//! RF-B: extracted verbatim from `clawcrew-runtime::i18n` so channel feature-crates
+//! RF-B: extracted verbatim from `galleon-runtime::i18n` so channel feature-crates
 //! and the gateway can localize without depending on the 288k-LOC runtime crate.
-//! `clawcrew-runtime` re-exports this as its `i18n` module (`pub use galleon_i18n as i18n`),
-//! so every existing `clawcrew_runtime::i18n::*` caller keeps resolving unchanged.
+//! `galleon-runtime` re-exports this as its `i18n` module (`pub use galleon_i18n as i18n`),
+//! so every existing `galleon_runtime::i18n::*` caller keeps resolving unchanged.
 //!
 //! English descriptions are embedded via `include_str!` at compile time.
 //! Non-English locales are loaded from disk and override English per-key.
@@ -132,10 +132,10 @@ pub fn get_disk_override_cli_string_for_test(
 }
 
 fn missing_cli_string(key: &str) -> String {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({"error_key": "i18n.missing_cli_string", "key": key})),
         "missing CLI Fluent string"
     );
@@ -284,15 +284,15 @@ fn load_ftl_with_reader(
     filename: &str,
     read: impl Fn(&std::path::Path) -> Option<String>,
 ) -> Option<String> {
-    let path = clawcrew_config::schema::ftl_locale_dir(locale)
+    let path = galleon_config::schema::ftl_locale_dir(locale)
         .ok()
         .map(|d| d.join(filename));
     let search_paths = [path];
     for path in search_paths.into_iter().flatten() {
         if let Some(content) = read(&path) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"path": path.display().to_string()})),
                 "loaded locale FTL from disk"
             );

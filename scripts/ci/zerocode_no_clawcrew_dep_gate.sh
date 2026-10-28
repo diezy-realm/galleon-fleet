@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-echo "==> zerocode gate: clawcrew-api is the only allowed clawcrew-* dependency"
+echo "==> zerocode gate: galleon-api is the only allowed clawcrew-* dependency"
 
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
@@ -45,7 +45,10 @@ def find_offending(candidate):
 
     def flag(label):
         if (
-            label.startswith("clawcrew-") or label.startswith("clawcrew_")
+            label.startswith("clawcrew-")
+            or label.startswith("clawcrew_")
+            or label.startswith("galleon-")
+            or label.startswith("galleon_")
         ) and label not in allowed:
             found.add(label)
 
@@ -64,17 +67,17 @@ def find_offending(candidate):
     return sorted(found)
 
 
-allowed = {"clawcrew-api", "clawcrew_api"}
+allowed = {"galleon-api", "galleon_api"}
 
 # Keep the exception narrow even when a dependency is renamed or target-gated.
-assert find_offending({"dependencies": {"clawcrew-api": {"workspace": True}}}) == []
-assert find_offending({"dependencies": {"clawcrew_api": {"workspace": True}}}) == []
-assert find_offending({"dependencies": {"clawcrew-runtime": {"workspace": True}}}) == [
-    "clawcrew-runtime"
+assert find_offending({"dependencies": {"galleon-api": {"workspace": True}}}) == []
+assert find_offending({"dependencies": {"galleon_api": {"workspace": True}}}) == []
+assert find_offending({"dependencies": {"galleon-runtime": {"workspace": True}}}) == [
+    "galleon-runtime"
 ]
 assert find_offending(
-    {"target": {"cfg(unix)": {"dependencies": {"backend": {"package": "clawcrew-config"}}}}}
-) == ["clawcrew-config"]
+    {"target": {"cfg(unix)": {"dependencies": {"backend": {"package": "galleon-config"}}}}}
+) == ["galleon-config"]
 
 for name in find_offending(manifest):
     print(name)
@@ -82,11 +85,11 @@ PY
 )"
 
 if [ -n "$offending" ]; then
-    echo "::error file=${manifest}::zerocode may depend on clawcrew-api only; found implementation dependencies:"
+    echo "::error file=${manifest}::zerocode may depend on galleon-api only; found implementation dependencies:"
     while IFS= read -r dep; do
         echo "  - ${dep}"
     done <<<"$offending"
-    echo "zerocode is an RPC-only surface: shared contracts may come from clawcrew-api, while runtime/config/channel/tool behavior must come over the wire."
+    echo "zerocode is an RPC-only surface: shared contracts may come from galleon-api, while runtime/config/channel/tool behavior must come over the wire."
     exit 1
 fi
 

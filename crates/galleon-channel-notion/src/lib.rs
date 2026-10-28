@@ -1,9 +1,9 @@
 use anyhow::{Result, bail};
 use async_trait::async_trait;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
 const NOTION_API_BASE: &str = "https://api.notion.com/v1";
 const NOTION_VERSION: &str = "2022-06-28";
@@ -12,7 +12,6 @@ const MAX_RETRIES: u32 = 3;
 const RETRY_BASE_DELAY_MS: u64 = 2000;
 /// Maximum number of characters to include from an error response body.
 const MAX_ERROR_BODY_CHARS: usize = 500;
-
 
 fn truncate_with_ellipsis(s: &str, max_chars: usize) -> String {
     match s.char_indices().nth(max_chars) {
@@ -66,7 +65,7 @@ impl NotionChannel {
             alias: alias.into(),
             status_type: Arc::new(RwLock::new("select".to_string())),
             inflight: Arc::new(RwLock::new(HashSet::new())),
-            http: clawcrew_config::schema::build_runtime_proxy_client("channel.notion"),
+            http: galleon_config::schema::build_runtime_proxy_client("channel.notion"),
             recover_stale,
         }
     }
@@ -77,10 +76,10 @@ impl NotionChannel {
         headers.insert(
             "Authorization",
             format!("Bearer {}", self.api_key).parse().map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "Invalid Notion API key header value"
                 );
@@ -123,13 +122,13 @@ impl NotionChannel {
                     let status = resp.status();
                     if status.is_success() {
                         return resp.json().await.map_err(|e| {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 ERROR,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Fail
+                                    ::galleon_log::Action::Fail
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({
                                     "phase": "response_parse",
                                     "error": format!("{}", e),
@@ -143,27 +142,23 @@ impl NotionChannel {
                     // Only retry on 429 (rate limit) or 5xx (server errors)
                     if status_code != 429 && (400..500).contains(&status_code) {
                         let body_text = resp.text().await.unwrap_or_default();
-                        let truncated =
-                            truncate_with_ellipsis(&body_text, MAX_ERROR_BODY_CHARS);
-                        ::clawcrew_log::record!(
+                        let truncated = truncate_with_ellipsis(&body_text, MAX_ERROR_BODY_CHARS);
+                        ::galleon_log::record!(
                             ERROR,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Fail
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
-                            .with_attrs(::serde_json::json!({
-                                "status": status_code,
-                                "body": truncated,
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
+                                .with_attrs(::serde_json::json!({
+                                    "status": status_code,
+                                    "body": truncated,
+                                })),
                             "notion: API client error (no retry)"
                         );
                         bail!("API error {status_code}: {truncated}");
                     }
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "status": status_code,
                                 "phase": "retryable_status",
@@ -173,10 +168,10 @@ impl NotionChannel {
                     last_err = Some(anyhow::Error::msg(format!("API error: {status_code}")));
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({
                                 "phase": "transport",
                                 "error": format!("{}", e),
@@ -187,10 +182,10 @@ impl NotionChannel {
                 }
             }
             let delay = RETRY_BASE_DELAY_MS * 2u64.pow(attempt);
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
                     "API call failed (attempt {}/{}), retrying in {}ms",
                     attempt + 1,
@@ -201,10 +196,10 @@ impl NotionChannel {
             tokio::time::sleep(std::time::Duration::from_millis(delay)).await;
         }
         Err(last_err.unwrap_or_else(|| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure),
                 "notion: API call exhausted retries"
             );
             anyhow::Error::msg("API call failed after retries")
@@ -297,10 +292,10 @@ impl NotionChannel {
         if stale.is_empty() {
             return Ok(());
         }
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             &format!(
                 "Found {} stale task(s) in 'running' state, resetting to 'pending'",
                 stale.len()
@@ -323,19 +318,19 @@ impl NotionChannel {
                     .api_call(reqwest::Method::PATCH, &page_url, Some(payload))
                     .await
                 {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(
                                 ::serde_json::json!({"error": format!("{}", e), "short_id": short_id})
                             ),
                         "Could not reset stale task"
                     );
                 } else {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         INFO,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                             .with_attrs(::serde_json::json!({"short_id": short_id})),
                         "Reset stale task to pending"
                     );
@@ -346,9 +341,9 @@ impl NotionChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for NotionChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Notion)
+impl ::galleon_api::attribution::Attributable for NotionChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Notion)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -382,9 +377,9 @@ impl Channel for NotionChannel {
         // Detect status property type
         match self.detect_status_type().await {
             Ok(st) => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"st": st})),
                     "status property type"
                 );
@@ -399,10 +394,10 @@ impl Channel for NotionChannel {
         if self.recover_stale
             && let Err(e) = self.recover_stale().await
         {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 ERROR,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                 "stale task recovery failed"
             );
@@ -413,12 +408,9 @@ impl Channel for NotionChannel {
             match self.query_pending().await {
                 Ok(tasks) => {
                     if !tasks.is_empty() {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             INFO,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             &format!("found {} pending task(s)", tasks.len())
                         );
                     }
@@ -435,13 +427,13 @@ impl Channel for NotionChannel {
 
                         if input_text.trim().is_empty() {
                             let short_end = page_id.floor_char_boundary(8);
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 WARN,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                                .with_outcome(::galleon_log::EventOutcome::Unknown),
                                 &format!(
                                     "empty input for task {}, skipping",
                                     &page_id[..short_end]
@@ -456,13 +448,13 @@ impl Channel for NotionChannel {
 
                         // Set status to running
                         if let Err(e) = self.set_status(&page_id, "running").await {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 ERROR,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Fail
+                                    ::galleon_log::Action::Fail
                                 )
-                                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "failed to set running status"
                             );
@@ -494,11 +486,11 @@ impl Channel for NotionChannel {
                             .await
                             .is_err()
                         {
-                            ::clawcrew_log::record!(
+                            ::galleon_log::record!(
                                 INFO,
-                                ::clawcrew_log::Event::new(
+                                ::galleon_log::Event::new(
                                     module_path!(),
-                                    ::clawcrew_log::Action::Note
+                                    ::galleon_log::Action::Note
                                 ),
                                 "channel shutting down"
                             );
@@ -507,10 +499,10 @@ impl Channel for NotionChannel {
                     }
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         ERROR,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                            .with_outcome(::galleon_log::EventOutcome::Failure)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "poll error"
                     );

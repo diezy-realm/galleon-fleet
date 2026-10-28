@@ -1,6 +1,6 @@
 //! `galleon-channel-imessage` — RF-C1 iMessage channel feature-crate.
 //!
-//! Ported verbatim from `clawcrew-channels::imessage` (RF-C1, pure-move):
+//! Ported verbatim from `galleon-channels::imessage` (RF-C1, pure-move):
 //! AppleScript bridge for sending, Messages.app SQLite polling for receiving,
 //! and the `typedstream`/attributedBody fallback parser. Zero coupling to
 //! other channels' shared state (unlike matrix/slack/telegram, which share a
@@ -11,7 +11,7 @@
 //!
 //! * **Allowlist policy.** [`IMessageChannel::is_contact_allowed`] calls
 //!   [`galleon_channel_core::allowlist::is_user_allowed`], the same
-//!   `clawcrew_config::schema` peer-policy SSOT upstream uses — reused, not
+//!   `galleon_config::schema` peer-policy SSOT upstream uses — reused, not
 //!   reimplemented.
 //!
 //! No production path uses `unwrap`/`expect` on fallible IO; errors propagate
@@ -20,10 +20,10 @@
 
 use async_trait::async_trait;
 use directories::UserDirs;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
 use rusqlite::{Connection, OpenFlags};
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
 
 fn extract_text_from_attributed_body(blob: &[u8]) -> Option<String> {
     // Find the start-of-text marker: [0x01, 0x2B]
@@ -57,10 +57,10 @@ fn resolve_message_content(rowid: i64, text: Option<String>, body: Option<Vec<u8
         .or_else(|| {
             let parsed = body.as_deref().and_then(extract_text_from_attributed_body);
             if parsed.is_none() && body.as_ref().is_some_and(|b| !b.is_empty()) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({"rowid": rowid})),
                     "failed to parse attributedBody"
                 );
@@ -155,11 +155,9 @@ fn is_valid_imessage_target(target: &str) -> bool {
     false
 }
 
-impl ::clawcrew_api::attribution::Attributable for IMessageChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(
-            ::clawcrew_api::attribution::ChannelKind::IMessage,
-        )
+impl ::galleon_api::attribution::Attributable for IMessageChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::IMessage)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -208,9 +206,9 @@ end tell"#
     }
 
     async fn listen(&self, tx: mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
             "iMessage channel listening (AppleScript bridge)..."
         );
 
@@ -219,10 +217,10 @@ end tell"#
         let db_path = UserDirs::new()
             .map(|u| u.home_dir().join("Library/Messages/chat.db"))
             .ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "Cannot find home directory"
                 );
                 anyhow::Error::msg("Cannot find home directory")
@@ -293,10 +291,10 @@ end tell"#
             )
             .await
             .map_err(|e| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     ERROR,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Fail)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                        .with_outcome(::galleon_log::EventOutcome::Failure)
                         .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                     "iMessage poll worker join error"
                 );
@@ -344,10 +342,10 @@ end tell"#
                     }
                 }
                 Err(e) => {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                         "iMessage poll error"
                     );

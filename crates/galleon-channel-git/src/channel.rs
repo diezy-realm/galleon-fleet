@@ -7,8 +7,8 @@ use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_config::schema::GitConfig;
+use galleon_api::channel::{Channel, ChannelMessage, SendMessage};
+use galleon_config::schema::GitConfig;
 
 use super::events::{self, EventFilter, GitEvent};
 use super::poll::{PollState, PollStream};
@@ -65,9 +65,9 @@ fn warn_on_loose_permissions(path: &str) {
         return;
     };
     if meta.mode() & 0o077 != 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"path": path})),
             "GitHub App private key is readable by group/other; chmod 600 recommended"
         );
@@ -234,13 +234,10 @@ impl GitChannel {
                 match RepoRef::parse(entry) {
                     Some(repo) => repos.push(repo),
                     None => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"entry": entry})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"entry": entry})),
                             "ignoring malformed `repos` entry (expected owner/repo)"
                         );
                     }
@@ -362,9 +359,9 @@ impl GitChannel {
                 events::event_to_message(&event, filter, CHANNEL_KEY, &self.alias, true)
             }
             RouteAction::Sop { sop } => {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     INFO,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({
                             "sop": sop,
                             "event_type": event.event_type(),
@@ -391,17 +388,17 @@ impl GitChannel {
             // ingress" followed by nothing. Repeats stay DEBUG so a busy public
             // repo cannot turn this into log spam.
             if self.warned_unauthorized.lock().insert(msg.sender.clone()) {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"sender": msg.sender})),
                     "git channel dropping events from sender outside the peer \
                      allowlist (repeats for this sender log at DEBUG)"
                 );
             } else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     DEBUG,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_attrs(::serde_json::json!({"sender": msg.sender})),
                     "ignoring git event from unauthorized user"
                 );
@@ -437,9 +434,9 @@ impl GitChannel {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for GitChannel {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Channel(::clawcrew_api::attribution::ChannelKind::Git)
+impl ::galleon_api::attribution::Attributable for GitChannel {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Channel(::galleon_api::attribution::ChannelKind::Git)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -466,9 +463,9 @@ impl Channel for GitChannel {
         let interval = Duration::from_secs(self.cfg.poll_interval_secs.max(MIN_POLL_INTERVAL_SECS));
 
         for problem in router::validate_routes(&self.cfg.events) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"problem": problem})),
                 "git channel `events` routing entry can never fire"
             );
@@ -481,9 +478,9 @@ impl Channel for GitChannel {
         // was a DEBUG line per event. Resolved once here for the diagnostic;
         // per-event checks still resolve live.
         if (self.peer_resolver)().is_empty() {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"alias": self.alias})),
                 "git channel peer allowlist resolves to EMPTY: every inbound event \
                  will be dropped; add a [peer_groups.<name>] with channel = \"git\" \
@@ -491,9 +488,9 @@ impl Channel for GitChannel {
             );
         }
 
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note).with_attrs(
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
                 ::serde_json::json!({
                     "provider": self.provider.name(),
                     "bot": mention_handle,
@@ -545,30 +542,24 @@ impl Channel for GitChannel {
                             // Jitter so multiple repos/instances don't
                             // stampede the moment the window resets.
                             + Duration::from_millis(u64::from(rand::random::<u16>()) % 5_000);
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"wait_secs": wait.as_secs()})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"wait_secs": wait.as_secs()})),
                             "git provider rate limited; backing off"
                         );
                         tokio::time::sleep(wait).await;
                         break;
                     }
                     Err(e) => {
-                        ::clawcrew_log::record!(
+                        ::galleon_log::record!(
                             WARN,
-                            ::clawcrew_log::Event::new(
-                                module_path!(),
-                                ::clawcrew_log::Action::Note
-                            )
-                            .with_outcome(::clawcrew_log::EventOutcome::Failure)
-                            .with_attrs(::serde_json::json!({
-                                "repo": repo.to_string(),
-                                "error": e.to_string(),
-                            })),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
+                                .with_attrs(::serde_json::json!({
+                                    "repo": repo.to_string(),
+                                    "error": e.to_string(),
+                                })),
                             "git poll failed for repo; continuing"
                         );
                     }
@@ -670,8 +661,8 @@ impl Channel for GitChannel {
 
     async fn forge_request(
         &self,
-        request: clawcrew_api::channel::ForgeApiRequest,
-    ) -> anyhow::Result<clawcrew_api::channel::ForgeApiResponse> {
+        request: galleon_api::channel::ForgeApiRequest,
+    ) -> anyhow::Result<galleon_api::channel::ForgeApiResponse> {
         let Some(method) = ForgeMethod::parse(&request.method) else {
             anyhow::bail!(
                 "invalid forge HTTP method `{}` (expected GET/POST/PATCH/PUT/DELETE)",
@@ -686,7 +677,7 @@ impl Channel for GitChannel {
                 body: request.body,
             })
             .await?;
-        Ok(clawcrew_api::channel::ForgeApiResponse {
+        Ok(galleon_api::channel::ForgeApiResponse {
             status: resp.status,
             body: resp.body,
         })
@@ -1048,7 +1039,7 @@ mod tests {
             let mut cfg = base_cfg();
             cfg.events.insert(
                 "pull_request.opened".to_string(),
-                clawcrew_config::schema::GitEventRoute {
+                galleon_config::schema::GitEventRoute {
                     message: false,
                     sop: Some("pr-triage".to_string()),
                 },
@@ -1209,7 +1200,7 @@ mod tests {
             let mut cfg = base_cfg();
             cfg.events.insert(
                 "workflow_run.failed".to_string(),
-                clawcrew_config::schema::GitEventRoute {
+                galleon_config::schema::GitEventRoute {
                     message: true,
                     sop: None,
                 },

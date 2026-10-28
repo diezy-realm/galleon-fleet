@@ -30,7 +30,7 @@ Skema `policies.json` (dari `policies_test.go`): `{"id", "name", "scope", "enfor
 
 ## 2. Temuan Utama: Go Sama Sekali Tidak Punya Konsep MCP
 
-Grep menyeluruh `mcp_server|McpServer|MCPServer|mcp_bundle|McpBundle` di SELURUH `engine/` = **0 hasil**. Ini mengonfirmasi dan memperkuat temuan `plugin-mcp-architecture-audit.md`: MCP adalah **konsep yang murni hidup di Rust** (`clawcrew-config::McpServerConfig`, `clawcrew-tools`). Go — yang menurut arsitektur yang dikonfirmasi Achmad adalah layer kebijakan/konsensus/hierarki organisasi (Fleet→Ship→Squad→Crew) — **tidak punya jalur apa pun** untuk melihat, mengatur, atau membatasi MCP server yang terpasang di level Rust.
+Grep menyeluruh `mcp_server|McpServer|MCPServer|mcp_bundle|McpBundle` di SELURUH `engine/` = **0 hasil**. Ini mengonfirmasi dan memperkuat temuan `plugin-mcp-architecture-audit.md`: MCP adalah **konsep yang murni hidup di Rust** (`galleon-config::McpServerConfig`, `galleon-tools`). Go — yang menurut arsitektur yang dikonfirmasi Achmad adalah layer kebijakan/konsensus/hierarki organisasi (Fleet→Ship→Squad→Crew) — **tidak punya jalur apa pun** untuk melihat, mengatur, atau membatasi MCP server yang terpasang di level Rust.
 
 **Implikasi:** governance MCP fleet-wide (dalam arti "satu kebijakan dari Fleet-level yang mengikat semua Ship/Squad/Crew di bawahnya") **tidak mungkin diterapkan hari ini** — bukan karena implementasinya kurang matang, tapi karena jembatannya BELUM ADA SAMA SEKALI. Ini konsisten dengan temuan sesi riset sebelumnya soal memory (`capabilities-skills-lessons-steering-audit.md`): proto `SystemGateway` hanya punya 3 RPC (`ExecuteTurn`/`ExecuteNativeTool`/`GetDecryptedSecret`) — tidak ada RPC untuk MCP governance juga.
 

@@ -401,7 +401,7 @@ mod tests {
 
     #[test]
     fn strips_rustdoc_source_anchor() {
-        let html = r#"<div><a class="src" href="../../src/clawcrew_tools/x.rs.html#146-177">Source</a></div>"#;
+        let html = r#"<div><a class="src" href="../../src/galleon_tools/x.rs.html#146-177">Source</a></div>"#;
         assert_eq!(strip_source_anchors(html), "<div></div>");
     }
 

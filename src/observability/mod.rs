@@ -1,2 +1,2 @@
 #[allow(unused_imports)]
-pub use clawcrew_runtime::observability::*;
+pub use galleon_runtime::observability::*;

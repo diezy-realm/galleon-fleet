@@ -13,9 +13,9 @@ depends_on: none (additive, risiko regresi rendah)
 
 #### Detail Eksekusi — BL-06
 
-**Verifikasi:** `crates/clawcrew-runtime/src/sop/types.rs:311` — `struct SopStep` sudah punya ~15 field (`number`, `title`, `body`, `suggested_tools`, `requires_confirmation`, `kind`, `schema`, `scope`, `routing`, `on_failure`, `mode`, `calls`, `pos`, `agent`, `capability`, `capability_input`, `policy`, `gate_prompt`, dll.) — **TIDAK ADA field Do's/Don'ts** di struct ini saat ini (dibaca penuh baris 300-390). Konfirmasi: tiket ini genuinely menambah field baru, bukan memperbaiki yang sudah ada.
+**Verifikasi:** `crates/galleon-runtime/src/sop/types.rs:311` — `struct SopStep` sudah punya ~15 field (`number`, `title`, `body`, `suggested_tools`, `requires_confirmation`, `kind`, `schema`, `scope`, `routing`, `on_failure`, `mode`, `calls`, `pos`, `agent`, `capability`, `capability_input`, `policy`, `gate_prompt`, dll.) — **TIDAK ADA field Do's/Don'ts** di struct ini saat ini (dibaca penuh baris 300-390). Konfirmasi: tiket ini genuinely menambah field baru, bukan memperbaiki yang sudah ada.
 
-**File & simbol spesifik:** Ubah `crates/clawcrew-runtime/src/sop/types.rs`, `struct SopStep` (baris 311).
+**File & simbol spesifik:** Ubah `crates/galleon-runtime/src/sop/types.rs`, `struct SopStep` (baris 311).
 
 **Spesifikasi API:**
 ```rust
@@ -41,7 +41,7 @@ Pola `#[serde(default, skip_serializing_if = "Vec::is_empty")]` — IKUTI PERSIS
 ```
 
 **Langkah pengerjaan:**
-1. Baca parser SOP.md (file yang mem-parsing markdown ke `SopStep` — kemungkinan di `crates/clawcrew-runtime/src/sop/parser.rs` atau sejenis, PERLU DICARI, belum diverifikasi sesi ini) untuk pola bullet existing (`- do:`/`- dont:` konsisten `- edit:`/`- prompt:` yang sudah dipakai `gate_prompt`).
+1. Baca parser SOP.md (file yang mem-parsing markdown ke `SopStep` — kemungkinan di `crates/galleon-runtime/src/sop/parser.rs` atau sejenis, PERLU DICARI, belum diverifikasi sesi ini) untuk pola bullet existing (`- do:`/`- dont:` konsisten `- edit:`/`- prompt:` yang sudah dipakai `gate_prompt`).
 2. Tambah field `dos`/`donts` ke `SopStep`.
 3. Update parser untuk mengenali bullet `- do:`/`- dont:`.
 4. **Perluas contoh role WAJIB mencakup minimal 1 non-engineering** — saat menulis dokumentasi/contoh SOP untuk tiket ini, sertakan contoh Marketing (Copywriter/Content Creator role) bukan hanya Backend/Frontend/QA.
@@ -59,7 +59,7 @@ Pola `#[serde(default, skip_serializing_if = "Vec::is_empty")]` — IKUTI PERSIS
 
 #### Detail Eksekusi — BL-07
 
-**Verifikasi:** `crates/clawcrew-runtime/src/sop/types.rs:458` — `struct Sop` punya field `name`, `description`, `version`, `priority`, `execution_mode`, `triggers`, `steps`, `cooldown_secs`, `max_concurrent`, `location`, `deterministic`, `admission_policy`, dll. — **TIDAK ADA field RACI** (Responsible/Accountable/Consulted/Informed) saat ini.
+**Verifikasi:** `crates/galleon-runtime/src/sop/types.rs:458` — `struct Sop` punya field `name`, `description`, `version`, `priority`, `execution_mode`, `triggers`, `steps`, `cooldown_secs`, `max_concurrent`, `location`, `deterministic`, `admission_policy`, dll. — **TIDAK ADA field RACI** (Responsible/Accountable/Consulted/Informed) saat ini.
 
 **Spesifikasi API:**
 ```rust
@@ -132,7 +132,7 @@ pub struct RaciAssignment {
 
 #### Detail Eksekusi — BL-57
 
-**File & simbol spesifik:** Ubah `crates/clawcrew-runtime/src/sop/types.rs` — tambah struct baru DI DEKAT `struct Sop` (baris 458) dan `struct SopStep` (baris 311), ikuti pola `#[derive(Debug, Clone, Serialize, Deserialize)] #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]` yang konsisten di SETIAP struct lain di file ini.
+**File & simbol spesifik:** Ubah `crates/galleon-runtime/src/sop/types.rs` — tambah struct baru DI DEKAT `struct Sop` (baris 458) dan `struct SopStep` (baris 311), ikuti pola `#[derive(Debug, Clone, Serialize, Deserialize)] #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]` yang konsisten di SETIAP struct lain di file ini.
 
 **Spesifikasi API:**
 ```rust
@@ -172,7 +172,7 @@ Tambah ke `Sop` struct: `#[serde(default, skip_serializing_if = "Vec::is_empty")
 
 #### Detail Eksekusi — BL-58
 
-**TIDAK DIVERIFIKASI sesi ini** — `HookResult::Cancel` dan infrastruktur hook `preToolUse` disebut dokumen tapi lokasi file persis belum dicari (kemungkinan `crates/clawcrew-runtime/src/hooks/` sesuai tabel File Ownership). **Langkah pertama WAJIB:** baca `crates/clawcrew-runtime/src/hooks/` penuh untuk signature `preToolUse` hook dan `HookResult::Cancel` variant persis sebelum menulis enforcement logic.
+**TIDAK DIVERIFIKASI sesi ini** — `HookResult::Cancel` dan infrastruktur hook `preToolUse` disebut dokumen tapi lokasi file persis belum dicari (kemungkinan `crates/galleon-runtime/src/hooks/` sesuai tabel File Ownership). **Langkah pertama WAJIB:** baca `crates/galleon-runtime/src/hooks/` penuh untuk signature `preToolUse` hook dan `HookResult::Cancel` variant persis sebelum menulis enforcement logic.
 
 **Spesifikasi API (pola, verifikasi signature persis saat eksekusi):**
 ```rust
@@ -234,14 +234,14 @@ fn enforce_role_restriction(
 
 ## C. Evaluation/Telemetry Loop (advisory, divalidasi lewat BL-60)
 
-- [x] **Eval-01 (dari `decisions/sop-eval-telemetry-loop-design.md`)** Sambungkan `clawcrew-eval` (harness Replay/Live yang sudah matang, CLI sudah ada) sebagai check ADVISORY di CI — TIDAK blocking merge. Dijalankan Lead→Backend→Principle (bukan Owner harian).
+- [x] **Eval-01 (dari `decisions/sop-eval-telemetry-loop-design.md`)** Sambungkan `galleon-eval` (harness Replay/Live yang sudah matang, CLI sudah ada) sebagai check ADVISORY di CI — TIDAK blocking merge. Dijalankan Lead→Backend→Principle (bukan Owner harian).
 
 #### Detail Eksekusi — Eval-01
 
-**TIDAK DIVERIFIKASI sesi ini** — lokasi `clawcrew-eval` crate dan CLI-nya belum dibaca. **Langkah pertama WAJIB:** baca `crates/clawcrew-eval/` struktur dan CLI entry point.
+**TIDAK DIVERIFIKASI sesi ini** — lokasi `galleon-eval` crate dan CLI-nya belum dibaca. **Langkah pertama WAJIB:** baca `crates/galleon-eval/` struktur dan CLI entry point.
 
 **Langkah pengerjaan:**
-1. Baca `clawcrew-eval` CLI command existing.
+1. Baca `galleon-eval` CLI command existing.
 2. Tambah job `.github/workflows/` baru yang menjalankan eval harness terhadap BL-60 (SOP "Engineering Feature Delivery") sebagai test-case — job TIDAK memblokir merge (`continue-on-error: true` atau pola non-required-check yang sudah dipakai workflow lain, cek `.github/workflows/` existing untuk konvensi non-blocking check).
 3. Hasil eval di-post sebagai PR comment/annotation (advisory), bukan status check yang gagal.
 
@@ -255,18 +255,18 @@ fn enforce_role_restriction(
 
 **Langkah pengerjaan:**
 1. Temukan struct `SopCounters`/`RunSnapshot` dan API yang sudah mengisinya.
-2. Tambah endpoint read-only baru di `clawcrew-gateway/src/` (pola REST GET, konsisten endpoint metrics lain yang sudah ada seperti disebut R-90 Sprint 1 `clawcrew_cache_hit_rate`).
+2. Tambah endpoint read-only baru di `galleon-gateway/src/` (pola REST GET, konsisten endpoint metrics lain yang sudah ada seperti disebut R-90 Sprint 1 `clawcrew_cache_hit_rate`).
 
 **Dependency:** Tidak hard-block tiket lain di sprint ini.
 
 ## D. SOP Execution Model — Delivery Separation & Cost Cap (dari `automation-cron-webhook-backlog.md`, belum pernah masuk sprint manapun sebelum audit 2026-10-05)
 
-- [x] **BL-13 (LOW-MEDIUM, MULAI DENGAN VERIFIKASI, bukan langsung kode)** Cost cap eksplisit per cron-job/SOP-run. **Verifikasi dulu**: `SecurityPolicy.max_actions_per_hour`/`record_action()`/`is_rate_limited()` (`crates/clawcrew-config/src/policy.rs:349`) sudah dipakai luas di `cron/scheduler.rs:898,1272` dan `subagent/mod.rs` — kemungkinan BESAR task ini SUDAH tercakup existing mechanism, bukan gap baru. Definition of Done tahap ini: dokumentasikan apakah `max_actions_per_hour` sudah cukup sebagai cost-cap level cron-job/SOP-run, atau genuinely butuh field tambahan (mis. cap biaya USD, bukan cuma jumlah aksi).
+- [x] **BL-13 (LOW-MEDIUM, MULAI DENGAN VERIFIKASI, bukan langsung kode)** Cost cap eksplisit per cron-job/SOP-run. **Verifikasi dulu**: `SecurityPolicy.max_actions_per_hour`/`record_action()`/`is_rate_limited()` (`crates/galleon-config/src/policy.rs:349`) sudah dipakai luas di `cron/scheduler.rs:898,1272` dan `subagent/mod.rs` — kemungkinan BESAR task ini SUDAH tercakup existing mechanism, bukan gap baru. Definition of Done tahap ini: dokumentasikan apakah `max_actions_per_hour` sudah cukup sebagai cost-cap level cron-job/SOP-run, atau genuinely butuh field tambahan (mis. cap biaya USD, bukan cuma jumlah aksi).
 
 #### Detail Eksekusi — BL-13
 
 **Langkah pengerjaan (VERIFIKASI, bukan kode):**
-1. Baca `crates/clawcrew-config/src/policy.rs` sekitar baris 349 (`SecurityPolicy.max_actions_per_hour`) penuh — pahami apa yang dihitung sebagai "action" (setiap tool call? setiap SOP step? setiap turn?).
+1. Baca `crates/galleon-config/src/policy.rs` sekitar baris 349 (`SecurityPolicy.max_actions_per_hour`) penuh — pahami apa yang dihitung sebagai "action" (setiap tool call? setiap SOP step? setiap turn?).
 2. Baca pemanggilan di `cron/scheduler.rs:898,1272` dan `subagent/mod.rs` — konfirmasi baris persis (dokumen lama, nomor bisa bergeser — verifikasi ulang).
 3. Tulis dokumen temuan singkat (markdown, di `standard-docs/decisions/` atau sejenis) menjawab: apakah ini CUKUP sebagai cost-cap, atau butuh dimensi baru (biaya USD aktual dari token LLM, bukan hitungan aksi).
 4. KEPUTUSAN: kalau cukup, tiket ini SELESAI tanpa kode baru (dokumentasi saja). Kalau tidak cukup, tulis AC lanjutan sebagai tiket terpisah untuk ditambahkan (butuh approval Lead/Owner karena menambah dimensi baru ke `SecurityPolicy`).
@@ -290,13 +290,13 @@ fn enforce_role_restriction(
 
 | Area | File | Penulis |
 |---|---|---|
-| A | `crates/clawcrew-runtime/src/sop/types.rs` (field baru), `engine/src/mission/` (Quest Go) | Backend-Rust + Backend-Go |
-| B | `crates/clawcrew-runtime/src/sop/{types.rs,constraint.rs}` (baru), `crates/clawcrew-runtime/src/hooks/` (reuse existing) | Backend-Rust — **serialkan A dan B pada `sop/types.rs` kalau bersinggungan** |
-| C | `crates/clawcrew-eval/`, `.github/workflows/` (check baru, non-blocking), `clawcrew-gateway/src/` (endpoint metrics baru) | Backend-Rust + Platform/DevOps |
-| D | `crates/clawcrew-config/src/policy.rs` (baca, verifikasi BL-13), `standard-docs/decisions/` (design-spec baru BL-12) | squad-lead (evaluasi/dokumentasi dulu, bukan kode) |
+| A | `crates/galleon-runtime/src/sop/types.rs` (field baru), `engine/src/mission/` (Quest Go) | Backend-Rust + Backend-Go |
+| B | `crates/galleon-runtime/src/sop/{types.rs,constraint.rs}` (baru), `crates/galleon-runtime/src/hooks/` (reuse existing) | Backend-Rust — **serialkan A dan B pada `sop/types.rs` kalau bersinggungan** |
+| C | `crates/galleon-eval/`, `.github/workflows/` (check baru, non-blocking), `galleon-gateway/src/` (endpoint metrics baru) | Backend-Rust + Platform/DevOps |
+| D | `crates/galleon-config/src/policy.rs` (baca, verifikasi BL-13), `standard-docs/decisions/` (design-spec baru BL-12) | squad-lead (evaluasi/dokumentasi dulu, bukan kode) |
 
 ## Keluaran Sprint
 
 - SOP engine punya Do's/Don'ts + RACI generik lintas departemen (terbukti via contoh Marketing, bukan hanya Engineering).
 - Larangan berbasis role ("Lead tidak boleh coding") ditegakkan struktural via hook, bukan instruksi teks yang bisa diabaikan model.
-- `clawcrew-eval` tersambung CI sebagai advisory check; `SopCounters` terlihat operator tanpa baca log mentah.
+- `galleon-eval` tersambung CI sebagai advisory check; `SopCounters` terlihat operator tanpa baca log mentah.

@@ -27,7 +27,7 @@
 //! client at the daemon).
 //!
 //! `zerorelay` is a standalone networking app (not daemon-path code), so bare
-//! `tokio::spawn` is the right primitive here; the `clawcrew_spawn::spawn!` rule
+//! `tokio::spawn` is the right primitive here; the `galleon_spawn::spawn!` rule
 //! is for in-daemon tasks. Mirrors the `apps/zerocode` exemption.
 #![allow(clippy::disallowed_methods)]
 
@@ -40,6 +40,10 @@ use anyhow::Result;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as B64;
 use futures_util::{SinkExt, StreamExt};
+use galleon_relay_proto::{
+    ConnWindow, Control, INITIAL_WINDOW, MAX_CONTROL_FRAME, MAX_DATA_PAYLOAD, PEER_HINT_ENROLL,
+    TokenBucket, decode_data, encode_data,
+};
 use ring::rand::{SecureRandom, SystemRandom};
 use ring::signature::{ED25519, UnparsedPublicKey};
 use serde::{Deserialize, Serialize};
@@ -55,10 +59,6 @@ use tokio::sync::{Mutex, mpsc};
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::Message;
-use clawcrew_relay_proto::{
-    ConnWindow, Control, INITIAL_WINDOW, MAX_CONTROL_FRAME, MAX_DATA_PAYLOAD, PEER_HINT_ENROLL,
-    TokenBucket, decode_data, encode_data,
-};
 
 /// How far a client may drive its send window negative before the relay treats it
 /// as ignoring flow control and tears the conn down. One full window of slack
@@ -711,7 +711,7 @@ impl RelayServer {
                             .1
                             .peer_certificates()
                             .and_then(|c| c.first())
-                            .and_then(|c| clawcrew_tls::client_cert_node_id(c.as_ref()))
+                            .and_then(|c| galleon_tls::client_cert_node_id(c.as_ref()))
                     } else {
                         None
                     };

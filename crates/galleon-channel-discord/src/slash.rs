@@ -5,7 +5,7 @@
 
 use serde_json::json;
 
-use clawcrew_api::skill::Skill;
+use galleon_api::skill::Skill;
 
 use super::slash_options::{Choice, OptKind, OptionSpec};
 use super::types::{DiscordSlashCommandSpec, ReconcileOutcome, SlashScope};
@@ -46,10 +46,10 @@ pub fn discord_slash_specs_from_skills(skills: &[Skill]) -> Vec<DiscordSlashComm
     for skill in candidates {
         let slug = discord_command_slug(&skill.name);
         if slug.is_empty() || !seen.insert(slug.clone()) {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "skill": skill.name,
                         "slug": slug,
@@ -154,10 +154,10 @@ fn map_skill_slash_options(skill: &Skill) -> Vec<OptionSpec> {
 }
 
 fn warn_drop_option(skill: &Skill, option: &str, reason: &str) {
-    ::clawcrew_log::record!(
+    ::galleon_log::record!(
         WARN,
-        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-            .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+            .with_outcome(::galleon_log::EventOutcome::Unknown)
             .with_attrs(::serde_json::json!({
                 "skill": skill.name,
                 "option": option,
@@ -187,10 +187,10 @@ fn valid_discord_localizations(
             if DISCORD_LOCALES.contains(&loc.as_str()) {
                 true
             } else {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                        .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                        .with_outcome(::galleon_log::EventOutcome::Unknown)
                         .with_attrs(::serde_json::json!({
                             "skill": skill,
                             "context": context,
@@ -241,10 +241,10 @@ fn map_options_cap(specs: &mut Vec<DiscordSlashCommandSpec>) {
             .iter()
             .map(|s| s.slug.as_str())
             .collect();
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown)
                 .with_attrs(::serde_json::json!({"dropped": dropped})),
             "too many skill slash commands; truncating to the registration cap"
         );
@@ -536,9 +536,9 @@ async fn reap_all_owned_commands(
         });
     }
     if !resp.status().is_success() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"status": resp.status().as_u16()})),
             "inactive-scope command listing failed; skipping cross-scope cleanup"
         );
@@ -550,9 +550,9 @@ async fn reap_all_owned_commands(
     let existing: Vec<serde_json::Value> = match resp.json().await {
         Ok(v) => v,
         Err(e) => {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"err": e.without_url().to_string()})),
                 "inactive-scope command listing returned an unparseable body; skipping cross-scope cleanup"
             );
@@ -580,17 +580,17 @@ async fn reap_all_owned_commands(
             .await
             .map_err(reqwest::Error::without_url)?;
         if del.status().is_success() || del.status() == reqwest::StatusCode::NOT_FOUND {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"command": name})),
                 "reaped command from inactive slash scope"
             );
         } else {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "command": name,
                         "status": del.status().as_u16(),
@@ -654,18 +654,18 @@ async fn reconcile_one_endpoint(
         if del.status().is_success() || del.status() == reqwest::StatusCode::NOT_FOUND {
             // 404 = already gone (raced another reconcile or manual
             // cleanup) — the desired end state holds either way.
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 INFO,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"command": name})),
                 "deregistered stale skill slash command"
             );
         } else {
             failed_deletes += 1;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({
                         "command": name,
                         "status": del.status().as_u16(),
@@ -701,10 +701,10 @@ async fn reconcile_one_endpoint(
             // Stop on the first 429 and surface the cooldown rather than
             // hammering the remaining upserts into the same rate limit.
             let until = rate_limit_deadline(resp).await;
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                    .with_outcome(::clawcrew_log::EventOutcome::Unknown)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                    .with_outcome(::galleon_log::EventOutcome::Unknown)
                     .with_attrs(::serde_json::json!({"command": name, "retry_after_until": until})),
                 "discord slash command reconcile rate-limited; backing off"
             );
@@ -718,9 +718,9 @@ async fn reconcile_one_endpoint(
         upserted += 1;
     }
     if upserted > 0 {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             INFO,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_attrs(::serde_json::json!({"upserted": upserted})),
             "discord slash commands upserted"
         );
@@ -897,18 +897,18 @@ Write it.
             tools: Vec::new(),
             prompts: Vec::new(),
             slash_options: vec![
-                clawcrew_api::skill::SkillSlashOption {
+                galleon_api::skill::SkillSlashOption {
                     name: "format".to_string(),
                     description: "Output format".to_string(),
                     kind: "string".to_string(),
                     required: true,
                     description_localizations: Default::default(),
                     choices: vec![
-                        clawcrew_api::skill::SkillSlashChoice {
+                        galleon_api::skill::SkillSlashChoice {
                             name: "Email".to_string(),
                             value: "email".to_string(),
                         },
-                        clawcrew_api::skill::SkillSlashChoice {
+                        galleon_api::skill::SkillSlashChoice {
                             name: "Tweet".to_string(),
                             value: "tweet".to_string(),
                         },
@@ -918,7 +918,7 @@ Write it.
                     min_length: None,
                     max_length: None,
                 },
-                clawcrew_api::skill::SkillSlashOption {
+                galleon_api::skill::SkillSlashOption {
                     name: "words".to_string(),
                     description: "Word limit".to_string(),
                     kind: "integer".to_string(),
@@ -982,7 +982,7 @@ Write it.
 
     #[test]
     fn map_drops_unknown_kinds_and_sorts_required_first() {
-        let skill = clawcrew_api::skill::Skill {
+        let skill = galleon_api::skill::Skill {
             name: "s".to_string(),
             description: "d".to_string(),
             description_localizations: Default::default(),
@@ -992,7 +992,7 @@ Write it.
             tools: Vec::new(),
             prompts: Vec::new(),
             slash_options: vec![
-                clawcrew_api::skill::SkillSlashOption {
+                galleon_api::skill::SkillSlashOption {
                     name: "opt".to_string(),
                     description: "o".to_string(),
                     kind: "string".to_string(),
@@ -1004,7 +1004,7 @@ Write it.
                     min_length: None,
                     max_length: None,
                 },
-                clawcrew_api::skill::SkillSlashOption {
+                galleon_api::skill::SkillSlashOption {
                     name: "Req".to_string(),
                     description: "r".to_string(),
                     kind: "integer".to_string(),
@@ -1016,7 +1016,7 @@ Write it.
                     min_length: None,
                     max_length: None,
                 },
-                clawcrew_api::skill::SkillSlashOption {
+                galleon_api::skill::SkillSlashOption {
                     name: "bad".to_string(),
                     description: "b".to_string(),
                     kind: "bogus".to_string(),
@@ -1039,8 +1039,8 @@ Write it.
         assert_eq!(mapped[1].name, "opt");
     }
 
-    fn sso(name: &str, kind: &str) -> clawcrew_api::skill::SkillSlashOption {
-        clawcrew_api::skill::SkillSlashOption {
+    fn sso(name: &str, kind: &str) -> galleon_api::skill::SkillSlashOption {
+        galleon_api::skill::SkillSlashOption {
             name: name.to_string(),
             description: "d".to_string(),
             description_localizations: Default::default(),
@@ -1055,9 +1055,9 @@ Write it.
     }
 
     fn skill_with(
-        slash_options: Vec<clawcrew_api::skill::SkillSlashOption>,
-    ) -> clawcrew_api::skill::Skill {
-        clawcrew_api::skill::Skill {
+        slash_options: Vec<galleon_api::skill::SkillSlashOption>,
+    ) -> galleon_api::skill::Skill {
+        galleon_api::skill::Skill {
             name: "s".to_string(),
             description: "d".to_string(),
             description_localizations: Default::default(),
@@ -1088,11 +1088,11 @@ Write it.
     fn map_drops_a_nonparsing_numeric_choice() {
         let mut o = sso("n", "integer");
         o.choices = vec![
-            clawcrew_api::skill::SkillSlashChoice {
+            galleon_api::skill::SkillSlashChoice {
                 name: "ok".to_string(),
                 value: "10".to_string(),
             },
-            clawcrew_api::skill::SkillSlashChoice {
+            galleon_api::skill::SkillSlashChoice {
                 name: "bad".to_string(),
                 value: "3.14".to_string(),
             },

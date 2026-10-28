@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-pub use clawcrew_runtime::security::*;
+pub use galleon_runtime::security::*;
 
 #[cfg(test)]
 mod tests {

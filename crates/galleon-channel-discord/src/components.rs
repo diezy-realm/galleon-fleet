@@ -174,10 +174,10 @@ impl DiscordActionRow {
             .filter_map(|c| {
                 let api = c.to_api();
                 if api.is_none() {
-                    ::clawcrew_log::record!(
+                    ::galleon_log::record!(
                         WARN,
-                        ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                            .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown),
                         "dropping component with un-encodable custom_id (over 100 chars)"
                     );
                 }
@@ -244,10 +244,10 @@ pub(crate) fn action_row(components: Vec<DiscordComponent>) -> DiscordActionRow 
         // A select must be the only component in its row.
         components.into_iter().take(1).collect()
     } else if components.len() > MAX_BUTTONS_PER_ROW {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "action row exceeds 5 buttons; truncating"
         );
         components.into_iter().take(MAX_BUTTONS_PER_ROW).collect()
@@ -260,10 +260,10 @@ pub(crate) fn action_row(components: Vec<DiscordComponent>) -> DiscordActionRow 
 /// Cap a set of action rows to Discord's per-message limit of 5.
 pub(crate) fn cap_rows(rows: Vec<DiscordActionRow>) -> Vec<DiscordActionRow> {
     if rows.len() > MAX_ROWS_PER_MESSAGE {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
-                .with_outcome(::clawcrew_log::EventOutcome::Unknown),
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                .with_outcome(::galleon_log::EventOutcome::Unknown),
             "message exceeds 5 action rows; truncating"
         );
         rows.into_iter().take(MAX_ROWS_PER_MESSAGE).collect()

@@ -1,16 +1,16 @@
-pub use clawcrew_runtime::cron::*;
+pub use galleon_runtime::cron::*;
 
 use crate::config::Config;
 use anyhow::{Result, bail};
-use clawcrew_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
+use galleon_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
 
 /// Bail with a clear error if the named agent isn't configured.
 fn require_configured_agent(config: &Config, agent_alias: &str) -> Result<()> {
     if config.agent(agent_alias).is_none() {
-        ::clawcrew_log::record!(
+        ::galleon_log::record!(
             WARN,
-            ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                .with_outcome(::clawcrew_log::EventOutcome::Failure)
+            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                .with_outcome(::galleon_log::EventOutcome::Failure)
                 .with_attrs(::serde_json::json!({"agent_alias": agent_alias})),
             "cron CLI rejected: unknown agent alias"
         );
@@ -23,10 +23,10 @@ fn parse_explicit_rfc3339_utc(raw: &str) -> Result<chrono::DateTime<chrono::Utc>
     chrono::DateTime::parse_from_rfc3339(raw)
         .map(|timestamp| timestamp.with_timezone(&chrono::Utc))
         .map_err(|err| {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 WARN,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                    .with_outcome(::clawcrew_log::EventOutcome::Failure)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                    .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({
                         "raw": raw,
                         "error": format!("{}", err),
@@ -713,7 +713,7 @@ mod tests {
             .ensure("openrouter", "test-agent")
             .expect("known family");
         config.agents.entry("test-agent".to_string()).or_insert(
-            clawcrew_config::schema::AliasedAgentConfig {
+            galleon_config::schema::AliasedAgentConfig {
                 model_provider: "openrouter.test-agent".into(),
                 risk_profile: "test-agent".into(),
                 runtime_profile: "test-agent".into(),

@@ -1,33 +1,33 @@
 //! `galleon-channel-signal` — RF-B1 ported Signal channel.
 //!
 //! This crate splits the `signal` channel out of the monolithic
-//! `clawcrew-channels` crate into an independent feature-crate. The Signal
-//! **protocol** body is ported for real from `clawcrew-channels::signal`: the
+//! `galleon-channels` crate into an independent feature-crate. The Signal
+//! **protocol** body is ported for real from `galleon-channels::signal`: the
 //! signal-cli JSON-RPC transport (`rpc_request`), the SSE event stream parser
 //! and reconnect loop (`listen`), envelope → [`ChannelMessage`] processing
 //! (`process_envelope`), native polls / reactions / typing / health, and the
 //! full [`Channel`] + [`Attributable`] trait surface.
 //!
-//! Two couplings in the upstream body reached INTO `clawcrew-channels`-internal
+//! Two couplings in the upstream body reached INTO `galleon-channels`-internal
 //! infrastructure. They were the RF-B1 split's real seams; both are now closed
-//! by sharing [`galleon_channel_core`] (which reuses the `clawcrew_config`
+//! by sharing [`galleon_channel_core`] (which reuses the `galleon_config`
 //! peer-policy SSOT without dragging the runtime):
 //!
 //! 1. **Allowlist policy — CLOSED.** `is_sender_allowed` now delegates to
 //!    [`galleon_channel_core::allowlist::is_user_allowed`], the full
-//!    grant/deny/`!name`/wildcard peer-policy (`clawcrew_config::schema`
+//!    grant/deny/`!name`/wildcard peer-policy (`galleon_config::schema`
 //!    semantics) rather than the earlier exact-match-plus-`*` stopgap.
 //! 2. **Approval prompt — SHARED, i18n is the remaining ceiling.** Token
 //!    generation, reply parsing and the prompt wire shape come from
 //!    [`galleon_channel_core::approval`]. The prompt text is plain English of
 //!    the IDENTICAL wire shape (`<token> yes|no|always`); localizing it needs
-//!    `clawcrew_runtime::i18n`, so **i18n stays the documented ceiling**
+//!    `galleon_runtime::i18n`, so **i18n stays the documented ceiling**
 //!    (`APPROVAL_I18N_CEILING` in core) — not closable without the runtime.
 //!
 //! One coupling remains fully a local simplification:
 //!
-//! * **Structured logging + env proxy.** Upstream uses the `clawcrew_log`
-//!    structured-event macro and `clawcrew_config` env-proxy fallback. Here
+//! * **Structured logging + env proxy.** Upstream uses the `galleon_log`
+//!    structured-event macro and `galleon_config` env-proxy fallback. Here
 //!    logging is dropped (a proof crate needs no event bus) and only an
 //!    EXPLICIT per-channel `proxy_url` is honoured (plain `reqwest::Proxy`);
 //!    the env-proxy fallback is the ceiling.
@@ -35,14 +35,16 @@
 //! Everything else is a faithful port. No production path uses `unwrap`/`expect`
 //! on fallible IO; errors propagate via `anyhow::Result` + `?`.
 
-use clawcrew_api::channel::{
+use galleon_api::channel::{
     ApprovalSource, AttributedApprovalResponse, Channel, ChannelApprovalRequest,
     ChannelApprovalResponse, ChannelMessage, SendMessage,
 };
 // RF-B1 seam #1 (allowlist) + #2 (approval parse/token/prompt): shared from core.
-use galleon_channel_core::allowlist::{self, Match};
-use galleon_channel_core::approval::{build_yesno_prompt, new_approval_token, parse_approval_reply};
 use futures_util::StreamExt;
+use galleon_channel_core::allowlist::{self, Match};
+use galleon_channel_core::approval::{
+    build_yesno_prompt, new_approval_token, parse_approval_reply,
+};
 use lru::LruCache;
 use parking_lot::Mutex as SyncMutex;
 use reqwest::Client;
@@ -88,7 +90,7 @@ pub struct SignalChannel {
     ignore_attachments: bool,
     ignore_stories: bool,
     /// Per-channel explicit proxy URL. `None` = direct connection.
-    /// ponytail: env-proxy fallback (upstream `clawcrew_config` runtime proxy)
+    /// ponytail: env-proxy fallback (upstream `galleon_config` runtime proxy)
     /// is the documented ceiling — only an explicit URL is honoured here.
     proxy_url: Option<String>,
     pending_approvals: Arc<Mutex<HashMap<String, oneshot::Sender<ChannelApprovalResponse>>>>,
@@ -209,7 +211,12 @@ impl SignalChannel {
     /// path); the env-proxy fallback is the documented ceiling.
     fn http_client(&self) -> anyhow::Result<Client> {
         let mut builder = Client::builder().connect_timeout(Duration::from_secs(10));
-        if let Some(url) = self.proxy_url.as_deref().map(str::trim).filter(|u| !u.is_empty()) {
+        if let Some(url) = self
+            .proxy_url
+            .as_deref()
+            .map(str::trim)
+            .filter(|u| !u.is_empty())
+        {
             builder = builder.proxy(reqwest::Proxy::all(url)?);
         }
         Ok(builder.build()?)
@@ -221,7 +228,10 @@ impl SignalChannel {
             .source_number
             .as_deref()
             .filter(|sender| !sender.is_empty())
-            .or(envelope.source.as_deref().filter(|sender| !sender.is_empty()))
+            .or(envelope
+                .source
+                .as_deref()
+                .filter(|sender| !sender.is_empty()))
             .or(envelope
                 .source_uuid
                 .as_deref()
@@ -388,7 +398,10 @@ impl SignalChannel {
         let parsed: serde_json::Value = serde_json::from_str(&text)?;
         if let Some(err) = parsed.get("error") {
             let code = err.get("code").and_then(|c| c.as_i64()).unwrap_or(-1);
-            let msg = err.get("message").and_then(|m| m.as_str()).unwrap_or("unknown");
+            let msg = err
+                .get("message")
+                .and_then(|m| m.as_str())
+                .unwrap_or("unknown");
             anyhow::bail!("Signal RPC error {code}: {msg}");
         }
         Ok(parsed.get("result").cloned())
@@ -428,21 +441,29 @@ impl SignalChannel {
 
         let target = self.reply_target(data_msg, &sender);
 
-        let timestamp = data_msg.timestamp.or(envelope.timestamp).unwrap_or_else(|| {
-            u64::try_from(
-                std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_millis(),
-            )
-            .unwrap_or(u64::MAX)
-        });
+        let timestamp = data_msg
+            .timestamp
+            .or(envelope.timestamp)
+            .unwrap_or_else(|| {
+                u64::try_from(
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_millis(),
+                )
+                .unwrap_or(u64::MAX)
+            });
 
-        let contents: Vec<String> = if let Some(pa) =
-            data_msg.poll_answer.as_ref().or(data_msg.poll_vote.as_ref())
+        let contents: Vec<String> = if let Some(pa) = data_msg
+            .poll_answer
+            .as_ref()
+            .or(data_msg.poll_vote.as_ref())
         {
             if !pa.selected_titles.is_empty() {
-                pa.selected_titles.iter().map(|t| format!("[choice]{t}")).collect()
+                pa.selected_titles
+                    .iter()
+                    .map(|t| format!("[choice]{t}"))
+                    .collect()
             } else if !pa.selected_indices.is_empty() {
                 pa.selected_indices
                     .iter()
@@ -519,9 +540,9 @@ impl SignalChannel {
     }
 }
 
-impl clawcrew_api::attribution::Attributable for SignalChannel {
-    fn role(&self) -> clawcrew_api::attribution::Role {
-        clawcrew_api::attribution::Role::Channel(clawcrew_api::attribution::ChannelKind::Signal)
+impl galleon_api::attribution::Attributable for SignalChannel {
+    fn role(&self) -> galleon_api::attribution::Role {
+        galleon_api::attribution::Role::Channel(galleon_api::attribution::ChannelKind::Signal)
     }
     fn alias(&self) -> &str {
         &self.alias
@@ -571,7 +592,9 @@ impl Channel for SignalChannel {
             if trimmed_prompt.is_empty() {
                 return Ok(());
             }
-            return self.send(&SendMessage::new(trimmed_prompt, recipient)).await;
+            return self
+                .send(&SendMessage::new(trimmed_prompt, recipient))
+                .await;
         }
         if options.len() >= 2 {
             let labels: Vec<String> = options.iter().map(|(_, l)| l.clone()).collect();
@@ -681,7 +704,12 @@ impl Channel for SignalChannel {
         let Ok(client) = self.http_client() else {
             return false;
         };
-        let Ok(resp) = client.get(&url).timeout(Duration::from_secs(10)).send().await else {
+        let Ok(resp) = client
+            .get(&url)
+            .timeout(Duration::from_secs(10))
+            .send()
+            .await
+        else {
             return false;
         };
         resp.status().is_success()
@@ -754,7 +782,10 @@ impl Channel for SignalChannel {
         );
 
         let (tx, rx) = oneshot::channel();
-        self.pending_approvals.lock().await.insert(token.clone(), tx);
+        self.pending_approvals
+            .lock()
+            .await
+            .insert(token.clone(), tx);
 
         if let Err(err) = self.send(&SendMessage::new(text, recipient)).await {
             self.pending_approvals.lock().await.remove(&token);
@@ -833,10 +864,8 @@ mod tests {
         assert_eq!(dyn_ch.name(), "signal");
         assert_eq!(ch.alias(), "signal_test_alias");
         assert!(matches!(
-            clawcrew_api::attribution::Attributable::role(&ch),
-            clawcrew_api::attribution::Role::Channel(
-                clawcrew_api::attribution::ChannelKind::Signal
-            )
+            galleon_api::attribution::Attributable::role(&ch),
+            galleon_api::attribution::Role::Channel(galleon_api::attribution::ChannelKind::Signal)
         ));
     }
 

@@ -4,18 +4,18 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Email (IMAP/SMTP) channel feature-crate (RF-B1 split; ported from clawcrew-channels)."
+description = "Email (IMAP/SMTP) channel feature-crate (RF-B1 split; ported from galleon-channels)."
 repository.workspace = true
 homepage.workspace = true
 publish = true
 
 [dependencies]
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
-clawcrew-config = { workspace = true, default-features = false }
-clawcrew-log.workspace = true
-clawcrew-providers.workspace = true
-clawcrew-tools.workspace = true
+galleon-api.workspace = true
+galleon-config = { workspace = true, default-features = false }
+galleon-log.workspace = true
+galleon-providers.workspace = true
+galleon-tools.workspace = true
 anyhow = "1.0"
 async-imap = { version = "0.11", features = [
   "runtime-tokio",

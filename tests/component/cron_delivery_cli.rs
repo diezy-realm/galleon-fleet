@@ -15,8 +15,8 @@
 use std::path::Path;
 use std::process::{Command, Output};
 
-use clawcrew_config::schema::Config;
-use clawcrew_runtime::cron;
+use galleon_config::schema::Config;
+use galleon_runtime::cron;
 
 /// `locale = "en"` is pinned so stdout assertions do not depend on the
 /// environment; `config_dir_locale_regression.rs` shows config drives locale.
@@ -330,17 +330,17 @@ fn seed_declarative_job(config_dir: &Path) {
 
     config.agents.insert(
         "default".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             enabled: true,
             cron_jobs: vec!["decl_job".to_string()],
             ..Default::default()
         },
     );
 
-    let decl = clawcrew_config::schema::CronJobDecl {
+    let decl = galleon_config::schema::CronJobDecl {
         name: Some("decl_job".to_string()),
         job_type: "shell".to_string(),
-        schedule: clawcrew_config::schema::CronScheduleDecl::Cron {
+        schedule: galleon_config::schema::CronScheduleDecl::Cron {
             expr: "0 2 * * *".to_string(),
             tz: None,
         },
@@ -351,14 +351,14 @@ fn seed_declarative_job(config_dir: &Path) {
         allowed_tools: None,
         uses_memory: true,
         session_target: None,
-        delivery: Some(clawcrew_config::schema::DeliveryConfigDecl {
+        delivery: Some(galleon_config::schema::DeliveryConfigDecl {
             mode: "announce".to_string(),
             channel: Some("telegram".to_string()),
             to: Some("111".to_string()),
             thread_id: None,
             best_effort: true,
         }),
-        shell_output_format: clawcrew_config::schema::CronShellOutputFormat::Wrapped,
+        shell_output_format: galleon_config::schema::CronShellOutputFormat::Wrapped,
     };
 
     let mut decls = std::collections::HashMap::new();
@@ -377,7 +377,7 @@ fn cron_update_rejects_delivery_on_a_declarative_job() {
     // Materialize the declarative row before invoking the CLI. No CLI command
     // runs `sync_declarative_jobs`; the only production caller is the scheduler's
     // daemon-startup path (`cron/scheduler.rs`). Seeding through the library is
-    // how `clawcrew-gateway`'s own declarative test sets this up, and it keeps the
+    // how `galleon-gateway`'s own declarative test sets this up, and it keeps the
     // assertions on what the binary does rather than on how the row got there.
     seed_declarative_job(config_dir);
 

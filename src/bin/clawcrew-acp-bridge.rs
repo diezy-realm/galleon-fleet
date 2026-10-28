@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use futures_util::{SinkExt, StreamExt};
+use galleon_config::schema::resolve_runtime_dirs;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use tokio::io::{self, AsyncBufReadExt, AsyncWrite, AsyncWriteExt, BufReader};
@@ -11,7 +12,6 @@ use tokio_tungstenite::{
         http::{HeaderValue, header},
     },
 };
-use clawcrew_config::schema::resolve_runtime_dirs;
 
 const CONFIG_NOT_FOUND_ERROR: &str = "ERROR: config.toml not found.  Are you sure the bridge and ClawCrew are running on the same host?  Tool use will not work remotely!";
 const PAIRING_TOKEN_NOT_FOUND_ERROR: &str = "ERROR: Gateway pairing is active but no ACP bridge token is cached. Run `clawcrew gateway get-paircode --new`, then run `clawcrew-acp-bridge --pair-code <code>`, or set CLAWCREW_ACP_BRIDGE_TOKEN.";
@@ -44,7 +44,7 @@ async fn run() -> Result<()> {
         .with_context(|| format!("failed to connect to {}", bridge_target.url))?;
     let (mut ws_write, mut ws_read) = ws_stream.split();
 
-    let stdin_to_ws = clawcrew_spawn::spawn!(async move {
+    let stdin_to_ws = galleon_spawn::spawn!(async move {
         let stdin = io::stdin();
         let mut lines = BufReader::new(stdin).lines();
 
@@ -61,7 +61,7 @@ async fn run() -> Result<()> {
             .context("failed to close websocket")
     });
 
-    let ws_to_stdout = clawcrew_spawn::spawn!(async move {
+    let ws_to_stdout = galleon_spawn::spawn!(async move {
         let mut stdout = io::stdout();
 
         while let Some(message) = ws_read.next().await {
@@ -194,10 +194,10 @@ fn config_dir_from_args(args: impl IntoIterator<Item = String>) -> Result<Option
     while let Some(arg) = args.next() {
         if arg == "--config-dir" {
             let dir = args.next().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "acp-bridge args rejected: --config-dir missing value"
                 );
                 anyhow::Error::msg("--config-dir requires a path value")
@@ -216,10 +216,10 @@ fn pair_code_from_args(args: impl IntoIterator<Item = String>) -> Result<Option<
     while let Some(arg) = args.next() {
         if arg == "--pair-code" {
             let code = args.next().ok_or_else(|| {
-                ::clawcrew_log::record!(
+                ::galleon_log::record!(
                     WARN,
-                    ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
-                        .with_outcome(::clawcrew_log::EventOutcome::Failure),
+                    ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Reject)
+                        .with_outcome(::galleon_log::EventOutcome::Failure),
                     "acp-bridge args rejected: --pair-code missing value"
                 );
                 anyhow::Error::msg("--pair-code requires a code value")
@@ -570,7 +570,7 @@ mod tests {
 
     #[test]
     fn cached_token_path_lives_next_to_config_without_using_config_toml() {
-        let dir = std::path::Path::new("/tmp/clawcrew-config");
+        let dir = std::path::Path::new("/tmp/galleon-config");
 
         assert_eq!(cached_token_path(dir), dir.join("acp-bridge-token"));
     }

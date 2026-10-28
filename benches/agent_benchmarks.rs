@@ -61,13 +61,11 @@ impl BenchModelProvider {
     }
 }
 
-impl ::clawcrew_api::attribution::Attributable for BenchModelProvider {
-    fn role(&self) -> ::clawcrew_api::attribution::Role {
-        ::clawcrew_api::attribution::Role::Provider(
-            ::clawcrew_api::attribution::ProviderKind::Model(
-                ::clawcrew_api::attribution::ModelProviderKind::Custom,
-            ),
-        )
+impl ::galleon_api::attribution::Attributable for BenchModelProvider {
+    fn role(&self) -> ::galleon_api::attribution::Role {
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::Custom,
+        ))
     }
     fn alias(&self) -> &str {
         "BenchModelProvider"
@@ -107,7 +105,7 @@ impl ModelProvider for BenchModelProvider {
 
 struct NoopTool;
 
-clawcrew_api::mock_tool_attribution!(NoopTool);
+galleon_api::mock_tool_attribution!(NoopTool);
 
 #[async_trait]
 impl Tool for NoopTool {

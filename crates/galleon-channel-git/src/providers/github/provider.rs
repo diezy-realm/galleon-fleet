@@ -250,9 +250,9 @@ impl GithubProvider {
             });
         }
         if page.events.len() >= 100 {
-            ::clawcrew_log::record!(
+            ::galleon_log::record!(
                 DEBUG,
-                ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_attrs(::serde_json::json!({"repo": repo.to_string()})),
                 "events feed page full; feed-only events may have been missed \
                  (targeted endpoints still cover routed types)"

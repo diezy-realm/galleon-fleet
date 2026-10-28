@@ -4,17 +4,17 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Matrix channel feature-crate (RF-B1 split; Matrix SDK 0.18, end-to-end encryption, streaming, and voice support ported from clawcrew-channels)."
+description = "Matrix channel feature-crate (RF-B1 split; Matrix SDK 0.18, end-to-end encryption, streaming, and voice support ported from galleon-channels)."
 repository.workspace = true
 homepage.workspace = true
 publish = true
 
 [dependencies]
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
-clawcrew-config.workspace = true
-clawcrew-infra.workspace = true
-clawcrew-log.workspace = true
+galleon-api.workspace = true
+galleon-config.workspace = true
+galleon-infra.workspace = true
+galleon-log.workspace = true
 galleon-i18n.workspace = true
 anyhow = "1.0"
 async-trait = "0.1"

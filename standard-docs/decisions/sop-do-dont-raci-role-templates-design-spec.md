@@ -10,7 +10,7 @@ reviewers_needed: Backend-Rust (sop::types impact), Backend-Go (Quest/Workflow i
 # Design Spec — SOP Do's/Don'ts, RACI, Role Templates, Quest Maturity
 
 > **Status:** PROPOSED — belum diimplementasi. Ini design-spec siap-eksekusi, bukan kode final. 211 konstruksi
-> `SopStep{}`/`Sop{}` tersebar di 30 file (`crates/clawcrew-runtime/src/sop/`), jadi perubahan struct harus
+> `SopStep{}`/`Sop{}` tersebar di 30 file (`crates/galleon-runtime/src/sop/`), jadi perubahan struct harus
 > lewat `#[serde(default)]` + `..Default::default()` (pola yang SUDAH dipakai konsisten di `types.rs`) agar
 > tidak merusak call-site yang ada. Jangan eksekusi langsung tanpa Principle gate review.
 >
@@ -27,7 +27,7 @@ Tambah field baru, BUKAN pindahkan konten dari `body` (markdown prosa) yang suda
 ### Perubahan struct
 
 ```rust
-// crates/clawcrew-runtime/src/sop/types.rs — tambahan ke SopStep
+// crates/galleon-runtime/src/sop/types.rs — tambahan ke SopStep
 
 /// Explicit Do's and Don'ts for this step, surfaced separately from `body`
 /// so they can be rendered as a checklist in the Blueprint editor and
@@ -59,7 +59,7 @@ Tambah `conduct: None` ke `impl Default for SopStep` (baris yang sudah ada di `t
 
 ### Dampak ke prompt-injection (agent/turn)
 
-`SopRunAction::ExecuteStep` yang membawa `step: SopStep` ke agent — perlu update titik yang merender `body` ke prompt (lokasi: cari `step.body` di `crates/clawcrew-runtime/src/agent/turn/` atau `sop/executor.rs`) agar `conduct.dos`/`conduct.donts` ikut disuntik, format seperti:
+`SopRunAction::ExecuteStep` yang membawa `step: SopStep` ke agent — perlu update titik yang merender `body` ke prompt (lokasi: cari `step.body` di `crates/galleon-runtime/src/agent/turn/` atau `sop/executor.rs`) agar `conduct.dos`/`conduct.donts` ikut disuntik, format seperti:
 ```
 ## Do
 - <dos[0]>
@@ -92,7 +92,7 @@ Tambah test di `types.rs` (ikuti pola `default_step_contract_fields_do_not_seria
 ### Perubahan struct
 
 ```rust
-// crates/clawcrew-runtime/src/sop/types.rs — tambahan ke struct Sop
+// crates/galleon-runtime/src/sop/types.rs — tambahan ke struct Sop
 
     /// Organizational owner accountable for this procedure's outcome — NOT
     /// an approval gate (see `SopStep.policy` for that). Informational: who
@@ -126,7 +126,7 @@ Tambah test: SOP dengan `informed_roles: ["qa-lead"]` yang selesai (`Completed`)
 
 Ikuti pola file yang SUDAH ada di `personality_templates/` (AGENTS.md generik) — buat 3 file baru sejenis, bukan mekanisme baru. Setiap file mengikuti struktur yang sudah terbukti (Safety, External vs Internal, dst.) tapi isi Do's/Don'ts spesifik per peran teknis.
 
-### File baru: `crates/clawcrew-runtime/src/agent/personality_templates/AGENTS.backend.md`
+### File baru: `crates/galleon-runtime/src/agent/personality_templates/AGENTS.backend.md`
 
 ```markdown
 # AGENTS.md — Backend Crew (Go Orchestrator + Rust System Core)
@@ -274,9 +274,9 @@ Test baru: `Quest` lifecycle (Pending→Active→Completed/Failed) mirror pola t
 
 | Item | File utama | Owner | Review |
 |---|---|---|---|
-| §1 | `crates/clawcrew-runtime/src/sop/types.rs` + titik render prompt | Backend-Rust | Principle |
-| §2 | `crates/clawcrew-runtime/src/sop/types.rs` (manifest mapping) + event emission point | Backend-Rust | Principle |
-| §3 | `crates/clawcrew-runtime/src/agent/personality_templates/AGENTS.{backend,frontend,qa}.md` (baru) + verifikasi loader | Backend-Rust (loader) | squad-lead (isi konten) |
+| §1 | `crates/galleon-runtime/src/sop/types.rs` + titik render prompt | Backend-Rust | Principle |
+| §2 | `crates/galleon-runtime/src/sop/types.rs` (manifest mapping) + event emission point | Backend-Rust | Principle |
+| §3 | `crates/galleon-runtime/src/agent/personality_templates/AGENTS.{backend,frontend,qa}.md` (baru) + verifikasi loader | Backend-Rust (loader) | squad-lead (isi konten) |
 | §4 | `engine/src/mission/interfaces.go` + service baru `engine/src/mission/service.go` | Backend-Go | Principle |
 
 Serialkan §1/§2 (satu file `types.rs`), §3/§4 independen bisa paralel.

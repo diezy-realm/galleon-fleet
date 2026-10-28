@@ -37,7 +37,7 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/regist
     --mount=type=cache,id=clawcrew-cargo-git,target=/usr/local/cargo/git,sharing=locked \
     --mount=type=cache,id=clawcrew-target-debug,target=/build/target,sharing=locked \
     cargo build \
-        -p clawcrew-hardware \
+        -p galleon-hardware \
         --example esp32_sim \
         --features "hardware dev-sim" \
     && cargo build \
@@ -66,7 +66,7 @@ COPY demo/clawcrew.toml.example /app/data/config/config.toml
 
 ENV CLAWCREW_CONFIG_DIR=/app/data/config \
     CLAWCREW_WORKSPACE=/app/data/workspace \
-    RUST_LOG=clawcrew=info,clawcrew_hardware=info,esp32_sim=info
+    RUST_LOG=clawcrew=info,galleon_hardware=info,esp32_sim=info
 
 EXPOSE 8080
 

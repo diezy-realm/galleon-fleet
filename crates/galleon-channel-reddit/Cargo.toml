@@ -4,16 +4,16 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Reddit channel feature-crate (RF-B1 split; OAuth2 polling for mentions/DMs/replies ported from clawcrew-channels)."
+description = "Reddit channel feature-crate (RF-B1 split; OAuth2 polling for mentions/DMs/replies ported from galleon-channels)."
 repository.workspace = true
 homepage.workspace = true
 publish = true
 
 [dependencies]
 galleon-channel-core.workspace = true
-clawcrew-api.workspace = true
-clawcrew-config = { workspace = true, default-features = false }
-clawcrew-log.workspace = true
+galleon-api.workspace = true
+galleon-config = { workspace = true, default-features = false }
+galleon-log.workspace = true
 async-trait = "0.1"
 anyhow = "1.0"
 parking_lot = "0.12"

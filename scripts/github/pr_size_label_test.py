@@ -62,7 +62,7 @@ class PrSizeLabelTest(unittest.TestCase):
             change(".github/ISSUE_TEMPLATE/feature.yml", 1000),
             change(".github/pull_request_template.md", 1000),
             change("README.md", 1000),
-            change("crates/clawcrew-config/src/policy.rs", 10, 5),
+            change("crates/galleon-config/src/policy.rs", 10, 5),
         ]
         self.assertEqual(size_labeler.effective_changed_lines(files), 15)
 

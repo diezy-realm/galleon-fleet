@@ -1,16 +1,15 @@
-
 use super::*;
-use clawcrew_config::schema::{Config, TelegramConfig};
 use galleon_channel_core::allowlist;
 use galleon_channel_core::approval::{
     PendingApproval, PendingApprovalResolution, resolve_pending_approval,
 };
 use galleon_channel_core::model_picker_delivery;
+use galleon_config::schema::{Config, TelegramConfig};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-pub fn channel_ingress_context(msg: &ChannelMessage) -> clawcrew_api::ingress::IngressContext {
-    use clawcrew_api::ingress::{IngressContext, SourceClass, Transport, TrustClass};
+pub fn channel_ingress_context(msg: &ChannelMessage) -> galleon_api::ingress::IngressContext {
+    use galleon_api::ingress::{IngressContext, SourceClass, Transport, TrustClass};
 
     let mut ingress = IngressContext::channel();
     ingress.message_id = (!msg.id.is_empty()).then(|| msg.id.clone());
@@ -28,7 +27,6 @@ pub fn channel_ingress_context(msg: &ChannelMessage) -> clawcrew_api::ingress::I
     ingress.trust = TrustClass::Untrusted;
     ingress
 }
-
 
 fn telegram_alias_config(alias: &str, multi_message_delay_ms: u64) -> Arc<RwLock<Config>> {
     let mut config = Config::default();
@@ -83,7 +81,7 @@ impl TelegramChannel {
         // Mock servers can be pooled across tests whose Tokio runtimes are not.
         // Keep connections within this fixture, using the normal proxy policy.
         self.fixture_http_client = Some(
-            clawcrew_config::schema::apply_channel_proxy_to_builder(
+            galleon_config::schema::apply_channel_proxy_to_builder(
                 reqwest::Client::builder(),
                 "channel.telegram",
                 self.proxy_url.as_deref(),
@@ -113,7 +111,7 @@ fn should_record_passive_group_context_matches_predicate() {
 
 #[test]
 fn passive_group_context_shares_group_history_whatever_per_user_session_says() {
-    use clawcrew_api::channel::ChannelConversationScope;
+    use galleon_api::channel::ChannelConversationScope;
 
     let mention_only = true;
     let group_msg = || {
@@ -271,9 +269,9 @@ fn scrub_leaves_unrelated_text_untouched() {
 
 #[test]
 fn voice_peer_resolver_resolves_live_from_config() {
-    use clawcrew_config::multi_agent::{OutputModality, PeerGroupConfig, PeerUsername};
+    use galleon_config::multi_agent::{OutputModality, PeerGroupConfig, PeerUsername};
 
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     // Voice group on this channel type — should be resolved.
     config.peer_groups.insert(
         "voicers".to_string(),
@@ -341,9 +339,9 @@ fn voice_peer_resolver_resolves_live_from_config() {
 
 #[test]
 fn voice_peer_resolver_survives_session_voice_chats_removal() {
-    use clawcrew_config::multi_agent::{OutputModality, PeerGroupConfig, PeerUsername};
+    use galleon_config::multi_agent::{OutputModality, PeerGroupConfig, PeerUsername};
 
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.peer_groups.insert(
         "voicers".to_string(),
         PeerGroupConfig {
@@ -378,9 +376,9 @@ fn voice_peer_resolver_survives_session_voice_chats_removal() {
 
 #[test]
 fn voice_peers_match_sender_identities_not_group_addresses() {
-    use clawcrew_config::multi_agent::{OutputModality, PeerGroupConfig, PeerUsername};
+    use galleon_config::multi_agent::{OutputModality, PeerGroupConfig, PeerUsername};
 
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.peer_groups.insert(
         "voicers".to_string(),
         PeerGroupConfig {
@@ -422,9 +420,9 @@ fn voice_peers_match_sender_identities_not_group_addresses() {
 
 #[test]
 fn wildcard_voice_peer_does_not_change_a_senderless_destination() {
-    use clawcrew_config::multi_agent::{OutputModality, PeerGroupConfig, PeerUsername};
+    use galleon_config::multi_agent::{OutputModality, PeerGroupConfig, PeerUsername};
 
-    let mut config = clawcrew_config::schema::Config::default();
+    let mut config = galleon_config::schema::Config::default();
     config.peer_groups.insert(
         "voicers".to_string(),
         PeerGroupConfig {
@@ -530,10 +528,10 @@ async fn telegram_with_transcription_binds_sole_provider_alias() {
     unsafe { std::env::remove_var("GROQ_API_KEY") };
 
     // Only the Groq key is set -> exactly one provider registers.
-    let config = clawcrew_config::schema::TranscriptionConfig {
+    let config = galleon_config::schema::TranscriptionConfig {
         enabled: true,
         api_key: Some("test-groq-key".to_string()),
-        ..clawcrew_config::schema::TranscriptionConfig::default()
+        ..galleon_config::schema::TranscriptionConfig::default()
     };
 
     let ch = TelegramChannel::new(
@@ -955,7 +953,7 @@ async fn stop_typing_clears_handle() {
     // Manually insert a dummy handle
     {
         let mut guard = ch.typing_handle.lock();
-        *guard = Some(clawcrew_spawn::spawn!(async {
+        *guard = Some(galleon_spawn::spawn!(async {
             tokio::time::sleep(Duration::from_secs(60)).await;
         }));
     }
@@ -980,7 +978,7 @@ async fn start_typing_replaces_previous_handle() {
     // Insert a dummy handle first
     {
         let mut guard = ch.typing_handle.lock();
-        *guard = Some(clawcrew_spawn::spawn!(async {
+        *guard = Some(galleon_spawn::spawn!(async {
             tokio::time::sleep(Duration::from_secs(60)).await;
         }));
     }
@@ -1612,7 +1610,7 @@ async fn send_text_chunks_resumes_from_first_unsent_chunk_after_partial_failure(
 
 /// Regression: when finalization chunks a long final answer and a later
 /// chunk fails after an earlier one was accepted, `finalize_draft` must
-/// surface [`clawcrew_api::channel::FinalizePartialDelivery`] rather than a
+/// surface [`galleon_api::channel::FinalizePartialDelivery`] rather than a
 /// plain error. A plain error makes the orchestrator fall back to
 /// `channel.send(full_answer)`, which restarts at chunk zero and re-posts the
 /// chunk Telegram already accepted. Proving the accepted chunk is sent
@@ -1679,7 +1677,7 @@ async fn finalize_draft_partial_chunk_failure_signals_partial_delivery_not_a_res
         .await
         .expect_err("a partial chunk failure must not report success");
     assert!(
-        err.downcast_ref::<clawcrew_api::channel::FinalizePartialDelivery>()
+        err.downcast_ref::<galleon_api::channel::FinalizePartialDelivery>()
             .is_some(),
         "partial chunk failure must surface as FinalizePartialDelivery so the \
              orchestrator does not resend the whole answer; got: {err:#}"
@@ -1762,7 +1760,7 @@ async fn finalize_multi_message_partial_chunk_failure_signals_partial_delivery_n
         .await
         .expect_err("a partial chunk failure must not report success");
     assert!(
-        err.downcast_ref::<clawcrew_api::channel::FinalizePartialDelivery>()
+        err.downcast_ref::<galleon_api::channel::FinalizePartialDelivery>()
             .is_some(),
         "the multi-message finalizer must surface FinalizePartialDelivery so the \
              orchestrator does not resend the whole answer from chunk zero; got: {err:#}"
@@ -2085,7 +2083,7 @@ async fn flush_draft_turn_strips_orphan_redacted_thinking_close_tag() {
 /// prompt (and no longer re-flushes anything).
 #[tokio::test]
 async fn narration_precedes_approval_prompt_via_barrier_flush() {
-    use clawcrew_api::channel::ChannelApprovalRequest;
+    use galleon_api::channel::ChannelApprovalRequest;
     use wiremock::matchers::{body_string_contains, method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -2148,7 +2146,7 @@ async fn narration_precedes_approval_prompt_via_barrier_flush() {
     let result = ch.request_approval("123", &request).await.unwrap();
     assert_eq!(
         result,
-        Some(clawcrew_api::channel::ChannelApprovalResponse::Deny)
+        Some(galleon_api::channel::ChannelApprovalResponse::Deny)
     );
 }
 
@@ -2168,7 +2166,7 @@ async fn narration_precedes_approval_prompt_via_barrier_flush() {
 /// `latest_multi_message_send_at`).
 #[tokio::test]
 async fn request_approval_paces_prompt_after_narration() {
-    use clawcrew_api::channel::ChannelApprovalRequest;
+    use galleon_api::channel::ChannelApprovalRequest;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -2227,7 +2225,7 @@ async fn request_approval_paces_prompt_after_narration() {
 /// synthesis endpoint is the observable proof that voice fired.
 #[tokio::test]
 async fn finalize_multi_message_suppress_voice_skips_tts_but_delivers_text() {
-    use clawcrew_config::schema::{
+    use galleon_config::schema::{
         AliasedAgentConfig, Config, OpenAITtsProviderConfig, TtsProviderConfig,
     };
     use wiremock::matchers::method;
@@ -2349,7 +2347,7 @@ async fn finalize_multi_message_suppress_voice_skips_tts_but_delivers_text() {
 /// proves the `suppress_voice = true` text-only override still delivers text.
 #[tokio::test]
 async fn multi_message_voice_only_peer_gets_voice_without_narration_or_final_text() {
-    use clawcrew_config::schema::{
+    use galleon_config::schema::{
         AliasedAgentConfig, Config, OpenAITtsProviderConfig, TtsProviderConfig,
     };
     use wiremock::matchers::method;
@@ -2474,7 +2472,7 @@ async fn multi_message_voice_only_peer_gets_voice_without_narration_or_final_tex
 /// `flush_unsent` content-safe rather than lossy.
 #[tokio::test]
 async fn multi_message_text_routed_voice_peer_gets_full_text_at_finalize() {
-    use clawcrew_config::schema::{
+    use galleon_config::schema::{
         AliasedAgentConfig, Config, OpenAITtsProviderConfig, TtsProviderConfig,
     };
     use wiremock::matchers::method;
@@ -3035,7 +3033,7 @@ async fn discard_draft_turn_excludes_cancelled_turn_without_dropping_prior_deliv
 /// so voice can never overtake unsent text.
 #[tokio::test]
 async fn finalize_does_not_queue_voice_when_final_send_fails() {
-    use clawcrew_config::schema::{
+    use galleon_config::schema::{
         AliasedAgentConfig, Config, OpenAITtsProviderConfig, TtsProviderConfig,
     };
     use wiremock::matchers::method;
@@ -3737,15 +3735,15 @@ fn model_picker_config() -> Config {
     let mut config = Config::default();
     config.channels.telegram.insert(
         "main".to_string(),
-        clawcrew_config::schema::TelegramConfig {
+        galleon_config::schema::TelegramConfig {
             enabled: true,
             ..Default::default()
         },
     );
     config.providers.models.openai.insert(
         "primary".to_string(),
-        clawcrew_config::schema::OpenAIModelProviderConfig {
-            base: clawcrew_config::schema::ModelProviderConfig {
+        galleon_config::schema::OpenAIModelProviderConfig {
+            base: galleon_config::schema::ModelProviderConfig {
                 model: Some("gpt-current".to_string()),
                 ..Default::default()
             },
@@ -3753,8 +3751,8 @@ fn model_picker_config() -> Config {
     );
     config.providers.models.openai.insert(
         "fast".to_string(),
-        clawcrew_config::schema::OpenAIModelProviderConfig {
-            base: clawcrew_config::schema::ModelProviderConfig {
+        galleon_config::schema::OpenAIModelProviderConfig {
+            base: galleon_config::schema::ModelProviderConfig {
                 model: Some("gpt-fast".to_string()),
                 ..Default::default()
             },
@@ -3762,8 +3760,8 @@ fn model_picker_config() -> Config {
     );
     config.providers.models.anthropic.insert(
         "team".to_string(),
-        clawcrew_config::schema::AnthropicModelProviderConfig {
-            base: clawcrew_config::schema::ModelProviderConfig {
+        galleon_config::schema::AnthropicModelProviderConfig {
+            base: galleon_config::schema::ModelProviderConfig {
                 model: Some("claude-sonnet".to_string()),
                 ..Default::default()
             },
@@ -3772,7 +3770,7 @@ fn model_picker_config() -> Config {
     );
     config.agents.insert(
         "assistant".to_string(),
-        clawcrew_config::schema::AliasedAgentConfig {
+        galleon_config::schema::AliasedAgentConfig {
             enabled: true,
             channels: vec!["telegram.main".into()],
             model_provider: "openai.primary".into(),
@@ -3780,25 +3778,25 @@ fn model_picker_config() -> Config {
         },
     );
     config.model_routes = vec![
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "current".to_string(),
             model_provider: "openai.primary".to_string(),
             model: "gpt-current".to_string(),
             api_key: None,
         },
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "reasoning".to_string(),
             model_provider: "openai.primary".to_string(),
             model: "gpt-reasoning".to_string(),
             api_key: None,
         },
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "fast".to_string(),
             model_provider: "openai.fast".to_string(),
             model: "gpt-fast".to_string(),
             api_key: None,
         },
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "sonnet".to_string(),
             model_provider: "anthropic.team".to_string(),
             model: "claude-sonnet".to_string(),
@@ -3824,11 +3822,11 @@ fn model_picker_runtime_routes(config: &Config) -> Arc<Vec<ModelPickerOption>> {
 
 fn model_picker_request_routes(
     config: &Config,
-) -> Vec<clawcrew_api::channel::ChannelModelPickerRoute> {
+) -> Vec<galleon_api::channel::ChannelModelPickerRoute> {
     config
         .model_routes
         .iter()
-        .map(|route| clawcrew_api::channel::ChannelModelPickerRoute {
+        .map(|route| galleon_api::channel::ChannelModelPickerRoute {
             hint: route.hint.clone(),
             model_provider: route.model_provider.clone(),
             model: route.model.clone(),
@@ -3859,19 +3857,19 @@ fn model_picker_configured_aliases_group_routes_by_provider() {
 fn model_picker_invalid_routes_are_excluded_without_discovery() {
     let mut config = model_picker_config();
     config.model_routes.extend([
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "duplicate".to_string(),
             model_provider: "openai.primary".to_string(),
             model: "gpt-current".to_string(),
             api_key: None,
         },
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "missing".to_string(),
             model_provider: "openai.not-configured".to_string(),
             model: "ghost".to_string(),
             api_key: None,
         },
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "unsafe\nroute".to_string(),
             model_provider: "openai.fast".to_string(),
             model: "unsafe".to_string(),
@@ -3879,25 +3877,25 @@ fn model_picker_invalid_routes_are_excluded_without_discovery() {
         },
         // Regression: flag-shaped hints must not cross the `/model
         // --user|--agent` scope boundary via the picker.
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "--user fast".to_string(),
             model_provider: "openai.fast".to_string(),
             model: "gpt-flag-user".to_string(),
             api_key: None,
         },
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "--agent fast".to_string(),
             model_provider: "openai.fast".to_string(),
             model: "gpt-flag-agent".to_string(),
             api_key: None,
         },
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "--flag".to_string(),
             model_provider: "openai.fast".to_string(),
             model: "gpt-flag-generic".to_string(),
             api_key: None,
         },
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "current".to_string(),
             model_provider: "anthropic.team".to_string(),
             model: "claude-conflicting".to_string(),
@@ -3952,7 +3950,7 @@ fn model_picker_routes_are_uniquely_selectable_or_excluded_with_a_reason() {
     config.model_routes.extend([
         // Case-insensitive collision with the earlier `fast` hint on a
         // different target: unreachable through its own hint.
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "FAST".to_string(),
             model_provider: "anthropic.team".to_string(),
             model: "claude-fast".to_string(),
@@ -3960,7 +3958,7 @@ fn model_picker_routes_are_uniquely_selectable_or_excluded_with_a_reason() {
         },
         // Hint equal to an earlier route's model identifier: the text
         // resolver would pick the `sonnet` route first.
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "claude-sonnet".to_string(),
             model_provider: "openai.fast".to_string(),
             model: "gpt-alias-collision".to_string(),
@@ -3968,19 +3966,19 @@ fn model_picker_routes_are_uniquely_selectable_or_excluded_with_a_reason() {
         },
         // Same target as `reasoning` under a second hint: still
         // reachable, presented once.
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "think".to_string(),
             model_provider: "openai.primary".to_string(),
             model: "gpt-reasoning".to_string(),
             api_key: None,
         },
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "ghost".to_string(),
             model_provider: "openai.not-configured".to_string(),
             model: "gpt-ghost".to_string(),
             api_key: None,
         },
-        clawcrew_config::schema::ModelRouteConfig {
+        galleon_config::schema::ModelRouteConfig {
             hint: "bad\thint".to_string(),
             model_provider: "openai.fast".to_string(),
             model: "gpt-bad".to_string(),
@@ -4152,7 +4150,7 @@ fn model_picker_selection_revalidates_exact_live_route() {
     ));
     config
         .model_routes
-        .push(clawcrew_config::schema::ModelRouteConfig {
+        .push(galleon_config::schema::ModelRouteConfig {
             hint: "also-fast".into(),
             model_provider: "openai.fast".into(),
             model: "gpt-fast".into(),
@@ -4224,7 +4222,7 @@ fn model_picker_excludes_hints_that_do_not_round_trip_the_command_boundary() {
     for (index, hint) in non_canonical.iter().enumerate() {
         config
             .model_routes
-            .push(clawcrew_config::schema::ModelRouteConfig {
+            .push(galleon_config::schema::ModelRouteConfig {
                 hint: (*hint).to_string(),
                 model_provider: "openai.fast".to_string(),
                 model: format!("gpt-non-canonical-{index}"),
@@ -4942,11 +4940,11 @@ async fn model_picker_cleanup_failures_emit_scrubbed_diagnostics() {
         false,
     )
     .with_mock_api_base(server.uri());
-    let _writer_guard = clawcrew_log::__private_test_writer_lock();
-    let _hook_guard = clawcrew_log::__private_test_hook_lock();
+    let _writer_guard = galleon_log::__private_test_writer_lock();
+    let _hook_guard = galleon_log::__private_test_hook_lock();
     let _hook_cleanup = BroadcastHookGuard;
-    clawcrew_log::try_install_capture_subscriber();
-    let mut rx = clawcrew_log::subscribe_or_install();
+    galleon_log::try_install_capture_subscriber();
+    let mut rx = galleon_log::subscribe_or_install();
     while rx.try_recv().is_ok() {}
 
     channel
@@ -5884,8 +5882,8 @@ fn telegram_pairing_stays_active_when_every_grant_is_shadowed() {
 
 #[tokio::test]
 async fn telegram_bind_reports_a_conflict_instead_of_appending_a_shadowed_grant() {
-    use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-    use clawcrew_config::providers::ChannelRef;
+    use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+    use galleon_config::providers::ChannelRef;
 
     // The other end of the re-enabled prompt. Pairing is offered again once
     // a shadowed grant stops counting as authorization, so the bind must not
@@ -5900,7 +5898,7 @@ async fn telegram_bind_reports_a_conflict_instead_of_appending_a_shadowed_grant(
     };
     config.channels.telegram.insert(
         "default".to_string(),
-        clawcrew_config::schema::TelegramConfig {
+        galleon_config::schema::TelegramConfig {
             bot_token: "t".to_string(),
             ..Default::default()
         },
@@ -5952,8 +5950,8 @@ async fn telegram_bind_reports_a_conflict_instead_of_appending_a_shadowed_grant(
 
 #[tokio::test]
 async fn telegram_bind_keeps_the_one_time_code_when_an_ignore_denies_the_sender() {
-    use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-    use clawcrew_config::providers::ChannelRef;
+    use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+    use galleon_config::providers::ChannelRef;
     use wiremock::matchers::method;
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -5978,7 +5976,7 @@ async fn telegram_bind_keeps_the_one_time_code_when_an_ignore_denies_the_sender(
         };
         config.channels.telegram.insert(
             "default".to_string(),
-            clawcrew_config::schema::TelegramConfig {
+            galleon_config::schema::TelegramConfig {
                 bot_token: "t".to_string(),
                 ..Default::default()
             },
@@ -6039,8 +6037,8 @@ async fn telegram_bind_keeps_the_one_time_code_when_an_ignore_denies_the_sender(
 
 #[tokio::test]
 async fn telegram_bind_honors_a_deny_naming_only_the_username() {
-    use clawcrew_config::multi_agent::{PeerGroupConfig, PeerUsername};
-    use clawcrew_config::providers::ChannelRef;
+    use galleon_config::multi_agent::{PeerGroupConfig, PeerUsername};
+    use galleon_config::providers::ChannelRef;
     use wiremock::matchers::method;
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -6065,7 +6063,7 @@ async fn telegram_bind_honors_a_deny_naming_only_the_username() {
     };
     config.channels.telegram.insert(
         "default".to_string(),
-        clawcrew_config::schema::TelegramConfig {
+        galleon_config::schema::TelegramConfig {
             bot_token: "t".to_string(),
             ..Default::default()
         },
@@ -6124,8 +6122,8 @@ async fn telegram_bind_honors_a_deny_naming_only_the_username() {
 
 #[tokio::test]
 async fn telegram_bind_rolls_back_when_the_writer_rejects_a_group_collision() {
-    use clawcrew_config::multi_agent::PeerGroupConfig;
-    use clawcrew_config::providers::ChannelRef;
+    use galleon_config::multi_agent::PeerGroupConfig;
+    use galleon_config::providers::ChannelRef;
     use wiremock::matchers::method;
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -6151,7 +6149,7 @@ async fn telegram_bind_rolls_back_when_the_writer_rejects_a_group_collision() {
     };
     config.channels.telegram.insert(
         "default".to_string(),
-        clawcrew_config::schema::TelegramConfig {
+        galleon_config::schema::TelegramConfig {
             bot_token: "t".to_string(),
             ..Default::default()
         },
@@ -6383,8 +6381,8 @@ fn wildcard_does_not_admit_a_sender_with_no_usable_identity() {
 
 #[test]
 fn channel_ingress_context_preserves_telegram_metadata_not_content_claims() {
-    use clawcrew_api::ingress::{IngressDecision, SourceClass, Transport, TrustClass, TurnOrigin};
-    use clawcrew_api::ingress::{IngressPolicy, ingress_policy};
+    use galleon_api::ingress::{IngressDecision, SourceClass, Transport, TrustClass, TurnOrigin};
+    use galleon_api::ingress::{IngressPolicy, ingress_policy};
 
     let channel = TelegramChannel::new(
         "token".into(),
@@ -6646,7 +6644,7 @@ async fn attachment_parser_applies_the_topic_thread_gate() {
 
 #[tokio::test]
 async fn opted_in_group_media_shares_the_text_conversation_scope() {
-    use clawcrew_api::channel::ChannelConversationScope;
+    use galleon_api::channel::ChannelConversationScope;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -6744,7 +6742,7 @@ async fn voice_parser_applies_the_topic_thread_gate() {
         .mount(&mock_server)
         .await;
 
-    let tc = clawcrew_config::schema::TranscriptionConfig {
+    let tc = galleon_config::schema::TranscriptionConfig {
         enabled: true,
         api_key: Some("test_key".to_string()),
         api_url: format!("{}/v1/audio/transcriptions", mock_server.uri()),
@@ -7950,7 +7948,7 @@ fn telegram_with_per_user_session_propagates_value() {
 
 #[test]
 fn telegram_conversation_scope_respects_per_user_session_flag() {
-    use clawcrew_api::channel::ChannelConversationScope;
+    use galleon_api::channel::ChannelConversationScope;
     let group_msg = serde_json::json!({ "chat": { "type": "supergroup" } });
     let private_msg = serde_json::json!({ "chat": { "type": "private" } });
 
@@ -8574,10 +8572,10 @@ fn parse_update_message_includes_reply_context() {
 
 #[test]
 fn with_transcription_sets_config_when_enabled() {
-    let tc = clawcrew_config::schema::TranscriptionConfig {
+    let tc = galleon_config::schema::TranscriptionConfig {
         enabled: true,
         api_key: Some("test_key".to_string()),
-        ..clawcrew_config::schema::TranscriptionConfig::default()
+        ..galleon_config::schema::TranscriptionConfig::default()
     };
 
     let mention_only = false;
@@ -8594,7 +8592,7 @@ fn with_transcription_sets_config_when_enabled() {
 
 #[test]
 fn with_transcription_skips_when_disabled() {
-    let tc = clawcrew_config::schema::TranscriptionConfig::default(); // enabled = false
+    let tc = galleon_config::schema::TranscriptionConfig::default(); // enabled = false
     let mention_only = false;
     let ch = TelegramChannel::new(
         "token".into(),
@@ -8647,7 +8645,7 @@ async fn try_parse_voice_message_skips_when_duration_exceeds_limit() {
         .mount(&mock_server)
         .await;
 
-    let tc = clawcrew_config::schema::TranscriptionConfig {
+    let tc = galleon_config::schema::TranscriptionConfig {
         enabled: true,
         api_key: Some("test_key".to_string()),
         max_duration_secs: 5,
@@ -8699,7 +8697,7 @@ async fn oversized_voice_notice_goes_to_the_forum_topic_it_came_from() {
         .mount(&mock_server)
         .await;
 
-    let tc = clawcrew_config::schema::TranscriptionConfig {
+    let tc = galleon_config::schema::TranscriptionConfig {
         enabled: true,
         api_key: Some("test_key".to_string()),
         max_duration_secs: 5,
@@ -8756,7 +8754,7 @@ async fn oversized_voice_from_stranger_is_dropped_without_a_word() {
         .mount(&mock_server)
         .await;
 
-    let tc = clawcrew_config::schema::TranscriptionConfig {
+    let tc = galleon_config::schema::TranscriptionConfig {
         enabled: true,
         api_key: Some("test_key".to_string()),
         max_duration_secs: 5,
@@ -8829,7 +8827,7 @@ async fn voice_drop_notices_name_the_reason_without_internals() {
 
 #[tokio::test]
 async fn try_parse_voice_message_rejects_unauthorized_sender_before_download() {
-    let tc = clawcrew_config::schema::TranscriptionConfig {
+    let tc = galleon_config::schema::TranscriptionConfig {
         enabled: true,
         api_key: Some("test_key".to_string()),
         max_duration_secs: 120,
@@ -8889,7 +8887,7 @@ async fn try_parse_voice_message_sets_platform_sender_id() {
         .mount(&mock_server)
         .await;
 
-    let tc = clawcrew_config::schema::TranscriptionConfig {
+    let tc = galleon_config::schema::TranscriptionConfig {
         enabled: true,
         api_key: Some("test_key".to_string()),
         api_url: format!("{}/transcribe", mock_server.uri()),
@@ -9216,7 +9214,7 @@ async fn listen_retries_transient_download_failure_at_same_offset_then_advances(
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -9281,7 +9279,7 @@ async fn listen_mid_batch_receiver_drop_never_advances_past_delivered() {
     .with_mock_api_base(mock_server.uri());
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
-    let handle = clawcrew_spawn::spawn!(async move { ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { ch.listen(tx).await });
 
     let first = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -9352,7 +9350,7 @@ async fn listen_permanent_skip_advances_past_unauthorized_update() {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -9445,7 +9443,7 @@ async fn listen_ordered_batch_recovers_after_extended_transient_failure() {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     let first_message = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -9560,7 +9558,7 @@ async fn assert_listen_skips_unauthorized_update(
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -9654,7 +9652,7 @@ async fn listen_restart_probe_queued_update_survives_transient_failure_until_del
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -9793,7 +9791,7 @@ async fn listen_callback_approval_ack_uses_fluent_catalogue() {
 
     let (tx, _rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     // A callback is terminal for inbound processing, so the offset must
     // advance past the whole batch; waiting on that also guarantees every
@@ -10153,7 +10151,7 @@ async fn listen_permanently_rejected_file_id_does_not_block_later_updates() {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     // The update behind the permanently rejected one must arrive.
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
@@ -10210,7 +10208,7 @@ async fn listen_stalled_drop_notice_does_not_block_later_updates() {
         .mount(&mock_server)
         .await;
 
-    let tc = clawcrew_config::schema::TranscriptionConfig {
+    let tc = galleon_config::schema::TranscriptionConfig {
         enabled: true,
         api_key: Some("test_key".to_string()),
         max_duration_secs: 120,
@@ -10231,7 +10229,7 @@ async fn listen_stalled_drop_notice_does_not_block_later_updates() {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     // The update behind the stalled notice must still arrive.
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
@@ -10304,7 +10302,7 @@ async fn listen_transient_file_failure_still_holds_the_offset() {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     // The update is retried, not skipped, and eventually delivered.
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
@@ -10390,7 +10388,7 @@ async fn listen_bodyless_408_holds_the_offset_and_later_recovers() {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     // The update must survive the 408s and arrive after recovery.
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
@@ -10426,7 +10424,7 @@ async fn listen_bodyless_408_holds_the_offset_and_later_recovers() {
 #[tokio::test]
 async fn listen_acknowledges_unauthorized_voice_update_without_download() {
     let voice_update = telegram_voice_update(5_000, 30, 999, "clawcrew_unauthorized", "voice789");
-    let tc = clawcrew_config::schema::TranscriptionConfig {
+    let tc = galleon_config::schema::TranscriptionConfig {
         enabled: true,
         api_key: Some("test_key".to_string()),
         max_duration_secs: 120,
@@ -10472,7 +10470,7 @@ async fn listen_skips_unauthorized_over_duration_voice_update_without_notice() {
     let mut voice_update =
         telegram_voice_update(5_100, 31, 1_020, "clawcrew_unauthorized", "voice999");
     voice_update["message"]["voice"]["duration"] = serde_json::json!(200);
-    let tc = clawcrew_config::schema::TranscriptionConfig {
+    let tc = galleon_config::schema::TranscriptionConfig {
         enabled: true,
         api_key: Some("test_key".to_string()),
         max_duration_secs: 120,
@@ -10575,8 +10573,8 @@ async fn listen_stays_silent_for_unauthorized_media_the_parsers_would_reject() {
         serde_json::json!({"update_id": update_id, "message": message})
     }
 
-    fn transcription_config() -> clawcrew_config::schema::TranscriptionConfig {
-        clawcrew_config::schema::TranscriptionConfig {
+    fn transcription_config() -> galleon_config::schema::TranscriptionConfig {
+        galleon_config::schema::TranscriptionConfig {
             enabled: true,
             api_key: Some("test_key".to_string()),
             max_duration_secs: 120,
@@ -10775,7 +10773,7 @@ async fn listen_routes_captioned_bind_on_oversized_document_without_download() {
     );
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
     let listen_ch = Arc::clone(&ch);
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     telegram_expect_main_loop_offset(
         &mock_server,
@@ -11139,7 +11137,7 @@ async fn media_group_listener_retains_video_context_before_photos_across_polls()
     );
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listener_channel = Arc::clone(&channel);
-    let listener = clawcrew_spawn::spawn!(async move { listener_channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { listener_channel.listen(tx).await });
 
     let album = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -11351,7 +11349,7 @@ async fn media_group_trailing_saturated_by_page_boundary_waits_for_next_page() {
     );
     let (tx, mut rx) = tokio::sync::mpsc::channel(128);
     let listener_channel = Arc::clone(&channel);
-    let listener = clawcrew_spawn::spawn!(async move { listener_channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { listener_channel.listen(tx).await });
 
     // 1. Intermediate messages (3..=98) dispatch immediately, while the
     // albums wait for their settlement delays.
@@ -11616,7 +11614,7 @@ async fn media_group_holds_across_saturated_page_ending_in_an_ordinary_update() 
     );
     let (tx, mut rx) = tokio::sync::mpsc::channel(128);
     let listener_channel = Arc::clone(&channel);
-    let listener = clawcrew_spawn::spawn!(async move { listener_channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { listener_channel.listen(tx).await });
 
     // 1. The ordinary updates on the page dispatch immediately, including
     // the one at the page boundary, while both albums wait to settle.
@@ -11796,7 +11794,7 @@ async fn media_group_stays_pending_when_a_later_unsupported_member_follows_an_or
     );
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listener_channel = Arc::clone(&channel);
-    let listener = clawcrew_spawn::spawn!(async move { listener_channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { listener_channel.listen(tx).await });
 
     let first = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -12279,7 +12277,7 @@ async fn media_group_materializes_once_in_message_order_with_shared_context() {
         attachment
             .marker
             .as_ref()
-            .is_some_and(|marker| marker.kind == clawcrew_api::media::MarkerKind::Image)
+            .is_some_and(|marker| marker.kind == galleon_api::media::MarkerKind::Image)
             && !attachment.data.is_empty()
     }));
     let first_pos = msg.content.find("photo_-100_10.jpg").unwrap();
@@ -12510,8 +12508,8 @@ fn envelope(
     file_name: &str,
     mime_type: Option<&str>,
     data: &[u8],
-) -> clawcrew_api::media::MediaAttachment {
-    clawcrew_api::media::MediaAttachment {
+) -> galleon_api::media::MediaAttachment {
+    galleon_api::media::MediaAttachment {
         file_name: file_name.to_string(),
         data: data.to_vec(),
         mime_type: mime_type.map(str::to_string),
@@ -12700,9 +12698,9 @@ fn markdown_attachment_not_detected_by_multimodal_image_markers() {
         &envelope("notes.md", None, b"# heading"),
         std::path::Path::new("/tmp/ws/notes.md"),
     );
-    let messages = vec![clawcrew_providers::ChatMessage::user(content)];
+    let messages = vec![galleon_providers::ChatMessage::user(content)];
     assert_eq!(
-        clawcrew_providers::multimodal::count_image_markers(&messages),
+        galleon_providers::multimodal::count_image_markers(&messages),
         0,
         "markdown file must not trigger image marker detection"
     );
@@ -12713,10 +12711,10 @@ fn markdown_attachment_not_detected_by_multimodal_image_markers() {
 #[test]
 fn photo_image_marker_detected_by_multimodal() {
     let photo_content = "[IMAGE:/tmp/workspace/photo_1_2.jpg]";
-    let messages = vec![clawcrew_providers::ChatMessage::user(
+    let messages = vec![galleon_providers::ChatMessage::user(
         photo_content.to_string(),
     )];
-    let count = clawcrew_providers::multimodal::count_image_markers(&messages);
+    let count = galleon_providers::multimodal::count_image_markers(&messages);
     assert_eq!(
         count, 1,
         "multimodal should detect exactly one image marker"
@@ -12737,9 +12735,9 @@ fn photo_image_marker_with_caption() {
     );
 
     // Multimodal pipeline still detects the marker.
-    let messages = vec![clawcrew_providers::ChatMessage::user(content)];
+    let messages = vec![galleon_providers::ChatMessage::user(content)];
     assert_eq!(
-        clawcrew_providers::multimodal::count_image_markers(&messages),
+        galleon_providers::multimodal::count_image_markers(&messages),
         1
     );
 }
@@ -12766,9 +12764,9 @@ fn e2e_attachment_saves_file_and_formats_content() {
         "document label format mismatch: {doc_content}"
     );
     // Multimodal must NOT detect image markers in document content.
-    let doc_msgs = vec![clawcrew_providers::ChatMessage::user(doc_content)];
+    let doc_msgs = vec![galleon_providers::ChatMessage::user(doc_content)];
     assert_eq!(
-        clawcrew_providers::multimodal::count_image_markers(&doc_msgs),
+        galleon_providers::multimodal::count_image_markers(&doc_msgs),
         0,
         "document content must not contain image markers"
     );
@@ -12795,9 +12793,9 @@ fn e2e_attachment_saves_file_and_formats_content() {
     );
 
     // Multimodal detects the marker.
-    let photo_msgs = vec![clawcrew_providers::ChatMessage::user(photo_content.clone())];
+    let photo_msgs = vec![galleon_providers::ChatMessage::user(photo_content.clone())];
     assert_eq!(
-        clawcrew_providers::multimodal::count_image_markers(&photo_msgs),
+        galleon_providers::multimodal::count_image_markers(&photo_msgs),
         1,
         "multimodal must detect exactly one image marker in photo content"
     );
@@ -12806,9 +12804,9 @@ fn e2e_attachment_saves_file_and_formats_content() {
     let mut captioned = photo_content;
     use std::fmt::Write;
     let _ = write!(captioned, "\n\nCheck this out");
-    let cap_msgs = vec![clawcrew_providers::ChatMessage::user(captioned.clone())];
+    let cap_msgs = vec![galleon_providers::ChatMessage::user(captioned.clone())];
     assert_eq!(
-        clawcrew_providers::multimodal::count_image_markers(&cap_msgs),
+        galleon_providers::multimodal::count_image_markers(&cap_msgs),
         1,
         "caption must not break image marker detection"
     );
@@ -12829,9 +12827,9 @@ fn e2e_attachment_saves_file_and_formats_content() {
         !md_content.contains("[IMAGE:"),
         "markdown must not get [IMAGE:] marker: {md_content}"
     );
-    let md_msgs = vec![clawcrew_providers::ChatMessage::user(md_content)];
+    let md_msgs = vec![galleon_providers::ChatMessage::user(md_content)];
     assert_eq!(
-        clawcrew_providers::multimodal::count_image_markers(&md_msgs),
+        galleon_providers::multimodal::count_image_markers(&md_msgs),
         0,
         "markdown file must not trigger image marker detection"
     );
@@ -12841,8 +12839,8 @@ fn e2e_attachment_saves_file_and_formats_content() {
 
 #[test]
 fn groq_provider_rejects_photo_with_vision_error() {
-    use clawcrew_providers::ModelProvider;
-    use clawcrew_providers::compatible::{AuthStyle, OpenAiCompatibleModelProvider};
+    use galleon_providers::ModelProvider;
+    use galleon_providers::compatible::{AuthStyle, OpenAiCompatibleModelProvider};
 
     let groq = OpenAiCompatibleModelProvider::builder("test")
         .display_name("Groq")
@@ -12858,10 +12856,10 @@ fn groq_provider_rejects_photo_with_vision_error() {
     );
 
     // Build a message with an [IMAGE:] marker (as photo attachment would).
-    let messages = vec![clawcrew_providers::ChatMessage::user(
+    let messages = vec![galleon_providers::ChatMessage::user(
         "[IMAGE:/tmp/photo.jpg]\n\nDescribe this image".to_string(),
     )];
-    let marker_count = clawcrew_providers::multimodal::count_image_markers(&messages);
+    let marker_count = galleon_providers::multimodal::count_image_markers(&messages);
     assert_eq!(marker_count, 1, "must detect image marker in photo content");
 
     // The combination of marker_count > 0 && !supports_vision() means
@@ -13563,7 +13561,7 @@ fn truncate_telegram_command_description_multibyte_within_char_limit() {
 
 #[tokio::test]
 async fn inbound_photo_populates_typed_image_attachment_envelope() {
-    use clawcrew_api::media::MediaKind;
+    use galleon_api::media::MediaKind;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -13629,7 +13627,7 @@ async fn inbound_photo_populates_typed_image_attachment_envelope() {
 
 #[tokio::test]
 async fn inbound_image_document_populates_image_kind_envelope() {
-    use clawcrew_api::media::MediaKind;
+    use galleon_api::media::MediaKind;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -13812,7 +13810,7 @@ async fn register_bot_commands_includes_skills() {
     )
     .with_mock_api_base(mock_server.uri())
     .with_workspace_dir(workspace.path().to_path_buf())
-    .with_skills(vec![clawcrew_api::skill::Skill {
+    .with_skills(vec![galleon_api::skill::Skill {
         name: "weather".to_string(),
         description: "Check the weather forecast".to_string(),
         ..Default::default()
@@ -13866,7 +13864,7 @@ struct BroadcastHookGuard;
 
 impl Drop for BroadcastHookGuard {
     fn drop(&mut self) {
-        clawcrew_log::clear_broadcast_hook();
+        galleon_log::clear_broadcast_hook();
     }
 }
 
@@ -13913,11 +13911,11 @@ async fn register_bot_commands_truncates_to_telegram_max() {
     .with_tool_command_specs(specs);
 
     // Install a broadcast hook so we can capture the WARN log event.
-    let _writer_guard = clawcrew_log::__private_test_writer_lock();
-    let _hook_guard = clawcrew_log::__private_test_hook_lock();
+    let _writer_guard = galleon_log::__private_test_writer_lock();
+    let _hook_guard = galleon_log::__private_test_hook_lock();
     let _hook_cleanup = BroadcastHookGuard;
-    clawcrew_log::try_install_capture_subscriber();
-    let mut rx = clawcrew_log::subscribe_or_install();
+    galleon_log::try_install_capture_subscriber();
+    let mut rx = galleon_log::subscribe_or_install();
     while rx.try_recv().is_ok() {}
 
     ch.register_bot_commands().await;
@@ -14006,7 +14004,7 @@ async fn register_bot_commands_truncates_to_telegram_max() {
 /// The truncation WARN must carry channel attribution (`clawcrew.channel`
 /// composite) when `register_bot_commands` runs under the attribution span
 /// the orchestrator opens around the supervised listener in
-/// `crates/clawcrew-channels/src/orchestrator/mod.rs`.
+/// `crates/galleon-channels/src/orchestrator/mod.rs`.
 ///
 /// The event-level counters (`TELEGRAM_MAX_BOT_COMMANDS`, `total_before_cap`,
 /// `registered`) correctly live in `attributes`; the "who/where" identity
@@ -14016,7 +14014,7 @@ async fn register_bot_commands_truncates_to_telegram_max() {
 /// channel, while the numeric counts remain in `attributes`.
 #[tokio::test]
 async fn register_bot_commands_truncation_warn_carries_channel_attribution() {
-    use clawcrew_log::Instrument;
+    use galleon_log::Instrument;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -14052,11 +14050,11 @@ async fn register_bot_commands_truncation_warn_carries_channel_attribution() {
     .with_mock_api_base(mock_server.uri())
     .with_tool_command_specs(specs);
 
-    let _writer_guard = clawcrew_log::__private_test_writer_lock();
-    let _hook_guard = clawcrew_log::__private_test_hook_lock();
+    let _writer_guard = galleon_log::__private_test_writer_lock();
+    let _hook_guard = galleon_log::__private_test_hook_lock();
     let _hook_cleanup = BroadcastHookGuard;
-    clawcrew_log::try_install_capture_subscriber();
-    let mut rx = clawcrew_log::subscribe_or_install();
+    galleon_log::try_install_capture_subscriber();
+    let mut rx = galleon_log::subscribe_or_install();
     while rx.try_recv().is_ok() {}
 
     // Run under the same attribution span the orchestrator opens around
@@ -14064,7 +14062,7 @@ async fn register_bot_commands_truncation_warn_carries_channel_attribution() {
     async {
         ch.register_bot_commands().await;
     }
-    .instrument(clawcrew_log::attribution_span!(&ch))
+    .instrument(galleon_log::attribution_span!(&ch))
     .await;
 
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
@@ -14167,7 +14165,7 @@ fn approval_timeout_defaults_to_120_and_is_overridable() {
 
 #[tokio::test]
 async fn pending_approval_requires_allowed_user_and_origin_chat() {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
 
     let mention_only = false;
     let ch = TelegramChannel::new(
@@ -14357,7 +14355,7 @@ async fn listener_rejects_known_approval_callbacks_from_wrong_user_or_chat() {
     );
     let (message_tx, mut message_rx) = tokio::sync::mpsc::channel(1);
     let listener = channel.clone();
-    let listener_task = clawcrew_spawn::spawn!(async move { listener.listen(message_tx).await });
+    let listener_task = galleon_spawn::spawn!(async move { listener.listen(message_tx).await });
 
     tokio::time::timeout(std::time::Duration::from_secs(2), async {
         loop {
@@ -14424,7 +14422,7 @@ async fn listener_rejects_known_approval_callbacks_from_wrong_user_or_chat() {
 
 #[tokio::test]
 async fn approval_callback_edits_message_with_outcome_and_drops_keyboard() {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -14688,7 +14686,7 @@ async fn edit_envelope_malformed_body_is_classified_failed() {
 
 #[tokio::test]
 async fn process_update_routes_callback_to_single_edit_and_returns_advanced() {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
     use wiremock::matchers::{method, path_regex};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -14882,7 +14880,7 @@ async fn timeout_wins_claim_and_late_callback_is_a_stale_no_edit() {
     .with_mock_api_base(mock_server.uri())
     .with_approval_timeout_secs(1);
 
-    let request = clawcrew_api::channel::ChannelApprovalRequest {
+    let request = galleon_api::channel::ChannelApprovalRequest {
         tool_name: "shell".to_string(),
         arguments_summary: "ls -la".to_string(),
         raw_arguments: None,
@@ -14895,7 +14893,7 @@ async fn timeout_wins_claim_and_late_callback_is_a_stale_no_edit() {
         .unwrap();
     assert_eq!(
         attributed.response,
-        clawcrew_api::channel::ChannelApprovalResponse::Deny
+        galleon_api::channel::ChannelApprovalResponse::Deny
     );
 
     // the operator's tap arrives after the runtime already denied: the
@@ -14975,7 +14973,7 @@ async fn callback_wins_claim_and_runtime_honors_operator_response() {
         .with_approval_timeout_secs(120),
     );
 
-    let request = clawcrew_api::channel::ChannelApprovalRequest {
+    let request = galleon_api::channel::ChannelApprovalRequest {
         tool_name: "shell".to_string(),
         arguments_summary: "ls -la".to_string(),
         raw_arguments: None,
@@ -14983,7 +14981,7 @@ async fn callback_wins_claim_and_runtime_honors_operator_response() {
     };
     let waiter = {
         let ch = Arc::clone(&ch);
-        clawcrew_spawn::spawn!(
+        galleon_spawn::spawn!(
             async move { ch.request_approval_attributed("12345", &request).await }
         )
     };
@@ -15010,7 +15008,7 @@ async fn callback_wins_claim_and_runtime_honors_operator_response() {
     let attributed = waiter.await.unwrap().unwrap().unwrap();
     assert_eq!(
         attributed.response,
-        clawcrew_api::channel::ChannelApprovalResponse::Approve
+        galleon_api::channel::ChannelApprovalResponse::Approve
     );
 
     let requests = mock_server.received_requests().await.unwrap();
@@ -15031,7 +15029,7 @@ async fn callback_wins_claim_and_runtime_honors_operator_response() {
 
 #[tokio::test]
 async fn deadline_resolver_loses_claim_and_consumes_callback_response() {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
 
     let mention_only = false;
     let ch = TelegramChannel::new(
@@ -15062,7 +15060,7 @@ async fn deadline_resolver_loses_claim_and_consumes_callback_response() {
 
 #[tokio::test]
 async fn deadline_resolver_wins_claim_and_denies() {
-    use clawcrew_api::channel::ChannelApprovalResponse;
+    use galleon_api::channel::ChannelApprovalResponse;
 
     let mention_only = false;
     let ch = TelegramChannel::new(
@@ -15116,7 +15114,7 @@ async fn request_approval_localizes_heading_and_keeps_callback_data_exact() {
     .with_mock_api_base(mock_server.uri())
     .with_approval_timeout_secs(1);
 
-    let request = clawcrew_api::channel::ChannelApprovalRequest {
+    let request = galleon_api::channel::ChannelApprovalRequest {
         tool_name: "shell".to_string(),
         arguments_summary: "ls -la".to_string(),
         raw_arguments: None,
@@ -15203,11 +15201,11 @@ async fn approval_card_shows_the_batch_position_in_html_and_in_the_plain_fallbac
     .with_mock_api_base(mock_server.uri())
     .with_approval_timeout_secs(1);
 
-    let request = clawcrew_api::channel::ChannelApprovalRequest {
+    let request = galleon_api::channel::ChannelApprovalRequest {
         tool_name: "shell".to_string(),
         arguments_summary: "ls -la".to_string(),
         raw_arguments: None,
-        position: Some(clawcrew_api::channel::ApprovalPosition { index: 2, total: 3 }),
+        position: Some(galleon_api::channel::ApprovalPosition { index: 2, total: 3 }),
     };
 
     // Nothing resolves the pending oneshot; the short timeout returns a
@@ -15288,11 +15286,11 @@ async fn approval_card_omits_the_position_for_a_single_call() {
     .with_mock_api_base(mock_server.uri())
     .with_approval_timeout_secs(1);
 
-    let request = clawcrew_api::channel::ChannelApprovalRequest {
+    let request = galleon_api::channel::ChannelApprovalRequest {
         tool_name: "shell".to_string(),
         arguments_summary: "ls -la".to_string(),
         raw_arguments: None,
-        position: Some(clawcrew_api::channel::ApprovalPosition { index: 1, total: 1 }),
+        position: Some(galleon_api::channel::ApprovalPosition { index: 1, total: 1 }),
     };
 
     let _ = ch.request_approval("12345", &request).await;

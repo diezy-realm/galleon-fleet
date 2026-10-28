@@ -26,6 +26,7 @@ use crate::Inner;
 use crate::enroll_proxy::{self, MAX_FRONTDOOR_REQUEST_BYTES, ProxyError};
 use crate::frontdoor_assets::{APP_JS, INDEX_HTML};
 use anyhow::{Context, Result};
+use galleon_relay_proto::SUBPROTOCOL;
 use std::io::Cursor;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -33,7 +34,6 @@ use std::task::{Context as TaskContext, Poll};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf};
 use tokio::time::{Duration, timeout};
 use tokio_tungstenite::WebSocketStream;
-use clawcrew_relay_proto::SUBPROTOCOL;
 
 const MAX_HTTP_HEAD: usize = 16 * 1024;
 
@@ -650,12 +650,12 @@ where
 }
 
 /// WebSocket parser limits for the relay plane, derived from the protocol
-/// budget in `clawcrew-relay-proto` so the transport and application bounds
+/// budget in `galleon-relay-proto` so the transport and application bounds
 /// cannot drift apart.
 pub(crate) fn relay_ws_config() -> tokio_tungstenite::tungstenite::protocol::WebSocketConfig {
     let mut cfg = tokio_tungstenite::tungstenite::protocol::WebSocketConfig::default();
-    cfg.max_message_size = Some(clawcrew_relay_proto::MAX_WS_MESSAGE);
-    cfg.max_frame_size = Some(clawcrew_relay_proto::MAX_WS_MESSAGE);
+    cfg.max_message_size = Some(galleon_relay_proto::MAX_WS_MESSAGE);
+    cfg.max_frame_size = Some(galleon_relay_proto::MAX_WS_MESSAGE);
     cfg
 }
 

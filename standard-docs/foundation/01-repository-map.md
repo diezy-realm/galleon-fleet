@@ -28,21 +28,21 @@ Ukuran dan arah dependency: Phase 5 §1 (`cargo metadata`).
 
 | Kelompok | Crate | Peran |
 |---|---|---|
-| Kontrak/leaf | `clawcrew-api` | Trait + tipe bersama (tanpa dep internal) |
-| | `clawcrew-macros`, `-commands`, `-relay-proto`, `-sop-graph`, `-dist` | Macro config, katalog slash-command, protokol relay, proyeksi graf SOP, registri target rilis |
-| Fondasi | `clawcrew-log`, `-spawn`, `-infra`, `-tls` | Logging terstruktur, spawn ber-atribusi, backend sesi/watchdog, TLS/mTLS |
-| | `clawcrew-config` (85k LOC, hub), `galleon-i18n` | Skema config & secret; Fluent i18n |
-| Domain | `clawcrew-providers` | **SSOT LLM** (ADR 0001) |
+| Kontrak/leaf | `galleon-api` | Trait + tipe bersama (tanpa dep internal) |
+| | `galleon-macros`, `-commands`, `-relay-proto`, `-sop-graph`, `-dist` | Macro config, katalog slash-command, protokol relay, proyeksi graf SOP, registri target rilis |
+| Fondasi | `galleon-log`, `-spawn`, `-infra`, `-tls` | Logging terstruktur, spawn ber-atribusi, backend sesi/watchdog, TLS/mTLS |
+| | `galleon-config` (85k LOC, hub), `galleon-i18n` | Skema config & secret; Fluent i18n |
+| Domain | `galleon-providers` | **SSOT LLM** (ADR 0001) |
 | | `-memory`, `-tools`, `-tool-call-parser`, `-hardware` | Memori & embedding, tool agen, parser tool-call, perangkat |
-| | `clawcrew-runtime` (286k LOC) | Agent loop, SOP, hooks, cron, security, observability, skills, RPC, TUI, subagents |
-| Tepi | `clawcrew-channels` (198k LOC) | ±35 adapter channel + orchestrator |
+| | `galleon-runtime` (286k LOC) | Agent loop, SOP, hooks, cron, security, observability, skills, RPC, TUI, subagents |
+| Tepi | `galleon-channels` (198k LOC) | ±35 adapter channel + orchestrator |
 | | `galleon-channel-{core,signal,bluesky,imessage}` | Pola feature-crate channel (Tier B) |
-| | `clawcrew-plugins` | Host WASI/Wasmtime, manifest, signature, catalog, egress |
-| Komposisi | `clawcrew-gateway` | HTTP/WS gateway (`api_*`), **gRPC `SystemGatewayService`** (`grpc_system_gateway.rs`), vault, pairing |
-| | `clawcrew-routing` | `DynamicRouter`/`RouteHandler` (kini dependency gateway; belum di-commit) |
-| | `clawcrew-eval` | Harness evaluasi trace |
+| | `galleon-plugins` | Host WASI/Wasmtime, manifest, signature, catalog, egress |
+| Komposisi | `galleon-gateway` | HTTP/WS gateway (`api_*`), **gRPC `SystemGatewayService`** (`grpc_system_gateway.rs`), vault, pairing |
+| | `galleon-routing` | `DynamicRouter`/`RouteHandler` (kini dependency gateway; belum di-commit) |
+| | `galleon-eval` | Harness evaluasi trace |
 
-Fixture (anggota workspace): `crates/clawcrew-plugins/tests/fixtures/*` (channel, nostr-pilot, egress, tool-*), `crates/clawcrew-log/tests/fixtures/attribution-macro-*`.
+Fixture (anggota workspace): `crates/galleon-plugins/tests/fixtures/*` (channel, nostr-pilot, egress, tool-*), `crates/galleon-log/tests/fixtures/attribution-macro-*`.
 
 ## 3. Domain Go (`engine/src/`)
 

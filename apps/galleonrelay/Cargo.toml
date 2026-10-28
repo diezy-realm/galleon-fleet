@@ -25,7 +25,7 @@ serde_json = "1.0"
 # A reloadable relay.toml ([bind]/[tls]/[admission]/[limits]); CLI flags override.
 serde = { version = "1.0", features = ["derive"] }
 toml = "1.0"
-clawcrew-relay-proto = { workspace = true }
+galleon-relay-proto = { workspace = true }
 # Outer transport: the relay terminates an OUTER TLS + WebSocket session with each
 # party and pipes the inner (still-encrypted) mTLS bytes inside DATA frames.
 tokio-tungstenite = { version = "0.29", default-features = false, features = ["handshake"] }
@@ -42,19 +42,19 @@ hex = "0.4"
 # Self-provision the relay's own outer TLS cert (CA + server leaf, SANs, perms) on
 # first run when no --tls-cert is given - the same machinery the daemon uses, so
 # no openssl is ever needed.
-clawcrew-tls = { workspace = true }
+galleon-tls = { workspace = true }
 
 [dev-dependencies]
 tempfile = "3.26"
 # Shared CA / server-cert / CSR fixtures for the frontdoor enrollment tests, so
 # the relay does not duplicate the rcgen boilerplate the daemon tests already own.
-clawcrew-tls = { workspace = true, features = ["testing"] }
+galleon-tls = { workspace = true, features = ["testing"] }
 # The frontdoor enrollment test drives the REAL daemon enrollment endpoint
 # (pairing-code consumption, CSR signing, ledger delivery) through a real relay,
 # rather than a stub that could agree with a wrong implementation. Test-only:
 # none of this reaches the shipped relay binary.
-clawcrew-runtime = { workspace = true }
-clawcrew-config = { workspace = true }
+galleon-runtime = { workspace = true }
+galleon-config = { workspace = true }
 tokio-util = "0.7"
 zeroize = "1.8"
 # `test-util` enables tokio's paused-clock test runtime so the refusal-write

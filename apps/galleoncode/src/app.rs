@@ -1468,10 +1468,7 @@ pub async fn run(
                 ephemeral_daemon_pid_alive,
             ) {
                 ephemeral_respawn_done = true;
-                record_automatic_respawn_failure(
-                    &mut owned_daemon_pid,
-                    &mut needs_intervention,
-                );
+                record_automatic_respawn_failure(&mut owned_daemon_pid, &mut needs_intervention);
             }
 
             {

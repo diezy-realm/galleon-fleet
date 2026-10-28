@@ -4,7 +4,7 @@
 **Status:** Approved  
 **Date:** 2026-10-08  
 **Domain:** Keamanan Autentikasi & Otorisasi Galleon  
-**Source of Truth:** `crates/clawcrew-api/src/principal.rs` (`PrincipalId::shared_operator()`)  
+**Source of Truth:** `crates/galleon-api/src/principal.rs` (`PrincipalId::shared_operator()`)  
 
 ---
 
@@ -20,7 +20,7 @@ Dokumen ini mendefinisikan model keamanan **Single-Tenant Authentication**: trus
 
 Dalam mode single-tenant (default pada deployment standalone CLI, TUI, dan workstation development):
 - **Asumsi Identitas:** Terdapat satu operator manusia tepercaya (*trusted local operator*) yang memiliki akses fisik atau administratif ke proses host mesin tempat Galleon daemon dijalankan.
-- **Sentinel Canonical ID:** Representasi kode kanonikal untuk identitas ini didefinisikan secara eksplisit di `clawcrew-api/src/principal.rs`:
+- **Sentinel Canonical ID:** Representasi kode kanonikal untuk identitas ini didefinisikan secara eksplisit di `galleon-api/src/principal.rs`:
   ```rust
   impl PrincipalId {
       pub const SHARED_OPERATOR: &'static str = "shared-operator";
