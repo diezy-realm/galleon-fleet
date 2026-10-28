@@ -1798,7 +1798,6 @@ dependencies = [
  "clawcrew-memory",
  "clawcrew-plugins",
  "clawcrew-providers",
- "clawcrew-routing",
  "clawcrew-runtime",
  "clawcrew-sop-graph",
  "clawcrew-spawn",
@@ -1807,6 +1806,7 @@ dependencies = [
  "directories",
  "futures-util",
  "galleon-i18n",
+ "galleon-routing",
  "galleon-security-scrub",
  "hex",
  "hmac 0.12.1",
@@ -2054,21 +2054,6 @@ dependencies = [
  "tokio-util",
  "tracing-subscriber",
  "uuid",
-]
-
-[[package]]
-name = "clawcrew-routing"
-version = "0.8.5"
-dependencies = [
- "anyhow",
- "async-trait",
- "axum 0.8.9",
- "clawcrew-log",
- "clawcrew-plugins",
- "futures",
- "tokio",
- "tower 0.5.3",
- "tracing",
 ]
 
 [[package]]
@@ -5024,6 +5009,21 @@ version = "0.8.5"
 dependencies = [
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "galleon-routing"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.8.9",
+ "clawcrew-log",
+ "clawcrew-plugins",
+ "futures",
+ "tokio",
+ "tower 0.5.3",
+ "tracing",
 ]
 
 [[package]]

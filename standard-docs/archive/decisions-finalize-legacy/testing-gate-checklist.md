@@ -1,6 +1,7 @@
 # Testing Gate Checklist — Finalize (Phase 2 → Phase 3 → Phase 4)
 
-> **Pembaruan 2026-10-04:** gerbang G0–G8 untuk task yang sudah [x] belum dicentang Principle (GV-12). Gerbang untuk pekerjaan baru ada di oadmap/PR-plan.md (GW-0..GW-9). G6 (T-6.5..6.10) ditahan sampai keputusan CO-09.
+> **Pembaruan 2026-10-04:** gerbang G0–G8 untuk task yang sudah [x] belum dicentang Principle (GV-12). Gerbang untuk pekerjaan baru ada di 
+oadmap/PR-plan.md (GW-0..GW-9). G6 (T-6.5..6.10) ditahan sampai keputusan CO-09.
 
 - **Status:** Siap pakai — berlaku untuk SETIAP PR dari `task-breakdown.md` (Grup 0–9), branch `feat/refactoring-rust`.
 - **Author:** squad-lead
@@ -111,10 +112,10 @@ cd web; npm run lint; npm run build; cd ..
 
 > **Prasyarat non-negotiable:** 3 poin sign-off Principle (Gap 1 tipe `PluginCapability`, Gap 2 defer crate-split, Gap 5 jumlah handler & urutan fase) harus tercatat di PR pertama Grup ini sebelum lanjut ke task berikutnya.
 
-- [ ] **T-6.1:** `capability()` di `clawcrew-routing` mengembalikan `Option<PluginCapability>` (reuse enum `clawcrew-plugins`), **tidak** mendefinisikan enum capability baru yang duplikat.
-- [ ] **T-6.2:** `clawcrew-gateway` meng-import `clawcrew-routing` dan memasang `DynamicRouter` sebagai `.fallback()` — sebelumnya 0 import, sesudahnya minimal 1 integration test membuktikan request lewat router ini.
+- [ ] **T-6.1:** `capability()` di `galleon-routing` mengembalikan `Option<PluginCapability>` (reuse enum `clawcrew-plugins`), **tidak** mendefinisikan enum capability baru yang duplikat.
+- [ ] **T-6.2:** `clawcrew-gateway` meng-import `galleon-routing` dan memasang `DynamicRouter` sebagai `.fallback()` — sebelumnya 0 import, sesudahnya minimal 1 integration test membuktikan request lewat router ini.
 - [ ] **T-6.3 (5 core handler):** Setiap handler (`api_config`, `api_logs`, `auth_rate_limit`, `api_webauthn`, `api_audit`) jadi **thin wrapper** `RouteHandler` — logic bisnis TIDAK ditulis ulang. Ada test collision: plugin yang coba registrasi path yang sama (`/api/config`) ditolak dengan error, bukan silent-override.
-- [ ] **T-6.4 (streaming regression):** Test `Body::from_stream(...)` lolos di suite `clawcrew-routing` SEBELUM Fase 3 (T-6.9/T-6.10) dimulai. Ini adalah gate blocking — PR Fase 3 tanpa bukti T-6.4 hijau **ditolak**.
+- [ ] **T-6.4 (streaming regression):** Test `Body::from_stream(...)` lolos di suite `galleon-routing` SEBELUM Fase 3 (T-6.9/T-6.10) dimulai. Ini adalah gate blocking — PR Fase 3 tanpa bukti T-6.4 hijau **ditolak**.
 - [ ] **T-6.5 – T-6.8 (Fase 2, 15 handler):** Setiap batch migrasi: `cargo test -p clawcrew-gateway` hijau, endpoint terkait tetap merespons benar, test collision T-6.3 masih hijau (regresi dicek ulang, bukan diasumsikan tetap jalan).
 - [ ] **T-6.9 – T-6.10 (Fase 3, protocol handler):** SSE/WebSocket upgrade tetap berfungsi setelah migrasi — Principle minta demonstrasi manual atau test otomatis koneksi tidak terputus, bukan hanya `cargo build` hijau.
 

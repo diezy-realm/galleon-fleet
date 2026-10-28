@@ -96,9 +96,9 @@ Berikut daftar tugas terperinci yang wajib diselesaikan sebelum PR #16 dapat di-
   git diff origin/testing...HEAD -- 'crates/**/*.rs' ':!crates/**/tests/**' ':!crates/**/benches/**' | Select-String '^\+[^+]' | Select-String '\.(unwrap|expect)\('
   ```
   *(Hasil: **KOSONG / 0 TEMUAN** — Exit Code 0).*
-- [x] **2.2:** Jalankan `cargo clippy -p clawcrew-routing -- -D warnings` dan `cargo check -p clawcrew-gateway`. *(Hasil: **PASSED** — Exit Code 0).*
+- [x] **2.2:** Jalankan `cargo clippy -p galleon-routing -- -D warnings` dan `cargo check -p clawcrew-gateway`. *(Hasil: **PASSED** — Exit Code 0).*
 - [x] **2.3:** Jalankan `cargo-nextest`:
-  - `cargo nextest run -p clawcrew-routing` (4 tests: **ALL PASSED**)
+  - `cargo nextest run -p galleon-routing` (4 tests: **ALL PASSED**)
   - `cargo nextest run -p clawcrew-gateway --test system_gateway_integration_test` (2 tests: **ALL PASSED**)
   - `cargo nextest run -p clawcrew-gateway -E "test(grpc_system_gateway::tests)"` (9 tests: **ALL PASSED**)
   - `cargo nextest run -p clawcrew-gateway -E "test(handlers::tests)"` (3 tests: **ALL PASSED**)

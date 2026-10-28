@@ -24,7 +24,7 @@ Hasil analisis 2026-10-04: status tiap task `T-*` dibandingkan dengan kode aktua
 | T-3.2 `MemoryProposal` | (klaim task-breakdown; Principle verifikasi) |
 | T-4.1..4.3 fail-closed tool | `tool/builtin_*.go` memanggil gateway `ExecuteNativeTool`. **Catatan:** `tool/services.go` dll. masih `exec` lokal → BG-A1 |
 | T-5.1..5.6 LLM SSOT Rust | `llmProvider` hilang dari `crew/services.go`; `engine/src/llm/` tidak ada |
-| T-6.1..6.4 routing | `clawcrew-routing` ada di `Cargo.toml` gateway |
+| T-6.1..6.4 routing | `galleon-routing` ada di `Cargo.toml` gateway |
 | T-7.1..7.3 WASI pilot & crate | `channel-nostr-pilot`, `wit/v0/.frozen`, `galleon-channel-{core,imessage,signal,bluesky}` |
 | T-8.1..8.2 vault secret | `get_decrypted_secret` terimplementasi (`grpc_system_gateway.rs`) |
 

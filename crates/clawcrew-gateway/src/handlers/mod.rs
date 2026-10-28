@@ -7,7 +7,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use clawcrew_routing::{DynamicRouter, RouteHandler};
+use galleon_routing::{DynamicRouter, RouteHandler};
 use std::collections::HashMap;
 use std::sync::Arc;
 

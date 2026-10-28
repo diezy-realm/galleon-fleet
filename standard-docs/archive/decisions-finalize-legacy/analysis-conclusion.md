@@ -14,7 +14,7 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 
 - **~80% pekerjaan Phase 2 sudah selesai** di sesi-sesi sebelumnya (Lane A/B/C/E/F mayoritas ✅).
 - **Phase 2 Lane D (Go→Rust sandboxed tool execution)** adalah satu-satunya lane yang belum dimulai, namun teknisnya sudah *unblocked* (Rust `SystemGatewayService.execute_native_tool` aktif di `:50052`, Go `WithSystemGateway` sudah terpasang di `wire_gen.go`).
-- **Phase 3 (DynamicRouter)** memiliki fondasi prototipe yang sudah ada (`clawcrew-routing` dengan 3 unit test lolos), namun belum di-wire sama sekali ke `clawcrew-gateway`.
+- **Phase 3 (DynamicRouter)** memiliki fondasi prototipe yang sudah ada (`galleon-routing` dengan 3 unit test lolos), namun belum di-wire sama sekali ke `clawcrew-gateway`.
 - **ADR 0001 (LLM SSOT Rust)** — sudah diterima prinsipnya, tetapi `ExecuteTurn` di proto belum ada, Go `engine/src/llm/` masih aktif, tidak ada wiring Rust ke gRPC LLM sama sekali.
 - **ADR 0002 & ADR 0003** — diterima, namun pelanggaran kode aktif masih ada: QR + telemetri di `web/server.ts`, dan `get_system_metrics()` di `apps/tauri/src/main.rs` masih mengembalikan konstanta palsu.
 
@@ -78,10 +78,10 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 
 ---
 
-### 2.2 Phase 3 — DynamicRouter (`clawcrew-routing` → `clawcrew-gateway`)
+### 2.2 Phase 3 — DynamicRouter (`galleon-routing` → `clawcrew-gateway`)
 
 **Temuan kunci:**
-1. `crates/clawcrew-routing/src/lib.rs` **sudah ada** dengan `RouteHandler` trait + `DynamicRouter` struct + 3 passing unit tests. Namun **tidak ada satu pun crate/binary yang mengimpornya** — orphan crate.
+1. `crates/galleon-routing/src/lib.rs` **sudah ada** dengan `RouteHandler` trait + `DynamicRouter` struct + 3 passing unit tests. Namun **tidak ada satu pun crate/binary yang mengimpornya** — orphan crate.
 2. `PluginCapability` enum (`Tool | Channel | Memory | Observer | Skill`) **sudah ada** di `crates/clawcrew-plugins/src/lib.rs:107`. Gap 1 adalah reuse, bukan membuat baru.
 3. `crates/clawcrew-gateway/src/lib.rs` memiliki **49 `pub mod`** (sebagian feature-gated), membenarkan urgensi dekomposisi.
 4. `SlidingWindowRateLimiter` sudah ada di `auth_rate_limit.rs` — bisa di-reuse untuk rate-limit per-IP saat rute miss (Gap 3), tidak perlu membuat limiter baru.

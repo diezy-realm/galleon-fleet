@@ -13,7 +13,7 @@
 | D5 | `00-overview.md` | "25 crates", Go 1.25+ | 27 crate; `go 1.27.1` | Diselaraskan di PR-20 (27 crate, Go 1.27+) |
 | D6 | `rust-conventions.md` | MSRV 1.82+ | `rust-version = 1.96.0` | Diselaraskan di PR-20 (MSRV 1.96.0, 27 crate) |
 | D7 | `ADR-001` | WIT unstable; `bluesky` Tier C | `.frozen` ada; `galleon-channel-bluesky` native | Errata |
-| D8 | `analysis-conclusion.md` | `clawcrew-routing` orphan | Sudah dependency gateway (belum commit) | Perbarui setelah commit |
+| D8 | `analysis-conclusion.md` | `galleon-routing` orphan | Sudah dependency gateway (belum commit) | Perbarui setelah commit |
 | D9 | `finalize/README.md` | Phase 4 di `decisions/phase-4/` | `decisions/refactoring-rust/phase-4/` | Dikoreksi |
 | D10 | `tech-standart/README.md` | `design-system/`, `grpc-agent-engine.md`, `03-c4-diagram.puml`, `decisions/000x` | Tidak ada / ADR di lokasi lain | Struktur diperbarui |
 | D11 | `00-overview.md` | Tauri "OS-shell only" | `apps/tauri` punya `execute_terminal_command`, koleksi lokal, metrik proses | Lihat V2 |

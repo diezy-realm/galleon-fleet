@@ -1,5 +1,5 @@
 [package]
-name = "clawcrew-routing"
+name = "galleon-routing"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
