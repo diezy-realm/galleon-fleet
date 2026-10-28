@@ -112,7 +112,7 @@ fn registry() -> Vec<Surface> {
         // through `render_docker_arg`.
         Surface {
             name: "dockerfile-zerorelay",
-            file: "apps/zerorelay/Dockerfile",
+            file: "apps/galleonrelay/Dockerfile",
             render: |root, cur| container_base::splice_zones(root, cur),
         },
         Surface {
@@ -142,7 +142,7 @@ fn registry() -> Vec<Surface> {
         },
         Surface {
             name: "zerocode-themes",
-            file: "apps/zerocode/src/generated_themes.rs",
+            file: "apps/galleoncode/src/generated_themes.rs",
             render: zerocode_themes::render_file,
         },
     ]

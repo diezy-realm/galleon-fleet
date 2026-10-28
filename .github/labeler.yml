@@ -69,7 +69,7 @@
       - any-glob-to-any-file:
           - "src/bin/clawcrew-acp-bridge.rs"
           - "docs/book/src/channels/acp.md"
-          - "apps/zerocode/src/acp.rs"
+          - "apps/galleoncode/src/acp.rs"
           - "web/src/lib/acp.ts"
           - "web/src/pages/AcpConsole.tsx"
           - "crates/clawcrew-channels/src/acp_channel.rs"
@@ -380,7 +380,7 @@
       - any-glob-to-any-file:
           - "crates/clawcrew-runtime/src/quickstart/**"
           - "crates/clawcrew-gateway/src/api_quickstart.rs"
-          - "apps/zerocode/src/quickstart_pane.rs"
+          - "apps/galleoncode/src/quickstart_pane.rs"
           - "web/src/pages/quickstart/**"
 
 "desktop":
@@ -405,6 +405,7 @@
 "zerocode":
   - changed-files:
       - any-glob-to-any-file:
+          - "apps/galleoncode/**"
           - "apps/zerocode/**"
 
 "provider":

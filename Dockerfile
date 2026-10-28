@@ -97,14 +97,14 @@ COPY --parents crates/clawcrew-macros/src/ ./
 # missing, and every such member lives at crates/*/tests/fixtures/*/.
 COPY --parents crates/*/tests/fixtures/*/Cargo.toml ./
 # apps/tauri is excluded from root workspace (exclude = ["apps/tauri"]) per PR-03/PL-B2
-# apps/zerocode: TUI app not shipped in the server image; copy only its manifest
+# apps/galleoncode: TUI app not shipped in the server image; copy only its manifest
 # so Cargo can resolve the workspace, then stub its src/main.rs and build.rs
 # below. Its real build.rs reads web/src/contexts/themes.json and would panic in
 # this pre-fetch stage, so it is stubbed.
-COPY apps/zerocode/Cargo.toml apps/zerocode/Cargo.toml
-# apps/zerorelay: workspace member with lib+bin targets; not shipped in the
+COPY apps/galleoncode/Cargo.toml apps/galleoncode/Cargo.toml
+# apps/galleonrelay: workspace member with lib+bin targets; not shipped in the
 # server image, but Cargo must be able to load its manifest during pre-fetch.
-COPY apps/zerorelay/Cargo.toml apps/zerorelay/Cargo.toml
+COPY apps/galleonrelay/Cargo.toml apps/galleonrelay/Cargo.toml
 # tools/fill-translations and xtask are dev/build tools; copy manifests only so
 # Cargo can resolve the workspace, then stub their entry points so the
 # dependency pre-fetch step succeeds without building them into the image.
@@ -114,15 +114,15 @@ COPY xtask/Cargo.toml xtask/Cargo.toml
 # `src/bin/clawcrew-acp-bridge.rs` is required because the `acp-bridge` feature
 # is in the root crate's default set; cargo selects the bin target during the
 # pre-fetch build even with only the workspace lib stubbed.
-RUN mkdir -p src src/bin benches apps/zerocode/src apps/zerorelay/src tools/fill-translations/src xtask/src/bin \
+RUN mkdir -p src src/bin benches apps/galleoncode/src apps/galleonrelay/src tools/fill-translations/src xtask/src/bin \
     && echo "fn main() {}" > src/main.rs \
     && echo "" > src/lib.rs \
     && echo "fn main() {}" > src/bin/clawcrew-acp-bridge.rs \
     && echo "fn main() {}" > benches/agent_benchmarks.rs \
-    && echo "fn main() {}" > apps/zerocode/src/main.rs \
-    && echo "fn main() {}" > apps/zerocode/build.rs \
-    && echo "fn main() {}" > apps/zerorelay/src/main.rs \
-    && echo "" > apps/zerorelay/src/lib.rs \
+    && echo "fn main() {}" > apps/galleoncode/src/main.rs \
+    && echo "fn main() {}" > apps/galleoncode/build.rs \
+    && echo "fn main() {}" > apps/galleonrelay/src/main.rs \
+    && echo "" > apps/galleonrelay/src/lib.rs \
     && echo "fn main() {}" > tools/fill-translations/src/main.rs \
     && echo "" > xtask/src/lib.rs \
     && echo "fn main() {}" > xtask/src/bin/mdbook.rs \
@@ -159,15 +159,15 @@ COPY benches/ benches/
 COPY crates/ crates/
 COPY xtask/ xtask/
 COPY tools/fill-translations/ tools/fill-translations/
-# apps/zerocode ships in the image; copy its real source. Its build.rs reads the
+# apps/galleoncode ships in the image; copy its real source. Its build.rs reads the
 # dashboard theme registry under web/src/contexts, so that path must be present.
-COPY apps/zerocode/ apps/zerocode/
+COPY apps/galleoncode/ apps/galleoncode/
 COPY web/src/ web/src/
 # locales.toml lives at repo root and is embedded by clawcrew-runtime via
 # include_str!("../../../locales.toml"); the real build needs it present.
 COPY locales.toml .
 COPY *.rs .
-RUN touch src/main.rs apps/zerocode/src/main.rs
+RUN touch src/main.rs apps/galleoncode/src/main.rs
 # Bust the stubbed workspace crates so the real sources rebuild. zerocode is
 # purged from BOTH the target tree and the host tree (target/release/): with
 # --target, build scripts compile in the host tree, so its real build.rs (which

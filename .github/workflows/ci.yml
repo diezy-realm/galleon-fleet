@@ -121,7 +121,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             base="$(git merge-base origin/${{ github.base_ref }} HEAD)"
-            if git diff --name-only "$base" HEAD | grep -q '^apps/zerocode/'; then
+            if git diff --name-only "$base" HEAD | grep -q -E '^apps/(zerocode|galleoncode)/'; then
               echo "run=true" >> "$GITHUB_OUTPUT"
             else
               echo "run=false" >> "$GITHUB_OUTPUT"

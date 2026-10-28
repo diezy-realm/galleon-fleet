@@ -16,7 +16,7 @@ use tokio::net::TcpListener;
 use tokio_rustls::TlsAcceptor;
 use tokio_tungstenite::tungstenite::{ClientRequestBuilder, Message};
 use clawcrew_relay_proto::{Control, PEER_HINT_ENROLL, SUBPROTOCOL, decode_data, encode_data};
-use zerorelay::{Admission, AdmissionPolicy, PublicOpenGuard, RelayConfig, RelayServer};
+use galleonrelay::{Admission, AdmissionPolicy, PublicOpenGuard, RelayConfig, RelayServer};
 
 type RelayWs =
     tokio_tungstenite::WebSocketStream<tokio_rustls::client::TlsStream<tokio::net::TcpStream>>;
@@ -945,7 +945,7 @@ async fn registry_is_bounded_and_rejects_the_next_node() {
 async fn oversized_and_nonprintable_node_ids_are_rejected() {
     let addr = start_relay(RelayConfig::default()).await;
 
-    let oversized = "n".repeat(zerorelay::MAX_NODE_ID_LEN + 1);
+    let oversized = "n".repeat(galleonrelay::MAX_NODE_ID_LEN + 1);
     let key = gen_key();
     let (_ws, term) = handshake(addr, &oversized, &key, None, true).await;
     match term {
@@ -954,7 +954,7 @@ async fn oversized_and_nonprintable_node_ids_are_rejected() {
     }
 
     // Exactly at the limit is still accepted: the bound is inclusive.
-    let at_limit = "n".repeat(zerorelay::MAX_NODE_ID_LEN);
+    let at_limit = "n".repeat(galleonrelay::MAX_NODE_ID_LEN);
     let key = gen_key();
     let (_ws, term) = handshake(addr, &at_limit, &key, None, true).await;
     assert!(

@@ -239,7 +239,7 @@ pub fn run_cmd(cmd: &mut Command) -> anyhow::Result<()> {
 pub fn fluent_catalog_roots_named(root: &Path) -> Vec<(&'static str, PathBuf)> {
     vec![
         ("runtime", root.join("crates/clawcrew-runtime/locales")),
-        ("zerocode", root.join("apps/zerocode/locales")),
+        ("zerocode", root.join("apps/galleoncode/locales")),
     ]
 }
 

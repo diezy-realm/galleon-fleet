@@ -7,7 +7,7 @@ use anyhow::Result;
 use std::fmt::Write as _;
 use std::path::Path;
 
-use zerocode::keymap::{Chord, GlobalAction, QuickstartTabAction, RebindableActions};
+use galleoncode::keymap::{Chord, GlobalAction, QuickstartTabAction, RebindableActions};
 
 const SNIPPET_DIR: &str = "docs/book/src/_snippets";
 

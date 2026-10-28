@@ -76,8 +76,8 @@ lcov.info
 apps/*
 !apps/tauri/
 !apps/tauri/Cargo.toml
-!apps/zerocode/
-# apps/zerorelay is the nominated relay binary (its own image via apps/zerorelay/Dockerfile);
+!apps/galleoncode/
+# apps/galleonrelay is the nominated relay binary (its own image via apps/galleonrelay/Dockerfile);
 # its full source is needed for workspace resolution and the relay build.
-!apps/zerorelay/
+!apps/galleonrelay/
 scripts/

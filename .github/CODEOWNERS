@@ -44,7 +44,7 @@
 
 # Zerocode TUI: paired. Must come AFTER /apps/** (last match wins) or the
 # broad apps rule strips @Audacity88 from zerocode files.
-/apps/zerocode/**             @tidux @Audacity88
+/apps/galleoncode/**             @tidux @Audacity88
 
 # ---------------------------------------------------------------------------
 # Legacy root crate and common source paths (shared maintainer triage)

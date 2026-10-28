@@ -30,9 +30,9 @@ WORKDIR /app
 COPY . .
 RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/registry,sharing=locked \
     --mount=type=cache,id=clawcrew-cargo-git,target=/usr/local/cargo/git,sharing=locked \
-    --mount=type=cache,id=zerorelay-target,target=/app/target,sharing=locked \
-    cargo build --release --locked -p zerorelay \
-    && cp target/release/zerorelay /usr/local/bin/zerorelay
+    --mount=type=cache,id=galleonrelay-target,target=/app/target,sharing=locked \
+    cargo build --release --locked -p galleonrelay \
+    && cp target/release/galleonrelay /usr/local/bin/galleonrelay
 # Seed an empty /data owned by the runtime UID. The runtime stage is distroless
 # (no shell), so the directory cannot be created there. Docker copies an image
 # directory's ownership into a FRESH named volume mounted over it, so shipping
@@ -41,19 +41,19 @@ RUN mkdir -p /seed/data && chown -R 65532:65532 /seed/data
 
 # --- Stage 2: minimal distroless runtime (no shell) ---
 FROM ${CLAWCREW_BASE_DISTROLESS} AS runtime
-COPY --from=builder /usr/local/bin/zerorelay /usr/local/bin/zerorelay
+COPY --from=builder /usr/local/bin/galleonrelay /usr/local/bin/galleonrelay
 # /data must exist in the image owned by nonroot (65532) or a fresh named
 # volume mounts root-owned and self-provisioning fails with
 # `mkdir: can't create directory '/data/tls': Permission denied`.
 COPY --from=builder --chown=65532:65532 /seed/data /data
 # Ship a default config (bind 0.0.0.0:8443, self-provision TLS into /data/tls,
-# open admission). Mount your own at /etc/zerorelay/relay.toml to override, then
+# open admission). Mount your own at /etc/galleonrelay/relay.toml to override, then
 # `kill -HUP` the process to hot-reload the [admission] section.
-COPY apps/zerorelay/relay.example.toml /etc/zerorelay/relay.toml
+COPY apps/galleonrelay/relay.example.toml /etc/galleonrelay/relay.toml
 EXPOSE 8443
 USER nonroot
-ENTRYPOINT ["/usr/local/bin/zerorelay"]
+ENTRYPOINT ["/usr/local/bin/galleonrelay"]
 # Drive the relay from the config file. Self-provisions the outer TLS cert into
 # the mounted /data/tls volume (see compose). Add a `sans` entry (or --tls-san
 # <public-host>) for a publicly reachable relay.
-CMD ["--config", "/etc/zerorelay/relay.toml"]
+CMD ["--config", "/etc/galleonrelay/relay.toml"]

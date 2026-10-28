@@ -160,7 +160,7 @@ async fn zerocode_to_relay_to_daemon_full_path() {
     let relay_addr = relay_listener.local_addr().unwrap();
     let relay_acceptor = relay_outer_acceptor();
     tokio::spawn(
-        zerorelay::RelayServer::new(zerorelay::RelayConfig::default())
+        galleonrelay::RelayServer::new(galleonrelay::RelayConfig::default())
             .serve(relay_listener, relay_acceptor),
     );
 
@@ -278,7 +278,7 @@ async fn enrollment_post_round_trips_through_relay_route() {
     let relay_addr = relay_listener.local_addr().unwrap();
     let relay_acceptor = relay_outer_acceptor();
     tokio::spawn(
-        zerorelay::RelayServer::new(zerorelay::RelayConfig::default())
+        galleonrelay::RelayServer::new(galleonrelay::RelayConfig::default())
             .serve(relay_listener, relay_acceptor),
     );
 

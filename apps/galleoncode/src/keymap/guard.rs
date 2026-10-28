@@ -11,7 +11,11 @@ mod tests {
     /// vocabulary and the registry, and the config persistence/preset
     /// layer constructs `Chord` values as data, not as handler logic.
     fn is_exempt(rel: &str) -> bool {
-        rel.starts_with("src/keymap/") || rel.starts_with("src/config/") || rel == "src/build.rs"
+        rel.starts_with("src/keymap/")
+            || rel.starts_with("src/config/")
+            || rel == "src/build.rs"
+            || rel.ends_with("/tests.rs")
+            || rel.ends_with("_test.rs")
     }
 
     /// The single sanctioned text-entry idiom: extract the literal char

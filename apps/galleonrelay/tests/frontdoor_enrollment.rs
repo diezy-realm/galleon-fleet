@@ -27,7 +27,7 @@ use tokio_tungstenite::tungstenite::{ClientRequestBuilder, Message};
 use clawcrew_relay_proto::{
     Control, INITIAL_WINDOW, PEER_HINT_ENROLL, SUBPROTOCOL, decode_data, encode_data,
 };
-use zerorelay::{RelayConfig, RelayServer};
+use galleonrelay::{RelayConfig, RelayServer};
 
 type RelayWs =
     tokio_tungstenite::WebSocketStream<tokio_rustls::client::TlsStream<tokio::net::TcpStream>>;

@@ -7,7 +7,10 @@ echo "==> zerocode gate: clawcrew-api is the only allowed clawcrew-* dependency"
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
-manifest="apps/zerocode/Cargo.toml"
+manifest="apps/galleoncode/Cargo.toml"
+if [ ! -f "$manifest" ]; then
+    manifest="apps/zerocode/Cargo.toml"
+fi
 
 offending="$(
     python3 - "$manifest" <<'PY'
