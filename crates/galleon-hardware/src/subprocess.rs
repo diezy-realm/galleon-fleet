@@ -2,6 +2,9 @@
 
 use super::manifest::ToolManifest;
 use async_trait::async_trait;
+use galleon_api::attribution::{ToolKind, ToolProvenance};
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_api::tool_attribution;
 use serde_json::json;
 use std::path::PathBuf;
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
@@ -9,9 +12,6 @@ use tokio::process::{Child, ChildStderr, ChildStdout, Command};
 use tokio::sync::oneshot;
 use tokio::task::{JoinError, JoinHandle};
 use tokio::time::{Duration, Instant, timeout, timeout_at};
-use galleon_api::attribution::{ToolKind, ToolProvenance};
-use galleon_api::tool::{Tool, ToolOutput, ToolResult};
-use galleon_api::tool_attribution;
 
 tool_attribution!(SubprocessTool, ToolKind::Plugin, ToolProvenance::Extension);
 
@@ -638,11 +638,11 @@ fn append_cleanup_diagnostic(mut message: String, cleanup_error: Option<&str>) -
 mod tests {
     use super::*;
     use crate::manifest::{ExecConfig, ParameterDef, ToolManifest, ToolMeta};
+    use galleon_api::attribution::Attributable;
     use std::sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
     };
-    use galleon_api::attribution::Attributable;
 
     fn make_manifest(name: &str, params: Vec<ParameterDef>) -> ToolManifest {
         ToolManifest {
@@ -720,7 +720,7 @@ mod tests {
     #[test]
     fn plugin_command_environment_is_allowlisted() {
         let mut command = Command::new("unused-test-binary");
-        command.env("CLAWCREW_SUBPROCESS_TEST_SECRET", "must-not-survive");
+        command.env("GALLEON_SUBPROCESS_TEST_SECRET", "must-not-survive");
         configure_plugin_environment(&mut command);
 
         let explicit_environment: Vec<String> = command
@@ -738,7 +738,7 @@ mod tests {
         assert!(
             !explicit_environment
                 .iter()
-                .any(|key| { key.eq_ignore_ascii_case("CLAWCREW_SUBPROCESS_TEST_SECRET") })
+                .any(|key| { key.eq_ignore_ascii_case("GALLEON_SUBPROCESS_TEST_SECRET") })
         );
     }
 

@@ -14,9 +14,9 @@ use tokio_tungstenite::{
 };
 
 const CONFIG_NOT_FOUND_ERROR: &str = "ERROR: config.toml not found.  Are you sure the bridge and ClawCrew are running on the same host?  Tool use will not work remotely!";
-const PAIRING_TOKEN_NOT_FOUND_ERROR: &str = "ERROR: Gateway pairing is active but no ACP bridge token is cached. Run `clawcrew gateway get-paircode --new`, then run `clawcrew-acp-bridge --pair-code <code>`, or set CLAWCREW_ACP_BRIDGE_TOKEN.";
-const ACP_BRIDGE_TOKEN_ENV: &str = "CLAWCREW_ACP_BRIDGE_TOKEN";
-const ACP_BRIDGE_PAIRING_CODE_ENV: &str = "CLAWCREW_ACP_PAIRING_CODE";
+const PAIRING_TOKEN_NOT_FOUND_ERROR: &str = "ERROR: Gateway pairing is active but no ACP bridge token is cached. Run `clawcrew gateway get-paircode --new`, then run `clawcrew-acp-bridge --pair-code <code>`, or set GALLEON_ACP_BRIDGE_TOKEN.";
+const ACP_BRIDGE_TOKEN_ENV: &str = "GALLEON_ACP_BRIDGE_TOKEN";
+const ACP_BRIDGE_PAIRING_CODE_ENV: &str = "GALLEON_ACP_PAIRING_CODE";
 
 #[tokio::main]
 async fn main() {
@@ -561,7 +561,7 @@ mod tests {
     #[test]
     fn token_from_env_uses_plaintext_bridge_token() {
         let token = token_from_env_with(|key| {
-            assert_eq!(key, "CLAWCREW_ACP_BRIDGE_TOKEN");
+            assert_eq!(key, "GALLEON_ACP_BRIDGE_TOKEN");
             Ok("  zc_plaintext  ".to_string())
         });
 

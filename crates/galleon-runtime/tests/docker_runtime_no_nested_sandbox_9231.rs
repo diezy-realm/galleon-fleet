@@ -6,14 +6,14 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::sync::{Arc, OnceLock};
 
-use serde_json::json;
-use tempfile::TempDir;
-use tokio::sync::{Mutex, MutexGuard};
 use galleon_api::tool::Tool;
 use galleon_config::platform::DockerRuntime;
 use galleon_config::schema::{Config, RuntimeKind};
 use galleon_runtime::security::{AutonomyLevel, SecurityPolicy, sandbox_posture};
 use galleon_runtime::tools::shell_tool_for_runtime;
+use serde_json::json;
+use tempfile::TempDir;
+use tokio::sync::{Mutex, MutexGuard};
 
 static ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
 
@@ -98,9 +98,9 @@ sandbox_backend = "docker"
     )
     .expect("write config fixture");
 
-    let _config_dir = EnvGuard::set("CLAWCREW_CONFIG_DIR", install.path());
-    let _data_dir = EnvGuard::remove("CLAWCREW_DATA_DIR");
-    let _legacy_workspace = EnvGuard::remove("CLAWCREW_WORKSPACE");
+    let _config_dir = EnvGuard::set("GALLEON_CONFIG_DIR", install.path());
+    let _data_dir = EnvGuard::remove("GALLEON_DATA_DIR");
+    let _legacy_workspace = EnvGuard::remove("GALLEON_WORKSPACE");
 
     let config = Config::load_or_init().await.expect("load config fixture");
     assert_eq!(config.runtime.kind, RuntimeKind::Docker);

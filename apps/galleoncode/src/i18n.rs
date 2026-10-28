@@ -149,23 +149,23 @@ fn load_ftl_from_disk(locale: &str) -> Option<String> {
     None
 }
 
-/// Resolve the ClawCrew config directory with the same precedence as
+/// Resolve the Galleon config directory with the same precedence as
 /// `client::resolve_config_dir`: the `--config-dir` flag (passed to `init` and
-/// cached in `CONFIG_DIR`) first, then `CLAWCREW_CONFIG_DIR`, then `~/.clawcrew`.
+/// cached in `CONFIG_DIR`) first, then `GALLEON_CONFIG_DIR`, then `~/.config/galleon`.
 /// This keeps the FTL read path aligned with the flag the rest of zerocode uses.
 pub(crate) fn config_dir() -> PathBuf {
     if let Some(dir) = CONFIG_DIR.get() {
         return dir.clone();
     }
-    if let Ok(custom) = std::env::var("CLAWCREW_CONFIG_DIR") {
+    if let Ok(custom) = std::env::var("GALLEON_CONFIG_DIR") {
         let trimmed = custom.trim();
         if !trimmed.is_empty() {
             return PathBuf::from(trimmed);
         }
     }
     directories::BaseDirs::new()
-        .map(|b| b.home_dir().join(".clawcrew"))
-        .unwrap_or_else(|| PathBuf::from(".clawcrew"))
+        .map(|b| b.home_dir().join(".config").join("galleon"))
+        .unwrap_or_else(|| PathBuf::from(".config/galleon"))
 }
 
 fn locale_from_config() -> Option<String> {
@@ -655,7 +655,7 @@ mod tests {
             format_ftl_message(&english, "zc-error-daemon-not-ready-timeout", &args).unwrap(),
             format!(
                 "daemon did not become ready within 30s (socket: {PATH}); if the socket path is \
-                 long, set CLAWCREW_SOCKET to a shorter path or use a shorter --config-dir"
+                 long, set GALLEON_SOCKET to a shorter path or use a shorter --config-dir"
             )
         );
 
@@ -689,8 +689,8 @@ mod tests {
                 })
                 .expect("timeout guidance must render");
             assert!(
-                timeout.contains("CLAWCREW_SOCKET"),
-                "`{locale}` lost the CLAWCREW_SOCKET guidance: {timeout}"
+                timeout.contains("GALLEON_SOCKET"),
+                "`{locale}` lost the GALLEON_SOCKET guidance: {timeout}"
             );
             assert!(
                 timeout.contains("--config-dir"),

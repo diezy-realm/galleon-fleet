@@ -74,9 +74,9 @@ Pre-push hook opt-ins (set the env var to enable for one push):
 
 | Variable | Effect |
 |---|---|
-| `CLAWCREW_STRICT_LINT=1` | Strict lint pass on the full repo |
-| `CLAWCREW_DOCS_LINT=1` | Markdown gate on changed lines |
-| `CLAWCREW_DOCS_LINKS=1` | Link check on added links only |
+| `GALLEON_STRICT_LINT=1` | Strict lint pass on the full repo |
+| `GALLEON_DOCS_LINT=1` | Markdown gate on changed lines |
+| `GALLEON_DOCS_LINKS=1` | Link check on added links only |
 
 Skip the hook for rapid iteration with `git push --no-verify`. CI runs the same checks regardless.
 
@@ -92,19 +92,19 @@ ClawCrew supports layered secret management for local development.
 **API key resolution order:**
 
 1. Explicit key passed from config or CLI.
-2. `CLAWCREW_<lowercase_dotted_path>` env-var override (lands on the in-memory `Config` at load time; see below).
+2. `GALLEON_<lowercase_dotted_path>` env-var override (lands on the in-memory `Config` at load time; see below).
 
 Set credentials in your config file (`~/.clawcrew/config.toml` by default; custom workspaces override the path) under `[providers.models.<type>.<alias>]`, or inject at runtime via the V0.8.0 schema-mirror grammar:
 
 ```sh
-CLAWCREW_providers__models__anthropic__default__api_key=sk-ant-...
-CLAWCREW_providers__models__openrouter__prod_v2__model=anthropic/claude-sonnet-4-6
-CLAWCREW_gateway__request_timeout_secs=120
+GALLEON_providers__models__anthropic__default__api_key=sk-ant-...
+GALLEON_providers__models__openrouter__prod_v2__model=anthropic/claude-sonnet-4-6
+GALLEON_gateway__request_timeout_secs=120
 ```
 
-The lowercase tail mirrors the dotted TOML path 1:1; each `__` (double underscore) is a path separator (`.` in TOML) and each single `_` is either a snake-case joiner inside a field name (`api_key` → `api-key`) or a literal char inside an alias key (`prod_v2`). Aliases are `[a-z0-9][a-z0-9_]{0,62}` — lowercase letters, digits, and single underscores; no leading underscore, no hyphen, no uppercase. Bootstrap variables (`CLAWCREW_WORKSPACE`, `CLAWCREW_CONFIG_DIR`) keep their UPPERCASE form; the case rule disambiguates them from the schema-mirror surface.
+The lowercase tail mirrors the dotted TOML path 1:1; each `__` (double underscore) is a path separator (`.` in TOML) and each single `_` is either a snake-case joiner inside a field name (`api_key` → `api-key`) or a literal char inside an alias key (`prod_v2`). Aliases are `[a-z0-9][a-z0-9_]{0,62}` — lowercase letters, digits, and single underscores; no leading underscore, no hyphen, no uppercase. Bootstrap variables (`GALLEON_WORKSPACE`, `GALLEON_CONFIG_DIR`) keep their UPPERCASE form; the case rule disambiguates them from the schema-mirror surface.
 
-V0.8.0 eradicated every per-provider env-var fallback (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, …), the generic `CLAWCREW_API_KEY` / `API_KEY`, and the legacy `CLAWCREW_PROVIDER` / `PROVIDER` / `CLAWCREW_MODEL` dispatchers. Legacy names have no runtime effect — they're silently ignored. See `docs/book/src/reference/env-vars.md` for the migration table and the `💉` visibility behavior.
+V0.8.0 eradicated every per-provider env-var fallback (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, …), the generic `GALLEON_API_KEY` / `API_KEY`, and the legacy `GALLEON_PROVIDER` / `PROVIDER` / `GALLEON_MODEL` dispatchers. Legacy names have no runtime effect — they're silently ignored. See `docs/book/src/reference/env-vars.md` for the migration table and the `💉` visibility behavior.
 
 **Never commit:** `.env`, API keys / tokens / passwords / OAuth tokens / webhook signing secrets, `~/.clawcrew/.secret_key`, or any personal identifier in tests or fixtures. The full content discipline is in **[Privacy & PII](docs/book/src/contributing/privacy.md)**.
 

@@ -1,16 +1,16 @@
 # syntax=docker/dockerfile:1.7-labs
 
 # >>> generated:base-arg-node from dev/ci/container-base-images.toml by `cargo generate installers` - do not edit <<<
-ARG CLAWCREW_BASE_NODE=node:24-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e
+ARG GALLEON_BASE_NODE=node:24-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e
 # >>> end generated:base-arg-node <<<
 # >>> generated:base-arg-rust-bookworm from dev/ci/container-base-images.toml by `cargo generate installers` - do not edit <<<
-ARG CLAWCREW_BASE_RUST_BOOKWORM=rust:1.98-bookworm@sha256:82150a52ec202c1b14d7817e14516c392bb7f5cfebd88f1ed531cb37ebd39922
+ARG GALLEON_BASE_RUST_BOOKWORM=rust:1.98-bookworm@sha256:82150a52ec202c1b14d7817e14516c392bb7f5cfebd88f1ed531cb37ebd39922
 # >>> end generated:base-arg-rust-bookworm <<<
 
 # ── Stage 0: Frontend build ─────────────────────────────────────
-FROM ${CLAWCREW_BASE_NODE} AS web-node
+FROM ${GALLEON_BASE_NODE} AS web-node
 
-FROM ${CLAWCREW_BASE_RUST_BOOKWORM} AS web-builder
+FROM ${GALLEON_BASE_RUST_BOOKWORM} AS web-builder
 WORKDIR /app
 COPY --from=web-node /usr/local/bin/node /usr/local/bin/node
 COPY --from=web-node /usr/local/lib/node_modules /usr/local/lib/node_modules
@@ -49,11 +49,11 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/regist
 #   docker compose -f docker-compose.yml -f docker-compose.debian.yml up
 
 # ── Stage 1: Build (match runtime glibc baseline) ───────────
-FROM ${CLAWCREW_BASE_RUST_BOOKWORM} AS builder
+FROM ${GALLEON_BASE_RUST_BOOKWORM} AS builder
 
 WORKDIR /app
 # >>> generated:docker-features-arg by `cargo generate installers` - do not edit <<<
-ARG CLAWCREW_CARGO_FLAGS="--no-default-features --features acp-bridge,agent-runtime,channel-acp-server,channel-discord,channel-email,channel-filesystem,channel-git,channel-lark,channel-matrix,channel-telegram,channel-webhook,gateway,observability-prometheus,schema-export,whatsapp-web"
+ARG GALLEON_CARGO_FLAGS="--no-default-features --features acp-bridge,agent-runtime,channel-acp-server,channel-discord,channel-email,channel-filesystem,channel-git,channel-lark,channel-matrix,channel-telegram,channel-webhook,gateway,observability-prometheus,schema-export,whatsapp-web"
 # >>> end generated:docker-features-arg <<<
 
 # Install build dependencies
@@ -124,8 +124,8 @@ RUN mkdir -p src src/bin benches apps/tauri/src apps/zerocode/src apps/zerorelay
 RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/registry,sharing=locked \
     --mount=type=cache,id=clawcrew-cargo-git,target=/usr/local/cargo/git,sharing=locked \
     --mount=type=cache,id=clawcrew-target,target=/app/target,sharing=locked \
-    if [ -n "$CLAWCREW_CARGO_FLAGS" ]; then \
-      cargo build --release --locked -p galleon-fleet -p zerocode $CLAWCREW_CARGO_FLAGS; \
+    if [ -n "$GALLEON_CARGO_FLAGS" ]; then \
+      cargo build --release --locked -p galleon-fleet -p zerocode $GALLEON_CARGO_FLAGS; \
     else \
       cargo build --release --locked -p galleon-fleet -p zerocode; \
     fi
@@ -161,8 +161,8 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/regist
            target/release/.fingerprint/zerocode-* \
            target/release/deps/zerocode-* \
            target/release/incremental/zerocode-* && \
-    if [ -n "$CLAWCREW_CARGO_FLAGS" ]; then \
-      cargo build --release --locked -p galleon-fleet -p zerocode $CLAWCREW_CARGO_FLAGS; \
+    if [ -n "$GALLEON_CARGO_FLAGS" ]; then \
+      cargo build --release --locked -p galleon-fleet -p zerocode $GALLEON_CARGO_FLAGS; \
     else \
       cargo build --release --locked -p galleon-fleet -p zerocode; \
     fi && \
@@ -221,11 +221,11 @@ COPY --from=web-builder /app/web/dist /usr/share/clawcrewlabs/web/dist
 # Environment setup
 # Ensure UTF-8 locale so CJK / multibyte input is handled correctly
 ENV LANG=C.UTF-8
-ENV CLAWCREW_DATA_DIR=/clawcrew-data/data
+ENV GALLEON_DATA_DIR=/clawcrew-data/data
 ENV HOME=/clawcrew-data
 # Default provider and model are set in config.toml, not here,
 # so config file edits are not silently overridden
-ENV CLAWCREW_GATEWAY_PORT=42617
+ENV GALLEON_GATEWAY_PORT=42617
 
 # API_KEY must be provided at runtime!
 

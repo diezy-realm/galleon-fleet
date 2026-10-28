@@ -14,12 +14,12 @@ mkdir -p "${mock_dir}/bin" "$runner_temp"
 
 cat > "${mock_dir}/bin/cargo" <<'EOF'
 #!/usr/bin/env bash
-printf '%s\n' "$@" > "$CLAWCREW_CLIPPY_TEST_ARGS"
+printf '%s\n' "$@" > "$GALLEON_CLIPPY_TEST_ARGS"
 printf '%s\n' \
     'Downloaded demo-crate v1.0.0' \
     'Compiling galleon-runtime v0.8.5 (/workspace/clawcrew/crates/galleon-runtime)' \
     'Compiling serde v1.0.0'
-exit "${CLAWCREW_CLIPPY_TEST_STATUS:-0}"
+exit "${GALLEON_CLIPPY_TEST_STATUS:-0}"
 EOF
 chmod +x "${mock_dir}/bin/cargo"
 
@@ -57,7 +57,7 @@ run_runner() {
         GITHUB_STEP_SUMMARY="$summary_file" \
         RUNNER_OS=TestOS \
         RUST_CACHE_HIT=true \
-        CLAWCREW_CLIPPY_TEST_ARGS="$cargo_args" \
+        GALLEON_CLIPPY_TEST_ARGS="$cargo_args" \
         bash "$runner" "$@" >/dev/null
 }
 
@@ -122,7 +122,7 @@ assert_rejected() {
     PATH="${mock_dir}/bin:$PATH" \
         RUNNER_TEMP="$runner_temp" \
         GITHUB_STEP_SUMMARY="$summary_file" \
-        CLAWCREW_CLIPPY_TEST_ARGS="$cargo_args" \
+        GALLEON_CLIPPY_TEST_ARGS="$cargo_args" \
         bash "$runner" "$@" >/dev/null 2>&1
     status=$?
     set -e
@@ -151,8 +151,8 @@ PATH="${mock_dir}/bin:$PATH" \
     GITHUB_STEP_SUMMARY="$summary_file" \
     RUNNER_OS=TestOS \
     RUST_CACHE_HIT=false \
-    CLAWCREW_CLIPPY_TEST_ARGS="$cargo_args" \
-    CLAWCREW_CLIPPY_TEST_STATUS=17 \
+    GALLEON_CLIPPY_TEST_ARGS="$cargo_args" \
+    GALLEON_CLIPPY_TEST_STATUS=17 \
     bash "$runner" \
         --scope workspace \
         --summary-title "Failure diagnostics" \

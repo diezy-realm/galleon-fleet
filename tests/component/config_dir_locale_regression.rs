@@ -1,5 +1,5 @@
 //! Regression: `--config-dir` must drive CLI locale detection, not only the
-//! `CLAWCREW_CONFIG_DIR` env var.
+//! `GALLEON_CONFIG_DIR` env var.
 //!
 //! Before the fix, locale was detected (and the clap help tree translated)
 //! *before* the parsed `--config-dir` flag was applied to the environment, so

@@ -15,7 +15,7 @@ pub(crate) const DEFAULT_REGISTRY_URL: &str =
     "https://raw.githubusercontent.com/clawcrew-labs/galleon-plugins/main/registry.json";
 pub(crate) const MAX_PLUGIN_ZIP_BYTES: usize = 50 * 1024 * 1024;
 pub(crate) const MAX_PLUGIN_EXTRACTED_BYTES: u64 = 50 * 1024 * 1024;
-const REGISTRY_URL_ENV: &str = "CLAWCREW_PLUGIN_REGISTRY_URL";
+const REGISTRY_URL_ENV: &str = "GALLEON_PLUGIN_REGISTRY_URL";
 
 pub(crate) struct DownloadedPlugin {
     _temp_dir: TempDir,

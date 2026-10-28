@@ -4,10 +4,10 @@ use crate::platform::{NativeRuntime, RuntimeAdapter};
 use crate::security::SecurityPolicy;
 use crate::tools::shell_env::SAFE_SHELL_ENV_VARS;
 use async_trait::async_trait;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
-use galleon_api::tool::{Tool, ToolOutput, ToolResult};
 
 /// Default execution time for a skill shell command when the manifest does not
 /// set `timeout_secs` (seconds). A skill may raise this via `timeout_secs` in
@@ -60,7 +60,7 @@ fn sanitize_tool_name(raw: &str) -> String {
 
 /// Name of the environment variable that carries the in-flight session key
 /// into skill shell tools.
-const SESSION_ID_ENV_VAR: &str = "CLAWCREW_SESSION_ID";
+const SESSION_ID_ENV_VAR: &str = "GALLEON_SESSION_ID";
 
 /// The session key for the current turn, or `None` when the turn is unscoped
 /// (one-shot / webhook). Empty keys are treated as absent.

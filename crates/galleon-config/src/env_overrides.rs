@@ -5,7 +5,7 @@ use anyhow::{Context, Result};
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
-const PREFIX: &str = "CLAWCREW_";
+const PREFIX: &str = "GALLEON_";
 const SEP: &str = "__";
 
 /// `[todotracker]` was a daemon schema section in v0.8.3 only; TodoWrite
@@ -15,7 +15,7 @@ const SEP: &str = "__";
 /// starting after an upgrade. Recognized legacy fields are therefore accepted
 /// and ignored (with a migration warning) instead of failing startup.
 ///
-/// This is an exact allowlist: an unknown `CLAWCREW_todotracker__*` field is
+/// This is an exact allowlist: an unknown `GALLEON_todotracker__*` field is
 /// still a hard error, so genuine typos keep surfacing.
 const LEGACY_TODOTRACKER_FIELDS: [&str; 5] = [
     "enabled",
@@ -42,7 +42,7 @@ pub struct AppliedOverrides {
     pub snapshots: HashMap<String, String>,
 }
 
-/// Apply every `CLAWCREW_<lowercase>` env var to `config`. Returns the set of
+/// Apply every `GALLEON_<lowercase>` env var to `config`. Returns the set of
 /// dotted prop-paths that were overridden plus the pre-override raw values
 /// for each. Hard-errors on any env var that doesn't resolve to a known
 /// schema path or whose alias fails validation.
@@ -264,7 +264,7 @@ mod tests {
     async fn walker_resolves_typed_family_alias_default() {
         let _guard = super::env_test_lock().await;
         let _v = EnvVarGuard::set(
-            "CLAWCREW_providers__models__anthropic__default__api_key",
+            "GALLEON_providers__models__anthropic__default__api_key",
             "sk-ant-fixture",
         );
 
@@ -294,7 +294,7 @@ mod tests {
     async fn walker_resolves_grok_cli_stdout_limit() {
         let _guard = super::env_test_lock().await;
         let _v = EnvVarGuard::set(
-            "CLAWCREW_providers__models__grok_cli__default__max_acp_stdout_bytes",
+            "GALLEON_providers__models__grok_cli__default__max_acp_stdout_bytes",
             "8388608",
         );
 
@@ -321,11 +321,11 @@ mod tests {
     async fn walker_accepts_alias_with_underscore() {
         let _guard = super::env_test_lock().await;
         let _v1 = EnvVarGuard::set(
-            "CLAWCREW_providers__models__openrouter__prod_v2__api_key",
+            "GALLEON_providers__models__openrouter__prod_v2__api_key",
             "sk-or-fixture",
         );
         let _v2 = EnvVarGuard::set(
-            "CLAWCREW_providers__models__openrouter__prod_v2__model",
+            "GALLEON_providers__models__openrouter__prod_v2__model",
             "anthropic/claude-sonnet-4-6",
         );
 
@@ -359,7 +359,7 @@ mod tests {
     async fn walker_preserves_legacy_memory_grant_input_and_mixed_json() {
         let _guard = super::env_test_lock().await;
         let _v = EnvVarGuard::set(
-            "CLAWCREW_agents__alpha__workspace__read_memory_from",
+            "GALLEON_agents__alpha__workspace__read_memory_from",
             r#"["beta", {"agent":"gamma", "categories":["facts"]}]"#,
         );
 
@@ -387,7 +387,7 @@ mod tests {
     #[tokio::test]
     async fn walker_resolves_non_map_gateway_path() {
         let _guard = super::env_test_lock().await;
-        let _v = EnvVarGuard::set("CLAWCREW_gateway__request_timeout_secs", "120");
+        let _v = EnvVarGuard::set("GALLEON_gateway__request_timeout_secs", "120");
 
         let mut config = Config::default();
         let applied = apply_env_overrides(&mut config).expect("apply succeeds");
@@ -399,13 +399,13 @@ mod tests {
     #[tokio::test]
     async fn walker_rejects_unknown_path() {
         let _guard = super::env_test_lock().await;
-        let _v = EnvVarGuard::set("CLAWCREW_no__such__field", "x");
+        let _v = EnvVarGuard::set("GALLEON_no__such__field", "x");
 
         let mut config = Config::default();
         let err = apply_env_overrides(&mut config).expect_err("must hard-error");
         let msg = format!("{err:#}");
         assert!(
-            msg.contains("CLAWCREW_no__such__field") && msg.contains("did not resolve"),
+            msg.contains("GALLEON_no__such__field") && msg.contains("did not resolve"),
             "error must name the env var and the failure: {msg}",
         );
     }
@@ -418,7 +418,7 @@ mod tests {
         // the prefilter, and the failure must surface as the validator's
         // specific message — not a generic "Unknown property".
         let _v = EnvVarGuard::set(
-            "CLAWCREW_providers__models__anthropic___invalid__api_key",
+            "GALLEON_providers__models__anthropic___invalid__api_key",
             "x",
         );
 
@@ -434,7 +434,7 @@ mod tests {
     #[tokio::test]
     async fn mask_restores_pre_override_snapshot_for_non_secret() {
         let _guard = super::env_test_lock().await;
-        let _v = EnvVarGuard::set("CLAWCREW_gateway__request_timeout_secs", "999");
+        let _v = EnvVarGuard::set("GALLEON_gateway__request_timeout_secs", "999");
 
         let mut config = Config::default();
         let original_timeout = config.gateway.request_timeout_secs;
@@ -456,7 +456,7 @@ mod tests {
     async fn mask_restores_pre_override_plaintext_for_secret() {
         let _guard = super::env_test_lock().await;
         let _v = EnvVarGuard::set(
-            "CLAWCREW_providers__models__anthropic__default__api_key",
+            "GALLEON_providers__models__anthropic__default__api_key",
             "sk-ant-from-env",
         );
 
@@ -517,10 +517,7 @@ mod tests {
     #[tokio::test]
     async fn mask_restores_structured_memory_grant_snapshot() {
         let _guard = super::env_test_lock().await;
-        let _v = EnvVarGuard::set(
-            "CLAWCREW_agents__alpha__workspace__read_memory_from",
-            "beta",
-        );
+        let _v = EnvVarGuard::set("GALLEON_agents__alpha__workspace__read_memory_from", "beta");
 
         let mut config = Config::default();
         for alias in ["alpha", "beta", "gamma"] {
@@ -557,7 +554,7 @@ mod tests {
     #[tokio::test]
     async fn schema_version_override_rejected() {
         let _guard = super::env_test_lock().await;
-        let _v = EnvVarGuard::set("CLAWCREW_schema_version", "99");
+        let _v = EnvVarGuard::set("GALLEON_schema_version", "99");
 
         let mut config = Config::default();
         let err = apply_env_overrides(&mut config).expect_err("must hard-error");
@@ -577,11 +574,11 @@ mod tests {
     #[tokio::test]
     async fn recognized_legacy_todotracker_env_does_not_block_startup() {
         let _guard = super::env_test_lock().await;
-        let _a = EnvVarGuard::set("CLAWCREW_todotracker__enabled", "false");
-        let _b = EnvVarGuard::set("CLAWCREW_todotracker__enabled_at_start", "true");
-        let _c = EnvVarGuard::set("CLAWCREW_todotracker__location", "left");
-        let _d = EnvVarGuard::set("CLAWCREW_todotracker__width", "40");
-        let _e = EnvVarGuard::set("CLAWCREW_todotracker__max_height", "8");
+        let _a = EnvVarGuard::set("GALLEON_todotracker__enabled", "false");
+        let _b = EnvVarGuard::set("GALLEON_todotracker__enabled_at_start", "true");
+        let _c = EnvVarGuard::set("GALLEON_todotracker__location", "left");
+        let _d = EnvVarGuard::set("GALLEON_todotracker__width", "40");
+        let _e = EnvVarGuard::set("GALLEON_todotracker__max_height", "8");
 
         let mut config = Config::default();
         let applied = apply_env_overrides(&mut config)
@@ -600,13 +597,13 @@ mod tests {
         let _guard = super::env_test_lock().await;
         // Not on the exact allowlist: a typo must still surface loudly rather
         // than being silently swallowed by the compatibility shim.
-        let _v = EnvVarGuard::set("CLAWCREW_todotracker__wdith", "40");
+        let _v = EnvVarGuard::set("GALLEON_todotracker__wdith", "40");
 
         let mut config = Config::default();
         let err = apply_env_overrides(&mut config).expect_err("unknown field must hard-error");
         let msg = format!("{err:#}");
         assert!(
-            msg.contains("CLAWCREW_todotracker__wdith") && msg.contains("did not resolve"),
+            msg.contains("GALLEON_todotracker__wdith") && msg.contains("did not resolve"),
             "error must name the env var and the failure: {msg}",
         );
     }
@@ -616,7 +613,7 @@ mod tests {
         let _guard = super::env_test_lock().await;
         // A section that merely *starts with* the legacy name must not be
         // captured by the allowlist prefix check.
-        let _v = EnvVarGuard::set("CLAWCREW_todotracker_extra__enabled", "false");
+        let _v = EnvVarGuard::set("GALLEON_todotracker_extra__enabled", "false");
 
         let mut config = Config::default();
         let err = apply_env_overrides(&mut config).expect_err("must hard-error");

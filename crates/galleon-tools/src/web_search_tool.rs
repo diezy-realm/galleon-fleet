@@ -4,13 +4,13 @@ use super::web_search_provider_routing::{
 use crate::helpers::response_body;
 use crate::util_helpers::truncate_with_ellipsis;
 use async_trait::async_trait;
+use galleon_api::tool::{Tool, ToolResult};
 use regex::Regex;
 use serde_json::json;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
-use galleon_api::tool::{Tool, ToolResult};
 
 // AnySearch skill protocol identifier. Keep this synchronized with the
 // upstream anysearch-ai/anysearch-skill CLIENT_HEADER value.
@@ -141,8 +141,8 @@ impl SerplyConfigParseFailure {
 /// are always resolved from `config.toml` at use time, so their canonical
 /// `[web_search]` fields stay the single source of truth and rotation/removal
 /// takes effect without a restart. The exception is a schema-mirror env
-/// override (`CLAWCREW_web_search__anysearch_api_key`,
-/// `CLAWCREW_web_search__serply_api_key`, `CLAWCREW_web_search__keenable_api_key`):
+/// override (`GALLEON_web_search__anysearch_api_key`,
+/// `GALLEON_web_search__serply_api_key`, `GALLEON_web_search__keenable_api_key`):
 /// the loader applies it to the
 /// in-memory `Config` only, so the runtime hands the effective value to the
 /// tool and the resolver uses it instead of the on-disk field for the lifetime
@@ -160,7 +160,7 @@ pub struct WebSearchTool {
     /// override. The outer `Option` records that an override was applied; an
     /// inner `None` explicitly selects anonymous mode.
     anysearch_api_key_override: Option<Option<String>>,
-    /// Effective Serply credential when `CLAWCREW_web_search__serply_api_key`
+    /// Effective Serply credential when `GALLEON_web_search__serply_api_key`
     /// was applied by the config loader. The outer `Option` records that an
     /// override is active; an inner `None` (blank override) means "not
     /// configured" and must not fall back to the on-disk key.
@@ -209,7 +209,7 @@ impl WebSearchTool {
 
     /// Read the effective schema-mirror env override for the Keenable key out
     /// of a loaded `Config`. The loader has already applied
-    /// `CLAWCREW_web_search__keenable_api_key` to the in-memory field and
+    /// `GALLEON_web_search__keenable_api_key` to the in-memory field and
     /// recorded the path in `env_overridden_paths`; this returns that value,
     /// blank included, only while the override is active, and `None` when the
     /// on-disk field is the source of truth.
@@ -293,7 +293,7 @@ impl WebSearchTool {
     /// Record the schema-mirror env override state for the Serply key.
     ///
     /// Pass `Some(value)` when the config loader applied
-    /// `CLAWCREW_web_search__serply_api_key` (`value` is the in-memory
+    /// `GALLEON_web_search__serply_api_key` (`value` is the in-memory
     /// credential, `None` for a blank override) and `None` when no override is
     /// active, in which case the key keeps being resolved from `config.toml`
     /// at use time.
@@ -1229,7 +1229,7 @@ impl WebSearchTool {
         );
         anyhow::Error::msg(
             "Serply API key not configured. Set [web_search] serply_api_key in \
-             config.toml (or CLAWCREW_web_search__serply_api_key). Obtain one at \
+             config.toml (or GALLEON_web_search__serply_api_key). Obtain one at \
              https://serply.io",
         )
     }
@@ -1828,7 +1828,7 @@ const KEENABLE_PUBLIC_SEARCH_PATH: &str = "/v1/search/public";
 const KEENABLE_TITLE_HEADER: &str = "X-Keenable-Title";
 const KEENABLE_APP_TITLE: &str = "clawcrew";
 /// Dotted prop-path of the key field, in the form `Config::prop_is_env_overridden`
-/// takes. Its env-var spelling is `CLAWCREW_web_search__keenable_api_key`.
+/// takes. Its env-var spelling is `GALLEON_web_search__keenable_api_key`.
 const KEENABLE_API_KEY_PROP_PATH: &str = "web_search.keenable_api_key";
 /// Stable code for a `config.toml` that fails to parse while the Keenable key
 /// is being resolved. The parser's own message quotes the offending source
@@ -2107,7 +2107,7 @@ fn decode_ddg_redirect_url(raw_url: &str) -> String {
 const SEARXNG_NOT_CONFIGURED_KEY: &str = "tool-web-search-tool-error-searxng-not-configured";
 
 /// Names only surfaces that exist: no code reads a `SEARXNG_INSTANCE_URL` env
-/// var, so the env route is the generic `CLAWCREW_<path>` override grammar
+/// var, so the env route is the generic `GALLEON_<path>` override grammar
 /// (`.` -> `__`) implemented in `galleon-config::env_overrides`.
 static SEARXNG_NOT_CONFIGURED_MESSAGE: LazyLock<String> =
     LazyLock::new(|| crate::i18n::get_required_tool_string(SEARXNG_NOT_CONFIGURED_KEY));
@@ -5699,7 +5699,7 @@ mod tests {
 
     /// Regression: the old text pointed at a `SEARXNG_INSTANCE_URL` env var
     /// that no code has ever read. The real surfaces are the config key and
-    /// the generic `CLAWCREW_<path>` override grammar.
+    /// the generic `GALLEON_<path>` override grammar.
     #[test]
     fn searxng_missing_url_message_names_only_real_surfaces() {
         let tmp = tempfile::TempDir::new().unwrap();
@@ -5724,7 +5724,7 @@ mod tests {
             .to_string();
 
         assert!(message.contains("[web_search] searxng_instance_url"));
-        assert!(message.contains("CLAWCREW_web_search__searxng_instance_url"));
+        assert!(message.contains("GALLEON_web_search__searxng_instance_url"));
         assert!(
             !message.contains("SEARXNG_INSTANCE_URL environment variable"),
             "must not advertise an env var nothing reads: {message}"
@@ -6053,7 +6053,7 @@ mod tests {
             "[web_search]\nserply_api_key = \"stored-key\"\n",
         )
         .unwrap();
-        // `CLAWCREW_web_search__serply_api_key=` reaches the tool either as an
+        // `GALLEON_web_search__serply_api_key=` reaches the tool either as an
         // explicit `None` (the loader clears the `Option`) or as an empty string.
         for blank in [None, Some(String::new())] {
             let tool =

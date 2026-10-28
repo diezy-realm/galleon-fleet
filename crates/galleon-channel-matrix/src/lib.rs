@@ -2863,7 +2863,7 @@ mod inbound {
                 ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_outcome(::galleon_log::EventOutcome::Unknown),
                 &format!(
-                    "matrix: cannot persist {} — channels.matrix workspace_dir not configured. Set CLAWCREW_DIR or run via the orchestrator.",
+                    "matrix: cannot persist {} — channels.matrix workspace_dir not configured. Set GALLEON_DIR or run via the orchestrator.",
                     info.file_name
                 )
             );

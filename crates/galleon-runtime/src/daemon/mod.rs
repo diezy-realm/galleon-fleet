@@ -1133,10 +1133,10 @@ pub(crate) enum ConnectionDrain {
 pub(crate) const CONNECTION_DRAIN_GRACE: Duration = Duration::from_millis(5500);
 
 pub(crate) fn socket_path(config: &Config) -> PathBuf {
-    if let Ok(p) = std::env::var("CLAWCREW_SOCKET") {
+    if let Ok(p) = std::env::var("GALLEON_SOCKET") {
         return PathBuf::from(p);
     }
-    config.data_dir.join("clawcrew.sock")
+    config.data_dir.join("galleon.sock")
 }
 
 /// Wait for the connections the transport listeners accepted to finish draining.

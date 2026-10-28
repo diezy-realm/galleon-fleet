@@ -20,7 +20,7 @@ use std::time::{Duration, Instant};
 /// key), the `default` risk/runtime profiles, and an agent that references them.
 /// `[agents.test-agent]` needs no explicit `workspace`, so its workspace
 /// resolves to `<install-root>/agents/test-agent/workspace`, where the install
-/// root is the directory holding `config.toml` (i.e. `CLAWCREW_CONFIG_DIR`).
+/// root is the directory holding `config.toml` (i.e. `GALLEON_CONFIG_DIR`).
 ///
 /// `schema_version = 3` is REQUIRED: `Config::load_or_init` treats a config with
 /// no `schema_version` as V1 (`detect_version` → 1) and runs the V1→V3 migration,
@@ -53,9 +53,9 @@ fn acp_stdio_session_new_omitted_cwd_returns_agent_workspace() {
     // stderr is discarded (logs go there); stdout carries only JSON-RPC frames.
     let mut child = Command::new(env!("CARGO_BIN_EXE_galleon"))
         .arg("acp")
-        .env("CLAWCREW_CONFIG_DIR", config_dir)
+        .env("GALLEON_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")
-        .env_remove("CLAWCREW_WORKSPACE")
+        .env_remove("GALLEON_WORKSPACE")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())

@@ -460,10 +460,10 @@ struct ConfigFileStamp {
     len: u64,
 }
 
-const SYSTEMD_STATUS_ARGS: [&str; 3] = ["--user", "is-active", "clawcrew.service"];
-const SYSTEMD_RESTART_ARGS: [&str; 3] = ["--user", "restart", "clawcrew.service"];
-const OPENRC_STATUS_ARGS: [&str; 2] = ["clawcrew", "status"];
-const OPENRC_RESTART_ARGS: [&str; 2] = ["clawcrew", "restart"];
+const SYSTEMD_STATUS_ARGS: [&str; 3] = ["--user", "is-active", "galleon.service"];
+const SYSTEMD_RESTART_ARGS: [&str; 3] = ["--user", "restart", "galleon.service"];
+const OPENRC_STATUS_ARGS: [&str; 2] = ["galleon", "status"];
+const OPENRC_RESTART_ARGS: [&str; 2] = ["galleon", "restart"];
 
 #[derive(Clone, Copy)]
 #[allow(clippy::struct_excessive_bools)]
@@ -1083,8 +1083,7 @@ enum InboundSlot {
     Ready(InboundTurn),
     Debounced {
         turn: InboundTurn,
-        content:
-            tokio::sync::oneshot::Receiver<(String, Vec<galleon_api::media::MediaAttachment>)>,
+        content: tokio::sync::oneshot::Receiver<(String, Vec<galleon_api::media::MediaAttachment>)>,
     },
 }
 
@@ -2061,10 +2060,7 @@ fn runtime_conversation_memory_key(
 /// history key would concatenate different members' messages into a single
 /// turn attributed to whoever sent last. The history key is resolved by the
 /// caller so runtime callers keep the registry-aware namespace.
-fn message_debounce_key(
-    history_key: String,
-    msg: &galleon_api::channel::ChannelMessage,
-) -> String {
+fn message_debounce_key(history_key: String, msg: &galleon_api::channel::ChannelMessage) -> String {
     match msg.conversation_scope {
         galleon_api::channel::ChannelConversationScope::Sender => history_key,
         galleon_api::channel::ChannelConversationScope::ReplyTarget => {
@@ -3235,8 +3231,7 @@ async fn load_runtime_config_and_defaults(
     parsed.config_path = path.to_path_buf();
 
     if let Some(clawcrew_dir) = path.parent() {
-        let store =
-            galleon_config::secrets::SecretStore::new(clawcrew_dir, parsed.secrets.encrypt);
+        let store = galleon_config::secrets::SecretStore::new(clawcrew_dir, parsed.secrets.encrypt);
         parsed.decrypt_secrets(&store)?;
     }
     let applied = galleon_config::env_overrides::apply_env_overrides(&mut parsed)?;
@@ -5293,7 +5288,7 @@ async fn handle_runtime_command_for_delivery(
                     &ctx.model_routes,
                 );
                 // Use a magic prefix so SlackChannel::send() can detect Block Kit JSON.
-                format!("__CLAWCREW_BLOCK_KIT__{blocks_json}")
+                format!("__GALLEON_BLOCK_KIT__{blocks_json}")
             } else {
                 build_config_text_response(&current, ctx.workspace_dir.as_path(), &ctx.model_routes)
             }
@@ -5955,8 +5950,7 @@ fn truncate_at_incomplete_protocol_json(s: &str) -> String {
             // Nothing completes from here, so this is the unfinished tail and
             // everything after it belongs to the same value.
             _ => {
-                return if galleon_tool_call_parser::looks_like_incomplete_tool_protocol_json(tail)
-                {
+                return if galleon_tool_call_parser::looks_like_incomplete_tool_protocol_json(tail) {
                     s[..at].trim_end().to_string()
                 } else {
                     s.to_string()
@@ -6111,11 +6105,8 @@ async fn run_draft_updater(
                     {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Draft progress update failed"
                         );
                     }
@@ -8731,11 +8722,12 @@ fn resolve_cold_crumb_provenance_result(
         Err(e) => {
             ::galleon_log::record!(
                 DEBUG,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "history_key": history_key,
                         "error": format!("{}", e),
-                    })),
+                    })
+                ),
                 "Trim breadcrumb provenance unreadable; treating as absent without text inference"
             );
             Err(())
@@ -8847,13 +8839,14 @@ async fn process_channel_message_body(
         galleon_security_scrub::ScanOutcome::Suspicious { patterns, score } => {
             ::galleon_log::record!(
                 WARN,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "channel": msg.channel,
                         "sender": msg.sender,
                         "patterns": patterns,
                         "score": score,
-                    })),
+                    })
+                ),
                 "inbound channel message flagged suspicious by ContentSafety guard"
             );
             msg.content = sanitized_content;
@@ -10147,11 +10140,8 @@ async fn process_channel_message_body(
                     galleon_api::hook::HookResult::Cancel(reason) => {
                         ::galleon_log::record!(
                             INFO,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"reason": reason.to_string()})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"reason": reason.to_string()})),
                             "outgoing message suppressed by hook"
                         );
                         if let (Some(channel), Some(draft_id)) =
@@ -10285,11 +10275,8 @@ async fn process_channel_message_body(
                     {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Memory consolidation skipped"
                         );
                     }
@@ -10533,8 +10520,7 @@ async fn process_channel_message_body(
             }
         }
         LlmExecutionResult::Completed(Ok(Err(e))) => {
-            if galleon_api::agent::is_tool_loop_cancelled(&e) || cancellation_token.is_cancelled()
-            {
+            if galleon_api::agent::is_tool_loop_cancelled(&e) || cancellation_token.is_cancelled() {
                 ::galleon_log::record!(
                     INFO,
                     ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
@@ -10622,13 +10608,10 @@ async fn process_channel_message_body(
                     if cache.remove(&cache_key).is_some() {
                         ::galleon_log::record!(
                             INFO,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(
-                                ::serde_json::json!({"model_provider": route.model_provider})
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(
+                                    ::serde_json::json!({"model_provider": route.model_provider})
+                                ),
                             "Evicted cached model_provider after auth error; next request will re-create with fresh credentials"
                         );
                     }
@@ -11378,12 +11361,9 @@ async fn run_message_dispatch_loop(
                     Err(_) => {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Unknown)
-                            .with_attrs(::serde_json::json!({"sender": msg.sender})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Unknown)
+                                .with_attrs(::serde_json::json!({"sender": msg.sender})),
                             "stop executed without acknowledgement: reply budget exhausted"
                         );
                     }
@@ -11771,13 +11751,13 @@ pub async fn bind_telegram_identity(config: &Config, identity: &str, alias: &str
         }
         Ok(false) => {
             println!(
-                "ℹ️ No managed daemon service detected. If `clawcrew daemon`/`channel start` is already running, restart it to load the updated allowlist."
+                "ℹ️ No managed daemon service detected. If `galleon daemon`/`channel start` is already running, restart it to load the updated allowlist."
             );
         }
         Err(e) => {
             eprintln!(
                 "⚠️ Allowlist saved, but failed to reload daemon service automatically: {e}\n\
-                 Restart service manually with `clawcrew service stop && clawcrew service start`."
+                 Restart service manually with `galleon service stop && galleon service start`."
             );
         }
     }
@@ -11792,7 +11772,7 @@ fn maybe_restart_managed_daemon_service() -> Result<bool> {
         let plist = home
             .join("Library")
             .join("LaunchAgents")
-            .join("com.clawcrew.daemon.plist");
+            .join("com.galleon.daemon.plist");
         if !plist.exists() {
             return Ok(false);
         }
@@ -11802,15 +11782,15 @@ fn maybe_restart_managed_daemon_service() -> Result<bool> {
             .output()
             .context("Failed to query launchctl list")?;
         let listed = String::from_utf8_lossy(&list_output.stdout);
-        if !listed.contains("com.clawcrew.daemon") {
+        if !listed.contains("com.galleon.daemon") {
             return Ok(false);
         }
 
         let _ = Command::new("launchctl")
-            .args(["stop", "com.clawcrew.daemon"])
+            .args(["stop", "com.galleon.daemon"])
             .output();
         let start_output = Command::new("launchctl")
-            .args(["start", "com.clawcrew.daemon"])
+            .args(["start", "com.galleon.daemon"])
             .output()
             .context("Failed to start launchd daemon service")?;
         if !start_output.status.success() {
@@ -11823,7 +11803,7 @@ fn maybe_restart_managed_daemon_service() -> Result<bool> {
 
     if cfg!(target_os = "linux") {
         // OpenRC (system-wide) takes precedence over systemd (user-level)
-        let openrc_init_script = PathBuf::from("/etc/init.d/clawcrew");
+        let openrc_init_script = PathBuf::from("/etc/init.d/galleon");
         if openrc_init_script.exists()
             && let Ok(status_output) = Command::new("rc-service").args(OPENRC_STATUS_ARGS).output()
         {
@@ -11849,7 +11829,7 @@ fn maybe_restart_managed_daemon_service() -> Result<bool> {
             .join(".config")
             .join("systemd")
             .join("user")
-            .join("clawcrew.service");
+            .join("galleon.service");
         if !unit_path.exists() {
             return Ok(false);
         }
@@ -12101,7 +12081,7 @@ fn build_channel_by_id(
                 format!(
                     "Slack channel '{alias}': bot_token is not set. Provide it in config \
                      (channels.slack.{alias}.bot_token) or via the \
-                     CLAWCREW_SLACK_BOT_TOKEN / SLACK_BOT_TOKEN environment variable."
+                     GALLEON_SLACK_BOT_TOKEN / SLACK_BOT_TOKEN environment variable."
                 )
             })?;
             Ok(Arc::new(
@@ -12519,11 +12499,8 @@ fn build_channel_by_id(
                     nc.resolve_bot_secret().unwrap_or_else(|e| {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Failure),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Failure),
                             &e.to_string()
                         );
                         None
@@ -13624,7 +13601,7 @@ fn collect_configured_channels(
                     .with_outcome(::galleon_log::EventOutcome::Failure)
                     .with_attrs(::serde_json::json!({ "alias": alias.clone() })),
                 "Slack channel skipped: bot_token not set in config or via \
-                 CLAWCREW_SLACK_BOT_TOKEN / SLACK_BOT_TOKEN env"
+                 GALLEON_SLACK_BOT_TOKEN / SLACK_BOT_TOKEN env"
             );
             continue;
         };
@@ -14801,7 +14778,7 @@ fn collect_configured_channels(
                 ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_outcome(::galleon_log::EventOutcome::Unknown),
                 "Notion channel enabled but `notion.api_key` is unset. Set it via the schema-mirror grammar: \
-                 `CLAWCREW_notion__api_key=...`."
+                 `GALLEON_notion__api_key=...`."
             );
         } else {
             channels.push(ConfiguredChannel {
@@ -16098,7 +16075,7 @@ pub async fn deliver_announcement(
                 format!(
                     "Slack channel '{alias}': bot_token is not set. Provide it in config \
                      (channels.slack.{alias}.bot_token) or via the \
-                     CLAWCREW_SLACK_BOT_TOKEN / SLACK_BOT_TOKEN environment variable."
+                     GALLEON_SLACK_BOT_TOKEN / SLACK_BOT_TOKEN environment variable."
                 )
             })?;
             let ch = SlackChannel::new(

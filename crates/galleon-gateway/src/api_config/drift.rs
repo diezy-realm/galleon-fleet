@@ -85,7 +85,7 @@ pub async fn try_compute_drift(
         if is_gateway_managed_field(name) {
             continue;
         }
-        // Env overrides (`CLAWCREW_<path>`) apply in memory but never persist to
+        // Env overrides (`GALLEON_<path>`) apply in memory but never persist to
         // disk, so a disk comparison always reports drift the operator can't fix.
         if in_memory.prop_is_env_overridden(name) {
             continue;

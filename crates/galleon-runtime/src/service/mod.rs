@@ -27,15 +27,15 @@ use tokio::process::Command as TokioCommand;
 
 const SERVICE_LABEL: &str = "com.galleon.fleet";
 const LEGACY_SERVICE_LABEL: &str = "com.clawcrew.daemon";
-const WINDOWS_TASK_NAME: &str = "ClawCrew Daemon";
+const WINDOWS_TASK_NAME: &str = "Galleon Daemon";
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
 const SERVICE_LOG_MAX_BYTES: u64 = 8 * 1024 * 1024;
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
 const SERVICE_LOG_COMPACT_BYTES: u64 = 4 * 1024 * 1024;
 #[cfg(any(target_os = "linux", test))]
-const OPENRC_STDOUT_LOG: &str = "/var/log/clawcrew/access.log";
+const OPENRC_STDOUT_LOG: &str = "/var/log/galleon/access.log";
 #[cfg(any(target_os = "linux", test))]
-const OPENRC_STDERR_LOG: &str = "/var/log/clawcrew/error.log";
+const OPENRC_STDERR_LOG: &str = "/var/log/galleon/error.log";
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
 const SERVICE_LOG_PENDING_BYTES: usize = 1024 * 1024;
 #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
@@ -3297,7 +3297,7 @@ mod macos_plist_tests {
 mod bounded_service_log_tests {
     use super::*;
 
-    const DESKTOP_CAPTURE_TEST_CHILD_ENV: &str = "CLAWCREW_DESKTOP_CAPTURE_TEST_CHILD";
+    const DESKTOP_CAPTURE_TEST_CHILD_ENV: &str = "GALLEON_DESKTOP_CAPTURE_TEST_CHILD";
 
     fn desktop_capture_test_command(mode: &str) -> TokioCommand {
         let executable = std::env::current_exe().expect("resolve current test binary");
@@ -3514,11 +3514,11 @@ mod bounded_service_log_tests {
         assert_eq!(openrc_log_path(true), Path::new(OPENRC_STDERR_LOG));
         assert_eq!(
             openrc_log_path(false),
-            Path::new("/var/log/clawcrew/access.log")
+            Path::new("/var/log/galleon/access.log")
         );
         assert_eq!(
             openrc_log_path(true),
-            Path::new("/var/log/clawcrew/error.log")
+            Path::new("/var/log/galleon/error.log")
         );
     }
 
@@ -3748,12 +3748,12 @@ mod bounded_service_log_tests {
             if generations == 1 {
                 command.args([
                     "-c",
-                    "printf 'desktop-generation-one:%s\\n' \"$CLAWCREW_DESKTOP_SUPERVISED\"; : > \"$CLAWCREW_DESKTOP_RESTART_MARKER\"; sleep 0.1; exit 75",
+                    "printf 'desktop-generation-one:%s\\n' \"$GALLEON_DESKTOP_SUPERVISED\"; : > \"$GALLEON_DESKTOP_RESTART_MARKER\"; sleep 0.1; exit 75",
                 ]);
             } else {
                 command.args([
                     "-c",
-                    "printf 'desktop-generation-two:%s\\n' \"$CLAWCREW_DESKTOP_SUPERVISED\"; exit 0",
+                    "printf 'desktop-generation-two:%s\\n' \"$GALLEON_DESKTOP_SUPERVISED\"; exit 0",
                 ]);
             }
             Ok(command)
@@ -3797,7 +3797,7 @@ mod bounded_service_log_tests {
         fs::write(
             &replacement,
             format!(
-                "#!/bin/sh\nprintf 'stable-generation-two:%s\\n' \"$CLAWCREW_DESKTOP_SUPERVISED\"\n"
+                "#!/bin/sh\nprintf 'stable-generation-two:%s\\n' \"$GALLEON_DESKTOP_SUPERVISED\"\n"
             ),
         )
         .expect("write replacement child");
@@ -3805,7 +3805,7 @@ mod bounded_service_log_tests {
             .expect("make replacement child executable");
         fs::write(
             &executable,
-            "#!/bin/sh\nprintf 'stable-generation-one:%s\\n' \"$CLAWCREW_DESKTOP_SUPERVISED\"\n: > \"$CLAWCREW_DESKTOP_RESTART_MARKER\"\nmv \"$(dirname \"$0\")/desktop-child.next\" \"$0\"\nexit 75\n",
+            "#!/bin/sh\nprintf 'stable-generation-one:%s\\n' \"$GALLEON_DESKTOP_SUPERVISED\"\n: > \"$GALLEON_DESKTOP_RESTART_MARKER\"\nmv \"$(dirname \"$0\")/desktop-child.next\" \"$0\"\nexit 75\n",
         )
         .expect("write initial child");
         fs::set_permissions(&executable, fs::Permissions::from_mode(0o700))
@@ -4180,8 +4180,8 @@ mod service_helper_tests {
         assert!(script.contains("description=\"ClawCrew daemon\""));
         assert!(script.contains("command=\"/usr/local/bin/clawcrew\""));
         assert!(script.contains("command_args=\"--config-dir /etc/clawcrew daemon\""));
-        assert!(!script.contains("env CLAWCREW_CONFIG_DIR"));
-        assert!(!script.contains("env CLAWCREW_WORKSPACE"));
+        assert!(!script.contains("env GALLEON_CONFIG_DIR"));
+        assert!(!script.contains("env GALLEON_WORKSPACE"));
         assert!(script.contains("command_background=\"yes\""));
         assert!(script.contains("command_user=\"clawcrew:clawcrew\""));
         assert!(script.contains("pidfile=\"/run/${RC_SVCNAME}.pid\""));

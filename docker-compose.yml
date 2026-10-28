@@ -24,16 +24,16 @@ services:
     
     environment:
       # V0.8.0: single env-var override surface — the schema-mirror grammar
-      # `CLAWCREW_<dotted_path_with_double_underscores>=<value>`. Each `__`
+      # `GALLEON_<dotted_path_with_double_underscores>=<value>`. Each `__`
       # is a path separator. Legacy `API_KEY`, `ANTHROPIC_API_KEY`,
-      # `OPENAI_API_KEY`, `PROVIDER`, `CLAWCREW_MODEL` (etc.) fallbacks were
+      # `OPENAI_API_KEY`, `PROVIDER`, `GALLEON_MODEL` (etc.) fallbacks were
       # eradicated.
       #
       # Pick a typed-family alias and set its api_key + model:
-      - CLAWCREW_providers__models__openrouter__default__api_key=${OPENROUTER_API_KEY:-}
-      # - CLAWCREW_providers__models__openrouter__default__model=anthropic/claude-sonnet-4-20250514
-      # - CLAWCREW_providers__models__anthropic__default__api_key=${ANTHROPIC_API_KEY:-}
-      # - CLAWCREW_providers__models__openai__default__api_key=${OPENAI_API_KEY:-}
+      - GALLEON_providers__models__openrouter__default__api_key=${OPENROUTER_API_KEY:-}
+      # - GALLEON_providers__models__openrouter__default__model=anthropic/claude-sonnet-4-20250514
+      # - GALLEON_providers__models__anthropic__default__api_key=${ANTHROPIC_API_KEY:-}
+      # - GALLEON_providers__models__openai__default__api_key=${OPENAI_API_KEY:-}
 
       # Listen on the container interface so Docker's published port can reach
       # the gateway. Docker bridge traffic never arrives on container loopback,
@@ -41,10 +41,10 @@ services:
       # this. `allow_public_bind` only acknowledges the non-loopback listener
       # and silences the startup warning; it does not refuse a public bind.
       # Host-side exposure is bounded by the `ports:` mapping below.
-      - CLAWCREW_gateway__host=0.0.0.0
-      - CLAWCREW_gateway__allow_public_bind=true
+      - GALLEON_gateway__host=0.0.0.0
+      - GALLEON_gateway__allow_public_bind=true
       # Default gateway port inside container
-      - CLAWCREW_gateway__port=${CLAWCREW_GATEWAY_PORT:-42617}
+      - GALLEON_gateway__port=${GALLEON_GATEWAY_PORT:-42617}
       
     volumes:
       # Persist workspace and config (must match WORKDIR/HOME in Dockerfile)
@@ -57,7 +57,7 @@ services:
       # requests. To serve other hosts, drop the `127.0.0.1:` prefix (or set
       # HOST_PORT to an explicit interface) and enable pairing or a tunnel.
       # Override HOST_PORT if 42617 is taken.
-      - "${HOST_PORT:-127.0.0.1:42617}:${CLAWCREW_GATEWAY_PORT:-42617}"
+      - "${HOST_PORT:-127.0.0.1:42617}:${GALLEON_GATEWAY_PORT:-42617}"
     
     # Resource limits
     deploy:

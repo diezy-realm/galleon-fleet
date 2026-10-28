@@ -303,7 +303,7 @@ pub(crate) const APP_JS: &str = r##"(function () {
     pemToDer, sha256Hex, enrollmentSas, createEnrollmentMaterial, derToPem, hex,
   };
   if (typeof globalThis !== 'undefined') {
-    globalThis.__CLAWCREW_ENROLL_CRYPTO__ = clawcrewEnrollCrypto;
+    globalThis.__GALLEON_ENROLL_CRYPTO__ = clawcrewEnrollCrypto;
   }
   // ---- >8 ---- clawcrew-enroll-crypto ---- >8 ----
 
@@ -562,7 +562,7 @@ mod tests {
     fn the_page_csr_is_accepted_by_the_daemon_issuer() {
         let Some(result) = run_page_crypto(
             r#"
-const material = await __CLAWCREW_ENROLL_CRYPTO__.createEnrollmentMaterial('clawcrew-browser');
+const material = await __GALLEON_ENROLL_CRYPTO__.createEnrollmentMaterial('clawcrew-browser');
 process.stdout.write(JSON.stringify(material));
 "#,
         ) else {
@@ -596,9 +596,9 @@ process.stdout.write(JSON.stringify(material));
         let driver = format!(
             r#"
 const caPem = {ca:?};
-const der = __CLAWCREW_ENROLL_CRYPTO__.pemToDer(caPem);
-const fingerprint = await __CLAWCREW_ENROLL_CRYPTO__.sha256Hex(der);
-const sas = await __CLAWCREW_ENROLL_CRYPTO__.enrollmentSas({code:?}, fingerprint);
+const der = __GALLEON_ENROLL_CRYPTO__.pemToDer(caPem);
+const fingerprint = await __GALLEON_ENROLL_CRYPTO__.sha256Hex(der);
+const sas = await __GALLEON_ENROLL_CRYPTO__.enrollmentSas({code:?}, fingerprint);
 process.stdout.write(JSON.stringify({{ fingerprint, sas }}));
 "#,
             ca = ca_cert_pem,

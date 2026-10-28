@@ -2,20 +2,20 @@
 
 set -euo pipefail
 
-runs="${CLAWCREW_PARALLEL_TEST_RUNS:-3}"
-threads="${CLAWCREW_PARALLEL_TEST_THREADS:-16}"
-scope="${CLAWCREW_PARALLEL_TEST_SCOPE:-all}"
+runs="${GALLEON_PARALLEL_TEST_RUNS:-3}"
+threads="${GALLEON_PARALLEL_TEST_THREADS:-16}"
+scope="${GALLEON_PARALLEL_TEST_SCOPE:-all}"
 
 case "$runs" in
     ''|*[!0-9]*|0)
-        echo "CLAWCREW_PARALLEL_TEST_RUNS must be a positive integer (got: $runs)."
+        echo "GALLEON_PARALLEL_TEST_RUNS must be a positive integer (got: $runs)."
         exit 2
         ;;
 esac
 
 case "$threads" in
     ''|*[!0-9]*|0)
-        echo "CLAWCREW_PARALLEL_TEST_THREADS must be a positive integer (got: $threads)."
+        echo "GALLEON_PARALLEL_TEST_THREADS must be a positive integer (got: $threads)."
         exit 2
         ;;
 esac
@@ -28,7 +28,7 @@ case "$scope" in
         crates=(galleon-channels)
         ;;
     *)
-        echo "CLAWCREW_PARALLEL_TEST_SCOPE must be 'channels' or 'all' (got: $scope)."
+        echo "GALLEON_PARALLEL_TEST_SCOPE must be 'channels' or 'all' (got: $scope)."
         exit 2
         ;;
 esac

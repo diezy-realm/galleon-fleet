@@ -456,7 +456,7 @@ fn create_doctor_model_provider(
 ///
 /// The cache is written to `<data_dir>/state/models_cache.json` — the
 /// canonical instance-wide runtime-state directory (databases, daemon
-/// state), honoring `CLAWCREW_DATA_DIR` overrides. Both the CLI writer and
+/// state), honoring `GALLEON_DATA_DIR` overrides. Both the CLI writer and
 /// the channel reader resolve this same path via [`Config::data_dir`].
 pub fn persist_model_cache(
     config: &Config,

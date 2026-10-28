@@ -1,16 +1,16 @@
 use crate::security::secrets::SecretStore;
 use anyhow::{Context, Result};
+use galleon_config::schema::OtpConfig;
 use parking_lot::Mutex;
 use ring::hmac;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
-use galleon_config::schema::OtpConfig;
 
 const OTP_SECRET_FILE: &str = "otp-secret";
 const OTP_DIGITS: u32 = 6;
-const OTP_ISSUER: &str = "ClawCrew";
+const OTP_ISSUER: &str = "Galleon";
 
 #[derive(Debug)]
 pub struct OtpValidator {

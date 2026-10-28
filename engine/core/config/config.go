@@ -56,29 +56,29 @@ func LoadConfig() *AppConfig {
 	}
 
 	// Environment variable overrides
-	if envPort := os.Getenv("CLAWCREW_ENGINE_GRPC_PORT"); envPort != "" {
+	if envPort := os.Getenv("GALLEON_ENGINE_GRPC_PORT"); envPort != "" {
 		if p, err := strconv.Atoi(envPort); err == nil {
 			cfg.GRPCPort = p
 		}
 	}
-	if envMetrics := os.Getenv("CLAWCREW_ENGINE_METRICS_PORT"); envMetrics != "" {
+	if envMetrics := os.Getenv("GALLEON_ENGINE_METRICS_PORT"); envMetrics != "" {
 		if p, err := strconv.Atoi(envMetrics); err == nil {
 			cfg.MetricsPort = p
 		}
 	}
-	if envSystem := os.Getenv("CLAWCREW_RUST_GRPC_ADDR"); envSystem != "" {
+	if envSystem := os.Getenv("GALLEON_RUST_GRPC_ADDR"); envSystem != "" {
 		cfg.SystemGRPC = envSystem
 	}
-	if envBaseURL := os.Getenv("CLAWCREW_LLM_BASE_URL"); envBaseURL != "" {
+	if envBaseURL := os.Getenv("GALLEON_LLM_BASE_URL"); envBaseURL != "" {
 		cfg.LLMBaseURL = envBaseURL
 	}
-	if envAPIKey := os.Getenv("CLAWCREW_LLM_API_KEY"); envAPIKey != "" {
+	if envAPIKey := os.Getenv("GALLEON_LLM_API_KEY"); envAPIKey != "" {
 		cfg.LLMAPIKey = envAPIKey
 	}
-	if envModel := os.Getenv("CLAWCREW_LLM_MODEL"); envModel != "" {
+	if envModel := os.Getenv("GALLEON_LLM_MODEL"); envModel != "" {
 		cfg.LLMModel = envModel
 	}
-	if envLog := os.Getenv("CLAWCREW_LOG_PATH"); envLog != "" {
+	if envLog := os.Getenv("GALLEON_LOG_PATH"); envLog != "" {
 		cfg.LoggerConfig.LogPath = envLog
 	}
 

@@ -4392,18 +4392,15 @@ mod live_smoke {
     #[ignore = "requires Matrix smoke credentials and a disposable test room"]
     async fn same_room_partial_draft_lifecycle_uses_real_draft_ids() {
         let homeserver = env_first(
-            "CLAWCREW_MATRIX_SMOKE_HOMESERVER",
-            "CLAWCREW_MATRIX_HOMESERVER",
+            "GALLEON_MATRIX_SMOKE_HOMESERVER",
+            "GALLEON_MATRIX_HOMESERVER",
         );
-        let room_id = env_first("CLAWCREW_MATRIX_SMOKE_ROOM_ID", "CLAWCREW_MATRIX_ROOM_ID");
+        let room_id = env_first("GALLEON_MATRIX_SMOKE_ROOM_ID", "GALLEON_MATRIX_ROOM_ID");
         let access_token = env_first(
-            "CLAWCREW_MATRIX_SMOKE_ACCESS_TOKEN",
-            "CLAWCREW_MATRIX_ACCESS_TOKEN",
+            "GALLEON_MATRIX_SMOKE_ACCESS_TOKEN",
+            "GALLEON_MATRIX_ACCESS_TOKEN",
         );
-        let device_id = env_first(
-            "CLAWCREW_MATRIX_SMOKE_DEVICE_ID",
-            "CLAWCREW_MATRIX_DEVICE_ID",
-        );
+        let device_id = env_first("GALLEON_MATRIX_SMOKE_DEVICE_ID", "GALLEON_MATRIX_DEVICE_ID");
         let stamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("system time before unix epoch")
@@ -4512,18 +4509,15 @@ mod live_smoke {
     #[ignore = "requires Matrix smoke credentials and a disposable test room"]
     async fn same_room_single_message_draft_edits_one_real_event() {
         let homeserver = env_first(
-            "CLAWCREW_MATRIX_SMOKE_HOMESERVER",
-            "CLAWCREW_MATRIX_HOMESERVER",
+            "GALLEON_MATRIX_SMOKE_HOMESERVER",
+            "GALLEON_MATRIX_HOMESERVER",
         );
-        let room_id = env_first("CLAWCREW_MATRIX_SMOKE_ROOM_ID", "CLAWCREW_MATRIX_ROOM_ID");
+        let room_id = env_first("GALLEON_MATRIX_SMOKE_ROOM_ID", "GALLEON_MATRIX_ROOM_ID");
         let access_token = env_first(
-            "CLAWCREW_MATRIX_SMOKE_ACCESS_TOKEN",
-            "CLAWCREW_MATRIX_ACCESS_TOKEN",
+            "GALLEON_MATRIX_SMOKE_ACCESS_TOKEN",
+            "GALLEON_MATRIX_ACCESS_TOKEN",
         );
-        let device_id = env_first(
-            "CLAWCREW_MATRIX_SMOKE_DEVICE_ID",
-            "CLAWCREW_MATRIX_DEVICE_ID",
-        );
+        let device_id = env_first("GALLEON_MATRIX_SMOKE_DEVICE_ID", "GALLEON_MATRIX_DEVICE_ID");
         let stamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("system time before unix epoch")
@@ -4605,20 +4599,17 @@ mod live_smoke {
     #[ignore = "requires Matrix smoke credentials and a disposable idle test room"]
     async fn idle_sync_does_not_error_at_30s_cadence() {
         let homeserver = env_first(
-            "CLAWCREW_MATRIX_SMOKE_HOMESERVER",
-            "CLAWCREW_MATRIX_HOMESERVER",
+            "GALLEON_MATRIX_SMOKE_HOMESERVER",
+            "GALLEON_MATRIX_HOMESERVER",
         );
-        let room_id = env_first("CLAWCREW_MATRIX_SMOKE_ROOM_ID", "CLAWCREW_MATRIX_ROOM_ID");
+        let room_id = env_first("GALLEON_MATRIX_SMOKE_ROOM_ID", "GALLEON_MATRIX_ROOM_ID");
         let access_token = env_first(
-            "CLAWCREW_MATRIX_SMOKE_ACCESS_TOKEN",
-            "CLAWCREW_MATRIX_ACCESS_TOKEN",
+            "GALLEON_MATRIX_SMOKE_ACCESS_TOKEN",
+            "GALLEON_MATRIX_ACCESS_TOKEN",
         );
-        let device_id = env_first(
-            "CLAWCREW_MATRIX_SMOKE_DEVICE_ID",
-            "CLAWCREW_MATRIX_DEVICE_ID",
-        );
+        let device_id = env_first("GALLEON_MATRIX_SMOKE_DEVICE_ID", "GALLEON_MATRIX_DEVICE_ID");
 
-        let idle_secs: u64 = env::var("CLAWCREW_MATRIX_SMOKE_IDLE_SECS")
+        let idle_secs: u64 = env::var("GALLEON_MATRIX_SMOKE_IDLE_SECS")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(35);
@@ -4626,7 +4617,7 @@ mod live_smoke {
             idle_secs > 30,
             "idle soak must exceed 30s to exercise the pre-fix failure window; got {idle_secs}s"
         );
-        let min_longpoll_ms: u64 = env::var("CLAWCREW_MATRIX_SMOKE_MIN_LONGPOLL_MS")
+        let min_longpoll_ms: u64 = env::var("GALLEON_MATRIX_SMOKE_MIN_LONGPOLL_MS")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(1_000);

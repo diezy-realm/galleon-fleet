@@ -34,7 +34,7 @@ pub trait AudioTranscriber: Send + Sync {
     }
 }
 
-pub const BLOCK_KIT_PREFIX: &str = "__CLAWCREW_BLOCK_KIT__";
+pub const BLOCK_KIT_PREFIX: &str = "__GALLEON_BLOCK_KIT__";
 
 pub fn approval_position_line(position: Option<(u32, u32)>) -> String {
     match position {

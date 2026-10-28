@@ -46,6 +46,7 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, OnceLock};
 
+use galleon_infra::net_guard::NetworkGuardError;
 use hyper::header::HOST;
 use tokio::net::TcpStream;
 use tokio::time::{Instant, timeout, timeout_at};
@@ -55,7 +56,6 @@ use wasmtime_wasi_http::p2::{
     body::HyperOutgoingBody,
     types::{HostFutureIncomingResponse, IncomingResponse, OutgoingRequestConfig},
 };
-use galleon_infra::net_guard::NetworkGuardError;
 
 use crate::egress::{
     AuthorizedEgress, EgressError, EgressHostService, EgressRequest, EgressTransport,
@@ -67,7 +67,7 @@ use crate::instance::{PluginInstanceId, PluginInstanceScope};
 /// It names the policy and nothing else: no host, no address, no matched or
 /// unmatched pattern. A guest must not be able to use denial messages to map the
 /// host's internal network.
-pub const DENIED_MESSAGE: &str = "clawcrew plugin egress policy: destination not permitted";
+pub const DENIED_MESSAGE: &str = "galleon plugin egress policy: destination not permitted";
 
 fn denied() -> ErrorCode {
     ErrorCode::InternalError(Some(DENIED_MESSAGE.to_string()))

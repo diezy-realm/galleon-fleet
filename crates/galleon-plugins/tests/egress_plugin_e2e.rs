@@ -208,7 +208,7 @@ const REDIRECT_TO_METADATA: &str = "HTTP/1.1 302 Found\r\nLocation: http://169.2
 const METADATA_URL: &str = "http://169.254.169.254/latest/meta-data/";
 
 /// The guest renders the host's `ErrorCode` with `{:?}`, so a denial arrives as
-/// `InternalError(Some("clawcrew plugin egress policy: ..."))`.
+/// `InternalError(Some("galleon plugin egress policy: ..."))`.
 fn assert_denied_by_policy(report: &str, hop: &str) {
     let marker = format!("{hop}:error=");
     assert!(

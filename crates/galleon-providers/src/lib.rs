@@ -1335,7 +1335,7 @@ pub(crate) fn api_error_from_parts(
 
 /// Resolve API key for a model_provider from the typed alias config/override.
 /// Env-var bridges land on the alias field at config-load via the
-/// `CLAWCREW_*` schema-mirror grammar; this constructor boundary deliberately
+/// `GALLEON_*` schema-mirror grammar; this constructor boundary deliberately
 /// does not read provider-specific global variables.
 fn resolve_model_provider_credential(
     _name: &str,
@@ -4690,7 +4690,7 @@ mod tests {
 
     #[test]
     fn ollama_uses_resolved_url_from_runtime_options() {
-        // V0.8.0: `CLAWCREW_PROVIDER_URL` env-var override eradicated. Ollama
+        // V0.8.0: `GALLEON_PROVIDER_URL` env-var override eradicated. Ollama
         // base URL flows through the typed alias's `api_url`/`uri` field which
         // pre-populates `provider_api_url` on `ModelProviderRuntimeOptions`.
         let model_provider =
@@ -5570,9 +5570,7 @@ mod tests {
                 base: ModelProviderConfig {
                     model: Some("gpt-4o".to_string()),
                     api_key: Some("a-key".to_string()),
-                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
-                        "openai.b",
-                    )],
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new("openai.b")],
                     ..Default::default()
                 },
             },
@@ -5583,9 +5581,7 @@ mod tests {
                 base: ModelProviderConfig {
                     model: Some("gpt-4.1".to_string()),
                     api_key: Some("b-key".to_string()),
-                    fallback: vec![galleon_config::providers::ModelProviderRef::new(
-                        "openai.a",
-                    )],
+                    fallback: vec![galleon_config::providers::ModelProviderRef::new("openai.a")],
                     ..Default::default()
                 },
             },

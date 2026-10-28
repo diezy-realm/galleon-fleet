@@ -157,7 +157,7 @@ jobs:
           load: ${{ matrix.gateway_smoke || (matrix.dockerfile == 'Dockerfile.alpine' && matrix.platform == 'linux/amd64' && !matrix.cargo_flags) }}
           platforms: ${{ matrix.platform }}
           tags: ${{ matrix.tag }}
-          build-args: ${{ matrix.cargo_flags && format('CLAWCREW_CARGO_FLAGS={0}', matrix.cargo_flags) || '' }}
+          build-args: ${{ matrix.cargo_flags && format('GALLEON_CARGO_FLAGS={0}', matrix.cargo_flags) || '' }}
 
       - name: Verify loaded production image runs as non-root
         if: matrix.gateway_smoke || (matrix.dockerfile == 'Dockerfile.alpine' && matrix.platform == 'linux/amd64' && !matrix.cargo_flags)
@@ -171,7 +171,7 @@ jobs:
       - name: Smoke test Compose published gateway port
         if: matrix.gateway_smoke
         env:
-          CLAWCREW_COMPOSE_SMOKE_IMAGE: ${{ matrix.tag }}
+          GALLEON_COMPOSE_SMOKE_IMAGE: ${{ matrix.tag }}
         run: bash scripts/ci/smoke_docker_compose.sh
 
       - name: Smoke Alpine binaries

@@ -21,8 +21,8 @@
 
 set -euo pipefail
 
-BASE_URL="${CLAWCREW_GATEWAY_URL:-http://localhost:42617}"
-WS_URL="${CLAWCREW_WS_URL:-ws://localhost:42617/ws/chat}"
+BASE_URL="${GALLEON_GATEWAY_URL:-http://localhost:42617}"
+WS_URL="${GALLEON_WS_URL:-ws://localhost:42617/ws/chat}"
 PASS=0
 FAIL=0
 SKIP=0

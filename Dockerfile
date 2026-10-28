@@ -1,16 +1,16 @@
 # syntax=docker/dockerfile:1.7-labs
 
 # >>> generated:base-arg-node from dev/ci/container-base-images.toml by `cargo generate installers` - do not edit <<<
-ARG CLAWCREW_BASE_NODE=node:24-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e
+ARG GALLEON_BASE_NODE=node:24-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e
 # >>> end generated:base-arg-node <<<
 # >>> generated:base-arg-rust-slim from dev/ci/container-base-images.toml by `cargo generate installers` - do not edit <<<
-ARG CLAWCREW_BASE_RUST_SLIM=rust:1.98-slim@sha256:17d1ba895198f9934c6314ec5346a0d5115372f3243390c3d731e242f35c2f27
+ARG GALLEON_BASE_RUST_SLIM=rust:1.98-slim@sha256:17d1ba895198f9934c6314ec5346a0d5115372f3243390c3d731e242f35c2f27
 # >>> end generated:base-arg-rust-slim <<<
 # >>> generated:base-arg-debian from dev/ci/container-base-images.toml by `cargo generate installers` - do not edit <<<
-ARG CLAWCREW_BASE_DEBIAN=debian:trixie-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132
+ARG GALLEON_BASE_DEBIAN=debian:trixie-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132
 # >>> end generated:base-arg-debian <<<
 # >>> generated:base-arg-distroless from dev/ci/container-base-images.toml by `cargo generate installers` - do not edit <<<
-ARG CLAWCREW_BASE_DISTROLESS=gcr.io/distroless/cc-debian13:nonroot@sha256:c31ff9abcb1910f3ab25c7957bdaf0bfe12a01eb546e8df2282f1c8f682b606c
+ARG GALLEON_BASE_DISTROLESS=gcr.io/distroless/cc-debian13:nonroot@sha256:c31ff9abcb1910f3ab25c7957bdaf0bfe12a01eb546e8df2282f1c8f682b606c
 # >>> end generated:base-arg-distroless <<<
 
 # ── Stage 0: Frontend build ─────────────────────────────────────
@@ -18,9 +18,9 @@ ARG CLAWCREW_BASE_DISTROLESS=gcr.io/distroless/cc-debian13:nonroot@sha256:c31ff9
 # frontend tooling stages are pinned to the native build platform. On a
 # multi-platform (`--platform linux/amd64,linux/arm64`) build this keeps node
 # and `cargo web build` running natively instead of under QEMU emulation.
-FROM --platform=$BUILDPLATFORM ${CLAWCREW_BASE_NODE} AS web-node
+FROM --platform=$BUILDPLATFORM ${GALLEON_BASE_NODE} AS web-node
 
-FROM --platform=$BUILDPLATFORM ${CLAWCREW_BASE_RUST_SLIM} AS web-builder
+FROM --platform=$BUILDPLATFORM ${GALLEON_BASE_RUST_SLIM} AS web-builder
 WORKDIR /app
 COPY --from=web-node /usr/local/bin/node /usr/local/bin/node
 COPY --from=web-node /usr/local/lib/node_modules /usr/local/lib/node_modules
@@ -46,12 +46,12 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/regist
 # (amd64 on the GitHub-hosted runners) and cross-compiles to $TARGETARCH so
 # rustc never runs under QEMU. TARGETARCH is injected by BuildKit per target
 # platform (`amd64`/`arm64`).
-FROM --platform=$BUILDPLATFORM ${CLAWCREW_BASE_RUST_SLIM} AS builder
+FROM --platform=$BUILDPLATFORM ${GALLEON_BASE_RUST_SLIM} AS builder
 
 WORKDIR /app
 ARG TARGETARCH
 # >>> generated:docker-features-arg by `cargo generate installers` - do not edit <<<
-ARG CLAWCREW_CARGO_FLAGS="--no-default-features --features acp-bridge,agent-runtime,channel-acp-server,channel-discord,channel-email,channel-filesystem,channel-git,channel-lark,channel-matrix,channel-telegram,channel-webhook,gateway,observability-prometheus,schema-export,whatsapp-web"
+ARG GALLEON_CARGO_FLAGS="--no-default-features --features acp-bridge,agent-runtime,channel-acp-server,channel-discord,channel-email,channel-filesystem,channel-git,channel-lark,channel-matrix,channel-telegram,channel-webhook,gateway,observability-prometheus,schema-export,whatsapp-web"
 # >>> end generated:docker-features-arg <<<
 
 # Install build dependencies. g++ is required by inkjet (zerocode's syntax
@@ -146,8 +146,8 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/regist
     else \
       export RUST_TARGET=x86_64-unknown-linux-gnu; \
     fi && \
-    if [ -n "$CLAWCREW_CARGO_FLAGS" ]; then \
-      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode $CLAWCREW_CARGO_FLAGS; \
+    if [ -n "$GALLEON_CARGO_FLAGS" ]; then \
+      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode $GALLEON_CARGO_FLAGS; \
     else \
       cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode; \
     fi
@@ -201,8 +201,8 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/regist
            target/"$RUST_TARGET"/release/build/zerocode-* \
            target/release/.fingerprint/zerocode-* \
            target/release/build/zerocode-* && \
-    if [ -n "$CLAWCREW_CARGO_FLAGS" ]; then \
-      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode $CLAWCREW_CARGO_FLAGS; \
+    if [ -n "$GALLEON_CARGO_FLAGS" ]; then \
+      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode $GALLEON_CARGO_FLAGS; \
     else \
       cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode; \
     fi && \
@@ -239,7 +239,7 @@ RUN mkdir -p /clawcrew-data/.clawcrew /clawcrew-data/data && \
     chown -R 65534:65534 /clawcrew-data
 
 # ── Stage 2: Development Runtime (Debian) ────────────────────
-FROM ${CLAWCREW_BASE_DEBIAN} AS dev
+FROM ${GALLEON_BASE_DEBIAN} AS dev
 
 # Install essential runtime dependencies only (use docker-compose.override.yml for dev tools)
 RUN apt-get update && apt-get install -y \
@@ -264,15 +264,15 @@ RUN chown 65534:65534 /clawcrew-data/.clawcrew/config.toml
 # Ensure UTF-8 locale so CJK / multibyte input is handled correctly
 ENV LANG=C.UTF-8
 # Bootstrap (uppercase tail) — pre-load: decides where the config file lives.
-ENV CLAWCREW_DATA_DIR=/clawcrew-data/data
+ENV GALLEON_DATA_DIR=/clawcrew-data/data
 ENV HOME=/clawcrew-data
-# V0.8.0 env-var grammar: `CLAWCREW_<dotted_path_with_double_underscores>=<value>`
+# V0.8.0 env-var grammar: `GALLEON_<dotted_path_with_double_underscores>=<value>`
 # mirrors the TOML config 1:1; `__` is the path separator. Operators inject
 # credentials and runtime knobs at `docker run -e ...` (or via docker-compose
-# `environment:`). Legacy `PROVIDER`, `CLAWCREW_MODEL`, `ANTHROPIC_API_KEY`,
+# `environment:`). Legacy `PROVIDER`, `GALLEON_MODEL`, `ANTHROPIC_API_KEY`,
 # `API_KEY`, etc. fallbacks were eradicated. Example:
-#   docker run -e CLAWCREW_providers__models__anthropic__default__api_key=sk-ant-... ...
-ENV CLAWCREW_gateway__port=42617
+#   docker run -e GALLEON_providers__models__anthropic__default__api_key=sk-ant-... ...
+ENV GALLEON_gateway__port=42617
 
 WORKDIR /clawcrew-data
 USER 65534:65534
@@ -283,7 +283,7 @@ ENTRYPOINT ["galleon"]
 CMD ["daemon"]
 
 # ── Stage 3: Production Runtime (Distroless) ─────────────────
-FROM ${CLAWCREW_BASE_DISTROLESS} AS release
+FROM ${GALLEON_BASE_DISTROLESS} AS release
 
 COPY --from=builder /app/galleon /usr/local/bin/galleon
 COPY --from=builder /app/clawcrew /usr/local/bin/clawcrew
@@ -296,12 +296,12 @@ COPY --from=web-builder /app/web/dist /usr/share/clawcrewlabs/web/dist
 # Environment setup
 # Ensure UTF-8 locale so CJK / multibyte input is handled correctly
 ENV LANG=C.UTF-8
-ENV CLAWCREW_DATA_DIR=/clawcrew-data/data
+ENV GALLEON_DATA_DIR=/clawcrew-data/data
 ENV HOME=/clawcrew-data
 # Default provider and model are set in config.toml, not here,
 # so config file edits are not silently overridden
 #ENV PROVIDER=
-ENV CLAWCREW_GATEWAY_PORT=42617
+ENV GALLEON_GATEWAY_PORT=42617
 
 # API_KEY must be provided at runtime!
 

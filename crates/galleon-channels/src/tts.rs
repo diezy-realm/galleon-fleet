@@ -76,7 +76,7 @@ impl OpenAiTtsProvider {
             .map(ToOwned::to_owned)
             .context(
                 "Missing OpenAI TTS API key: set `[tts_providers.openai.<alias>].api_key` (or via \
-                 `CLAWCREW_providers__tts__openai__<alias>__api_key=...`).",
+                 `GALLEON_providers__tts__openai__<alias>__api_key=...`).",
             )?;
 
         Ok(Self {
@@ -195,7 +195,7 @@ impl ElevenLabsTtsProvider {
             .map(ToOwned::to_owned)
             .context(
                 "Missing ElevenLabs API key: set `[tts_providers.elevenlabs.<alias>].api_key` (or \
-                 via `CLAWCREW_providers__tts__elevenlabs__<alias>__api_key=...`).",
+                 via `GALLEON_providers__tts__elevenlabs__<alias>__api_key=...`).",
             )?;
 
         Ok(Self {
@@ -326,7 +326,7 @@ impl GoogleTtsProvider {
             .map(ToOwned::to_owned)
             .context(
                 "Missing Google TTS API key: set `[tts_providers.google.<alias>].api_key` (or via \
-                 `CLAWCREW_providers__tts__google__<alias>__api_key=...`).",
+                 `GALLEON_providers__tts__google__<alias>__api_key=...`).",
             )?;
 
         Ok(Self {
@@ -1433,7 +1433,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn edge_tts_artifact_is_owner_only_and_writable_under_restrictive_umask() {
-        const CHILD_ENV: &str = "CLAWCREW_TTS_UMASK_TEST_CHILD";
+        const CHILD_ENV: &str = "GALLEON_TTS_UMASK_TEST_CHILD";
         const TEST_NAME: &str =
             "tts::tests::edge_tts_artifact_is_owner_only_and_writable_under_restrictive_umask";
 
@@ -2325,9 +2325,10 @@ mod tests {
             &[script],
             std::time::Duration::from_secs(10),
         );
-        let mut handle = galleon_spawn::spawn!(async move {
-            provider.synthesize("hello", "en-US-AriaNeural").await
-        });
+        let mut handle =
+            galleon_spawn::spawn!(
+                async move { provider.synthesize("hello", "en-US-AriaNeural").await }
+            );
         // Wait until the child has created the artifact and recorded its path
         // so the abort deterministically drops the future while `child.wait()`
         // is pending. If startup fails, report the provider result instead of

@@ -137,10 +137,15 @@ def migrate_state(source: Path, target: Path, dry_run: bool = False, force: bool
             shutil.copytree(f_src, f_dest, dirs_exist_ok=True)
             print(f"[DIR] Copied {folder_name} -> {f_dest}")
 
-    # Create migration marker
+    # Create migration markers
+    marker_content = f"Migrated from {source} to {target} by Galleon State Migration Tool\n"
     marker = target / ".migrated"
-    marker.write_text(f"Migrated from {source} by Galleon State Migration Tool\n")
-    print(f"[SUCCESS] Migration completed. Marker written at {marker}")
+    marker.write_text(marker_content)
+    try:
+        (source / ".migrated").write_text(marker_content)
+    except Exception as err:
+        print(f"[WARN] Failed to write marker in source: {err}", file=sys.stderr)
+    print(f"[SUCCESS] Migration completed. Markers written at {marker} and {source / '.migrated'}")
     return True
 
 

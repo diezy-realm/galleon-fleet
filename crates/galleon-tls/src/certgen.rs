@@ -413,17 +413,17 @@ impl CaKeyProtection {
     }
 
     /// Source CA-key protection from the environment (the daemon's opt-in
-    /// passphrase; threat A4). `CLAWCREW_CA_PASSPHRASE` takes precedence; otherwise
-    /// `CLAWCREW_CA_PASSPHRASE_FILE` is read. Unset yields [`CaKeyProtection::None`]
+    /// passphrase; threat A4). `GALLEON_CA_PASSPHRASE` takes precedence; otherwise
+    /// `GALLEON_CA_PASSPHRASE_FILE` is read. Unset yields [`CaKeyProtection::None`]
     /// (the 0600 floor). Every CA generation + read path uses this so the on-disk
     /// form always matches.
     pub fn from_env() -> Self {
-        if let Ok(p) = std::env::var("CLAWCREW_CA_PASSPHRASE")
+        if let Ok(p) = std::env::var("GALLEON_CA_PASSPHRASE")
             && !p.trim().is_empty()
         {
             return Self::passphrase(p.trim());
         }
-        if let Ok(path) = std::env::var("CLAWCREW_CA_PASSPHRASE_FILE")
+        if let Ok(path) = std::env::var("GALLEON_CA_PASSPHRASE_FILE")
             && let Ok(p) = std::fs::read_to_string(&path)
             && !p.trim().is_empty()
         {

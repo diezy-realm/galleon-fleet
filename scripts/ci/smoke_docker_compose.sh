@@ -3,8 +3,8 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-image="${CLAWCREW_COMPOSE_SMOKE_IMAGE:?set CLAWCREW_COMPOSE_SMOKE_IMAGE to a locally loaded image}"
-requested_host_port="${CLAWCREW_COMPOSE_SMOKE_HOST_PORT:-42618}"
+image="${GALLEON_COMPOSE_SMOKE_IMAGE:?set GALLEON_COMPOSE_SMOKE_IMAGE to a locally loaded image}"
+requested_host_port="${GALLEON_COMPOSE_SMOKE_HOST_PORT:-42618}"
 smoke_root="$(mktemp -d)"
 override_file="$smoke_root/compose.override.yml"
 config_file="$smoke_root/config.toml"
@@ -13,10 +13,10 @@ container_name="clawcrew-compose-smoke-$$"
 
 compose() {
   HOST_PORT="127.0.0.1:${requested_host_port}" \
-    CLAWCREW_GATEWAY_PORT=42617 \
-    CLAWCREW_COMPOSE_SMOKE_CONFIG="$config_file" \
-    CLAWCREW_COMPOSE_SMOKE_IMAGE="$image" \
-    CLAWCREW_COMPOSE_SMOKE_CONTAINER="$container_name" \
+    GALLEON_GATEWAY_PORT=42617 \
+    GALLEON_COMPOSE_SMOKE_CONFIG="$config_file" \
+    GALLEON_COMPOSE_SMOKE_IMAGE="$image" \
+    GALLEON_COMPOSE_SMOKE_CONTAINER="$container_name" \
     docker compose \
       --project-name "$project_name" \
       --file "$repo_root/docker-compose.yml" \
@@ -48,12 +48,12 @@ CONFIG
 cat > "$override_file" <<'COMPOSE'
 services:
   clawcrew:
-    image: "${CLAWCREW_COMPOSE_SMOKE_IMAGE}"
+    image: "${GALLEON_COMPOSE_SMOKE_IMAGE}"
     pull_policy: never
-    container_name: "${CLAWCREW_COMPOSE_SMOKE_CONTAINER}"
+    container_name: "${GALLEON_COMPOSE_SMOKE_CONTAINER}"
     restart: "no"
     volumes:
-      - "${CLAWCREW_COMPOSE_SMOKE_CONFIG}:/clawcrew-data/.clawcrew/config.toml:ro"
+      - "${GALLEON_COMPOSE_SMOKE_CONFIG}:/clawcrew-data/.clawcrew/config.toml:ro"
 COMPOSE
 
 compose config --quiet

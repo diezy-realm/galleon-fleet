@@ -1,12 +1,12 @@
 use async_trait::async_trait;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult};
+use galleon_config::autonomy::AutonomyLevel;
+use galleon_config::policy::SecurityPolicy;
 use serde_json::json;
 use std::collections::BTreeSet;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use galleon_api::tool::{Tool, ToolOutput, ToolResult};
-use galleon_config::autonomy::AutonomyLevel;
-use galleon_config::policy::SecurityPolicy;
 
 use crate::util_helpers::clean_verbatim_path;
 
@@ -2182,12 +2182,12 @@ impl Tool for GitOperationsTool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use galleon_config::policy::SecurityPolicy;
     #[cfg(unix)]
     use std::io::Write;
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
     use tempfile::TempDir;
-    use galleon_config::policy::SecurityPolicy;
 
     #[cfg(unix)]
     struct MarkerGitCommandBoundary {
@@ -2205,7 +2205,7 @@ mod tests {
             let mut replacement = std::process::Command::new(program);
             replacement
                 .args(args)
-                .env("CLAWCREW_GIT_BOUNDARY_MARKER", &self.marker)
+                .env("GALLEON_GIT_BOUNDARY_MARKER", &self.marker)
                 .env("GIT_CONFIG_GLOBAL", "/must-not-survive-boundary");
             *command = replacement;
             Ok(())
@@ -2765,7 +2765,7 @@ mod tests {
         let hook = repository.path().join(".git/hooks/post-checkout");
         std::fs::write(
             &hook,
-            "#!/bin/sh\nprintf '%s|%s|%s|%s' \"$GIT_TERMINAL_PROMPT\" \"$GIT_PAGER\" \"${GIT_CONFIG_GLOBAL-unset}\" \"$PWD\" > \"$CLAWCREW_GIT_BOUNDARY_MARKER\"\n",
+            "#!/bin/sh\nprintf '%s|%s|%s|%s' \"$GIT_TERMINAL_PROMPT\" \"$GIT_PAGER\" \"${GIT_CONFIG_GLOBAL-unset}\" \"$PWD\" > \"$GALLEON_GIT_BOUNDARY_MARKER\"\n",
         )
         .unwrap();
         let mut permissions = std::fs::metadata(&hook).unwrap().permissions();

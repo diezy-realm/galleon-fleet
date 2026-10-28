@@ -183,7 +183,7 @@ pub use galleon_tools::{ArcToolRef, DelegateParentToolsHandle};
 
 /// Serply credential override state for `WebSearchTool`.
 ///
-/// `Some(_)` when the config loader applied `CLAWCREW_web_search__serply_api_key`
+/// `Some(_)` when the config loader applied `GALLEON_web_search__serply_api_key`
 /// (the inner value is the in-memory credential, `None` for a blank override),
 /// so the schema-mirror value wins for this process. `None` when no override is
 /// active, in which case the tool keeps resolving `[web_search] serply_api_key`
@@ -1543,7 +1543,7 @@ fn all_tools_with_runtime_on_thread(
                 root_config.secrets.encrypt,
             )
             .with_serply_api_key_override(serply_api_key_override(root_config))
-            // The loader applies `CLAWCREW_web_search__keenable_api_key` in
+            // The loader applies `GALLEON_web_search__keenable_api_key` in
             // memory only. Without handing it over, the tool would reread
             // `config.toml` and miss an env-only key, or send a stored key
             // that a blank override was meant to suppress.
@@ -2610,7 +2610,7 @@ mod tests {
         assert!(!names.contains(&"mcp_prompts".to_string()));
     }
 
-    /// The Serply resolver only honours `CLAWCREW_web_search__serply_api_key`
+    /// The Serply resolver only honours `GALLEON_web_search__serply_api_key`
     /// if the runtime hands it the loader's override state. Pin the mapping for
     /// the three states the loader can produce (no override, non-empty
     /// override, blank override) using the same `set_prop` path the loader
@@ -2624,7 +2624,7 @@ mod tests {
         cfg.web_search.serply_api_key = Some("stored-key".to_string());
         assert_eq!(serply_api_key_override(&cfg), None);
 
-        // `CLAWCREW_web_search__serply_api_key=env-key` applied by the loader.
+        // `GALLEON_web_search__serply_api_key=env-key` applied by the loader.
         cfg.set_prop("web_search.serply_api_key", "env-key")
             .unwrap();
         cfg.env_overridden_paths

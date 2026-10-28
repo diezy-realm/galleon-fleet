@@ -744,7 +744,7 @@ fn validate_keys(params: &[PeerParams]) -> anyhow::Result<()> {
 /// Render the two-tab "bridge ecosystem env vars" widget (sh + PowerShell) from
 /// the `bridge_sh` and `bridge_ps` groups. The schema-mirror name on the left
 /// is derived from a validated path; the ecosystem var on the right lives in
-/// each row's `value`. One widget, both tabs, no literal `CLAWCREW_...` name.
+/// each row's `value`. One widget, both tabs, no literal `GALLEON_...` name.
 fn render_env_var_bridge(vars: &[EnvVarParams]) -> anyhow::Result<String> {
     let sh = env_var_lines(vars, "bridge_sh")?;
     let ps = env_var_lines(vars, "bridge_ps")?;
@@ -779,7 +779,7 @@ fn env_var_lines(vars: &[EnvVarParams], group: &str) -> anyhow::Result<String> {
     Ok(body)
 }
 
-/// Render a single bare `CLAWCREW_...` env-var name for inline prose or a
+/// Render a single bare `GALLEON_...` env-var name for inline prose or a
 /// one-line code block. The path is validated against the schema exactly like
 /// the `env-vars.toml` rows, so an inline reference cannot drift either.
 fn render_env_var_name(path: &str) -> anyhow::Result<String> {
@@ -955,12 +955,12 @@ fn render_model_provider_fields() -> String {
 }
 
 fn env_form(path: &str) -> String {
-    format!("CLAWCREW_{}", path.replace('.', "__"))
+    format!("GALLEON_{}", path.replace('.', "__"))
 }
 
 /// Render the `## Examples` code block from the curated, schema-validated rows
 /// in the `example` group. Comments become `#` lines; each row becomes one
-/// `CLAWCREW_...=value` line. No env-var name is literal in the page — every
+/// `GALLEON_...=value` line. No env-var name is literal in the page — every
 /// one is derived from a validated schema path.
 fn render_env_var_block(vars: &[EnvVarParams], group: &str) -> anyhow::Result<String> {
     let mut body = String::new();

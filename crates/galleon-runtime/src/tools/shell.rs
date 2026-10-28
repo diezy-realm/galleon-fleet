@@ -3,12 +3,12 @@ use crate::security::SecurityPolicy;
 use crate::security::traits::Sandbox;
 use crate::tools::shell_env::SAFE_SHELL_ENV_VARS;
 use async_trait::async_trait;
+use galleon_api::platform::is_android;
+use galleon_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
 use serde_json::json;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
-use galleon_api::platform::is_android;
-use galleon_api::tool::{Tool, ToolOutput, ToolResult, with_ephemeral_workspace_warning};
 
 /// Maximum output size in bytes (1MB).
 const MAX_OUTPUT_BYTES: usize = 1_048_576;
@@ -159,7 +159,7 @@ fn collect_allowed_shell_env_vars(security: &SecurityPolicy) -> Vec<String> {
 
 /// Name of the environment variable that carries the in-flight session key
 /// into shell tools.
-pub(crate) const SESSION_ID_ENV_VAR: &str = "CLAWCREW_SESSION_ID";
+pub(crate) const SESSION_ID_ENV_VAR: &str = "GALLEON_SESSION_ID";
 
 fn get_session_id() -> Option<String> {
     galleon_api::TOOL_LOOP_SESSION_KEY
@@ -1525,7 +1525,7 @@ mod tests {
     #[tokio::test(flavor = "current_thread")]
     async fn shell_does_not_leak_api_key() {
         let _g1 = EnvGuard::set("API_KEY", "sk-test-secret-12345");
-        let _g2 = EnvGuard::set("CLAWCREW_API_KEY", "sk-test-secret-67890");
+        let _g2 = EnvGuard::set("GALLEON_API_KEY", "sk-test-secret-67890");
 
         let tool = ShellTool::new(test_security_with_env_cmd(), test_runtime());
         let result = tool
@@ -1539,7 +1539,7 @@ mod tests {
         );
         assert!(
             !result.output.contains("sk-test-secret-67890"),
-            "CLAWCREW_API_KEY leaked to shell command output"
+            "GALLEON_API_KEY leaked to shell command output"
         );
     }
 
@@ -1583,9 +1583,9 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn shell_allows_configured_env_passthrough() {
-        let _guard = EnvGuard::set("CLAWCREW_TEST_PASSTHROUGH", "db://unit-test");
+        let _guard = EnvGuard::set("GALLEON_TEST_PASSTHROUGH", "db://unit-test");
         let tool = ShellTool::new(
-            test_security_with_env_passthrough(&["CLAWCREW_TEST_PASSTHROUGH"]),
+            test_security_with_env_passthrough(&["GALLEON_TEST_PASSTHROUGH"]),
             test_runtime(),
         );
 
@@ -1596,7 +1596,7 @@ mod tests {
         assert!(result.success);
         assert!(env_output_contains_assignment(
             &result.output,
-            "CLAWCREW_TEST_PASSTHROUGH",
+            "GALLEON_TEST_PASSTHROUGH",
             "db://unit-test"
         ));
     }

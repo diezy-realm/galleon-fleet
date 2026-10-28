@@ -5,10 +5,10 @@
 
 use std::path::PathBuf;
 
-use rusqlite::Connection;
 use galleon_api::model_provider::ChatMessage;
 use galleon_infra::session_backend::{SessionBackend, SessionContext};
 use galleon_infra::session_sqlite::SqliteSessionBackend;
+use rusqlite::Connection;
 
 #[test]
 fn migration_adds_routing_columns_and_set_session_context_persists() {
@@ -17,7 +17,7 @@ fn migration_adds_routing_columns_and_set_session_context_persists() {
     std::fs::create_dir_all(&sessions_dir).expect("mkdir");
     let db_path = sessions_dir.join("sessions.db");
 
-    if let Ok(live) = std::env::var("CLAWCREW_LIVE_SESSIONS_DB") {
+    if let Ok(live) = std::env::var("GALLEON_LIVE_SESSIONS_DB") {
         let live_path = PathBuf::from(&live);
         if live_path.exists() {
             std::fs::copy(&live_path, &db_path).expect("copy live db");
@@ -28,7 +28,7 @@ fn migration_adds_routing_columns_and_set_session_context_persists() {
             );
         }
     } else {
-        println!("CLAWCREW_LIVE_SESSIONS_DB unset; running migration over empty file");
+        println!("GALLEON_LIVE_SESSIONS_DB unset; running migration over empty file");
     }
 
     println!("\n=== BEFORE migration ===");

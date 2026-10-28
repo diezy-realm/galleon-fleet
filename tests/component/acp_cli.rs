@@ -34,7 +34,7 @@ runtime_profile = "default"
     .expect("write ACP config");
 
     let mut child = Command::new(env!("CARGO_BIN_EXE_galleon"))
-        .env("CLAWCREW_CONFIG_DIR", config_dir.path())
+        .env("GALLEON_CONFIG_DIR", config_dir.path())
         .env("RUST_LOG", "off")
         .args(["acp", "--agent", "fable"])
         .current_dir(session_cwd.path())

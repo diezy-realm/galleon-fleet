@@ -2471,9 +2471,9 @@ mod tests {
         use std::process::{Child, Command, Output, Stdio};
         use std::time::{Duration, Instant};
 
-        const CHILD_ENV: &str = "CLAWCREW_WINDOWS_UPDATE_RUNTIME_TEST_CHILD";
-        const READY_ENV: &str = "CLAWCREW_WINDOWS_UPDATE_RUNTIME_TEST_READY";
-        const RELEASE_ENV: &str = "CLAWCREW_WINDOWS_UPDATE_RUNTIME_TEST_RELEASE";
+        const CHILD_ENV: &str = "GALLEON_WINDOWS_UPDATE_RUNTIME_TEST_CHILD";
+        const READY_ENV: &str = "GALLEON_WINDOWS_UPDATE_RUNTIME_TEST_READY";
+        const RELEASE_ENV: &str = "GALLEON_WINDOWS_UPDATE_RUNTIME_TEST_RELEASE";
         const CHILD_TEST: &str =
             "commands::update::tests::windows_runtime_tests::windows_update_runtime_child";
         const POLL_INTERVAL: Duration = Duration::from_millis(10);

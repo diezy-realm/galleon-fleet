@@ -1022,11 +1022,9 @@ impl ModelProvider for GrokCliModelProvider {
 
 impl ::galleon_api::attribution::Attributable for GrokCliModelProvider {
     fn role(&self) -> ::galleon_api::attribution::Role {
-        ::galleon_api::attribution::Role::Provider(
-            ::galleon_api::attribution::ProviderKind::Model(
-                ::galleon_api::attribution::ModelProviderKind::GrokCli,
-            ),
-        )
+        ::galleon_api::attribution::Role::Provider(::galleon_api::attribution::ProviderKind::Model(
+            ::galleon_api::attribution::ModelProviderKind::GrokCli,
+        ))
     }
 
     fn alias(&self) -> &str {
@@ -1369,7 +1367,7 @@ mod tests {
         assert!(!env_var_allowed("XAI_API_KEY", none));
         assert!(!env_var_allowed("XAI_AUTH_TOKEN", none));
         assert!(!env_var_allowed("GROK_SANDBOX", none));
-        assert!(!env_var_allowed("CLAWCREW_SLACK_BOT_TOKEN", none));
+        assert!(!env_var_allowed("GALLEON_SLACK_BOT_TOKEN", none));
         assert!(!env_var_allowed("AWS_SECRET_ACCESS_KEY", none));
         assert!(!env_var_allowed("OPENAI_API_KEY", none));
     }
@@ -1448,7 +1446,7 @@ mod tests {
                     "test-secret".to_string(),
                 ),
                 (
-                    "CLAWCREW_SLACK_BOT_TOKEN".to_string(),
+                    "GALLEON_SLACK_BOT_TOKEN".to_string(),
                     "test-token".to_string(),
                 ),
                 ("XAI_API_KEY".to_string(), "test-xai-key".to_string()),
@@ -1479,7 +1477,7 @@ mod tests {
         assert!(
             !copied
                 .iter()
-                .any(|(name, _)| name == "CLAWCREW_SLACK_BOT_TOKEN")
+                .any(|(name, _)| name == "GALLEON_SLACK_BOT_TOKEN")
         );
         assert!(!copied.iter().any(|(name, _)| name == "XAI_API_KEY"));
         assert!(!copied.iter().any(|(name, _)| name == "GROK_SANDBOX"));

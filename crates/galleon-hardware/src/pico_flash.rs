@@ -3,12 +3,12 @@
 use super::device::DeviceRegistry;
 use super::uf2;
 use async_trait::async_trait;
-use serde_json::json;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 use galleon_api::attribution::ToolKind;
 use galleon_api::tool::{Tool, ToolResult};
 use galleon_api::tool_attribution;
+use serde_json::json;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 tool_attribution!(PicoFlashTool, ToolKind::Plugin);
 
@@ -169,12 +169,9 @@ impl Tool for PicoFlashTool {
                     None => {
                         ::galleon_log::record!(
                             WARN,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Fail
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Failure)
-                            .with_attrs(::serde_json::json!({"port": port_str})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
+                                .with_attrs(::serde_json::json!({"port": port_str})),
                             "no pico alias in registry; cannot reconnect transport after flash"
                         );
                         Err(anyhow::Error::msg(
@@ -297,7 +294,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "may flash attached hardware"]
     async fn execute_with_confirm_true_does_not_panic_when_explicitly_opted_in() {
-        const HARDWARE_TEST_OPT_IN: &str = "CLAWCREW_RUN_PICO_HARDWARE_TESTS";
+        const HARDWARE_TEST_OPT_IN: &str = "GALLEON_RUN_PICO_HARDWARE_TESTS";
 
         assert_eq!(
             std::env::var(HARDWARE_TEST_OPT_IN).as_deref(),

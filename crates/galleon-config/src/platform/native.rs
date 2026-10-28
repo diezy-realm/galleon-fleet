@@ -1,7 +1,7 @@
-use std::path::{Path, PathBuf};
 #[cfg(not(target_os = "windows"))]
 use galleon_api::platform::is_android;
 use galleon_api::runtime_traits::{RuntimeAdapter, ShellDialect, ShellProfile};
+use std::path::{Path, PathBuf};
 
 pub fn windows_cmd_shell_raw_arg(command: &str) -> String {
     format!("\"{command}\"")
@@ -156,8 +156,8 @@ impl RuntimeAdapter for NativeRuntime {
 
     fn storage_path(&self) -> PathBuf {
         directories::UserDirs::new().map_or_else(
-            || PathBuf::from(".clawcrew"),
-            |u| u.home_dir().join(".clawcrew"),
+            || PathBuf::from(".config").join("galleon"),
+            |u| u.home_dir().join(".config").join("galleon"),
         )
     }
 
@@ -414,9 +414,9 @@ mod tests {
     }
 
     #[test]
-    fn native_storage_path_contains_clawcrew() {
+    fn native_storage_path_contains_galleon() {
         let path = NativeRuntime::new().storage_path();
-        assert!(path.to_string_lossy().contains("clawcrew"));
+        assert!(path.to_string_lossy().contains("galleon"));
     }
 
     #[test]

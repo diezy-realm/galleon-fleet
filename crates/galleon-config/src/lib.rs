@@ -13,6 +13,7 @@ pub mod autonomy;
 pub mod browse;
 pub mod classifier;
 pub mod comment_writer;
+pub mod config_migration;
 pub mod cost;
 pub mod domain_matcher;
 pub mod dto;

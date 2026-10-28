@@ -38,7 +38,7 @@ fn canonical(dir: &Path) -> PathBuf {
     std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf())
 }
 
-const CACHE_ENABLED_ENV: &str = "CLAWCREW_SKILLS_CACHE_ENABLED";
+const CACHE_ENABLED_ENV: &str = "GALLEON_SKILLS_CACHE_ENABLED";
 
 /// Pure kill-switch decision split from the env read so it stays testable
 /// without mutating process-global state. The cache is enabled unless the value

@@ -443,7 +443,7 @@ async fn check_websocket_handshake(config: &crate::config::Config) -> CheckResul
             "websocket",
             format!(
                 "pairing required but no bearer token available for self-test \
-                 (set CLAWCREW_GATEWAY_TOKEN or keep a plaintext zc_* entry in \
+                 (set GALLEON_GATEWAY_TOKEN or keep a plaintext zc_* entry in \
                  gateway.paired_tokens): {display_url}"
             ),
         );
@@ -505,11 +505,11 @@ fn build_websocket_probe_url(
 }
 
 /// Resolve a plaintext gateway bearer token for local diagnostics.
-/// Precedence: `CLAWCREW_GATEWAY_TOKEN`, then `CLAWCREW_ACP_BRIDGE_TOKEN`,
+/// Precedence: `GALLEON_GATEWAY_TOKEN`, then `GALLEON_ACP_BRIDGE_TOKEN`,
 /// then the first plaintext (`zc_*`) entry in `gateway.paired_tokens`.
 #[cfg(feature = "gateway")]
 fn resolve_gateway_bearer_token(config: &crate::config::Config) -> Option<String> {
-    for key in ["CLAWCREW_GATEWAY_TOKEN", "CLAWCREW_ACP_BRIDGE_TOKEN"] {
+    for key in ["GALLEON_GATEWAY_TOKEN", "GALLEON_ACP_BRIDGE_TOKEN"] {
         if let Ok(value) = std::env::var(key) {
             let trimmed = value.trim();
             if !trimmed.is_empty() {

@@ -289,7 +289,7 @@ fn scheduled_trivy_verifies_published_tag_before_scan() {
 fn root_compose_publishes_on_host_loopback_by_default() {
     let compose = repository_file("docker-compose.yml");
     let required_overrides =
-        "- CLAWCREW_gateway__host=0.0.0.0\n      - CLAWCREW_gateway__allow_public_bind=true";
+        "- GALLEON_gateway__host=0.0.0.0\n      - GALLEON_gateway__allow_public_bind=true";
 
     assert!(
         compose.contains(required_overrides),
@@ -301,7 +301,7 @@ fn root_compose_publishes_on_host_loopback_by_default() {
     // loopback: a persisted `require_pairing = false` config answers
     // unauthenticated requests on /webhook, /api/config, and /api/browse.
     assert!(
-        compose.contains("${HOST_PORT:-127.0.0.1:42617}:${CLAWCREW_GATEWAY_PORT:-42617}"),
+        compose.contains("${HOST_PORT:-127.0.0.1:42617}:${GALLEON_GATEWAY_PORT:-42617}"),
         "Compose must publish the gateway port on host loopback by default"
     );
 }
@@ -367,13 +367,13 @@ fn plugin_enabled_container_variants_stage_wit_and_have_source_build_coverage() 
             .find("COPY wit/ wit/")
             .unwrap_or_else(|| panic!("{name} must stage the repository WIT contract"));
         let dependency_build = builder
-            .find("$CLAWCREW_CARGO_FLAGS;")
+            .find("$GALLEON_CARGO_FLAGS;")
             .unwrap_or_else(|| panic!("{name} must expose its feature-enabled dependency build"));
         let source_copy = builder
             .find("COPY crates/ crates/")
             .unwrap_or_else(|| panic!("{name} must copy real crate sources"));
         let source_build = builder
-            .rfind("$CLAWCREW_CARGO_FLAGS;")
+            .rfind("$GALLEON_CARGO_FLAGS;")
             .unwrap_or_else(|| panic!("{name} must expose its feature-enabled source build"));
         let cleanup_window = &builder[dependency_build..source_copy];
         let cleanup_instructions: Vec<_> = cleanup_window
@@ -446,7 +446,7 @@ fn plugin_enabled_container_variants_stage_wit_and_have_source_build_coverage() 
         build.contains(
             "load: ${{ matrix.gateway_smoke || (matrix.dockerfile == 'Dockerfile.alpine' && matrix.platform == 'linux/amd64' && !matrix.cargo_flags) }}"
         ) && build.contains(
-            "build-args: ${{ matrix.cargo_flags && format('CLAWCREW_CARGO_FLAGS={0}', matrix.cargo_flags) || '' }}"
+            "build-args: ${{ matrix.cargo_flags && format('GALLEON_CARGO_FLAGS={0}', matrix.cargo_flags) || '' }}"
         ),
         "source-image build must pass feature flags conditionally and keep feature lanes build-only"
     );
@@ -482,7 +482,7 @@ fn source_containerfiles_stage_nested_workspace_members_during_prefetch() {
         let containerfile = repository_file(name);
         let builder = builder_stage(&containerfile, name);
         let dependency_build = builder
-            .find("$CLAWCREW_CARGO_FLAGS;")
+            .find("$GALLEON_CARGO_FLAGS;")
             .unwrap_or_else(|| panic!("{name} must expose its dependency build"));
         let prefetch = &builder[..dependency_build];
         let generic_fixture_manifests =

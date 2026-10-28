@@ -1,8 +1,8 @@
 use crate::schema::DockerRuntimeConfig;
 use anyhow::{Context, Result};
+use galleon_api::runtime_traits::{RuntimeAdapter, ShellDialect};
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
-use galleon_api::runtime_traits::{RuntimeAdapter, ShellDialect};
 
 /// Canonicalization failures that the runtime layer can present through
 /// localized tool diagnostics without parsing an English error chain.
@@ -163,9 +163,9 @@ impl RuntimeAdapter for DockerRuntime {
 
     fn storage_path(&self) -> PathBuf {
         if self.config.mount_workspace {
-            PathBuf::from("/workspace/.clawcrew")
+            PathBuf::from("/workspace/.config/galleon")
         } else {
-            PathBuf::from("/tmp/.clawcrew")
+            PathBuf::from("/tmp/.config/galleon")
         }
     }
 

@@ -94,9 +94,9 @@ pub struct ListEntry {
     pub value: Option<serde_json::Value>,
     pub populated: bool,
     pub is_secret: bool,
-    /// Whether this field was populated by a `CLAWCREW_*` env-var override
+    /// Whether this field was populated by a `GALLEON_*` env-var override
     /// at load time. The dashboard renders the 💉 badge and a persistent
-    /// warning *"Edits here won't take effect — overridden by CLAWCREW_..."*
+    /// warning *"Edits here won't take effect — overridden by GALLEON_..."*
     /// when this is `true`.
     #[serde(default, skip_serializing_if = "is_false")]
     pub is_env_overridden: bool,

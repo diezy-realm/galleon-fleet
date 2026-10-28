@@ -51,10 +51,9 @@ impl ControlPlaneRecoveryOwner {
         if reclaimed > 0 {
             ::galleon_log::record!(
                 INFO,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(
-                        ::serde_json::json!({ "reconciled": reclaimed, "boot_id": boot_id })
-                    ),
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({ "reconciled": reclaimed, "boot_id": boot_id })
+                ),
                 "control-plane: reconciled prior-boot tasks at startup"
             );
         }
@@ -281,7 +280,7 @@ mod tests {
     #[test]
     #[ignore]
     fn live_owner_process_helper() {
-        if std::env::var_os("CLAWCREW_LIVE_OWNER_TEST_HELPER").is_some() {
+        if std::env::var_os("GALLEON_LIVE_OWNER_TEST_HELPER").is_some() {
             std::thread::sleep(std::time::Duration::from_secs(60));
         }
     }
@@ -307,7 +306,7 @@ mod tests {
                     "--exact",
                     "control_plane::boot::tests::live_owner_process_helper",
                 ])
-                .env("CLAWCREW_LIVE_OWNER_TEST_HELPER", "1")
+                .env("GALLEON_LIVE_OWNER_TEST_HELPER", "1")
                 .spawn()
                 .unwrap(),
         );

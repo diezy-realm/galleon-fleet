@@ -440,8 +440,8 @@ Examples:
   $0 --uninstall                               # remove ClawCrew
 
 Environment:
-  CLAWCREW_INSTALL_DIR   Source checkout override (default: PREFIX/.clawcrew/src)
-  CLAWCREW_CARGO_FEATURES  Extra cargo features (legacy; prefer --features)
+  GALLEON_INSTALL_DIR   Source checkout override (default: PREFIX/.clawcrew/src)
+  GALLEON_CARGO_FEATURES  Extra cargo features (legacy; prefer --features)
 EOF
 }
 
@@ -776,8 +776,8 @@ USER_APPS=""    # ""=unset (default apps), "none"=skip all, or comma list (e.g. 
 FULL_APPS=false # true when --full: install every discovered app, not just the defaults
 
 # Support legacy env var
-if [ -n "${CLAWCREW_CARGO_FEATURES:-}" ]; then
-  USER_FEATURES="${USER_FEATURES:+$USER_FEATURES,}$CLAWCREW_CARGO_FEATURES"
+if [ -n "${GALLEON_CARGO_FEATURES:-}" ]; then
+  USER_FEATURES="${USER_FEATURES:+$USER_FEATURES,}$GALLEON_CARGO_FEATURES"
 fi
 
 while [ $# -gt 0 ]; do
@@ -860,7 +860,7 @@ done
 
 CARGO_HOME="${CARGO_HOME:-$PREFIX/.cargo}"
 RUSTUP_HOME="${RUSTUP_HOME:-$PREFIX/.rustup}"
-INSTALL_DIR="${CLAWCREW_INSTALL_DIR:-$PREFIX/.clawcrew/src}"
+INSTALL_DIR="${GALLEON_INSTALL_DIR:-$PREFIX/.clawcrew/src}"
 ORIGINAL_PATH="$PATH"
 PATH="$CARGO_HOME/bin:$PATH"
 export CARGO_HOME RUSTUP_HOME PATH
