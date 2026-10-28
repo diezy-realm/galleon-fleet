@@ -985,7 +985,7 @@ async fn run_agent_job(
                     "cli:{}",
                     session_path.display()
                 ));
-                if let Ok(mem) = clawcrew_memory::create_memory_for_agent(
+                if let Ok(mem) = galleon_memory::create_memory_for_agent(
                     config,
                     agent_alias,
                     config

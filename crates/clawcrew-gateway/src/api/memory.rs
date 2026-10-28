@@ -5,7 +5,7 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Json},
 };
-use clawcrew_memory::MemoryEntry;
+use galleon_memory::MemoryEntry;
 use serde::Deserialize;
 
 use super::require_auth;
@@ -51,7 +51,7 @@ pub struct MemoryDeleteQuery {
 pub(crate) async fn resolve_memory_handle(
     state: &AppState,
     agent_alias: Option<&str>,
-) -> Result<std::sync::Arc<dyn clawcrew_memory::Memory>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<std::sync::Arc<dyn galleon_memory::Memory>, (StatusCode, Json<serde_json::Value>)> {
     let alias = match agent_alias.map(str::trim).filter(|s| !s.is_empty()) {
         Some(a) => a,
         None => return Ok(state.mem.clone()),
@@ -68,7 +68,7 @@ pub(crate) async fn resolve_memory_handle(
     let api_key = config
         .resolved_model_provider_for_agent(alias)
         .and_then(|(_, _, cfg)| cfg.api_key.clone());
-    clawcrew_memory::create_memory_for_agent(&config, alias, api_key.as_deref())
+    galleon_memory::create_memory_for_agent(&config, alias, api_key.as_deref())
         .await
         .map_err(|e| {
             (
@@ -123,10 +123,10 @@ pub async fn handle_api_memory_list(
     } else {
         // List mode
         let category = params.category.as_deref().map(|cat| match cat {
-            "core" => clawcrew_memory::MemoryCategory::Core,
-            "daily" => clawcrew_memory::MemoryCategory::Daily,
-            "conversation" => clawcrew_memory::MemoryCategory::Conversation,
-            other => clawcrew_memory::MemoryCategory::Custom(other.to_string()),
+            "core" => galleon_memory::MemoryCategory::Core,
+            "daily" => galleon_memory::MemoryCategory::Daily,
+            "conversation" => galleon_memory::MemoryCategory::Conversation,
+            other => galleon_memory::MemoryCategory::Custom(other.to_string()),
         });
 
         match mem.list(category.as_ref(), None).await {
@@ -183,12 +183,12 @@ pub async fn handle_api_memory_store(
         .category
         .as_deref()
         .map(|cat| match cat {
-            "core" => clawcrew_memory::MemoryCategory::Core,
-            "daily" => clawcrew_memory::MemoryCategory::Daily,
-            "conversation" => clawcrew_memory::MemoryCategory::Conversation,
-            other => clawcrew_memory::MemoryCategory::Custom(other.to_string()),
+            "core" => galleon_memory::MemoryCategory::Core,
+            "daily" => galleon_memory::MemoryCategory::Daily,
+            "conversation" => galleon_memory::MemoryCategory::Conversation,
+            other => galleon_memory::MemoryCategory::Custom(other.to_string()),
         })
-        .unwrap_or(clawcrew_memory::MemoryCategory::Core);
+        .unwrap_or(galleon_memory::MemoryCategory::Core);
 
     let mem = match resolve_memory_handle(&state, body.agent.as_deref()).await {
         Ok(m) => m,

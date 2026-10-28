@@ -116,7 +116,7 @@ use clawcrew_config::autonomy::AutonomyLevel;
 use clawcrew_config::policy::SecurityPolicy;
 use clawcrew_config::scattered_types::{ThinkingConfig, ThinkingLevel};
 use clawcrew_config::schema::Config;
-use clawcrew_memory::{self, MEMORY_CONTEXT_CLOSE, MEMORY_CONTEXT_OPEN, Memory};
+use galleon_memory::{self, MEMORY_CONTEXT_CLOSE, MEMORY_CONTEXT_OPEN, Memory};
 use clawcrew_providers::reliable::ProviderFallbackInfo;
 use clawcrew_providers::{
     self, ChatMessage, ModelProvider, ProviderDispatch, SafeguardFallbackKind,
@@ -9121,7 +9121,7 @@ async fn process_channel_message_body(
     let autosave_content = strip_inline_data_image_markers(&history_user_content);
     if ctx.auto_save_memory
         && autosave_content.chars().count() >= AUTOSAVE_MIN_MESSAGE_CHARS
-        && !clawcrew_memory::should_skip_autosave_content(&autosave_content)
+        && !galleon_memory::should_skip_autosave_content(&autosave_content)
     {
         let autosave_key = runtime_conversation_memory_key(ctx.as_ref(), &msg);
         let _ = ctx
@@ -9129,7 +9129,7 @@ async fn process_channel_message_body(
             .store(
                 &autosave_key,
                 &autosave_content,
-                clawcrew_memory::MemoryCategory::Conversation,
+                galleon_memory::MemoryCategory::Conversation,
                 Some(&history_key),
             )
             .await;
@@ -13569,7 +13569,7 @@ fn collect_configured_channels(
             }));
         }
         if dc.archive {
-            match clawcrew_memory::SqliteMemory::new_named("sqlite", &config.data_dir, "discord") {
+            match galleon_memory::SqliteMemory::new_named("sqlite", &config.data_dir, "discord") {
                 Ok(mem) => {
                     discord_ch = discord_ch.with_archive_memory(std::sync::Arc::new(mem));
                 }
@@ -15640,7 +15640,7 @@ pub async fn start_channels_with_plugin_webhooks(
         }
 
         SecurityPolicy::for_agent(&config, agent_alias)?;
-        let mem: Arc<dyn Memory> = clawcrew_memory::create_memory_for_agent(
+        let mem: Arc<dyn Memory> = galleon_memory::create_memory_for_agent(
             &config,
             agent_alias,
             provider_api_key.as_deref(),
@@ -15820,7 +15820,7 @@ pub async fn start_channels_with_plugin_webhooks(
         let interrupt_on_new_message = interrupt_on_new_message_config(&config.channels);
 
         let memory_strategy: Arc<dyn MemoryStrategy> =
-            Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+            Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
                 Arc::clone(&mem),
                 config.memory.clone(),
                 config.data_dir.clone(),
@@ -16397,7 +16397,7 @@ fn concurrent_persist_lock_serialization() {
         agent_alias: Arc::new("test".into()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(tests::NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(tests::NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -16561,7 +16561,7 @@ fn test_channel_ctx_with_backend(
         agent_alias: Arc::new("test".into()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(tests::NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(tests::NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -16664,7 +16664,7 @@ fn test_channel_ctx_with_backend_channel_and_provider(
         agent_alias: Arc::new("test".into()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(tests::NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(tests::NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),

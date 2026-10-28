@@ -6,7 +6,7 @@ Panduan pemindahan state Galleon Fleet (konfigurasi, basis data SQLite memori, j
 
 ## 1. Peringatan Keamanan Kritis: SQLite WAL Mode
 
-Seluruh database memori di `crates/clawcrew-memory` (seperti `knowledge.db`, `audit.db`, `response_cache.db`) beroperasi dengan **`PRAGMA journal_mode = WAL;`**.
+Seluruh database memori di `crates/galleon-memory` (seperti `knowledge.db`, `audit.db`, `response_cache.db`) beroperasi dengan **`PRAGMA journal_mode = WAL;`**.
 
 > [!CAUTION]
 > **JANGAN PERNAH** menyalin hanya file `.db` saat transaksi aktif masih ada di file `-wal`! 

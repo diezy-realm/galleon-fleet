@@ -1518,7 +1518,7 @@ mod tests {
         Sop, SopExecutionMode, SopPriority, SopRunAction, SopStep, SopTrigger, SopTriggerSource,
     };
     use clawcrew_config::schema::SopConfig;
-    use clawcrew_memory::traits::{Memory, MemoryCategory, MemoryEntry};
+    use galleon_memory::traits::{Memory, MemoryCategory, MemoryEntry};
 
     fn test_sop(name: &str, triggers: Vec<SopTrigger>) -> Sop {
         Sop {

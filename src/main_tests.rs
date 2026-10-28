@@ -3210,7 +3210,7 @@
     async fn sop_maintenance_tick_dispatches_cached_cron_triggers() {
         use std::sync::{Arc, Mutex};
         use clawcrew_config::schema::{MemoryConfig, SopConfig};
-        use clawcrew_memory::traits::Memory;
+        use galleon_memory::traits::Memory;
         use clawcrew_runtime::sop::{
             Sop, SopEngine, SopExecutionMode, SopPriority, SopStep, SopStepKind, SopTrigger,
         };
@@ -3253,7 +3253,7 @@
             ..MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
         let audit = Arc::new(clawcrew_runtime::sop::SopAuditLogger::new(memory));
         let cache = clawcrew_runtime::sop::dispatch::SopCronCache::from_engine(&engine);
 

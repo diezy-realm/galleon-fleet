@@ -46,7 +46,7 @@ inline blocks flagged separately and not treated as must-fix):
 
 Crates in scope (runtime-reachable text per #7828): `clawcrew-channels`,
 `galleon-tools`, `clawcrew-providers`, `clawcrew-runtime`, `clawcrew-gateway`,
-`clawcrew-memory`, `apps/zerocode`, and the root `src/` binary.
+`galleon-memory`, `apps/zerocode`, and the root `src/` binary.
 
 High-risk surfaces reviewed explicitly: channel message chunking/cards
 (discord, telegram, lark, slack, matrix, notion, nextcloud), tool output

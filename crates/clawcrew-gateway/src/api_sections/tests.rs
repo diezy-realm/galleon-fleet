@@ -288,7 +288,7 @@ fn empty_cfg() -> clawcrew_config::schema::Config {
 
 fn section_test_state(config: clawcrew_config::schema::Config) -> AppState {
     let memory: std::sync::Arc<dyn clawcrew_api::memory_traits::Memory> =
-        std::sync::Arc::new(clawcrew_memory::NoneMemory::new("none"));
+        std::sync::Arc::new(galleon_memory::NoneMemory::new("none"));
     AppState {
         config: std::sync::Arc::new(parking_lot::RwLock::new(config)),
         config_write_lock: std::sync::Arc::new(tokio::sync::Mutex::new(())),
@@ -297,7 +297,7 @@ fn section_test_state(config: clawcrew_config::schema::Config) -> AppState {
         temperature: None,
         mem: memory.clone(),
         memory_strategy: std::sync::Arc::new(
-            clawcrew_memory::strategy::DefaultMemoryStrategy::with_config(
+            galleon_memory::strategy::DefaultMemoryStrategy::with_config(
                 memory,
                 clawcrew_config::schema::MemoryConfig::default(),
                 std::path::PathBuf::new(),
@@ -538,7 +538,7 @@ fn providers_picker_marks_alias_readiness() {
 fn memory_picker_sources_from_selectable_backends() {
     let cfg = empty_cfg();
     let items = memory_picker(&cfg);
-    // Mirrors clawcrew_memory::selectable_memory_backends() exactly.
+    // Mirrors galleon_memory::selectable_memory_backends() exactly.
     let keys: Vec<&str> = items.iter().map(|i| i.key.as_str()).collect();
     assert!(keys.contains(&"sqlite"));
     assert!(keys.contains(&"none"));

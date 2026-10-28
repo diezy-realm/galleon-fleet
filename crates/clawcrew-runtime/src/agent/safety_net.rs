@@ -42,7 +42,7 @@ fn mem_none(workspace: &Path) -> Arc<dyn Memory> {
         ..clawcrew_config::schema::MemoryConfig::default()
     };
     Arc::from(
-        clawcrew_memory::create_memory(&cfg, workspace, None)
+        galleon_memory::create_memory(&cfg, workspace, None)
             .expect("memory creation should succeed"),
     )
 }

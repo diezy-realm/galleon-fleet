@@ -128,7 +128,7 @@ use anyhow::{Context, Result};
 use clawcrew_api::channel::Channel;
 use clawcrew_api::ingress::{IngressContext, TurnOrigin};
 use clawcrew_config::schema::Config;
-use clawcrew_memory::{self, Memory, MemoryCategory};
+use galleon_memory::{self, Memory, MemoryCategory};
 #[cfg(test)]
 use clawcrew_providers::ChatRequest;
 use clawcrew_providers::{self, ChatMessage, ModelProvider, ToolCall};
@@ -181,9 +181,9 @@ fn should_autosave_user_message(
     content: &str,
 ) -> bool {
     auto_save
-        && clawcrew_memory::should_autosave_origin(origin)
+        && galleon_memory::should_autosave_origin(origin)
         && content.chars().count() >= AUTOSAVE_MIN_MESSAGE_CHARS
-        && !clawcrew_memory::should_skip_autosave_content(content)
+        && !galleon_memory::should_skip_autosave_content(content)
 }
 
 pub(crate) const MAX_INTERACTIVE_INPUT_BYTES: usize = 1024 * 1024; // 1 MiB
@@ -1283,12 +1283,12 @@ pub async fn run(
         let agent_model_provider = agent_provider_resolved.as_ref().map(|(_, _, cfg)| cfg);
 
         let mem: Arc<dyn Memory> = if memory_free {
-            Arc::new(clawcrew_memory::NoneMemory::new("none"))
+            Arc::new(galleon_memory::NoneMemory::new("none"))
         } else {
             match overrides.memory {
                 Some(m) => m,
                 None => {
-                    clawcrew_memory::create_memory_for_agent(
+                    galleon_memory::create_memory_for_agent(
                         &config,
                         agent_alias,
                         agent_model_provider.and_then(|e| e.api_key.as_deref()),
@@ -1331,8 +1331,8 @@ pub async fn run(
         // path, so the approval route adapter is the no-op (log-only); the daemon
         // path injects a real channel-delivering adapter.
         let (sop_engine, sop_audit) = if config.sop.runtime_enabled() {
-            let sop_mem: Arc<dyn clawcrew_memory::Memory> =
-                clawcrew_memory::create_memory_for_agent(&config, agent_alias, None).await?;
+            let sop_mem: Arc<dyn galleon_memory::Memory> =
+                galleon_memory::create_memory_for_agent(&config, agent_alias, None).await?;
             let (engine, audit) = crate::sop::build_sop_engine(
                 config.sop.clone(),
                 &config.data_dir,
@@ -2984,7 +2984,7 @@ pub(crate) async fn process_message_shared(
             }
         };
         let approval_manager = ApprovalManager::for_non_interactive(&risk_profile);
-        let mem: Arc<dyn Memory> = clawcrew_memory::create_memory_for_agent(
+        let mem: Arc<dyn Memory> = galleon_memory::create_memory_for_agent(
             &config,
             agent_alias,
             agent_model_provider
@@ -3007,8 +3007,8 @@ pub(crate) async fn process_message_shared(
         // wired here, so the approval route adapter is the no-op (log-only); the
         // daemon path injects a real channel-delivering adapter.
         let (sop_engine, sop_audit) = if config.sop.runtime_enabled() {
-            let sop_mem: Arc<dyn clawcrew_memory::Memory> =
-                clawcrew_memory::create_memory_for_agent(&config, agent_alias, None).await?;
+            let sop_mem: Arc<dyn galleon_memory::Memory> =
+                galleon_memory::create_memory_for_agent(&config, agent_alias, None).await?;
             let (engine, audit) = crate::sop::build_sop_engine(
                 config.sop.clone(),
                 &config.data_dir,

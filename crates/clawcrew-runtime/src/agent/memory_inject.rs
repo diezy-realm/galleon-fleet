@@ -26,7 +26,7 @@ use std::fmt::Write as _;
 use std::time::Instant;
 
 use clawcrew_api::ingress::TurnOrigin;
-use clawcrew_memory::{
+use galleon_memory::{
     self, MEMORY_CONTEXT_CLOSE, MEMORY_CONTEXT_OPEN, Memory, MemoryCategory, MemoryEntry, decay,
     rerank,
 };
@@ -221,16 +221,16 @@ pub fn resolve_inject_policy(
 /// The uniform skip set: entries no path wants in a preamble. Union of the
 /// legacy renderers' filters (the channel renderer's set was the widest).
 fn should_skip_entry(key: &str, content: &str) -> bool {
-    if clawcrew_memory::is_assistant_autosave_key(key) {
+    if galleon_memory::is_assistant_autosave_key(key) {
         return true;
     }
     // Raw per-turn user messages: re-injecting them makes each recalled
     // entry embed all prior generations, growing exponentially. Consolidated
     // knowledge is already promoted to Core/Daily entries.
-    if clawcrew_memory::is_user_autosave_key(key) {
+    if galleon_memory::is_user_autosave_key(key) {
         return true;
     }
-    if clawcrew_memory::should_skip_autosave_content(content) {
+    if galleon_memory::should_skip_autosave_content(content) {
         return true;
     }
     // Channel history blobs are session transcripts, not knowledge.
@@ -1050,9 +1050,9 @@ mod tests {
             MemoryCategory::Core,
             Some(0.9),
         )]));
-        let pipeline = clawcrew_memory::RetrievalPipeline::new(
+        let pipeline = galleon_memory::RetrievalPipeline::new(
             fixture.clone() as std::sync::Arc<dyn Memory>,
-            clawcrew_memory::RetrievalConfig::default(),
+            galleon_memory::RetrievalConfig::default(),
         );
         let observer = RecordingObserver::default();
 
@@ -1823,7 +1823,7 @@ mod tests {
     #[tokio::test]
     async fn noop_sqlite_bm25_recall_stays_ranked_through_rerank_injection() {
         let tmp = tempfile::TempDir::new().unwrap();
-        let memory = clawcrew_memory::SqliteMemory::new("rerank-bm25", tmp.path()).unwrap();
+        let memory = galleon_memory::SqliteMemory::new("rerank-bm25", tmp.path()).unwrap();
         assert_eq!(
             memory.embedder_dimensions(),
             0,

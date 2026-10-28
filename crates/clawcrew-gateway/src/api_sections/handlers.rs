@@ -598,7 +598,7 @@ pub(crate) fn memory_picker(cfg: &clawcrew_config::schema::Config) -> Vec<Picker
         .completed_sections
         .iter()
         .any(|section| section == "memory");
-    clawcrew_memory::selectable_memory_backends()
+    galleon_memory::selectable_memory_backends()
         .iter()
         .map(|b| PickerItem {
             key: b.key.to_string(),

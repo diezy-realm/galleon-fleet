@@ -295,7 +295,7 @@ mod tests {
     use crate::sop::engine::SopEngine;
     use crate::sop::types::*;
     use clawcrew_config::schema::SopConfig;
-    use clawcrew_memory::Memory;
+    use galleon_memory::Memory;
 
     fn test_sop() -> Sop {
         Sop {
@@ -469,7 +469,7 @@ mod tests {
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
         let audit = Arc::new(SopAuditLogger::new(memory.clone()));
 
         let tool = SopAdvanceTool::new(engine).with_audit(audit.clone());
@@ -500,7 +500,7 @@ mod tests {
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
         let audit = Arc::new(SopAuditLogger::new(memory.clone()));
 
         let tool = SopAdvanceTool::new(engine).with_audit(audit.clone());
@@ -517,7 +517,7 @@ mod tests {
         // Verify step audit was written
         let entries = memory
             .list(
-                Some(&clawcrew_memory::traits::MemoryCategory::Custom(
+                Some(&galleon_memory::traits::MemoryCategory::Custom(
                     "sop".into(),
                 )),
                 None,

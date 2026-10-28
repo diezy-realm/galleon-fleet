@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 use std::path::Path;
-use clawcrew_memory::chunker;
+use galleon_memory::chunker;
 
 /// A chunk of datasheet content with board metadata.
 #[derive(Debug, Clone)]

@@ -13,7 +13,7 @@ use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 use clawcrew_api::agent::TurnEvent;
 use clawcrew_config::schema::{AliasedAgentConfig, MemoryConfig, RiskProfileConfig};
-use clawcrew_memory::{self, Memory};
+use galleon_memory::{self, Memory};
 
 clawcrew_api::mock_tool_attribution!(CountingTool, EchoTool, FailingTool, PanickingTool);
 use clawcrew_providers::{
@@ -314,7 +314,7 @@ fn make_memory() -> Arc<dyn Memory> {
         backend: "none".into(),
         ..MemoryConfig::default()
     };
-    Arc::from(clawcrew_memory::create_memory(&cfg, &std::env::temp_dir(), None).unwrap())
+    Arc::from(galleon_memory::create_memory(&cfg, &std::env::temp_dir(), None).unwrap())
 }
 
 fn make_sqlite_memory() -> (Arc<dyn Memory>, tempfile::TempDir) {
@@ -323,7 +323,7 @@ fn make_sqlite_memory() -> (Arc<dyn Memory>, tempfile::TempDir) {
         backend: "sqlite".into(),
         ..MemoryConfig::default()
     };
-    let mem = Arc::from(clawcrew_memory::create_memory(&cfg, tmp.path(), None).unwrap());
+    let mem = Arc::from(galleon_memory::create_memory(&cfg, tmp.path(), None).unwrap());
     (mem, tmp)
 }
 

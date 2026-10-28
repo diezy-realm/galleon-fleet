@@ -2004,8 +2004,8 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
             None
         };
 
-        let heartbeat_memory: Option<Box<dyn clawcrew_memory::Memory>> =
-            clawcrew_memory::create_memory_from_config(
+        let heartbeat_memory: Option<Box<dyn galleon_memory::Memory>> =
+            galleon_memory::create_memory_from_config(
                 &config,
                 config
                     .model_provider_for_agent(&agent_alias)
@@ -2114,7 +2114,7 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                             .store(
                                 &key,
                                 &format!("Heartbeat task '{}': {}", task.text, summary),
-                                clawcrew_memory::MemoryCategory::Daily,
+                                galleon_memory::MemoryCategory::Daily,
                                 None,
                             )
                             .await;

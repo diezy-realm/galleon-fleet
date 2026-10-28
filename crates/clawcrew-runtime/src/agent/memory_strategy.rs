@@ -1,2 +1,2 @@
-//! Re-export canonical `DefaultMemoryStrategy` from `clawcrew_memory`.
-pub use clawcrew_memory::DefaultMemoryStrategy;
+//! Re-export canonical `DefaultMemoryStrategy` from `galleon_memory`.
+pub use galleon_memory::DefaultMemoryStrategy;

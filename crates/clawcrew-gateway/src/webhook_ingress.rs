@@ -68,7 +68,7 @@ use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
     feature = "channel-nextcloud",
     feature = "channel-whatsapp-cloud"
 ))]
-use clawcrew_memory::MemoryCategory;
+use galleon_memory::MemoryCategory;
 
 #[cfg(any(
     feature = "channel-linq",
@@ -604,7 +604,7 @@ async fn process_verified_message(
         }
     };
 
-    if state.auto_save && !clawcrew_memory::should_skip_autosave_content(&msg.content) {
+    if state.auto_save && !galleon_memory::should_skip_autosave_content(&msg.content) {
         let key = memory_key(msg);
         let _ = state
             .mem

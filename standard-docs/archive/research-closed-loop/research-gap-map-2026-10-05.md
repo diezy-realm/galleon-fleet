@@ -53,7 +53,7 @@ Crate ini adalah **jantung arsitektur** menurut ADR 0001 (LLM SSOT di Rust) — 
 - **Kenapa layak diriset**: pairing/vault adalah titik SATU-SATUNYA yang menghubungkan ke-4 tier (Tauri/Rust/Go/Web) secara otentikasi — kerentanan di sini = kompromi seluruh sistem. Sering diasumsikan "sudah matang" di riset lain tanpa pernah diverifikasi langsung.
 
 ### 2.3 Data Governance Memory — Retention, Privacy, Right-to-Delete (SEBAGIAN TERSENTUH, PERLU DIPERDALAM)
-`capabilities-skills-lessons-steering-audit.md` sudah menyentuh memory TAPI fokusnya ke "Go in-memory vs Rust persistent" (temuan arsitektur), BUKAN ke governance data personal. Penyisiran baru menemukan `clawcrew-memory` punya modul `hygiene.rs`, `policy.rs`, `audit.rs` yang **belum pernah dibaca isinya** — ini kemungkinan jawaban untuk pertanyaan privasi (user minta hapus semua data, retention otomatis, dll) yang relevan untuk produk yang menyimpan percakapan + "deepening model of who you are" (istilah dari riset Hermes Agent sebelumnya — pola umum di seluruh kompetitor, termasuk Galleon).
+`capabilities-skills-lessons-steering-audit.md` sudah menyentuh memory TAPI fokusnya ke "Go in-memory vs Rust persistent" (temuan arsitektur), BUKAN ke governance data personal. Penyisiran baru menemukan `galleon-memory` punya modul `hygiene.rs`, `policy.rs`, `audit.rs` yang **belum pernah dibaca isinya** — ini kemungkinan jawaban untuk pertanyaan privasi (user minta hapus semua data, retention otomatis, dll) yang relevan untuk produk yang menyimpan percakapan + "deepening model of who you are" (istilah dari riset Hermes Agent sebelumnya — pola umum di seluruh kompetitor, termasuk Galleon).
 - **Kenapa layak diriset**: produk yang menyimpan memori personal LINTAS SESI punya kewajiban privasi (mirip prinsip GDPR "right to erasure") yang belum pernah diverifikasi punya mekanisme nyata di Galleon.
 
 ### 2.4 Channel Tier A/B/C — Keamanan Spesifik per-Protokol (TERSENTUH SEPINTAS, BELUM MENDALAM)
@@ -118,7 +118,7 @@ Satu-satunya referensi: **BR-C8** (P3, M) — *"Audit `tools`/`config`/`provider
 
 `BG-F4` (P2, L): *"Learning by consent lanjutan: tipe `MemoryProposal` sudah ada (T-3.2 ✔); tinggal alur umpan balik → persetujuan Owner → versi/rollback di atas store baru."* Plus `FW-C5` (UI persetujuan `MemoryProposal`).
 
-**Ini topik yang BERBEDA dari yang saya usulkan.** `BG-F4` adalah tentang mekanisme CONSENT untuk Agent mengusulkan pembelajaran baru (sudah diriset mendalam di `capabilities-skills-lessons-steering-audit.md` sesi ini — "Learning by Consent" di `engine/src/memory/proposal.go`). Yang saya usulkan di §2.3 adalah **retention/right-to-delete/privacy** untuk data yang SUDAH tersimpan (`hygiene.rs`/`policy.rs`/`audit.rs` di `clawcrew-memory` Rust) — ini sudut yang BERBEDA, tidak tumpang tindih.
+**Ini topik yang BERBEDA dari yang saya usulkan.** `BG-F4` adalah tentang mekanisme CONSENT untuk Agent mengusulkan pembelajaran baru (sudah diriset mendalam di `capabilities-skills-lessons-steering-audit.md` sesi ini — "Learning by Consent" di `engine/src/memory/proposal.go`). Yang saya usulkan di §2.3 adalah **retention/right-to-delete/privacy** untuk data yang SUDAH tersimpan (`hygiene.rs`/`policy.rs`/`audit.rs` di `galleon-memory` Rust) — ini sudut yang BERBEDA, tidak tumpang tindih.
 
 **Kesimpulan: topik ini TETAP LAYAK, tidak ada overlap.** `BG-F4` adalah "bagaimana data BARU masuk dengan consent," bukan "bagaimana data LAMA dihapus/dipertahankan sesuai privasi." Dua pertanyaan berbeda, dev-tasks hanya menjawab yang pertama.
 

@@ -1,7 +1,7 @@
 //! Tests for SQLite WAL mode checkpointing, database backup, state migration,
 //! and zero-data-loss verification (SPEC-008 / T3-21 / BL-11).
 
-use clawcrew_memory::{
+use galleon_memory::{
     Memory, MemoryCategory, SqliteMemory, WalCheckpointMode, backup_database_from_connection,
     backup_database_with_wal_checkpoint, checkpoint_wal, checkpoint_wal_truncate,
     compute_table_checksum, ensure_wal_mode, is_wal_mode, migrate_database_file,

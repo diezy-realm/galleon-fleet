@@ -81,7 +81,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
      }
      ```
   3. **Contoh pengkodean (pola dari knowledge_graph.rs Rust):**
-     - Gunakan pattern yang sama dengan `clawcrew-memory/src/knowledge_graph.rs`
+     - Gunakan pattern yang sama dengan `galleon-memory/src/knowledge_graph.rs`
      - Scope: Fleet/Ship/Squad/Crew/Run sebagai columns di database
      - Query decomposition: filter by scope fields
   4. **Konvensi penamaan:**
@@ -264,16 +264,16 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 - [x] **R-92 (eks-BL-48, MEDIUM)** Field citation + verifikasi pada node Lesson/Decision di `knowledge_graph.rs` — mitigasi bug "configuration-lies" (`query_by_similarity` nama vector tapi impl FTS5 keyword).
   *Status: SELESAI (100% test passing)*
   *Bukti konkret:*
-  - `crates/clawcrew-memory/src/knowledge_graph.rs`: Field `pub citations: Vec<String>` ditambahkan pada `KnowledgeNode`, method `verify_citations(&self)` diimplementasikan untuk validasi integritas provenance. Method `add_node_with_citations` dan backward-compatible `add_node` ditambahkan.
+  - `crates/galleon-memory/src/knowledge_graph.rs`: Field `pub citations: Vec<String>` ditambahkan pada `KnowledgeNode`, method `verify_citations(&self)` diimplementasikan untuk validasi integritas provenance. Method `add_node_with_citations` dan backward-compatible `add_node` ditambahkan.
   - Skema SQLite `nodes` ditambahkan kolom `citations TEXT NOT NULL DEFAULT ''` dengan migrasi otomatis.
   - Dokumentasi dan behavior `query_by_similarity` dipertegas sebagai FTS5 lexical/BM25 rank similarity (anti configuration lies).
   - `crates/clawcrew-api/src/knowledge.rs`: Field `citations` ditambahkan pada model `Lesson`.
-  - Test suite `node_citations_storage_and_verification` dan seluruh test `knowledge_graph` (15/15) lolos via `cargo nextest run -p clawcrew-memory -E 'test(knowledge_graph)'`.
+  - Test suite `node_citations_storage_and_verification` dan seluruh test `knowledge_graph` (15/15) lolos via `cargo nextest run -p galleon-memory -E 'test(knowledge_graph)'`.
   #### Detail Eksekusi -- R-92
   1. **File & simbol spesifik:**
-     - `/crates/clawcrew-memory/src/knowledge_graph.rs` - current implementation
+     - `/crates/galleon-memory/src/knowledge_graph.rs` - current implementation
      - `/crates/clawcrew-api/src/knowledge.rs` - API layer
-     - `/crates/clawcrew-memory/src/traits.rs` - Memory trait definition
+     - `/crates/galleon-memory/src/traits.rs` - Memory trait definition
   2. **Spesifikasi API:**
      - Tambah field `citations: Vec<String>` ke `KnowledgeEntry`
      - Tambah `verify_citations()` method untuk validasi source
@@ -317,7 +317,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
   7. **Dependency antar-tiket:** None (independen, tapi koherensi dengan R-93)
   8. **Edge case:** Empty citations, malformed URL citation
   9. **JANGAN DIUBAH:** Existing `KnowledgeEntry` fields - hanya tambah citations
-  10. **ASUMSI:** `clawcrew_memory` crate punya embedding support; no breaking changes di Memory trait
+  10. **ASUMSI:** `galleon_memory` crate punya embedding support; no breaking changes di Memory trait
 
 - [x] **R-93 (eks-BL-49, MEDIUM-HIGH)** Aktifkan Knowledge Library untuk `standard-docs/` — setelah R-92 untuk koherensi (tidak hard-block).
   #### Detail Eksekusi -- R-93
@@ -343,12 +343,12 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 
 > Tema sama dengan §A/§D di atas (jembatan Go-Rust untuk storage vektor/persisten) — BL-01 digabung ke sini karena pola arsitekturnya identik: Go pegang kebijakan, Rust pegang storage, gRPC `SystemGateway` sebagai jembatan.
 
-- [x] **BL-01 (HIGH, bug fungsional nyata)** Jembatan gRPC: persist Lesson/Learning dari Go (`engine/src/memory/proposal.go`, "Learning by Consent" lifecycle lengkap) ke Rust vector store (`clawcrew-memory`) — saat ini `Approve()`/`Revert()` menulis ke `inMemoryVectorStore` Go yang hilang total saat restart proses. Scope: RPC baru `StoreLearnedRule`/`RetrieveLearnedRules` di proto `SystemGateway`, implementasi di `clawcrew-gateway/src/grpc_system_gateway.rs` (reuse `clawcrew-memory`, JANGAN tulis ulang vector-store). **Serialisasi: proto dulu, baru implementasi Go+Rust paralel.**
+- [x] **BL-01 (HIGH, bug fungsional nyata)** Jembatan gRPC: persist Lesson/Learning dari Go (`engine/src/memory/proposal.go`, "Learning by Consent" lifecycle lengkap) ke Rust vector store (`galleon-memory`) — saat ini `Approve()`/`Revert()` menulis ke `inMemoryVectorStore` Go yang hilang total saat restart proses. Scope: RPC baru `StoreLearnedRule`/`RetrieveLearnedRules` di proto `SystemGateway`, implementasi di `clawcrew-gateway/src/grpc_system_gateway.rs` (reuse `galleon-memory`, JANGAN tulis ulang vector-store). **Serialisasi: proto dulu, baru implementasi Go+Rust paralel.**
   *Status: SELESAI (100% test passing)*
   *Bukti konkret:*
   - `proto/agent_service.proto`: RPC `StoreLearnedRule` & `RetrieveLearnedRules` beserta message types `StoreLearnedRuleRequest/Response`, `RetrieveLearnedRulesRequest/Response`, `LearnedRule`.
   - `engine/pkg/pb`: Go protobuf code regenerated (`agent_service.pb.go`, `agent_service_grpc.pb.go`).
-  - `crates/clawcrew-gateway/src/grpc_system_gateway.rs`: Implementasi `store_learned_rule` & `retrieve_learned_rules` memanfaatkan `clawcrew-memory` (SqliteMemory/Memory trait). Test `store_and_retrieve_learned_rules_persists_across_queries` lulus via `cargo nextest run -p clawcrew-gateway --lib grpc_system_gateway` (15/15 passed).
+  - `crates/clawcrew-gateway/src/grpc_system_gateway.rs`: Implementasi `store_learned_rule` & `retrieve_learned_rules` memanfaatkan `galleon-memory` (SqliteMemory/Memory trait). Test `store_and_retrieve_learned_rules_persists_across_queries` lulus via `cargo nextest run -p clawcrew-gateway --lib grpc_system_gateway` (15/15 passed).
   - `engine/pkg/client/system_gateway.go`: Implementasi client method `StoreLearnedRule` & `RetrieveLearnedRules`. Test client lulus (5/5 passed).
   - `engine/src/memory/proposal.go`: `NewProposalStoreWithGateway` & `SyncFromGateway` menghubungkan lifecycle learning ke gRPC SystemGateway. Test `TestProposalStoreWithGateway` lulus (13/13 passed).
   #### Detail Eksekusi -- BL-01
@@ -356,7 +356,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
      - `/proto/agent_service.proto` - ADD RPC service `SystemGateway` method
      - `/engine/src/memory/proposal.go` - `MemoryProposal`, `ProposalStore` interface (sudah ada)
      - `/engine/src/memory/store.go` - `inMemoryVectorStore` (sudah ada)
-     - `/crates/clawcrew-memory/src/lib.rs` - public API `clawcrew-memory` crate
+     - `/crates/galleon-memory/src/lib.rs` - public API `galleon-memory` crate
      - `/crates/clawcrew-gateway/src/grpc_system_gateway.rs` - implementasi RPC
   2. **Spesifikasi API:**
      - **Proto definition (ADD to `SystemGateway`):**
@@ -408,9 +408,9 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
            return s.approveWithRustStore(ctx, id)
        }
        ```
-     - **Rust side (reuse `clawcrew-memory`):**
+     - **Rust side (reuse `galleon-memory`):**
        ```rust
-       // Use existing clawcrew_memory::Memory trait
+       // Use existing galleon_memory::Memory trait
        // No custom vector store implementation!
        pub async fn store_learned_rule(
            memory: &Arc<dyn Memory>,
@@ -478,17 +478,17 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
   5. **Langkah pengerjaan berurutan:**
      1. **PROTO FIRST** - Update `proto/agent_service.proto` dengan RPC methods
      2. Generate Go/Rust code: `protoc --go_out=... --rust_out=...`
-     3. Implement Rust side: wire to `clawcrew-memory::Memory::store`
+     3. Implement Rust side: wire to `galleon-memory::Memory::store`
      4. Implement Go side: call Rust via gRPC
      5. Test: `Approve()` writes to Rust store, survives restart
   6. **Acceptance criteria testable:**
-     - [x] `ProposalStore.Approve()` writes to Rust `clawcrew-memory`
+     - [x] `ProposalStore.Approve()` writes to Rust `galleon-memory`
      - [x] Restart Go process → learned rules still exist
      - [x] `ProposalStore.Revert()` deletes from Rust store
   7. **Dependency antar-tiket:** None (independen)
   8. **Edge case:** Concurrent approvals, scope collision, memory full
   9. **JANGAN DIUBAH:** Existing `inMemoryVectorStore` behavior - hanya ganti destination
-  10. **ASUMSI:** `clawcrew-memory` crate public API cukup untuk learned rule storage; no breaking changes di Rust Memory trait
+  10. **ASUMSI:** `galleon-memory` crate public API cukup untuk learned rule storage; no breaking changes di Rust Memory trait
 
 - [x] **BL-03 (LOW, dokumentasi murni, bisa paralel kapan saja)** Dokumentasikan ekosistem `open-skills` yang sudah matang (`crates/clawcrew-runtime/src/skills/mod.rs`, 3-lapis loading workspace→global→plugin WASM) — risiko duplikasi SSOT kalau tim lain menganggap belum ada. Tulis `standard-docs/tech-standart/plugin-standard/open-skills-ecosystem.md`.
   #### Detail Eksekusi -- BL-03
@@ -519,7 +519,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 | A | `engine/pkg/store/postgres/`, `engine/pkg/store/vector/` (baru) | Backend-Go |
 | B | `crates/clawcrew-{gateway,channels,runtime}/src/**` (per-crate berseri, JANGAN paralel di crate yang sama) | Backend-Rust |
 | C | `crates/clawcrew-runtime/src/agent/{history_trim,loop_}/mod.rs` (verified paths) | Backend-Rust |
-| D | `crates/clawcrew-memory/src/knowledge_graph.rs`, `clawcrew-api/src/knowledge.rs` | Backend-Rust |
+| D | `crates/galleon-memory/src/knowledge_graph.rs`, `clawcrew-api/src/knowledge.rs` | Backend-Rust |
 | E | `proto/agent_service.proto`, `crates/clawcrew-gateway/src/grpc_system_gateway.rs`, `engine/src/memory/{proposal,store,wire}.go`, `standard-docs/tech-standart/plugin-standard/` (BL-03) | Backend-Go + Backend-Rust (BL-01 serial: proto dulu) |
 
 ## Keluaran Sprint

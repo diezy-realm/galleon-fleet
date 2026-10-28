@@ -3,7 +3,7 @@ use serde_json::json;
 use std::fmt::Write;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_memory::Memory;
+use galleon_memory::Memory;
 
 /// Search Discord message history stored in discord.db.
 pub struct DiscordSearchTool {
@@ -149,7 +149,7 @@ impl Tool for DiscordSearchTool {
 mod tests {
     use super::*;
     use tempfile::TempDir;
-    use clawcrew_memory::{MemoryCategory, SqliteMemory};
+    use galleon_memory::{MemoryCategory, SqliteMemory};
 
     fn seeded_discord_mem() -> (TempDir, Arc<dyn Memory>) {
         let tmp = TempDir::new().unwrap();

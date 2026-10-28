@@ -421,18 +421,18 @@ pub async fn handle_agents(cmd: AgentsCommands, config: &mut Config) -> Result<(
 /// owned-state cascade.
 #[cfg(all(feature = "gateway", feature = "agent-runtime"))]
 type OwnedStateHandles = (
-    std::sync::Arc<dyn clawcrew_memory::Memory>,
+    std::sync::Arc<dyn galleon_memory::Memory>,
     Option<std::sync::Arc<dyn clawcrew_infra::session_backend::SessionBackend>>,
 );
 
 #[cfg(all(feature = "gateway", feature = "agent-runtime"))]
 fn build_owned_state_handles(config: &Config) -> Result<OwnedStateHandles> {
     use std::sync::Arc;
-    let mem: Arc<dyn clawcrew_memory::Memory> = if config.agents.is_empty() {
-        Arc::new(clawcrew_memory::NoneMemory::new("none"))
+    let mem: Arc<dyn galleon_memory::Memory> = if config.agents.is_empty() {
+        Arc::new(galleon_memory::NoneMemory::new("none"))
     } else {
         Arc::from(
-            clawcrew_memory::create_memory_from_config(config, None)
+            galleon_memory::create_memory_from_config(config, None)
                 .context("open memory backend for the owned-state cascade")?,
         )
     };

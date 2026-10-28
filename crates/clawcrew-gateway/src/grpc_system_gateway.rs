@@ -64,7 +64,7 @@ impl SystemGatewayService {
         let vault_dir = root.join(".vault");
         let secret_store =
             std::sync::Arc::new(clawcrew_config::secrets::SecretStore::new(&root, true));
-        let memory = clawcrew_memory::sqlite::SqliteMemory::new("gateway", &root)
+        let memory = galleon_memory::sqlite::SqliteMemory::new("gateway", &root)
             .ok()
             .map(|m| {
                 std::sync::Arc::new(m) as std::sync::Arc<dyn clawcrew_api::memory_traits::Memory>

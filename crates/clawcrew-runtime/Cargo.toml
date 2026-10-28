@@ -22,7 +22,7 @@ galleon-relay-proto.workspace = true
 galleon-commands.workspace = true
 clawcrew-log.workspace = true
 clawcrew-providers.workspace = true
-clawcrew-memory.workspace = true
+galleon-memory.workspace = true
 galleon-tools.workspace = true
 galleon-sop-graph.workspace = true
 galleon-plugins = { workspace = true, optional = true }

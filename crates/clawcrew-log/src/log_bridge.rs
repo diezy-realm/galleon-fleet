@@ -75,12 +75,12 @@
 //! (`whatsapp_rust::socket=debug`) no longer matches anything, since the
 //! reduction happens before the filters look.
 //!
-//! Note the deliberate contrast with [`clawcrew_memory::redact`], which is
+//! Note the deliberate contrast with [`galleon_memory::redact`], which is
 //! allow-by-default: it rewrites *recognized* patterns in user content the
 //! operator opted into storing. Here the input is unreviewed third-party text
 //! entering a credential-adjacent sink, so the text channels are not passed.
 //!
-//! [`clawcrew_memory::redact`]: https://docs.rs/clawcrew-memory
+//! [`galleon_memory::redact`]: https://docs.rs/galleon-memory
 
 use tracing::level_filters::LevelFilter;
 use tracing_log::AsTrace;

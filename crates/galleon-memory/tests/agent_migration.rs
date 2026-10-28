@@ -3,7 +3,7 @@
 use rusqlite::{Connection, OptionalExtension};
 use std::path::Path;
 use tempfile::TempDir;
-use clawcrew_memory::{Memory, MemoryCategory, SqliteMemory};
+use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
 
 fn db_path(workspace: &Path) -> std::path::PathBuf {
     workspace.join("memory").join("brain.db")

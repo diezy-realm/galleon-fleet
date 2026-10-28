@@ -63,8 +63,8 @@
     fn replay_loop_messages_strips_the_memory_context_preamble() {
         let preamble = format!(
             "{}\n- k: recalled fact\n{}\n\n",
-            clawcrew_memory::MEMORY_CONTEXT_OPEN,
-            clawcrew_memory::MEMORY_CONTEXT_CLOSE,
+            galleon_memory::MEMORY_CONTEXT_OPEN,
+            galleon_memory::MEMORY_CONTEXT_CLOSE,
         );
         let with_preamble = ChatMessage::user(format!("{preamble}what's the weather like"));
         let assistant = ChatMessage::assistant("it's sunny".to_string());
@@ -86,7 +86,7 @@
         assert!(
             !user_msg
                 .content
-                .contains(clawcrew_memory::MEMORY_CONTEXT_OPEN),
+                .contains(galleon_memory::MEMORY_CONTEXT_OPEN),
             "durable history must never carry the recalled-memory preamble"
         );
     }
@@ -99,8 +99,8 @@
     fn replay_loop_messages_preserves_a_user_message_that_looks_like_a_preamble() {
         let looks_like_a_preamble = ChatMessage::user(format!(
             "{}\n- k: a user-authored fact\n{}\n\nplease keep this text",
-            clawcrew_memory::MEMORY_CONTEXT_OPEN,
-            clawcrew_memory::MEMORY_CONTEXT_CLOSE,
+            galleon_memory::MEMORY_CONTEXT_OPEN,
+            galleon_memory::MEMORY_CONTEXT_CLOSE,
         ));
         let original = looks_like_a_preamble.content.clone();
         let replayed = Agent::replay_loop_messages(&[looks_like_a_preamble], None);
@@ -127,8 +127,8 @@
     fn replay_loop_messages_never_strips_an_uninjected_clone_even_when_text_collides() {
         let preamble = format!(
             "{}\n- k: recalled fact\n{}\n\n",
-            clawcrew_memory::MEMORY_CONTEXT_OPEN,
-            clawcrew_memory::MEMORY_CONTEXT_CLOSE,
+            galleon_memory::MEMORY_CONTEXT_OPEN,
+            galleon_memory::MEMORY_CONTEXT_CLOSE,
         );
         // The user's genuine text starts with the exact recorded block, in
         // a buffer the injector never touched.
@@ -158,8 +158,8 @@
     fn replay_loop_messages_strips_only_the_injected_user_message_when_an_older_one_collides() {
         let preamble = format!(
             "{}\n- k: recalled fact\n{}\n\n",
-            clawcrew_memory::MEMORY_CONTEXT_OPEN,
-            clawcrew_memory::MEMORY_CONTEXT_CLOSE,
+            galleon_memory::MEMORY_CONTEXT_OPEN,
+            galleon_memory::MEMORY_CONTEXT_CLOSE,
         );
         // A genuine older turn quoting the exact recalled block verbatim.
         let older_collision = ChatMessage::user(preamble.clone());
@@ -205,8 +205,8 @@
     fn replay_loop_messages_preserves_a_later_steering_message_when_it_collides() {
         let preamble = format!(
             "{}\n- k: recalled fact\n{}\n\n",
-            clawcrew_memory::MEMORY_CONTEXT_OPEN,
-            clawcrew_memory::MEMORY_CONTEXT_CLOSE,
+            galleon_memory::MEMORY_CONTEXT_OPEN,
+            galleon_memory::MEMORY_CONTEXT_CLOSE,
         );
         let injected = ChatMessage::user(format!("{preamble}current question"));
         let assistant = ChatMessage::assistant("working on it".to_string());
@@ -525,7 +525,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -1507,7 +1507,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("test memory must initialize"),
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -1641,7 +1641,7 @@
                 vec![Box::new(MockTool)],
             ))
             .memory(Arc::from(
-                clawcrew_memory::create_memory(
+                galleon_memory::create_memory(
                     &clawcrew_config::schema::MemoryConfig {
                         backend: "none".into(),
                         ..Default::default()
@@ -2461,7 +2461,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -2679,7 +2679,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -2719,7 +2719,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -2772,7 +2772,7 @@
         };
         let workspace = tempfile::TempDir::new().expect("temp dir");
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, workspace.path(), None)
+            galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -2821,7 +2821,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, workspace.path(), None)
+            galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
                 .expect("memory creation should succeed"),
         );
         let risk_profile = clawcrew_config::schema::RiskProfileConfig {
@@ -3021,7 +3021,7 @@
             };
             let workspace = tempfile::TempDir::new().expect("temp dir");
             let mem: Arc<dyn Memory> = Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, workspace.path(), None)
+                galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
                     .expect("memory creation should succeed"),
             );
             let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -3062,7 +3062,7 @@
                 ..clawcrew_config::schema::MemoryConfig::default()
             };
             let mem: Arc<dyn Memory> = Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, workspace.path(), None)
+                galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
                     .expect("memory creation should succeed"),
             );
             let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -3165,7 +3165,7 @@
                 ..clawcrew_config::schema::MemoryConfig::default()
             };
             let mem: Arc<dyn Memory> = Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, workspace.path(), None)
+                galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
                     .expect("memory creation should succeed"),
             );
             let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -3208,7 +3208,7 @@
                 ..clawcrew_config::schema::MemoryConfig::default()
             };
             let mem: Arc<dyn Memory> = Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, workspace.path(), None)
+                galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
                     .expect("memory creation should succeed"),
             );
             let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -3306,7 +3306,7 @@
                 ..clawcrew_config::schema::MemoryConfig::default()
             };
             let mem: Arc<dyn Memory> = Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, workspace.path(), None)
+                galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
                     .expect("memory creation should succeed"),
             );
             let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -3536,7 +3536,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -3586,7 +3586,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -3717,7 +3717,7 @@
         };
         let workspace = tempfile::tempdir().expect("temp workspace");
         let memory: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, workspace.path(), None)
+            galleon_memory::create_memory(&memory_cfg, workspace.path(), None)
                 .expect("memory creation should succeed"),
         );
         let mut hooks = crate::hooks::HookRunner::new();
@@ -4144,7 +4144,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -4177,7 +4177,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -4243,7 +4243,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -4292,7 +4292,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -4344,7 +4344,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -4739,7 +4739,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -4858,7 +4858,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -4942,7 +4942,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -5129,7 +5129,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -5284,7 +5284,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -5352,7 +5352,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -5407,7 +5407,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -5449,7 +5449,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let agent_config = clawcrew_config::schema::AliasedAgentConfig {
@@ -5656,7 +5656,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let capturing = Arc::new(CapturingObserver::default());
@@ -6027,7 +6027,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -6183,7 +6183,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -6227,7 +6227,7 @@
     async fn response_cache_key_uses_full_provider_visible_transcript() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
 
@@ -6236,11 +6236,11 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem_a: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let mem_b: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -6322,7 +6322,7 @@
     async fn response_cache_hit_cannot_bypass_cancelling_before_llm_hook() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let memory_cfg = clawcrew_config::schema::MemoryConfig {
@@ -6331,7 +6331,7 @@
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+                galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                     .expect("memory creation should succeed"),
             )
         };
@@ -6478,7 +6478,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+            galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                 .expect("memory creation should succeed"),
         );
         let mut hooks = crate::hooks::HookRunner::new();
@@ -6615,7 +6615,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+            galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                 .expect("memory creation should succeed"),
         );
         let mut hooks = crate::hooks::HookRunner::new();
@@ -6728,7 +6728,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+            galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                 .expect("memory creation should succeed"),
         );
         let mut hooks = crate::hooks::HookRunner::new();
@@ -6782,7 +6782,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let memory: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+            galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                 .expect("memory creation should succeed"),
         );
         let mut hooks = crate::hooks::HookRunner::new();
@@ -6837,7 +6837,7 @@
     async fn response_cache_separates_configured_provider_identity() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let memory_cfg = clawcrew_config::schema::MemoryConfig {
@@ -6846,7 +6846,7 @@
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+                galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                     .expect("memory creation should succeed"),
             )
         };
@@ -6856,7 +6856,7 @@
             |provider_alias: &str,
              answer: &str,
              seen: Arc<Mutex<Vec<Vec<ChatMessage>>>>,
-             cache: Arc<clawcrew_memory::response_cache::ResponseCache>| {
+             cache: Arc<galleon_memory::response_cache::ResponseCache>| {
                 Agent::builder()
                     .model_provider(Box::new(TranscriptCaptureModelProvider {
                         alias: provider_alias.into(),
@@ -6894,13 +6894,13 @@
 
     fn context_recovery_cache_agent(
         workspace: &std::path::Path,
-        cache: Arc<clawcrew_memory::response_cache::ResponseCache>,
+        cache: Arc<galleon_memory::response_cache::ResponseCache>,
         calls: Arc<AtomicUsize>,
         answer: &str,
         reject_full_context: bool,
     ) -> Agent {
         let memory: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(
+            galleon_memory::create_memory(
                 &clawcrew_config::schema::MemoryConfig {
                     backend: "none".into(),
                     ..clawcrew_config::schema::MemoryConfig::default()
@@ -6953,7 +6953,7 @@
     async fn response_cache_does_not_store_non_streaming_context_recovery() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let recovering_calls = Arc::new(AtomicUsize::new(0));
@@ -6992,7 +6992,7 @@
     async fn response_cache_does_not_store_streamed_context_recovery() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let recovering_calls = Arc::new(AtomicUsize::new(0));
@@ -7041,7 +7041,7 @@
     async fn response_cache_bypasses_non_streaming_provider_failover() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let primary_calls = Arc::new(AtomicUsize::new(0));
@@ -7052,7 +7052,7 @@
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+                galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                     .expect("memory creation should succeed"),
             )
         };
@@ -7120,7 +7120,7 @@
     async fn response_cache_bypasses_streamed_provider_failover() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let primary_calls = Arc::new(AtomicUsize::new(0));
@@ -7131,7 +7131,7 @@
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+                galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                     .expect("memory creation should succeed"),
             )
         };
@@ -7199,7 +7199,7 @@
     async fn response_cache_bypasses_non_streaming_safeguard_fallback() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let calls = Arc::new(AtomicUsize::new(0));
@@ -7209,7 +7209,7 @@
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+                galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                     .expect("memory creation should succeed"),
             )
         };
@@ -7266,7 +7266,7 @@
     async fn response_cache_bypasses_streamed_safeguard_fallback() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let calls = Arc::new(AtomicUsize::new(0));
@@ -7276,7 +7276,7 @@
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+                galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                     .expect("memory creation should succeed"),
             )
         };
@@ -7338,7 +7338,7 @@
     async fn response_cache_distinguishes_model_pin_identity() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let memory_cfg = clawcrew_config::schema::MemoryConfig {
@@ -7347,7 +7347,7 @@
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+                galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                     .expect("memory creation should succeed"),
             )
         };
@@ -7415,7 +7415,7 @@
     async fn response_cache_bypasses_router_hint_remaps() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let memory_cfg = clawcrew_config::schema::MemoryConfig {
@@ -7424,7 +7424,7 @@
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+                galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                     .expect("memory creation should succeed"),
             )
         };
@@ -7510,7 +7510,7 @@
     async fn response_cache_bypasses_native_thinking_overrides() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let memory_cfg = clawcrew_config::schema::MemoryConfig {
@@ -7519,7 +7519,7 @@
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+                galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                     .expect("memory creation should succeed"),
             )
         };
@@ -7528,7 +7528,7 @@
         let build =
             |answer: &str,
              seen: Arc<Mutex<Vec<Vec<ChatMessage>>>>,
-             cache: Arc<clawcrew_memory::response_cache::ResponseCache>| {
+             cache: Arc<galleon_memory::response_cache::ResponseCache>| {
                 Agent::builder()
                     .model_provider(Box::new(TranscriptCaptureModelProvider {
                         alias: "thinking-provider".into(),
@@ -7589,7 +7589,7 @@
     async fn response_cache_bypasses_requests_that_can_advertise_tools() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let memory_cfg = clawcrew_config::schema::MemoryConfig {
@@ -7598,7 +7598,7 @@
         };
         let memory = || -> Arc<dyn Memory> {
             Arc::from(
-                clawcrew_memory::create_memory(&memory_cfg, tmp.path(), None)
+                galleon_memory::create_memory(&memory_cfg, tmp.path(), None)
                     .expect("memory creation should succeed"),
             )
         };
@@ -7607,7 +7607,7 @@
         let build =
             |answer: &str,
              seen: Arc<Mutex<Vec<Vec<ChatMessage>>>>,
-             cache: Arc<clawcrew_memory::response_cache::ResponseCache>| {
+             cache: Arc<galleon_memory::response_cache::ResponseCache>| {
                 Agent::builder()
                     .model_provider(Box::new(TranscriptCaptureModelProvider {
                         alias: "tool-capable".into(),
@@ -7672,8 +7672,8 @@
                 _: Option<&str>,
                 _: Option<&str>,
                 _: Option<&str>,
-            ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
-                Ok(vec![clawcrew_memory::MemoryEntry {
+            ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
+                Ok(vec![galleon_memory::MemoryEntry {
                     id: "deploy".into(),
                     key: "deploy".into(),
                     content: self.content.clone(),
@@ -7692,14 +7692,14 @@
                     agent_id: None,
                 }])
             }
-            async fn get(&self, _: &str) -> anyhow::Result<Option<clawcrew_memory::MemoryEntry>> {
+            async fn get(&self, _: &str) -> anyhow::Result<Option<galleon_memory::MemoryEntry>> {
                 Ok(None)
             }
             async fn list(
                 &self,
                 _: Option<&MemoryCategory>,
                 _: Option<&str>,
-            ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+            ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
                 Ok(vec![])
             }
             async fn forget(&self, _: &str) -> anyhow::Result<bool> {
@@ -7734,7 +7734,7 @@
                 session_id: Option<&str>,
                 since: Option<&str>,
                 until: Option<&str>,
-            ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+            ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
                 self.recall(query, limit, session_id, since, until).await
             }
         }
@@ -7772,7 +7772,7 @@
         let build =
             |mem: Arc<dyn Memory>,
              seen: Arc<Mutex<Vec<Vec<ChatMessage>>>>,
-             cache: Arc<clawcrew_memory::response_cache::ResponseCache>| {
+             cache: Arc<galleon_memory::response_cache::ResponseCache>| {
                 let provider = Box::new(TranscriptCaptureModelProvider {
                     alias: "memory-regression".into(),
                     responses: Mutex::new(vec![clawcrew_providers::ChatResponse {
@@ -7805,7 +7805,7 @@
         // Harm case: same prompt, DIFFERENT recalled memory, one shared cache.
         let harm_dir = tempfile::tempdir().expect("cache dir");
         let harm_cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(harm_dir.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(harm_dir.path(), 60, 100)
                 .expect("response cache"),
         );
         let seen_a = Arc::new(Mutex::new(Vec::new()));
@@ -7850,7 +7850,7 @@
         // case is not passing merely because the cache never works.
         let ctrl_dir = tempfile::tempdir().expect("cache dir");
         let ctrl_cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(ctrl_dir.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(ctrl_dir.path(), 60, 100)
                 .expect("response cache"),
         );
         let none_cfg = clawcrew_config::schema::MemoryConfig {
@@ -7859,7 +7859,7 @@
         };
         let none_mem = || -> Arc<dyn Memory> {
             Arc::from(
-                clawcrew_memory::create_memory(&none_cfg, std::path::Path::new("/tmp"), None)
+                galleon_memory::create_memory(&none_cfg, std::path::Path::new("/tmp"), None)
                     .expect("none memory"),
             )
         };
@@ -7881,7 +7881,7 @@
     fn response_cache_key_skips_multimodal_image_markers() {
         let tmp = tempfile::tempdir().expect("temp dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache init"),
         );
 
@@ -7893,7 +7893,7 @@
                 vec![],
             ))
             .memory(Arc::from(
-                clawcrew_memory::create_memory(
+                galleon_memory::create_memory(
                     &clawcrew_config::schema::MemoryConfig {
                         backend: "none".into(),
                         ..clawcrew_config::schema::MemoryConfig::default()
@@ -7971,7 +7971,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -8100,7 +8100,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -8172,7 +8172,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -8240,7 +8240,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -8314,7 +8314,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -8379,7 +8379,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -8437,7 +8437,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -8542,7 +8542,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -8964,7 +8964,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -9246,7 +9246,7 @@
     async fn turn_cache_hit_emits_agent_end_with_none_tokens() {
         let tmp = tempfile::tempdir().expect("temp response cache dir");
         let cache = Arc::new(
-            clawcrew_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
+            galleon_memory::response_cache::ResponseCache::new(tmp.path(), 60, 100)
                 .expect("response cache should initialize"),
         );
         let memory_cfg = clawcrew_config::schema::MemoryConfig {
@@ -9254,11 +9254,11 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem_a: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let mem_b: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -9340,7 +9340,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let capturing = Arc::new(CapturingObserver::default());
@@ -9429,7 +9429,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let workspace = tempfile::TempDir::new().expect("temp dir");
@@ -9531,7 +9531,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let workspace = tempfile::TempDir::new().expect("temp dir");
@@ -9631,7 +9631,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let capturing = Arc::new(CapturingObserver::default());
@@ -9671,7 +9671,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -9719,7 +9719,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
 
@@ -9775,7 +9775,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         // Single response with no token usage.
@@ -9849,7 +9849,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         // Single response carrying usage WITHOUT token counts (kilocli-style).
@@ -9902,7 +9902,7 @@
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         // Call 1: a tool request WITH usage (drives iteration 2 and emits a
@@ -10152,7 +10152,7 @@ vision_model_provider = "custom.vision"
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, temp.path(), None)
+            galleon_memory::create_memory(&memory_cfg, temp.path(), None)
                 .expect("memory creation should succeed"),
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -10491,7 +10491,7 @@ model_provider = "custom.primary"
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, temp.path(), None)
+            galleon_memory::create_memory(&memory_cfg, temp.path(), None)
                 .expect("memory creation should succeed"),
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -10708,7 +10708,7 @@ model_provider = "custom.only"
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, temp.path(), None)
+            galleon_memory::create_memory(&memory_cfg, temp.path(), None)
                 .expect("memory creation should succeed"),
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -10819,7 +10819,7 @@ model_provider = "custom.only"
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation"),
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});
@@ -11571,7 +11571,7 @@ model_provider = "custom.only"
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation"),
         );
         let capturing = Arc::new(CapturingObserver::default());
@@ -11703,7 +11703,7 @@ model_provider = "custom.only"
             ..clawcrew_config::schema::MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
+            galleon_memory::create_memory(&memory_cfg, std::path::Path::new("/tmp"), None)
                 .expect("memory creation should succeed with valid config"),
         );
         let observer: Arc<dyn Observer> = Arc::from(crate::observability::NoopObserver {});

@@ -9,7 +9,7 @@
 
 ## 1. Analisis Kondisi Saat Ini (As-Is)
 
-Berdasarkan audit langsung pada `crates/clawcrew-memory/src/hygiene.rs`:
+Berdasarkan audit langsung pada `crates/galleon-memory/src/hygiene.rs`:
 1. **Coupling Ketat ke SQLite:**
    - File `hygiene.rs` mengimpor `use rusqlite::{Connection, params};` secara langsung.
    - Fungsi `run_if_due(config: &MemoryConfig, workspace_dir: &Path)` mengasumsikan database memori selalu berupa file SQLite lokal di disk workspace (`memories.db`).

@@ -1179,7 +1179,7 @@ mod tests {
         use crate::observability::{NoopObserver, Observer};
         use std::sync::{Arc, Mutex};
         use clawcrew_config::schema::MemoryConfig;
-        use clawcrew_memory::{self, Memory};
+        use galleon_memory::{self, Memory};
         use clawcrew_providers::{ChatMessage, ChatRequest, ChatResponse, ModelProvider};
 
         pub type SharedRequests = Arc<Mutex<Vec<Vec<ChatMessage>>>>;
@@ -1253,7 +1253,7 @@ mod tests {
                 backend: "none".into(),
                 ..MemoryConfig::default()
             };
-            Arc::from(clawcrew_memory::create_memory(&cfg, &std::env::temp_dir(), None).unwrap())
+            Arc::from(galleon_memory::create_memory(&cfg, &std::env::temp_dir(), None).unwrap())
         }
 
         pub fn make_observer() -> Arc<dyn Observer> {

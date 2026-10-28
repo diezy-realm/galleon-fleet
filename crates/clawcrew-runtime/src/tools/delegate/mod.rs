@@ -26,7 +26,7 @@ use clawcrew_config::schema::{
     ResolvedRuntime, RiskProfileConfig, RuntimeProfileConfig, SkillBundleConfig,
 };
 use clawcrew_log::Instrument as _;
-use clawcrew_memory::Memory;
+use galleon_memory::Memory;
 use clawcrew_providers::{self, ChatMessage, ModelProvider, ProviderDispatch};
 use galleon_tools::memory_export::MemoryExportTool;
 use galleon_tools::memory_forget::MemoryForgetTool;
@@ -959,7 +959,7 @@ impl DelegateTool {
         let api_key = config
             .resolved_model_provider_for_agent(agent_name)
             .and_then(|(_, _, cfg)| cfg.api_key.as_deref());
-        clawcrew_memory::create_memory_for_agent(config, agent_name, api_key)
+        galleon_memory::create_memory_for_agent(config, agent_name, api_key)
             .await
             .map(Some)
     }

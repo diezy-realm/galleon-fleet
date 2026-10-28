@@ -9,7 +9,7 @@ Handles migration and backup of Galleon state:
 - Custom skills and extensions
 
 CRITICAL SAFETY NOTICE FOR SQLITE WAL MODE:
-Every database in `crates/clawcrew-memory` runs with `PRAGMA journal_mode = WAL;`.
+Every database in `crates/galleon-memory` runs with `PRAGMA journal_mode = WAL;`.
 Copying only the `.db` file while transactions exist in `-wal` will cause
 silent data loss. This tool executes `PRAGMA wal_checkpoint(TRUNCATE)` before
 copying, or copies `.db`, `.db-wal`, and `.db-shm` atomically together.

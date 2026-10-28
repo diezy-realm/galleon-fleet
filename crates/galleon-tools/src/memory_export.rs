@@ -2,8 +2,8 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_memory::traits::ExportFilter;
-use clawcrew_memory::{Memory, MemoryCategory};
+use galleon_memory::traits::ExportFilter;
+use galleon_memory::{Memory, MemoryCategory};
 
 /// Bulk-export memories as a JSON array for GDPR Art. 20 data portability.
 pub struct MemoryExportTool {
@@ -16,7 +16,7 @@ impl MemoryExportTool {
     }
 }
 
-fn entry_matches_filter(entry: &clawcrew_memory::MemoryEntry, filter: &ExportFilter) -> bool {
+fn entry_matches_filter(entry: &galleon_memory::MemoryEntry, filter: &ExportFilter) -> bool {
     if let Some(ref namespace) = filter.namespace
         && entry.namespace != *namespace
     {
@@ -138,7 +138,7 @@ mod tests {
     use super::*;
     use tempfile::TempDir;
     use clawcrew_config::schema::MemoryPolicyConfig;
-    use clawcrew_memory::{ScannedMemory, SqliteMemory};
+    use galleon_memory::{ScannedMemory, SqliteMemory};
 
     fn test_mem() -> (TempDir, Arc<dyn Memory>) {
         let tmp = TempDir::new().unwrap();

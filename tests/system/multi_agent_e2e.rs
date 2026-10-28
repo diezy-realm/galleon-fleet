@@ -121,10 +121,10 @@ async fn two_sqlite_agents_on_one_install_have_isolated_memory() {
         );
     }
 
-    let alpha_mem = clawcrew_memory::create_memory_for_agent(&cfg, "alpha", None)
+    let alpha_mem = galleon_memory::create_memory_for_agent(&cfg, "alpha", None)
         .await
         .expect("per-agent memory for alpha");
-    let beta_mem = clawcrew_memory::create_memory_for_agent(&cfg, "beta", None)
+    let beta_mem = galleon_memory::create_memory_for_agent(&cfg, "beta", None)
         .await
         .expect("per-agent memory for beta");
 
@@ -132,7 +132,7 @@ async fn two_sqlite_agents_on_one_install_have_isolated_memory() {
         .store(
             "alpha-key",
             "alpha owns this row",
-            clawcrew_memory::MemoryCategory::Core,
+            galleon_memory::MemoryCategory::Core,
             None,
         )
         .await
@@ -141,7 +141,7 @@ async fn two_sqlite_agents_on_one_install_have_isolated_memory() {
         .store(
             "beta-key",
             "beta owns this row",
-            clawcrew_memory::MemoryCategory::Core,
+            galleon_memory::MemoryCategory::Core,
             None,
         )
         .await

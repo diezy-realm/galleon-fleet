@@ -6,7 +6,7 @@ use clawcrew_config::cost::tracker::CostTracker;
 use clawcrew_config::pairing::PairingGuard;
 use clawcrew_config::schema::Config;
 use clawcrew_infra::session_backend::SessionBackend;
-use clawcrew_memory::{self, Memory};
+use galleon_memory::{self, Memory};
 use clawcrew_providers::{self, ModelProvider};
 use galleon_tools::canvas::CanvasStore;
 use parking_lot::RwLock;
@@ -125,7 +125,7 @@ impl AppState {
         canvas_store: Option<CanvasStore>,
         sop_runner: Option<Arc<dyn clawcrew_api::sop::SopRunner>>,
     ) -> Self {
-        let memory: Arc<dyn Memory> = Arc::new(clawcrew_memory::NoneMemory::new("gateway-runtime"));
+        let memory: Arc<dyn Memory> = Arc::new(galleon_memory::NoneMemory::new("gateway-runtime"));
         let model_provider: Arc<dyn ModelProvider> =
             match clawcrew_providers::create_model_provider("ollama", None) {
                 Ok(p) => Arc::from(p),
@@ -146,7 +146,7 @@ impl AppState {
             model: "default".into(),
             temperature: None,
             mem: memory.clone(),
-            memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+            memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
                 memory,
                 clawcrew_config::schema::MemoryConfig::default(),
                 std::path::PathBuf::new(),

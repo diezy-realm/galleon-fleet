@@ -1101,7 +1101,7 @@ pub async fn run_tool_call_loop(mut p: ToolLoop<'_>) -> Result<String> {
             // same history; the preamble must not stack.
             && !turn_state.history[last_user_idx]
                 .content
-                .starts_with(clawcrew_memory::MEMORY_CONTEXT_OPEN)
+                .starts_with(galleon_memory::MEMORY_CONTEXT_OPEN)
         {
             let scopes: Vec<Option<&str>> =
                 turn_memory.sessions.iter().map(|s| s.as_deref()).collect();
@@ -2752,7 +2752,7 @@ pub(crate) async fn assemble_owned_execution(
         .resolved_model_provider_for_agent(alias)
         .and_then(|(_, _, cfg)| cfg.api_key.clone());
     let memory =
-        clawcrew_memory::create_memory_for_agent(config, alias, resolved_key.as_deref()).await?;
+        galleon_memory::create_memory_for_agent(config, alias, resolved_key.as_deref()).await?;
 
     // Mirror a fresh agent turn: the headless SOP driver reaches this agent's
     // tools via `crate::agent::run`, which builds its runtime from

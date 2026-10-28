@@ -9,7 +9,7 @@ use axum::{Router, extract::State, routing::post};
 use tempfile::TempDir;
 use tokio::sync::Mutex as AsyncMutex;
 use clawcrew_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
-use clawcrew_memory::{Memory, MemoryCategory, SqliteMemory};
+use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
 use clawcrew_runtime::agent::loop_::AgentRunOverrides;
 
 // Present ONLY in the planted memory entry: if it surfaces in a provider

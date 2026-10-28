@@ -152,7 +152,7 @@ mod memory_tool_names_guard {
     use super::*;
     use clawcrew_api::tool::Tool;
     use clawcrew_config::policy::SecurityPolicy;
-    use clawcrew_memory::NoneMemory;
+    use galleon_memory::NoneMemory;
     use std::collections::BTreeSet;
     use std::sync::Arc;
 

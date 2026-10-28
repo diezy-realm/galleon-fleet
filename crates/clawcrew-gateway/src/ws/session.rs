@@ -36,7 +36,7 @@ pub(crate) async fn tick_websocket_ping(interval: &mut Option<tokio::time::Inter
 pub(crate) async fn resolve_ws_memory_handle(
     config: &clawcrew_config::schema::Config,
     agent_alias: &str,
-) -> anyhow::Result<Option<Arc<dyn clawcrew_memory::Memory>>> {
+) -> anyhow::Result<Option<Arc<dyn galleon_memory::Memory>>> {
     if config.agent(agent_alias).is_some_and(|agent| {
         matches!(
             agent.memory.backend,
@@ -49,7 +49,7 @@ pub(crate) async fn resolve_ws_memory_handle(
     let api_key = config
         .resolved_model_provider_for_agent(agent_alias)
         .and_then(|(_, _, cfg)| cfg.api_key.clone());
-    clawcrew_memory::create_memory_for_agent(config, agent_alias, api_key.as_deref())
+    galleon_memory::create_memory_for_agent(config, agent_alias, api_key.as_deref())
         .await
         .map(Some)
 }

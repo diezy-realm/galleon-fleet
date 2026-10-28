@@ -6,7 +6,7 @@ use axum::{Router, extract::State, routing::post};
 use tempfile::TempDir;
 use tokio::sync::Mutex as AsyncMutex;
 use clawcrew_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
-use clawcrew_memory::{Memory, MemoryCategory, SqliteMemory};
+use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
 
 // Unique sentinel that exists ONLY in the planted Conversation entry: it must
 // not appear in the cron prompt or any system prompt. If it surfaces in the
@@ -159,7 +159,7 @@ async fn scheduled_run_does_not_leak_conversation_memory_into_provider_request()
     assert!(
         conversation_entries
             .iter()
-            .all(|entry| !clawcrew_memory::is_user_autosave_key(&entry.key)),
+            .all(|entry| !galleon_memory::is_user_autosave_key(&entry.key)),
         "scheduled run created an autosaved user message: {conversation_entries:#?}"
     );
 }

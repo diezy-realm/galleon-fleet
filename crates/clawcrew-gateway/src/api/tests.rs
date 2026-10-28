@@ -13,7 +13,7 @@ use clawcrew_config::pairing::PairingGuard;
 use clawcrew_infra::session_backend::SessionBackend;
 use clawcrew_infra::session_sqlite::SqliteSessionBackend;
 use clawcrew_infra::session_store::SessionStore;
-use clawcrew_memory::{Memory, MemoryCategory, MemoryEntry};
+use galleon_memory::{Memory, MemoryCategory, MemoryEntry};
 use clawcrew_providers::ModelProvider;
 #[cfg(any(
     feature = "channel-linq",
@@ -180,7 +180,7 @@ pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
         temperature: None,
         mem: Arc::new(MockMemory::default()),
         memory_strategy: Arc::new(
-            clawcrew_memory::strategy::DefaultMemoryStrategy::with_config(
+            galleon_memory::strategy::DefaultMemoryStrategy::with_config(
                 Arc::new(MockMemory::default()),
                 clawcrew_config::schema::MemoryConfig::default(),
                 std::path::PathBuf::new(),

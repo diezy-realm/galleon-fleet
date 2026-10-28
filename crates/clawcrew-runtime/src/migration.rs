@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use clawcrew_config::schema::Config;
-use clawcrew_memory::{self, Memory, MemoryCategory};
+use galleon_memory::{self, Memory, MemoryCategory};
 
 #[derive(Debug, Clone)]
 struct SourceEntry {
@@ -121,15 +121,15 @@ pub async fn migrate_openclaw_memory(
 }
 
 fn target_memory_backend(config: &Config) -> Result<Box<dyn Memory>> {
-    let backend = clawcrew_memory::backend_kind_from_dotted(&config.memory.backend);
-    if clawcrew_memory::classify_memory_backend(&backend)
-        == clawcrew_memory::MemoryBackendKind::Qdrant
+    let backend = galleon_memory::backend_kind_from_dotted(&config.memory.backend);
+    if galleon_memory::classify_memory_backend(&backend)
+        == galleon_memory::MemoryBackendKind::Qdrant
     {
         bail!(crate::i18n::get_required_cli_string(
             "cli-migrate-openclaw-qdrant-unsupported"
         ));
     }
-    clawcrew_memory::create_memory_for_migration(config)
+    galleon_memory::create_memory_for_migration(config)
 }
 
 /// Memory handle for the post-import `--reindex` pass, with the configured
@@ -138,7 +138,7 @@ fn target_memory_backend(config: &Config) -> Result<Box<dyn Memory>> {
 /// embedding-route handling, so `migrate openclaw --reindex` is equivalent to
 /// running the standalone reindex command right after the import.
 fn reindex_memory_backend(config: &Config) -> Result<Box<dyn Memory>> {
-    clawcrew_memory::create_memory_with_storage_and_routes(
+    galleon_memory::create_memory_with_storage_and_routes(
         &config.memory,
         &config.embedding_routes,
         config.resolve_active_storage(),
@@ -457,7 +457,7 @@ mod tests {
     use rusqlite::params;
     use tempfile::TempDir;
     use clawcrew_config::schema::{Config, MemoryConfig};
-    use clawcrew_memory::SqliteMemory;
+    use galleon_memory::SqliteMemory;
 
     fn test_config(workspace: &Path) -> Config {
         Config {

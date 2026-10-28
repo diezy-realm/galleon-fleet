@@ -67,8 +67,8 @@ fn temp_config(tmp: &tempfile::TempDir) -> clawcrew_config::schema::Config {
 }
 
 pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
-    let memory: Arc<dyn clawcrew_memory::Memory> =
-        Arc::new(clawcrew_memory::NoneMemory::new("api-config-test"));
+    let memory: Arc<dyn galleon_memory::Memory> =
+        Arc::new(galleon_memory::NoneMemory::new("api-config-test"));
     AppState {
         config: Arc::new(RwLock::new(config)),
         config_write_lock: Arc::new(tokio::sync::Mutex::new(())),
@@ -76,7 +76,7 @@ pub(crate) fn test_state(config: clawcrew_config::schema::Config) -> AppState {
         model: "test-model".into(),
         temperature: None,
         mem: memory.clone(),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             memory,
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),

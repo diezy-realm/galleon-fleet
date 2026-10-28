@@ -15,7 +15,7 @@ clawcrew-spawn.workspace = true
 clawcrew-infra.workspace = true
 clawcrew-config = { workspace = true, default-features = false }
 clawcrew-log.workspace = true
-clawcrew-memory.workspace = true
+galleon-memory.workspace = true
 clawcrew-providers.workspace = true
 galleon-tool-call-parser.workspace = true
 galleon-tools.workspace = true

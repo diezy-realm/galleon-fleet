@@ -12,7 +12,7 @@ use clawcrew::gateway::{self, AppState};
 use clawcrew_api::attribution::Attributable;
 use clawcrew_config::schema::Config;
 #[cfg(feature = "gateway")]
-use clawcrew_memory::NoneMemory;
+use galleon_memory::NoneMemory;
 #[cfg(feature = "gateway")]
 use clawcrew_providers::ModelProvider;
 #[cfg(feature = "gateway")]
@@ -62,7 +62,7 @@ impl Attributable for MockModelProvider {
 
 #[cfg(feature = "gateway")]
 fn test_state(config: Config) -> AppState {
-    let memory: Arc<dyn clawcrew_memory::Memory> =
+    let memory: Arc<dyn galleon_memory::Memory> =
         Arc::new(NoneMemory::new("config-patch-cli-test"));
     AppState {
         config: Arc::new(RwLock::new(config)),

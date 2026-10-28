@@ -4,7 +4,7 @@ use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use clawcrew_config::policy::SecurityPolicy;
 use clawcrew_config::policy::ToolOperation;
-use clawcrew_memory::{Memory, MemoryCategory};
+use galleon_memory::{Memory, MemoryCategory};
 
 /// Let the agent store memories — its own brain writes
 pub struct MemoryStoreTool {
@@ -114,7 +114,7 @@ mod tests {
     use tempfile::TempDir;
     use clawcrew_config::autonomy::AutonomyLevel;
     use clawcrew_config::policy::SecurityPolicy;
-    use clawcrew_memory::SqliteMemory;
+    use galleon_memory::SqliteMemory;
 
     fn test_security() -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy::default())

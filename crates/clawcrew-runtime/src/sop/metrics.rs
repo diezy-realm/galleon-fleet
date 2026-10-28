@@ -6,7 +6,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use serde_json::json;
 
 use super::types::{SopRun, SopRunStatus, SopStepStatus};
-use clawcrew_memory::traits::{Memory, MemoryCategory};
+use galleon_memory::traits::{Memory, MemoryCategory};
 
 /// Maximum recent runs kept in each ring buffer (global + per-SOP).
 /// Covers ~90-day window at ~11 runs/day. If throughput exceeds this,
@@ -1221,7 +1221,7 @@ mod tests {
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: std::sync::Arc<dyn Memory> = std::sync::Arc::from(
-            clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap(),
+            galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap(),
         );
 
         let audit = crate::sop::SopAuditLogger::new(memory.clone());
@@ -1271,7 +1271,7 @@ mod tests {
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: std::sync::Arc<dyn Memory> = std::sync::Arc::from(
-            clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap(),
+            galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap(),
         );
 
         let audit = crate::sop::SopAuditLogger::new(memory.clone());
@@ -1313,7 +1313,7 @@ mod tests {
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: std::sync::Arc<dyn Memory> = std::sync::Arc::from(
-            clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap(),
+            galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap(),
         );
 
         let store = InMemoryRunStore::new();
@@ -1335,7 +1335,7 @@ mod tests {
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: std::sync::Arc<dyn Memory> = std::sync::Arc::from(
-            clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap(),
+            galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap(),
         );
 
         let audit = crate::sop::SopAuditLogger::new(memory.clone());
@@ -1382,7 +1382,7 @@ mod tests {
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: std::sync::Arc<dyn Memory> = std::sync::Arc::from(
-            clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap(),
+            galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap(),
         );
 
         let audit = crate::sop::SopAuditLogger::new(memory.clone());

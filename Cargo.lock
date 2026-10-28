@@ -1618,7 +1618,6 @@ dependencies = [
  "clawcrew-config",
  "clawcrew-infra",
  "clawcrew-log",
- "clawcrew-memory",
  "clawcrew-providers",
  "clawcrew-spawn",
  "cpal",
@@ -1659,6 +1658,7 @@ dependencies = [
  "galleon-channel-wecom-ws",
  "galleon-channel-whatsapp",
  "galleon-i18n",
+ "galleon-memory",
  "galleon-security-scrub",
  "galleon-tool-call-parser",
  "galleon-tools",
@@ -1771,8 +1771,8 @@ dependencies = [
  "async-trait",
  "clawcrew-api",
  "clawcrew-config",
- "clawcrew-memory",
  "clawcrew-runtime",
+ "galleon-memory",
  "regex",
  "serde",
  "serde_json",
@@ -1794,7 +1794,6 @@ dependencies = [
  "clawcrew-config",
  "clawcrew-infra",
  "clawcrew-log",
- "clawcrew-memory",
  "clawcrew-providers",
  "clawcrew-runtime",
  "clawcrew-spawn",
@@ -1802,6 +1801,7 @@ dependencies = [
  "futures-util",
  "galleon-hardware",
  "galleon-i18n",
+ "galleon-memory",
  "galleon-plugins",
  "galleon-routing",
  "galleon-security-scrub",
@@ -1911,33 +1911,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "clawcrew-memory"
-version = "0.8.5"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "clawcrew-api",
- "clawcrew-config",
- "clawcrew-log",
- "clawcrew-providers",
- "clawcrew-spawn",
- "filetime",
- "parking_lot",
- "postgres",
- "regex",
- "reqwest 0.12.28",
- "rusqlite",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
- "tokio",
- "toml 1.1.2+spec-1.1.0",
- "uuid",
-]
-
-[[package]]
 name = "clawcrew-providers"
 version = "0.8.5"
 dependencies = [
@@ -1995,7 +1968,6 @@ dependencies = [
  "clawcrew-config",
  "clawcrew-infra",
  "clawcrew-log",
- "clawcrew-memory",
  "clawcrew-providers",
  "clawcrew-spawn",
  "console",
@@ -2008,6 +1980,7 @@ dependencies = [
  "galleon-commands",
  "galleon-i18n",
  "galleon-macros",
+ "galleon-memory",
  "galleon-plugins",
  "galleon-relay-proto",
  "galleon-security-scrub",
@@ -4093,12 +4066,12 @@ dependencies = [
  "clawcrew-config",
  "clawcrew-infra",
  "clawcrew-log",
- "clawcrew-memory",
  "clawcrew-providers",
  "clawcrew-spawn",
  "futures-util",
  "galleon-channel-core",
  "galleon-i18n",
+ "galleon-memory",
  "galleon-security-scrub",
  "parking_lot",
  "rand 0.10.2",
@@ -4760,7 +4733,6 @@ dependencies = [
  "clawcrew-gateway",
  "clawcrew-infra",
  "clawcrew-log",
- "clawcrew-memory",
  "clawcrew-providers",
  "clawcrew-runtime",
  "clawcrew-spawn",
@@ -4773,6 +4745,7 @@ dependencies = [
  "futures-util",
  "galleon-hardware",
  "galleon-macros",
+ "galleon-memory",
  "galleon-plugins",
  "galleon-tls",
  "galleon-tool-call-parser",
@@ -4863,6 +4836,33 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "galleon-memory"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-log",
+ "clawcrew-providers",
+ "clawcrew-spawn",
+ "filetime",
+ "parking_lot",
+ "postgres",
+ "regex",
+ "reqwest 0.12.28",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "tokio",
+ "toml 1.1.2+spec-1.1.0",
+ "uuid",
 ]
 
 [[package]]
@@ -4995,7 +4995,6 @@ dependencies = [
  "clawcrew-config",
  "clawcrew-infra",
  "clawcrew-log",
- "clawcrew-memory",
  "clawcrew-providers",
  "clawcrew-spawn",
  "directories",
@@ -5003,6 +5002,7 @@ dependencies = [
  "flate2",
  "fluent",
  "futures-util",
+ "galleon-memory",
  "glob",
  "hex",
  "infer",

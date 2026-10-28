@@ -12,7 +12,7 @@ use crate::tools::{self, Tool};
 use anyhow::{Context, Result};
 use chrono::{Datelike, Timelike};
 use clawcrew_config::schema::Config;
-use clawcrew_memory::{self, Memory, MemoryCategory};
+use galleon_memory::{self, Memory, MemoryCategory};
 #[cfg(test)]
 use clawcrew_providers::ChatRequest;
 use clawcrew_providers::{
@@ -395,7 +395,7 @@ pub struct Agent {
     /// The exact immutable route table used by `model_provider` for hint
     /// dispatch. It is replaced atomically with the provider on model switch.
     model_route_resolver: Arc<clawcrew_providers::router::ModelRouteResolver>,
-    response_cache: Option<Arc<clawcrew_memory::response_cache::ResponseCache>>,
+    response_cache: Option<Arc<galleon_memory::response_cache::ResponseCache>>,
     /// Pre-rendered security policy summary injected into the system prompt
     /// so the LLM knows the concrete constraints before making tool calls.
     security_summary: Option<String>,
@@ -557,7 +557,7 @@ pub struct AgentBuilder {
     classification_config: Option<clawcrew_config::schema::QueryClassificationConfig>,
     model_route_resolver: Option<Arc<clawcrew_providers::router::ModelRouteResolver>>,
     allowed_tools: Option<Vec<String>>,
-    response_cache: Option<Arc<clawcrew_memory::response_cache::ResponseCache>>,
+    response_cache: Option<Arc<galleon_memory::response_cache::ResponseCache>>,
     security_summary: Option<String>,
     autonomy_level: Option<crate::security::AutonomyLevel>,
     shell_profile: Option<clawcrew_api::runtime_traits::ShellProfile>,
@@ -800,7 +800,7 @@ impl AgentBuilder {
 
     pub fn response_cache(
         mut self,
-        cache: Option<Arc<clawcrew_memory::response_cache::ResponseCache>>,
+        cache: Option<Arc<galleon_memory::response_cache::ResponseCache>>,
     ) -> Self {
         self.response_cache = cache;
         self
@@ -947,7 +947,7 @@ impl AgentBuilder {
         }
 
         let memory: Arc<dyn Memory> = if exclude_memory {
-            Arc::new(clawcrew_memory::NoneMemory::new("none"))
+            Arc::new(galleon_memory::NoneMemory::new("none"))
         } else {
             self.memory.ok_or_else(|| {
                 ::clawcrew_log::record!(
@@ -1433,7 +1433,7 @@ impl Agent {
             effective_model,
         );
 
-        Some(clawcrew_memory::response_cache::ResponseCache::cache_key(
+        Some(galleon_memory::response_cache::ResponseCache::cache_key(
             &provider_model_identity,
             None,
             &transcript,
@@ -2021,7 +2021,7 @@ impl Agent {
                     );
                 }
             };
-        let memory: Arc<dyn Memory> = clawcrew_memory::create_memory_for_agent(
+        let memory: Arc<dyn Memory> = galleon_memory::create_memory_for_agent(
             config,
             agent_alias,
             agent_model_provider.and_then(|e| e.api_key.as_deref()),
@@ -2047,8 +2047,8 @@ impl Agent {
         let (sop_engine, sop_audit) = match (sop_engine, sop_audit) {
             (Some(engine), Some(audit)) => (Some(engine), Some(audit)),
             (None, None) if config.sop.runtime_enabled() => {
-                let mem: Arc<dyn clawcrew_memory::Memory> =
-                    clawcrew_memory::create_memory_for_agent(config, agent_alias, None).await?;
+                let mem: Arc<dyn galleon_memory::Memory> =
+                    galleon_memory::create_memory_for_agent(config, agent_alias, None).await?;
                 // CLI / standalone path: no channel map is wired here, so the route
                 // adapter is the no-op (log-only). The daemon path builds the SOP
                 // engine with a real channel-delivering adapter instead.
@@ -2191,7 +2191,7 @@ impl Agent {
             tool_dispatcher_for_provider(agent_cfg, model_provider.as_ref(), &model_name);
 
         let response_cache = if config.memory.response_cache_enabled {
-            clawcrew_memory::response_cache::ResponseCache::with_hot_cache(
+            galleon_memory::response_cache::ResponseCache::with_hot_cache(
                 &config.data_dir,
                 config.memory.response_cache_ttl_minutes,
                 config.memory.response_cache_max_entries,

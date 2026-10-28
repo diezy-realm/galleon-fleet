@@ -2,8 +2,8 @@ use anyhow::{Context, Result};
 use std::path::PathBuf;
 use clawcrew_api::model_provider::{ChatMessage, ChatRequest, ModelProvider};
 use clawcrew_config::schema::SkillCreationConfig;
-use clawcrew_memory::embeddings::EmbeddingProvider;
-use clawcrew_memory::vector::cosine_similarity;
+use galleon_memory::embeddings::EmbeddingProvider;
+use galleon_memory::vector::cosine_similarity;
 
 use super::document::SkillDocument;
 
@@ -657,7 +657,7 @@ pub fn extract_tool_calls_from_history(
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use clawcrew_memory::embeddings::{EmbeddingProvider, NoopEmbedding};
+    use galleon_memory::embeddings::{EmbeddingProvider, NoopEmbedding};
 
     // ── Slug generation ──────────────────────────────────────────
 

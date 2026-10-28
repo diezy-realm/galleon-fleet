@@ -70,7 +70,7 @@ fn shared_room_history_keeps_the_speaker_for_any_channel() {
 // Production code no longer calls this directly (the ScopedToolRegistry::assemble
 // seam applies it internally now); two tests below still exercise it directly to
 // pin the built-in filter's own behavior.
-use clawcrew_memory::{Memory, MemoryCategory, SqliteMemory};
+use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
 use clawcrew_providers::{ChatMessage, ModelProvider};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -1765,7 +1765,7 @@ fn router_test_ctx() -> Arc<ChannelRuntimeContext> {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -2699,7 +2699,7 @@ fn channel_runtime_context_for_defaults_test(
             ..Default::default()
         }),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             clawcrew_dir.to_path_buf(),
@@ -3169,7 +3169,7 @@ fn compact_sender_history_keeps_recent_truncated_messages() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -3256,7 +3256,7 @@ fn append_sender_turn_stores_single_turn_per_call() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -3366,7 +3366,7 @@ fn rollback_orphan_user_turn_removes_only_latest_matching_user_turn() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -3478,7 +3478,7 @@ fn rollback_orphan_user_turn_also_removes_from_session_store() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -5420,7 +5420,7 @@ fn test_runtime_ctx_with_observer_and_tools(
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(agent_cfg),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -5513,7 +5513,7 @@ fn test_runtime_ctx_with_observer(
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(agent_cfg),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -7642,7 +7642,7 @@ fn peer_prompt_test_context(
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(RecallMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(RecallMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -7718,7 +7718,7 @@ async fn process_channel_message_executes_tool_calls_instead_of_sending_raw_json
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -7876,7 +7876,7 @@ async fn multi_message_narration_reaches_telegram_before_approval_prompt() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -8062,7 +8062,7 @@ async fn multi_message_narration_applies_leak_detection_before_send() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -8233,7 +8233,7 @@ async fn multi_message_narration_applies_send_hook_before_send() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -8413,7 +8413,7 @@ async fn multi_message_approval_narration_crosses_outbound_hook_once() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -8967,7 +8967,7 @@ async fn multi_message_cancelled_narration_is_not_resurrected_by_a_later_flush()
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -9097,7 +9097,7 @@ async fn process_channel_message_scopes_sender_session_key_for_sessions_current_
         model_provider_ref: Arc::new("test-provider".to_string()),
         agent_alias: Arc::new("test-agent".to_string()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -9204,7 +9204,7 @@ async fn process_channel_message_renders_trailing_tool_receipts_block_when_enabl
         model_provider_ref: Arc::new("test-provider".to_string()),
         agent_alias: Arc::new("test-agent".to_string()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -9483,7 +9483,7 @@ async fn process_channel_message_omits_receipts_block_when_disabled() {
         model_provider_ref: Arc::new("test-provider".to_string()),
         agent_alias: Arc::new("test-agent".to_string()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -9593,7 +9593,7 @@ async fn process_channel_message_disabled_receipt_generator_emits_no_receipts_an
         model_provider_ref: Arc::new("test-provider".to_string()),
         agent_alias: Arc::new("test-agent".to_string()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -9727,7 +9727,7 @@ async fn process_channel_message_telegram_does_not_persist_tool_summary_prefix()
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -9848,7 +9848,7 @@ async fn process_channel_message_strips_unexecuted_tool_json_artifacts_from_repl
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -9954,7 +9954,7 @@ async fn process_channel_message_executes_tool_calls_with_alias_tags() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -10080,7 +10080,7 @@ async fn process_channel_message_handles_models_command_without_llm_call() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -10230,7 +10230,7 @@ async fn process_channel_message_uses_route_override_provider_and_model() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -10396,7 +10396,7 @@ async fn process_channel_message_persists_model_switch_with_route_credential() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -10872,7 +10872,7 @@ async fn process_channel_message_prefers_cached_default_provider_instance() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -10973,7 +10973,7 @@ async fn process_channel_message_respects_configured_max_tool_iterations_above_d
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -11084,7 +11084,7 @@ async fn process_channel_message_reports_configured_max_tool_iterations_limit() 
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -11197,7 +11197,7 @@ impl Memory for NoopMemory {
         &self,
         _key: &str,
         _content: &str,
-        _category: clawcrew_memory::MemoryCategory,
+        _category: galleon_memory::MemoryCategory,
         _session_id: Option<&str>,
     ) -> anyhow::Result<()> {
         Ok(())
@@ -11210,19 +11210,19 @@ impl Memory for NoopMemory {
         _session_id: Option<&str>,
         _since: Option<&str>,
         _until: Option<&str>,
-    ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+    ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
         Ok(Vec::new())
     }
 
-    async fn get(&self, _key: &str) -> anyhow::Result<Option<clawcrew_memory::MemoryEntry>> {
+    async fn get(&self, _key: &str) -> anyhow::Result<Option<galleon_memory::MemoryEntry>> {
         Ok(None)
     }
 
     async fn list(
         &self,
-        _category: Option<&clawcrew_memory::MemoryCategory>,
+        _category: Option<&galleon_memory::MemoryCategory>,
         _session_id: Option<&str>,
-    ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+    ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
         Ok(Vec::new())
     }
 
@@ -11246,7 +11246,7 @@ impl Memory for NoopMemory {
         &self,
         _key: &str,
         _content: &str,
-        _category: clawcrew_memory::MemoryCategory,
+        _category: galleon_memory::MemoryCategory,
         _session_id: Option<&str>,
         _namespace: Option<&str>,
         _importance: Option<f64>,
@@ -11263,7 +11263,7 @@ impl Memory for NoopMemory {
         _session_id: Option<&str>,
         _since: Option<&str>,
         _until: Option<&str>,
-    ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+    ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
         Ok(Vec::new())
     }
 }
@@ -11288,7 +11288,7 @@ impl Memory for RecallMemory {
         &self,
         _key: &str,
         _content: &str,
-        _category: clawcrew_memory::MemoryCategory,
+        _category: galleon_memory::MemoryCategory,
         _session_id: Option<&str>,
     ) -> anyhow::Result<()> {
         Ok(())
@@ -11301,12 +11301,12 @@ impl Memory for RecallMemory {
         _session_id: Option<&str>,
         _since: Option<&str>,
         _until: Option<&str>,
-    ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
-        Ok(vec![clawcrew_memory::MemoryEntry {
+    ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
+        Ok(vec![galleon_memory::MemoryEntry {
             id: "entry-1".to_string(),
             key: "memory_key_1".to_string(),
             content: "Age is 45".to_string(),
-            category: clawcrew_memory::MemoryCategory::Conversation,
+            category: galleon_memory::MemoryCategory::Conversation,
             scope: Default::default(),
             timestamp: "2026-02-20T00:00:00Z".to_string(),
             session_id: None,
@@ -11322,15 +11322,15 @@ impl Memory for RecallMemory {
         }])
     }
 
-    async fn get(&self, _key: &str) -> anyhow::Result<Option<clawcrew_memory::MemoryEntry>> {
+    async fn get(&self, _key: &str) -> anyhow::Result<Option<galleon_memory::MemoryEntry>> {
         Ok(None)
     }
 
     async fn list(
         &self,
-        _category: Option<&clawcrew_memory::MemoryCategory>,
+        _category: Option<&galleon_memory::MemoryCategory>,
         _session_id: Option<&str>,
-    ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+    ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
         Ok(Vec::new())
     }
 
@@ -11354,7 +11354,7 @@ impl Memory for RecallMemory {
         &self,
         _key: &str,
         _content: &str,
-        _category: clawcrew_memory::MemoryCategory,
+        _category: galleon_memory::MemoryCategory,
         _session_id: Option<&str>,
         _namespace: Option<&str>,
         _importance: Option<f64>,
@@ -11371,7 +11371,7 @@ impl Memory for RecallMemory {
         session_id: Option<&str>,
         since: Option<&str>,
         until: Option<&str>,
-    ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+    ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
         self.recall(query, limit, session_id, since, until).await
     }
 }
@@ -12539,7 +12539,7 @@ async fn message_dispatch_processes_messages_in_parallel() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -12676,7 +12676,7 @@ async fn message_dispatch_interrupts_in_flight_telegram_request_and_preserves_co
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -12828,7 +12828,7 @@ async fn passive_stop_command_does_not_cancel_another_participants_turn() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -12973,7 +12973,7 @@ async fn active_batch_is_not_swallowed_by_later_passive_chatter() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -13123,7 +13123,7 @@ async fn message_dispatch_interrupts_in_flight_slack_request_and_preserves_conte
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -13320,7 +13320,7 @@ async fn message_dispatch_preserves_interrupt_on_new_message_policy_per_whatsapp
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -13536,7 +13536,7 @@ async fn message_dispatch_interrupt_scope_is_same_sender_same_chat() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -13663,7 +13663,7 @@ async fn process_channel_message_cancels_scoped_typing_task() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -14178,7 +14178,7 @@ async fn process_channel_message_adds_and_swaps_reactions() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -14299,7 +14299,7 @@ async fn process_channel_message_no_reply_clears_early_ack() {
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -14423,7 +14423,7 @@ async fn process_channel_message_no_reply_refused_sends_notice() {
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -14539,7 +14539,7 @@ async fn process_channel_message_no_reply_failed_sends_notice() {
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -14655,7 +14655,7 @@ async fn process_channel_message_no_reply_notice_sent_when_reactions_disabled() 
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -15049,7 +15049,7 @@ async fn process_channel_message_acks_before_slow_model_completes() {
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         thinking_overrides: Arc::new(Mutex::new(HashMap::new())),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -15811,7 +15811,7 @@ async fn shared_session_new_message_interrupts_only_same_sender() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -16896,7 +16896,7 @@ fn test_runtime_ctx_with_turn_runner(
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -21757,7 +21757,7 @@ async fn autosave_keys_preserve_multiple_conversation_facts() {
 
 /// Test shim: render recalled memory directly via Memory::recall.
 async fn render_for_sessions(
-    mem: &dyn clawcrew_memory::Memory,
+    mem: &dyn galleon_memory::Memory,
     user_msg: &str,
     _min_relevance_score: f64,
     session_ids: &[Option<&str>],
@@ -21951,7 +21951,7 @@ async fn process_channel_message_restores_per_sender_history_on_follow_ups() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -22258,7 +22258,7 @@ fn cache_stability_test_context(
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: memory.clone(),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             memory,
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -22436,7 +22436,7 @@ async fn process_channel_message_memory_recall_difference_keeps_system_byte_iden
             &self,
             _key: &str,
             _content: &str,
-            _category: clawcrew_memory::MemoryCategory,
+            _category: galleon_memory::MemoryCategory,
             _session_id: Option<&str>,
         ) -> anyhow::Result<()> {
             Ok(())
@@ -22448,12 +22448,12 @@ async fn process_channel_message_memory_recall_difference_keeps_system_byte_iden
             _session_id: Option<&str>,
             _since: Option<&str>,
             _until: Option<&str>,
-        ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
-            Ok(vec![clawcrew_memory::MemoryEntry {
+        ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
+            Ok(vec![galleon_memory::MemoryEntry {
                 id: "entry-x".to_string(),
                 key: format!("key-for-{}", query),
                 content: format!("memory-for-{}", query),
-                category: clawcrew_memory::MemoryCategory::Conversation,
+                category: galleon_memory::MemoryCategory::Conversation,
                 scope: Default::default(),
                 timestamp: "2026-02-20T00:00:00Z".to_string(),
                 session_id: None,
@@ -22468,14 +22468,14 @@ async fn process_channel_message_memory_recall_difference_keeps_system_byte_iden
                 agent_id: None,
             }])
         }
-        async fn get(&self, _key: &str) -> anyhow::Result<Option<clawcrew_memory::MemoryEntry>> {
+        async fn get(&self, _key: &str) -> anyhow::Result<Option<galleon_memory::MemoryEntry>> {
             Ok(None)
         }
         async fn list(
             &self,
-            _category: Option<&clawcrew_memory::MemoryCategory>,
+            _category: Option<&galleon_memory::MemoryCategory>,
             _session_id: Option<&str>,
-        ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+        ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
             Ok(Vec::new())
         }
         async fn forget(&self, _key: &str) -> anyhow::Result<bool> {
@@ -22494,7 +22494,7 @@ async fn process_channel_message_memory_recall_difference_keeps_system_byte_iden
             &self,
             _key: &str,
             _content: &str,
-            _category: clawcrew_memory::MemoryCategory,
+            _category: galleon_memory::MemoryCategory,
             _session_id: Option<&str>,
             _namespace: Option<&str>,
             _importance: Option<f64>,
@@ -22510,7 +22510,7 @@ async fn process_channel_message_memory_recall_difference_keeps_system_byte_iden
             _session_id: Option<&str>,
             _since: Option<&str>,
             _until: Option<&str>,
-        ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+        ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
             self.recall(query, 5, None, None, None).await
         }
     }
@@ -22734,7 +22734,7 @@ async fn process_channel_message_persists_image_payload_verbatim() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -22886,7 +22886,7 @@ async fn process_channel_message_telegram_keeps_system_instruction_at_top_only()
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -26235,7 +26235,7 @@ async fn e2e_photo_attachment_rejected_by_non_vision_provider() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -26343,7 +26343,7 @@ async fn e2e_failed_vision_turn_does_not_poison_follow_up_text_turn() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -26498,7 +26498,7 @@ async fn e2e_failed_non_retryable_turn_does_not_poison_follow_up_text_turn() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -26795,7 +26795,7 @@ async fn process_channel_message_applies_query_classification_route() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -26941,7 +26941,7 @@ async fn process_channel_message_classification_disabled_uses_default_route() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -27079,7 +27079,7 @@ async fn process_channel_message_classification_no_match_uses_default_route() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -27237,7 +27237,7 @@ async fn process_channel_message_classification_priority_selects_highest() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),
@@ -28168,7 +28168,7 @@ async fn message_dispatch_different_threads_do_not_cancel_each_other() {
         agent_alias: Arc::new("test-agent".to_string()),
         agent_cfg: Arc::new(clawcrew_config::schema::AliasedAgentConfig::default()),
         memory: Arc::new(NoopMemory),
-        memory_strategy: Arc::new(clawcrew_memory::DefaultMemoryStrategy::with_config(
+        memory_strategy: Arc::new(galleon_memory::DefaultMemoryStrategy::with_config(
             Arc::new(NoopMemory),
             clawcrew_config::schema::MemoryConfig::default(),
             std::path::PathBuf::new(),

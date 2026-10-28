@@ -16,7 +16,7 @@
         DEFAULT_DELEGATE_TIMEOUT_SECS, DelegateExecutionMode, DelegateTargetConfig,
         ModelProviderConfig, ModelRouteConfig,
     };
-    use clawcrew_memory::{AgentScopedMemory, SqliteMemory};
+    use galleon_memory::{AgentScopedMemory, SqliteMemory};
     use clawcrew_providers::{
         ChatRequest, ChatResponse, ReliableProviderTerminalFailure,
         ReliableProviderTerminalFailureKind, ToolCall,

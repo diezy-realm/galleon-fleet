@@ -173,7 +173,7 @@ fn tool_names(tools: &[&dyn Tool]) -> Vec<OptionEntry> {
 }
 
 fn memory_categories() -> Vec<OptionEntry> {
-    use clawcrew_memory::traits::MemoryCategory;
+    use galleon_memory::traits::MemoryCategory;
     [
         MemoryCategory::Core,
         MemoryCategory::Daily,

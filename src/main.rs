@@ -5229,8 +5229,8 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                 // (or empty) by default, so SOP runtime behavior is off until an
                 // operator opts in by setting a directory.
                 let (sop_engine, sop_audit) = if current_config.sop.runtime_enabled() {
-                    let mem: Arc<dyn clawcrew_memory::Memory> = Arc::from(
-                        clawcrew_memory::create_memory_from_config(&current_config, None)?,
+                    let mem: Arc<dyn galleon_memory::Memory> = Arc::from(
+                        galleon_memory::create_memory_from_config(&current_config, None)?,
                     );
                     let sop_adapters = build_sop_adapters(&current_config);
                     let (engine, audit) = clawcrew_runtime::sop::build_sop_engine(
@@ -6491,8 +6491,8 @@ Add pricing to the active provider profile or supply a catalog entry."
 
                 let cancel = tokio_util::sync::CancellationToken::new();
                 let (sop_engine, sop_audit) = if config.sop.runtime_enabled() {
-                    let mem: Arc<dyn clawcrew_memory::Memory> =
-                        Arc::from(clawcrew_memory::create_memory_from_config(&config, None)?);
+                    let mem: Arc<dyn galleon_memory::Memory> =
+                        Arc::from(galleon_memory::create_memory_from_config(&config, None)?);
                     let sop_adapters = build_sop_adapters(&config);
                     let (engine, audit) = clawcrew_runtime::sop::build_sop_engine(
                         config.sop.clone(),

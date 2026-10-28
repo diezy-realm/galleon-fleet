@@ -4,7 +4,7 @@ use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use clawcrew_config::policy::SecurityPolicy;
 use clawcrew_config::policy::ToolOperation;
-use clawcrew_memory::Memory;
+use galleon_memory::Memory;
 
 /// Let the agent bulk-delete memories by namespace or session
 pub struct MemoryPurgeTool {
@@ -126,7 +126,7 @@ mod tests {
     use tempfile::TempDir;
     use clawcrew_config::autonomy::AutonomyLevel;
     use clawcrew_config::policy::SecurityPolicy;
-    use clawcrew_memory::{MemoryCategory, MemoryEntry, SqliteMemory};
+    use galleon_memory::{MemoryCategory, MemoryEntry, SqliteMemory};
 
     fn test_security() -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy::default())

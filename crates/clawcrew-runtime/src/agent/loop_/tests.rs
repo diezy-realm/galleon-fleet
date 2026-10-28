@@ -810,7 +810,7 @@
     use clawcrew_api::model_provider::{
         ProviderCapabilities, StreamChunk, StreamError, StreamEvent, StreamOptions,
     };
-    use clawcrew_memory::{Memory, MemoryCategory, SqliteMemory};
+    use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
     use clawcrew_providers::ChatResponse;
     use clawcrew_providers::router::{Route, RouterModelProvider};
 
@@ -2989,7 +2989,7 @@
     struct StaticRecallMemory;
 
     #[async_trait]
-    impl clawcrew_memory::Memory for StaticRecallMemory {
+    impl galleon_memory::Memory for StaticRecallMemory {
         fn name(&self) -> &str {
             "static-recall"
         }
@@ -3009,8 +3009,8 @@
             _session_id: Option<&str>,
             _since: Option<&str>,
             _until: Option<&str>,
-        ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
-            Ok(vec![clawcrew_memory::MemoryEntry {
+        ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
+            Ok(vec![galleon_memory::MemoryEntry {
                 id: "1".into(),
                 key: "remembered".into(),
                 content: "the server is prod-3".into(),
@@ -3029,14 +3029,14 @@
                 agent_id: None,
             }])
         }
-        async fn get(&self, _key: &str) -> anyhow::Result<Option<clawcrew_memory::MemoryEntry>> {
+        async fn get(&self, _key: &str) -> anyhow::Result<Option<galleon_memory::MemoryEntry>> {
             Ok(None)
         }
         async fn list(
             &self,
             _category: Option<&MemoryCategory>,
             _session_id: Option<&str>,
-        ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+        ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
             Ok(vec![])
         }
         async fn forget(&self, _key: &str) -> anyhow::Result<bool> {
@@ -3071,7 +3071,7 @@
             session_id: Option<&str>,
             since: Option<&str>,
             until: Option<&str>,
-        ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+        ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
             self.recall(query, limit, session_id, since, until).await
         }
     }
@@ -3090,7 +3090,7 @@
     #[tokio::test]
     async fn run_tool_call_loop_memory_injection_keys_on_origin() {
         async fn run_case(
-            mem: &dyn clawcrew_memory::Memory,
+            mem: &dyn galleon_memory::Memory,
             origin: clawcrew_api::ingress::TurnOrigin,
         ) -> (String, Vec<(Option<String>, bool)>) {
             let model_provider = ScriptedModelProvider::from_text_responses(vec!["done"]);
@@ -3183,7 +3183,7 @@
             clawcrew_api::ingress::TurnOrigin::Interactive,
         )
         .await;
-        assert!(msg.starts_with(clawcrew_memory::MEMORY_CONTEXT_OPEN));
+        assert!(msg.starts_with(galleon_memory::MEMORY_CONTEXT_OPEN));
         assert!(msg.contains("- remembered: the server is prod-3"));
         assert!(msg.ends_with("what server?"));
         assert_eq!(recalls.len(), 1);
@@ -10114,7 +10114,7 @@ This is an example, not an invocation."#;
     struct FailingRecallMemory;
 
     #[async_trait]
-    impl clawcrew_memory::Memory for FailingRecallMemory {
+    impl galleon_memory::Memory for FailingRecallMemory {
         fn name(&self) -> &str {
             "failing-recall"
         }
@@ -10134,17 +10134,17 @@ This is an example, not an invocation."#;
             _session_id: Option<&str>,
             _since: Option<&str>,
             _until: Option<&str>,
-        ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+        ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
             anyhow::bail!("simulated recall failure")
         }
-        async fn get(&self, _key: &str) -> anyhow::Result<Option<clawcrew_memory::MemoryEntry>> {
+        async fn get(&self, _key: &str) -> anyhow::Result<Option<galleon_memory::MemoryEntry>> {
             Ok(None)
         }
         async fn list(
             &self,
             _category: Option<&MemoryCategory>,
             _session_id: Option<&str>,
-        ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+        ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
             Ok(Vec::new())
         }
         async fn forget(&self, _key: &str) -> anyhow::Result<bool> {
@@ -10179,7 +10179,7 @@ This is an example, not an invocation."#;
             session_id: Option<&str>,
             since: Option<&str>,
             until: Option<&str>,
-        ) -> anyhow::Result<Vec<clawcrew_memory::MemoryEntry>> {
+        ) -> anyhow::Result<Vec<galleon_memory::MemoryEntry>> {
             self.recall(query, limit, session_id, since, until).await
         }
     }
@@ -14320,8 +14320,8 @@ Let me check the result."#;
             ..TestPolicy::default()
         });
         let risk = clawcrew_config::schema::RiskProfileConfig::default();
-        let mem: Arc<dyn clawcrew_memory::Memory> =
-            Arc::new(clawcrew_memory::NoneMemory::new("test"));
+        let mem: Arc<dyn galleon_memory::Memory> =
+            Arc::new(galleon_memory::NoneMemory::new("test"));
 
         // Build the real eager built-in registry, as process_message does.
         let built = crate::tools::all_tools(

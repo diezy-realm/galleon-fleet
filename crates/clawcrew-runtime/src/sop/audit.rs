@@ -4,7 +4,7 @@ use anyhow::Result;
 
 use super::engine::now_iso8601;
 use super::types::{SopRun, SopStepResult, SopTriggerSource};
-use clawcrew_memory::traits::{Memory, MemoryCategory};
+use galleon_memory::traits::{Memory, MemoryCategory};
 
 const SOP_CATEGORY: &str = "sop";
 
@@ -231,7 +231,7 @@ mod tests {
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let logger = SopAuditLogger::new(memory);
 
@@ -269,7 +269,7 @@ mod tests {
         };
         let tmp = tempfile::tempdir().unwrap();
         let memory: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let logger = SopAuditLogger::new(memory);
         let result = logger.get_run("nonexistent").await.unwrap();

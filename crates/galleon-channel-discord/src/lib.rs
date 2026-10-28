@@ -248,7 +248,7 @@ pub struct DiscordChannel {
     /// When set, every non-bot message that passes the channel filter is
     /// archived to a sidecar SQLite memory backend (`discord.db`). The
     /// `discord_search` tool reads from this when registered.
-    archive_memory: Option<std::sync::Arc<dyn clawcrew_memory::Memory>>,
+    archive_memory: Option<std::sync::Arc<dyn galleon_memory::Memory>>,
     /// The alias key under `[channels.discord.<alias>]` this handle is
     /// bound to. Used to scope peer-group writes and resolver lookups.
     alias: String,
@@ -511,7 +511,7 @@ impl DiscordChannel {
         Ok(response.error_for_status()?)
     }
 
-    pub fn with_archive_memory(mut self, mem: std::sync::Arc<dyn clawcrew_memory::Memory>) -> Self {
+    pub fn with_archive_memory(mut self, mem: std::sync::Arc<dyn galleon_memory::Memory>) -> Self {
         self.archive_memory = Some(mem);
         self
     }
@@ -553,9 +553,9 @@ impl DiscordChannel {
     /// lookup failures — a missed sync beats a silent one).
     async fn archived_entry(
         &self,
-        archive_mem: &std::sync::Arc<dyn clawcrew_memory::Memory>,
+        archive_mem: &std::sync::Arc<dyn galleon_memory::Memory>,
         key: &str,
-    ) -> Option<clawcrew_memory::MemoryEntry> {
+    ) -> Option<galleon_memory::MemoryEntry> {
         match archive_mem.get(key).await {
             Ok(entry) => entry,
             Err(e) => {
@@ -577,10 +577,10 @@ impl DiscordChannel {
     /// Re-store an entry preserving its category and session attribution.
     async fn restore_archived_entry(
         &self,
-        archive_mem: &std::sync::Arc<dyn clawcrew_memory::Memory>,
+        archive_mem: &std::sync::Arc<dyn galleon_memory::Memory>,
         key: &str,
         content: &str,
-        existing: &clawcrew_memory::MemoryEntry,
+        existing: &galleon_memory::MemoryEntry,
     ) {
         if let Err(e) = archive_mem
             .store(
@@ -608,7 +608,7 @@ impl DiscordChannel {
     /// MESSAGE_DELETE racing a bulk delete) must not double-stamp.
     async fn apply_archive_tombstone(
         &self,
-        archive_mem: &std::sync::Arc<dyn clawcrew_memory::Memory>,
+        archive_mem: &std::sync::Arc<dyn galleon_memory::Memory>,
         message_id: &str,
     ) {
         let key = format!("discord_{message_id}");
@@ -628,7 +628,7 @@ impl DiscordChannel {
 
     async fn apply_archive_edit(
         &self,
-        archive_mem: &std::sync::Arc<dyn clawcrew_memory::Memory>,
+        archive_mem: &std::sync::Arc<dyn galleon_memory::Memory>,
         d: &serde_json::Value,
         bot_user_id: &str,
     ) {
@@ -814,7 +814,7 @@ impl DiscordChannel {
             .store(
                 &key,
                 &content,
-                clawcrew_memory::MemoryCategory::Custom("discord".to_string()),
+                galleon_memory::MemoryCategory::Custom("discord".to_string()),
                 session,
             )
             .await
@@ -890,7 +890,7 @@ impl DiscordChannel {
         // No prefix/suffix delete API on the Memory trait, so list the
         // archive's discord rows and filter by key in memory. The sidecar
         // category is the same `Custom("discord")` the store path writes.
-        let category = clawcrew_memory::MemoryCategory::Custom("discord".to_string());
+        let category = galleon_memory::MemoryCategory::Custom("discord".to_string());
         let entries = match archive_mem.list(Some(&category), None).await {
             Ok(entries) => entries,
             Err(e) => {
@@ -3402,7 +3402,7 @@ impl Channel for DiscordChannel {
                                 .store(
                                     &mem_key,
                                     &mem_content,
-                                    clawcrew_memory::MemoryCategory::Custom(
+                                    galleon_memory::MemoryCategory::Custom(
                                         "discord".to_string(),
                                     ),
                                     session,
@@ -5479,12 +5479,12 @@ mod tests {
     /// the orchestrator's `with_archive_memory` wiring.
     fn archived_test_channel() -> (
         DiscordChannel,
-        std::sync::Arc<dyn clawcrew_memory::Memory>,
+        std::sync::Arc<dyn galleon_memory::Memory>,
         tempfile::TempDir,
     ) {
         let dir = tempfile::tempdir().unwrap();
-        let mem: std::sync::Arc<dyn clawcrew_memory::Memory> = std::sync::Arc::new(
-            clawcrew_memory::SqliteMemory::new_named("sqlite", dir.path(), "discord").unwrap(),
+        let mem: std::sync::Arc<dyn galleon_memory::Memory> = std::sync::Arc::new(
+            galleon_memory::SqliteMemory::new_named("sqlite", dir.path(), "discord").unwrap(),
         );
         let ch = DiscordChannel::new(
             "fake".into(),
@@ -5498,11 +5498,11 @@ mod tests {
         (ch, mem, dir)
     }
 
-    async fn seed_archived_message(mem: &std::sync::Arc<dyn clawcrew_memory::Memory>) {
+    async fn seed_archived_message(mem: &std::sync::Arc<dyn galleon_memory::Memory>) {
         mem.store(
             "discord_111",
             "@alice in #200 at t0: original text",
-            clawcrew_memory::MemoryCategory::Custom("discord".to_string()),
+            galleon_memory::MemoryCategory::Custom("discord".to_string()),
             Some("200"),
         )
         .await
@@ -5577,8 +5577,8 @@ mod tests {
         // Archive-time authorization is not durable: once a peer leaves
         // the allowlist their edits must stop reaching the archive.
         let dir = tempfile::tempdir().unwrap();
-        let mem: std::sync::Arc<dyn clawcrew_memory::Memory> = std::sync::Arc::new(
-            clawcrew_memory::SqliteMemory::new_named("sqlite", dir.path(), "discord").unwrap(),
+        let mem: std::sync::Arc<dyn galleon_memory::Memory> = std::sync::Arc::new(
+            galleon_memory::SqliteMemory::new_named("sqlite", dir.path(), "discord").unwrap(),
         );
         let ch = DiscordChannel::new(
             "fake".into(),
@@ -5631,7 +5631,7 @@ mod tests {
         mem.store(
             "discord_112",
             "@bob in #200 at t1: second message",
-            clawcrew_memory::MemoryCategory::Custom("discord".to_string()),
+            galleon_memory::MemoryCategory::Custom("discord".to_string()),
             Some("200"),
         )
         .await
@@ -5796,12 +5796,12 @@ mod tests {
         scope: DiscordReactionScope,
     ) -> (
         DiscordChannel,
-        std::sync::Arc<dyn clawcrew_memory::Memory>,
+        std::sync::Arc<dyn galleon_memory::Memory>,
         tempfile::TempDir,
     ) {
         let dir = tempfile::tempdir().unwrap();
-        let mem: std::sync::Arc<dyn clawcrew_memory::Memory> = std::sync::Arc::new(
-            clawcrew_memory::SqliteMemory::new_named("sqlite", dir.path(), "discord").unwrap(),
+        let mem: std::sync::Arc<dyn galleon_memory::Memory> = std::sync::Arc::new(
+            galleon_memory::SqliteMemory::new_named("sqlite", dir.path(), "discord").unwrap(),
         );
         let ch = DiscordChannel::new(
             "fake".into(),
@@ -5959,8 +5959,8 @@ mod tests {
     async fn reaction_filters_mirror_the_message_path() {
         // Peer allowlist: a reactor outside the peer set is never recorded.
         let dir = tempfile::tempdir().unwrap();
-        let mem: std::sync::Arc<dyn clawcrew_memory::Memory> = std::sync::Arc::new(
-            clawcrew_memory::SqliteMemory::new_named("sqlite", dir.path(), "discord").unwrap(),
+        let mem: std::sync::Arc<dyn galleon_memory::Memory> = std::sync::Arc::new(
+            galleon_memory::SqliteMemory::new_named("sqlite", dir.path(), "discord").unwrap(),
         );
         let gated = DiscordChannel::new(
             "fake".into(),
@@ -6185,8 +6185,8 @@ mod tests {
     #[tokio::test]
     async fn bulk_removal_respects_guild_and_channel_gates() {
         let dir = tempfile::tempdir().unwrap();
-        let mem: std::sync::Arc<dyn clawcrew_memory::Memory> = std::sync::Arc::new(
-            clawcrew_memory::SqliteMemory::new_named("sqlite", dir.path(), "discord").unwrap(),
+        let mem: std::sync::Arc<dyn galleon_memory::Memory> = std::sync::Arc::new(
+            galleon_memory::SqliteMemory::new_named("sqlite", dir.path(), "discord").unwrap(),
         );
         let gated = DiscordChannel::new(
             "fake".into(),

@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_memory::knowledge_graph::{KnowledgeGraph, NodeType, Relation};
+use galleon_memory::knowledge_graph::{KnowledgeGraph, NodeType, Relation};
 
 const CLIENT_NETWORK_INTERACTION_LIMIT: usize = 20;
 const CLIENT_NETWORK_ENTITY_LIMIT: usize = 100;
@@ -746,7 +746,7 @@ impl KnowledgeTool {
         &self,
         args: &serde_json::Value,
         action: &'static str,
-    ) -> anyhow::Result<clawcrew_memory::knowledge_graph::KnowledgeNode> {
+    ) -> anyhow::Result<galleon_memory::knowledge_graph::KnowledgeNode> {
         let client_id = args
             .get("client_id")
             .and_then(|v| v.as_str())
@@ -781,7 +781,7 @@ impl KnowledgeTool {
         &self,
         client_id: &str,
         limit: usize,
-    ) -> anyhow::Result<Vec<clawcrew_memory::knowledge_graph::KnowledgeNode>> {
+    ) -> anyhow::Result<Vec<galleon_memory::knowledge_graph::KnowledgeNode>> {
         self.graph.find_outbound_by_relation_and_type(
             client_id,
             Relation::InteractedWith,
@@ -792,7 +792,7 @@ impl KnowledgeTool {
 }
 
 fn neighbor_json(
-    node: &clawcrew_memory::knowledge_graph::KnowledgeNode,
+    node: &galleon_memory::knowledge_graph::KnowledgeNode,
     relation: Relation,
 ) -> serde_json::Value {
     json!({
@@ -830,7 +830,7 @@ fn truncate_str(s: &str, max_len: usize) -> String {
 mod tests {
     use super::*;
     use tempfile::TempDir;
-    use clawcrew_memory::knowledge_graph::KnowledgeGraph;
+    use galleon_memory::knowledge_graph::KnowledgeGraph;
 
     fn test_tool() -> (TempDir, KnowledgeTool) {
         let tmp = TempDir::new().unwrap();

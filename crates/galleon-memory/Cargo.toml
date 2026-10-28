@@ -1,5 +1,5 @@
 [package]
-name = "clawcrew-memory"
+name = "galleon-memory"
 rust-version.workspace = true
 version.workspace = true
 edition.workspace = true

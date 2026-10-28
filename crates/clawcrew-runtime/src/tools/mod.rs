@@ -171,7 +171,7 @@ use crate::sop::audit::SopAuditLogger;
 use crate::sop::engine::SopEngine;
 use async_trait::async_trait;
 use clawcrew_config::schema::{AliasedAgentConfig, Config};
-use clawcrew_memory::Memory;
+use galleon_memory::Memory;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -1206,7 +1206,7 @@ fn all_tools_with_runtime_on_thread(
     // bot/server set); the search tool reads from a shared archive DB
     // so it's enabled when at least one alias archives.
     if root_config.channels.discord.values().any(|d| d.archive) {
-        match clawcrew_memory::SqliteMemory::new_named("sqlite", &config.data_dir, "discord") {
+        match galleon_memory::SqliteMemory::new_named("sqlite", &config.data_dir, "discord") {
             Ok(discord_mem) => {
                 tool_arcs.push(Arc::new(DiscordSearchTool::new(Arc::new(discord_mem))));
             }
@@ -2054,7 +2054,7 @@ fn all_tools_with_runtime_on_thread(
     // Knowledge graph tool
     if root_config.knowledge.enabled {
         let db_path = root_config.knowledge.resolved_db_path();
-        match clawcrew_memory::knowledge_graph::KnowledgeGraph::new(
+        match galleon_memory::knowledge_graph::KnowledgeGraph::new(
             &db_path,
             root_config.knowledge.max_nodes,
         ) {
@@ -2493,7 +2493,7 @@ mod tests {
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
         let mut cfg = test_config(&tmp);
         cfg.runtime.kind = clawcrew_config::schema::RuntimeKind::Docker;
         let risk = clawcrew_config::schema::RiskProfileConfig {
@@ -3231,7 +3231,7 @@ permissions = ["http_client"]
         config.plugins.plugins_dir = tmp.path().join("plugins").display().to_string();
         let security = Arc::new(SecurityPolicy::default());
         let memory: Arc<dyn Memory> = Arc::from(
-            clawcrew_memory::create_memory(
+            galleon_memory::create_memory(
                 &MemoryConfig {
                     backend: "markdown".into(),
                     ..MemoryConfig::default()
@@ -3301,7 +3301,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig {
             enabled: false,
@@ -3371,7 +3371,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig {
             enabled: false,
@@ -3434,7 +3434,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
         let browser = BrowserConfig {
             enabled: false,
             allowed_domains: vec![],
@@ -3490,7 +3490,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig {
             enabled: false,
@@ -3632,7 +3632,7 @@ permissions = ["http_client"]
                 ..MemoryConfig::default()
             };
             let mem: Arc<dyn Memory> =
-                Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+                Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
             let browser = BrowserConfig {
                 enabled: false,
                 ..BrowserConfig::default()
@@ -3724,7 +3724,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
         let browser = BrowserConfig {
             enabled: false,
             ..BrowserConfig::default()
@@ -3792,7 +3792,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig {
             enabled: false,
@@ -3850,7 +3850,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let cfg = test_config(&tmp);
         let browser = BrowserConfig::default();
@@ -3940,7 +3940,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
         let mut groups = HashMap::new();
         groups.insert(
             "release".to_string(),
@@ -4091,7 +4091,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
         let browser = BrowserConfig::default();
         let http = clawcrew_config::schema::HttpRequestConfig::default();
         let web = clawcrew_config::schema::WebFetchConfig::default();
@@ -4191,14 +4191,14 @@ permissions = ["http_client"]
         };
 
         // Using the session alias ("ops") must succeed even with no "default" agent.
-        let mem = clawcrew_memory::create_memory_for_agent(&config, "ops", None).await;
+        let mem = galleon_memory::create_memory_for_agent(&config, "ops", None).await;
         assert!(
             mem.is_ok(),
             "create_memory_for_agent with session alias should succeed"
         );
 
         // The old hardcoded "default" must fail — proving the fix is load-bearing.
-        let mem_default = clawcrew_memory::create_memory_for_agent(&config, "default", None).await;
+        let mem_default = galleon_memory::create_memory_for_agent(&config, "default", None).await;
         assert!(
             mem_default.is_err(),
             "create_memory_for_agent(\"default\") must fail when agents.default is absent"
@@ -4316,7 +4316,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig {
             enabled: false,
@@ -4366,7 +4366,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
         let browser = BrowserConfig {
             enabled: false,
             ..BrowserConfig::default()
@@ -4420,7 +4420,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig {
             enabled: true,
@@ -4476,7 +4476,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig {
             enabled: true,
@@ -4526,7 +4526,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig {
             enabled: false,
@@ -4586,7 +4586,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let security = Arc::new(SecurityPolicy::default());
         let mut cfg = test_config(&tmp);
@@ -4745,7 +4745,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig::default();
         let http = clawcrew_config::schema::HttpRequestConfig::default();
@@ -4794,7 +4794,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig::default();
         let http = clawcrew_config::schema::HttpRequestConfig::default();
@@ -4834,7 +4834,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig::default();
         let http = clawcrew_config::schema::HttpRequestConfig::default();
@@ -4876,7 +4876,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig::default();
         let http = clawcrew_config::schema::HttpRequestConfig::default();
@@ -4915,7 +4915,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
         let cfg = test_config(tmp);
 
         all_tools(
@@ -4970,7 +4970,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let build = |enabled: bool| {
             let mut cfg = test_config(&tmp);
@@ -5027,7 +5027,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig::default();
         let http = clawcrew_config::schema::HttpRequestConfig::default();
@@ -5089,7 +5089,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let browser = BrowserConfig::default();
         let http = clawcrew_config::schema::HttpRequestConfig::default();
@@ -5206,7 +5206,7 @@ permissions = ["http_client"]
             ..MemoryConfig::default()
         };
         let mem: Arc<dyn Memory> =
-            Arc::from(clawcrew_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
 
         let tools = all_tools_with_runtime(
             Arc::new(config.clone()),

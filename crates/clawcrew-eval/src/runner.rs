@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use clawcrew_api::model_provider::ModelProvider;
 use clawcrew_config::schema::MemoryConfig;
-use clawcrew_memory::{Memory, create_memory};
+use galleon_memory::{Memory, create_memory};
 use clawcrew_runtime::agent::agent::Agent;
 use clawcrew_runtime::agent::dispatcher::NativeToolDispatcher;
 use serde::{Deserialize, Serialize};

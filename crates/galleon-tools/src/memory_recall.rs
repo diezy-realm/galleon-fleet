@@ -3,7 +3,7 @@ use serde_json::json;
 use std::fmt::Write;
 use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_memory::Memory;
+use galleon_memory::Memory;
 
 /// Let the agent search its own memory
 pub struct MemoryRecallTool {
@@ -141,7 +141,7 @@ mod tests {
     use super::*;
     use std::sync::Mutex;
     use tempfile::TempDir;
-    use clawcrew_memory::{MemoryCategory, MemoryEntry, SqliteMemory, is_recent_recall_query};
+    use galleon_memory::{MemoryCategory, MemoryEntry, SqliteMemory, is_recent_recall_query};
 
     fn seeded_mem() -> (TempDir, Arc<dyn Memory>) {
         let tmp = TempDir::new().unwrap();

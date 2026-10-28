@@ -55,14 +55,14 @@ Pencarian wajib memprioritaskan sumber primer berotoritas tinggi untuk meminimal
 
 ## 4. Pelacakan Sumber & Sitasi (Citation Tracking)
 
-Setiap kesimpulan atau aturan baru yang dimasukkan ke Knowledge Graph (`clawcrew-memory`) atau proposal pembelajaran (`MemoryProposal`) wajib menyertakan atribut sitasi konkret (URI atau path berkas):
+Setiap kesimpulan atau aturan baru yang dimasukkan ke Knowledge Graph (`galleon-memory`) atau proposal pembelajaran (`MemoryProposal`) wajib menyertakan atribut sitasi konkret (URI atau path berkas):
 
 ```json
 {
   "rule": "Pastikan statement rusqlite selalu di-drop sebelum koneksi ditutup",
   "citations": [
     "https://docs.rs/rusqlite/latest/rusqlite/struct.Statement.html",
-    "crates/clawcrew-memory/src/knowledge_graph.rs#L45"
+    "crates/galleon-memory/src/knowledge_graph.rs#L45"
   ]
 }
 ```

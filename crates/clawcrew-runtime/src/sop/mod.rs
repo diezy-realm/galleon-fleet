@@ -74,7 +74,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use clawcrew_config::schema::SopConfig;
-use clawcrew_memory::traits::Memory;
+use galleon_memory::traits::Memory;
 use types::{SopManifest, SopMeta};
 
 /// Build the tool-spec map an SOP graph projection uses to type step pins.

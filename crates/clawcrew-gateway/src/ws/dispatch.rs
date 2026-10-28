@@ -418,7 +418,7 @@ pub(crate) async fn process_chat_message(
     approval_event_rx: &mut tokio::sync::mpsc::Receiver<clawcrew_api::agent::TurnEvent>,
     pending_approvals: &PendingApprovals,
     ping_interval: &mut Option<tokio::time::Interval>,
-    ws_memory: &Option<Arc<dyn clawcrew_memory::Memory>>,
+    ws_memory: &Option<Arc<dyn galleon_memory::Memory>>,
     content: &str,
     session_key: &str,
     session_id: &str,
@@ -838,7 +838,7 @@ pub(crate) async fn process_chat_message(
                     let user_msg = content.to_string();
                     let assistant_resp = outcome.response.clone();
                     clawcrew_spawn::spawn!(async move {
-                        if let Err(e) = clawcrew_memory::consolidation::consolidate_turn(
+                        if let Err(e) = galleon_memory::consolidation::consolidate_turn(
                             model_provider.as_ref(),
                             &model,
                             temperature,

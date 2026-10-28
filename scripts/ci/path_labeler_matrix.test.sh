@@ -58,7 +58,7 @@ const positives = [
 ];
 const negatives = [
   ['cli', 'src/memory/mod.rs'],
-  ['cli', 'crates/clawcrew-memory/src/cli.rs'],
+  ['cli', 'crates/galleon-memory/src/cli.rs'],
   ['hardware', 'src/peripherals/driver.rs'],
   ['hardware', 'crates/clawcrew-api/src/channel.rs'],
   ['hardware', 'crates/clawcrew-runtime/src/agent/history.rs'],

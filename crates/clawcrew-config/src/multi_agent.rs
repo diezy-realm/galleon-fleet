@@ -84,21 +84,21 @@ impl MemoryGrant {
 pub enum MemoryBackendKind {
     /// No memory backend. Recall returns empty; stores are no-ops.
     None,
-    /// Embedded SQLite (`crates/clawcrew-memory/src/sqlite.rs`). Default for
+    /// Embedded SQLite (`crates/galleon-memory/src/sqlite.rs`). Default for
     /// new installs because every supported platform can run it without
     /// extra services.
     #[default]
     Sqlite,
     /// PostgreSQL with optional pgvector
-    /// (`crates/clawcrew-memory/src/postgres.rs`, feature `memory-postgres`).
+    /// (`crates/galleon-memory/src/postgres.rs`, feature `memory-postgres`).
     Postgres,
-    /// Qdrant vector store (`crates/clawcrew-memory/src/qdrant.rs`).
+    /// Qdrant vector store (`crates/galleon-memory/src/qdrant.rs`).
     Qdrant,
     /// Markdown files in the agent's workspace
-    /// (`crates/clawcrew-memory/src/markdown.rs`).
+    /// (`crates/galleon-memory/src/markdown.rs`).
     Markdown,
     /// Hybrid local SQLite + external Lucid CLI
-    /// (`crates/clawcrew-memory/src/lucid.rs`).
+    /// (`crates/galleon-memory/src/lucid.rs`).
     Lucid,
 }
 
