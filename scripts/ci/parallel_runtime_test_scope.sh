@@ -14,7 +14,7 @@ while IFS= read -r path; do
         crates/clawcrew-runtime/*)
             scope=all
             ;;
-        crates/clawcrew-channels/*)
+        crates/galleon-channels/*)
             if [ "$scope" = none ]; then
                 scope=channels
             fi

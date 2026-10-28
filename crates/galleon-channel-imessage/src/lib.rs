@@ -1,6 +1,6 @@
 //! `galleon-channel-imessage` — RF-C1 iMessage channel feature-crate.
 //!
-//! Ported verbatim from `clawcrew-channels::imessage` (RF-C1, pure-move):
+//! Ported verbatim from `galleon-channels::imessage` (RF-C1, pure-move):
 //! AppleScript bridge for sending, Messages.app SQLite polling for receiving,
 //! and the `typedstream`/attributedBody fallback parser. Zero coupling to
 //! other channels' shared state (unlike matrix/slack/telegram, which share a

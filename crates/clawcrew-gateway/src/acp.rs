@@ -171,7 +171,7 @@ fn extract_ws_token<'a>(headers: &'a HeaderMap, query_token: Option<&'a str>) ->
 mod tests {
     //! Front-door proof for the gateway ACP surface.
     //!
-    //! The `session/new` unit tests in `clawcrew-channels` call
+    //! The `session/new` unit tests in `galleon-channels` call
     //! `handle_session_new` directly; they prove the shared handler but cross
     //! neither user boundary. This test drives the *real* `/acp` WebSocket
     //! route: it boots the full gateway via `run_gateway` (so the request

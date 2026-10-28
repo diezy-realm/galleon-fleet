@@ -32,7 +32,7 @@ Out of scope for the excision pass; the right fix is either (a) extend `QuickUi`
 - `crates/galleon-tools/src/browser.rs:66,68,70,2006` — kept. Fields/fns gated to the `browser-native` feature; the suppression marks the cfg-off path, which is a legitimate (if ugly) pattern.
 - `crates/galleon-plugins/src/host.rs:25` `verification: VerificationResult` — kept. Plugin trust audit field; deletion needs a security/trust review.
 - `tests/integration/channel_matrix.rs:19`, `crates/clawcrew-runtime/src/agent/tests.rs:63`, `crates/clawcrew-runtime/src/sop/engine.rs:1002` — kept. Test file / `#[cfg(test)]` block content; user directive: don't touch tests.
-- `crates/clawcrew-channels/src/lark.rs:179` `event_id`, `crates/clawcrew-channels/src/bluesky.rs:48,62`, `crates/clawcrew-channels/src/reddit.rs:45` — kept. Deserializer struct fields. Serde reads and discards them; deletion would force a separate "manually skip in serde" change.
+- `crates/galleon-channels/src/lark.rs:179` `event_id`, `crates/galleon-channels/src/bluesky.rs:48,62`, `crates/galleon-channels/src/reddit.rs:45` — kept. Deserializer struct fields. Serde reads and discards them; deletion would force a separate "manually skip in serde" change.
 - `crates/galleon-providers/src/bedrock.rs:532,555,571` — kept. Same shape as the lark/bluesky case (response-deserialize fields).
 
 ### Deleted

@@ -8,7 +8,7 @@
 
 ```
 Channel/ekstensi baru
- ├─ Identitas inti produk / berbagi governance primitive (approval queue) dgn Tier A? ──► Tier A: embed di clawcrew-channels
+ ├─ Identitas inti produk / berbagi governance primitive (approval queue) dgn Tier A? ──► Tier A: embed di galleon-channels
  ├─ Butuh socket 2-arah native / native crypto / SDK berat / HTTP outbound aktif / OS-spesifik? ──► Tier B: crate galleon-channel-<name> (compiled-in, Cargo feature)
  └─ Cukup inbound webhook/polling, niche/regional, boleh di-sandbox? ──► Tier C: WASI plugin (signed, hot-load)
 ```
@@ -70,9 +70,9 @@ crates/galleon-channel-<name>/
 ```
 
 Aturan tambahan:
-- **Dilarang** mengimpor `clawcrew-runtime` atau `clawcrew-channels` (arah dependency; dikunci CI). Kebutuhan runtime lewat trait di crate kontrak/`galleon-channel-core`.
-- Registrasi mandiri (self-register) via `galleon-channel-core`; `clawcrew-channels` hanya meng-*aggregate* di balik Cargo feature `channel-<name>`.
-- Feature flag di bin/`clawcrew-channels`: `channel-<name>`; masuk `default-channels` **hanya** jika Tier A.
+- **Dilarang** mengimpor `clawcrew-runtime` atau `galleon-channels` (arah dependency; dikunci CI). Kebutuhan runtime lewat trait di crate kontrak/`galleon-channel-core`.
+- Registrasi mandiri (self-register) via `galleon-channel-core`; `galleon-channels` hanya meng-*aggregate* di balik Cargo feature `channel-<name>`.
+- Feature flag di bin/`galleon-channels`: `channel-<name>`; masuk `default-channels` **hanya** jika Tier A.
 - Platform-spesifik dengan `#[cfg(target_os = "...")]` dan target `compile_error!`/stub yang jelas; tidak ada kode mati.
 - Test: unit tanpa jaringan (mock transport) + 1 contract test terhadap trait `Channel`.
 - Ambang pecah: bila crate > 5k baris, pisahkan `-protocol` (pure codec) dari `-transport`.

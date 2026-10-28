@@ -9,7 +9,7 @@ fixture_dir="$(mktemp -d)"
 trap 'rm -rf "$fixture_dir"' EXIT
 
 repo_root="${fixture_dir}/repo"
-mkdir -p "$repo_root/crates/clawcrew-channels" \
+mkdir -p "$repo_root/crates/galleon-channels" \
     "$repo_root/crates/clawcrew-api" \
     "$repo_root/crates/clawcrew-config" \
     "$repo_root/crates/galleon-plugins" \
@@ -24,7 +24,7 @@ cat > "$metadata_file" <<EOF
   "packages": [
     {"id": "path+file://${repo_root}#clawcrew 0.8.4", "name": "clawcrew", "manifest_path": "Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4", "name": "clawcrew-api", "manifest_path": "crates/clawcrew-api/Cargo.toml"},
-    {"id": "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4", "name": "clawcrew-channels", "manifest_path": "crates/clawcrew-channels/Cargo.toml"},
+    {"id": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4", "name": "galleon-channels", "manifest_path": "crates/galleon-channels/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4", "name": "clawcrew-config", "manifest_path": "crates/clawcrew-config/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "name": "galleon-plugins", "manifest_path": "crates/galleon-plugins/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "name": "clawcrew-runtime", "manifest_path": "crates/clawcrew-runtime/Cargo.toml"},
@@ -36,7 +36,7 @@ cat > "$metadata_file" <<EOF
   "workspace_members": [
     "path+file://${repo_root}#clawcrew 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4",
-    "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4",
+    "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4",
     "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4",
@@ -47,16 +47,16 @@ cat > "$metadata_file" <<EOF
   ],
   "resolve": {
     "nodes": [
-      {"id": "path+file://${repo_root}#clawcrew 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4"}]},
+      {"id": "path+file://${repo_root}#clawcrew 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4", "deps": []},
-      {"id": "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4", "deps": []},
+      {"id": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "deps": []},
-      {"id": "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4"}]}
+      {"id": "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}]}
     ]
   }
 }
@@ -113,14 +113,14 @@ assert_selection "empty change set" skip '[]' 'No covered Rust compilation or te
 printf '%s\n' 'docs/book/src/testing.md' > "$paths_file"
 assert_selection "skip" skip '[]' 'No covered Rust compilation or test paths changed.' "$paths_file"
 
-printf '%s\n' 'crates/clawcrew-channels/src/lib.rs' > "$paths_file"
-assert_selection "one package and reverse dependent" scoped '["clawcrew","clawcrew-channels"]' '' "$paths_file"
+printf '%s\n' 'crates/galleon-channels/src/lib.rs' > "$paths_file"
+assert_selection "one package and reverse dependent" scoped '["clawcrew","galleon-channels"]' '' "$paths_file"
 
 printf '%s\n' 'crates/clawcrew-api/src/lib.rs' > "$paths_file"
 assert_selection "plugin host from reverse-dependent closure" scoped '["clawcrew","clawcrew-api","galleon-plugins"]' '' "$paths_file" true
 
-printf '%s\n' 'crates/galleon-providers/src/lib.rs' 'crates/clawcrew-channels/src/lib.rs' > "$paths_file"
-assert_selection "multiple packages" scoped '["clawcrew","clawcrew-channels","clawcrew-gateway","galleon-providers"]' '' "$paths_file" true
+printf '%s\n' 'crates/galleon-providers/src/lib.rs' 'crates/galleon-channels/src/lib.rs' > "$paths_file"
+assert_selection "multiple packages" scoped '["clawcrew","galleon-channels","clawcrew-gateway","galleon-providers"]' '' "$paths_file" true
 
 printf '%s\n' 'crates/galleon-providers/src/lib.rs' > "$paths_file"
 assert_selection "provider feature owner" scoped '["clawcrew","clawcrew-gateway","galleon-providers"]' '' "$paths_file" true
@@ -131,17 +131,17 @@ assert_selection "root feature owner" scoped '["clawcrew"]' '' "$paths_file" tru
 printf '%s\n' 'crates/clawcrew-gateway/src/api_plugins.rs' > "$paths_file"
 assert_selection "gateway feature owner" scoped '["clawcrew","clawcrew-gateway"]' '' "$paths_file" true
 
-printf '%s\n' 'crates/clawcrew-channels/src/lib.rs' 'crates/clawcrew-channels/tests/one.rs' > "$paths_file"
-assert_selection "deduplication" scoped '["clawcrew","clawcrew-channels"]' '' "$paths_file"
+printf '%s\n' 'crates/galleon-channels/src/lib.rs' 'crates/galleon-channels/tests/one.rs' > "$paths_file"
+assert_selection "deduplication" scoped '["clawcrew","galleon-channels"]' '' "$paths_file"
 
-printf '%s\n' 'crates/clawcrew-channels/tests/fixture.md' > "$paths_file"
-assert_selection "test fixture" scoped '["clawcrew","clawcrew-channels"]' '' "$paths_file"
+printf '%s\n' 'crates/galleon-channels/tests/fixture.md' > "$paths_file"
+assert_selection "test fixture" scoped '["clawcrew","galleon-channels"]' '' "$paths_file"
 
-printf '%s\n' 'crates/clawcrew-channels/locales/en/cli.ftl' > "$paths_file"
-assert_selection "package locale resource" scoped '["clawcrew","clawcrew-channels"]' '' "$paths_file"
+printf '%s\n' 'crates/galleon-channels/locales/en/cli.ftl' > "$paths_file"
+assert_selection "package locale resource" scoped '["clawcrew","galleon-channels"]' '' "$paths_file"
 
-printf '%s\n' 'crates/clawcrew-channels/build.rs' > "$paths_file"
-assert_selection "package build script" scoped '["clawcrew","clawcrew-channels"]' '' "$paths_file"
+printf '%s\n' 'crates/galleon-channels/build.rs' > "$paths_file"
+assert_selection "package build script" scoped '["clawcrew","galleon-channels"]' '' "$paths_file"
 
 printf '%s\n' 'build.rs' > "$paths_file"
 assert_selection "root build script" full '[]' '' "$paths_file"
@@ -152,16 +152,16 @@ assert_selection "plugin-host package locale resource" scoped '["clawcrew","claw
 printf '%s\n' 'locales/en/cli.ftl' > "$paths_file"
 assert_selection "root package locale resource" full '[]' '' "$paths_file"
 
-printf '%s\n' 'crates/clawcrew-channels/assets/locales/en/cli.ftl' > "$paths_file"
-assert_selection "nested locale-like resource" full '[]' '' "$paths_file" false 'crates/clawcrew-channels/assets/locales/en/cli.ftl'
+printf '%s\n' 'crates/galleon-channels/assets/locales/en/cli.ftl' > "$paths_file"
+assert_selection "nested locale-like resource" full '[]' '' "$paths_file" false 'crates/galleon-channels/assets/locales/en/cli.ftl'
 
-printf '%s\n' 'crates/clawcrew-channels/fuzz/fuzz_targets/parser.rs' > "$paths_file"
-assert_selection "unclassified member Rust path" full '[]' '' "$paths_file" false 'crates/clawcrew-channels/fuzz/fuzz_targets/parser.rs'
+printf '%s\n' 'crates/galleon-channels/fuzz/fuzz_targets/parser.rs' > "$paths_file"
+assert_selection "unclassified member Rust path" full '[]' '' "$paths_file" false 'crates/galleon-channels/fuzz/fuzz_targets/parser.rs'
 
-printf '%s\n' 'crates/clawcrew-channels/assets/generated.bin' > "$paths_file"
-assert_selection "unclassified member asset" full '[]' '' "$paths_file" false 'crates/clawcrew-channels/assets/generated.bin'
+printf '%s\n' 'crates/galleon-channels/assets/generated.bin' > "$paths_file"
+assert_selection "unclassified member asset" full '[]' '' "$paths_file" false 'crates/galleon-channels/assets/generated.bin'
 
-printf '%s\n' 'crates/clawcrew-channels/src/lib.rs' 'crates/clawcrew-runtime/assets/generated.bin' > "$paths_file"
+printf '%s\n' 'crates/galleon-channels/src/lib.rs' 'crates/clawcrew-runtime/assets/generated.bin' > "$paths_file"
 assert_selection "unclassified plugin-host path with scoped path" full '[]' '' "$paths_file" true 'crates/clawcrew-runtime/assets/generated.bin'
 
 printf '%s\n' 'crates/galleon-plugins/tests/fixtures/channel-fixture/src/lib.rs' > "$paths_file"
@@ -191,19 +191,19 @@ assert_selection "full workspace manifest" full '[]' '' "$paths_file" true
 printf '%s\n' 'crates/unknown/src/lib.rs' > "$paths_file"
 assert_selection "unknown path" full '[]' '' "$paths_file" false 'crates/unknown/src/lib.rs'
 
-printf '%s\n' 'crates/clawcrew-channels/config/ambiguous.yaml' > "$paths_file"
-assert_selection "ambiguous package path" full '[]' '' "$paths_file" false 'crates/clawcrew-channels/config/ambiguous.yaml'
+printf '%s\n' 'crates/galleon-channels/config/ambiguous.yaml' > "$paths_file"
+assert_selection "ambiguous package path" full '[]' '' "$paths_file" false 'crates/galleon-channels/config/ambiguous.yaml'
 
 printf '%s\n' 'Cargo.lock' > "$paths_file"
 assert_selection "lockfile only" full '[]' 'Cargo.lock changes require the full suite.' "$paths_file" true
 
-printf '%s\n' 'Cargo.lock' 'crates/clawcrew-channels/Cargo.toml' > "$paths_file"
+printf '%s\n' 'Cargo.lock' 'crates/galleon-channels/Cargo.toml' > "$paths_file"
 assert_selection "manifest plus lockfile" full '[]' 'Cargo.lock changes require the full suite.' "$paths_file" true
 
-printf '%s\n' 'Cargo.lock' 'crates/clawcrew-channels/Cargo.toml' 'crates/galleon-providers/src/lib.rs' > "$paths_file"
+printf '%s\n' 'Cargo.lock' 'crates/galleon-channels/Cargo.toml' 'crates/galleon-providers/src/lib.rs' > "$paths_file"
 assert_selection "lockfile with multiple packages" full '[]' 'Cargo.lock changes require the full suite.' "$paths_file" true
 
-printf '%s\n' 'Cargo.lock' 'crates/clawcrew-channels/src/lib.rs' > "$paths_file"
+printf '%s\n' 'Cargo.lock' 'crates/galleon-channels/src/lib.rs' > "$paths_file"
 assert_selection "lockfile with source change" full '[]' 'Cargo.lock changes require the full suite.' "$paths_file" true
 
 assert_selection "desktop exclusion" skip '[]' 'No covered Rust compilation or test paths changed.' <(printf '%s\n' 'apps/tauri/src/main.rs')
@@ -230,10 +230,10 @@ assert_selection "label-gated workflow exercises plugin host path" full '[]' '' 
 printf '%s\n' '.github/workflows/pr-size-labeler.yml' > "$paths_file"
 assert_selection "known independent workflow only" skip '[]' 'No covered Rust compilation or test paths changed.' "$paths_file"
 
-printf '%s\n' '.github/workflows/pr-size-labeler.yml' 'crates/clawcrew-channels/src/lib.rs' > "$paths_file"
-assert_selection "known independent workflow with package source" scoped '["clawcrew","clawcrew-channels"]' '' "$paths_file"
+printf '%s\n' '.github/workflows/pr-size-labeler.yml' 'crates/galleon-channels/src/lib.rs' > "$paths_file"
+assert_selection "known independent workflow with package source" scoped '["clawcrew","galleon-channels"]' '' "$paths_file"
 
-printf '%s\n' '.github/workflows/new-reusable-workflow.yml' 'crates/clawcrew-channels/src/lib.rs' > "$paths_file"
+printf '%s\n' '.github/workflows/new-reusable-workflow.yml' 'crates/galleon-channels/src/lib.rs' > "$paths_file"
 assert_selection "unknown workflow with package source remains full" full '[]' '' "$paths_file"
 
 printf '%s\n' 'scripts/ci/windows_test_scope.py' > "$paths_file"
@@ -242,7 +242,7 @@ assert_selection "selector itself exercises plugin host path" full '[]' '' "$pat
 printf '%s\n' 'scripts/ci/windows_test_scope.test.sh' > "$paths_file"
 assert_selection "selector contract itself exercises plugin host path" full '[]' '' "$paths_file" true
 
-printf '%s\n' 'crates/clawcrew-channels/src/$(touch should-not-exist).rs' > "$paths_file"
+printf '%s\n' 'crates/galleon-channels/src/$(touch should-not-exist).rs' > "$paths_file"
 output="$(run_selector pull_request "$paths_file" "$metadata_file")"
 if [ -e "$repo_root/should-not-exist" ] || printf '%s\n' "$output" | grep -q 'should-not-exist'; then
     echo "FAIL: changed path was executed or echoed" >&2
@@ -307,11 +307,11 @@ printf '%s\n' "$output" | grep -Fx 'mode=full' >/dev/null
 printf '%s\n' "$output" | grep -Fx 'reason=Cargo metadata is malformed or unavailable (FileNotFoundError).' >/dev/null
 printf '%s\n' "$output" | grep -Fx 'needs_plugin_host=true' >/dev/null
 
-package_args="$(python3 "$selector" --package-args-json '["clawcrew","clawcrew-channels"]')"
+package_args="$(python3 "$selector" --package-args-json '["clawcrew","galleon-channels"]')"
 test "$package_args" = $'-p\nclawcrew\n-p\nclawcrew-channels'
 
 package_args_file="$repo_root/package-args"
-python3 "$selector" --package-args-json '["clawcrew","clawcrew-channels"]' > "$package_args_file"
+python3 "$selector" --package-args-json '["clawcrew","galleon-channels"]' > "$package_args_file"
 PACKAGE_ARGS_FILE="$package_args_file" python3 - <<'PY'
 import os
 from pathlib import Path

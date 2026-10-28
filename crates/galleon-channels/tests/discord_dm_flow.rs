@@ -5,7 +5,7 @@
 //!
 //! Usage:
 //! ```bash
-//! cargo test --package clawcrew-channels discord_dm_flow -- --nocapture
+//! cargo test --package galleon-channels discord_dm_flow -- --nocapture
 //! ```
 //!
 //! Expected behavior:

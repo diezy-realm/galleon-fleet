@@ -1,6 +1,6 @@
 //! `galleon-channel-irc` — RF-B1 IRC channel feature-crate.
 //!
-//! Ported from `clawcrew-channels::irc` following the RF-B1 pattern established
+//! Ported from `galleon-channels::irc` following the RF-B1 pattern established
 //! by `galleon-channel-signal` and `galleon-channel-bluesky`.
 //!
 //! ## Seams closed by `galleon-channel-core`

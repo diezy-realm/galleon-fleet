@@ -2521,7 +2521,7 @@ fn has_supervised_channels(config: &Config) -> bool {
     config.channels.has_any_enabled()
 }
 
-// run_mqtt_sop_listener has been moved to clawcrew-channels::orchestrator::mqtt.
+// run_mqtt_sop_listener has been moved to galleon-channels::orchestrator::mqtt.
 // The daemon now receives it as a starter via DaemonRegistry::register_mqtt.
 
 #[cfg(test)]

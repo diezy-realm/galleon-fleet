@@ -494,7 +494,7 @@ pub fn count_latest_user_image_markers(messages: &[ChatMessage]) -> usize {
 /// literal text. Both marker regexes below derive their kind alternation from
 /// these consts so the strip-all and strip-audio paths cannot drift apart on
 /// which kinds exist. The channel grammar (`ATTACHMENT_KINDS` in
-/// `crates/clawcrew-channels/src/util.rs`) recognizes these same kinds plus
+/// `crates/galleon-channels/src/util.rs`) recognizes these same kinds plus
 /// `LOCATION`, which carries coordinates rather than a file reference and has
 /// no provider-side handling; the two lists live in different crates
 /// deliberately (providers cannot depend on channels).
@@ -2144,7 +2144,7 @@ mod tests {
     #[test]
     fn strip_media_markers_replaces_all_supported_kinds() {
         // Mirrors `ATTACHMENT_KINDS` in
-        // `crates/clawcrew-channels/src/util.rs`, which is the source of
+        // `crates/galleon-channels/src/util.rs`, which is the source of
         // truth for which marker spellings inbound channels can produce.
         let input = "[IMAGE:/a.jpg] [PHOTO:/b.jpg] [DOCUMENT:/c.pdf] [FILE:/d.zip] [VIDEO:/e.mp4] [VOICE:/f.ogg] [AUDIO:/g.wav]";
         let expected = [MEDIA_PLACEHOLDER; 7].join(" ");

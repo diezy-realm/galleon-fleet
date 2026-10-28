@@ -448,7 +448,7 @@ mod tests {
     fn channel_compile_specs_cover_schema_channel_types() {
         let out_of_scope = BTreeSet::from([
             // Voice duplex is a gateway event-stream config surface, not a
-            // `clawcrew-channels` Channel implementation with its own feature.
+            // `galleon-channels` Channel implementation with its own feature.
             "voice_duplex",
         ]);
 

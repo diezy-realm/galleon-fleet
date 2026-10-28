@@ -60,7 +60,7 @@ gateway · eval · bin (wiring/DI)          galleon-channel-<name>
 
 Aturan:
 - Panah hanya naik. Crate di bawah **tidak boleh** mengimpor crate di atasnya.
-- **Channel (`galleon-channel-*`, `clawcrew-channels`) tidak boleh mengimpor `clawcrew-runtime`.** Channel bergantung pada trait di crate kontrak; runtime di-inject saat wiring di bin/gateway.
+- **Channel (`galleon-channel-*`, `galleon-channels`) tidak boleh mengimpor `clawcrew-runtime`.** Channel bergantung pada trait di crate kontrak; runtime di-inject saat wiring di bin/gateway.
 - `clawcrew-api` adalah leaf: tidak ada dependency internal.
 - `galleon-plugins` hanya boleh bergantung ke `api`, `infra`, `log`.
 - Composition root (DI) hanya di bin dan `gateway`; library crate tidak membuat global singleton.

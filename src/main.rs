@@ -4738,7 +4738,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
         clawcrew_runtime::cron::scheduler::register_delivery_fn(Box::new(
             |config, channel, target, thread_id, output| {
                 Box::pin(async move {
-                    clawcrew_channels::orchestrator::deliver_announcement(
+                    galleon_channels::orchestrator::deliver_announcement(
                         &config, &channel, &target, thread_id, &output,
                     )
                     .await
@@ -4792,7 +4792,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
 
             // Wire CLI channel for interactive mode
             clawcrew_runtime::agent::loop_::register_cli_channel_fn(Box::new(|| {
-                Box::new(clawcrew_channels::cli::CliChannel::new("cli"))
+                Box::new(galleon_channels::cli::CliChannel::new("cli"))
             }));
 
             // Wire peripheral tools (gpio_read/gpio_write etc.) for `clawcrew agent`.
@@ -4807,7 +4807,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
             // Register channel map factory for late-bound tool handle population.
             clawcrew_runtime::agent::loop_::register_channel_map_fn(Box::new({
                 let config_clone = config.clone();
-                move || clawcrew_channels::orchestrator::build_channel_map(&config_clone)
+                move || galleon_channels::orchestrator::build_channel_map(&config_clone)
             }));
 
             Box::pin(agent::run(
@@ -5169,7 +5169,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
             // Wire CLI channel for interactive mode
             #[cfg(feature = "agent-runtime")]
             clawcrew_runtime::agent::loop_::register_cli_channel_fn(Box::new(|| {
-                Box::new(clawcrew_channels::cli::CliChannel::new("cli"))
+                Box::new(galleon_channels::cli::CliChannel::new("cli"))
             }));
 
             // Wire peripheral tools from galleon-hardware
@@ -5323,7 +5323,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 };
                             let turn_runner =
                                 std::sync::Arc::new(clawcrew_api::channel::NoopChannelTurnRunner);
-                            let channels = clawcrew_channels::orchestrator::start_channels_with_plugin_webhooks(
+                            let channels = galleon_channels::orchestrator::start_channels_with_plugin_webhooks(
                                 config,
                                 turn_runner,
                                 cancel,
@@ -5347,7 +5347,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                                 let dispatcher = std::sync::Arc::new(
                                     clawcrew_runtime::sop::SopRuntimeDispatcher::new(engine, audit),
                                 );
-                                clawcrew_channels::orchestrator::mqtt::run_mqtt_sop_listener(
+                                galleon_channels::orchestrator::mqtt::run_mqtt_sop_listener(
                                     &mqtt_config,
                                     dispatcher,
                                 )
@@ -6224,7 +6224,7 @@ Add pricing to the active provider profile or supply a catalog entry."
             println!();
             println!("{}", t("cli-status-channels", "Channels:"));
             println!("{}", t("cli-status-cli-always", "  CLI:      ✅ always"));
-            for entry in clawcrew_channels::listing::compiled_channels(&config.channels) {
+            for entry in galleon_channels::listing::compiled_channels(&config.channels) {
                 let channel_status = if entry.configured {
                     t("cli-status-word-configured", "configured")
                 } else {
@@ -6246,7 +6246,7 @@ Add pricing to the active provider profile or supply a catalog entry."
                 println!("  {:9} {}", entry.name, status);
             }
             let uncompiled =
-                clawcrew_channels::listing::configured_uncompiled_channels(&config.channels);
+                galleon_channels::listing::configured_uncompiled_channels(&config.channels);
             if !uncompiled.is_empty() {
                 println!(
                     "{}",
@@ -9386,7 +9386,7 @@ fn build_sop_adapters(config: &Config) -> clawcrew_runtime::sop::SopEngineAdapte
                 ) as _)
             });
 
-    let channels = clawcrew_channels::orchestrator::build_channel_map(config);
+    let channels = galleon_channels::orchestrator::build_channel_map(config);
     // Startup validation: this send-only adapter's channel map omits channels that
     // need runtime SOP handles (e.g. AMQP SOP-dispatch channels). Surface at BOOT any
     // configured approval route whose channel is absent here, so a `request_route` /

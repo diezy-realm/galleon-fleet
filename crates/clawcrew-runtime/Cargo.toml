@@ -118,7 +118,7 @@ webauthn = ["clawcrew-config/webauthn"]
 sandbox-bubblewrap = []
 # Exposes test-only helpers (including `ScopedToolRegistry::from_raw_for_test`
 # and the deterministic Agent clock seam) to OTHER crates' test builds (e.g.
-# clawcrew-channels and clawcrew-gateway). Off by default and never enabled by
+# galleon-channels and clawcrew-gateway). Off by default and never enabled by
 # any production dependency edge, so these helpers are absent from shipped
 # builds.
 test-util = []
@@ -146,7 +146,7 @@ galleon-tools = { workspace = true, features = ["test-helpers"] }
 # regression. Same pattern as galleon-tools above.
 clawcrew-config = { workspace = true, features = ["test-helpers"] }
 
-# Channel features (forwarded to clawcrew-channels)
+# Channel features (forwarded to galleon-channels)
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(clawcrew_root_crate)'] }

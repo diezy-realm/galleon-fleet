@@ -165,7 +165,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
   #### Detail Eksekusi -- BR-A5
   1. **File & simbol spesifik:**
      - `/crates/clawcrew-gateway/src/api.rs`, `ws.rs`, `gateway.rs`, `api_pairing.rs`
-     - `/crates/clawcrew-channels/src/`
+     - `/crates/galleon-channels/src/`
      - `/crates/clawcrew-runtime/src/security/prompt_guard.rs`
   2. **Spesifikasi API:**
      - Bersihkan `unwrap()` & `expect()` di kode produksi
@@ -174,7 +174,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
      - Crate lint level terdefinisi di workspace root `Cargo.toml`: `unwrap_used = "warn"`, `expect_used = "warn"`
   3. **Hasil Audit & Burn-down Aktual:**
      - `clawcrew-gateway`: **0** prod unwrap/expect (target <50 tercapai)
-     - `clawcrew-channels`: **27** prod unwrap/expect (target <50 tercapai)
+     - `galleon-channels`: **27** prod unwrap/expect (target <50 tercapai)
      - `clawcrew-runtime`: **194** prod unwrap/expect (target <200 tercapai)
   4. **Acceptance criteria testable:**
      - [x] Workspace lint policy di `Cargo.toml`: `unwrap_used` dan `expect_used` aktif

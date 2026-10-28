@@ -716,7 +716,7 @@ async fn handle_whatsapp_message_impl(
 async fn process_whatsapp_message(
     state: &AppState,
     alias: &str,
-    wa: &Arc<clawcrew_channels::whatsapp::WhatsAppChannel>,
+    wa: &Arc<galleon_channels::whatsapp::WhatsAppChannel>,
     app_secret: Option<&str>,
     headers: HeaderMap,
     body: Bytes,
@@ -756,7 +756,7 @@ async fn process_whatsapp_message(
     // to the agent.
     let mut approvals = wa.pending_approvals().lock().await;
     verified.retain(|msg| {
-        let Some((token, response)) = clawcrew_channels::util::parse_approval_reply(&msg.content)
+        let Some((token, response)) = galleon_channels::util::parse_approval_reply(&msg.content)
         else {
             return true;
         };
@@ -835,7 +835,7 @@ async fn handle_linq_webhook_impl(
 async fn process_linq_webhook(
     state: &AppState,
     alias: &str,
-    linq: &Arc<clawcrew_channels::linq::LinqChannel>,
+    linq: &Arc<galleon_channels::linq::LinqChannel>,
     signing_secret: Option<&str>,
     headers: HeaderMap,
     body: Bytes,
@@ -856,7 +856,7 @@ async fn process_linq_webhook(
                 .get("X-Webhook-Signature")
                 .and_then(|v| v.to_str().ok())
                 .unwrap_or("");
-            clawcrew_channels::linq::verify_linq_signature(secret, &body_str, timestamp, signature)
+            galleon_channels::linq::verify_linq_signature(secret, &body_str, timestamp, signature)
         },
     ) {
         Ok(verified) => verified,
@@ -972,7 +972,7 @@ async fn handle_nextcloud_talk_webhook_impl(
 async fn process_nextcloud_talk_webhook(
     state: &AppState,
     alias: &str,
-    nextcloud_talk: &Arc<clawcrew_channels::nextcloud_talk::NextcloudTalkChannel>,
+    nextcloud_talk: &Arc<galleon_channels::nextcloud_talk::NextcloudTalkChannel>,
     webhook_secret: Option<&str>,
     headers: HeaderMap,
     body: Bytes,
@@ -993,7 +993,7 @@ async fn process_nextcloud_talk_webhook(
                 .get("X-Nextcloud-Talk-Signature")
                 .and_then(|v| v.to_str().ok())
                 .unwrap_or("");
-            clawcrew_channels::nextcloud_talk::verify_nextcloud_talk_signature(
+            galleon_channels::nextcloud_talk::verify_nextcloud_talk_signature(
                 secret, random, &body_str, signature,
             )
         },
@@ -1082,7 +1082,7 @@ pub(crate) async fn handle_gmail_push_webhook(
     }
 
     let body_str = String::from_utf8_lossy(&body);
-    let envelope: clawcrew_channels::gmail_push::PubSubEnvelope =
+    let envelope: galleon_channels::gmail_push::PubSubEnvelope =
         match serde_json::from_str(&body_str) {
             Ok(e) => e,
             Err(e) => {

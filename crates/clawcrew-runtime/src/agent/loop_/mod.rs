@@ -58,7 +58,7 @@ pub async fn load_peripheral_tools(
 
 /// Channel map factory type — builds `channel_key → Arc<dyn Channel>` map.
 /// Injected by the binary so `clawcrew-runtime` doesn't depend on
-/// `clawcrew-channels`.
+/// `galleon-channels`.
 type ChannelMapFn = Box<
     dyn Fn()
             -> std::collections::HashMap<String, std::sync::Arc<dyn clawcrew_api::channel::Channel>>

@@ -67,7 +67,7 @@ scopeguard = "1.2"
 
 [features]
 # schema-export and clap are the only defaults. All channel schema types
-# compile unconditionally; channel feature flags live in clawcrew-channels only.
+# compile unconditionally; channel feature flags live in galleon-channels only.
 default = ["schema-export", "clap"]
 schema-export = ["dep:schemars", "clawcrew-api/schema-export"]
 clap = ["dep:clap"]

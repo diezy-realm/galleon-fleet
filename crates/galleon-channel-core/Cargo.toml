@@ -12,7 +12,7 @@ publish = true
 [dependencies]
 # RF-B1 seam #1 — allowlist. The grant/deny/`!name`/wildcard peer-policy SSOT
 # lives in `clawcrew_config::schema` (peer_policy_admits & co.), and
-# `clawcrew-channels::allowlist` is a thin wrapper over it. This crate re-exports
+# `galleon-channels::allowlist` is a thin wrapper over it. This crate re-exports
 # that real policy rather than reimplementing security-critical precedence rules.
 # `clawcrew-config` does NOT depend on clawcrew-runtime (its deps are
 # api/log/infra/macros), so sharing it keeps channel feature-crates off the

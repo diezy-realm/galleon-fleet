@@ -2,10 +2,10 @@
 //! RF-B1 channel feature-crates (Signal first).
 //!
 //! The split pulls one channel at a time out of the monolithic
-//! `clawcrew-channels` crate. Two couplings every channel needs — the allowlist
+//! `galleon-channels` crate. Two couplings every channel needs — the allowlist
 //! policy and the text-reply approval prompt — are provided here so a feature
 //! crate does not have to reimplement them or reach back into
-//! `clawcrew-channels` internals. Neither helper drags `clawcrew-runtime`:
+//! `galleon-channels` internals. Neither helper drags `clawcrew-runtime`:
 //! `clawcrew-config` depends only on api/log/infra/macros, and the approval
 //! helper here is the i18n-free half.
 //!
@@ -13,7 +13,7 @@
 //!
 //! The grant / deny / `!name` / wildcard peer-policy is security-critical and
 //! has a single source of truth in `clawcrew_config::schema`
-//! (`peer_policy_admits` and friends). `clawcrew-channels::allowlist` is a thin
+//! (`peer_policy_admits` and friends). `galleon-channels::allowlist` is a thin
 //! wrapper over it. This module **re-exports that same policy** rather than
 //! reimplementing the precedence rules — reuse over a second copy that could
 //! drift. A channel crate gets the full policy (not just exact-match) by
@@ -23,7 +23,7 @@
 //!
 //! [`approval::parse_approval_reply`], [`approval::new_approval_token`] and
 //! [`approval::build_yesno_prompt`] are the parts of the upstream
-//! `clawcrew-channels::util` approval helper that depend only on
+//! `galleon-channels::util` approval helper that depend only on
 //! `clawcrew-api`. The upstream prompt localizes its heading/labels through
 //! `clawcrew_runtime::i18n`; porting that would drag the runtime, so the prompt
 //! here is plain English of the IDENTICAL wire shape (`<token> yes|no|always`),
@@ -33,7 +33,7 @@
 
 /// Peer-policy allowlist — re-exported from the `clawcrew_config::schema` SSOT.
 ///
-/// `clawcrew-channels::allowlist` wraps the same functions; sharing them here
+/// `galleon-channels::allowlist` wraps the same functions; sharing them here
 /// keeps the grant/deny/precedence rules defined once. See the crate-level docs
 /// for why this is a re-export and not a reimplementation.
 pub mod allowlist {
@@ -178,7 +178,7 @@ pub mod allowlist {
 }
 
 /// Text-reply approval helper (i18n-free half of the upstream
-/// `clawcrew-channels::util` prompt). See crate docs.
+/// `galleon-channels::util` prompt). See crate docs.
 pub mod approval {
     use clawcrew_api::channel::ChannelApprovalResponse;
 

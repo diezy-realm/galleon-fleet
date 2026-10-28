@@ -369,7 +369,7 @@ pub(crate) async fn handle_socket(
         .channel_handles_any()
         .downcast_ref::<galleon_tools::send_via::AgentChannelHandles>(
     ) {
-        clawcrew_channels::orchestrator::register_channels_for_tools(
+        galleon_channels::orchestrator::register_channels_for_tools(
             &config,
             &ch.ask_user,
             &ch.channel_room,

@@ -2,7 +2,7 @@
 """
 Galleon Fleet — Gate D-2 Governance Coupling Verifier (T-CI-03)
 ==============================================================
-Verifies that `crates/clawcrew-channels/src/util.rs` does not couple
+Verifies that `crates/galleon-channels/src/util.rs` does not couple
 channel transport helpers with genuine governance policy primitives.
 
 Two-Layer Detection:
@@ -12,7 +12,7 @@ Two-Layer Detection:
      with zero dependency on `clawcrew-runtime`.
    - Violation (REJECT): Presence of policy decision symbols (RiskTier,
      should_auto_approve, playbook::, clawcrew_runtime::) OR crate dependency
-     from `clawcrew-channels` to `clawcrew-runtime`.
+     from `galleon-channels` to `clawcrew-runtime`.
 
 Normative Reference:
 - standard-docs/decisions/refactoring-rust/RF-D-principle-gateway-checklist.md (§Gate D-2)
@@ -59,7 +59,7 @@ def check_gate_d2(util_path: Path) -> tuple[bool, list[str]]:
     runtime_dep_output = ""
     try:
         res = subprocess.run(
-            ["cargo", "tree", "-p", "clawcrew-channels", "-e", "normal", "--prefix", "none"],
+            ["cargo", "tree", "-p", "galleon-channels", "-e", "normal", "--prefix", "none"],
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -80,7 +80,7 @@ def check_gate_d2(util_path: Path) -> tuple[bool, list[str]]:
         violations.append(f"Policy decision symbols detected in util.rs ({len(policy_matches)} occurrences):")
         violations.extend(policy_matches[:5])
     if has_runtime_dep:
-        violations.append(f"Architectural boundary violation: clawcrew-channels depends on clawcrew-runtime ({runtime_dep_output})")
+        violations.append(f"Architectural boundary violation: galleon-channels depends on clawcrew-runtime ({runtime_dep_output})")
 
     if violations:
         return False, violations
@@ -92,7 +92,7 @@ def check_gate_d2(util_path: Path) -> tuple[bool, list[str]]:
 
 def main():
     parser = argparse.ArgumentParser(description="Verify Gate D-2 governance decoupling in util.rs.")
-    parser.add_argument("--path", default="crates/clawcrew-channels/src/util.rs", help="Path to util.rs")
+    parser.add_argument("--path", default="crates/galleon-channels/src/util.rs", help="Path to util.rs")
     args = parser.parse_args()
 
     passed, messages = check_gate_d2(Path(args.path))

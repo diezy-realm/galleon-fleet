@@ -51,7 +51,7 @@ Sesuai aturan `AGENTS.md`:
   - `crates/galleon-channel-bluesky`
   - `crates/galleon-channel-imessage`
   - `crates/galleon-channel-signal`
-- **Channel Monolith Tersisa di `crates/clawcrew-channels`:**
+- **Channel Monolith Tersisa di `crates/galleon-channels`:**
   - `discord/`, `git/`, `matrix/`, `orchestrator/`, `slack/`, `telegram/`.
 - **Pola Pemecahan (RF-B1):**
   - Mengikuti template `galleon-channel-bluesky` saat mengekstraksi channel Tier A (Telegram, Slack, Discord) dengan public surface identical dan allowlist policy dari `galleon-channel-core`.

@@ -4148,7 +4148,7 @@ pub struct AliasedAgentConfig {
     pub transcription_provider: crate::providers::TranscriptionProviderRef,
 
     /// Optional override for the per-message LLM reply-intent classifier
-    /// (`classify_channel_reply_intent` in clawcrew-channels). When non-empty,
+    /// (`classify_channel_reply_intent` in galleon-channels). When non-empty,
     /// the channel orchestrator routes the "should this message be replied to?"
     /// classification call to `[providers.models.<type>.<alias>]` referenced
     /// here, instead of reusing the main agent's `model_provider`.
@@ -5095,7 +5095,7 @@ impl Config {
 
     /// Resolve the runtime-active agent alias the orchestrator binds
     /// channels to. Mirrors the same selection logic as
-    /// `start_channels()` in clawcrew-channels: prefer the migration-
+    /// `start_channels()` in galleon-channels: prefer the migration-
     /// synthesized `"default"` agent, otherwise fall back to the
     /// lexicographically-smallest enabled alias. Returns `None` only
     /// when no enabled agent is configured.
@@ -15644,7 +15644,7 @@ impl ChannelsConfig {
     /// feature flags — the `configured` flag reflects whether the operator has
     /// populated that channel's config section. For a list restricted to only
     /// the channels compiled into this binary use
-    /// `clawcrew_channels::listing::compiled_channels` instead.
+    /// `galleon_channels::listing::compiled_channels` instead.
     pub fn channels(&self) -> Vec<super::traits::ChannelInfo> {
         use super::traits::ChannelInfo;
         vec![
@@ -21656,8 +21656,8 @@ pub fn peer_deny_names(entry: &str, user: &str, match_fn: &impl Fn(&str, &str) -
 ///
 /// Lives here rather than beside the channel allowlist because
 /// `channel_external_peers` produces the encoding, and consumers outside
-/// `clawcrew-channels` have to decode it the same way. The plugin ingress in
-/// `clawcrew-runtime` is one: `clawcrew-channels` depends on `clawcrew-runtime`,
+/// `galleon-channels` have to decode it the same way. The plugin ingress in
+/// `clawcrew-runtime` is one: `galleon-channels` depends on `clawcrew-runtime`,
 /// so it cannot reach back for the helper, and a second implementation of deny
 /// precedence on an authorization surface is the drift this codec exists to
 /// prevent.

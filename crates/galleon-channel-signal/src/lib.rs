@@ -1,14 +1,14 @@
 //! `galleon-channel-signal` — RF-B1 ported Signal channel.
 //!
 //! This crate splits the `signal` channel out of the monolithic
-//! `clawcrew-channels` crate into an independent feature-crate. The Signal
-//! **protocol** body is ported for real from `clawcrew-channels::signal`: the
+//! `galleon-channels` crate into an independent feature-crate. The Signal
+//! **protocol** body is ported for real from `galleon-channels::signal`: the
 //! signal-cli JSON-RPC transport (`rpc_request`), the SSE event stream parser
 //! and reconnect loop (`listen`), envelope → [`ChannelMessage`] processing
 //! (`process_envelope`), native polls / reactions / typing / health, and the
 //! full [`Channel`] + [`Attributable`] trait surface.
 //!
-//! Two couplings in the upstream body reached INTO `clawcrew-channels`-internal
+//! Two couplings in the upstream body reached INTO `galleon-channels`-internal
 //! infrastructure. They were the RF-B1 split's real seams; both are now closed
 //! by sharing [`galleon_channel_core`] (which reuses the `clawcrew_config`
 //! peer-policy SSOT without dragging the runtime):

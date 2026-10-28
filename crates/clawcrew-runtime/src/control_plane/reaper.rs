@@ -2,7 +2,7 @@
 //! from OUTSIDE the task body, which the flat-file design could never do.
 //!
 //! Two entry points, both modelled on the ACP idle-reaper
-//! (`clawcrew_channels::orchestrator::acp_server` — `interval(60s)` + lock-aware
+//! (`galleon_channels::orchestrator::acp_server` — `interval(60s)` + lock-aware
 //! skip):
 //!   * [`recovery_pass`] — a one-shot sweep at boot that reclaims prior-boot orphans.
 //!   * [`reaper_loop`] — the periodic sweep that also times out the daemon's own

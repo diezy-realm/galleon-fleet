@@ -150,7 +150,7 @@ Start with [how to contribute](docs/book/src/contributing/how-to.md). Larger cha
 
 Good places to start:
 
-- New channel → `crates/clawcrew-channels/`
+- New channel → `crates/galleon-channels/`
 - New provider → `crates/galleon-providers/`
 - New tool → `crates/galleon-tools/`
 - Hardware support → `crates/galleon-hardware/`

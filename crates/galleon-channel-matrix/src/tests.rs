@@ -6212,7 +6212,7 @@ mod outbound_voice_duration {
     /// against a real encoder rather than against our own idea of the
     /// format. `opusinfo` reports its playback length as `0m:01.000s`, and
     /// its `OpusTags` carry only encoder strings.
-    const VOICE_NOTE: &[u8] = include_bytes!("../../clawcrew-channels/src/testdata/voice_note.ogg");
+    const VOICE_NOTE: &[u8] = include_bytes!("../../galleon-channels/src/testdata/voice_note.ogg");
     /// The fixture's length, on the 48 kHz granule clock.
     const VOICE_NOTE_SAMPLES: u64 = 48_000;
 

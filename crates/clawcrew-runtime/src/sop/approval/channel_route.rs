@@ -9,8 +9,8 @@
 //!
 //! Layering: this lives in `clawcrew-runtime` because it needs only
 //! [`clawcrew_api::channel::Channel`] (a runtime dependency already), never the
-//! `clawcrew-channels` implementations. The DAEMON builds the concrete channel map
-//! (via `clawcrew_channels::orchestrator::build_channel_map`) and injects it here, so
+//! `galleon-channels` implementations. The DAEMON builds the concrete channel map
+//! (via `galleon_channels::orchestrator::build_channel_map`) and injects it here, so
 //! there is no runtime -> channels layering inversion.
 //!
 //! Delivery is best-effort and fire-and-forget: [`ApprovalRouteAdapter::deliver`] is

@@ -76,7 +76,7 @@ pub use crate::whatsapp::WhatsAppChannel;
 pub use clawcrew_api::channel::{
     Channel, ChannelMessage, DraftProgress, DraftProgressKind, ListenerHealth, SendMessage,
 };
-// Local channel types (in misc, not clawcrew-channels)
+// Local channel types (in misc, not galleon-channels)
 pub use crate::cli::CliChannel;
 pub use crate::link_enricher;
 #[cfg(feature = "channel-matrix")]

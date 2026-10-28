@@ -35,7 +35,7 @@ fn crate_dependency_direction_strictly_enforced() {
         for forbidden in [
             "clawcrew-runtime",
             "clawcrew-gateway",
-            "clawcrew-channels",
+            "galleon-channels",
             "galleon-tools",
             "galleon-providers",
         ] {
@@ -59,7 +59,7 @@ fn crate_dependency_direction_strictly_enforced() {
 
     // 3. Check channel crates do not depend on clawcrew-runtime
     for channel_crate in [
-        "crates/clawcrew-channels",
+        "crates/galleon-channels",
         "crates/galleon-channel-core",
         "crates/galleon-channel-signal",
         "crates/galleon-channel-bluesky",

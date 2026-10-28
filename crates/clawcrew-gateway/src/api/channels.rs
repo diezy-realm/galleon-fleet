@@ -30,7 +30,7 @@ pub async fn handle_api_channels(
         .map(|info| {
             let composite = format!("{}.{}", info.channel_type, info.alias);
             let compiled_key = compiled_readiness_key_for_alias(&config, &info);
-            let compiled = clawcrew_channels::listing::is_channel_type_compiled(compiled_key);
+            let compiled = galleon_channels::listing::is_channel_type_compiled(compiled_key);
             let readiness = channel_readiness(&config, &info, &health, &state);
             let (status, health_status) = if compiled {
                 channel_readiness_summary(&readiness)
@@ -60,7 +60,7 @@ pub async fn handle_api_channels(
 ///
 /// `{channel}` is the composite `<type>.<alias>` name returned by
 /// `GET /api/channels`. Dispatches to the channel-owned relink hook
-/// ([`clawcrew_channels::login_relink::relink`]); the gateway performs no
+/// ([`galleon_channels::login_relink::relink`]); the gateway performs no
 /// file operations of its own and holds no knowledge of channel session
 /// layouts.
 ///
@@ -107,7 +107,7 @@ pub async fn handle_api_channel_relink(
     // has no relink hook or its feature is not compiled — an explicit
     // no-op conflict where nothing is touched.
     let compiled_key = compiled_readiness_key_for_alias(&config, &info);
-    let Some(qr_channel) = clawcrew_channels::listing::qr_pairing_channel(compiled_key) else {
+    let Some(qr_channel) = galleon_channels::listing::qr_pairing_channel(compiled_key) else {
         return (
             StatusCode::CONFLICT,
             Json(serde_json::json!({
@@ -123,8 +123,8 @@ pub async fn handle_api_channel_relink(
             .into_response();
     };
 
-    match clawcrew_channels::login_relink::relink(qr_channel, &config, &info.alias) {
-        Ok(clawcrew_channels::login_relink::RelinkOutcome::Cleared { removed }) => {
+    match galleon_channels::login_relink::relink(qr_channel, &config, &info.alias) {
+        Ok(galleon_channels::login_relink::RelinkOutcome::Cleared { removed }) => {
             ::clawcrew_log::record!(
                 INFO,
                 ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)
@@ -140,7 +140,7 @@ pub async fn handle_api_channel_relink(
             }))
             .into_response()
         }
-        Ok(clawcrew_channels::login_relink::RelinkOutcome::NothingToClear) => {
+        Ok(galleon_channels::login_relink::RelinkOutcome::NothingToClear) => {
             Json(serde_json::json!({
                 "channel": channel,
                 "outcome": "nothing_to_clear",
@@ -246,7 +246,7 @@ pub(crate) fn channel_readiness(
 }
 
 /// Fill `readiness.authenticated` from the channel-owned persisted-login
-/// probe (`clawcrew_channels::login_probe`). The probe resolves the same
+/// probe (`galleon_channels::login_probe`). The probe resolves the same
 /// on-disk session signal each QR-pairing channel uses at startup to decide
 /// between resuming a session and minting a fresh QR code; nothing is
 /// cached and nothing is written. Channel types without a typed QR-pairing
@@ -257,12 +257,12 @@ fn apply_persisted_login_readiness(
     info: &clawcrew_config::schema::ChannelAliasInfo,
     readiness: &mut ChannelReadiness,
 ) {
-    use clawcrew_channels::login_probe::PersistedLogin;
+    use galleon_channels::login_probe::PersistedLogin;
 
     // Resolve the string key to the typed QR-pairing channel once; all
     // downstream dispatch is on the enum.
     let compiled_key = compiled_readiness_key_for_alias(config, info);
-    let Some(channel) = clawcrew_channels::listing::qr_pairing_channel(compiled_key) else {
+    let Some(channel) = galleon_channels::listing::qr_pairing_channel(compiled_key) else {
         readiness.notes.push(format!(
             "Live readiness is not checked for `{}` channels yet.",
             info.channel_type
@@ -270,7 +270,7 @@ fn apply_persisted_login_readiness(
         return;
     };
 
-    match clawcrew_channels::login_probe::persisted_login(channel, config, &info.alias) {
+    match galleon_channels::login_probe::persisted_login(channel, config, &info.alias) {
         PersistedLogin::Present => {
             readiness.authenticated = ChannelReadinessState::Ready;
             readiness.notes.push(format!(

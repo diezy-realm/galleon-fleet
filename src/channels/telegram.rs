@@ -1,1 +1,1 @@
-pub use clawcrew_channels::telegram::*;
+pub use galleon_channels::telegram::*;

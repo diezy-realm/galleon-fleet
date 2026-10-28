@@ -172,7 +172,7 @@ pub async fn handle_api_channel_bind(
     let alias = body.alias.trim();
 
     // Closed-set gate: only telegram/wechat/line have an operator-bind surface.
-    if clawcrew_channels::orchestrator::channel_identity_normalizer(channel_type).is_none() {
+    if galleon_channels::orchestrator::channel_identity_normalizer(channel_type).is_none() {
         return error_response(ConfigApiError::new(
             ConfigApiCode::ValidationFailed,
             format!(
@@ -202,14 +202,14 @@ pub async fn handle_api_channel_bind(
 
     // Reject a phantom alias loudly (404) rather than minting a peer group the
     // runtime never reads.
-    if !clawcrew_channels::orchestrator::channel_alias_configured(&working, channel_type, alias) {
+    if !galleon_channels::orchestrator::channel_alias_configured(&working, channel_type, alias) {
         return error_response(ConfigApiError::new(
             ConfigApiCode::PathNotFound,
             format!("channel `{channel_type}.{alias}` is not configured"),
         ));
     }
 
-    let target = match clawcrew_channels::orchestrator::bind_channel_identity_into(
+    let target = match galleon_channels::orchestrator::bind_channel_identity_into(
         &mut working,
         channel_type,
         alias,
@@ -233,14 +233,14 @@ pub async fn handle_api_channel_bind(
         // Name the group that actually carries the grant, including a bare
         // type-wide one. Falling back to the conventional `<type>_<alias>` key
         // named a block that need not exist and sent operators to edit it.
-        let source = clawcrew_channels::orchestrator::channel_authorizing_group_key(
+        let source = galleon_channels::orchestrator::channel_authorizing_group_key(
             &working,
             channel_type,
             alias,
             &body.identity,
         )
         .or_else(|| {
-            clawcrew_channels::orchestrator::channel_peer_group_key(&working, channel_type, alias)
+            galleon_channels::orchestrator::channel_peer_group_key(&working, channel_type, alias)
         });
         return Json(serde_json::json!({
             "saved": false,

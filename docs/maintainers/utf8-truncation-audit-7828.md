@@ -44,7 +44,7 @@ inline blocks flagged separately and not treated as must-fix):
 | C | `as_bytes()[..]`, `from_utf8(&x[..])` | 7 |
 | D | `.get(..N)`, `.split_at(...)` | 11 |
 
-Crates in scope (runtime-reachable text per #7828): `clawcrew-channels`,
+Crates in scope (runtime-reachable text per #7828): `galleon-channels`,
 `galleon-tools`, `galleon-providers`, `clawcrew-runtime`, `clawcrew-gateway`,
 `galleon-memory`, `apps/zerocode`, and the root `src/` binary.
 
@@ -66,7 +66,7 @@ repo toolchain (verified: a standalone `--edition 2024` probe compiles and runs;
 `s.floor_char_boundary(n)` with no local trait import). The three crate-local
 reimplementations —
 
-- `crates/clawcrew-channels/src/util.rs:13`
+- `crates/galleon-channels/src/util.rs:13`
 - `crates/galleon-tools/src/util_helpers.rs:10`
 - `crates/clawcrew-runtime/src/agent/history.rs:32`
 
@@ -112,7 +112,7 @@ one of these shapes or is byte/ASCII data):
 - **Helper consolidation onto std `floor_char_boundary`.** With
   `str::floor_char_boundary` stable, the three crate-local copies and the
   inlined walk-back loops are redundant. Collapsing them touches
-  `clawcrew-channels`, `galleon-tools`, and `clawcrew-runtime` public/`pub(crate)`
+  `galleon-channels`, `galleon-tools`, and `clawcrew-runtime` public/`pub(crate)`
   surfaces and every call site — a multi-crate refactor whose risk/benefit does
   not fit #7828's "narrow audit, no API changes" mandate (compare the excision
   log's deferral of cross-crate consolidation as "risky on a release branch").

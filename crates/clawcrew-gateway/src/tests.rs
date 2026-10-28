@@ -6477,7 +6477,7 @@ fn needs_quickstart_channel_reply_resolves_via_fluent() {
 
 /// Helper: compute a valid Linq HMAC-SHA256 signature for the given
 /// secret, timestamp, and body.  Mirrors the verification logic in
-/// `clawcrew_channels::linq::verify_linq_signature`.
+/// `galleon_channels::linq::verify_linq_signature`.
 #[cfg(feature = "channel-linq")]
 fn compute_linq_signature_hex(secret: &str, timestamp: &str, body: &str) -> String {
     use hmac::{Hmac, Mac};

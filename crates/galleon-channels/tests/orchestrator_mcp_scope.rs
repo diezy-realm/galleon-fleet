@@ -1,5 +1,5 @@
 //! Regression coverageat the channels-orchestrator MCP
-//! connection site (`crates/clawcrew-channels/src/orchestrator/mod.rs`,
+//! connection site (`crates/galleon-channels/src/orchestrator/mod.rs`,
 //! search for `mcp_servers_for_agent`).
 
 use std::collections::HashMap;

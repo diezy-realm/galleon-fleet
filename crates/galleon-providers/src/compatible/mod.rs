@@ -347,7 +347,7 @@ const MAX_MODELS_RESPONSE_BYTES: u64 = 16 * 1024 * 1024;
 /// Read a response body into memory, refusing anything past `max_bytes`: a
 /// declared `Content-Length` over the cap fails fast, and a stream that grows
 /// past it fails as the bytes arrive (so a lying or absent `Content-Length`
-/// cannot get around the bound). Mirrors the bounded reader in `clawcrew-channels`
+/// cannot get around the bound). Mirrors the bounded reader in `galleon-channels`
 /// so both behave identically, without taking a cross-crate dependency for it.
 async fn read_body_capped(
     mut response: reqwest::Response,

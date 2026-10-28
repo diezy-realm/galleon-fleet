@@ -1,6 +1,6 @@
 //! `galleon-channel-bluesky` — RF-B1 Bluesky channel feature-crate.
 //!
-//! The AT Protocol body is ported here from `clawcrew-channels::bluesky`,
+//! The AT Protocol body is ported here from `galleon-channels::bluesky`,
 //! mirroring the shape already proven by [`galleon-channel-signal`]: the
 //! `com.atproto` session + record calls, the newest-first notification poll
 //! loop with its partial-walk watermark discipline, and the full

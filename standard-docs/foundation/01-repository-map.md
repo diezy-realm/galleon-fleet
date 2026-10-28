@@ -35,7 +35,7 @@ Ukuran dan arah dependency: Phase 5 §1 (`cargo metadata`).
 | Domain | `galleon-providers` | **SSOT LLM** (ADR 0001) |
 | | `-memory`, `-tools`, `-tool-call-parser`, `-hardware` | Memori & embedding, tool agen, parser tool-call, perangkat |
 | | `clawcrew-runtime` (286k LOC) | Agent loop, SOP, hooks, cron, security, observability, skills, RPC, TUI, subagents |
-| Tepi | `clawcrew-channels` (198k LOC) | ±35 adapter channel + orchestrator |
+| Tepi | `galleon-channels` (198k LOC) | ±35 adapter channel + orchestrator |
 | | `galleon-channel-{core,signal,bluesky,imessage}` | Pola feature-crate channel (Tier B) |
 | | `galleon-plugins` | Host WASI/Wasmtime, manifest, signature, catalog, egress |
 | Komposisi | `clawcrew-gateway` | HTTP/WS gateway (`api_*`), **gRPC `SystemGatewayService`** (`grpc_system_gateway.rs`), vault, pairing |

@@ -183,7 +183,7 @@ fn verify_webhook_signature_with_timestamp(
 #[tokio::test]
 async fn webhook_ingress_accepts_valid_hmac_signature() {
     let secret = "valid-secret-token-e2e-testing-key-123";
-    let channel = clawcrew_channels::webhook::WebhookChannel::new(
+    let channel = galleon_channels::webhook::WebhookChannel::new(
         "test_ingress_channel".to_string(),
         0,
         Some("/inbound".to_string()),
@@ -242,7 +242,7 @@ async fn webhook_ingress_accepts_valid_hmac_signature() {
 #[tokio::test]
 async fn webhook_ingress_rejects_corrupted_signature_with_401() {
     let secret = "valid-secret-token-e2e-testing-key-123";
-    let channel = clawcrew_channels::webhook::WebhookChannel::new(
+    let channel = galleon_channels::webhook::WebhookChannel::new(
         "test_ingress_channel".to_string(),
         0,
         Some("/inbound".to_string()),
@@ -295,7 +295,7 @@ async fn webhook_ingress_rejects_corrupted_signature_with_401() {
 #[tokio::test]
 async fn webhook_ingress_rejects_missing_signature_with_401() {
     let secret = "valid-secret-token-e2e-testing-key-123";
-    let channel = clawcrew_channels::webhook::WebhookChannel::new(
+    let channel = galleon_channels::webhook::WebhookChannel::new(
         "test_ingress_channel".to_string(),
         0,
         Some("/inbound".to_string()),
@@ -339,7 +339,7 @@ async fn webhook_ingress_rejects_missing_signature_with_401() {
 #[tokio::test]
 async fn webhook_ingress_rejects_tampered_payload_with_401() {
     let secret = "valid-secret-token-e2e-testing-key-123";
-    let channel = clawcrew_channels::webhook::WebhookChannel::new(
+    let channel = galleon_channels::webhook::WebhookChannel::new(
         "test_ingress_channel".to_string(),
         0,
         Some("/inbound".to_string()),

@@ -31,20 +31,20 @@ pub struct AppState {
     pub auth_limiter: Arc<crate::auth_rate_limit::AuthRateLimiter>,
     pub idempotency_store: Arc<crate::IdempotencyStore>,
     #[cfg(feature = "channel-whatsapp-cloud")]
-    pub whatsapp: HashMap<String, Arc<clawcrew_channels::whatsapp::WhatsAppChannel>>,
+    pub whatsapp: HashMap<String, Arc<galleon_channels::whatsapp::WhatsAppChannel>>,
     #[cfg(feature = "channel-whatsapp-cloud")]
     pub whatsapp_app_secret: HashMap<String, Arc<str>>,
     #[cfg(feature = "channel-linq")]
-    pub linq: HashMap<String, Arc<clawcrew_channels::linq::LinqChannel>>,
+    pub linq: HashMap<String, Arc<galleon_channels::linq::LinqChannel>>,
     #[cfg(feature = "channel-linq")]
     pub linq_signing_secrets: HashMap<String, Arc<str>>,
     #[cfg(feature = "channel-nextcloud")]
     pub nextcloud_talk:
-        HashMap<String, Arc<clawcrew_channels::nextcloud_talk::NextcloudTalkChannel>>,
+        HashMap<String, Arc<galleon_channels::nextcloud_talk::NextcloudTalkChannel>>,
     #[cfg(feature = "channel-nextcloud")]
     pub nextcloud_talk_webhook_secret: HashMap<String, Arc<str>>,
     #[cfg(feature = "channel-email")]
-    pub gmail_push: Option<Arc<clawcrew_channels::gmail_push::GmailPushChannel>>,
+    pub gmail_push: Option<Arc<galleon_channels::gmail_push::GmailPushChannel>>,
     pub observer: Arc<dyn clawcrew_api::observability_traits::Observer>,
     pub tools_registry: Arc<Vec<clawcrew_api::tool::ToolSpec>>,
     pub tools_registry_by_agent: Arc<HashMap<String, Arc<Vec<clawcrew_api::tool::ToolSpec>>>>,

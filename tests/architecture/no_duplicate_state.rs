@@ -28,7 +28,7 @@ const FORBIDDEN_TYPE_SUBSTRINGS: &[&str] = &[
 
 /// Roots to scan. Channels are the hottest drift surface; we lint there
 /// first. Extending the scan is one entry away.
-const SCAN_ROOTS: &[&str] = &["crates/clawcrew-channels/src"];
+const SCAN_ROOTS: &[&str] = &["crates/galleon-channels/src"];
 
 /// Files / paths that hold the canonical sources of truth and are
 /// therefore allowed to declare these fields. Anything outside these

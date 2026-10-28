@@ -382,8 +382,8 @@ case "${package}|${no_default}|${features}" in
     'clawcrew|true|agent-runtime,channel-matrix') profile=standard-distribution ;;
     'clawcrew|true|ci-all') profile=ci-all ;;
     'clawcrew|true|agent-runtime,probe,galleon-tools/probe') profile=hardware-probe ;;
-    'clawcrew-channels|true|') profile=channels-minimal ;;
-    'clawcrew-channels|false|') profile=channels-default ;;
+    'galleon-channels|true|') profile=channels-minimal ;;
+    'galleon-channels|false|') profile=channels-default ;;
     *) exit 99 ;;
 esac
 [[ "$profile" != "${FAKE_CARGO_FAIL_PROFILE:-}" ]] || exit 100

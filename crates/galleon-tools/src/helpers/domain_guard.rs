@@ -1,9 +1,9 @@
 //! Shared domain/URL validation and allowlist helpers.
 //!
 //! The primitives themselves live in [`galleon_infra::net_guard`] so the tool
-//! implementations and `clawcrew-channels` read one implementation. This
+//! implementations and `galleon-channels` read one implementation. This
 //! module is the tool-layer facade: it keeps the
-//! `crate::helpers::domain_guard::*` paths the tools and `clawcrew-channels`
+//! `crate::helpers::domain_guard::*` paths the tools and `galleon-channels`
 //! already use, and it is where a tool-specific or config-specific wrapper
 //! would go if one were ever needed. Unit coverage for the primitives lives
 //! beside them in `galleon-infra`.

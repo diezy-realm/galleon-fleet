@@ -217,9 +217,9 @@ fn check_tool_registry(config: &crate::config::Config) -> CheckResult {
 }
 
 fn check_channel_config(config: &crate::config::Config) -> CheckResult {
-    let channels = clawcrew_channels::listing::compiled_channels(&config.channels);
+    let channels = galleon_channels::listing::compiled_channels(&config.channels);
     let configured = channels.iter().filter(|e| e.configured).count();
-    let uncompiled = clawcrew_channels::listing::configured_uncompiled_channels(&config.channels);
+    let uncompiled = galleon_channels::listing::configured_uncompiled_channels(&config.channels);
     if !uncompiled.is_empty() {
         let names = uncompiled
             .iter()

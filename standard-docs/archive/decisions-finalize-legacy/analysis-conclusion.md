@@ -74,7 +74,7 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 #### ADR-001 — Channel Distribution (3-Tier)
 - **Status:** `Proposed` — **menunggu sign-off Owner.**
 - Fondasi WASI host (`galleon-plugins`) dan WIT contract (`wit/v0/channel.wit`) sudah tersedia.
-- `crates/clawcrew-channels` masih monolit ~197k LOC. Belum ada pemisahan `galleon-channel-*`.
+- `crates/galleon-channels` masih monolit ~197k LOC. Belum ada pemisahan `galleon-channel-*`.
 
 ---
 

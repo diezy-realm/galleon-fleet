@@ -19,7 +19,7 @@ galleon-infra = { workspace = true, features = ["schema-export"] }
 clawcrew-log.workspace = true
 galleon-memory.workspace = true
 galleon-providers.workspace = true
-clawcrew-channels = { workspace = true, default-features = false }
+galleon-channels = { workspace = true, default-features = false }
 clawcrew-runtime.workspace = true
 galleon-sop-graph = { workspace = true, features = ["schema-export"] }
 galleon-tools.workspace = true
@@ -130,14 +130,14 @@ a2a = []
 plugins-wasm = ["dep:galleon-plugins"]
 webauthn = ["clawcrew-config/webauthn"]
 observability-prometheus = ["clawcrew-runtime/observability-prometheus"]
-channel-acp-server = ["clawcrew-channels/channel-acp-server"]
-channel-email = ["clawcrew-channels/channel-email"]
-channel-linq = ["clawcrew-channels/channel-linq"]
-channel-nextcloud = ["clawcrew-channels/channel-nextcloud"]
-channel-nostr = ["clawcrew-channels/channel-nostr"]
-channel-wechat = ["clawcrew-channels/channel-wechat"]
-channel-whatsapp-cloud = ["clawcrew-channels/channel-whatsapp-cloud"]
-whatsapp-web = ["clawcrew-channels/whatsapp-web"]
+channel-acp-server = ["galleon-channels/channel-acp-server"]
+channel-email = ["galleon-channels/channel-email"]
+channel-linq = ["galleon-channels/channel-linq"]
+channel-nextcloud = ["galleon-channels/channel-nextcloud"]
+channel-nostr = ["galleon-channels/channel-nostr"]
+channel-wechat = ["galleon-channels/channel-wechat"]
+channel-whatsapp-cloud = ["galleon-channels/channel-whatsapp-cloud"]
+whatsapp-web = ["galleon-channels/whatsapp-web"]
 gateway-voice-duplex = []
 # Enables OPTIONS /api/config* responses with the schemars-generated
 # JSON Schema body and the serde-side schemars derives transitively. Defaults

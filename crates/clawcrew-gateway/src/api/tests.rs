@@ -1226,7 +1226,7 @@ async fn api_channels_serializes_readiness_without_duplicate_summary_fields() {
     assert_eq!(response.status(), StatusCode::OK);
     let json = response_json(response).await;
     let channel = &json["channels"][0];
-    let webhook_compiled = clawcrew_channels::listing::is_channel_type_compiled("webhook");
+    let webhook_compiled = galleon_channels::listing::is_channel_type_compiled("webhook");
     assert_eq!(channel["name"], "webhook.ops");
     assert_eq!(channel["compiled"], webhook_compiled);
     if webhook_compiled {

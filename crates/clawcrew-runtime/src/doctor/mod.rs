@@ -1267,7 +1267,7 @@ fn check_config_semantics(config: &Config, items: &mut Vec<DiagItem>) {
     // TTS provider api_key presence. Unlike the model_provider check above,
     // a missing key on `openai`, `elevenlabs`, or `google` is not "may rely
     // on env vars or model_provider defaults" — `OpenAiTtsProvider::new` and
-    // its siblings (`crates/clawcrew-channels/src/tts.rs`) bail on a
+    // its siblings (`crates/galleon-channels/src/tts.rs`) bail on a
     // missing/blank `api_key` before the entry is ever registered, so the
     // provider silently drops out of `[providers.tts.*]` entirely.
     // `edge` and `piper` have no key gate and are never checked here.
@@ -1299,7 +1299,7 @@ fn check_config_semantics(config: &Config, items: &mut Vec<DiagItem>) {
     // Transcription provider api_key presence — same shape as the TTS check
     // above. `groq`, `openai`, `deepgram`, `assemblyai`, and `google` all
     // gate registration on `api_key` in
-    // `crates/clawcrew-channels/src/transcription.rs`. `local_whisper` has
+    // `crates/galleon-channels/src/transcription.rs`. `local_whisper` has
     // no api_key concept (its optional `bearer_token` is a different field)
     // and is never checked here.
     {

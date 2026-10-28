@@ -73,7 +73,7 @@ impl ScopedToolRegistry {
     /// Test-only constructor that mints a registry directly from raw tools,
     /// bypassing [`Self::assemble`]. Gated to `test` (this crate's own unit
     /// tests) OR the `test-util` feature (so OTHER crates' test builds -
-    /// notably `clawcrew-channels`, whose `ChannelRuntimeContext` fixtures need
+    /// notably `galleon-channels`, whose `ChannelRuntimeContext` fixtures need
     /// a sealed registry - can construct one). The `test-util` feature is never
     /// enabled by a production dependency edge, so this raw mint does not exist
     /// in shipped builds and the seal holds where it matters.

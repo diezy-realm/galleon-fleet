@@ -15980,7 +15980,7 @@ allowed_users = []
     ///
     /// Mirrors the production boundary of
     /// `local_whisper_config_init_preserves_transcription_section`
-    /// (crates/clawcrew-channels/src/transcription.rs) but drives a bare
+    /// (crates/galleon-channels/src/transcription.rs) but drives a bare
     /// full init instead of an exact-prefix one.
     #[test]
     async fn config_init_full_produces_strict_roundtrippable_config() {

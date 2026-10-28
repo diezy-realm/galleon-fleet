@@ -10,7 +10,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use clawcrew_api::attribution::{Attributable, ChannelKind, Role};
 use clawcrew_api::channel::{Channel, ChannelMessage, SendMessage};
-use clawcrew_channels::paced_channel::PacedChannel;
+use galleon_channels::paced_channel::PacedChannel;
 use clawcrew_config::schema::HasReplyPacing;
 use parking_lot::Mutex;
 

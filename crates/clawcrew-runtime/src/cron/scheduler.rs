@@ -2848,7 +2848,7 @@ mod tests {
 
     #[tokio::test]
     async fn persist_job_result_delivery_stubbed_succeeds() {
-        // Delivery is stubbed (moved to clawcrew-channels orchestrator).
+        // Delivery is stubbed (moved to galleon-channels orchestrator).
         // This test verifies the stub returns Ok, so persist_job_result succeeds.
         let tmp = TempDir::new().unwrap();
         let config = test_config(&tmp).await;
@@ -3267,7 +3267,7 @@ mod tests {
         assert_eq!(overdue.len(), 3, "all_overdue_jobs must return all");
     }
 
-    // scan_and_redact_output tests moved to clawcrew-channels orchestrator
+    // scan_and_redact_output tests moved to galleon-channels orchestrator
 
     // ── Broadcast / EventBroadcast tests ─────────────────────────────
 

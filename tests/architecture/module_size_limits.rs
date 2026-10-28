@@ -25,8 +25,8 @@ fn legacy_size_exceptions() -> HashMap<&'static str, usize> {
     m.insert("crates/galleon-channel-matrix/src/lib.rs", 6000);
     m.insert("crates/galleon-channel-mattermost/src/lib.rs", 7000);
     m.insert("crates/clawcrew-runtime/src/acp/server.rs", 11000);
-    m.insert("crates/clawcrew-channels/src/orchestrator/mod.rs", 19000);
-    m.insert("crates/clawcrew-channels/src/orchestrator/tests.rs", 35000);
+    m.insert("crates/galleon-channels/src/orchestrator/mod.rs", 19000);
+    m.insert("crates/galleon-channels/src/orchestrator/tests.rs", 35000);
     m.insert("crates/galleon-channel-slack/src/lib.rs", 11000);
     m.insert("crates/galleon-channel-telegram/src/tests.rs", 16000);
     m.insert("crates/galleon-channel-telegram/src/lib.rs", 9000);

@@ -14006,7 +14006,7 @@ async fn register_bot_commands_truncates_to_telegram_max() {
 /// The truncation WARN must carry channel attribution (`clawcrew.channel`
 /// composite) when `register_bot_commands` runs under the attribution span
 /// the orchestrator opens around the supervised listener in
-/// `crates/clawcrew-channels/src/orchestrator/mod.rs`.
+/// `crates/galleon-channels/src/orchestrator/mod.rs`.
 ///
 /// The event-level counters (`TELEGRAM_MAX_BOT_COMMANDS`, `total_before_cap`,
 /// `registered`) correctly live in `attributes`; the "who/where" identity

@@ -5521,7 +5521,7 @@ data: {\"type\":\"message_stop\"}\n\n";
     }
 
     /// The orchestrator's actual user-facing call shape is
-    /// `sanitize_api_error(&e.to_string())` (crates/clawcrew-channels/src/
+    /// `sanitize_api_error(&e.to_string())` (crates/galleon-channels/src/
     /// orchestrator/mod.rs). Pin the end-to-end boundary, not just `Display`:
     /// the sanitizer only scrubs secrets and truncates, so anything `Display`
     /// emits reaches the user intact.

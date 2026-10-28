@@ -7,18 +7,18 @@ depends_on: Sprint 0 §C (BL-14 harus merge dulu — file overlap orchestrator/m
 
 # Sprint 2 — Attachment & Messaging Integrity
 
-> **PRASYARAT KERAS:** BL-14 (Sprint 0) harus sudah merge sebelum sprint ini menyentuh `clawcrew-channels/src/orchestrator/mod.rs`. Jangan mulai BL-52 di file ini sebelum BL-14 selesai — dua crew menulis file yang sama secara paralel menghasilkan merge conflict/regresi silang.
+> **PRASYARAT KERAS:** BL-14 (Sprint 0) harus sudah merge sebelum sprint ini menyentuh `galleon-channels/src/orchestrator/mod.rs`. Jangan mulai BL-52 di file ini sebelum BL-14 selesai — dua crew menulis file yang sama secara paralel menghasilkan merge conflict/regresi silang.
 
 ## A. Bug Data-Loss (PRIORITASKAN — P0, mempengaruhi semua channel messaging hari ini)
 
-- [x] **BL-52 (P0 — bug data-loss nyata, PRIORITASKAN di atas semua item lain sprint ini)** Perbaiki bug attachment hilang di `MessageDebouncer`. **Masalah terverifikasi sampai baris kode:** saat pesan rapid digabung, hanya `turn` PERTAMA yang dipertahankan strukturnya (komentar kode sendiri: *"the combined turn keeps the place of the sender's first message"*), attachment dari pesan ke-2/3/dst HILANG diam-diam — hanya teksnya yang ikut digabung. File: `crates/galleon-infra/src/debounce.rs`, `crates/clawcrew-channels/src/orchestrator/mod.rs:1370-1372` (titik overwrite `turn.turn.msg.content = combined`). Status: COMPLETED (`debounced_messages_preserve_all_attachments` passed).
+- [x] **BL-52 (P0 — bug data-loss nyata, PRIORITASKAN di atas semua item lain sprint ini)** Perbaiki bug attachment hilang di `MessageDebouncer`. **Masalah terverifikasi sampai baris kode:** saat pesan rapid digabung, hanya `turn` PERTAMA yang dipertahankan strukturnya (komentar kode sendiri: *"the combined turn keeps the place of the sender's first message"*), attachment dari pesan ke-2/3/dst HILANG diam-diam — hanya teksnya yang ikut digabung. File: `crates/galleon-infra/src/debounce.rs`, `crates/galleon-channels/src/orchestrator/mod.rs:1370-1372` (titik overwrite `turn.turn.msg.content = combined`). Status: COMPLETED (`debounced_messages_preserve_all_attachments` passed).
 
 #### Detail Eksekusi — BL-52
 
-**Koreksi baris (verifikasi 2026-10-06):** Titik overwrite `turn.turn.msg.content = combined` ada di `crates/clawcrew-channels/src/orchestrator/mod.rs:1662` (bergeser dari `1370-1372` di dokumen lama — kode telah berubah sejak dicatat), di dalam fungsi `route_inbound_slot`. Verifikasi akar masalah LENGKAP (bukan hanya titik overwrite, tapi seluruh jalur):
+**Koreksi baris (verifikasi 2026-10-06):** Titik overwrite `turn.turn.msg.content = combined` ada di `crates/galleon-channels/src/orchestrator/mod.rs:1662` (bergeser dari `1370-1372` di dokumen lama — kode telah berubah sejak dicatat), di dalam fungsi `route_inbound_slot`. Verifikasi akar masalah LENGKAP (bukan hanya titik overwrite, tapi seluruh jalur):
 
 1. `crates/galleon-infra/src/debounce.rs` — `MessageDebouncer::debounce_with_window(sender_key: &str, message: &str, window: Duration)` HANYA menerima `message: &str` (teks polos). `DebouncerEntry.messages: Vec<String>` menyimpan teks saja. `fire_debounced()` menggabung via `entry.messages.join("\n")` — SATU `String`, tidak ada tempat untuk attachment sama sekali di level debouncer ini.
-2. `crates/clawcrew-channels/src/orchestrator/mod.rs` sekitar baris 11316 (fungsi pemanggil, nama fungsi tempatnya belum dikonfirmasi persis — baca ~11250-11320 untuk nama fungsi pembungkus): panggilan `ctx.debouncer.debounce_with_window(&debounce_key, &msg.content, debounce_window)` hanya mengirim `&msg.content` (String) — **`msg.attachments` (field `Vec<MediaAttachment>` di `clawcrew-api/src/channel.rs:423`) TIDAK PERNAH disertakan dalam pemanggilan ini**. Attachment pesan ke-2/3/dst genuinely tidak pernah disalurkan ke mana pun, bukan "ditimpa" — ini presisi penting untuk desain fix.
+2. `crates/galleon-channels/src/orchestrator/mod.rs` sekitar baris 11316 (fungsi pemanggil, nama fungsi tempatnya belum dikonfirmasi persis — baca ~11250-11320 untuk nama fungsi pembungkus): panggilan `ctx.debouncer.debounce_with_window(&debounce_key, &msg.content, debounce_window)` hanya mengirim `&msg.content` (String) — **`msg.attachments` (field `Vec<MediaAttachment>` di `clawcrew-api/src/channel.rs:423`) TIDAK PERNAH disertakan dalam pemanggilan ini**. Attachment pesan ke-2/3/dst genuinely tidak pernah disalurkan ke mana pun, bukan "ditimpa" — ini presisi penting untuk desain fix.
 3. `InboundTurn { turn: Box<PendingTurn> }` dibuat SEKALI saat bucket debounce PERTAMA kali dibuka (`msg` lengkap dengan attachment pesan pertama tersimpan di `PendingTurn.msg`). Pesan susulan dalam window yang sama HANYA memperbarui bucket teks di debouncer (langkah 1), tidak pernah menyentuh `PendingTurn` yang sudah dibuat.
 4. Di `route_inbound_slot` (baris 1662), saat window selesai: `turn.turn.msg.content = combined` — mengganti teks `PendingTurn` pertama dengan gabungan teks SEMUA pesan, TAPI `turn.turn.msg.attachments` tetap attachment pesan PERTAMA saja (field ini tidak pernah disentuh ulang).
 
@@ -66,7 +66,7 @@ InboundSlot::Debounced { mut turn, content, attachments_key } => match content.a
 **Konvensi penamaan:** `attachments_key`/`take_accumulated_attachments` — nama contoh, ikuti pola existing `debounce_key`/`debounce_buckets` di file yang sama persis gaya snake_case Rust yang sudah dipakai.
 
 **Langkah pengerjaan:**
-1. Baca `crates/clawcrew-channels/src/orchestrator/mod.rs` baris 11250-11450 PENUH (bagian yang memanggil `debouncer.debounce_with_window` dan menangani `DebounceResult`) — pahami variable `debounce_buckets`, `debounce_bucket_owners` yang sudah ada sebagai pola accumulator serupa yang bisa ditiru untuk attachment.
+1. Baca `crates/galleon-channels/src/orchestrator/mod.rs` baris 11250-11450 PENUH (bagian yang memanggil `debouncer.debounce_with_window` dan menangani `DebounceResult`) — pahami variable `debounce_buckets`, `debounce_bucket_owners` yang sudah ada sebagai pola accumulator serupa yang bisa ditiru untuk attachment.
 2. **TUNGGU BL-14 (Sprint 0) merge dulu** — PRASYARAT KERAS sudah tercatat di header file ini, file yang sama (`orchestrator/mod.rs`) sedang disentuh BL-14.
 3. Tambah struktur akumulasi attachment terpisah (pola di atas, OPSI A) — JANGAN ubah `MessageDebouncer` di `debounce.rs` kecuali OPSI A terbukti tidak mungkin saat implementasi (baru pindah ke OPSI B dengan konfirmasi Lead).
 4. Update titik `turn.turn.msg.content = combined` (baris 1662) menjadi juga mengisi `attachments`.
@@ -132,7 +132,7 @@ pub enum MediaKind {
 
 #### Detail Eksekusi — BL-54
 
-**TIDAK DIVERIFIKASI sesi ini** — "Front App entry point" mencakup banyak permukaan (desktop Tauri, web React, tiap channel messaging) yang di luar budget grep sesi ini. **Langkah pertama WAJIB bagi tim eksekusi:** inventarisasi semua titik upload/attach di `apps/tauri/`, `web/src/`, dan tiap `crates/galleon-channel-*`/`clawcrew-channels/src/` yang menerima attachment dari user sebelum menulis kode — tiket ini genuinely tersebar, bukan satu titik.
+**TIDAK DIVERIFIKASI sesi ini** — "Front App entry point" mencakup banyak permukaan (desktop Tauri, web React, tiap channel messaging) yang di luar budget grep sesi ini. **Langkah pertama WAJIB bagi tim eksekusi:** inventarisasi semua titik upload/attach di `apps/tauri/`, `web/src/`, dan tiap `crates/galleon-channel-*`/`galleon-channels/src/` yang menerima attachment dari user sebelum menulis kode — tiket ini genuinely tersebar, bukan satu titik.
 
 **Acceptance criteria testable:** Upload percobaan ke-11 attachment dalam satu pesan → ditolak di level Front App (UI menampilkan pesan error), request TIDAK terkirim ke Core sama sekali (verifikasi via network trace/mock, bukan hanya UI state).
 
@@ -319,7 +319,7 @@ fn restrict_log_file_acl(path: &Path) -> std::io::Result<()> {
 
 | Area | File | Penulis | Catatan serialisasi |
 |---|---|---|---|
-| A (BL-52) | `galleon-infra/src/debounce.rs`, `clawcrew-channels/src/orchestrator/mod.rs` | Backend-Rust | **Tunggu BL-14 (Sprint 0) merge dulu** |
+| A (BL-52) | `galleon-infra/src/debounce.rs`, `galleon-channels/src/orchestrator/mod.rs` | Backend-Rust | **Tunggu BL-14 (Sprint 0) merge dulu** |
 | B (BL-53/54/55) | `clawcrew-api/src/media.rs`, Front App entry point per-channel, Core agregasi | Backend-Rust + Frontend (per-channel) | BL-55 tunggu BL-52 merge |
 | C (BL-37/38/39) | `clawcrew-runtime/src/agent/tool_execution.rs`, `clawcrew-config/src/schema.rs`, `clawcrew-log/src/*` | Backend-Rust (crew berbeda dari A/B, file tidak beririsan) | Bisa paralel penuh dengan A/B |
 

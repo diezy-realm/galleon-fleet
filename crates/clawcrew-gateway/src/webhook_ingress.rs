@@ -1086,9 +1086,9 @@ mod tests {
     fn whatsapp_test_channel(
         alias: &str,
         verify_token: &str,
-    ) -> Arc<clawcrew_channels::whatsapp::WhatsAppChannel> {
+    ) -> Arc<galleon_channels::whatsapp::WhatsAppChannel> {
         let peer_resolver: Arc<dyn Fn() -> Vec<String> + Send + Sync> = Arc::new(Vec::new);
-        Arc::new(clawcrew_channels::whatsapp::WhatsAppChannel::new(
+        Arc::new(galleon_channels::whatsapp::WhatsAppChannel::new(
             "access-token".into(),
             "phone-number-id".into(),
             verify_token.into(),

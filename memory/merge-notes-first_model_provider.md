@@ -13,7 +13,7 @@ destroy ALL traces of `first_model_provider` and its family.
 - `crates/clawcrew-gateway/src/lib.rs` — 4 usages (lines ~489, ~490, ~647, ~2136)
 - `crates/galleon-providers/src/lib.rs` — fallback logic, multiple usages (~660, ~715, ~724, ~753)
 - `crates/clawcrew-runtime/src/agent/loop_.rs` — temperature lookup (~4598)
-- `crates/clawcrew-channels/src/orchestrator/mod.rs`
+- `crates/galleon-channels/src/orchestrator/mod.rs`
 
 ## What replaces it?
 See commit `a1665774b` — "fix: delete first_model_provider*, enforce explicit provider alias resolution"
@@ -40,7 +40,7 @@ Replacements (per a1665774b):
 - crates/clawcrew-config/src/providers.rs
 - crates/galleon-providers/src/lib.rs
 - crates/clawcrew-gateway/src/lib.rs, api.rs, api_onboard.rs, ws.rs
-- crates/clawcrew-channels/src/orchestrator/mod.rs, acp_server.rs
+- crates/galleon-channels/src/orchestrator/mod.rs, acp_server.rs
 - crates/clawcrew-runtime/src/agent/agent.rs, loop_.rs
 - crates/clawcrew-runtime/src/daemon/mod.rs, doctor/mod.rs, onboard/mod.rs, rpc/dispatch.rs, tools/mod.rs
 - crates/galleon-tools/src/model_routing_config.rs

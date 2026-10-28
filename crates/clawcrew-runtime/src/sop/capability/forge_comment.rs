@@ -31,7 +31,7 @@
 //! headlessly after an out-of-band approval, without a live agent turn.
 //!
 //! Layering mirrors `approval::channel_route`: this module needs only
-//! [`clawcrew_api::channel::Channel`], never `clawcrew-channels` — the daemon
+//! [`clawcrew_api::channel::Channel`], never `galleon-channels` — the daemon
 //! builds the concrete channel map and injects it, so there is no
 //! runtime -> channels inversion.
 
