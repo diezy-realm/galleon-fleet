@@ -30,7 +30,7 @@ UI aktif di **`web/`**, desktop aktif di **`apps/tauri/`**. Kode lama ClawCrew d
 | `apps/tauri/` | aktif | melanggar ODR-07 (`execute_terminal_command`) + data palsu → U-06/U-07 |
 | `engine/` (Go) | aktif | otak tunggal |
 | `crates/*` (Rust) | aktif | sebagian besar `galleon-runtime` & REST gateway adalah fungsi era ClawCrew (§4) |
-| `src/` binary, `apps/zerocode`, `apps/zerorelay` | perlu klasifikasi | asumsi A1: CLI = klien tipis ke Go → R-00 |
+| `src/` binary, `apps/galleoncode`, `apps/galleonrelay` | perlu klasifikasi | asumsi A1: CLI = klien tipis ke Go → R-00 |
 
 ## 4. Risiko arsitektur terbesar: "dua otak"
 

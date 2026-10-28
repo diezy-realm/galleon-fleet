@@ -29,7 +29,7 @@ Review advisory apakah sebuah diff/PR menghormati arsitektur kanonikal galleon-f
    - **Arah dependency**: UI → Go → Rust, tidak terbalik. UI tidak impor logic domain.
    - **Boundary tier**: tiap file di tier yang benar; tidak ada logika bisnis bocor ke UI; Go tidak bypass sandbox Rust.
    - **SSOT (no-duplicate-state)**: fakta yang sama tidak didefinisikan ganda lintas-tier dengan nilai beda (contoh nyata repo: risk-tier policy di Rust `apps/tauri-2/src/main.rs` DAN Go `engine/src/fleet/services.go`). Engine = sumber tunggal; Tauri cukup proxy.
-   - **Penempatan crate/paket**: fitur lintas-crate dipisah jadi crate independen (plugin arch), bukan monolit; crate/modul baru pakai `galleon`, bukan `clawcrew`.
+   - **Penempatan crate/paket**: fitur lintas-crate dipisah jadi crate independen (plugin arch), bukan monolit; seluruh crate/modul memakai prefix `galleon-` (SPEC-009).
    - **Klaim doc = kode**: doc arsitektur yang klaim perilaku harus cocok wiring nyata.
 4. **Tulis artifact** ke `$KIROCREW_SCRATCH/arch-review-<N>.md` (struktur di bawah).
 5. **Tampilkan artifact ke user, tunggu approval.** JANGAN auto-post. Advisory output harus dikonfirmasi manusia dulu.

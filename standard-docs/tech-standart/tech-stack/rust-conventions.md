@@ -14,8 +14,8 @@ crates/
 ├── galleon-gateway/         # gRPC server, vault, secret management
 ├── galleon-runtime/         # Agent turn execution, tool dispatch
 ├── galleon-providers/       # LLM vendor APIs (SSOT ADR 0001)
-├── clawcrew-channel-*/       # Channel plugins (Discord, Telegram, etc.)
-├── clawcrew-tools-*/         # Native tools (filesystem, shell, network)
+├── galleon-channel-*/       # Channel plugins (Discord, Telegram, etc.)
+├── galleon-tools/           # Native tools (filesystem, shell, network)
 └── [33 core workspace crates + fixtures & tools; limit: <50]
 ```
 
@@ -26,8 +26,8 @@ members = [
     "crates/galleon-gateway",
     "crates/galleon-runtime",
     "crates/galleon-providers",
-    "crates/clawcrew-channel-*",
-    "crates/galleon-tools-*",
+    "crates/galleon-channel-*",
+    "crates/galleon-tools",
 ]
 resolver = "2"
 
@@ -106,8 +106,7 @@ pub trait ToolExecutor {
 ```toml
 [dependencies]
 galleon-providers.workspace = true
-clawcrew-tools-shell.workspace = true
-clawcrew-tools-filesystem.workspace = true
+galleon-tools.workspace = true
 tokio.workspace = true
 serde_json.workspace = true
 ```
@@ -157,11 +156,11 @@ serde.workspace = true
 
 ---
 
-### Channel Crates (`clawcrew-channel-*`)
+### Channel Crates (`galleon-channel-*`)
 
 **Pattern:** One crate per channel (Discord, Telegram, Slack, etc.)
 
-**Example: `clawcrew-channel-discord`**
+**Example: `galleon-channel-discord`**
 ```rust
 pub struct DiscordChannel {
     client: Arc<DiscordClient>,
@@ -173,17 +172,15 @@ impl Channel for DiscordChannel {
 }
 ```
 
-**Naming:** `clawcrew-channel-{service}` (e.g., `clawcrew-channel-telegram`, `clawcrew-channel-slack`)
-
-**New channels:** Use `galleon-channel-*` prefix (ADR: brand consistency).
+**Naming:** `galleon-channel-{service}` (e.g., `galleon-channel-telegram`, `galleon-channel-slack`)
 
 ---
 
-### Tool Crates (`clawcrew-tools-*`)
+### Tool Crates (`galleon-tools`)
 
-**Pattern:** One crate per tool domain (filesystem, shell, network, etc.)
+**Pattern:** Native tools (filesystem, shell, network, etc.) under `galleon-tools`
 
-**Example: `clawcrew-tools-shell`**
+**Example: `ShellTool` in `galleon-tools`**
 ```rust
 pub struct ShellTool;
 
@@ -205,7 +202,7 @@ impl ToolExecutor for ShellTool {
 }
 ```
 
-**Naming:** `clawcrew-tools-{domain}` (e.g., `clawcrew-tools-filesystem`, `clawcrew-tools-network`)
+**Naming:** `galleon-tools` (or domain-specific tools if partitioned)
 
 ---
 

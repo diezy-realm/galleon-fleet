@@ -18,7 +18,7 @@
 
 1. Repo = fork produk **ClawCrew** (Rust, ±1 juta LOC) yang dibentuk ulang menjadi **Galleon**: platform organisasi AI local-first, 4 tier (Tauri shell → web UI → Go orchestrator → Rust system core).
 2. **Antarmuka aktif:** `web/` + `apps/tauri/` (kode Galleon; kode ClawCrew lama sudah diganti). Konfigurasi build/Docker/embed masih mengasumsikan produk lama (02 §2).
-3. **Rust workspace** (edition 2024, `rust-version 1.96.0`, v`0.8.5`): root bin `clawcrew`, `apps/{zerocode,zerorelay,tauri}`, ±27 crate, fixture plugin WASI, `xtask`, `tools/fill-translations`. `apps/tauri` kini berisi paket Galleon `fleet-ai-desktop`.
+3. **Rust workspace** (edition 2024, `rust-version 1.96.0`, v`0.8.5`): root bin `galleon`, `apps/{galleoncode,galleonrelay,tauri}`, ±27 crate, fixture plugin WASI, `xtask`, `tools/fill-translations`. `apps/tauri` kini berisi paket Galleon `fleet-ai-desktop`.
 4. **Go engine** (`engine/`, modul terpisah, `go 1.27.1`, Wire): persistensi saat ini **JSON/JSONL di disk**, bukan SQLite/Postgres seperti tertulis di beberapa dokumen.
 5. **Kontrak lintas bahasa:** `proto/agent_service.proto` (Go `AgentEngine` :50051; Rust `SystemGateway` :50052: `ExecuteNativeTool`, `GetDecryptedSecret`, `ExecuteTask` [stub], `ExecuteTurn` streaming [nyata]) dan `wit/v0/` (plugin WASI, beku).
 6. **Governance dokumen:** `standard-docs/` = otoritas; `docs/` = warisan upstream tanpa indeks otoritas; `docs/_archive/` = historis.

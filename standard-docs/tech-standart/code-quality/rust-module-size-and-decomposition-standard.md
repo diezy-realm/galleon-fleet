@@ -40,7 +40,7 @@ Pecah file **tidak** mempercepat build; pecah crate yang mempercepat. Sebuah pot
 - [ ] Punya test sendiri yang jalan tanpa crate induk.
 - [ ] Bukan fragmentasi prematur: jangan buat crate < 500 baris tanpa alasan boundary (keamanan, platform, feature opsional).
 
-Penamaan: crate baru **wajib** `galleon-<domain>`; crate legacy `clawcrew-*` tidak di-rename massal.
+Penamaan: seluruh crate **wajib** menggunakan prefix `galleon-<domain>` (SPEC-009).
 
 ## 5. Arah dependency (dikunci CI)
 

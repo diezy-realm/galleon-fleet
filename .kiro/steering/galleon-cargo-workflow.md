@@ -13,6 +13,6 @@ Panduan umum build/test cepat Rust ada di steering GLOBAL `rust-build-speed.md` 
 - sccache + nextest SUDAH dikonfigurasi di repo ini: `.cargo/config.toml` (`rustc-wrapper="sccache"`) + `.config/nextest.toml` (profil `default`/`ci`). Verifikasi hit: `sccache --show-stats`.
 - Pre-PR penuh: `./dev/ci.sh all`.
 - Build fixture wasm plugin (`crates/galleon-plugins/tests/fixtures/*`) butuh target `wasm32-wasip2`; test e2e gated `--features plugins-wasm-cranelift` dan menjalankan nested `cargo build` (puluhan detik — wajar, bukan hang).
-- Branding: crate/modul BARU pakai `galleon-`, bukan `clawcrew-`.
+- Branding: seluruh crate/modul menggunakan prefix `galleon-` (SPEC-009).
 
 Selebihnya ikuti `rust-build-speed.md`.

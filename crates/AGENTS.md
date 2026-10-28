@@ -17,8 +17,8 @@ Ringkas yang WAJIB:
   Jangan `#[allow(dead_code)]`/underscore untuk sembunyikan kode mati — hapus,
   sambungkan, atau track.
 - **Foldering/SSOT:** satu fakta satu sumber kanonikal; jangan duplikat
-  state/cache paralel. Crate/modul BARU pakai prefix `galleon-`, bukan
-  `clawcrew-`. Definisi pindah ke leaf crate SSOT (pola T3-02 di
+  state/cache paralel. Seluruh crate/modul memakai prefix `galleon-` (SPEC-009).
+  Definisi pindah ke leaf crate SSOT (pola T3-02 di
   `reference/dev-task-3/README.md`).
 - **Verifikasi:** `cargo check -p <crate>` (bukan `--workspace` kecuali perlu) +
   `cargo nextest run -p <crate>` (BUKAN `cargo test`). sccache aktif — jangan

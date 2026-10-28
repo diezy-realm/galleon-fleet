@@ -1,4 +1,4 @@
-# CLAUDE.md — ClawCrew (Claude Code)
+# CLAUDE.md — Galleon Fleet (Claude Code)
 
 > **Shared instructions live in [`AGENTS.md`](./AGENTS.md).**
 > This file contains only Claude Code-specific directives.

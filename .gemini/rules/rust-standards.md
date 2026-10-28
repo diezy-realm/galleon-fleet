@@ -4,9 +4,8 @@ Normative reference: [`standard-docs/tech-standart/tech-stack/rust-conventions.m
 Edition: **Rust 2024** | MSRV: **1.82+**
 
 ## 1. Branding & Crate Naming
-- The project has rebranded from `zeroclaw` / `clawcrew` to `Galleon`.
-- Any new crates, files, documents, or modules MUST use `galleon-` prefix instead of `clawcrew-` (e.g., `galleon-channel-matrix`).
-- Legacy crates retain `clawcrew-*` unless refactored.
+- The project has rebranded from `zeroclaw` / `clawcrew` to `Galleon Fleet`.
+- All crates, files, documents, and modules MUST use `galleon-` prefix (SPEC-009).
 
 ## 2. Workspace & Dependency Governance
 - Workspace dependencies are declared centrally in root `Cargo.toml` under `[workspace.dependencies]`.
@@ -17,8 +16,8 @@ Edition: **Rust 2024** | MSRV: **1.82+**
 - `galleon-gateway`: gRPC server (`SystemGatewayServer` :50052), Vault, WebSocket server, mDNS discovery.
 - `galleon-runtime`: Agent turn execution (`execute_turn`), tool dispatch (`ToolDispatcher`), WASI plugin host.
 - `galleon-providers`: LLM vendor APIs (OpenAI, Gemini, Bedrock, Anthropic) — **SSOT (ADR 0001)**. Must remain a **leaf crate** (no dependency on `galleon-runtime`).
-- `clawcrew-channel-*`: Channel plugins (one crate per domain/service).
-- `clawcrew-tools-*`: Native tool implementations (filesystem, shell, network).
+- `galleon-channel-*`: Channel plugins (one crate per domain/service).
+- `galleon-tools`: Native tool implementations (filesystem, shell, network).
 
 ## 4. Trait-Driven Architecture
 - Extensibility and testing via traits: `Provider`, `ToolExecutor`, `Channel`.
