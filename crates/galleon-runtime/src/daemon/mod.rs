@@ -1241,12 +1241,9 @@ where
                         }
                         ::galleon_log::record!(
                             INFO,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Success)
-                            .with_attrs(::serde_json::json!({"name": name})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Success)
+                                .with_attrs(::serde_json::json!({"name": name})),
                             &format!(
                                 "Daemon component '{name}' shut down cleanly via cancellation token"
                             )
@@ -1962,10 +1959,7 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                     if indices.is_empty() {
                         ::galleon_log::record!(
                             INFO,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            ),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note),
                             "heartbeat phase 1: skip (nothing to do)"
                         );
                         crate::health::mark_component_ok("heartbeat");
@@ -2131,12 +2125,9 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
                     if suppress_delivery {
                         ::galleon_log::record!(
                             DEBUG,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Success)
-                            .with_attrs(::serde_json::json!({"task": task.text})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_outcome(::galleon_log::EventOutcome::Success)
+                                .with_attrs(::serde_json::json!({"task": task.text})),
                             "Heartbeat task returned NO_REPLY sentinel — skipping delivery"
                         );
                     }

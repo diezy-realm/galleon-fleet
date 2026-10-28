@@ -2,8 +2,8 @@ pub mod docker;
 pub mod native;
 
 pub use docker::DockerRuntime;
-pub use native::NativeRuntime;
 pub use galleon_api::runtime_traits::{RuntimeAdapter, ShellDialect, ShellProfile};
+pub use native::NativeRuntime;
 
 use crate::schema::{RuntimeConfig, RuntimeKind};
 

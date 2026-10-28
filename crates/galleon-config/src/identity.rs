@@ -1,11 +1,11 @@
 //! Identity system supporting OpenClaw (markdown) and AIEOS (JSON) formats.
 
+use crate::schema::IdentityConfig;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use crate::schema::IdentityConfig;
 
 /// AIEOS v1.1 identity structure.
 /// This follows the AIEOS schema for defining AI agent identity, personality,

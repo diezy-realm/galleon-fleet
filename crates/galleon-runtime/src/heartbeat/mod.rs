@@ -5,8 +5,8 @@ pub mod store;
 mod tests {
     use crate::heartbeat::engine::HeartbeatEngine;
     use crate::observability::NoopObserver;
-    use std::sync::Arc;
     use galleon_config::schema::HeartbeatConfig;
+    use std::sync::Arc;
 
     #[test]
     fn heartbeat_engine_is_constructible_via_module_export() {

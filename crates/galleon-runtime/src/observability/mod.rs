@@ -173,16 +173,11 @@ fn create_primary_observer(config: &ObservabilityConfig) -> Box<dyn Observer> {
 
                         ::galleon_log::record!(
                             INFO,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Note
-                            )
-                            .with_attrs(
-                                ::serde_json::json!({"endpoint": config
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                                .with_attrs(::serde_json::json!({"endpoint": config
                                 .otel_endpoint
                                 .as_deref()
-                                .unwrap_or("http://localhost:4318")})
-                            ),
+                                .unwrap_or("http://localhost:4318")})),
                             "OpenTelemetry observer initialized"
                         );
                         Box::new(obs)
@@ -190,12 +185,9 @@ fn create_primary_observer(config: &ObservabilityConfig) -> Box<dyn Observer> {
                     Err(e) => {
                         ::galleon_log::record!(
                             ERROR,
-                            ::galleon_log::Event::new(
-                                module_path!(),
-                                ::galleon_log::Action::Fail
-                            )
-                            .with_outcome(::galleon_log::EventOutcome::Failure)
-                            .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
+                            ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Fail)
+                                .with_outcome(::galleon_log::EventOutcome::Failure)
+                                .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "Failed to create OTel observer. Falling back to noop."
                         );
                         Box::new(NoopObserver)

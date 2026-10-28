@@ -16,9 +16,9 @@ pub use pinggy::PinggyTunnel;
 pub use tailscale::TailscaleTunnel;
 
 use anyhow::{Result, bail};
+use galleon_config::schema::{TailscaleTunnelConfig, TunnelConfig};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use galleon_config::schema::{TailscaleTunnelConfig, TunnelConfig};
 
 // ── Tunnel trait ─────────────────────────────────────────────────
 
@@ -193,11 +193,11 @@ pub fn create_tunnel(config: &TunnelConfig) -> Result<Option<Box<dyn Tunnel>>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio::process::Command;
     use galleon_config::schema::{
         CloudflareTunnelConfig, CustomTunnelConfig, NgrokTunnelConfig, OpenVpnTunnelConfig,
         PinggyTunnelConfig, TunnelConfig,
     };
+    use tokio::process::Command;
 
     /// Helper: assert `create_tunnel` returns an error containing `needle`.
     fn assert_tunnel_err(cfg: &TunnelConfig, needle: &str) {

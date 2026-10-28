@@ -59,7 +59,6 @@ const EXTRA_REGISTRY_DIR_PREFIX: &str = "extra-registry-";
 
 pub use galleon_api::skill::*;
 
-
 /// Why the audited resolver dropped a candidate skill directory/file.
 /// Carries the human-readable detail the loader already logs, so the
 /// dashboard can show the same reason without re-running the audit.

@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
+use galleon_config::schema::{Config, UNCONFIGURED_CONTEXT_WINDOW_FALLBACK};
 use std::io::Write;
 use std::path::Path;
-use galleon_config::schema::{Config, UNCONFIGURED_CONTEXT_WINDOW_FALLBACK};
 
 const DAEMON_STALE_SECONDS: i64 = 30;
 const SCHEDULER_STALE_SECONDS: i64 = 120;
@@ -522,12 +522,10 @@ pub fn persist_model_cache(
     // Replace or insert the entry for this provider.
     let canonical = canonicalize_provider_ref(provider_name);
     cache.entries.retain(|e| e.model_provider != canonical);
-    cache
-        .entries
-        .push(galleon_config::schema::ModelCacheEntry {
-            model_provider: canonical,
-            models: models.to_vec(),
-        });
+    cache.entries.push(galleon_config::schema::ModelCacheEntry {
+        model_provider: canonical,
+        models: models.to_vec(),
+    });
 
     let json = serde_json::to_string_pretty(&cache).context("Failed to serialize model cache")?;
 
@@ -728,8 +726,7 @@ pub async fn update_context_windows(
 ) -> anyhow::Result<usize> {
     let fetch_fn = fetch_fn.unwrap_or_else(|| {
         Box::new(
-            |provider_type: &str,
-             provider_config: &galleon_config::schema::ModelProviderConfig| {
+            |provider_type: &str, provider_config: &galleon_config::schema::ModelProviderConfig| {
                 Box::pin(galleon_providers::fetch_context_window(
                     provider_type,
                     provider_config,

@@ -1,11 +1,11 @@
 use anyhow::{Context, Result, bail};
 use directories::UserDirs;
+use galleon_config::schema::Config;
+use galleon_memory::{self, Memory, MemoryCategory};
 use rusqlite::{Connection, OpenFlags, OptionalExtension};
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-use galleon_config::schema::Config;
-use galleon_memory::{self, Memory, MemoryCategory};
 
 #[derive(Debug, Clone)]
 struct SourceEntry {
@@ -454,10 +454,10 @@ fn backup_target_memory(workspace_dir: &Path) -> Result<Option<PathBuf>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rusqlite::params;
-    use tempfile::TempDir;
     use galleon_config::schema::{Config, MemoryConfig};
     use galleon_memory::SqliteMemory;
+    use rusqlite::params;
+    use tempfile::TempDir;
 
     fn test_config(workspace: &Path) -> Config {
         Config {

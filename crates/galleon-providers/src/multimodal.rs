@@ -1,15 +1,15 @@
 use base64::{Engine as _, engine::general_purpose::STANDARD};
-use reqwest::Client;
-use sha2::{Digest as _, Sha256};
-use std::borrow::Cow;
-use std::collections::{HashMap, HashSet};
-use std::path::Path;
 use galleon_api::media::{
     PROVIDER_IMAGE_MIME_TYPES, image_mime_from_extension, image_mime_from_magic,
     is_provider_image_mime,
 };
 use galleon_api::model_provider::ChatMessage;
 use galleon_config::schema::{MultimodalConfig, build_runtime_proxy_client_with_timeouts};
+use reqwest::Client;
+use sha2::{Digest as _, Sha256};
+use std::borrow::Cow;
+use std::collections::{HashMap, HashSet};
+use std::path::Path;
 
 pub const IMAGE_MARKER_PREFIX: &str = "[IMAGE:";
 
@@ -1059,13 +1059,14 @@ async fn prepare_messages_inner(
         if after < before {
             ::galleon_log::record!(
                 INFO,
-                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
-                    .with_attrs(::serde_json::json!({
+                ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note).with_attrs(
+                    ::serde_json::json!({
                         "max_image_turns": config.max_image_turns,
                         "images_before": before,
                         "images_after": after,
                         "images_dropped": before - after,
-                    })),
+                    })
+                ),
                 "multimodal: age-trimmed old images from conversation history"
             );
         }

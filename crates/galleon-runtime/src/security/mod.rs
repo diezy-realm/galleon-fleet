@@ -71,11 +71,11 @@ pub use iam_policy::{IamPolicy, PolicyDecision};
 #[allow(unused_imports)]
 pub use nevis::{NevisAuthProvider, NevisIdentity};
 // Prompt injection defense exports
+pub use galleon_security_scrub::{redact, scrub, scrub_with_config};
 #[allow(unused_imports)]
 pub use leak_detector::{LeakDetector, LeakResult};
 #[allow(unused_imports)]
 pub use prompt_guard::{GuardAction, GuardResult, PromptGuard};
-pub use galleon_security_scrub::{redact, scrub, scrub_with_config};
 
 #[cfg(test)]
 mod tests {

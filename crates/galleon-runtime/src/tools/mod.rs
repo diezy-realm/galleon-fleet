@@ -1237,9 +1237,9 @@ fn all_tools_with_runtime_on_thread(
 
         if !email_configs.is_empty() {
             let auth_service = if email_configs.values().any(|c| c.oauth2.is_some()) {
-                Some(Arc::new(
-                    galleon_providers::auth::AuthService::from_config(root_config),
-                ))
+                Some(Arc::new(galleon_providers::auth::AuthService::from_config(
+                    root_config,
+                )))
             } else {
                 None
             };
@@ -2769,8 +2769,7 @@ permissions = ["http_client"]
 "#,
         )
         .unwrap();
-        let host =
-            galleon_plugins::host::PluginHost::from_plugins_dir(plugins_dir.path()).unwrap();
+        let host = galleon_plugins::host::PluginHost::from_plugins_dir(plugins_dir.path()).unwrap();
         let manifest = host.manifest("egress-plugin").unwrap();
         // The production tool path: binding == package name, which is exactly
         // what used to be handed to `entry_egress`.

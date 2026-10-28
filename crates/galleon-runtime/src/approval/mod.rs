@@ -4,13 +4,13 @@
 
 use crate::security::AutonomyLevel;
 use chrono::Utc;
+use galleon_config::schema::RiskProfileConfig;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 #[cfg(unix)]
 use std::io::BufReader;
 use std::io::{self, BufRead, Write};
-use galleon_config::schema::RiskProfileConfig;
 
 // ── Types ────────────────────────────────────────────────────────
 

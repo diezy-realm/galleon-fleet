@@ -1241,10 +1241,8 @@ async fn supervise_desktop_child(
             .context("desktop daemon stderr pipe unavailable")?;
         let stdout_sink = writers.stdout.clone();
         let stderr_sink = writers.stderr.clone();
-        let stdout_task =
-            galleon_spawn::spawn!(drain_service_pipe(stdout, stdout_sink, "desktop"));
-        let stderr_task =
-            galleon_spawn::spawn!(drain_service_pipe(stderr, stderr_sink, "desktop"));
+        let stdout_task = galleon_spawn::spawn!(drain_service_pipe(stdout, stdout_sink, "desktop"));
+        let stderr_task = galleon_spawn::spawn!(drain_service_pipe(stderr, stderr_sink, "desktop"));
         if first_generation {
             emit_desktop_handshake("READY", None);
             first_generation = false;
