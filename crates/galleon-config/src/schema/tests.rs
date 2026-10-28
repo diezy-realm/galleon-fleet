@@ -8761,19 +8761,19 @@ async fn load_or_init_warns_for_current_and_legacy_wati_config() {
 
 [channels.wati.production]
 enabled = true
-api_token = "current-placeholder-token"
+api_token = "tok-current"
 "#,
             "channels.wati",
-            "current-placeholder-token",
+            "tok-current",
         ),
         (
             "legacy",
             r#"[channels_config.wati]
 enabled = true
-api_token = "legacy-placeholder-token"
+api_token = "tok-legacy"
 "#,
             "channels_config.wati",
-            "legacy-placeholder-token",
+            "tok-legacy",
         ),
     ];
 
@@ -10079,7 +10079,7 @@ async fn line_config_toml_roundtrip() {
     let toml = r#"
 [channels_config.line.default]
 enabled = true
-channel_access_token = "ChannelAccessToken=="
+channel_access_token = "line_tok_123"
 channel_secret = "abc123secret"
 dm_policy = "pairing"
 group_policy = "mention"
@@ -10089,7 +10089,7 @@ sender_name = "Popcorn"
 "#;
     let config: Config = toml::from_str(toml).unwrap();
     let ln = config.channels.line.get("default").unwrap();
-    assert_eq!(ln.channel_access_token, "ChannelAccessToken==");
+    assert_eq!(ln.channel_access_token, "line_tok_123");
     assert_eq!(ln.channel_secret, "abc123secret");
     assert_eq!(ln.dm_policy, LineDmPolicy::Pairing);
     assert_eq!(ln.group_policy, LineGroupPolicy::Mention);
@@ -12647,7 +12647,7 @@ async fn git_config_debug_redacts_private_key_and_access_token() {
         private_key: Some(
             "-----BEGIN RSA PRIVATE KEY-----\nSUPERSECRETPEM\n-----END RSA PRIVATE KEY-----".into(),
         ),
-        access_token: "ghp_supersecrettoken".into(),
+        access_token: "ghp_dummy".into(),
         ..GitConfig::default()
     };
     let debug_output = format!("{cfg:?}");
@@ -12656,7 +12656,7 @@ async fn git_config_debug_redacts_private_key_and_access_token() {
         "Debug output must not contain the raw private_key PEM"
     );
     assert!(
-        !debug_output.contains("ghp_supersecrettoken"),
+        !debug_output.contains("ghp_dummy"),
         "Debug output must not contain the raw access_token"
     );
     assert!(
@@ -15331,7 +15331,7 @@ api_key = "header-value"
 
 [providers.models.openai.default.provider_extra]
 model = "router-model"
-api_key = "provider-extra-value"
+api_key = "extra-val"
 
 [providers.models.openai.default.chat_template_kwargs]
 model = "template-model"
