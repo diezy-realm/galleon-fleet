@@ -3830,7 +3830,9 @@ fn main() -> Result<()> {
         // SAFETY: this synchronous bootstrap runs before the Tokio runtime (and
         // therefore its worker threads) is constructed.
         #[allow(unsafe_code)]
-        unsafe { std::env::set_var("CLAWCREW_CONFIG_DIR", config_dir) };
+        unsafe {
+            std::env::set_var("CLAWCREW_CONFIG_DIR", config_dir)
+        };
     }
 
     async_main(command)

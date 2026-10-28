@@ -5,7 +5,7 @@
 //! gated so the CLI-only tests still compile and run with the feature off.
 
 #[cfg(feature = "gateway")]
-use axum::{routing::patch, Router};
+use axum::{Router, routing::patch};
 #[cfg(feature = "gateway")]
 use clawcrew::gateway::{self, AppState};
 #[cfg(feature = "gateway")]
