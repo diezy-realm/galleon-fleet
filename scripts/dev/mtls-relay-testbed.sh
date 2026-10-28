@@ -92,9 +92,9 @@ case "$PROFILE" in
            export RUST_MIN_STACK="${RUST_MIN_STACK:-8388608}" ;;
   *) echo "ZC_PROFILE must be 'release' or 'debug' (got '$PROFILE')" >&2; exit 2 ;;
 esac
-CLAWCREW="$BIN_DIR/clawcrew"
-ZEROCODE="$BIN_DIR/zerocode"
-ZERORELAY="$BIN_DIR/zerorelay"
+CLAWCREW="$BIN_DIR/galleon"
+ZEROCODE="$BIN_DIR/galleoncode"
+ZERORELAY="$BIN_DIR/galleonrelay"
 
 say()  { printf '\033[1;36m==>\033[0m %s\n' "$*"; }
 ok()   { printf '\033[1;32m  ok\033[0m %s\n' "$*"; }
@@ -120,7 +120,7 @@ else
   say "building clawcrew, zerocode, zerorelay ($PROFILE) with ${CARGO_CMD[*]} ..."
   ( cd "$REPO_ROOT" && CARGO_TARGET_DIR="$CARGO_TARGET_DIR" "${CARGO_CMD[@]}" build $CARGO_PROFILE_FLAG \
       --features channels-full \
-      -p clawcrew -p zerocode -p zerorelay ) \
+      -p galleon-fleet -p galleoncode -p galleonrelay ) \
     || die "build failed"
 fi
 ok "binaries ready in $BIN_DIR"

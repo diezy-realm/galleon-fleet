@@ -336,12 +336,12 @@ jobs:
           # feature the generator excludes for this target (e.g. the Prometheus
           # exporter on ARM).
           $BUILD_CMD --release --locked --no-default-features --features "${FEATURES}" --target ${{ matrix.target }}
-          # Build the zerocode TUI and the zerorelay nominated relay alongside the
+          # Build the galleoncode TUI and the galleonrelay nominated relay alongside the
           # main binary so they ship in the release archive. Skipped on Android,
           # which lacks the terminal deps.
           if [ "${{ matrix.target }}" != "aarch64-linux-android" ]; then
-            $BUILD_CMD --release --locked -p zerocode --target ${{ matrix.target }}
-            $BUILD_CMD --release --locked -p zerorelay --target ${{ matrix.target }}
+            $BUILD_CMD --release --locked -p galleoncode --target ${{ matrix.target }}
+            $BUILD_CMD --release --locked -p galleonrelay --target ${{ matrix.target }}
           fi
 
       - name: Check binary size
@@ -357,8 +357,9 @@ jobs:
           cp target/${{ matrix.target }}/release/${{ matrix.artifact }} staging/
           extra=""
           for b in zerocode zerorelay; do
-            if [ -f target/${{ matrix.target }}/release/$b ]; then
-              cp target/${{ matrix.target }}/release/$b staging/
+            src="galleon${b#zero}"
+            if [ -f target/${{ matrix.target }}/release/$src ]; then
+              cp target/${{ matrix.target }}/release/$src staging/$b
               extra="$extra $b"
             fi
           done
@@ -374,8 +375,9 @@ jobs:
           cp target/${{ matrix.target }}/release/${{ matrix.artifact }} staging/
           extra=""
           for b in zerocode.exe zerorelay.exe; do
-            if [ -f target/${{ matrix.target }}/release/$b ]; then
-              cp target/${{ matrix.target }}/release/$b staging/
+            src="galleon${b#zero}"
+            if [ -f target/${{ matrix.target }}/release/$src ]; then
+              cp target/${{ matrix.target }}/release/$src staging/$b
               extra="$extra $b"
             fi
           done

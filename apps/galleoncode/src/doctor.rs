@@ -986,7 +986,7 @@ mod tests {
     /// via `Doctor::draw` against a `ratatui::backend::TestBackend` at
     /// 120x24 so it can be regenerated on demand:
     ///
-    ///   cargo test --locked --bin zerocode -p zerocode \
+    ///   cargo test --locked --bin zerocode -p galleoncode \
     ///     render_screenshot -- --nocapture
     #[tokio::test]
     async fn render_screenshot_partial_results_banner() {

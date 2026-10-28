@@ -242,7 +242,7 @@ echo   Target: %TARGET%
 
 if "%DRY_RUN%"=="true" (
     echo   [dry-run] Would run: cargo build --release --locked %FEATURES% --target %TARGET%
-    echo   [dry-run] Would run: cargo build --release --locked -p zerocode --target %TARGET%
+    echo   [dry-run] Would run: cargo build --release --locked -p galleoncode --target %TARGET%
     echo   [dry-run] Would install to %USERPROFILE%\.clawcrew\bin
     echo   [dry-run] Would build web dashboard ^(cargo web build^) and install to %LOCALAPPDATA%\clawcrew\web\dist
     echo   [dry-run] Would add %USERPROFILE%\.clawcrew\bin to PATH
@@ -279,8 +279,8 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo   %GREEN%OK%RESET% Build succeeded.
 
-echo   Command: cargo build --release --locked -p zerocode --target %TARGET%
-cargo build --release --locked -p zerocode --target %TARGET%
+echo   Command: cargo build --release --locked -p galleoncode --target %TARGET%
+cargo build --release --locked -p galleoncode --target %TARGET%
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo   %RED%ERROR: zerocode TUI build failed.%RESET%
@@ -294,8 +294,8 @@ echo.
 echo %BOLD%[4/5] Installing binary...%RESET%
 mkdir "%USERPROFILE%\.clawcrew\bin" 2>nul
 copy /Y "target\%TARGET%\release\clawcrew.exe" "%USERPROFILE%\.clawcrew\bin\clawcrew.exe" >nul
-if exist "target\%TARGET%\release\zerocode.exe" (
-    copy /Y "target\%TARGET%\release\zerocode.exe" "%USERPROFILE%\.clawcrew\bin\zerocode.exe" >nul
+if exist "target\%TARGET%\release\galleoncode.exe" (
+    copy /Y "target\%TARGET%\release\galleoncode.exe" "%USERPROFILE%\.clawcrew\bin\zerocode.exe" >nul
     echo   %GREEN%OK%RESET% TUI installed to %USERPROFILE%\.clawcrew\bin\zerocode.exe
 )
 set "BIN_PATH=%USERPROFILE%\.clawcrew\bin\clawcrew.exe"
