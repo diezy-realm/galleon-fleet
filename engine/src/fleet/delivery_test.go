@@ -165,8 +165,10 @@ func TestHandleExtendedSystemEndpoints(t *testing.T) {
 		t.Fatalf("expected non-empty process list, got error: %v", err)
 	}
 
-	// 4. /api/engine/execute
+	// 4. /api/engine/execute (requires GALLEON_ENGINE_TOKEN)
+	t.Setenv("GALLEON_ENGINE_TOKEN", "test-token-execute")
 	req = httptest.NewRequest(http.MethodPost, "/api/engine/execute", strings.NewReader(`{"command":"echo test"}`))
+	req.Header.Set("Authorization", "Bearer test-token-execute")
 	rec = httptest.NewRecorder()
 	server.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -209,5 +211,89 @@ func TestCollectionPathTraversalSanitization(t *testing.T) {
 	var items []map[string]any
 	if err := json.Unmarshal(rec.Body.Bytes(), &items); err != nil || len(items) == 0 {
 		t.Fatalf("expected non-empty items, got error %v", err)
+	}
+}
+
+func TestTerminalEngineTokenContainment(t *testing.T) {
+	mockGw := &mockGatewayClient{
+		respSuccess: true,
+		respOutput:  `{"stdout":"ok","exit_code":0}`,
+	}
+	svc := NewService(mockGw)
+	h := NewHTTPHandler(svc)
+	server := metrics.NewServer(0)
+	h.RegisterHTTP(server)
+
+	endpoints := []string{"/api/terminal/exec", "/api/engine/execute"}
+
+	for _, endpoint := range endpoints {
+		t.Run(endpoint+" empty env always 401", func(t *testing.T) {
+			t.Setenv("GALLEON_ENGINE_TOKEN", "")
+
+			// Even with bearer token present, if env is empty -> 401
+			req := httptest.NewRequest(http.MethodPost, endpoint, strings.NewReader(`{"command":"echo test"}`))
+			req.Header.Set("Authorization", "Bearer some-token")
+			rec := httptest.NewRecorder()
+			server.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusUnauthorized {
+				t.Fatalf("expected 401 Unauthorized when GALLEON_ENGINE_TOKEN is empty, got %d", rec.Code)
+			}
+			var resp map[string]string
+			if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil || resp["error"] != "unauthorized" {
+				t.Fatalf("expected {\"error\":\"unauthorized\"}, got %s", rec.Body.String())
+			}
+		})
+
+		t.Run(endpoint+" missing auth header -> 401", func(t *testing.T) {
+			t.Setenv("GALLEON_ENGINE_TOKEN", "valid-secret")
+
+			req := httptest.NewRequest(http.MethodPost, endpoint, strings.NewReader(`{"command":"echo test"}`))
+			rec := httptest.NewRecorder()
+			server.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusUnauthorized {
+				t.Fatalf("expected 401 Unauthorized when Authorization header is missing, got %d", rec.Code)
+			}
+		})
+
+		t.Run(endpoint+" invalid prefix -> 401", func(t *testing.T) {
+			t.Setenv("GALLEON_ENGINE_TOKEN", "valid-secret")
+
+			req := httptest.NewRequest(http.MethodPost, endpoint, strings.NewReader(`{"command":"echo test"}`))
+			req.Header.Set("Authorization", "Basic valid-secret")
+			rec := httptest.NewRecorder()
+			server.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusUnauthorized {
+				t.Fatalf("expected 401 Unauthorized with Basic auth header, got %d", rec.Code)
+			}
+		})
+
+		t.Run(endpoint+" wrong token -> 401", func(t *testing.T) {
+			t.Setenv("GALLEON_ENGINE_TOKEN", "valid-secret")
+
+			req := httptest.NewRequest(http.MethodPost, endpoint, strings.NewReader(`{"command":"echo test"}`))
+			req.Header.Set("Authorization", "Bearer wrong-secret")
+			rec := httptest.NewRecorder()
+			server.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusUnauthorized {
+				t.Fatalf("expected 401 Unauthorized with incorrect token, got %d", rec.Code)
+			}
+		})
+
+		t.Run(endpoint+" valid token -> 200", func(t *testing.T) {
+			t.Setenv("GALLEON_ENGINE_TOKEN", "valid-secret")
+
+			req := httptest.NewRequest(http.MethodPost, endpoint, strings.NewReader(`{"command":"echo test"}`))
+			req.Header.Set("Authorization", "Bearer valid-secret")
+			rec := httptest.NewRecorder()
+			server.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200 OK with valid token, got %d: %s", rec.Code, rec.Body.String())
+			}
+		})
 	}
 }

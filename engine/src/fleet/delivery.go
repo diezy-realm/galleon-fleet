@@ -1,6 +1,7 @@
 package fleet
 
 import (
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -69,16 +70,39 @@ func (h *HTTPHandler) RegisterHTTP(server *metrics.Server) {
 	server.RegisterRouteFunc("/api/system/network", h.handleNetwork)
 	server.RegisterRouteFunc("/api/engine/processes", h.handleEngineProcesses)
 	server.RegisterRouteFunc("/api/project/git-status", h.handleProjectGitStatus)
-	server.RegisterRouteFunc("/api/terminal/exec", h.handleTerminalExec)
+	terminalHandler := wrapEngineTokenAuth(h.handleTerminalExec)
+	server.RegisterRouteFunc("/api/terminal/exec", terminalHandler)
 	server.RegisterRouteFunc("/api/terminal/audit", h.handleTerminalAudit)
 	server.RegisterRouteFunc("/api/v1/audit/trail", h.handleTerminalAudit)
-	server.RegisterRouteFunc("/api/engine/execute", h.handleTerminalExec)
+	server.RegisterRouteFunc("/api/engine/execute", terminalHandler)
 	server.RegisterRouteFunc("/api/v1/entitlement/usage", h.handleEntitlementUsage)
 
 	// BG-C2: Mount authorized device pairing endpoints (/api/pairing/*)
 	if h.pairingService != nil {
 		pairingHandler := identity.NewPairingHTTPHandler(h.pairingService, h.resolver)
 		pairingHandler.RegisterHTTP(server)
+	}
+}
+
+func wrapEngineTokenAuth(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		envToken := os.Getenv("GALLEON_ENGINE_TOKEN")
+		if envToken == "" {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+			return
+		}
+		authHeader := r.Header.Get("Authorization")
+		const prefix = "Bearer "
+		if !strings.HasPrefix(authHeader, prefix) {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+			return
+		}
+		token := strings.TrimPrefix(authHeader, prefix)
+		if subtle.ConstantTimeCompare([]byte(token), []byte(envToken)) != 1 {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+			return
+		}
+		next(w, r)
 	}
 }
 
