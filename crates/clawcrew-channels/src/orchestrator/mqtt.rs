@@ -59,7 +59,7 @@ pub async fn run_mqtt_sop_listener(
         );
     }
 
-    clawcrew_infra::health::mark_component_ok("mqtt");
+    galleon_infra::health::mark_component_ok("mqtt");
 
     loop {
         match eventloop.poll().await {
@@ -76,7 +76,7 @@ pub async fn run_mqtt_sop_listener(
                     .await;
             }
             Ok(Event::Incoming(Packet::ConnAck(_))) => {
-                clawcrew_infra::health::mark_component_ok("mqtt");
+                galleon_infra::health::mark_component_ok("mqtt");
                 ::clawcrew_log::record!(
                     INFO,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note),
@@ -87,7 +87,7 @@ pub async fn run_mqtt_sop_listener(
                 // Other events (PingResp, SubAck, etc.) — ignore
             }
             Err(e) => {
-                clawcrew_infra::health::mark_component_error("mqtt", e.to_string());
+                galleon_infra::health::mark_component_error("mqtt", e.to_string());
                 ::clawcrew_log::record!(
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Note)

@@ -1,4 +1,4 @@
-pub use clawcrew_infra::health::*;
+pub use galleon_infra::health::*;
 
 #[cfg(test)]
 mod tests {

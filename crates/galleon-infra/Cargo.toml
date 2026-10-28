@@ -1,5 +1,5 @@
 [package]
-name = "clawcrew-infra"
+name = "galleon-infra"
 rust-version.workspace = true
 version.workspace = true
 edition.workspace = true

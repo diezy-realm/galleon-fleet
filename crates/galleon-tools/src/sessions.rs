@@ -8,10 +8,10 @@ use std::sync::Arc;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
 use clawcrew_config::policy::SecurityPolicy;
 use clawcrew_config::policy::ToolOperation;
-use clawcrew_infra::acp_session_store::{
+use galleon_infra::acp_session_store::{
     AcpSessionAccess, AcpSessionData, AcpSessionStore, AcpSessionSummary,
 };
-use clawcrew_infra::session_backend::SessionBackend;
+use galleon_infra::session_backend::SessionBackend;
 
 /// Agent-scoped access to the durable ACP session store.
 ///
@@ -1061,8 +1061,8 @@ mod tests {
     use std::sync::Mutex;
     use tempfile::TempDir;
     use clawcrew_api::model_provider::ChatMessage;
-    use clawcrew_infra::session_backend::SessionMetadata;
-    use clawcrew_infra::session_store::SessionStore;
+    use galleon_infra::session_backend::SessionMetadata;
+    use galleon_infra::session_store::SessionStore;
 
     fn test_security() -> Arc<SecurityPolicy> {
         Arc::new(SecurityPolicy::default())
@@ -1566,7 +1566,7 @@ mod tests {
     #[tokio::test]
     async fn sessions_current_includes_name() {
         let tmp = TempDir::new().unwrap();
-        let sqlite = clawcrew_infra::session_sqlite::SqliteSessionBackend::new(tmp.path()).unwrap();
+        let sqlite = galleon_infra::session_sqlite::SqliteSessionBackend::new(tmp.path()).unwrap();
         let backend: Arc<dyn SessionBackend> = Arc::new(sqlite);
         backend
             .append("gw_named", &ChatMessage::user("hi"))

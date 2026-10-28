@@ -2265,7 +2265,7 @@ impl Channel for DiscordChannel {
 
         // --- Stall watchdog --------------------------------------------------
         let watchdog = if self.stall_timeout_secs > 0 {
-            Some(clawcrew_infra::stall_watchdog::StallWatchdog::new(
+            Some(galleon_infra::stall_watchdog::StallWatchdog::new(
                 self.stall_timeout_secs,
             ))
         } else {

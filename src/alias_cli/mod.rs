@@ -422,7 +422,7 @@ pub async fn handle_agents(cmd: AgentsCommands, config: &mut Config) -> Result<(
 #[cfg(all(feature = "gateway", feature = "agent-runtime"))]
 type OwnedStateHandles = (
     std::sync::Arc<dyn galleon_memory::Memory>,
-    Option<std::sync::Arc<dyn clawcrew_infra::session_backend::SessionBackend>>,
+    Option<std::sync::Arc<dyn galleon_infra::session_backend::SessionBackend>>,
 );
 
 #[cfg(all(feature = "gateway", feature = "agent-runtime"))]
@@ -438,7 +438,7 @@ fn build_owned_state_handles(config: &Config) -> Result<OwnedStateHandles> {
     };
     let session_backend = if config.gateway.session_persistence {
         Some(
-            clawcrew_infra::make_session_backend(
+            galleon_infra::make_session_backend(
                 &config.data_dir,
                 &config.channels.session_backend,
             )

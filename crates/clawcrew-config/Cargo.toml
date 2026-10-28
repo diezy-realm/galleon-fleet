@@ -16,7 +16,7 @@ galleon-macros.workspace = true
 # `plugins.entries[].egress_hosts` validates against the one shared egress
 # grammar in `clawcrew_infra::net_guard`. Reimplementing the grammar here would
 # give a security-relevant rule two definitions that can drift apart.
-clawcrew-infra.workspace = true
+galleon-infra.workspace = true
 anyhow = "1.0"
 base64 = { version = "0.22", optional = true }
 clap = { version = "4.5", optional = true, default-features = false, features = ["std", "derive"] }

@@ -1735,7 +1735,7 @@ impl Agent {
         sop_engine: Option<Arc<std::sync::Mutex<SopEngine>>>,
         sop_audit: Option<Arc<SopAuditLogger>>,
         canvas_store: Option<tools::CanvasStore>,
-        acp_session_store: Arc<clawcrew_infra::acp_session_store::AcpSessionStore>,
+        acp_session_store: Arc<galleon_infra::acp_session_store::AcpSessionStore>,
     ) -> Result<Self> {
         Self::from_config_with_session_cwd_and_mcp_approval_mode(
             config,
@@ -1827,7 +1827,7 @@ impl Agent {
         sop_engine: Option<Arc<std::sync::Mutex<SopEngine>>>,
         sop_audit: Option<Arc<SopAuditLogger>>,
         canvas_store: Option<tools::CanvasStore>,
-        acp_session_store: Arc<clawcrew_infra::acp_session_store::AcpSessionStore>,
+        acp_session_store: Arc<galleon_infra::acp_session_store::AcpSessionStore>,
     ) -> Result<Self> {
         let config = live_config.read().clone();
         Self::from_config_with_session_cwd_and_mcp_approval_mode(
@@ -1948,7 +1948,7 @@ impl Agent {
         sop_engine: Option<Arc<std::sync::Mutex<SopEngine>>>,
         sop_audit: Option<Arc<SopAuditLogger>>,
         canvas_store: Option<tools::CanvasStore>,
-        acp_session_store: Option<Arc<clawcrew_infra::acp_session_store::AcpSessionStore>>,
+        acp_session_store: Option<Arc<galleon_infra::acp_session_store::AcpSessionStore>>,
         live_config: Option<Arc<parking_lot::RwLock<Config>>>,
         live_model_config: Option<Arc<parking_lot::RwLock<Config>>>,
     ) -> Result<Self> {

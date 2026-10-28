@@ -15,7 +15,7 @@
 //! # What this module does not own
 //!
 //! Address classification, the egress pattern grammar, NAT64 translation, and
-//! the post-resolution SSRF verdict all live in `clawcrew_infra::net_guard`,
+//! the post-resolution SSRF verdict all live in `galleon_infra::net_guard`,
 //! which is also what the built-in tools use. Nothing here re-implements them:
 //! a plugin and a built-in tool must not be able to disagree about whether a
 //! destination is reachable.
@@ -25,7 +25,7 @@ use std::fmt;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex, OnceLock};
 
-use clawcrew_infra::net_guard::{
+use galleon_infra::net_guard::{
     Nat64Prefix, NetworkGuardError, PrivateNetworkAccess, ResolvedDestination, egress_host_matches,
     egress_pattern_contains, normalize_egress_patterns, normalize_host, parse_nat64_prefixes,
 };
@@ -98,7 +98,7 @@ impl EgressPolicy {
     /// Build and validate one resolved policy view.
     ///
     /// `hosts` and `allow_private` use the strict egress grammar
-    /// (`clawcrew_infra::net_guard::normalize_egress_pattern`): exact hosts or
+    /// (`galleon_infra::net_guard::normalize_egress_pattern`): exact hosts or
     /// `*.suffix` patterns, with no allow-all form. An empty `hosts` list is
     /// the default and means no reach at all.
     ///

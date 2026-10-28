@@ -3382,7 +3382,7 @@ mod outbound {
                 .with_context(|| format!("parse marker URL {target}"))
                 .map_err(ValidateError::Refused)?;
             let host_str = url.host_str().unwrap_or("");
-            if clawcrew_infra::net_guard::is_private_or_local_host(host_str) {
+            if galleon_infra::net_guard::is_private_or_local_host(host_str) {
                 ::clawcrew_log::record!(
                     WARN,
                     ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)
@@ -3523,7 +3523,7 @@ mod outbound {
                 // which moves the attempt, can run.
                 let target_str = attempt.url().as_str().to_string();
                 let host = attempt.url().host_str().unwrap_or("").to_string();
-                if clawcrew_infra::net_guard::is_private_or_local_host(&host) {
+                if galleon_infra::net_guard::is_private_or_local_host(&host) {
                     ::clawcrew_log::record!(
                         WARN,
                         ::clawcrew_log::Event::new(module_path!(), ::clawcrew_log::Action::Reject)

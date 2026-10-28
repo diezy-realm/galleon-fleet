@@ -21,7 +21,7 @@ pub async fn handle_api_channels(
     }
 
     let config = state.config.read().clone();
-    let health = clawcrew_infra::health::snapshot();
+    let health = galleon_infra::health::snapshot();
     // One entry per `[channels.<type>.<alias>]` block. Owning
     // agent comes from the agents.<alias>.channels reverse lookup.
     let channels: Vec<serde_json::Value> = config
@@ -201,7 +201,7 @@ pub(crate) struct ChannelReadiness {
 pub(crate) fn channel_readiness(
     config: &clawcrew_config::schema::Config,
     info: &clawcrew_config::schema::ChannelAliasInfo,
-    health: &clawcrew_infra::health::HealthSnapshot,
+    health: &galleon_infra::health::HealthSnapshot,
     state: &AppState,
 ) -> ChannelReadiness {
     let mut readiness = ChannelReadiness {
@@ -316,7 +316,7 @@ pub(crate) fn channel_readiness_summary(
 fn apply_webhook_readiness(
     config: &clawcrew_config::schema::Config,
     alias: &str,
-    health: &clawcrew_infra::health::HealthSnapshot,
+    health: &galleon_infra::health::HealthSnapshot,
     state: &AppState,
     readiness: &mut ChannelReadiness,
 ) {
@@ -360,7 +360,7 @@ fn apply_webhook_readiness(
     }
 }
 
-fn component_health_ok_and_fresh(component: &clawcrew_infra::health::ComponentHealth) -> bool {
+fn component_health_ok_and_fresh(component: &galleon_infra::health::ComponentHealth) -> bool {
     if component.status != "ok" {
         return false;
     }

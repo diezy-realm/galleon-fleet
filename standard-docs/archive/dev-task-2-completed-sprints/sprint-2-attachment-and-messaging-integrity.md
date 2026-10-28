@@ -11,20 +11,20 @@ depends_on: Sprint 0 §C (BL-14 harus merge dulu — file overlap orchestrator/m
 
 ## A. Bug Data-Loss (PRIORITASKAN — P0, mempengaruhi semua channel messaging hari ini)
 
-- [x] **BL-52 (P0 — bug data-loss nyata, PRIORITASKAN di atas semua item lain sprint ini)** Perbaiki bug attachment hilang di `MessageDebouncer`. **Masalah terverifikasi sampai baris kode:** saat pesan rapid digabung, hanya `turn` PERTAMA yang dipertahankan strukturnya (komentar kode sendiri: *"the combined turn keeps the place of the sender's first message"*), attachment dari pesan ke-2/3/dst HILANG diam-diam — hanya teksnya yang ikut digabung. File: `crates/clawcrew-infra/src/debounce.rs`, `crates/clawcrew-channels/src/orchestrator/mod.rs:1370-1372` (titik overwrite `turn.turn.msg.content = combined`). Status: COMPLETED (`debounced_messages_preserve_all_attachments` passed).
+- [x] **BL-52 (P0 — bug data-loss nyata, PRIORITASKAN di atas semua item lain sprint ini)** Perbaiki bug attachment hilang di `MessageDebouncer`. **Masalah terverifikasi sampai baris kode:** saat pesan rapid digabung, hanya `turn` PERTAMA yang dipertahankan strukturnya (komentar kode sendiri: *"the combined turn keeps the place of the sender's first message"*), attachment dari pesan ke-2/3/dst HILANG diam-diam — hanya teksnya yang ikut digabung. File: `crates/galleon-infra/src/debounce.rs`, `crates/clawcrew-channels/src/orchestrator/mod.rs:1370-1372` (titik overwrite `turn.turn.msg.content = combined`). Status: COMPLETED (`debounced_messages_preserve_all_attachments` passed).
 
 #### Detail Eksekusi — BL-52
 
 **Koreksi baris (verifikasi 2026-10-06):** Titik overwrite `turn.turn.msg.content = combined` ada di `crates/clawcrew-channels/src/orchestrator/mod.rs:1662` (bergeser dari `1370-1372` di dokumen lama — kode telah berubah sejak dicatat), di dalam fungsi `route_inbound_slot`. Verifikasi akar masalah LENGKAP (bukan hanya titik overwrite, tapi seluruh jalur):
 
-1. `crates/clawcrew-infra/src/debounce.rs` — `MessageDebouncer::debounce_with_window(sender_key: &str, message: &str, window: Duration)` HANYA menerima `message: &str` (teks polos). `DebouncerEntry.messages: Vec<String>` menyimpan teks saja. `fire_debounced()` menggabung via `entry.messages.join("\n")` — SATU `String`, tidak ada tempat untuk attachment sama sekali di level debouncer ini.
+1. `crates/galleon-infra/src/debounce.rs` — `MessageDebouncer::debounce_with_window(sender_key: &str, message: &str, window: Duration)` HANYA menerima `message: &str` (teks polos). `DebouncerEntry.messages: Vec<String>` menyimpan teks saja. `fire_debounced()` menggabung via `entry.messages.join("\n")` — SATU `String`, tidak ada tempat untuk attachment sama sekali di level debouncer ini.
 2. `crates/clawcrew-channels/src/orchestrator/mod.rs` sekitar baris 11316 (fungsi pemanggil, nama fungsi tempatnya belum dikonfirmasi persis — baca ~11250-11320 untuk nama fungsi pembungkus): panggilan `ctx.debouncer.debounce_with_window(&debounce_key, &msg.content, debounce_window)` hanya mengirim `&msg.content` (String) — **`msg.attachments` (field `Vec<MediaAttachment>` di `clawcrew-api/src/channel.rs:423`) TIDAK PERNAH disertakan dalam pemanggilan ini**. Attachment pesan ke-2/3/dst genuinely tidak pernah disalurkan ke mana pun, bukan "ditimpa" — ini presisi penting untuk desain fix.
 3. `InboundTurn { turn: Box<PendingTurn> }` dibuat SEKALI saat bucket debounce PERTAMA kali dibuka (`msg` lengkap dengan attachment pesan pertama tersimpan di `PendingTurn.msg`). Pesan susulan dalam window yang sama HANYA memperbarui bucket teks di debouncer (langkah 1), tidak pernah menyentuh `PendingTurn` yang sudah dibuat.
 4. Di `route_inbound_slot` (baris 1662), saat window selesai: `turn.turn.msg.content = combined` — mengganti teks `PendingTurn` pertama dengan gabungan teks SEMUA pesan, TAPI `turn.turn.msg.attachments` tetap attachment pesan PERTAMA saja (field ini tidak pernah disentuh ulang).
 
 **Spesifikasi API — perubahan diperlukan di 2 layer:**
 ```rust
-// crates/clawcrew-infra/src/debounce.rs — tambah payload generik, bukan String murni.
+// crates/galleon-infra/src/debounce.rs — tambah payload generik, bukan String murni.
 // Opsi desain (pilih salah satu, DIPUTUSKAN saat implementasi berdasarkan dampak minimal):
 
 // OPSI A (lebih kecil diff): debouncer tetap String-only untuk teks,
@@ -319,7 +319,7 @@ fn restrict_log_file_acl(path: &Path) -> std::io::Result<()> {
 
 | Area | File | Penulis | Catatan serialisasi |
 |---|---|---|---|
-| A (BL-52) | `clawcrew-infra/src/debounce.rs`, `clawcrew-channels/src/orchestrator/mod.rs` | Backend-Rust | **Tunggu BL-14 (Sprint 0) merge dulu** |
+| A (BL-52) | `galleon-infra/src/debounce.rs`, `clawcrew-channels/src/orchestrator/mod.rs` | Backend-Rust | **Tunggu BL-14 (Sprint 0) merge dulu** |
 | B (BL-53/54/55) | `clawcrew-api/src/media.rs`, Front App entry point per-channel, Core agregasi | Backend-Rust + Frontend (per-channel) | BL-55 tunggu BL-52 merge |
 | C (BL-37/38/39) | `clawcrew-runtime/src/agent/tool_execution.rs`, `clawcrew-config/src/schema.rs`, `clawcrew-log/src/*` | Backend-Rust (crew berbeda dari A/B, file tidak beririsan) | Bisa paralel penuh dengan A/B |
 

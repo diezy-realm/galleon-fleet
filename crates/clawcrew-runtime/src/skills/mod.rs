@@ -1564,7 +1564,7 @@ pub(crate) fn skills_to_prompt_with_mode_and_availability(
 pub fn skills_to_tools(
     skills: &[Skill],
     security: std::sync::Arc<crate::security::SecurityPolicy>,
-    nat64_prefixes: &[clawcrew_infra::net_guard::Nat64Prefix],
+    nat64_prefixes: &[galleon_infra::net_guard::Nat64Prefix],
 ) -> Vec<Box<dyn clawcrew_api::tool::Tool>> {
     skills_to_tools_with_context(skills, security, &[], nat64_prefixes)
 }
@@ -1615,7 +1615,7 @@ pub fn skills_to_tools_with_context(
     skills: &[Skill],
     security: std::sync::Arc<crate::security::SecurityPolicy>,
     unfiltered_registry: &[std::sync::Arc<dyn clawcrew_api::tool::Tool>],
-    nat64_prefixes: &[clawcrew_infra::net_guard::Nat64Prefix],
+    nat64_prefixes: &[galleon_infra::net_guard::Nat64Prefix],
 ) -> Vec<Box<dyn clawcrew_api::tool::Tool>> {
     skills_to_tools_with_context_and_runtime(
         skills,
@@ -1631,7 +1631,7 @@ pub fn skills_to_tools_with_context_and_runtime(
     security: std::sync::Arc<crate::security::SecurityPolicy>,
     unfiltered_registry: &[std::sync::Arc<dyn clawcrew_api::tool::Tool>],
     runtime: std::sync::Arc<dyn crate::platform::RuntimeAdapter>,
-    nat64_prefixes: &[clawcrew_infra::net_guard::Nat64Prefix],
+    nat64_prefixes: &[galleon_infra::net_guard::Nat64Prefix],
 ) -> Vec<Box<dyn clawcrew_api::tool::Tool>> {
     skills_to_tools_with_context_and_runtime_optional_nat64(
         skills,
@@ -1649,7 +1649,7 @@ pub(crate) fn skills_to_tools_with_context_and_runtime_optional_nat64(
     security: std::sync::Arc<crate::security::SecurityPolicy>,
     unfiltered_registry: &[std::sync::Arc<dyn clawcrew_api::tool::Tool>],
     runtime: std::sync::Arc<dyn crate::platform::RuntimeAdapter>,
-    nat64_prefixes: Option<&[clawcrew_infra::net_guard::Nat64Prefix]>,
+    nat64_prefixes: Option<&[galleon_infra::net_guard::Nat64Prefix]>,
 ) -> Vec<Box<dyn clawcrew_api::tool::Tool>> {
     let mut tools: Vec<Box<dyn clawcrew_api::tool::Tool>> = Vec::new();
     for skill in skills {

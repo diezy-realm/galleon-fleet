@@ -308,13 +308,13 @@ async fn test_run_gateway_supervision_and_readiness_lifecycle() {
     let config = create_test_config(&tmp);
 
     let (ready_tx, mut ready_rx) = tokio::sync::watch::channel(None);
-    let readiness = clawcrew_infra::gateway_controls::GatewayReadinessReporter::new(move |addr| {
+    let readiness = galleon_infra::gateway_controls::GatewayReadinessReporter::new(move |addr| {
         let _ = ready_tx.send(Some(addr));
     });
 
     let (shutdown_tx, _) = tokio::sync::watch::channel(false);
     let (reload_tx, _) = tokio::sync::watch::channel(false);
-    let reload_controls = clawcrew_infra::gateway_controls::GatewayReloadControls {
+    let reload_controls = galleon_infra::gateway_controls::GatewayReloadControls {
         shutdown_tx: shutdown_tx.clone(),
         reload_tx,
     };

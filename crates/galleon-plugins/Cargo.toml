@@ -37,7 +37,7 @@ plugins-wasm-pulley = ["plugins-wasmtime", "wasmtime/pulley"]
 [dependencies]
 clawcrew-log.workspace = true
 clawcrew-api.workspace = true
-clawcrew-infra.workspace = true
+galleon-infra.workspace = true
 anyhow = "1.0"
 async-trait = "0.1"
 base64 = "0.22"

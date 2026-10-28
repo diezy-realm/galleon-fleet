@@ -13,7 +13,7 @@ use crate::tui_identity::TuiRegistry;
 
 pub type StarterFuture = Pin<Box<dyn Future<Output = Result<()>> + Send>>;
 
-pub use clawcrew_infra::gateway_controls::GatewayReloadControls;
+pub use galleon_infra::gateway_controls::GatewayReloadControls;
 
 pub type GatewayStarter = Box<
     dyn Fn(

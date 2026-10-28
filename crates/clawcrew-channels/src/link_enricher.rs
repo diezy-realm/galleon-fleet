@@ -60,7 +60,7 @@ fn is_blocked_url(url: &reqwest::Url) -> bool {
         return true;
     };
     let canonical_host = host.trim_end_matches('.');
-    canonical_host.is_empty() || clawcrew_infra::net_guard::is_private_or_local_host(canonical_host)
+    canonical_host.is_empty() || galleon_infra::net_guard::is_private_or_local_host(canonical_host)
 }
 
 fn redirect_policy() -> reqwest::redirect::Policy {

@@ -10,9 +10,9 @@ use parking_lot::RwLock;
 // `--features channel-nextcloud` alone failed to compile. `--all-features`
 // hid it, because `channel-linq` was always along for the ride.
 use clawcrew_config::pairing::PairingGuard;
-use clawcrew_infra::session_backend::SessionBackend;
-use clawcrew_infra::session_sqlite::SqliteSessionBackend;
-use clawcrew_infra::session_store::SessionStore;
+use galleon_infra::session_backend::SessionBackend;
+use galleon_infra::session_sqlite::SqliteSessionBackend;
+use galleon_infra::session_store::SessionStore;
 use galleon_memory::{Memory, MemoryCategory, MemoryEntry};
 use galleon_providers::ModelProvider;
 #[cfg(any(
@@ -1049,7 +1049,7 @@ fn first_channel_info(
 fn channel_readiness_webhook_does_not_call_gateway_route_healthy_without_listener() {
     let config = config_with_webhook("default", true, true, 42617, Some("/webhook"));
     let state = test_state(config.clone());
-    let health = clawcrew_infra::health::snapshot();
+    let health = galleon_infra::health::snapshot();
     let info = first_channel_info(&config);
     let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -1068,7 +1068,7 @@ fn channel_readiness_webhook_does_not_call_gateway_route_healthy_without_listene
 fn channel_readiness_webhook_does_not_call_custom_path_healthy_without_listener() {
     let config = config_with_webhook("custom_path", true, true, 42632, Some("/eyrie"));
     let state = test_state(config.clone());
-    let health = clawcrew_infra::health::snapshot();
+    let health = galleon_infra::health::snapshot();
     let info = first_channel_info(&config);
     let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -1086,9 +1086,9 @@ fn channel_readiness_webhook_does_not_call_custom_path_healthy_without_listener(
 #[test]
 fn channel_readiness_webhook_uses_supervised_listener_health_for_custom_path() {
     let config = config_with_webhook("supervised", true, true, 42632, Some("/eyrie"));
-    clawcrew_infra::health::mark_component_ok("channel:webhook.supervised");
+    galleon_infra::health::mark_component_ok("channel:webhook.supervised");
     let state = test_state(config.clone());
-    let health = clawcrew_infra::health::snapshot();
+    let health = galleon_infra::health::snapshot();
     let info = first_channel_info(&config);
     let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -1103,13 +1103,13 @@ fn channel_readiness_webhook_rejects_stale_listener_health() {
     let old = (chrono::Utc::now()
         - chrono::Duration::seconds(CHANNEL_LISTENER_HEALTH_MAX_AGE_SECS + 5))
     .to_rfc3339();
-    let health = clawcrew_infra::health::HealthSnapshot {
+    let health = galleon_infra::health::HealthSnapshot {
         pid: std::process::id(),
         updated_at: chrono::Utc::now().to_rfc3339(),
         uptime_seconds: 1,
         components: std::collections::BTreeMap::from([(
             component,
-            clawcrew_infra::health::ComponentHealth {
+            galleon_infra::health::ComponentHealth {
                 status: "ok".to_string(),
                 updated_at: old,
                 last_ok: None,
@@ -1129,14 +1129,14 @@ fn channel_readiness_webhook_rejects_stale_listener_health() {
 #[test]
 fn channel_readiness_webhook_uses_live_pairing_guard_for_auth() {
     let config = config_with_webhook("paired", true, true, 42632, Some("/eyrie"));
-    clawcrew_infra::health::mark_component_ok("channel:webhook.paired");
+    galleon_infra::health::mark_component_ok("channel:webhook.paired");
     let mut state = test_state(config.clone());
     state.pairing = Arc::new(PairingGuard::new(
         true,
         &[],
         clawcrew_config::pairing::PairingCodePolicy::default(),
     ));
-    let health = clawcrew_infra::health::snapshot();
+    let health = galleon_infra::health::snapshot();
     let info = first_channel_info(&config);
     let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -1149,7 +1149,7 @@ fn channel_readiness_webhook_uses_live_pairing_guard_for_auth() {
 fn channel_readiness_unchecked_channel_types_are_unknown_not_down() {
     let config = config_with_telegram("ops");
     let state = test_state(config.clone());
-    let health = clawcrew_infra::health::snapshot();
+    let health = galleon_infra::health::snapshot();
     let info = first_channel_info(&config);
     let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -1174,7 +1174,7 @@ fn channel_readiness_unchecked_channel_types_are_unknown_not_down() {
 fn channel_readiness_orphan_channel_reports_missing_agent_binding_without_broken_health() {
     let config = config_with_webhook("orphan", true, false, 42617, Some("/webhook"));
     let state = test_state(config.clone());
-    let health = clawcrew_infra::health::snapshot();
+    let health = galleon_infra::health::snapshot();
     let info = first_channel_info(&config);
     let readiness = channel_readiness(&config, &info, &health, &state);
 
@@ -2097,11 +2097,11 @@ async fn cron_api_accepts_agent_jobs() {
     let config = state.config.read().clone();
     let jobs = crate::cron_adapter::list_jobs(&config).unwrap();
     assert_eq!(jobs.len(), 1);
-    assert_eq!(jobs[0].job_type, clawcrew_infra::cron_types::JobType::Agent);
+    assert_eq!(jobs[0].job_type, galleon_infra::cron_types::JobType::Agent);
     assert_eq!(jobs[0].prompt.as_deref(), Some("summarize the latest logs"));
     assert_eq!(
         jobs[0].session_target,
-        clawcrew_infra::cron_types::SessionTarget::Isolated
+        galleon_infra::cron_types::SessionTarget::Isolated
     );
 }
 
@@ -2140,7 +2140,7 @@ async fn cron_api_agent_job_persists_session_target_main() {
     assert_eq!(jobs.len(), 1);
     assert_eq!(
         jobs[0].session_target,
-        clawcrew_infra::cron_types::SessionTarget::Main
+        galleon_infra::cron_types::SessionTarget::Main
     );
 }
 
@@ -2177,7 +2177,7 @@ async fn cron_api_agent_job_accepts_session_target_case_and_whitespace() {
     let jobs = crate::cron_adapter::list_jobs(&state.config.read().clone()).unwrap();
     assert_eq!(
         jobs[0].session_target,
-        clawcrew_infra::cron_types::SessionTarget::Main
+        galleon_infra::cron_types::SessionTarget::Main
     );
 }
 
@@ -2302,7 +2302,7 @@ async fn cron_api_timezone_add_persists_explicit_timezone() {
     let jobs = crate::cron_adapter::list_jobs(&config).unwrap();
     assert_eq!(
         jobs[0].schedule,
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "0 9 * * *".to_string(),
             tz: Some("America/New_York".to_string()),
         }
@@ -2361,7 +2361,7 @@ async fn cron_api_timezone_patch_schedule_preserves_existing_timezone() {
         &state.config.read().clone(),
         "test-agent",
         Some("localized-job".to_string()),
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "0 9 * * *".to_string(),
             tz: Some("Europe/Berlin".to_string()),
         },
@@ -2391,7 +2391,7 @@ async fn cron_api_timezone_patch_schedule_preserves_existing_timezone() {
         crate::cron_adapter::get_job(&state.config.read().clone(), &job.id).expect("updated job");
     assert_eq!(
         updated.schedule,
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "30 9 * * *".to_string(),
             tz: Some("Europe/Berlin".to_string()),
         }
@@ -2412,7 +2412,7 @@ async fn cron_api_timezone_patch_replaces_timezone_when_provided() {
         &state.config.read().clone(),
         "test-agent",
         Some("localized-job".to_string()),
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "0 9 * * *".to_string(),
             tz: Some("America/New_York".to_string()),
         },
@@ -2443,7 +2443,7 @@ async fn cron_api_timezone_patch_replaces_timezone_when_provided() {
         crate::cron_adapter::get_job(&state.config.read().clone(), &job.id).expect("updated job");
     assert_eq!(
         updated.schedule,
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "30 9 * * *".to_string(),
             tz: Some("Asia/Tokyo".to_string()),
         }
@@ -2464,7 +2464,7 @@ async fn cron_api_timezone_patch_sets_timezone_without_schedule_change() {
         &state.config.read().clone(),
         "test-agent",
         Some("runtime-local-job".to_string()),
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "0 9 * * *".to_string(),
             tz: None,
         },
@@ -2494,7 +2494,7 @@ async fn cron_api_timezone_patch_sets_timezone_without_schedule_change() {
         crate::cron_adapter::get_job(&state.config.read().clone(), &job.id).expect("updated job");
     assert_eq!(
         updated.schedule,
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "0 9 * * *".to_string(),
             tz: Some("America/Chicago".to_string()),
         }
@@ -2515,7 +2515,7 @@ async fn cron_api_timezone_patch_rejects_invalid_timezone_as_bad_request() {
         &state.config.read().clone(),
         "test-agent",
         Some("localized-job".to_string()),
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "0 9 * * *".to_string(),
             tz: Some("America/New_York".to_string()),
         },
@@ -2564,7 +2564,7 @@ async fn cron_api_timezone_patch_clears_timezone_with_explicit_signal() {
         &state.config.read().clone(),
         "test-agent",
         Some("localized-job".to_string()),
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "0 9 * * *".to_string(),
             tz: Some("America/New_York".to_string()),
         },
@@ -2594,7 +2594,7 @@ async fn cron_api_timezone_patch_clears_timezone_with_explicit_signal() {
         crate::cron_adapter::get_job(&state.config.read().clone(), &job.id).expect("updated job");
     assert_eq!(
         updated.schedule,
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "0 9 * * *".to_string(),
             tz: None,
         }
@@ -2615,7 +2615,7 @@ async fn cron_api_patch_enabled_without_agent() {
         &state.config.read().clone(),
         "test-agent",
         Some("toggle-job".to_string()),
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "*/5 * * * *".to_string(),
             tz: None,
         },
@@ -2662,7 +2662,7 @@ async fn cron_api_patch_name_and_schedule_without_agent() {
         &state.config.read().clone(),
         "test-agent",
         Some("old-name".to_string()),
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "*/5 * * * *".to_string(),
             tz: None,
         },
@@ -2698,7 +2698,7 @@ async fn cron_api_patch_name_and_schedule_without_agent() {
     assert_eq!(updated.name.as_deref(), Some("new-name"));
     assert_eq!(
         updated.schedule,
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "30 9 * * *".to_string(),
             tz: None,
         }
@@ -2719,7 +2719,7 @@ async fn cron_api_patch_shell_command_requires_known_agent() {
         &state.config.read().clone(),
         "test-agent",
         Some("shell-job".to_string()),
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "*/5 * * * *".to_string(),
             tz: None,
         },
@@ -2772,7 +2772,7 @@ async fn cron_api_patch_shell_prompt_unknown_agent_is_bad_request_not_500() {
         &state.config.read().clone(),
         "test-agent",
         Some("shell-job".to_string()),
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "*/5 * * * *".to_string(),
             tz: None,
         },
@@ -2878,7 +2878,7 @@ async fn cron_api_patch_updates_imperative_shell_output_format() {
         &state.config.read().clone(),
         "test-agent",
         Some("format-job".to_string()),
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "*/5 * * * *".to_string(),
             tz: None,
         },
@@ -2889,7 +2889,7 @@ async fn cron_api_patch_updates_imperative_shell_output_format() {
     .expect("job added");
     assert_eq!(
         job.shell_output_format,
-        clawcrew_infra::cron_types::CronShellOutputFormat::Wrapped,
+        galleon_infra::cron_types::CronShellOutputFormat::Wrapped,
         "imperative jobs default to wrapped"
     );
     // Imperative jobs get UUID ids; the scheduler resolves owning agent
@@ -2920,7 +2920,7 @@ async fn cron_api_patch_updates_imperative_shell_output_format() {
         crate::cron_adapter::get_job(&state.config.read().clone(), &job.id).expect("updated job");
     assert_eq!(
         updated.shell_output_format,
-        clawcrew_infra::cron_types::CronShellOutputFormat::Raw,
+        galleon_infra::cron_types::CronShellOutputFormat::Raw,
         "get_job must reflect the patched format for an imperative job"
     );
 
@@ -3015,7 +3015,7 @@ async fn cron_api_patch_rejects_shell_output_format_for_declarative_job() {
     let unchanged = crate::cron_adapter::get_job(&state.config.read().clone(), "decl-job").unwrap();
     assert_eq!(
         unchanged.shell_output_format,
-        clawcrew_infra::cron_types::CronShellOutputFormat::Wrapped,
+        galleon_infra::cron_types::CronShellOutputFormat::Wrapped,
         "the rejected PATCH must not have changed the resolved format"
     );
 }
@@ -3191,7 +3191,7 @@ async fn cron_api_run_executes_shell_job_and_records_run() {
         &state.config.read().clone(),
         "test-agent",
         None,
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "*/5 * * * *".to_string(),
             tz: None,
         },
@@ -3254,12 +3254,12 @@ async fn cron_api_run_records_best_effort_delivery_failure_as_degraded() {
         &state.config.read().clone(),
         "test-agent",
         None,
-        clawcrew_infra::cron_types::Schedule::Cron {
+        galleon_infra::cron_types::Schedule::Cron {
             expr: "*/5 * * * *".to_string(),
             tz: None,
         },
         "echo hello-from-manual-trigger",
-        Some(clawcrew_infra::cron_types::DeliveryConfig {
+        Some(galleon_infra::cron_types::DeliveryConfig {
             mode: "announce".into(),
             channel: Some("fail-delivery".into()),
             to: Some("123456".into()),

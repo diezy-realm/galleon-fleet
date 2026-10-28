@@ -15126,20 +15126,20 @@ pub enum CronShellOutputFormat {
     Raw,
 }
 
-impl From<CronShellOutputFormat> for clawcrew_infra::cron_types::CronShellOutputFormat {
+impl From<CronShellOutputFormat> for galleon_infra::cron_types::CronShellOutputFormat {
     fn from(f: CronShellOutputFormat) -> Self {
         match f {
-            CronShellOutputFormat::Wrapped => clawcrew_infra::cron_types::CronShellOutputFormat::Wrapped,
-            CronShellOutputFormat::Raw => clawcrew_infra::cron_types::CronShellOutputFormat::Raw,
+            CronShellOutputFormat::Wrapped => galleon_infra::cron_types::CronShellOutputFormat::Wrapped,
+            CronShellOutputFormat::Raw => galleon_infra::cron_types::CronShellOutputFormat::Raw,
         }
     }
 }
 
-impl From<clawcrew_infra::cron_types::CronShellOutputFormat> for CronShellOutputFormat {
-    fn from(f: clawcrew_infra::cron_types::CronShellOutputFormat) -> Self {
+impl From<galleon_infra::cron_types::CronShellOutputFormat> for CronShellOutputFormat {
+    fn from(f: galleon_infra::cron_types::CronShellOutputFormat) -> Self {
         match f {
-            clawcrew_infra::cron_types::CronShellOutputFormat::Wrapped => Self::Wrapped,
-            clawcrew_infra::cron_types::CronShellOutputFormat::Raw => Self::Raw,
+            galleon_infra::cron_types::CronShellOutputFormat::Wrapped => Self::Wrapped,
+            galleon_infra::cron_types::CronShellOutputFormat::Raw => Self::Raw,
         }
     }
 }
@@ -25202,12 +25202,12 @@ impl Config {
         // The granted egress allowlist is a security control, so a malformed
         // entry is a hard config error rather than a silently dropped line.
         // Both lists validate against the one shared strict grammar in
-        // `clawcrew_infra::net_guard`, including containment of the private
+        // `galleon_infra::net_guard`, including containment of the private
         // address carveout by the host grant.
         for entry in &self.plugins.entries {
             let hosts = {
                 let path = format!("plugins.entries.{}.egress_hosts", entry.name);
-                match clawcrew_infra::net_guard::normalize_egress_patterns(
+                match galleon_infra::net_guard::normalize_egress_patterns(
                     &entry.egress_hosts,
                     &path,
                 ) {
@@ -25217,7 +25217,7 @@ impl Config {
             };
             let private = {
                 let path = format!("plugins.entries.{}.egress_allow_private", entry.name);
-                match clawcrew_infra::net_guard::normalize_egress_patterns(
+                match galleon_infra::net_guard::normalize_egress_patterns(
                     &entry.egress_allow_private,
                     &path,
                 ) {
@@ -25232,7 +25232,7 @@ impl Config {
             for private in &private {
                 if !hosts
                     .iter()
-                    .any(|grant| clawcrew_infra::net_guard::egress_pattern_contains(grant, private))
+                    .any(|grant| galleon_infra::net_guard::egress_pattern_contains(grant, private))
                 {
                     validation_bail!(
                         InvalidFormat,

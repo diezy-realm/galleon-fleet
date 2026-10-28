@@ -65,7 +65,7 @@ The v0.8.0 branch grows the repo by **+17,660 lines total**, of which:
 | galleon-hardware          | 5,760        | 5,760        | 0      |
 | galleon-plugins           | 954          | 954          | 0      |
 | robot-kit                  | 1,951        | 1,940        | −11    |
-| clawcrew-infra             | 1,024        | 1,021        | −3     |
+| galleon-infra             | 1,024        | 1,021        | −3     |
 | src (root binary)          | 6,326        | 5,956        | −370   |
 | galleon-tools             | 24,106       | 23,311       | **−795** |
 | galleon-providers         | 17,582       | 16,152       | **−1,430** |

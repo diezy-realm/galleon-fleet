@@ -13,7 +13,7 @@ use std::net::{SocketAddr, TcpListener};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use clawcrew_infra::net_guard::{
+use galleon_infra::net_guard::{
     NetworkGuardError, PrivateNetworkAccess, ResolvedDestination, egress_host_matches,
     normalize_egress_patterns,
 };

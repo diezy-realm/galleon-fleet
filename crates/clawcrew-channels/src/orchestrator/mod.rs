@@ -85,10 +85,10 @@ pub use crate::matrix::MatrixChannel;
 pub use crate::telegram::TelegramChannel;
 #[cfg(feature = "whatsapp-web")]
 pub use crate::whatsapp_web::WhatsAppWebChannel;
-pub use clawcrew_infra::debounce::MessageDebouncer;
-pub use clawcrew_infra::session_backend::SessionBackend;
-pub use clawcrew_infra::session_sqlite::SqliteSessionBackend;
-pub use clawcrew_infra::stall_watchdog::StallWatchdog;
+pub use galleon_infra::debounce::MessageDebouncer;
+pub use galleon_infra::session_backend::SessionBackend;
+pub use galleon_infra::session_sqlite::SqliteSessionBackend;
+pub use galleon_infra::stall_watchdog::StallWatchdog;
 
 use anyhow::{Context, Result};
 use parking_lot::RwLock;
@@ -1009,9 +1009,9 @@ struct ChannelRuntimeContext {
     query_classification: clawcrew_config::schema::QueryClassificationConfig,
     ack_reactions: bool,
     show_tool_calls: bool,
-    session_store: Option<Arc<dyn clawcrew_infra::session_backend::SessionBackend>>,
+    session_store: Option<Arc<dyn galleon_infra::session_backend::SessionBackend>>,
     pacing: clawcrew_config::schema::PacingConfig,
-    debouncer: Arc<clawcrew_infra::debounce::MessageDebouncer>,
+    debouncer: Arc<galleon_infra::debounce::MessageDebouncer>,
     last_applied_config_stamp: Arc<Mutex<Option<ConfigFileStamp>>>,
     runtime_defaults_override: Arc<Mutex<Option<Arc<ChannelRuntimeOverride>>>>,
     /// Per-conversation-history-key locks that serialize persistence mutations
@@ -7223,13 +7223,13 @@ fn spawn_supervised_listener(
 fn mark_listener_health(ch: &dyn Channel, component: &str) {
     match ch.listener_health() {
         None | Some(ListenerHealth::Healthy) => {
-            clawcrew_infra::health::mark_component_ok(component);
+            galleon_infra::health::mark_component_ok(component);
         }
         Some(ListenerHealth::Unhealthy) => {
-            clawcrew_infra::health::mark_component_error(component, "channel reported unhealthy");
+            galleon_infra::health::mark_component_error(component, "channel reported unhealthy");
         }
         Some(ListenerHealth::Pending) => {
-            clawcrew_infra::health::mark_component_starting(component);
+            galleon_infra::health::mark_component_starting(component);
         }
     }
 }
@@ -7295,7 +7295,7 @@ fn spawn_supervised_listener_with_health_interval(
                             .with_outcome(::clawcrew_log::EventOutcome::Unknown),
                             &format!("Channel {} exited unexpectedly; restarting", ch.name())
                         );
-                        clawcrew_infra::health::mark_component_error(
+                        galleon_infra::health::mark_component_error(
                             &component,
                             "listener exited unexpectedly",
                         );
@@ -7313,7 +7313,7 @@ fn spawn_supervised_listener_with_health_interval(
                                 .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                                 "channel listener hit non-retryable error; waiting for config change or shutdown"
                             );
-                            clawcrew_infra::health::mark_component_error(&component, e.to_string());
+                            galleon_infra::health::mark_component_error(&component, e.to_string());
                             tokio::select! {
                                 () = cancel.cancelled() => return,
                                 () = std::future::pending::<()>() => unreachable!(),
@@ -7329,11 +7329,11 @@ fn spawn_supervised_listener_with_health_interval(
                             .with_attrs(::serde_json::json!({"error": format!("{}", e)})),
                             "channel listener error; restarting"
                         );
-                        clawcrew_infra::health::mark_component_error(&component, e.to_string());
+                        galleon_infra::health::mark_component_error(&component, e.to_string());
                     }
                 }
 
-                clawcrew_infra::health::bump_component_restart(&component);
+                galleon_infra::health::bump_component_restart(&component);
                 tokio::select! {
                     () = cancel.cancelled() => return,
                     () = tokio::time::sleep(Duration::from_secs(backoff)) => {}
@@ -8629,7 +8629,7 @@ fn stamp_session_routing_context(
                 Some(target)
             }
         });
-    let context = clawcrew_infra::session_backend::SessionContext {
+    let context = galleon_infra::session_backend::SessionContext {
         channel_id: channel_id.as_deref(),
         room_id,
         sender_id: Some(msg.sender.as_str()).filter(|s| !s.is_empty()),
@@ -8677,7 +8677,7 @@ fn record_passive_context(ctx: &ChannelRuntimeContext, msg: &ChannelMessage, his
 /// post-loop resync leaves cache and flag untouched on a provenance-read
 /// error rather than pairing a guess with a possibly-incomplete reload.
 fn resolve_cold_crumb_provenance(
-    store: Option<&dyn clawcrew_infra::session_backend::SessionBackend>,
+    store: Option<&dyn galleon_infra::session_backend::SessionBackend>,
     history_key: &str,
     history: &[ChatMessage],
 ) -> bool {
@@ -8693,7 +8693,7 @@ fn resolve_cold_crumb_provenance(
 /// trim state must treat `Err(())` as "unreconciled", never as a confirmed
 /// `false`.
 fn resolve_cold_crumb_provenance_result(
-    store: Option<&dyn clawcrew_infra::session_backend::SessionBackend>,
+    store: Option<&dyn galleon_infra::session_backend::SessionBackend>,
     history_key: &str,
     history: &[ChatMessage],
 ) -> Result<bool, ()> {
@@ -11450,7 +11450,7 @@ async fn run_message_dispatch_loop(
                 .debounce_with_window(&debounce_key, &msg.content, debounce_window)
                 .await
             {
-                clawcrew_infra::debounce::DebounceResult::Pending { rx, extended } => {
+                galleon_infra::debounce::DebounceResult::Pending { rx, extended } => {
                     // A follow-up that extended an open bucket hands the
                     // debouncer's replacement receiver to the lane position
                     // that bucket already owns, so the combined turn keeps the
@@ -11550,7 +11550,7 @@ async fn run_message_dispatch_loop(
                     );
                     continue;
                 }
-                clawcrew_infra::debounce::DebounceResult::Passthrough(content) => {
+                galleon_infra::debounce::DebounceResult::Passthrough(content) => {
                     let mut m = msg;
                     m.content = content;
                     m
@@ -15334,7 +15334,7 @@ struct HydrationFailed;
 /// accepted would leave the live cache ahead of durable storage until the
 /// next authoritative replacement.
 fn hydrate_session_transcript(
-    store: &dyn clawcrew_infra::session_backend::SessionBackend,
+    store: &dyn galleon_infra::session_backend::SessionBackend,
     session_key: &str,
 ) -> Result<Option<HydratedSession>, HydrationFailed> {
     let mut msgs = match store.try_load(session_key) {
@@ -15546,9 +15546,9 @@ pub async fn start_channels_with_plugin_webhooks(
     // Single session backend shared across agents — they're scoped by
     // `session_key` (which already encodes `<channel_type>.<alias>`), so
     // multiple agent ctxs reading the same backend never overlap.
-    let shared_session_store: Option<Arc<dyn clawcrew_infra::session_backend::SessionBackend>> =
+    let shared_session_store: Option<Arc<dyn galleon_infra::session_backend::SessionBackend>> =
         if config.channels.session_persistence {
-            match clawcrew_infra::make_session_backend(
+            match galleon_infra::make_session_backend(
                 &config.data_dir,
                 &config.channels.session_backend,
             ) {
@@ -15773,7 +15773,7 @@ pub async fn start_channels_with_plugin_webhooks(
             println!("  Listening for messages... (Ctrl+C to stop)");
             println!();
 
-            clawcrew_infra::health::mark_component_ok("channels");
+            galleon_infra::health::mark_component_ok("channels");
 
             let initial_backoff_secs = config
                 .reliability
@@ -15873,7 +15873,7 @@ pub async fn start_channels_with_plugin_webhooks(
             show_tool_calls: config.channels.show_tool_calls,
             session_store: shared_session_store.clone(),
             pacing: config.pacing.clone(),
-            debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+            debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
                 Duration::from_millis(config.channels.debounce_ms),
             )),
             last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -16348,7 +16348,7 @@ pub async fn deliver_announcement(
 #[test]
 fn concurrent_persist_lock_serialization() {
     use clawcrew_api::observability_traits::NoopObserver;
-    use clawcrew_infra::session_backend::SessionBackend;
+    use galleon_infra::session_backend::SessionBackend;
     use galleon_providers::ChatMessage;
     use std::sync::Barrier;
     use std::sync::atomic::{AtomicUsize, Ordering};
@@ -16449,7 +16449,7 @@ fn concurrent_persist_lock_serialization() {
         show_tool_calls: true,
         session_store: Some(Arc::new(backend) as Arc<dyn SessionBackend>),
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -16552,7 +16552,7 @@ fn strip_volatile_preamble_before_persist_is_a_no_op_without_raw_content() {
 /// resync tests below so each only has to name the backend under test.
 #[cfg(test)]
 fn test_channel_ctx_with_backend(
-    backend: Arc<dyn clawcrew_infra::session_backend::SessionBackend>,
+    backend: Arc<dyn galleon_infra::session_backend::SessionBackend>,
 ) -> Arc<ChannelRuntimeContext> {
     Arc::new(ChannelRuntimeContext {
         channels_by_name: Arc::new(HashMap::new()),
@@ -16613,7 +16613,7 @@ fn test_channel_ctx_with_backend(
         show_tool_calls: true,
         session_store: Some(backend),
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             std::time::Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -16633,7 +16633,7 @@ fn test_channel_ctx_with_backend(
 /// without needing a real provider-reported budget.
 #[cfg(test)]
 fn test_channel_ctx_with_backend_channel_and_provider(
-    backend: Arc<dyn clawcrew_infra::session_backend::SessionBackend>,
+    backend: Arc<dyn galleon_infra::session_backend::SessionBackend>,
     channel: Arc<dyn Channel>,
     model_provider: Arc<dyn ModelProvider>,
     context_token_budget: usize,
@@ -16716,7 +16716,7 @@ fn test_channel_ctx_with_backend_channel_and_provider(
         show_tool_calls: true,
         session_store: Some(backend),
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             std::time::Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -16730,7 +16730,7 @@ fn test_channel_ctx_with_backend_channel_and_provider(
 #[cfg(test)]
 #[test]
 fn channel_trim_resync_survives_restart() {
-    use clawcrew_infra::session_backend::SessionBackend;
+    use galleon_infra::session_backend::SessionBackend;
     use galleon_providers::ChatMessage;
     use std::sync::Mutex as StdMutex;
 
@@ -16913,7 +16913,7 @@ fn channel_trim_resync_survives_restart() {
 #[cfg(test)]
 #[test]
 fn channel_trim_resync_does_not_record_breadcrumb_when_transcript_write_fails() {
-    use clawcrew_infra::session_backend::SessionBackend;
+    use galleon_infra::session_backend::SessionBackend;
     use galleon_providers::ChatMessage;
     use std::sync::Mutex as StdMutex;
 
@@ -17045,7 +17045,7 @@ fn channel_trim_resync_does_not_record_breadcrumb_when_transcript_write_fails() 
 #[cfg(test)]
 #[test]
 fn channel_trim_resync_does_not_guess_breadcrumb_when_provenance_read_fails() {
-    use clawcrew_infra::session_backend::SessionBackend;
+    use galleon_infra::session_backend::SessionBackend;
     use galleon_providers::ChatMessage;
     use std::sync::Mutex as StdMutex;
 
@@ -17165,7 +17165,7 @@ fn channel_trim_resync_does_not_guess_breadcrumb_when_provenance_read_fails() {
 #[cfg(test)]
 #[test]
 fn caller_evicts_cache_and_does_not_guess_flag_when_trim_resync_fails() {
-    use clawcrew_infra::session_backend::SessionBackend;
+    use galleon_infra::session_backend::SessionBackend;
     use galleon_providers::ChatMessage;
     use std::sync::Mutex as StdMutex;
 
@@ -17280,7 +17280,7 @@ fn caller_evicts_cache_and_does_not_guess_flag_when_trim_resync_fails() {
 #[cfg(test)]
 #[test]
 fn cold_crumb_provenance_fails_closed_on_provenance_read_error() {
-    use clawcrew_infra::session_backend::SessionBackend;
+    use galleon_infra::session_backend::SessionBackend;
     use galleon_providers::ChatMessage;
 
     fn crumb_text() -> String {
@@ -17375,8 +17375,8 @@ fn cold_crumb_provenance_fails_closed_on_provenance_read_error() {
 #[cfg(test)]
 #[test]
 fn stale_no_trim_completion_does_not_overwrite_a_newer_trims_flag() {
-    use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_infra::session_store::SessionStore;
+    use galleon_infra::session_backend::SessionBackend;
+    use galleon_infra::session_store::SessionStore;
     use galleon_providers::ChatMessage;
     use tempfile::TempDir;
 
@@ -17480,8 +17480,8 @@ fn stale_no_trim_completion_does_not_overwrite_a_newer_trims_flag() {
 #[cfg(test)]
 #[test]
 fn evicted_cache_reloads_durable_transcript_on_next_append() {
-    use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_infra::session_store::SessionStore;
+    use galleon_infra::session_backend::SessionBackend;
+    use galleon_infra::session_store::SessionStore;
     use galleon_providers::ChatMessage;
     use tempfile::TempDir;
 
@@ -17562,8 +17562,8 @@ fn evicted_cache_reloads_durable_transcript_on_next_append() {
 #[cfg(test)]
 #[test]
 fn channel_trim_resync_preserves_a_concurrent_workers_later_turn() {
-    use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_infra::session_store::SessionStore;
+    use galleon_infra::session_backend::SessionBackend;
+    use galleon_infra::session_store::SessionStore;
     use galleon_providers::ChatMessage;
     use tempfile::TempDir;
 
@@ -17660,8 +17660,8 @@ fn channel_trim_resync_preserves_a_concurrent_workers_later_turn() {
 #[cfg(test)]
 #[test]
 fn channel_trim_resync_preserves_a_concurrent_workers_later_turn_across_eviction() {
-    use clawcrew_infra::session_backend::SessionBackend;
-    use clawcrew_infra::session_store::SessionStore;
+    use galleon_infra::session_backend::SessionBackend;
+    use galleon_infra::session_store::SessionStore;
     use galleon_providers::ChatMessage;
     use tempfile::TempDir;
 

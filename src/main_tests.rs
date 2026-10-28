@@ -2578,7 +2578,7 @@
 
     #[test]
     fn gateway_bind_addr_resolver_accepts_bracketed_ipv6_hosts() {
-        let addr = clawcrew_infra::effective_gateway_bind_socket_addr("[::1]", 9001);
+        let addr = galleon_infra::effective_gateway_bind_socket_addr("[::1]", 9001);
 
         assert_eq!(addr.port(), 9001);
         assert!(addr.is_ipv6());

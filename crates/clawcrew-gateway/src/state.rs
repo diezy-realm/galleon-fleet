@@ -5,7 +5,7 @@ use clawcrew_api::memory_traits::MemoryStrategy;
 use clawcrew_config::cost::tracker::CostTracker;
 use clawcrew_config::pairing::PairingGuard;
 use clawcrew_config::schema::Config;
-use clawcrew_infra::session_backend::SessionBackend;
+use galleon_infra::session_backend::SessionBackend;
 use galleon_memory::{self, Memory};
 use galleon_providers::{self, ModelProvider};
 use galleon_tools::canvas::CanvasStore;
@@ -120,7 +120,7 @@ impl AppState {
     pub fn from_config_and_controls(
         config: Config,
         external_event_tx: Option<tokio::sync::broadcast::Sender<serde_json::Value>>,
-        reload_controls: Option<clawcrew_infra::gateway_controls::GatewayReloadControls>,
+        reload_controls: Option<galleon_infra::gateway_controls::GatewayReloadControls>,
         tui_registry: Option<Arc<dyn clawcrew_api::runtime_traits::TuiConnectionRegistry>>,
         canvas_store: Option<CanvasStore>,
         sop_runner: Option<Arc<dyn clawcrew_api::sop::SopRunner>>,
@@ -214,14 +214,14 @@ impl AppState {
 
 /// Daemon-owned services whose lifecycle matches one supervised gateway run.
 pub struct GatewaySupervision {
-    pub readiness: Option<clawcrew_infra::gateway_controls::GatewayReadinessReporter>,
+    pub readiness: Option<galleon_infra::gateway_controls::GatewayReadinessReporter>,
     pub plugin_webhooks: Arc<clawcrew_api::webhook::PluginWebhookRegistry>,
 }
 
 impl GatewaySupervision {
     #[must_use]
     pub fn new(
-        readiness: Option<clawcrew_infra::gateway_controls::GatewayReadinessReporter>,
+        readiness: Option<galleon_infra::gateway_controls::GatewayReadinessReporter>,
         plugin_webhooks: Arc<clawcrew_api::webhook::PluginWebhookRegistry>,
     ) -> Self {
         Self {

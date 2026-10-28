@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
 use clawcrew_api::tool::{Tool, ToolOutput, ToolResult};
-use clawcrew_infra::net_guard::{Nat64Prefix, PrivateNetworkAccess, ResolvedDestination};
+use galleon_infra::net_guard::{Nat64Prefix, PrivateNetworkAccess, ResolvedDestination};
 
 /// Maximum response body size (1 MB).
 const MAX_RESPONSE_BYTES: usize = 1_048_576;
@@ -94,7 +94,7 @@ impl SkillHttpTool {
         let request_host = url
             .host_str()
             .ok_or_else(|| anyhow::Error::msg("URL must include a host"))?;
-        let host = clawcrew_infra::net_guard::normalize_host(request_host)
+        let host = galleon_infra::net_guard::normalize_host(request_host)
             .map_err(|_| anyhow::Error::msg("URL host is invalid"))?;
         let port = url
             .port_or_known_default()
@@ -359,7 +359,7 @@ mod tests {
     #[test]
     fn skill_http_tool_rejects_private_metadata_mixed_and_nat64_destinations() {
         use std::net::{Ipv4Addr, Ipv6Addr};
-        use clawcrew_infra::net_guard::parse_nat64_prefixes;
+        use galleon_infra::net_guard::parse_nat64_prefixes;
 
         let reject = |host: &str, addresses: &[SocketAddr], prefixes: &[Nat64Prefix]| {
             ResolvedDestination::new(

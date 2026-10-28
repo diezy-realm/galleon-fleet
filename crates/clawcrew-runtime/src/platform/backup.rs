@@ -1,4 +1,4 @@
 //! Durable-store backup manifest and integrity checks.
-//! Re-exports canonical implementation from `clawcrew_infra::backup`.
+//! Re-exports canonical implementation from `galleon_infra::backup`.
 
-pub use clawcrew_infra::backup::*;
+pub use galleon_infra::backup::*;

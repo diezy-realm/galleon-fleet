@@ -92,11 +92,11 @@ pub struct StatusResponse {
     pub paired: bool,
     pub channels: BTreeMap<String, bool>,
     pub nodes: StatusNodes,
-    pub health: clawcrew_infra::health::HealthSnapshot,
+    pub health: galleon_infra::health::HealthSnapshot,
     /// Configured agent alias used for per-agent resolution, or `null` for the install-wide view.
     pub agent_alias: Option<String>,
     /// Self-process resource snapshot; unsupported hosts report zero memory and a null CPU value.
-    pub process: clawcrew_infra::process_stats::ProcessStats,
+    pub process: galleon_infra::process_stats::ProcessStats,
     /// Whether the gateway polls for newer releases and shows an update indicator.
     pub check_updates: bool,
     /// Whether browser-triggered self-upgrade is enabled.
@@ -129,7 +129,7 @@ pub async fn handle_api_status(
     }
 
     let config = state.config.read().clone();
-    let health = clawcrew_infra::health::snapshot();
+    let health = galleon_infra::health::snapshot();
 
     // Per-alias map keyed by composite `<type>.<alias>`. Every
     // populated `[channels.<type>.<alias>]` is a separate dashboard row.
@@ -186,7 +186,7 @@ pub async fn handle_api_status(
             ),
         };
 
-    let process = clawcrew_infra::process_stats::sample();
+    let process = galleon_infra::process_stats::sample();
 
     // Upgrade affordance: whether the dashboard should poll for updates / offer
     // the upgrade button, and which restart command to show afterwards.
@@ -198,7 +198,7 @@ pub async fn handle_api_status(
         model,
         temperature,
         uptime_seconds: health.uptime_seconds,
-        daemon_started_at: clawcrew_infra::health::daemon_started_at(),
+        daemon_started_at: galleon_infra::health::daemon_started_at(),
         gateway_port: config.gateway.port,
         locale,
         memory_backend,
@@ -442,7 +442,7 @@ pub async fn handle_api_health(
         return e.into_response();
     }
 
-    let snapshot = clawcrew_infra::health::snapshot();
+    let snapshot = galleon_infra::health::snapshot();
     Json(serde_json::json!({"health": snapshot})).into_response()
 }
 

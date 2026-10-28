@@ -1,6 +1,6 @@
 //! Gateway cron adapter: fully decoupled from `clawcrew-runtime`.
 //!
-//! Uses leaf crates `clawcrew-infra`, `clawcrew-config`, and `clawcrew-api`
+//! Uses leaf crates `galleon-infra`, `clawcrew-config`, and `clawcrew-api`
 //! for all cron state persistence, validation, and execution.
 #![allow(dead_code)]
 
@@ -10,9 +10,9 @@ use std::sync::OnceLock;
 use anyhow::Context;
 use clawcrew_api::runtime_traits::CronRunner;
 use clawcrew_config::schema::{Config, CronJobDecl, CronScheduleDecl, CronShellOutputFormat};
-use clawcrew_infra::cron_schedule::{next_run_for_schedule, schedule_cron_expression};
-use clawcrew_infra::cron_store::CronStore;
-use clawcrew_infra::cron_types::{
+use galleon_infra::cron_schedule::{next_run_for_schedule, schedule_cron_expression};
+use galleon_infra::cron_store::CronStore;
+use galleon_infra::cron_types::{
     CronJob, CronJobPatch, CronRun, DeliveryConfig, JobType, ManualCronRunResult, Schedule,
     SessionTarget, validate_delivery_config,
 };
@@ -209,7 +209,7 @@ pub async fn run_manual_job(
                         let stdout = String::from_utf8_lossy(&out.stdout);
                         let stderr = String::from_utf8_lossy(&out.stderr);
                         let combined = match job.shell_output_format {
-                            clawcrew_infra::cron_types::CronShellOutputFormat::Raw
+                            galleon_infra::cron_types::CronShellOutputFormat::Raw
                                 if out.status.success() =>
                             {
                                 stdout.trim().to_string()

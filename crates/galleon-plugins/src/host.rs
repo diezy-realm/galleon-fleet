@@ -715,7 +715,7 @@ fn validate_manifest_shape(
     // rather than silently dropping the entry. This validates the *declaration*
     // only — it still grants nothing, and the grammar it validates
     // against is the same one the operator's grant is validated against.
-    clawcrew_infra::net_guard::normalize_egress_patterns(
+    galleon_infra::net_guard::normalize_egress_patterns(
         &manifest.egress.hosts,
         &format!("plugin '{}' egress.hosts", manifest.name),
     )

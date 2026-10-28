@@ -26,7 +26,7 @@ pub struct CronAddBody {
     pub command: Option<String>,
     pub job_type: Option<String>,
     pub prompt: Option<String>,
-    pub delivery: Option<clawcrew_infra::cron_types::DeliveryConfig>,
+    pub delivery: Option<galleon_infra::cron_types::DeliveryConfig>,
     /// Agent session context: `"isolated"` (default) or `"main"`. For agent jobs,
     /// a present value that is not one of those two names is rejected; omitted
     /// keeps the isolated default. Same contract as the `cron_add` tool. Shell
@@ -123,9 +123,9 @@ fn parse_timezone_patch(
 fn cron_schedule_from_api(
     expr: String,
     tz: Option<String>,
-) -> Result<clawcrew_infra::cron_types::Schedule, (StatusCode, Json<serde_json::Value>)> {
-    let schedule = clawcrew_infra::cron_types::Schedule::Cron { expr, tz };
-    clawcrew_infra::cron_schedule::validate_schedule(&schedule, chrono::Utc::now())
+) -> Result<galleon_infra::cron_types::Schedule, (StatusCode, Json<serde_json::Value>)> {
+    let schedule = galleon_infra::cron_types::Schedule::Cron { expr, tz };
+    galleon_infra::cron_schedule::validate_schedule(&schedule, chrono::Utc::now())
         .map_err(|e| bad_request(format!("Invalid cron schedule: {e}")))?;
     Ok(schedule)
 }
@@ -195,7 +195,7 @@ pub async fn handle_api_cron_add(
         Ok(schedule) => schedule,
         Err(e) => return e.into_response(),
     };
-    if let Err(e) = clawcrew_infra::cron_types::validate_delivery_config(delivery.as_ref()) {
+    if let Err(e) = galleon_infra::cron_types::validate_delivery_config(delivery.as_ref()) {
         return (
             StatusCode::BAD_REQUEST,
             Json(serde_json::json!({"error": format!("Failed to add cron job: {e}")})),
@@ -226,14 +226,14 @@ pub async fn handle_api_cron_add(
         };
 
         let session_target = match session_target {
-            Some(raw) => match clawcrew_infra::cron_types::SessionTarget::try_parse(&raw) {
+            Some(raw) => match galleon_infra::cron_types::SessionTarget::try_parse(&raw) {
                 Ok(target) => target,
                 Err(e) => return bad_request(e).into_response(),
             },
-            None => clawcrew_infra::cron_types::SessionTarget::Isolated,
+            None => galleon_infra::cron_types::SessionTarget::Isolated,
         };
 
-        let default_delete = matches!(schedule, clawcrew_infra::cron_types::Schedule::At { .. });
+        let default_delete = matches!(schedule, galleon_infra::cron_types::Schedule::At { .. });
         let delete_after_run = delete_after_run.unwrap_or(default_delete);
 
         crate::cron_adapter::add_agent_job(
@@ -413,7 +413,7 @@ pub async fn handle_api_cron_patch(
     };
     let is_agent = matches!(
         existing.job_type,
-        clawcrew_infra::cron_types::JobType::Agent
+        galleon_infra::cron_types::JobType::Agent
     );
     if shell_output_format.is_some() {
         if is_agent {
@@ -452,12 +452,12 @@ pub async fn handle_api_cron_patch(
         let (expr, existing_tz) = match (&existing.schedule, new_expr) {
             (_, Some(expr)) => {
                 let existing_tz = match &existing.schedule {
-                    clawcrew_infra::cron_types::Schedule::Cron { tz, .. } => tz.clone(),
+                    galleon_infra::cron_types::Schedule::Cron { tz, .. } => tz.clone(),
                     _ => None,
                 };
                 (expr, existing_tz)
             }
-            (clawcrew_infra::cron_types::Schedule::Cron { expr, tz }, None) => {
+            (galleon_infra::cron_types::Schedule::Cron { expr, tz }, None) => {
                 (expr.clone(), tz.clone())
             }
             (_, None) => {
@@ -482,7 +482,7 @@ pub async fn handle_api_cron_patch(
         (command.or(prompt), None)
     };
 
-    let patch = clawcrew_infra::cron_types::CronJobPatch {
+    let patch = galleon_infra::cron_types::CronJobPatch {
         name,
         schedule,
         command: patch_command,
@@ -490,7 +490,7 @@ pub async fn handle_api_cron_patch(
         enabled,
         uses_memory,
         shell_output_format: shell_output_format.map(Into::into),
-        ..clawcrew_infra::cron_types::CronJobPatch::default()
+        ..galleon_infra::cron_types::CronJobPatch::default()
     };
 
     match crate::cron_adapter::update_shell_job_with_approval(

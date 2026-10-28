@@ -360,7 +360,7 @@ fn websocket_connect_persists_a_restore_time_trim_before_going_live() {
 
 async fn websocket_connect_persists_a_restore_time_trim_before_going_live_inner() {
     clawcrew_runtime::install_agent_runner();
-    use clawcrew_infra::session_backend::SessionBackend;
+    use galleon_infra::session_backend::SessionBackend;
 
     let tmp = tempfile::tempdir().expect("temporary gateway workspace");
     let workspace = tmp.path().join("workspace");
@@ -412,7 +412,7 @@ async fn websocket_connect_persists_a_restore_time_trim_before_going_live_inner(
     );
 
     let backend: Arc<dyn SessionBackend> =
-        Arc::new(clawcrew_infra::session_store::SessionStore::new(tmp.path()).unwrap());
+        Arc::new(galleon_infra::session_store::SessionStore::new(tmp.path()).unwrap());
     let session_id = "restore-trim-session";
     let session_key = format!("{GW_SESSION_PREFIX}{session_id}");
     let over_cap = vec![
@@ -1287,7 +1287,7 @@ struct DeletedSessionBackend {
     rewrite_calls: std::sync::Mutex<Vec<String>>,
 }
 
-impl clawcrew_infra::session_backend::SessionBackend for DeletedSessionBackend {
+impl galleon_infra::session_backend::SessionBackend for DeletedSessionBackend {
     fn load(&self, _session_key: &str) -> Vec<galleon_providers::ChatMessage> {
         Vec::new()
     }
@@ -1353,7 +1353,7 @@ struct AppendOnlyBackend {
     messages: std::sync::Mutex<Vec<galleon_providers::ChatMessage>>,
 }
 
-impl clawcrew_infra::session_backend::SessionBackend for AppendOnlyBackend {
+impl galleon_infra::session_backend::SessionBackend for AppendOnlyBackend {
     fn load(&self, _session_key: &str) -> Vec<galleon_providers::ChatMessage> {
         self.messages.lock().unwrap().clone()
     }
@@ -1412,7 +1412,7 @@ fn append_only_backend_durably_replaces_state_through_the_websocket_persistence_
 /// boundary.
 struct FailingReplaceBackend;
 
-impl clawcrew_infra::session_backend::SessionBackend for FailingReplaceBackend {
+impl galleon_infra::session_backend::SessionBackend for FailingReplaceBackend {
     fn load(&self, _session_key: &str) -> Vec<galleon_providers::ChatMessage> {
         Vec::new()
     }

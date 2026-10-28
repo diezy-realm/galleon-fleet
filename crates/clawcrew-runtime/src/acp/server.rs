@@ -20,7 +20,7 @@ use clawcrew_api::jsonrpc::{
 use clawcrew_api::model_provider::{ChatMessage, ConversationMessage, ToolCall};
 use clawcrew_api::plan::PlanEntry;
 use clawcrew_config::schema::Config;
-use clawcrew_infra::acp_session_store::AcpSessionStore;
+use galleon_infra::acp_session_store::AcpSessionStore;
 use crate::agent::agent::{Agent, TurnEvent};
 use galleon_tools::canvas::CanvasStore;
 
@@ -3848,7 +3848,7 @@ mod tests {
         // the prompt result is returned and an immediate load/resume sees it.
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-acp-usage-order";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -4202,7 +4202,7 @@ mod tests {
     fn initialize_advertises_load_session_when_store_present() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let server = AcpServer::new_with_store(
             make_test_config(cwd.path()),
             AcpServerConfig::default(),
@@ -5075,7 +5075,7 @@ mod tests {
     async fn session_load_restore_ignores_connection_default_when_persisted_agent_deleted() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
 
         let session_id = "sess-restore-ignores-conn-default";
         store
@@ -5156,7 +5156,7 @@ mod tests {
     async fn session_load_restore_skips_missing_config_default_to_sole_agent() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
 
         let session_id = "sess-restore-missing-config-default";
         store
@@ -5196,7 +5196,7 @@ mod tests {
     async fn session_resume_restore_skips_disabled_persisted_owner() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
 
         let session_id = "sess-resume-disabled-owner";
         store
@@ -5235,7 +5235,7 @@ mod tests {
     async fn session_resume_restore_ignores_connection_default_when_persisted_agent_deleted() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
 
         let session_id = "sess-resume-ignores-conn-default";
         store
@@ -6414,7 +6414,7 @@ mod tests {
     async fn session_new_persists_to_store() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let server = Arc::new(AcpServer::new_with_store(
             make_test_config(cwd.path()),
             AcpServerConfig::default(),
@@ -6752,7 +6752,7 @@ mod tests {
         use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
 
         let session_id = "sess-load-test";
         store
@@ -6821,7 +6821,7 @@ mod tests {
 
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-load-trimmed-test";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -6903,7 +6903,7 @@ mod tests {
         // must begin at the new turn, not at the old turn's assistant reply.
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-load-crumb-replay";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -6997,7 +6997,7 @@ mod tests {
         // failed-turn transcript and confirm it survives `load_session`.
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-failed-turn-persist";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -7178,7 +7178,7 @@ mod tests {
 
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-failed-turn-incomplete-tool";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -7305,7 +7305,7 @@ mod tests {
 
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let server = Arc::new(AcpServer::new_with_store(
             make_test_config(cwd.path()),
             AcpServerConfig::default(),
@@ -7375,7 +7375,7 @@ mod tests {
 
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
 
         // `replace_messages_and_breadcrumb` errors for a session with no
         // record. `replace_transcript` must propagate that as `Err` so a
@@ -7624,7 +7624,7 @@ mod tests {
         // `session/load` to resurrect.
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-replace-not-append";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -7743,7 +7743,7 @@ mod tests {
 
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let server = Arc::new(AcpServer::new_with_store(
             make_test_config(cwd.path()),
             AcpServerConfig::default(),
@@ -7859,7 +7859,7 @@ mod tests {
         // not reach the next provider request.
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-resume-sanitize";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -7955,7 +7955,7 @@ mod tests {
         // would delete the tool call the user already saw.
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-replay-vs-seed";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -8049,7 +8049,7 @@ mod tests {
         let marker = format!("look at this [IMAGE:{}]", image_path.display());
 
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-rejected-image";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -8149,7 +8149,7 @@ mod tests {
         let marker = format!("look at this [IMAGE:{}]", image_path.display());
 
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-cross-locale-failed-turn";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -8352,7 +8352,7 @@ mod tests {
         let marker = format!("look at this [IMAGE:{}]", image_path.display());
 
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let server = Arc::new(AcpServer::new_with_store(
             make_test_config(cwd.path()),
             AcpServerConfig::default(),
@@ -8472,7 +8472,7 @@ mod tests {
         let marker = format!("look at this [IMAGE:{}]", image_path.display());
 
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-carrier-failed-turn";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -8644,7 +8644,7 @@ mod tests {
         );
 
         let live_store = Arc::new(
-            clawcrew_infra::acp_session_store::AcpSessionStore::new(live_cwd.path()).unwrap(),
+            galleon_infra::acp_session_store::AcpSessionStore::new(live_cwd.path()).unwrap(),
         );
         let live_server = Arc::new(AcpServer::new_with_store(
             make_test_config(live_cwd.path()),
@@ -8767,7 +8767,7 @@ mod tests {
 
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-trim-repair-alignment";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -8905,7 +8905,7 @@ mod tests {
         // do not exist could otherwise grow `session_gates` without bound.
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let server = Arc::new(AcpServer::new_with_store(
             make_test_config(cwd.path()),
             AcpServerConfig::default(),
@@ -9047,7 +9047,7 @@ mod tests {
 
         let cwd = tempfile::tempdir().unwrap();
         let store = StdArc::new(
-            clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap(),
+            galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap(),
         );
         let server = StdArc::new(AcpServer::new_with_store(
             make_test_config(cwd.path()),
@@ -9160,7 +9160,7 @@ mod tests {
 
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-cancelled-turn";
         store
             .create_session(session_id, "test-agent", &cwd.path().to_string_lossy())
@@ -9310,7 +9310,7 @@ mod tests {
 
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let server = Arc::new(AcpServer::new_with_store(
             make_test_config(cwd.path()),
             AcpServerConfig::default(),
@@ -9448,7 +9448,7 @@ mod tests {
 
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let server = Arc::new(AcpServer::new_with_store(
             make_test_config(cwd.path()),
             AcpServerConfig::default(),
@@ -9573,7 +9573,7 @@ mod tests {
         // transcript is committed, and nothing may append after it returns.
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let server = Arc::new(AcpServer::new_with_store(
             make_test_config(cwd.path()),
             AcpServerConfig::default(),
@@ -9714,7 +9714,7 @@ mod tests {
         // Same scheduling window as the close variant, for `session/stop`.
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let server = Arc::new(AcpServer::new_with_store(
             make_test_config(cwd.path()),
             AcpServerConfig::default(),
@@ -9818,7 +9818,7 @@ mod tests {
         // invalid request would pollute `session/load`.
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let server = Arc::new(AcpServer::new_with_store(
             make_test_config(cwd.path()),
             AcpServerConfig::default(),
@@ -9868,7 +9868,7 @@ mod tests {
     async fn session_load_returns_not_found_for_unknown_id() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let (writer_tx, _rx) = tokio::sync::mpsc::channel::<String>(8);
         let server = AcpServer::new_with_writer_and_store(
             make_test_config(cwd.path()),
@@ -9889,7 +9889,7 @@ mod tests {
     async fn session_load_rejects_already_active_session() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let (writer_tx, _rx) = tokio::sync::mpsc::channel::<String>(8);
         let server = Arc::new(AcpServer::new_with_writer_and_store(
             make_test_config(cwd.path()),
@@ -9951,7 +9951,7 @@ mod tests {
         let config = make_cross_agent_restore_config(cwd.path(), mcp.uri());
 
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-cross-agent-load";
         store
             .create_session(session_id, "finance", &cwd.path().to_string_lossy())
@@ -9994,7 +9994,7 @@ mod tests {
         let config = make_cross_agent_restore_config(cwd.path(), mcp.uri());
 
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let session_id = "sess-cross-agent-resume";
         store
             .create_session(session_id, "finance", &cwd.path().to_string_lossy())
@@ -10049,7 +10049,7 @@ mod tests {
         use clawcrew_api::model_provider::{ChatMessage, ConversationMessage};
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
 
         let session_id = "sess-resume-test";
         store
@@ -10097,7 +10097,7 @@ mod tests {
         use clawcrew_api::plan::{PlanEntry, PlanPriority, PlanStatus};
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
 
         let session_id = "sess-resume-plan";
         store
@@ -10147,7 +10147,7 @@ mod tests {
     async fn session_close_releases_memory_but_keeps_store_record() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
         let server = Arc::new(AcpServer::new_with_store(
             make_test_config(cwd.path()),
             AcpServerConfig::default(),
@@ -10232,7 +10232,7 @@ mod tests {
     async fn session_load_respects_max_sessions() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
 
         // Pre-create a stored session that we'll attempt to load
         let stored_id = "sess-load-limit-test";
@@ -10276,7 +10276,7 @@ mod tests {
     async fn session_resume_respects_max_sessions() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
 
         // Pre-create a stored session that we'll attempt to resume
         let stored_id = "sess-resume-limit-test";
@@ -10320,7 +10320,7 @@ mod tests {
     async fn session_load_releases_reservation_on_store_error() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
 
         let session_id = "sess-load-store-err";
         store
@@ -10377,7 +10377,7 @@ mod tests {
     async fn session_resume_releases_reservation_on_store_error() {
         let cwd = tempfile::tempdir().unwrap();
         let store =
-            Arc::new(clawcrew_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
+            Arc::new(galleon_infra::acp_session_store::AcpSessionStore::new(cwd.path()).unwrap());
 
         let session_id = "sess-resume-store-err";
         store

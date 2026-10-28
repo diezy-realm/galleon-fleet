@@ -95,7 +95,7 @@ pub struct PluginManifest {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PluginEgressDeclaration {
     /// Exact hosts or `*.suffix` patterns, in the strict egress grammar
-    /// (`clawcrew_infra::net_guard::normalize_egress_pattern`). Invalid grammar
+    /// (`galleon_infra::net_guard::normalize_egress_pattern`). Invalid grammar
     /// rejects the whole manifest at discovery and at install.
     #[serde(default)]
     pub hosts: Vec<String>,

@@ -742,7 +742,7 @@ pub(crate) fn session_queue_ws_error_code(
 /// when the store disagrees. A skipped write (session already gone) returns
 /// `true`: there is nothing left to persist.
 pub(crate) fn replace_conversation_state_unless_deleted(
-    backend: &dyn clawcrew_infra::session_backend::SessionBackend,
+    backend: &dyn galleon_infra::session_backend::SessionBackend,
     session_key: &str,
     durable: &[galleon_providers::ChatMessage],
     breadcrumb_present: bool,
@@ -772,7 +772,7 @@ pub(crate) fn replace_conversation_state_unless_deleted(
 /// `agent.history()` keeps the store in sync with what the agent actually
 /// retains.
 pub(crate) fn persist_agent_conversation_state(
-    backend: &dyn clawcrew_infra::session_backend::SessionBackend,
+    backend: &dyn galleon_infra::session_backend::SessionBackend,
     session_key: &str,
     agent: &(dyn clawcrew_api::agent::AgentSession + '_),
 ) -> bool {

@@ -599,7 +599,7 @@ impl ScopedToolRegistry {
             .chain(mcp_elevation_arcs.iter().cloned())
             .chain(pipeline_tool.iter().cloned())
             .collect();
-        let nat64_prefixes = match clawcrew_infra::net_guard::parse_nat64_prefixes(
+        let nat64_prefixes = match galleon_infra::net_guard::parse_nat64_prefixes(
             &config.security.nat64_prefixes,
             "security.nat64_prefixes",
         ) {

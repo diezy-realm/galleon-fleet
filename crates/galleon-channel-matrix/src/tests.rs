@@ -5984,11 +5984,11 @@ mod outbound_redirect_ssrf {
     #[tokio::test]
     async fn follows_public_redirect_target() {
         assert!(
-            !clawcrew_infra::net_guard::is_private_or_local_host("example.com"),
+            !galleon_infra::net_guard::is_private_or_local_host("example.com"),
             "public hostnames must not be classified as private by the per-hop guard"
         );
         assert!(
-            !clawcrew_infra::net_guard::is_private_or_local_host("cdn.example.com"),
+            !galleon_infra::net_guard::is_private_or_local_host("cdn.example.com"),
             "public subdomains must not be classified as private"
         );
     }

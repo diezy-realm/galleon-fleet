@@ -16,7 +16,7 @@ clawcrew-spawn.workspace = true
 clawcrew-config = { workspace = true, default-features = false }
 galleon-providers.workspace = true
 galleon-memory.workspace = true
-clawcrew-infra.workspace = true
+galleon-infra.workspace = true
 anyhow = "1.0"
 async-trait = "0.1"
 base64 = "0.22"
@@ -81,7 +81,7 @@ probe = ["dep:probe-rs"]
 test-helpers = []
 
 [dev-dependencies]
-clawcrew-infra.workspace = true
+galleon-infra.workspace = true
 galleon-providers = { workspace = true, features = ["test-helpers"] }
 rcgen = "0.13"
 tempfile = "3.26"

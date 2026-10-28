@@ -838,7 +838,7 @@ async fn agent_rename_leaves_owned_state_put_when_persist_fails() {
     config.runtime_profiles.entry("default".into()).or_default();
 
     // Seed an owned-state row (a cron job) under `from` - the move-probe.
-    let cron_store = clawcrew_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
+    let cron_store = galleon_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
     cron_store
         .add_job("from", "* * * * *", "echo hi")
         .expect("seed cron job");
@@ -898,7 +898,7 @@ async fn agent_rename_moves_owned_state_after_successful_persist() {
     // Create the agent's default workspace dir so the move has something to move.
     let old_ws = config.agent_workspace_dir("from");
     std::fs::create_dir_all(&old_ws).unwrap();
-    let cron_store = clawcrew_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
+    let cron_store = galleon_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
     cron_store
         .add_job("from", "* * * * *", "echo hi")
         .expect("seed cron job");
@@ -955,7 +955,7 @@ async fn agent_rename_resume_converges_when_config_already_to() {
     config.runtime_profiles.entry("default".into()).or_default();
 
     // Seed the lagging owned state + workspace under `from`.
-    let cron_store = clawcrew_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
+    let cron_store = galleon_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
     cron_store
         .add_job("from", "* * * * *", "echo hi")
         .expect("seed lagged cron job under `from`");
@@ -1638,7 +1638,7 @@ async fn agent_delete_leaves_owned_state_intact_when_persist_fails() {
     let old_ws = config.agent_workspace_dir("victim");
     std::fs::create_dir_all(&old_ws).unwrap();
     // Seed an owned-state row (a cron job) under `victim` — the delete probe.
-    let cron_store = clawcrew_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
+    let cron_store = galleon_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
     cron_store
         .add_job("victim", "* * * * *", "echo hi")
         .expect("seed cron job");
@@ -1695,7 +1695,7 @@ async fn agent_delete_purges_owned_state_after_successful_persist() {
     config.runtime_profiles.entry("default".into()).or_default();
     let old_ws = config.agent_workspace_dir("victim");
     std::fs::create_dir_all(&old_ws).unwrap();
-    let cron_store = clawcrew_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
+    let cron_store = galleon_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
     cron_store
         .add_job("victim", "* * * * *", "echo hi")
         .expect("seed cron job");
@@ -1767,7 +1767,7 @@ async fn agent_delete_response_carries_partial_failure_warnings() {
     // Drop a real file inside the workspace so the cascade has something
     // to archive (and so we can detect a successful archive).
     std::fs::write(old_ws.join("marker.txt"), b"hi").unwrap();
-    let cron_store = clawcrew_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
+    let cron_store = galleon_infra::cron_store::CronStore::new(&config.data_dir).unwrap();
     cron_store
         .add_job("victim", "* * * * *", "echo hi")
         .expect("seed cron job");

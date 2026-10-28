@@ -1,5 +1,5 @@
 //! Network-safety primitives shared across crates that must reject SSRF and
-//! local/private targets. Lives in `clawcrew-infra` so both the tool layer
+//! local/private targets. Lives in `galleon-infra` so both the tool layer
 //! (`galleon-tools` domain guard) and its `clawcrew-channels` consumers read
 //! one implementation.
 //!

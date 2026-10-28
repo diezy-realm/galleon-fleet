@@ -438,7 +438,7 @@ impl Channel for AmqpChannel {
     async fn listen(&self, tx: mpsc::Sender<ChannelMessage>) -> anyhow::Result<()> {
         let (_conn, mut consumer) = self.establish_consumer().await?;
 
-        clawcrew_infra::health::mark_component_ok("amqp");
+        galleon_infra::health::mark_component_ok("amqp");
         let _peers = (self.peer_resolver)();
 
         while let Some(delivery) = consumer.next().await {

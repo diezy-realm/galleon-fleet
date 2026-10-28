@@ -102,7 +102,7 @@ impl FilesystemChannel {
             );
         }
 
-        clawcrew_infra::health::mark_component_ok("filesystem");
+        galleon_infra::health::mark_component_ok("filesystem");
 
         self.dispatch_loop(raw_rx, tx, &include, &exclude).await
     }

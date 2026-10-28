@@ -4,10 +4,10 @@ pub mod matrix;
 #[cfg(feature = "channel-telegram")]
 pub mod telegram;
 pub mod session_backend {
-    pub use clawcrew_infra::session_backend::*;
+    pub use galleon_infra::session_backend::*;
 }
 pub mod session_sqlite {
-    pub use clawcrew_infra::session_sqlite::*;
+    pub use galleon_infra::session_sqlite::*;
 }
 
 use crate::config::Config;

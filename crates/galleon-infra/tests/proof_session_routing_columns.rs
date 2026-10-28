@@ -7,8 +7,8 @@ use std::path::PathBuf;
 
 use rusqlite::Connection;
 use clawcrew_api::model_provider::ChatMessage;
-use clawcrew_infra::session_backend::{SessionBackend, SessionContext};
-use clawcrew_infra::session_sqlite::SqliteSessionBackend;
+use galleon_infra::session_backend::{SessionBackend, SessionContext};
+use galleon_infra::session_sqlite::SqliteSessionBackend;
 
 #[test]
 fn migration_adds_routing_columns_and_set_session_context_persists() {

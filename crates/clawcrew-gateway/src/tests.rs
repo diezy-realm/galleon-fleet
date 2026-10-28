@@ -270,8 +270,8 @@ fn paircode_recovery_curl_preserves_path_prefix() {
 async fn public_health_omits_component_error_details() {
     let component = format!("health-public-{}", uuid::Uuid::new_v4());
     let sensitive_error = "provider failed: token=not-for-public-health";
-    clawcrew_infra::health::mark_component_ok(&component);
-    clawcrew_infra::health::mark_component_error(&component, sensitive_error);
+    galleon_infra::health::mark_component_ok(&component);
+    galleon_infra::health::mark_component_error(&component, sensitive_error);
 
     let tmp = tempfile::TempDir::new().unwrap();
     let response = handle_health(State(admin_paircode_state(&tmp, false, false)))
@@ -290,7 +290,7 @@ async fn public_health_omits_component_error_details() {
     assert!(public_component.get("last_error").is_none());
     assert!(!json.to_string().contains(sensitive_error));
     assert_eq!(
-        clawcrew_infra::health::snapshot().components[&component]
+        galleon_infra::health::snapshot().components[&component]
             .last_error
             .as_deref(),
         Some(sensitive_error)
@@ -1278,12 +1278,12 @@ async fn daemon_startup_gateway_reports_ready_and_uses_external_shutdown_sender(
 
     let (shutdown_tx, _) = tokio::sync::watch::channel(false);
     let (reload_tx, _) = tokio::sync::watch::channel(false);
-    let reload_controls = clawcrew_infra::gateway_controls::GatewayReloadControls {
+    let reload_controls = galleon_infra::gateway_controls::GatewayReloadControls {
         shutdown_tx: shutdown_tx.clone(),
         reload_tx,
     };
     let (ready_tx, mut ready_rx) = tokio::sync::watch::channel(None);
-    let readiness = clawcrew_infra::gateway_controls::GatewayReadinessReporter::new(move |addr| {
+    let readiness = galleon_infra::gateway_controls::GatewayReadinessReporter::new(move |addr| {
         let _ = ready_tx.send(Some(addr));
     });
 
@@ -1354,7 +1354,7 @@ async fn daemon_startup_gateway_does_not_report_ready_when_tls_setup_fails() {
     std::fs::create_dir_all(&config.data_dir).unwrap();
 
     let (ready_tx, ready_rx) = tokio::sync::watch::channel(None);
-    let readiness = clawcrew_infra::gateway_controls::GatewayReadinessReporter::new(move |addr| {
+    let readiness = galleon_infra::gateway_controls::GatewayReadinessReporter::new(move |addr| {
         let _ = ready_tx.send(Some(addr));
     });
     let result = run_gateway(
@@ -3440,9 +3440,9 @@ async fn websocket_resumes_seeded_legacy_dotted_session_inner() {
     let (mut state, _) =
         production_sse_state(&tmp, "http://127.0.0.1:9/v1/chat/completions", 1.0, false);
     let session_db = tempfile::tempdir().expect("legacy-resume session db");
-    let backend: std::sync::Arc<dyn clawcrew_infra::session_backend::SessionBackend> =
+    let backend: std::sync::Arc<dyn galleon_infra::session_backend::SessionBackend> =
         std::sync::Arc::new(
-            clawcrew_infra::session_sqlite::SqliteSessionBackend::new(session_db.path())
+            galleon_infra::session_sqlite::SqliteSessionBackend::new(session_db.path())
                 .expect("sqlite session backend"),
         );
     // Seed the transcript under the legacy raw gateway key: dot-bearing
@@ -3515,10 +3515,10 @@ async fn websocket_delivers_api_injected_message_inner() {
         production_sse_state(&tmp, "http://127.0.0.1:9/v1/chat/completions", 1.0, false);
     let session_db = tempfile::tempdir().expect("api-delivery session db");
     state.session_backend = Some(std::sync::Arc::new(
-        clawcrew_infra::session_sqlite::SqliteSessionBackend::new(session_db.path())
+        galleon_infra::session_sqlite::SqliteSessionBackend::new(session_db.path())
             .expect("sqlite session backend"),
     )
-        as std::sync::Arc<dyn clawcrew_infra::session_backend::SessionBackend>);
+        as std::sync::Arc<dyn galleon_infra::session_backend::SessionBackend>);
 
     let (gateway_addr, gateway_server) = spawn_test_ws_gateway(state.clone()).await;
     let session_id = "transport.api-delivery";

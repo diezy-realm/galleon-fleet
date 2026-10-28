@@ -3949,7 +3949,7 @@
             AliasedAgentConfig, Config, ModelProviderConfig, OpenAIModelProviderConfig,
             RiskProfileConfig,
         };
-        use clawcrew_infra::acp_session_store::AcpSessionStore;
+        use galleon_infra::acp_session_store::AcpSessionStore;
 
         let tmp = TempDir::new().expect("temp dir");
         let data_dir = tmp.path().join("data");

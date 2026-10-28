@@ -55,7 +55,7 @@ use wasmtime_wasi_http::p2::{
     body::HyperOutgoingBody,
     types::{HostFutureIncomingResponse, IncomingResponse, OutgoingRequestConfig},
 };
-use clawcrew_infra::net_guard::NetworkGuardError;
+use galleon_infra::net_guard::NetworkGuardError;
 
 use crate::egress::{
     AuthorizedEgress, EgressError, EgressHostService, EgressRequest, EgressTransport,

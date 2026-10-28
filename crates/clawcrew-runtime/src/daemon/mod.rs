@@ -93,7 +93,7 @@ fn fatal_socket_startup_kind(error: &anyhow::Error) -> Option<std::io::ErrorKind
         })
 }
 
-pub use clawcrew_infra::gateway_controls::GatewayReadinessReporter;
+pub use galleon_infra::gateway_controls::GatewayReadinessReporter;
 
 #[derive(Clone)]
 pub struct SocketReadinessReporter(std::sync::Arc<dyn Fn() + Send + Sync>);
@@ -453,7 +453,7 @@ pub async fn detect_gateway_bind_mode(config: &Config, host: &str, port: u16) ->
     // Mirror the gateway's own bind exactly. If host:port does not parse as a
     // socket address, defer to the gateway (it has its own fallback) rather
     // than pre-judging the address.
-    let Ok(addr) = clawcrew_infra::parse_gateway_bind_socket_addr(host, port) else {
+    let Ok(addr) = galleon_infra::parse_gateway_bind_socket_addr(host, port) else {
         return GatewayBindMode::StartFresh;
     };
 

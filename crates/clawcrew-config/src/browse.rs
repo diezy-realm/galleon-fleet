@@ -170,7 +170,7 @@ const AGENT_WORKSPACE_PROTECTED_FILES: &[&str] = &[
 
 /// Top-level agent-workspace directories the runtime owns. `sessions/`
 /// holds the per-agent session DB (`sessions/sessions.db`) created on first
-/// session write by `clawcrew_infra::session_sqlite`. Deleting it wipes
+/// session write by `galleon_infra::session_sqlite`. Deleting it wipes
 /// session history.
 const AGENT_WORKSPACE_PROTECTED_DIRS: &[&str] = &["sessions"];
 

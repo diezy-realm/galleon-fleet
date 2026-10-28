@@ -3,7 +3,7 @@ use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::time::Duration;
 
-use clawcrew_infra::acp_session_store::AcpSessionStore;
+use galleon_infra::acp_session_store::AcpSessionStore;
 
 #[test]
 fn standalone_acp_agent_flag_selects_alias_less_session_owner() {

@@ -359,7 +359,7 @@ pub fn register_skill_tools_with_context_and_runtime(
     security: Arc<SecurityPolicy>,
     unfiltered_registry: &[Arc<dyn Tool>],
     runtime: Arc<dyn RuntimeAdapter>,
-    nat64_prefixes: &[clawcrew_infra::net_guard::Nat64Prefix],
+    nat64_prefixes: &[galleon_infra::net_guard::Nat64Prefix],
 ) {
     register_skill_tools_with_context_and_runtime_optional_nat64(
         tools_registry,
@@ -379,7 +379,7 @@ pub(crate) fn register_skill_tools_with_context_and_runtime_optional_nat64(
     security: Arc<SecurityPolicy>,
     unfiltered_registry: &[Arc<dyn Tool>],
     runtime: Arc<dyn RuntimeAdapter>,
-    nat64_prefixes: Option<&[clawcrew_infra::net_guard::Nat64Prefix]>,
+    nat64_prefixes: Option<&[galleon_infra::net_guard::Nat64Prefix]>,
 ) {
     if skills.is_empty() {
         return;
@@ -1768,7 +1768,7 @@ fn all_tools_with_runtime_on_thread(
     )));
 
     if let Ok(backend) =
-        clawcrew_infra::make_session_backend(&config.data_dir, &config.channels.session_backend)
+        galleon_infra::make_session_backend(&config.data_dir, &config.channels.session_backend)
     {
         if let Some(acp_sessions) = acp_sessions {
             tool_arcs.push(Arc::new(SessionsCurrentTool::with_acp_sessions(

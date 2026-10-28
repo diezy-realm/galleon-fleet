@@ -4846,7 +4846,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                     acp_config.session_timeout_secs = timeout;
                 }
                 let store =
-                    clawcrew_infra::acp_session_store::AcpSessionStore::new(&config.data_dir)
+                    galleon_infra::acp_session_store::AcpSessionStore::new(&config.data_dir)
                         .map(std::sync::Arc::new)
                         .inspect_err(|e| {
                             ::clawcrew_log::record!(
@@ -9763,7 +9763,7 @@ fn available_gateway_restart_hint_port(host: &str, port: u16) -> Option<u16> {
         let Some(candidate) = port.checked_add(offset) else {
             break;
         };
-        if std::net::TcpListener::bind(clawcrew_infra::effective_gateway_bind_socket_addr(
+        if std::net::TcpListener::bind(galleon_infra::effective_gateway_bind_socket_addr(
             host, candidate,
         ))
         .is_ok()

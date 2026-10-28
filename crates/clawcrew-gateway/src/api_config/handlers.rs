@@ -1186,7 +1186,7 @@ async fn rename_residue_exists(
     let cfg = state.config.read().clone();
 
     // Cron jobs still owned by `from`.
-    if let Ok(store) = clawcrew_infra::cron_store::CronStore::new(&cfg.data_dir)
+    if let Ok(store) = galleon_infra::cron_store::CronStore::new(&cfg.data_dir)
         && store
             .list_jobs_by_agent(from)
             .map(|jobs| !jobs.is_empty())
@@ -1196,7 +1196,7 @@ async fn rename_residue_exists(
     }
 
     // ACP sessions (live OR killed) still owned by `from`.
-    if let Ok(store) = clawcrew_infra::acp_session_store::AcpSessionStore::new(&cfg.data_dir)
+    if let Ok(store) = galleon_infra::acp_session_store::AcpSessionStore::new(&cfg.data_dir)
         && store
             .list_sessions_by_agent(from)
             .map(|s| !s.is_empty())

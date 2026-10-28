@@ -1817,7 +1817,7 @@ fn router_test_ctx() -> Arc<ChannelRuntimeContext> {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -2754,7 +2754,7 @@ fn channel_runtime_context_for_defaults_test(
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -3219,7 +3219,7 @@ fn compact_sender_history_keeps_recent_truncated_messages() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -3308,7 +3308,7 @@ fn append_sender_turn_stores_single_turn_per_call() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -3416,7 +3416,7 @@ fn rollback_orphan_user_turn_removes_only_latest_matching_user_turn() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -3443,8 +3443,8 @@ fn rollback_orphan_user_turn_removes_only_latest_matching_user_turn() {
 #[test]
 fn rollback_orphan_user_turn_also_removes_from_session_store() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let store: Arc<dyn clawcrew_infra::session_backend::SessionBackend> =
-        Arc::new(clawcrew_infra::session_store::SessionStore::new(tmp.path()).unwrap());
+    let store: Arc<dyn galleon_infra::session_backend::SessionBackend> =
+        Arc::new(galleon_infra::session_store::SessionStore::new(tmp.path()).unwrap());
 
     let sender = "telegram_u4".to_string();
 
@@ -3528,7 +3528,7 @@ fn rollback_orphan_user_turn_also_removes_from_session_store() {
         show_tool_calls: true,
         session_store: Some(Arc::clone(&store)),
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -3593,7 +3593,7 @@ fn hydration_keeps_an_explicit_false_flag_despite_a_marker_text_collision() {
     // with the durable flag explicitly recorded false. Hydration must
     // not override that explicit record with a from-scratch text guess.
     let tmp = tempfile::TempDir::new().unwrap();
-    let store = clawcrew_infra::session_store::SessionStore::new(tmp.path()).unwrap();
+    let store = galleon_infra::session_store::SessionStore::new(tmp.path()).unwrap();
     let sender = "chan_collision".to_string();
     store
         .append(&sender, &ChatMessage::user(breadcrumb_text()))
@@ -3626,7 +3626,7 @@ fn hydration_drops_ownership_when_the_cap_removes_the_owned_marker() {
     // truncated transcript must be persisted together with the
     // corrected flag.
     let tmp = tempfile::TempDir::new().unwrap();
-    let store = clawcrew_infra::session_store::SessionStore::new(tmp.path()).unwrap();
+    let store = galleon_infra::session_store::SessionStore::new(tmp.path()).unwrap();
     let sender = "chan_capped".to_string();
     store
         .append(&sender, &ChatMessage::user(breadcrumb_text()))
@@ -3673,7 +3673,7 @@ fn hydration_keeps_ownership_when_the_marker_survives_the_cap() {
     // short enough that the cap is a no-op: ownership must stay true
     // and nothing needs to be rewritten.
     let tmp = tempfile::TempDir::new().unwrap();
-    let store = clawcrew_infra::session_store::SessionStore::new(tmp.path()).unwrap();
+    let store = galleon_infra::session_store::SessionStore::new(tmp.path()).unwrap();
     let sender = "chan_uncapped".to_string();
     store
         .append(&sender, &ChatMessage::user(breadcrumb_text()))
@@ -3706,7 +3706,7 @@ fn hydration_skips_a_session_whose_reconciliation_write_fails() {
     // truncated transcript: the live process would otherwise append to
     // a cache durable storage did not accept, and a later restart would
     // resurrect the turns the live process discarded.
-    use clawcrew_infra::session_backend::SessionBackend;
+    use galleon_infra::session_backend::SessionBackend;
     use std::sync::Mutex as StdMutex;
 
     struct UnwritableBackend {
@@ -3764,7 +3764,7 @@ fn append_after_failed_hydration_installs_a_verified_durable_fallback() {
     // new-message-only cache over an existing transcript (which would
     // also stop later turns from retrying hydration, since the cache
     // would then exist).
-    use clawcrew_infra::session_backend::SessionBackend;
+    use galleon_infra::session_backend::SessionBackend;
     use std::sync::Mutex as StdMutex;
 
     struct ReadableButUnreconcilableBackend {
@@ -3864,7 +3864,7 @@ fn append_after_failed_hydration_does_not_install_a_cache_when_provenance_is_unr
     // only this one message instead of the sender's real conversation.
     // No cache entry or crumb flag is installed, and the next turn
     // retries hydration.
-    use clawcrew_infra::session_backend::SessionBackend;
+    use galleon_infra::session_backend::SessionBackend;
     use std::sync::Mutex as StdMutex;
 
     struct ReadableTranscriptUnreadableProvenance {
@@ -3943,7 +3943,7 @@ fn hydration_persists_the_cap_even_when_the_explicit_flag_is_already_false() {
     // still be written back: otherwise the durable transcript stays
     // over the cap and a later restart reloads the untruncated state.
     let tmp = tempfile::TempDir::new().unwrap();
-    let store = clawcrew_infra::session_store::SessionStore::new(tmp.path()).unwrap();
+    let store = galleon_infra::session_store::SessionStore::new(tmp.path()).unwrap();
     let sender = "chan_capped_false".to_string();
     for i in 0..(MAX_CHANNEL_HISTORY + 4) {
         let msg = if i % 2 == 0 {
@@ -3980,7 +3980,7 @@ fn hydration_drops_legacy_marker_ownership_when_the_cap_removes_it() {
     // be inferred from the transcript actually returned, not from a
     // pre-cap snapshot that no longer matches what's kept.
     let tmp = tempfile::TempDir::new().unwrap();
-    let store = clawcrew_infra::session_store::SessionStore::new(tmp.path()).unwrap();
+    let store = galleon_infra::session_store::SessionStore::new(tmp.path()).unwrap();
     let sender = "chan_legacy_capped".to_string();
     store
         .append(&sender, &ChatMessage::user(breadcrumb_text()))
@@ -4022,9 +4022,9 @@ fn hydration_fails_closed_when_the_breadcrumb_flag_is_unreadable() {
     // that would fall through to legacy text inference and let a
     // colliding first user message manufacture ownership the backend
     // never actually recorded.
-    struct FailingBreadcrumbStore(clawcrew_infra::session_store::SessionStore);
+    struct FailingBreadcrumbStore(galleon_infra::session_store::SessionStore);
 
-    impl clawcrew_infra::session_backend::SessionBackend for FailingBreadcrumbStore {
+    impl galleon_infra::session_backend::SessionBackend for FailingBreadcrumbStore {
         fn load(&self, session_key: &str) -> Vec<ChatMessage> {
             self.0.load(session_key)
         }
@@ -4059,7 +4059,7 @@ fn hydration_fails_closed_when_the_breadcrumb_flag_is_unreadable() {
     }
 
     let tmp = tempfile::TempDir::new().unwrap();
-    let inner = clawcrew_infra::session_store::SessionStore::new(tmp.path()).unwrap();
+    let inner = galleon_infra::session_store::SessionStore::new(tmp.path()).unwrap();
     let sender = "chan_unreadable_flag".to_string();
     inner
         .append(&sender, &ChatMessage::user(breadcrumb_text()))
@@ -4088,7 +4088,7 @@ fn hydration_fails_closed_on_a_corrupt_breadcrumb_sidecar_on_disk() {
     // back to a text guess.
     for corrupt_contents in [b"".as_slice(), b"2".as_slice(), b"10".as_slice()] {
         let tmp = tempfile::TempDir::new().unwrap();
-        let store = clawcrew_infra::session_store::SessionStore::new(tmp.path()).unwrap();
+        let store = galleon_infra::session_store::SessionStore::new(tmp.path()).unwrap();
         let sender = "chan_corrupt_breadcrumb".to_string();
         store
             .append(&sender, &ChatMessage::user(breadcrumb_text()))
@@ -4100,7 +4100,7 @@ fn hydration_fails_closed_on_a_corrupt_breadcrumb_sidecar_on_disk() {
 
         let sidecar_path = tmp.path().join("sessions").join(format!(
             "{}.trim_breadcrumb",
-            clawcrew_infra::session_store::sanitize_session_key(&sender)
+            galleon_infra::session_store::sanitize_session_key(&sender)
         ));
         std::fs::write(&sidecar_path, corrupt_contents).unwrap();
 
@@ -4127,7 +4127,7 @@ fn hydration_fails_closed_when_the_orphan_closure_append_fails() {
     // next authoritative replacement, and a restart would drop the
     // phantom row. Fail closed instead, leaving the session unreconciled
     // for the next turn to retry.
-    use clawcrew_infra::session_backend::SessionBackend;
+    use galleon_infra::session_backend::SessionBackend;
     use std::sync::Mutex as StdMutex;
 
     struct ClosureAppendFailsBackend {
@@ -5465,7 +5465,7 @@ fn test_runtime_ctx_with_observer_and_tools(
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -5558,7 +5558,7 @@ fn test_runtime_ctx_with_observer(
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -6049,7 +6049,7 @@ async fn process_channel_message_emits_brackets_when_llm_errors() {
 /// guard on the tool/assistant appends.
 #[tokio::test]
 async fn process_channel_message_does_not_recreate_cache_after_provider_error_and_failed_resync() {
-    use clawcrew_infra::session_backend::SessionBackend;
+    use galleon_infra::session_backend::SessionBackend;
 
     #[derive(Default)]
     struct FailingRewriteAndProvenanceBackend {
@@ -7692,7 +7692,7 @@ fn peer_prompt_test_context(
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -7770,7 +7770,7 @@ async fn process_channel_message_executes_tool_calls_instead_of_sending_raw_json
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -7928,7 +7928,7 @@ async fn multi_message_narration_reaches_telegram_before_approval_prompt() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -8114,7 +8114,7 @@ async fn multi_message_narration_applies_leak_detection_before_send() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -8285,7 +8285,7 @@ async fn multi_message_narration_applies_send_hook_before_send() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -8465,7 +8465,7 @@ async fn multi_message_approval_narration_crosses_outbound_hook_once() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -9019,7 +9019,7 @@ async fn multi_message_cancelled_narration_is_not_resurrected_by_a_later_flush()
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -9088,8 +9088,8 @@ async fn process_channel_message_scopes_sender_session_key_for_sessions_current_
     channels_by_name.insert(channel.name().to_string(), channel);
 
     let tmp = TempDir::new().unwrap();
-    let session_store: Arc<dyn clawcrew_infra::session_backend::SessionBackend> =
-        Arc::new(clawcrew_infra::session_store::SessionStore::new(tmp.path()).unwrap());
+    let session_store: Arc<dyn galleon_infra::session_backend::SessionBackend> =
+        Arc::new(galleon_infra::session_store::SessionStore::new(tmp.path()).unwrap());
 
     let runtime_ctx = Arc::new(ChannelRuntimeContext {
         channels_by_name: Arc::new(channels_by_name),
@@ -9150,7 +9150,7 @@ async fn process_channel_message_scopes_sender_session_key_for_sessions_current_
         show_tool_calls: true,
         session_store: Some(Arc::clone(&session_store)),
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -9255,7 +9255,7 @@ async fn process_channel_message_renders_trailing_tool_receipts_block_when_enabl
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -9538,7 +9538,7 @@ async fn process_channel_message_omits_receipts_block_when_disabled() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -9644,7 +9644,7 @@ async fn process_channel_message_disabled_receipt_generator_emits_no_receipts_an
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -9779,7 +9779,7 @@ async fn process_channel_message_telegram_does_not_persist_tool_summary_prefix()
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -9900,7 +9900,7 @@ async fn process_channel_message_strips_unexecuted_tool_json_artifacts_from_repl
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -10006,7 +10006,7 @@ async fn process_channel_message_executes_tool_calls_with_alias_tags() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -10132,7 +10132,7 @@ async fn process_channel_message_handles_models_command_without_llm_call() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -10282,7 +10282,7 @@ async fn process_channel_message_uses_route_override_provider_and_model() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -10448,7 +10448,7 @@ async fn process_channel_message_persists_model_switch_with_route_credential() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -10924,7 +10924,7 @@ async fn process_channel_message_prefers_cached_default_provider_instance() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -11028,7 +11028,7 @@ async fn process_channel_message_respects_configured_max_tool_iterations_above_d
             loop_detection_enabled: false,
             ..clawcrew_config::schema::PacingConfig::default()
         },
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -11139,7 +11139,7 @@ async fn process_channel_message_reports_configured_max_tool_iterations_limit() 
             loop_detection_enabled: false,
             ..clawcrew_config::schema::PacingConfig::default()
         },
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -12591,7 +12591,7 @@ async fn message_dispatch_processes_messages_in_parallel() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -12728,7 +12728,7 @@ async fn message_dispatch_interrupts_in_flight_telegram_request_and_preserves_co
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -12880,7 +12880,7 @@ async fn passive_stop_command_does_not_cancel_another_participants_turn() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -13029,7 +13029,7 @@ async fn active_batch_is_not_swallowed_by_later_passive_chatter() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::from_millis(120),
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -13175,7 +13175,7 @@ async fn message_dispatch_interrupts_in_flight_slack_request_and_preserves_conte
         model_routes: Arc::new(Vec::new()),
         query_classification: clawcrew_config::schema::QueryClassificationConfig::default(),
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -13365,7 +13365,7 @@ async fn message_dispatch_preserves_interrupt_on_new_message_policy_per_whatsapp
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -13588,7 +13588,7 @@ async fn message_dispatch_interrupt_scope_is_same_sender_same_chat() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -13715,7 +13715,7 @@ async fn process_channel_message_cancels_scoped_typing_task() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -14230,7 +14230,7 @@ async fn process_channel_message_adds_and_swaps_reactions() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -14350,7 +14350,7 @@ async fn process_channel_message_no_reply_clears_early_ack() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -14474,7 +14474,7 @@ async fn process_channel_message_no_reply_refused_sends_notice() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -14590,7 +14590,7 @@ async fn process_channel_message_no_reply_failed_sends_notice() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -14706,7 +14706,7 @@ async fn process_channel_message_no_reply_notice_sent_when_reactions_disabled() 
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -15100,7 +15100,7 @@ async fn process_channel_message_acks_before_slow_model_completes() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -15572,8 +15572,8 @@ async fn shared_session_debounce_never_collapses_distinct_senders() {
         )
         .await
     {
-        clawcrew_infra::debounce::DebounceResult::Pending { rx, .. } => rx,
-        clawcrew_infra::debounce::DebounceResult::Passthrough(_) => {
+        galleon_infra::debounce::DebounceResult::Pending { rx, .. } => rx,
+        galleon_infra::debounce::DebounceResult::Passthrough(_) => {
             panic!("nonzero window must debounce")
         }
     };
@@ -15585,8 +15585,8 @@ async fn shared_session_debounce_never_collapses_distinct_senders() {
         )
         .await
     {
-        clawcrew_infra::debounce::DebounceResult::Pending { rx, .. } => rx,
-        clawcrew_infra::debounce::DebounceResult::Passthrough(_) => {
+        galleon_infra::debounce::DebounceResult::Pending { rx, .. } => rx,
+        galleon_infra::debounce::DebounceResult::Passthrough(_) => {
             panic!("nonzero window must debounce")
         }
     };
@@ -15863,7 +15863,7 @@ async fn shared_session_new_message_interrupts_only_same_sender() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -16941,7 +16941,7 @@ fn test_runtime_ctx_with_turn_runner(
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -22003,7 +22003,7 @@ async fn process_channel_message_restores_per_sender_history_on_follow_ups() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -22310,7 +22310,7 @@ fn cache_stability_test_context(
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -22789,7 +22789,7 @@ async fn process_channel_message_persists_image_payload_verbatim() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -22936,7 +22936,7 @@ async fn process_channel_message_telegram_keeps_system_instruction_at_top_only()
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -24922,7 +24922,7 @@ async fn supervised_listener_marks_error_and_restarts_on_failures() {
     cancel.cancel();
     let _ = tokio::time::timeout(Duration::from_millis(500), handle).await;
 
-    let snapshot = clawcrew_infra::health::snapshot_json();
+    let snapshot = galleon_infra::health::snapshot_json();
     let component = &snapshot["components"]["channel:test-supervised-fail"];
     assert_eq!(component["status"], "error");
     assert!(component["restart_count"].as_u64().unwrap_or(0) >= 1);
@@ -24963,7 +24963,7 @@ async fn supervised_listener_does_not_report_ok_for_a_channel_that_never_connect
     );
 
     tokio::time::sleep(Duration::from_millis(70)).await;
-    let snapshot = clawcrew_infra::health::snapshot_json();
+    let snapshot = galleon_infra::health::snapshot_json();
     let component = &snapshot["components"][&component_name];
 
     assert_eq!(
@@ -25028,7 +25028,7 @@ async fn supervised_listener_health_observation_never_probes_the_channel() {
         observations.load(Ordering::SeqCst)
     );
 
-    let snapshot = clawcrew_infra::health::snapshot_json();
+    let snapshot = galleon_infra::health::snapshot_json();
     let component = &snapshot["components"][&component_name];
     assert_eq!(
         component["status"], "ok",
@@ -25109,7 +25109,7 @@ async fn supervised_listener_does_not_report_ok_before_the_first_exchange() {
 
     tokio::time::sleep(Duration::from_millis(120)).await;
 
-    let snapshot = clawcrew_infra::health::snapshot_json();
+    let snapshot = galleon_infra::health::snapshot_json();
     let component = &snapshot["components"][&component_name];
     // Assert on the *present* entry, not on the absence of one. Indexing a
     // missing key yields JSON null, which would satisfy both assertions
@@ -25166,7 +25166,7 @@ async fn a_replacement_listener_does_not_inherit_the_previous_ok_on_the_same_ali
     );
 
     tokio::time::sleep(Duration::from_millis(60)).await;
-    let before = clawcrew_infra::health::snapshot_json();
+    let before = galleon_infra::health::snapshot_json();
     let before = &before["components"][&component_name];
     assert_eq!(
         before["status"], "ok",
@@ -25203,7 +25203,7 @@ async fn a_replacement_listener_does_not_inherit_the_previous_ok_on_the_same_ali
     );
 
     tokio::time::sleep(Duration::from_millis(120)).await;
-    let after = clawcrew_infra::health::snapshot_json();
+    let after = galleon_infra::health::snapshot_json();
     let after = &after["components"][&component_name];
     assert_eq!(
         after["status"], "starting",
@@ -25269,7 +25269,7 @@ async fn paced_wrapper_preserves_listener_health_through_to_the_registry() {
     );
 
     tokio::time::sleep(Duration::from_millis(100)).await;
-    let pending = clawcrew_infra::health::snapshot_json();
+    let pending = galleon_infra::health::snapshot_json();
     let pending = &pending["components"][&component_name];
     // As above: require the entry to exist, since a missing key would index
     // to null and pass a bare `assert_ne!(.., "ok")`.
@@ -25284,7 +25284,7 @@ async fn paced_wrapper_preserves_listener_health_through_to_the_registry() {
 
     reporter.set_report(Some(ListenerHealth::Unhealthy));
     tokio::time::sleep(Duration::from_millis(80)).await;
-    let unhealthy = clawcrew_infra::health::snapshot_json();
+    let unhealthy = galleon_infra::health::snapshot_json();
     let unhealthy = &unhealthy["components"][&component_name];
     assert_eq!(
         unhealthy["status"], "error",
@@ -25325,7 +25325,7 @@ async fn supervised_listener_stops_refreshing_ok_once_a_success_goes_stale() {
     );
 
     tokio::time::sleep(Duration::from_millis(60)).await;
-    let healthy = clawcrew_infra::health::snapshot_json();
+    let healthy = galleon_infra::health::snapshot_json();
     let healthy = &healthy["components"][&component_name];
     assert_eq!(
         healthy["status"], "ok",
@@ -25338,7 +25338,7 @@ async fn supervised_listener_stops_refreshing_ok_once_a_success_goes_stale() {
     reporter.set_report(Some(ListenerHealth::Unhealthy));
     tokio::time::sleep(Duration::from_millis(80)).await;
 
-    let stale = clawcrew_infra::health::snapshot_json();
+    let stale = galleon_infra::health::snapshot_json();
     let stale = &stale["components"][&component_name];
     assert_eq!(
         stale["status"], "error",
@@ -25379,7 +25379,7 @@ async fn supervised_listener_refreshes_health_while_running() {
 
     tokio::time::sleep(Duration::from_millis(35)).await;
     let first_last_ok =
-        clawcrew_infra::health::snapshot_json()["components"][&component_name]["last_ok"]
+        galleon_infra::health::snapshot_json()["components"][&component_name]["last_ok"]
             .as_str()
             .unwrap_or("")
             .to_string();
@@ -25387,7 +25387,7 @@ async fn supervised_listener_refreshes_health_while_running() {
 
     tokio::time::sleep(Duration::from_millis(70)).await;
     let second_last_ok =
-        clawcrew_infra::health::snapshot_json()["components"][&component_name]["last_ok"]
+        galleon_infra::health::snapshot_json()["components"][&component_name]["last_ok"]
             .as_str()
             .unwrap_or("")
             .to_string();
@@ -25420,7 +25420,7 @@ async fn supervised_listener_does_not_restart_on_non_retryable_discord_http_erro
     let handle = spawn_supervised_listener(channel, None, tx, 1, 1, cancel.clone());
 
     tokio::time::sleep(Duration::from_millis(80)).await;
-    let snapshot = clawcrew_infra::health::snapshot_json();
+    let snapshot = galleon_infra::health::snapshot_json();
     let component = &snapshot["components"][&component_name];
     assert_eq!(calls.load(Ordering::SeqCst), 1);
     assert_eq!(component["status"], "error");
@@ -25458,7 +25458,7 @@ async fn supervised_listener_enters_retry_path_on_discord_gateway_rate_limit() {
     let handle = spawn_supervised_listener(channel, None, tx, 1, 1, cancel.clone());
 
     tokio::time::sleep(Duration::from_millis(80)).await;
-    let snapshot = clawcrew_infra::health::snapshot_json();
+    let snapshot = galleon_infra::health::snapshot_json();
     let component = &snapshot["components"][&component_name];
     assert_eq!(calls.load(Ordering::SeqCst), 1);
     assert_eq!(component["status"], "error");
@@ -25501,7 +25501,7 @@ async fn supervised_listener_does_not_restart_on_fatal_discord_gateway_close_cod
     let handle = spawn_supervised_listener(channel, None, tx, 1, 1, cancel.clone());
 
     tokio::time::sleep(Duration::from_millis(80)).await;
-    let snapshot = clawcrew_infra::health::snapshot_json();
+    let snapshot = galleon_infra::health::snapshot_json();
     let component = &snapshot["components"][&component_name];
     assert_eq!(calls.load(Ordering::SeqCst), 1);
     assert_eq!(component["status"], "error");
@@ -25559,7 +25559,7 @@ async fn non_retryable_listener_error_does_not_stop_other_listener_health() {
     tokio::time::sleep(Duration::from_millis(80)).await;
 
     let first_last_ok =
-        clawcrew_infra::health::snapshot_json()["components"][&healthy_component]["last_ok"]
+        galleon_infra::health::snapshot_json()["components"][&healthy_component]["last_ok"]
             .as_str()
             .unwrap_or("")
             .to_string();
@@ -25570,7 +25570,7 @@ async fn non_retryable_listener_error_does_not_stop_other_listener_health() {
 
     tokio::time::sleep(Duration::from_millis(70)).await;
 
-    let snapshot = clawcrew_infra::health::snapshot_json();
+    let snapshot = galleon_infra::health::snapshot_json();
     let failing = &snapshot["components"][&failing_component];
     let healthy = &snapshot["components"][&healthy_component];
     let second_last_ok = healthy["last_ok"].as_str().unwrap_or("").to_string();
@@ -26287,7 +26287,7 @@ async fn e2e_photo_attachment_rejected_by_non_vision_provider() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -26395,7 +26395,7 @@ async fn e2e_failed_vision_turn_does_not_poison_follow_up_text_turn() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -26547,7 +26547,7 @@ async fn e2e_failed_non_retryable_turn_does_not_poison_follow_up_text_turn() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             std::time::Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -26847,7 +26847,7 @@ async fn process_channel_message_applies_query_classification_route() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -26993,7 +26993,7 @@ async fn process_channel_message_classification_disabled_uses_default_route() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -27131,7 +27131,7 @@ async fn process_channel_message_classification_no_match_uses_default_route() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -27289,7 +27289,7 @@ async fn process_channel_message_classification_priority_selects_highest() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
@@ -28220,7 +28220,7 @@ async fn message_dispatch_different_threads_do_not_cancel_each_other() {
         show_tool_calls: true,
         session_store: None,
         pacing: clawcrew_config::schema::PacingConfig::default(),
-        debouncer: Arc::new(clawcrew_infra::debounce::MessageDebouncer::new(
+        debouncer: Arc::new(galleon_infra::debounce::MessageDebouncer::new(
             Duration::ZERO,
         )),
         last_applied_config_stamp: Arc::new(Mutex::new(None)),
