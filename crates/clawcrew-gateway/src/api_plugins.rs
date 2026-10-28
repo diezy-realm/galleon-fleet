@@ -42,8 +42,8 @@ pub mod plugin_routes {
                 // in strict mode must not appear here as `loaded: true`. An
                 // unrecognized value fails safe to strict, same as the runtime.
                 let signature_mode =
-                    clawcrew_plugins::host::PluginHost::resolve_signature_mode(&signature_mode_raw);
-                match clawcrew_plugins::host::PluginHost::from_plugins_dir_with_security(
+                    galleon_plugins::host::PluginHost::resolve_signature_mode(&signature_mode_raw);
+                match galleon_plugins::host::PluginHost::from_plugins_dir_with_security(
                     &plugin_path,
                     signature_mode,
                     trusted_publisher_keys,

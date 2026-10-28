@@ -9,12 +9,12 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::OnceLock;
 
-use clawcrew_plugins::component::PluginLimits;
-use clawcrew_plugins::config::{PluginConfigResolver, resolve_plugin_config};
-use clawcrew_plugins::instance::PluginInstanceScope;
-use clawcrew_plugins::runtime;
-use clawcrew_plugins::services::PluginHostServices;
-use clawcrew_plugins::{PluginCapability, PluginManifest, PluginPermission};
+use galleon_plugins::component::PluginLimits;
+use galleon_plugins::config::{PluginConfigResolver, resolve_plugin_config};
+use galleon_plugins::instance::PluginInstanceScope;
+use galleon_plugins::runtime;
+use galleon_plugins::services::PluginHostServices;
+use galleon_plugins::{PluginCapability, PluginManifest, PluginPermission};
 
 use support::admit_fixture;
 

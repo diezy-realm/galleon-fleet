@@ -15,7 +15,7 @@
 //! the canonical instance entry through the live handle *after* the tools are
 //! built, and asserts the next execution observes the new value.
 //!
-//! The component is the in-tree `clawcrew-plugins` tool fixture, built on demand
+//! The component is the in-tree `galleon-plugins` tool fixture, built on demand
 //! into a separate target directory so the nested Cargo invocation cannot
 //! contend with the host test process's build lock. There is no skip path: a
 //! fixture that cannot be built is a test failure, matching the plugin crate's
@@ -33,8 +33,8 @@ use clawcrew_config::schema::{
     AliasedAgentConfig, Config, DelegateExecutionMode, DelegateTargetConfig, PluginEntryConfig,
     RiskProfileConfig, RuntimeProfileConfig,
 };
-use clawcrew_plugins::instance::PluginInstanceScope;
-use clawcrew_plugins::{PluginCapability, PluginManifest};
+use galleon_plugins::instance::PluginInstanceScope;
+use galleon_plugins::{PluginCapability, PluginManifest};
 
 use super::Agent;
 
@@ -86,7 +86,7 @@ fn fixture() -> PathBuf {
     FIXTURE
         .get_or_init(|| {
             let fixture_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("../clawcrew-plugins/tests/fixtures/tool-fixture");
+                .join("../galleon-plugins/tests/fixtures/tool-fixture");
             let target_dir = fixture_target_dir();
             let status = Command::new(env!("CARGO"))
                 .current_dir(&fixture_dir)

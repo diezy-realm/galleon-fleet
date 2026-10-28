@@ -26,7 +26,7 @@ Aturan: `clawcrew-X` → `galleon-X`. Crate yang sudah `galleon-*` tetap. Urutan
 | `clawcrew-channels` | `galleon-channels` | lalu dipecah per channel (R-15) menjadi `galleon-channel-<nama>` |
 | `clawcrew-runtime` | `galleon-runtime` | **rename ditunda sampai R-00/R-16** (isi akan menyusut/dipindah) |
 | `clawcrew-gateway` | `galleon-gateway` | setelah R-14 |
-| `clawcrew-plugins` | `galleon-plugins` | |
+| `galleon-plugins` | `galleon-plugins` | |
 | `galleon-relay-proto` | `galleon-relay-proto` | ikut `galleonrelay` |
 | `galleon-channel-{core,signal,bluesky,imessage}`, `galleon-i18n` | tetap | sudah sesuai |
 

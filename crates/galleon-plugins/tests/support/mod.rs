@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use tempfile::tempdir;
-use clawcrew_plugins::host::{AdmittedComponent, PluginHost};
-use clawcrew_plugins::{PluginCapability, PluginManifest};
+use galleon_plugins::host::{AdmittedComponent, PluginHost};
+use galleon_plugins::{PluginCapability, PluginManifest};
 
 pub fn admit_fixture(path: &Path, manifest: &PluginManifest) -> AdmittedComponent {
     let root = tempdir().expect("create fixture package root");

@@ -24,7 +24,7 @@ clawcrew-runtime.workspace = true
 galleon-sop-graph = { workspace = true, features = ["schema-export"] }
 clawcrew-tools.workspace = true
 galleon-hardware.workspace = true
-clawcrew-plugins = { workspace = true, optional = true }
+galleon-plugins = { workspace = true, optional = true }
 galleon-routing.workspace = true
 galleon-security-scrub.workspace = true
 galleon-i18n.workspace = true
@@ -127,7 +127,7 @@ default = ["schema-export", "a2a"]
 # [a2a.server] enabled = false. Pure-serde cards on the existing axum stack,
 # no a2a-rs/protobuf footprint.
 a2a = []
-plugins-wasm = ["dep:clawcrew-plugins"]
+plugins-wasm = ["dep:galleon-plugins"]
 webauthn = ["clawcrew-config/webauthn"]
 observability-prometheus = ["clawcrew-runtime/observability-prometheus"]
 channel-acp-server = ["clawcrew-channels/channel-acp-server"]

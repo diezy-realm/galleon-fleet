@@ -3,7 +3,7 @@
 //! Enforces the layered dependency direction rules defined in
 //! standard-docs/tech-standart/code-quality/rust-module-size-and-decomposition-standard.md §5:
 //! - clawcrew-api is a leaf: must not depend on higher-level workspace crates (runtime, gateway, channels, tools, providers).
-//! - clawcrew-plugins must not depend on clawcrew-runtime.
+//! - galleon-plugins must not depend on clawcrew-runtime.
 //! - galleon-channel-* must not depend on clawcrew-runtime directly.
 
 use std::{fs, path::Path};
@@ -46,14 +46,14 @@ fn crate_dependency_direction_strictly_enforced() {
         }
     }
 
-    // 2. Check clawcrew-plugins does not depend on clawcrew-runtime
-    let plugins_cargo = root.join("crates/clawcrew-plugins/Cargo.toml");
+    // 2. Check galleon-plugins does not depend on clawcrew-runtime
+    let plugins_cargo = root.join("crates/galleon-plugins/Cargo.toml");
     if plugins_cargo.exists() {
         let content =
-            fs::read_to_string(&plugins_cargo).expect("clawcrew-plugins/Cargo.toml readable");
+            fs::read_to_string(&plugins_cargo).expect("galleon-plugins/Cargo.toml readable");
         assert!(
             !has_active_dependency(&content, "clawcrew-runtime"),
-            "clawcrew-plugins must not depend on clawcrew-runtime"
+            "galleon-plugins must not depend on clawcrew-runtime"
         );
     }
 

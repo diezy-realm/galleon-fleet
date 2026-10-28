@@ -114,7 +114,7 @@ advisory input you have personally vetted. If the file does not exist, do not
 auto-invoke `pr-architecture-check`.
 
 > **Tip:** If the PR touches core crates (`clawcrew-api`, `clawcrew-runtime`,
-> `clawcrew-gateway`, `clawcrew-plugins`), consider running `arch-check #<N>`
+> `clawcrew-gateway`, `galleon-plugins`), consider running `arch-check #<N>`
 > first to get an architecture analysis before starting your review.
 
 ### Phase 2 — Execute the protocol

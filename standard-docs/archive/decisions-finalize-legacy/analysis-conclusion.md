@@ -73,7 +73,7 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 
 #### ADR-001 — Channel Distribution (3-Tier)
 - **Status:** `Proposed` — **menunggu sign-off Owner.**
-- Fondasi WASI host (`clawcrew-plugins`) dan WIT contract (`wit/v0/channel.wit`) sudah tersedia.
+- Fondasi WASI host (`galleon-plugins`) dan WIT contract (`wit/v0/channel.wit`) sudah tersedia.
 - `crates/clawcrew-channels` masih monolit ~197k LOC. Belum ada pemisahan `galleon-channel-*`.
 
 ---
@@ -82,7 +82,7 @@ Dari tiga sesi observasi terhadap dokumen `standard-docs/decisions/` dan perband
 
 **Temuan kunci:**
 1. `crates/galleon-routing/src/lib.rs` **sudah ada** dengan `RouteHandler` trait + `DynamicRouter` struct + 3 passing unit tests. Namun **tidak ada satu pun crate/binary yang mengimpornya** — orphan crate.
-2. `PluginCapability` enum (`Tool | Channel | Memory | Observer | Skill`) **sudah ada** di `crates/clawcrew-plugins/src/lib.rs:107`. Gap 1 adalah reuse, bukan membuat baru.
+2. `PluginCapability` enum (`Tool | Channel | Memory | Observer | Skill`) **sudah ada** di `crates/galleon-plugins/src/lib.rs:107`. Gap 1 adalah reuse, bukan membuat baru.
 3. `crates/clawcrew-gateway/src/lib.rs` memiliki **49 `pub mod`** (sebagian feature-gated), membenarkan urgensi dekomposisi.
 4. `SlidingWindowRateLimiter` sudah ada di `auth_rate_limit.rs` — bisa di-reuse untuk rate-limit per-IP saat rute miss (Gap 3), tidak perlu membuat limiter baru.
 5. `security_headers::apply` sudah berupa `axum::middleware::Next` layer yang berfungsi (Gap 4).

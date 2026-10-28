@@ -62,7 +62,7 @@ Aturan:
 - Panah hanya naik. Crate di bawah **tidak boleh** mengimpor crate di atasnya.
 - **Channel (`galleon-channel-*`, `clawcrew-channels`) tidak boleh mengimpor `clawcrew-runtime`.** Channel bergantung pada trait di crate kontrak; runtime di-inject saat wiring di bin/gateway.
 - `clawcrew-api` adalah leaf: tidak ada dependency internal.
-- `clawcrew-plugins` hanya boleh bergantung ke `api`, `infra`, `log`.
+- `galleon-plugins` hanya boleh bergantung ke `api`, `infra`, `log`.
 - Composition root (DI) hanya di bin dan `gateway`; library crate tidak membuat global singleton.
 
 Gerbang: test `tests/architecture/` berbasis `cargo metadata` dengan daftar edge terlarang.

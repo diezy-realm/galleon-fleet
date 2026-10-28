@@ -10,10 +10,10 @@
 
 ## 1. Status Implementasi MCP Host Aktual (Hasil Verifikasi Kode)
 
-Berlawanan dengan asumsi awal bahwa MCP client host belum ada atau berada di `clawcrew-plugins`, verifikasi kode menunjukkan:
+Berlawanan dengan asumsi awal bahwa MCP client host belum ada atau berada di `galleon-plugins`, verifikasi kode menunjukkan:
 - **Lokasi Nyata:** MCP Client Host berada di `crates/clawcrew-tools/src/mcp_transport.rs`, `mcp_client.rs`, `mcp_deferred.rs`, dan `mcp_protocol.rs`.
 - **Protokol:** Mendukung JSON-RPC melalui stdio subprocess, SSE, dan HTTP streaming.
-- **WASM vs MCP:** `clawcrew-plugins` adalah murni host WASM Component Model (`wasmtime`), sedangkan `clawcrew-tools` mengelola koneksi MCP.
+- **WASM vs MCP:** `galleon-plugins` adalah murni host WASM Component Model (`wasmtime`), sedangkan `clawcrew-tools` mengelola koneksi MCP.
 
 ---
 
@@ -27,7 +27,7 @@ Dalam `crates/clawcrew-tools/src/mcp_transport.rs::apply_default_mcp_sandbox`:
    - `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`
    - `AWS_SECRET_ACCESS_KEY`, `GITHUB_TOKEN`, `GH_TOKEN`, `DATABASE_URL`
 
-### Gap Keamanan Dibandingkan Host WASM (`clawcrew-plugins`)
+### Gap Keamanan Dibandingkan Host WASM (`galleon-plugins`)
 1. **Ambient OS Permissions**: Jika `McpCommandBoundary` (Landlock/Bubblewrap di Linux, Seatbelt di macOS, AppContainer di Windows) tidak dipasang oleh host runtime, proses MCP stdio berjalan dengan user privilege host dan dapat membaca filesystem di luar direktori kerja.
 2. **Network Egress Hook**: Proses MCP memiliki akses raw socket sistem operasi, tidak melewati filter interceptor terpusat seperti `PluginEgressHooks` pada WASM.
 3. **Resource Ceiling Enforcement**: Tidak ada penghitungan instruksi/fuel secara deterministik seperti `call_fuel` pada WASM; pembatasan hanya bergantung pada timeout dan kill signal.

@@ -11,14 +11,14 @@ use std::time::{Duration, Instant};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio::sync::oneshot;
-use clawcrew_plugins::component::PluginLimits;
-use clawcrew_plugins::config::{PluginConfigResolver, resolve_plugin_config};
-use clawcrew_plugins::egress::{EgressHostService, EgressPolicy, EgressPolicyResolver};
-use clawcrew_plugins::host::PluginHost;
-use clawcrew_plugins::instance::PluginInstanceScope;
-use clawcrew_plugins::runtime;
-use clawcrew_plugins::services::PluginHostServices;
-use clawcrew_plugins::{PluginCapability, PluginPermission};
+use galleon_plugins::component::PluginLimits;
+use galleon_plugins::config::{PluginConfigResolver, resolve_plugin_config};
+use galleon_plugins::egress::{EgressHostService, EgressPolicy, EgressPolicyResolver};
+use galleon_plugins::host::PluginHost;
+use galleon_plugins::instance::PluginInstanceScope;
+use galleon_plugins::runtime;
+use galleon_plugins::services::PluginHostServices;
+use galleon_plugins::{PluginCapability, PluginPermission};
 
 fn fixture() -> PathBuf {
     static FIXTURE: OnceLock<PathBuf> = OnceLock::new();

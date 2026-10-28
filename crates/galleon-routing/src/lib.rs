@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use axum::{extract::Request, response::Response};
-pub use clawcrew_plugins::PluginCapability;
+pub use galleon_plugins::PluginCapability;
 
 /// Trait for handler implementations that can be registered dynamically.
 #[async_trait::async_trait]

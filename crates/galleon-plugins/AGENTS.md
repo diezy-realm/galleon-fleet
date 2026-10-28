@@ -1,4 +1,4 @@
-# clawcrew-plugins
+# galleon-plugins
 
 ## What this crate is
 

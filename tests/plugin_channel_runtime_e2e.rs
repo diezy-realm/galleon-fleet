@@ -23,12 +23,12 @@ use clawcrew_config::schema::{
     AliasedAgentConfig, AnthropicModelProviderConfig, Config, PluginChannelConfig,
     PluginEntryConfig, RiskProfileConfig,
 };
-use clawcrew_plugins::PluginCapability;
-use clawcrew_plugins::host::PluginHost;
-use clawcrew_plugins::instance::PluginInstanceScope;
+use galleon_plugins::PluginCapability;
+use galleon_plugins::host::PluginHost;
+use galleon_plugins::instance::PluginInstanceScope;
 
 const MANIFEST: &str =
-    "crates/clawcrew-plugins/tests/fixtures/channel-fixture/plugin-manifest.toml";
+    "crates/galleon-plugins/tests/fixtures/channel-fixture/plugin-manifest.toml";
 
 /// Build the channel component once per test binary.
 ///
@@ -39,7 +39,7 @@ fn fixture() -> PathBuf {
     FIXTURE
         .get_or_init(|| {
             let fixture_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("crates/clawcrew-plugins/tests/fixtures/channel-fixture");
+                .join("crates/galleon-plugins/tests/fixtures/channel-fixture");
             let target_dir =
                 PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("plugin-channel-runtime-fixture");
             let status = Command::new(env!("CARGO"))

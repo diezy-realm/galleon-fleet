@@ -12,11 +12,11 @@ repo_root="${fixture_dir}/repo"
 mkdir -p "$repo_root/crates/clawcrew-channels" \
     "$repo_root/crates/clawcrew-api" \
     "$repo_root/crates/clawcrew-config" \
-    "$repo_root/crates/clawcrew-plugins" \
+    "$repo_root/crates/galleon-plugins" \
     "$repo_root/crates/clawcrew-runtime" \
     "$repo_root/crates/clawcrew-gateway" \
     "$repo_root/crates/clawcrew-providers" \
-    "$repo_root/crates/clawcrew-plugins/tests/fixtures/channel-fixture" \
+    "$repo_root/crates/galleon-plugins/tests/fixtures/channel-fixture" \
     "$repo_root/apps/tauri"
 metadata_file="${fixture_dir}/metadata.json"
 cat > "$metadata_file" <<EOF
@@ -26,11 +26,11 @@ cat > "$metadata_file" <<EOF
     {"id": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4", "name": "clawcrew-api", "manifest_path": "crates/clawcrew-api/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4", "name": "clawcrew-channels", "manifest_path": "crates/clawcrew-channels/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4", "name": "clawcrew-config", "manifest_path": "crates/clawcrew-config/Cargo.toml"},
-    {"id": "path+file://${repo_root}/crates/clawcrew-plugins#clawcrew-plugins 0.8.4", "name": "clawcrew-plugins", "manifest_path": "crates/clawcrew-plugins/Cargo.toml"},
+    {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "name": "galleon-plugins", "manifest_path": "crates/galleon-plugins/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "name": "clawcrew-runtime", "manifest_path": "crates/clawcrew-runtime/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4", "name": "clawcrew-gateway", "manifest_path": "crates/clawcrew-gateway/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/clawcrew-providers#clawcrew-providers 0.8.4", "name": "clawcrew-providers", "manifest_path": "crates/clawcrew-providers/Cargo.toml"},
-    {"id": "path+file://${repo_root}/crates/clawcrew-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "name": "clawcrew-channel-plugin-fixture", "manifest_path": "crates/clawcrew-plugins/tests/fixtures/channel-fixture/Cargo.toml"},
+    {"id": "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "name": "clawcrew-channel-plugin-fixture", "manifest_path": "crates/galleon-plugins/tests/fixtures/channel-fixture/Cargo.toml"},
     {"id": "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4", "name": "clawcrew-desktop", "manifest_path": "apps/tauri/Cargo.toml"}
   ],
   "workspace_members": [
@@ -38,11 +38,11 @@ cat > "$metadata_file" <<EOF
     "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4",
-    "path+file://${repo_root}/crates/clawcrew-plugins#clawcrew-plugins 0.8.4",
+    "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4",
     "path+file://${repo_root}/crates/clawcrew-providers#clawcrew-providers 0.8.4",
-    "path+file://${repo_root}/crates/clawcrew-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0",
+    "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0",
     "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4"
   ],
   "resolve": {
@@ -51,11 +51,11 @@ cat > "$metadata_file" <<EOF
       {"id": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/clawcrew-config#clawcrew-config 0.8.4", "deps": []},
-      {"id": "path+file://${repo_root}/crates/clawcrew-plugins#clawcrew-plugins 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}]},
+      {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-api#clawcrew-api 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/clawcrew-gateway#clawcrew-gateway 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-providers#clawcrew-providers 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/clawcrew-providers#clawcrew-providers 0.8.4", "deps": []},
-      {"id": "path+file://${repo_root}/crates/clawcrew-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "deps": []},
+      {"id": "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "deps": []},
       {"id": "path+file://${repo_root}/apps/tauri#clawcrew-desktop 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/clawcrew-channels#clawcrew-channels 0.8.4"}]}
     ]
   }
@@ -117,7 +117,7 @@ printf '%s\n' 'crates/clawcrew-channels/src/lib.rs' > "$paths_file"
 assert_selection "one package and reverse dependent" scoped '["clawcrew","clawcrew-channels"]' '' "$paths_file"
 
 printf '%s\n' 'crates/clawcrew-api/src/lib.rs' > "$paths_file"
-assert_selection "plugin host from reverse-dependent closure" scoped '["clawcrew","clawcrew-api","clawcrew-plugins"]' '' "$paths_file" true
+assert_selection "plugin host from reverse-dependent closure" scoped '["clawcrew","clawcrew-api","galleon-plugins"]' '' "$paths_file" true
 
 printf '%s\n' 'crates/clawcrew-providers/src/lib.rs' 'crates/clawcrew-channels/src/lib.rs' > "$paths_file"
 assert_selection "multiple packages" scoped '["clawcrew","clawcrew-channels","clawcrew-gateway","clawcrew-providers"]' '' "$paths_file" true
@@ -164,11 +164,11 @@ assert_selection "unclassified member asset" full '[]' '' "$paths_file" false 'c
 printf '%s\n' 'crates/clawcrew-channels/src/lib.rs' 'crates/clawcrew-runtime/assets/generated.bin' > "$paths_file"
 assert_selection "unclassified plugin-host path with scoped path" full '[]' '' "$paths_file" true 'crates/clawcrew-runtime/assets/generated.bin'
 
-printf '%s\n' 'crates/clawcrew-plugins/tests/fixtures/channel-fixture/src/lib.rs' > "$paths_file"
+printf '%s\n' 'crates/galleon-plugins/tests/fixtures/channel-fixture/src/lib.rs' > "$paths_file"
 assert_selection "dynamically consumed plugin fixture" full '[]' 'Dynamically consumed plugin test fixtures require the full suite.' "$paths_file" true
 
 for plugin_path in \
-    'crates/clawcrew-plugins/src/lib.rs' \
+    'crates/galleon-plugins/src/lib.rs' \
     'crates/clawcrew-runtime/src/lib.rs' \
     'crates/clawcrew-config/src/lib.rs' \
     'tests/plugin_channel_runtime_e2e.rs' \
@@ -182,7 +182,7 @@ for plugin_path in \
     printf '%s\n' "$output" | grep -Fx 'needs_plugin_host=true' >/dev/null
 done
 
-printf '%s\n' 'Cargo.toml' 'crates/clawcrew-plugins/tests/fixtures/channel-fixture/src/lib.rs' > "$paths_file"
+printf '%s\n' 'Cargo.toml' 'crates/galleon-plugins/tests/fixtures/channel-fixture/src/lib.rs' > "$paths_file"
 assert_selection "mixed full trigger with plugin fixture" full '[]' '' "$paths_file" true
 
 printf '%s\n' 'Cargo.toml' > "$paths_file"
@@ -296,7 +296,7 @@ printf '%s\n' "$output" | grep -Fx 'mode=full' >/dev/null
 printf '%s\n' "$output" | grep -Fx 'reason=Cargo metadata is malformed or unavailable (FileNotFoundError).' >/dev/null
 printf '%s\n' "$output" | grep -Fx 'needs_plugin_host=true' >/dev/null
 
-printf '%s\n' 'crates/clawcrew-plugins/tests/fixtures/channel-fixture/src/lib.rs' > "$paths_file"
+printf '%s\n' 'crates/galleon-plugins/tests/fixtures/channel-fixture/src/lib.rs' > "$paths_file"
 output="$(run_selector pull_request "$paths_file" "$malformed_metadata")"
 printf '%s\n' "$output" | grep -Fx 'mode=full' >/dev/null
 printf '%s\n' "$output" | grep -F 'reason=Cargo metadata is malformed or unavailable' >/dev/null
@@ -368,9 +368,9 @@ package_conversion = 'scripts/ci/windows_test_scope.py --package-args-json "$PAC
 scoped_command = 'cargo nextest run --locked --no-fail-fast "${package_args[@]}"'
 full_command = 'cargo nextest run --locked --no-fail-fast --workspace --exclude clawcrew-desktop'
 plugin_condition = 'if [[ "$NEEDS_PLUGIN_HOST" == "true" ]]; then'
-plugin_components_command = 'cargo nextest run --locked --no-fail-fast \\\n              -p clawcrew-plugins'
+plugin_components_command = 'cargo nextest run --locked --no-fail-fast \\\n              -p galleon-plugins'
 plugin_root_command = 'cargo nextest run --locked --no-fail-fast \\\n              --features plugins-wasm-cranelift \\\n              --test plugin_channel_runtime_e2e'
-plugin_lib_command = "cargo nextest run --locked --no-fail-fast \\\n              -p clawcrew-plugins \\\n              --no-default-features \\\n              --features plugins-wasm-cranelift \\\n              --lib"
+plugin_lib_command = "cargo nextest run --locked --no-fail-fast \\\n              -p galleon-plugins \\\n              --no-default-features \\\n              --features plugins-wasm-cranelift \\\n              --lib"
 plugin_runtime_config_command = "cargo nextest run --locked --no-fail-fast \\\n              -p clawcrew-runtime \\\n              --features plugins-wasm-cranelift \\\n              --lib \\\n              live_agent_plugin_tool_observes_config_reload_after_construction"
 plugin_runtime_admission_command = "cargo nextest run --locked --no-fail-fast \\\n              -p clawcrew-runtime \\\n              --features plugins-wasm-cranelift \\\n              --lib \\\n              plugin_runtime::"
 assert "bash scripts/ci/windows_test_scope.test.sh" in scope_job

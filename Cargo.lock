@@ -1795,7 +1795,6 @@ dependencies = [
  "clawcrew-infra",
  "clawcrew-log",
  "clawcrew-memory",
- "clawcrew-plugins",
  "clawcrew-providers",
  "clawcrew-runtime",
  "clawcrew-spawn",
@@ -1804,6 +1803,7 @@ dependencies = [
  "futures-util",
  "galleon-hardware",
  "galleon-i18n",
+ "galleon-plugins",
  "galleon-routing",
  "galleon-security-scrub",
  "galleon-sop-graph",
@@ -1938,40 +1938,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "clawcrew-plugins"
-version = "0.8.5"
-dependencies = [
- "anyhow",
- "async-trait",
- "base64",
- "clawcrew-api",
- "clawcrew-config",
- "clawcrew-infra",
- "clawcrew-log",
- "clawcrew-spawn",
- "http-body-util",
- "hyper",
- "jsonschema",
- "rcgen",
- "ring",
- "rustls",
- "rustls-native-certs 0.8.4",
- "same-file",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.20",
- "tokio",
- "tokio-rustls",
- "toml 1.1.2+spec-1.1.0",
- "toml_edit 0.25.12+spec-1.1.0",
- "wasmtime",
- "wasmtime-wasi",
- "wasmtime-wasi-http",
- "webpki-roots 1.0.9",
-]
-
-[[package]]
 name = "clawcrew-providers"
 version = "0.8.5"
 dependencies = [
@@ -2030,7 +1996,6 @@ dependencies = [
  "clawcrew-infra",
  "clawcrew-log",
  "clawcrew-memory",
- "clawcrew-plugins",
  "clawcrew-providers",
  "clawcrew-spawn",
  "clawcrew-tools",
@@ -2044,6 +2009,7 @@ dependencies = [
  "galleon-commands",
  "galleon-i18n",
  "galleon-macros",
+ "galleon-plugins",
  "galleon-relay-proto",
  "galleon-security-scrub",
  "galleon-sop-graph",
@@ -4853,7 +4819,6 @@ dependencies = [
  "clawcrew-infra",
  "clawcrew-log",
  "clawcrew-memory",
- "clawcrew-plugins",
  "clawcrew-providers",
  "clawcrew-runtime",
  "clawcrew-spawn",
@@ -4867,6 +4832,7 @@ dependencies = [
  "futures-util",
  "galleon-hardware",
  "galleon-macros",
+ "galleon-plugins",
  "galleon-tls",
  "galleon-tool-call-parser",
  "hex",
@@ -4958,6 +4924,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-plugins"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64",
+ "clawcrew-api",
+ "clawcrew-config",
+ "clawcrew-infra",
+ "clawcrew-log",
+ "clawcrew-spawn",
+ "http-body-util",
+ "hyper",
+ "jsonschema",
+ "rcgen",
+ "ring",
+ "rustls",
+ "rustls-native-certs 0.8.4",
+ "same-file",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.20",
+ "tokio",
+ "tokio-rustls",
+ "toml 1.1.2+spec-1.1.0",
+ "toml_edit 0.25.12+spec-1.1.0",
+ "wasmtime",
+ "wasmtime-wasi",
+ "wasmtime-wasi-http",
+ "webpki-roots 1.0.9",
+]
+
+[[package]]
 name = "galleon-relay-proto"
 version = "0.8.5"
 dependencies = [
@@ -4973,8 +4973,8 @@ dependencies = [
  "async-trait",
  "axum 0.8.9",
  "clawcrew-log",
- "clawcrew-plugins",
  "futures",
+ "galleon-plugins",
  "tokio",
  "tower 0.5.3",
  "tracing",

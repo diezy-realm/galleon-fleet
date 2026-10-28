@@ -19,13 +19,13 @@ use std::time::Duration;
 
 use clawcrew_api::attribution::Attributable;
 use clawcrew_api::channel::Channel;
-use clawcrew_plugins::component::PluginLimits;
-use clawcrew_plugins::config::{PluginConfigResolver, resolve_plugin_config};
-use clawcrew_plugins::endpoint::PluginChannelEndpoint;
-use clawcrew_plugins::instance::PluginInstanceScope;
-use clawcrew_plugins::services::PluginHostServices;
-use clawcrew_plugins::wasm_channel::WasmChannel;
-use clawcrew_plugins::{PluginCapability, PluginManifest, PluginPermission};
+use galleon_plugins::component::PluginLimits;
+use galleon_plugins::config::{PluginConfigResolver, resolve_plugin_config};
+use galleon_plugins::endpoint::PluginChannelEndpoint;
+use galleon_plugins::instance::PluginInstanceScope;
+use galleon_plugins::services::PluginHostServices;
+use galleon_plugins::wasm_channel::WasmChannel;
+use galleon_plugins::{PluginCapability, PluginManifest, PluginPermission};
 
 use support::admit_fixture;
 
@@ -123,7 +123,7 @@ fn host_services(config: CanonicalConfig) -> PluginHostServices {
     let resolver = PluginConfigResolver::new(move |scope| {
         let configured = config.read().expect("lock canonical pilot config");
         let values = configured.get(scope.id().binding()).ok_or_else(|| {
-            clawcrew_plugins::error::PluginError::InvalidConfig(
+            galleon_plugins::error::PluginError::InvalidConfig(
                 "missing canonical pilot binding".to_string(),
             )
         })?;

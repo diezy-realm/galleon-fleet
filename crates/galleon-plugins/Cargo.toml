@@ -1,5 +1,5 @@
 [package]
-name = "clawcrew-plugins"
+name = "galleon-plugins"
 rust-version.workspace = true
 version.workspace = true
 edition.workspace = true

@@ -25,7 +25,7 @@ clawcrew-providers.workspace = true
 clawcrew-memory.workspace = true
 clawcrew-tools.workspace = true
 galleon-sop-graph.workspace = true
-clawcrew-plugins = { workspace = true, optional = true }
+galleon-plugins = { workspace = true, optional = true }
 galleon-tool-call-parser.workspace = true
 anyhow = "1.0"
 async-trait = "0.1"
@@ -106,14 +106,14 @@ schema-export = ["dep:schemars", "clawcrew-config/schema-export", "galleon-sop-g
 
 
 browser-native = []
-plugins-wasm = ["dep:clawcrew-plugins", "clawcrew-plugins/plugins-wasmtime"]
+plugins-wasm = ["dep:galleon-plugins", "galleon-plugins/plugins-wasmtime"]
 # Adds the Cranelift JIT to the plugin host so a `.wasm` component can be
 # compiled on the host instead of requiring a precompiled `.cwasm`. Production
 # builds get this through the root crate's feature of the same name; the runtime
 # crate declares it so the live-Agent plugin regression can be compiled and run
 # against a real component (`WasmTool::from_wasm` refuses to register a tool it
 # cannot load, so a runtime-only backend has no plugin tool to execute).
-plugins-wasm-cranelift = ["plugins-wasm", "clawcrew-plugins/plugins-wasm-cranelift"]
+plugins-wasm-cranelift = ["plugins-wasm", "galleon-plugins/plugins-wasm-cranelift"]
 webauthn = ["clawcrew-config/webauthn"]
 sandbox-bubblewrap = []
 # Exposes test-only helpers (including `ScopedToolRegistry::from_raw_for_test`

@@ -3043,12 +3043,12 @@ pub fn load_plugin_skills_from_config(
 
     let plugins_dir = config.plugins.resolved_plugins_dir();
 
-    let signature_mode = clawcrew_plugins::host::PluginHost::resolve_signature_mode(
+    let signature_mode = galleon_plugins::host::PluginHost::resolve_signature_mode(
         &config.plugins.security.signature_mode,
     );
     let trusted_keys = config.plugins.security.trusted_publisher_keys.clone();
 
-    let host = match clawcrew_plugins::host::PluginHost::from_plugins_dir_with_security(
+    let host = match galleon_plugins::host::PluginHost::from_plugins_dir_with_security(
         &plugins_dir,
         signature_mode,
         trusted_keys,
@@ -3088,7 +3088,7 @@ pub fn load_plugin_skills_from_config(
         // the package name is both halves of this admission lookup.
         if !plan.admits(
             &manifest.name,
-            clawcrew_plugins::PluginCapability::Skill,
+            galleon_plugins::PluginCapability::Skill,
             &manifest.name,
         ) {
             continue;

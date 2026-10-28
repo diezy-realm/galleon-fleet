@@ -21,9 +21,9 @@ expect() {
 
 # Plugin-only changes must run the backend job.
 expect "plugin crate source" "true" \
-    "crates/clawcrew-plugins/src/wasm_tool.rs"
+    "crates/galleon-plugins/src/wasm_tool.rs"
 expect "plugin crate tests" "true" \
-    "crates/clawcrew-plugins/tests/reference_plugin_e2e.rs"
+    "crates/galleon-plugins/tests/reference_plugin_e2e.rs"
 
 # Runtime-only changes must run the backend job: it carries the
 # feature-gated live-config regression that protects the Agent
@@ -36,7 +36,7 @@ expect "runtime elsewhere" "true" \
     "crates/clawcrew-runtime/src/tools/mod.rs"
 
 # Config-only changes must run the backend job: clawcrew-config owns the
-# operator-facing plugin config surface that clawcrew-plugins compiles
+# operator-facing plugin config surface that galleon-plugins compiles
 # against, so this job can break with nothing under the plugin crate touched.
 expect "config plugin entry schema" "true" \
     "crates/clawcrew-config/src/schema.rs"

@@ -20,13 +20,13 @@ use clawcrew_api::channel::{Channel, SendMessage};
 use clawcrew_api::webhook::{
     MAX_WEBHOOK_RESPONSE_BODY_BYTES, RawWebhook, WebhookIdempotency, WebhookOutcome, WebhookReject,
 };
-use clawcrew_plugins::component::{HostInboundMessage, PluginLimits};
-use clawcrew_plugins::config::{PluginConfigResolver, resolve_plugin_config};
-use clawcrew_plugins::endpoint::PluginChannelEndpoint;
-use clawcrew_plugins::instance::PluginInstanceScope;
-use clawcrew_plugins::services::PluginHostServices;
-use clawcrew_plugins::wasm_channel::WasmChannel;
-use clawcrew_plugins::{PluginCapability, PluginManifest, PluginPermission};
+use galleon_plugins::component::{HostInboundMessage, PluginLimits};
+use galleon_plugins::config::{PluginConfigResolver, resolve_plugin_config};
+use galleon_plugins::endpoint::PluginChannelEndpoint;
+use galleon_plugins::instance::PluginInstanceScope;
+use galleon_plugins::services::PluginHostServices;
+use galleon_plugins::wasm_channel::WasmChannel;
+use galleon_plugins::{PluginCapability, PluginManifest, PluginPermission};
 
 use support::admit_fixture;
 
@@ -142,7 +142,7 @@ fn host_services(config: CanonicalConfig) -> PluginHostServices {
     let resolver = PluginConfigResolver::new(move |scope| {
         let configured = config.read().expect("lock canonical fixture config");
         let values = configured.get(scope.id().binding()).ok_or_else(|| {
-            clawcrew_plugins::error::PluginError::InvalidConfig(
+            galleon_plugins::error::PluginError::InvalidConfig(
                 "missing canonical fixture binding".to_string(),
             )
         })?;
@@ -789,8 +789,8 @@ async fn reconstruction_replays_the_constructor_generation_config_snapshot() {
     let channel = channel_with(
         "config-generation",
         vec![
-            clawcrew_plugins::PluginPermission::HttpClient,
-            clawcrew_plugins::PluginPermission::ConfigRead,
+            galleon_plugins::PluginPermission::HttpClient,
+            galleon_plugins::PluginPermission::ConfigRead,
         ],
         &config,
         // u64::MAX fuel so the wall-clock deadline, not fuel exhaustion,
@@ -844,7 +844,7 @@ async fn interrupted_poll_preserves_backlog_but_not_the_dequeued_message() {
     // interrupts the spin, which is the store-discard path under test.
     let channel = channel_with(
         "at-most-once",
-        vec![clawcrew_plugins::PluginPermission::HttpClient],
+        vec![galleon_plugins::PluginPermission::HttpClient],
         &HashMap::new(),
         limits_with(u64::MAX, Duration::from_millis(250)),
     )

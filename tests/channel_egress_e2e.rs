@@ -537,9 +537,9 @@ mod wasm_cranelift_e2e {
         AliasedAgentConfig, AnthropicModelProviderConfig, Config, PluginChannelConfig,
         PluginEntryConfig, RiskProfileConfig,
     };
-    use clawcrew_plugins::PluginCapability;
-    use clawcrew_plugins::host::PluginHost;
-    use clawcrew_plugins::instance::PluginInstanceScope;
+    use galleon_plugins::PluginCapability;
+    use galleon_plugins::host::PluginHost;
+    use galleon_plugins::instance::PluginInstanceScope;
     use std::collections::HashMap;
     use std::path::PathBuf;
     use std::process::Command;
@@ -547,14 +547,14 @@ mod wasm_cranelift_e2e {
     use tempfile::TempDir;
 
     const MANIFEST: &str =
-        "crates/clawcrew-plugins/tests/fixtures/channel-egress-fixture/plugin-manifest.toml";
+        "crates/galleon-plugins/tests/fixtures/channel-egress-fixture/plugin-manifest.toml";
 
     fn fixture() -> PathBuf {
         static FIXTURE: OnceLock<PathBuf> = OnceLock::new();
         FIXTURE
             .get_or_init(|| {
                 let fixture_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                    .join("crates/clawcrew-plugins/tests/fixtures/channel-egress-fixture");
+                    .join("crates/galleon-plugins/tests/fixtures/channel-egress-fixture");
                 let target_dir =
                     PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("channel-egress-fixture");
                 let status = Command::new(env!("CARGO"))

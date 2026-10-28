@@ -112,7 +112,7 @@ cd web; npm run lint; npm run build; cd ..
 
 > **Prasyarat non-negotiable:** 3 poin sign-off Principle (Gap 1 tipe `PluginCapability`, Gap 2 defer crate-split, Gap 5 jumlah handler & urutan fase) harus tercatat di PR pertama Grup ini sebelum lanjut ke task berikutnya.
 
-- [ ] **T-6.1:** `capability()` di `galleon-routing` mengembalikan `Option<PluginCapability>` (reuse enum `clawcrew-plugins`), **tidak** mendefinisikan enum capability baru yang duplikat.
+- [ ] **T-6.1:** `capability()` di `galleon-routing` mengembalikan `Option<PluginCapability>` (reuse enum `galleon-plugins`), **tidak** mendefinisikan enum capability baru yang duplikat.
 - [ ] **T-6.2:** `clawcrew-gateway` meng-import `galleon-routing` dan memasang `DynamicRouter` sebagai `.fallback()` — sebelumnya 0 import, sesudahnya minimal 1 integration test membuktikan request lewat router ini.
 - [ ] **T-6.3 (5 core handler):** Setiap handler (`api_config`, `api_logs`, `auth_rate_limit`, `api_webauthn`, `api_audit`) jadi **thin wrapper** `RouteHandler` — logic bisnis TIDAK ditulis ulang. Ada test collision: plugin yang coba registrasi path yang sama (`/api/config`) ditolak dengan error, bukan silent-override.
 - [ ] **T-6.4 (streaming regression):** Test `Body::from_stream(...)` lolos di suite `galleon-routing` SEBELUM Fase 3 (T-6.9/T-6.10) dimulai. Ini adalah gate blocking — PR Fase 3 tanpa bukti T-6.4 hijau **ditolak**.
@@ -125,7 +125,7 @@ cd web; npm run lint; npm run build; cd ..
 
 ## Gate G7: ADR-001 — Channel Distribution WASI Pilot (T-7.1 – T-7.3)
 
-- [ ] **T-7.1:** 2 channel Tier C kandidat (`line`/`lark` atau sejenis, inbound-first/webhook) dibangun sebagai `.wasm` plugin menggunakan fixture template yang ADA (`crates/clawcrew-plugins/tests/fixtures/channel-fixture/`), bukan membangun loader WASI baru dari nol.
+- [ ] **T-7.1:** 2 channel Tier C kandidat (`line`/`lark` atau sejenis, inbound-first/webhook) dibangun sebagai `.wasm` plugin menggunakan fixture template yang ADA (`crates/galleon-plugins/tests/fixtures/channel-fixture/`), bukan membangun loader WASI baru dari nol.
 - [ ] Round-trip polling pesan masuk teruji di integration test — bukan hanya "plugin ter-load".
 - [ ] **T-7.2:** `wit/v0/channel.wit` dibekukan (`.frozen` marker) HANYA setelah pilot T-7.1 hijau; gate CI `wit-breaking-change-check` aktif dan menolak perubahan breaking pada contract yang sudah dibekukan.
 - [ ] **T-7.3 (Lapis B):** Crate `galleon-channel-<name>` baru dapat di-build **mandiri** (`cargo check -p galleon-channel-<name>`) DAN gateway inti terukur mengecil (bandingkan `cargo build --timings` sebelum/sesudah, jangan klaim tanpa angka).

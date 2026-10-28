@@ -7,7 +7,7 @@ use std::path::Path;
 use clawcrew_config::schema::ExternalRegistryKind;
 
 #[cfg(feature = "plugins-wasm")]
-use clawcrew_plugins::registry::{
+use galleon_plugins::registry::{
     install_command as plugin_install_command, read_cached_registry_index,
 };
 

@@ -16,13 +16,13 @@ use clawcrew_config::schema::Config;
 pub use clawcrew_api::plugin::WASM_PLUGIN_SUPPORT_COMPILED;
 
 #[cfg(feature = "plugins-wasm")]
-use clawcrew_plugins::PluginCapability;
+use galleon_plugins::PluginCapability;
 #[cfg(feature = "plugins-wasm")]
-use clawcrew_plugins::error::PluginError;
+use galleon_plugins::error::PluginError;
 #[cfg(feature = "plugins-wasm")]
-use clawcrew_plugins::host::PluginHost;
+use galleon_plugins::host::PluginHost;
 #[cfg(feature = "plugins-wasm")]
-use clawcrew_plugins::instance::PluginInstanceScope;
+use galleon_plugins::instance::PluginInstanceScope;
 
 #[cfg(feature = "plugins-wasm")]
 struct ActivationCandidate {
@@ -35,7 +35,7 @@ struct BuiltChannelCandidate {
     package: String,
     alias: String,
     config_read: bool,
-    channel: clawcrew_plugins::wasm_channel::WasmChannel,
+    channel: galleon_plugins::wasm_channel::WasmChannel,
 }
 
 /// One deterministic, guest-free admission decision across logical plugin
@@ -244,8 +244,8 @@ pub(crate) fn plugin_host(config: &Config) -> Result<Arc<PluginHost>, PluginErro
 }
 
 #[cfg(feature = "plugins-wasm")]
-pub(crate) fn plugin_limits(config: &Config) -> clawcrew_plugins::component::PluginLimits {
-    clawcrew_plugins::component::PluginLimits {
+pub(crate) fn plugin_limits(config: &Config) -> galleon_plugins::component::PluginLimits {
+    galleon_plugins::component::PluginLimits {
         call_fuel: config.plugins.limits.call_fuel,
         max_memory_bytes: config
             .plugins
@@ -276,7 +276,7 @@ fn channel_sender_authorizer(
     config: Arc<Config>,
     live_config: Option<Arc<RwLock<Config>>>,
     alias: String,
-) -> clawcrew_plugins::wasm_channel::SenderAuthorizer {
+) -> galleon_plugins::wasm_channel::SenderAuthorizer {
     match live_config {
         Some(live_config) => {
             Arc::new(move |sender| plugin_sender_allowed(&live_config.read(), &alias, sender))
@@ -555,7 +555,7 @@ pub async fn configured_plugin_channels_with_webhooks(
                 continue;
             };
             let endpoint =
-                match clawcrew_plugins::endpoint::PluginChannelEndpoint::new(scope, "plugin") {
+                match galleon_plugins::endpoint::PluginChannelEndpoint::new(scope, "plugin") {
                     Ok(endpoint) => endpoint,
                     Err(error) => {
                         ::clawcrew_log::record!(
@@ -577,7 +577,7 @@ pub async fn configured_plugin_channels_with_webhooks(
             let alias = endpoint.alias().to_string();
             let authorizer =
                 channel_sender_authorizer(Arc::clone(&config), live_config.clone(), alias.clone());
-            match clawcrew_plugins::wasm_channel::WasmChannel::from_wasm(
+            match galleon_plugins::wasm_channel::WasmChannel::from_wasm(
                 endpoint,
                 component,
                 &host_services,
@@ -591,7 +591,7 @@ pub async fn configured_plugin_channels_with_webhooks(
                     alias,
                     config_read: manifest
                         .permissions
-                        .contains(&clawcrew_plugins::PluginPermission::ConfigRead),
+                        .contains(&galleon_plugins::PluginPermission::ConfigRead),
                     channel: channel.with_sender_authorizer(authorizer),
                 }),
                 Err(error) => {
@@ -978,7 +978,7 @@ mod tests {
             .scope("alpha", PluginCapability::Channel, "ops")
             .unwrap();
         let endpoint =
-            clawcrew_plugins::endpoint::PluginChannelEndpoint::new(scope, "plugin").unwrap();
+            galleon_plugins::endpoint::PluginChannelEndpoint::new(scope, "plugin").unwrap();
 
         assert_eq!(endpoint.channel_type(), "plugin");
         assert_eq!(endpoint.alias(), "ops");

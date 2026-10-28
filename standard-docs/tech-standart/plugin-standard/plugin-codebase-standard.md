@@ -1,7 +1,7 @@
 # Plugin & Channel Codebase Standard
 
 > **Status:** Normatif (Proposed → berlaku setelah sign-off Lead + PO)
-> **Berdasarkan:** `ADR-001-channel-plugin-distribution.md`, `wit/v0/*.wit` (beku, `wit/v0/.frozen`), `crates/clawcrew-plugins`, fixture di `crates/clawcrew-plugins/tests/fixtures/`.
+> **Berdasarkan:** `ADR-001-channel-plugin-distribution.md`, `wit/v0/*.wit` (beku, `wit/v0/.frozen`), `crates/galleon-plugins`, fixture di `crates/galleon-plugins/tests/fixtures/`.
 > **Catatan:** ADR tidak diedit; koreksi fakta ada di `phase-5-production-hardening/README.md` §1.4.
 
 ## 1. Pilih tier dengan pohon keputusan
@@ -13,7 +13,7 @@ Channel/ekstensi baru
  └─ Cukup inbound webhook/polling, niche/regional, boleh di-sandbox? ──► Tier C: WASI plugin (signed, hot-load)
 ```
 
-Tool, memory backend, observer, skill: default **Tier C (WASI)** bila tidak butuh akses native; selain itu feature-crate. Mengacu ke `PluginCapability` (`Tool | Channel | Memory | Observer | Skill`) di `clawcrew-plugins`.
+Tool, memory backend, observer, skill: default **Tier C (WASI)** bila tidak butuh akses native; selain itu feature-crate. Mengacu ke `PluginCapability` (`Tool | Channel | Memory | Observer | Skill`) di `galleon-plugins`.
 
 ## 2. Aturan umum (semua tier)
 

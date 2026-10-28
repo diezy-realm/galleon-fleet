@@ -737,14 +737,14 @@ pub fn shell_tool_for_runtime(
 /// config so a plugin and a built-in tool cannot classify one answer set
 /// differently.
 ///
-/// [key]: clawcrew_plugins::instance::PluginInstanceScope::config_entry_key
+/// [key]: galleon_plugins::instance::PluginInstanceScope::config_entry_key
 #[cfg(feature = "plugins-wasm")]
 fn plugin_egress_policy(
     config: &Config,
     instance_key: &str,
-) -> Result<clawcrew_plugins::egress::EgressPolicy, clawcrew_plugins::egress::EgressError> {
+) -> Result<galleon_plugins::egress::EgressPolicy, galleon_plugins::egress::EgressError> {
     let (hosts, allow_private) = config.plugins.entry_egress(instance_key);
-    clawcrew_plugins::egress::EgressPolicy::new(
+    galleon_plugins::egress::EgressPolicy::new(
         &hosts,
         &allow_private,
         &config.security.nat64_prefixes,
@@ -762,7 +762,7 @@ fn plugin_egress_policy(
 ///
 /// A fresh service is built per registry, and that is deliberately fine: the
 /// per-instance connection budget does *not* live in the service. It lives in
-/// `clawcrew_plugins::egress`'s process-wide registry, keyed by canonical
+/// `galleon_plugins::egress`'s process-wide registry, keyed by canonical
 /// instance identity, so the agent loop, the gateway, the channels
 /// orchestrator, and the delegate tool spend one ceiling between them rather
 /// than one each.
@@ -776,11 +776,11 @@ fn plugin_egress_policy(
 pub(crate) fn plugin_egress_service(
     config: Arc<Config>,
     live_config: Option<Arc<parking_lot::RwLock<Config>>>,
-) -> clawcrew_plugins::egress::EgressHostService {
-    clawcrew_plugins::egress::EgressHostService::new(
-        clawcrew_plugins::egress::EgressPolicyResolver::new(move |scope| {
+) -> galleon_plugins::egress::EgressHostService {
+    galleon_plugins::egress::EgressHostService::new(
+        galleon_plugins::egress::EgressPolicyResolver::new(move |scope| {
             let instance_key = scope.id().config_entry_key().map_err(|error| {
-                clawcrew_plugins::egress::EgressError::PolicyUnavailable(error.to_string())
+                galleon_plugins::egress::EgressError::PolicyUnavailable(error.to_string())
             })?;
             match live_config.as_ref() {
                 Some(handle) => plugin_egress_policy(&handle.read(), &instance_key),
@@ -795,13 +795,13 @@ fn plugin_config_values(
     config: &Config,
     instance_key: &str,
     package: &str,
-) -> Result<Option<HashMap<String, String>>, clawcrew_plugins::error::PluginError> {
+) -> Result<Option<HashMap<String, String>>, galleon_plugins::error::PluginError> {
     config
         .plugins
         .entry_config(instance_key)
         .map(|configured| configured.cloned())
         .map_err(|_| {
-            clawcrew_plugins::error::PluginError::InvalidConfig(format!(
+            galleon_plugins::error::PluginError::InvalidConfig(format!(
                 "plugin '{package}' has duplicate config entries for its instance key"
             ))
         })
@@ -809,21 +809,21 @@ fn plugin_config_values(
 
 #[cfg(feature = "plugins-wasm")]
 pub(crate) fn plugin_host_services(
-    host: Arc<clawcrew_plugins::host::PluginHost>,
+    host: Arc<galleon_plugins::host::PluginHost>,
     config: Arc<Config>,
     live_config: Option<Arc<parking_lot::RwLock<Config>>>,
-) -> clawcrew_plugins::services::PluginHostServices {
+) -> galleon_plugins::services::PluginHostServices {
     // A live daemon handle and a fallback snapshot are mutually exclusive in
     // the long-lived service, so the resolver never retains two config sources.
     let fallback_config = live_config.is_none().then_some(config);
-    let config = clawcrew_plugins::config::PluginConfigResolver::new(move |scope| {
+    let config = galleon_plugins::config::PluginConfigResolver::new(move |scope| {
         let package = scope.id().package();
         let config_entry_key = scope.id().config_entry_key()?;
         let manifest = host
             .manifest(package)
-            .ok_or_else(|| clawcrew_plugins::error::PluginError::NotFound(package.to_string()))?;
+            .ok_or_else(|| galleon_plugins::error::PluginError::NotFound(package.to_string()))?;
         if let Some(live_config) = &live_config {
-            clawcrew_plugins::config::resolve_plugin_config_from(manifest, scope, || {
+            galleon_plugins::config::resolve_plugin_config_from(manifest, scope, || {
                 // Transient per-call view: schema/grant checks happen before
                 // this access, and the global lock is released before guest
                 // setup.
@@ -831,16 +831,16 @@ pub(crate) fn plugin_host_services(
             })
         } else {
             let config = fallback_config.as_ref().ok_or_else(|| {
-                clawcrew_plugins::error::PluginError::InvalidConfig(
+                galleon_plugins::error::PluginError::InvalidConfig(
                     "plugin config source is unavailable".to_string(),
                 )
             })?;
-            clawcrew_plugins::config::resolve_plugin_config_from(manifest, scope, || {
+            galleon_plugins::config::resolve_plugin_config_from(manifest, scope, || {
                 plugin_config_values(config, &config_entry_key, package)
             })
         }
     });
-    clawcrew_plugins::services::PluginHostServices::new(config)
+    galleon_plugins::services::PluginHostServices::new(config)
 }
 
 /// Stack reserved for the dedicated registry-builder thread. The registry
@@ -2151,11 +2151,11 @@ fn all_tools_with_runtime_on_thread(
         let plugin_path = config.plugins.resolved_plugins_dir();
 
         if plugin_path.exists() && config.plugins.enabled {
-            let signature_mode = clawcrew_plugins::host::PluginHost::resolve_signature_mode(
+            let signature_mode = galleon_plugins::host::PluginHost::resolve_signature_mode(
                 &config.plugins.security.signature_mode,
             );
             let trusted_publisher_keys = config.plugins.security.trusted_publisher_keys.clone();
-            match clawcrew_plugins::host::PluginHost::from_plugins_dir_with_security(
+            match galleon_plugins::host::PluginHost::from_plugins_dir_with_security(
                 &plugin_path,
                 signature_mode,
                 trusted_publisher_keys,
@@ -2174,7 +2174,7 @@ fn all_tools_with_runtime_on_thread(
                     if root_config.pipeline.enabled {
                         registered_names.insert(PipelineTool::NAME.to_string());
                     }
-                    let plugin_limits = clawcrew_plugins::component::PluginLimits {
+                    let plugin_limits = galleon_plugins::component::PluginLimits {
                         call_fuel: config.plugins.limits.call_fuel,
                         max_memory_bytes: config
                             .plugins
@@ -2276,10 +2276,10 @@ fn claim_plugin_tool_name(
 #[cfg(feature = "plugins-wasm")]
 fn register_plugin_tools(
     config: &Config,
-    host: &clawcrew_plugins::host::PluginHost,
-    services: &clawcrew_plugins::services::PluginHostServices,
-    plugin_limits: clawcrew_plugins::component::PluginLimits,
-    egress: Option<clawcrew_plugins::egress::EgressHostService>,
+    host: &galleon_plugins::host::PluginHost,
+    services: &galleon_plugins::services::PluginHostServices,
+    plugin_limits: galleon_plugins::component::PluginLimits,
+    egress: Option<galleon_plugins::egress::EgressHostService>,
     registered_names: &mut std::collections::HashSet<String>,
     tool_arcs: &mut Vec<Arc<dyn Tool>>,
 ) {
@@ -2299,7 +2299,7 @@ fn register_plugin_tools(
     let details = host.tool_plugin_details();
     let discovered_count = details.len();
     let admitted: Vec<_> = plan
-        .scopes(clawcrew_plugins::PluginCapability::Tool)
+        .scopes(galleon_plugins::PluginCapability::Tool)
         .collect();
     let admitted_count = admitted.len();
     let mut registered_count = 0_usize;
@@ -2331,7 +2331,7 @@ fn register_plugin_tools(
             continue;
         }
 
-        let tool = clawcrew_plugins::wasm_tool::WasmTool::from_wasm(
+        let tool = galleon_plugins::wasm_tool::WasmTool::from_wasm(
             component.clone(),
             scope,
             services.clone(),
@@ -2675,21 +2675,21 @@ const = true
         )
         .unwrap();
         let host = Arc::new(
-            clawcrew_plugins::host::PluginHost::from_plugins_dir(plugins_dir.path()).unwrap(),
+            galleon_plugins::host::PluginHost::from_plugins_dir(plugins_dir.path()).unwrap(),
         );
         let manifest = host.manifest("fixture-plugin").unwrap();
-        let scope = clawcrew_plugins::instance::PluginInstanceScope::from_manifest(
+        let scope = galleon_plugins::instance::PluginInstanceScope::from_manifest(
             manifest,
-            clawcrew_plugins::PluginCapability::Tool,
+            galleon_plugins::PluginCapability::Tool,
             "work",
-            [clawcrew_plugins::PluginPermission::ConfigRead],
+            [galleon_plugins::PluginPermission::ConfigRead],
         )
         .unwrap();
-        let backup_scope = clawcrew_plugins::instance::PluginInstanceScope::from_manifest(
+        let backup_scope = galleon_plugins::instance::PluginInstanceScope::from_manifest(
             manifest,
-            clawcrew_plugins::PluginCapability::Tool,
+            galleon_plugins::PluginCapability::Tool,
             "backup",
-            [clawcrew_plugins::PluginPermission::ConfigRead],
+            [galleon_plugins::PluginPermission::ConfigRead],
         )
         .unwrap();
         let instance_key = scope.id().config_entry_key().unwrap();
@@ -2770,13 +2770,13 @@ permissions = ["http_client"]
         )
         .unwrap();
         let host =
-            clawcrew_plugins::host::PluginHost::from_plugins_dir(plugins_dir.path()).unwrap();
+            galleon_plugins::host::PluginHost::from_plugins_dir(plugins_dir.path()).unwrap();
         let manifest = host.manifest("egress-plugin").unwrap();
         // The production tool path: binding == package name, which is exactly
         // what used to be handed to `entry_egress`.
-        let scope = clawcrew_plugins::instance::PluginInstanceScope::for_package_binding(
+        let scope = galleon_plugins::instance::PluginInstanceScope::for_package_binding(
             manifest,
-            clawcrew_plugins::PluginCapability::Tool,
+            galleon_plugins::PluginCapability::Tool,
             manifest.permissions.iter().copied(),
         )
         .unwrap();
@@ -2794,9 +2794,9 @@ permissions = ["http_client"]
             egress_allow_private: Vec::new(),
         };
         let request = || {
-            clawcrew_plugins::egress::EgressRequest::new(
+            galleon_plugins::egress::EgressRequest::new(
                 scope.clone(),
-                clawcrew_plugins::egress::EgressTransport::Http { encrypted: true },
+                galleon_plugins::egress::EgressTransport::Http { encrypted: true },
                 "api.example.com",
                 443,
             )
@@ -2817,7 +2817,7 @@ permissions = ["http_client"]
         assert!(
             matches!(
                 service.authorize_addresses(request(), addresses),
-                Err(clawcrew_plugins::egress::EgressError::DestinationNotGranted { .. })
+                Err(galleon_plugins::egress::EgressError::DestinationNotGranted { .. })
             ),
             "an unconfigured instance must have no reach"
         );
@@ -2830,7 +2830,7 @@ permissions = ["http_client"]
         assert!(
             matches!(
                 service.authorize_addresses(request(), addresses),
-                Err(clawcrew_plugins::egress::EgressError::DestinationNotGranted { .. })
+                Err(galleon_plugins::egress::EgressError::DestinationNotGranted { .. })
             ),
             "a raw package or binding entry must not bypass the canonical key"
         );
@@ -2912,8 +2912,8 @@ permissions = ["http_client"]
     }
 
     #[cfg(feature = "plugins-wasm")]
-    fn test_plugin_limits() -> clawcrew_plugins::component::PluginLimits {
-        clawcrew_plugins::component::PluginLimits {
+    fn test_plugin_limits() -> galleon_plugins::component::PluginLimits {
+        galleon_plugins::component::PluginLimits {
             call_fuel: 1_000_000,
             max_memory_bytes: 16 * 1024 * 1024,
             max_table_elements: 10_000,
@@ -2930,9 +2930,9 @@ permissions = ["http_client"]
     /// detectable even when the component itself is unloadable.
     #[cfg(feature = "plugins-wasm")]
     fn recording_resolver(
-        host: &Arc<clawcrew_plugins::host::PluginHost>,
+        host: &Arc<galleon_plugins::host::PluginHost>,
     ) -> (
-        clawcrew_plugins::config::PluginConfigResolver,
+        galleon_plugins::config::PluginConfigResolver,
         Arc<std::sync::Mutex<Vec<String>>>,
     ) {
         let probed: Arc<std::sync::Mutex<Vec<String>>> =
@@ -2940,13 +2940,13 @@ permissions = ["http_client"]
         let resolver = {
             let host = Arc::clone(host);
             let probed = Arc::clone(&probed);
-            clawcrew_plugins::config::PluginConfigResolver::new(move |scope| {
+            galleon_plugins::config::PluginConfigResolver::new(move |scope| {
                 let package = scope.id().package().to_string();
                 probed.lock().unwrap().push(package.clone());
                 let manifest = host.manifest(&package).ok_or_else(|| {
-                    clawcrew_plugins::error::PluginError::NotFound(package.clone())
+                    galleon_plugins::error::PluginError::NotFound(package.clone())
                 })?;
-                clawcrew_plugins::config::resolve_plugin_config(manifest, scope, None)
+                galleon_plugins::config::resolve_plugin_config(manifest, scope, None)
             })
         };
         (resolver, probed)
@@ -2969,11 +2969,11 @@ permissions = ["http_client"]
     #[cfg(feature = "plugins-wasm")]
     fn tool_packages_reaching_construction(
         config: &Config,
-        host: &Arc<clawcrew_plugins::host::PluginHost>,
+        host: &Arc<galleon_plugins::host::PluginHost>,
         reserved: &[&str],
     ) -> Vec<String> {
         let (resolver, probed) = recording_resolver(host);
-        let services = clawcrew_plugins::services::PluginHostServices::new(resolver);
+        let services = galleon_plugins::services::PluginHostServices::new(resolver);
         let mut registered_names: std::collections::HashSet<String> =
             reserved.iter().map(|name| (*name).to_string()).collect();
         let mut tool_arcs: Vec<Arc<dyn Tool>> = Vec::new();
@@ -3007,7 +3007,7 @@ permissions = ["http_client"]
         write_tool_package(plugins.path(), "novel-tool");
 
         let host =
-            Arc::new(clawcrew_plugins::host::PluginHost::from_plugins_dir(plugins.path()).unwrap());
+            Arc::new(galleon_plugins::host::PluginHost::from_plugins_dir(plugins.path()).unwrap());
         let config = plugin_activation_config(plugins.path());
 
         // `shell` is already taken by a native tool; `novel-tool` is free.
@@ -3034,7 +3034,7 @@ permissions = ["http_client"]
         write_tool_package(plugins.path(), "beta");
 
         let host =
-            Arc::new(clawcrew_plugins::host::PluginHost::from_plugins_dir(plugins.path()).unwrap());
+            Arc::new(galleon_plugins::host::PluginHost::from_plugins_dir(plugins.path()).unwrap());
         let config = plugin_activation_config(plugins.path());
 
         let probed = tool_packages_reaching_construction(&config, &host, &[]);
@@ -3090,7 +3090,7 @@ permissions = ["http_client"]
         let plugins = TempDir::new().unwrap();
         let mut config = mixed_capability_fixture(&plugins);
         let host =
-            Arc::new(clawcrew_plugins::host::PluginHost::from_plugins_dir(plugins.path()).unwrap());
+            Arc::new(galleon_plugins::host::PluginHost::from_plugins_dir(plugins.path()).unwrap());
 
         // Control: a ceiling wide enough for every candidate loads all of them,
         // so the assertions below cannot pass for want of a working fixture.
@@ -3129,7 +3129,7 @@ permissions = ["http_client"]
         let mut config = mixed_capability_fixture(&plugins);
         config.plugins.max_active_instances = 2;
         let host =
-            Arc::new(clawcrew_plugins::host::PluginHost::from_plugins_dir(plugins.path()).unwrap());
+            Arc::new(galleon_plugins::host::PluginHost::from_plugins_dir(plugins.path()).unwrap());
 
         let first_tools = tool_packages_reaching_construction(&config, &host, &[]);
         let second_tools = tool_packages_reaching_construction(&config, &host, &[]);
@@ -3174,7 +3174,7 @@ permissions = ["http_client"]
         write_skill_package(plugins.path(), "beta");
 
         let host =
-            Arc::new(clawcrew_plugins::host::PluginHost::from_plugins_dir(plugins.path()).unwrap());
+            Arc::new(galleon_plugins::host::PluginHost::from_plugins_dir(plugins.path()).unwrap());
 
         let mut config = Config::default();
         config.plugins.enabled = true;

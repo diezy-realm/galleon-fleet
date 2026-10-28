@@ -37,12 +37,12 @@ Ukuran dan arah dependency: Phase 5 §1 (`cargo metadata`).
 | | `clawcrew-runtime` (286k LOC) | Agent loop, SOP, hooks, cron, security, observability, skills, RPC, TUI, subagents |
 | Tepi | `clawcrew-channels` (198k LOC) | ±35 adapter channel + orchestrator |
 | | `galleon-channel-{core,signal,bluesky,imessage}` | Pola feature-crate channel (Tier B) |
-| | `clawcrew-plugins` | Host WASI/Wasmtime, manifest, signature, catalog, egress |
+| | `galleon-plugins` | Host WASI/Wasmtime, manifest, signature, catalog, egress |
 | Komposisi | `clawcrew-gateway` | HTTP/WS gateway (`api_*`), **gRPC `SystemGatewayService`** (`grpc_system_gateway.rs`), vault, pairing |
 | | `galleon-routing` | `DynamicRouter`/`RouteHandler` (kini dependency gateway; belum di-commit) |
 | | `clawcrew-eval` | Harness evaluasi trace |
 
-Fixture (anggota workspace): `crates/clawcrew-plugins/tests/fixtures/*` (channel, nostr-pilot, egress, tool-*), `crates/clawcrew-log/tests/fixtures/attribution-macro-*`.
+Fixture (anggota workspace): `crates/galleon-plugins/tests/fixtures/*` (channel, nostr-pilot, egress, tool-*), `crates/clawcrew-log/tests/fixtures/attribution-macro-*`.
 
 ## 3. Domain Go (`engine/src/`)
 

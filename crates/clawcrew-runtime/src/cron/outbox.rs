@@ -17,7 +17,7 @@ use serde_json::Value;
 use uuid::Uuid;
 use clawcrew_api::plugin_key::SecretPropertyRef;
 use clawcrew_config::schema::Config;
-use clawcrew_plugins::instance::PluginInstanceId;
+use galleon_plugins::instance::PluginInstanceId;
 
 use super::store::with_initialized_connection;
 
@@ -712,7 +712,7 @@ mod tests {
 
     use chrono::TimeZone;
     use tempfile::TempDir;
-    use clawcrew_plugins::{PluginCapability, PluginManifest, instance::PluginInstanceScope};
+    use galleon_plugins::{PluginCapability, PluginManifest, instance::PluginInstanceScope};
 
     use super::*;
 
