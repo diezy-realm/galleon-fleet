@@ -270,7 +270,7 @@ impl PacedChannel {
         let recipients = Arc::clone(&self.recipients);
         let inner = Arc::clone(&self.inner);
         let min_interval = self.min_interval;
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             loop {
                 // Wait until the floor has elapsed for this recipient.
                 let sleep_for = {
@@ -874,11 +874,11 @@ mod tests {
         let paced_a = Arc::clone(&paced);
         let paced_b = Arc::clone(&paced);
         let h_a =
-            clawcrew_spawn::spawn!(
+            galleon_spawn::spawn!(
                 async move { paced_a.send(&SendMessage::new("a", "alice")).await }
             );
         let h_b =
-            clawcrew_spawn::spawn!(
+            galleon_spawn::spawn!(
                 async move { paced_b.send(&SendMessage::new("b", "alice")).await }
             );
         // Yield enough times for both spawned tasks to make it past the
@@ -1140,7 +1140,7 @@ mod tests {
         let paced_a = Arc::clone(&paced);
 
         // Send A takes the immediate path and blocks inside inner.send.
-        let a = clawcrew_spawn::spawn!(async move {
+        let a = galleon_spawn::spawn!(async move {
             paced_a.send(&SendMessage::new("a", "alice")).await.unwrap();
         });
         // Wait until A is parked inside inner.send (in flight).
@@ -1153,7 +1153,7 @@ mod tests {
 
         // Send B races in while A is in flight and the floor has elapsed.
         let paced_b = Arc::clone(&paced);
-        let b = clawcrew_spawn::spawn!(async move {
+        let b = galleon_spawn::spawn!(async move {
             paced_b.send(&SendMessage::new("b", "alice")).await.unwrap();
         });
         tokio::time::sleep(Duration::from_millis(50)).await;

@@ -12,7 +12,7 @@ publish = true
 [dependencies]
 clawcrew-log.workspace = true
 clawcrew-api.workspace = true
-clawcrew-spawn.workspace = true
+galleon-spawn.workspace = true
 clawcrew-config = { workspace = true, default-features = false }
 galleon-providers.workspace = true
 galleon-memory.workspace = true

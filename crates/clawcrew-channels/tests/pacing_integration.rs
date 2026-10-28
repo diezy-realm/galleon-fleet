@@ -162,9 +162,9 @@ async fn whatsapp_web_shape_queue_overflow_drops_newest() {
     let paced_a = Arc::clone(&paced);
     let paced_b = Arc::clone(&paced);
     let h_a =
-        clawcrew_spawn::spawn!(async move { paced_a.send(&SendMessage::new("a", jid)).await });
+        galleon_spawn::spawn!(async move { paced_a.send(&SendMessage::new("a", jid)).await });
     let h_b =
-        clawcrew_spawn::spawn!(async move { paced_b.send(&SendMessage::new("b", jid)).await });
+        galleon_spawn::spawn!(async move { paced_b.send(&SendMessage::new("b", jid)).await });
     tokio::time::sleep(Duration::from_millis(50)).await;
     // Overflow — queue is full (depth=2). Drop newest, returns Ok.
     paced

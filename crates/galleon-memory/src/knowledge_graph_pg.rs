@@ -401,7 +401,7 @@ mod tests {
         let (release_first_tx, release_first_rx) = std::sync::mpsc::channel();
 
         let first_gate = Arc::clone(&gate);
-        let first = clawcrew_spawn::spawn!(run_bounded(first_gate, move || {
+        let first = galleon_spawn::spawn!(run_bounded(first_gate, move || {
             first_started_tx.send(()).unwrap();
             release_first_rx.recv().unwrap();
             Ok(())
@@ -411,7 +411,7 @@ mod tests {
 
         let second_entered_in_task = second_entered.clone();
         let second_gate = Arc::clone(&gate);
-        let second = clawcrew_spawn::spawn!(run_bounded(second_gate, move || {
+        let second = galleon_spawn::spawn!(run_bounded(second_gate, move || {
             second_entered_in_task.store(true, Ordering::SeqCst);
             Ok(())
         }));
@@ -446,7 +446,7 @@ mod tests {
         let (release_first_tx, release_first_rx) = std::sync::mpsc::channel();
 
         let first_gate = Arc::clone(&gate);
-        let first = clawcrew_spawn::spawn!(run_bounded(first_gate, move || {
+        let first = galleon_spawn::spawn!(run_bounded(first_gate, move || {
             first_started_tx.send(()).unwrap();
             release_first_rx.recv().unwrap();
             Ok(())
@@ -459,7 +459,7 @@ mod tests {
         let second_entered = Arc::new(AtomicBool::new(false));
         let second_entered_in_task = second_entered.clone();
         let second_gate = Arc::clone(&gate);
-        let second = clawcrew_spawn::spawn!(run_bounded(second_gate, move || {
+        let second = galleon_spawn::spawn!(run_bounded(second_gate, move || {
             second_entered_in_task.store(true, Ordering::SeqCst);
             Ok(())
         }));

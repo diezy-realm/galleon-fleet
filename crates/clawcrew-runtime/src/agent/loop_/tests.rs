@@ -14098,7 +14098,7 @@ Let me check the result."#;
             .await
             .expect("bind test provider");
         let mock_addr = listener.local_addr().expect("test provider address");
-        let server_handle = clawcrew_spawn::spawn!(async move {
+        let server_handle = galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("test provider serves");
@@ -16496,7 +16496,7 @@ Let me check the result."#;
             .expect("test listener should bind");
         let addr = listener.local_addr().expect("listener should have address");
         let app = Router::new().route("/v1/chat/completions", post(respond_with_done));
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("test server should run");
@@ -16730,7 +16730,7 @@ Let me check the result."#;
         let app = Router::new()
             .route("/v1/chat/completions", post(respond_switch_then_done))
             .with_state(calls);
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("test server should run");

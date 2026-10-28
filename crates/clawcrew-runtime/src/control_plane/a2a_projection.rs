@@ -32,7 +32,7 @@ impl A2aRunObserver for ProjectingObserver {
         };
         let control_plane = control_plane.clone();
         let event = event.clone();
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             project_with(Some(&control_plane), &event).await;
         });
     }

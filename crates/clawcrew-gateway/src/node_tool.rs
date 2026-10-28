@@ -236,7 +236,7 @@ mod tests {
         );
 
         // Spawn a task that simulates the node responding
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             if let Some(invocation) = invoke_rx.recv().await {
                 let _ = invocation
                     .response_tx

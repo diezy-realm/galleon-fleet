@@ -5464,7 +5464,7 @@ impl Channel for SlackChannel {
         let token = self.bot_token.clone();
         let channel = recipient.to_string();
         let update_url = self.slack_api_url("chat.update");
-        let update_task = clawcrew_spawn::spawn!(async move {
+        let update_task = galleon_spawn::spawn!(async move {
             let mut body = serde_json::json!({
                 "channel": channel,
                 "ts": real_ts,
@@ -8760,7 +8760,7 @@ mod tests {
         let a_id = turn_a.clone();
         let started = Arc::new(AtomicUsize::new(0));
         let started_a = Arc::clone(&started);
-        let a_task = clawcrew_spawn::spawn!(async move {
+        let a_task = galleon_spawn::spawn!(async move {
             started_a.fetch_add(1, Ordering::SeqCst);
             a_ch.update_draft_lifecycle("C123", &a_id, ProgressEvent::RunningTool)
                 .await
@@ -9133,7 +9133,7 @@ mod tests {
         }
 
         let (tx, mut inbound_rx) = tokio::sync::mpsc::channel(4);
-        let listener = clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+        let listener = galleon_spawn::spawn!(async move { channel.listen(tx).await });
 
         assert_eq!(
             tokio::time::timeout(Duration::from_secs(6), approved_rx)
@@ -9576,7 +9576,7 @@ mod tests {
             "text": "<@U_BOT> summarize",
         });
         let task_ch = Arc::clone(&ch);
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             task_ch
                 .build_incoming_content(&mention, "C_ONE", true, "U_BOT")
                 .await
@@ -9735,7 +9735,7 @@ mod tests {
             "text": "<@U_BOT> second",
         });
         let task_b = Arc::clone(&alias_b);
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             task_b
                 .build_incoming_content(&second, "C_ONE", true, "U_BOT")
                 .await
@@ -9817,7 +9817,7 @@ mod tests {
             "text": "<@U_BOT> second",
         });
         let task_ch = Arc::clone(&ch);
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             task_ch
                 .build_incoming_content(&second, "C_ONE", true, "U_BOT")
                 .await

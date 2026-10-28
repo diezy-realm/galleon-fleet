@@ -760,7 +760,7 @@ impl StdioTransport {
         alive.store(true, Ordering::Release);
         child_exited.store(false, Ordering::Release);
         let server_name = config.name.clone();
-        let reader = clawcrew_spawn::spawn!(stdio_read_loop(
+        let reader = galleon_spawn::spawn!(stdio_read_loop(
             server_name,
             generation,
             stdout,
@@ -773,7 +773,7 @@ impl StdioTransport {
         let watcher_child = Arc::clone(&child);
         let watcher_flag = Arc::clone(&child_exited);
         let exit_watcher =
-            clawcrew_spawn::spawn!(stdio_child_exit_watcher(watcher_child, watcher_flag,));
+            galleon_spawn::spawn!(stdio_child_exit_watcher(watcher_child, watcher_flag,));
 
         Ok(StdioConn {
             generation,
@@ -1583,7 +1583,7 @@ impl SseTransport {
         let server_name = self.server_name.clone();
         let max_response_bytes = self.max_response_bytes;
 
-        conn.reader_task = Some(clawcrew_spawn::spawn!(async move {
+        conn.reader_task = Some(galleon_spawn::spawn!(async move {
             let stream = resp
                 .bytes_stream()
                 .map(|item| item.map_err(std::io::Error::other));
@@ -2406,14 +2406,14 @@ mod tests {
         } else {
             1
         };
-        let task = ::clawcrew_spawn::spawn!(async move {
+        let task = ::galleon_spawn::spawn!(async move {
             let acceptor = TlsAcceptor::from(Arc::new(server_config));
             let mut handlers = Vec::with_capacity(connection_count);
             for _ in 0..connection_count {
                 let (stream, _) = listener.accept().await.unwrap();
                 let connection_acceptor = acceptor.clone();
                 let connection_behavior = behavior.clone();
-                handlers.push(::clawcrew_spawn::spawn!(serve_test_tls_connection(
+                handlers.push(::galleon_spawn::spawn!(serve_test_tls_connection(
                     stream,
                     connection_acceptor,
                     addr,
@@ -2577,7 +2577,7 @@ mod tests {
         let task_transport = Arc::clone(&transport);
         let request = JsonRpcRequest::new(7, "tools/call", serde_json::json!({}));
         let lifecycle = McpRequestLifecycle::uncoordinated(0);
-        let call = clawcrew_spawn::spawn!(async move {
+        let call = galleon_spawn::spawn!(async move {
             SharedMcpTransportConn::send_and_recv(task_transport.as_ref(), &request, &lifecycle)
                 .await
         });
@@ -2694,7 +2694,7 @@ mod tests {
             ..Default::default()
         };
         let transport = SseTransport::new(&config).expect("build transport");
-        let reader = clawcrew_spawn::spawn!(std::future::pending::<()>());
+        let reader = galleon_spawn::spawn!(std::future::pending::<()>());
         {
             let mut conn = transport.conn.lock().await;
             conn.stream_state = SseStreamState::Connected;
@@ -3812,7 +3812,7 @@ mod tests {
         // an incremental reader returns as soon as the event completes.
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             let (mut sock, _) = listener.accept().await.unwrap();
             let mut buf = [0u8; 2048];
             // Drain the request head so the client's write side does not block.
@@ -3966,7 +3966,7 @@ data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n\n";
             ..Default::default()
         };
         let transport = Arc::new(SseTransport::new(&config).expect("build transport"));
-        let reader = clawcrew_spawn::spawn!(std::future::pending::<()>());
+        let reader = galleon_spawn::spawn!(std::future::pending::<()>());
         {
             let mut conn = transport.conn.lock().await;
             conn.stream_state = SseStreamState::Connected;
@@ -3981,7 +3981,7 @@ data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n\n";
         let task_transport = Arc::clone(&transport);
         let request = JsonRpcRequest::new(7, "tools/call", serde_json::json!({}));
         let lifecycle = McpRequestLifecycle::uncoordinated(0);
-        let call = clawcrew_spawn::spawn!(async move {
+        let call = galleon_spawn::spawn!(async move {
             SharedMcpTransportConn::send_and_recv(task_transport.as_ref(), &request, &lifecycle)
                 .await
         });
@@ -4047,7 +4047,7 @@ data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n\n";
             ..Default::default()
         };
         let transport = SseTransport::new(&config).expect("build transport");
-        let reader = clawcrew_spawn::spawn!(std::future::pending::<()>());
+        let reader = galleon_spawn::spawn!(std::future::pending::<()>());
         {
             let mut conn = transport.conn.lock().await;
             conn.stream_state = SseStreamState::Connected;
@@ -4145,7 +4145,7 @@ data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n\n";
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             let (mut sse_socket, _) = listener.accept().await.unwrap();
             let mut request = [0_u8; 4096];
             let bytes_read = sse_socket.read(&mut request).await.unwrap();
@@ -4249,7 +4249,7 @@ Connection: keep-alive\r\n\
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             let (mut sock, _) = listener.accept().await.unwrap();
             let mut buf = [0u8; 2048];
             let _ = sock.read(&mut buf).await;
@@ -4404,7 +4404,7 @@ Connection: keep-alive\r\n\
         let transport = Arc::new(SseTransport::new(&config).expect("build transport"));
         // A persistent reader that never delivers: if the oversized body were
         // swallowed to an empty fallback, the request would wait here forever.
-        let reader = clawcrew_spawn::spawn!(std::future::pending::<()>());
+        let reader = galleon_spawn::spawn!(std::future::pending::<()>());
         {
             let mut conn = transport.conn.lock().await;
             conn.stream_state = SseStreamState::Connected;

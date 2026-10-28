@@ -846,7 +846,7 @@ impl TtsProvider for EdgeTtsProvider {
                 .stderr
                 .take()
                 .expect("stderr piped");
-            artifact.stderr_reader = Some(clawcrew_spawn::spawn!(async move {
+            artifact.stderr_reader = Some(galleon_spawn::spawn!(async move {
                 let mut buf = Vec::new();
                 let mut pipe = pipe;
                 let _ = pipe.read_to_end(&mut buf).await;
@@ -2325,7 +2325,7 @@ mod tests {
             &[script],
             std::time::Duration::from_secs(10),
         );
-        let mut handle = clawcrew_spawn::spawn!(async move {
+        let mut handle = galleon_spawn::spawn!(async move {
             provider.synthesize("hello", "en-US-AriaNeural").await
         });
         // Wait until the child has created the artifact and recorded its path
@@ -2431,7 +2431,7 @@ mod tests {
             // A probe task on the same worker must keep advancing while cleanup
             // is pending. With a blocking Drop it cannot run until the reap
             // bound ends (~3 s); with the async reaper it fires on schedule.
-            let probe = clawcrew_spawn::spawn!(async {
+            let probe = galleon_spawn::spawn!(async {
                 tokio::time::sleep(std::time::Duration::from_millis(200)).await;
                 true
             });

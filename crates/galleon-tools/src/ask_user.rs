@@ -259,7 +259,7 @@ impl Tool for AskUserTool {
 
         // Spawn a listener task on the channel
         let listen_channel = Arc::clone(&channel);
-        let listen_handle = clawcrew_spawn::spawn!(async move { listen_channel.listen(tx).await });
+        let listen_handle = galleon_spawn::spawn!(async move { listen_channel.listen(tx).await });
 
         let response = tokio::time::timeout(timeout, rx.recv()).await;
 

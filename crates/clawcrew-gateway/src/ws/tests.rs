@@ -200,7 +200,7 @@ data: {\"type\":\"message_stop\"}\n\n",
         .await
         .expect("bind local Anthropic fixture");
     let mock_addr = mock_listener.local_addr().expect("fixture address");
-    let mock_server = clawcrew_spawn::spawn!(async move {
+    let mock_server = galleon_spawn::spawn!(async move {
         axum::serve(mock_listener, mock_app)
             .await
             .expect("local Anthropic fixture serves");
@@ -257,7 +257,7 @@ data: {\"type\":\"message_stop\"}\n\n",
         .await
         .expect("bind local WebSocket gateway");
     let gateway_addr = gateway_listener.local_addr().expect("gateway address");
-    let gateway_server = clawcrew_spawn::spawn!(async move {
+    let gateway_server = galleon_spawn::spawn!(async move {
         axum::serve(gateway_listener, gateway_app)
             .await
             .expect("local WebSocket gateway serves");
@@ -436,7 +436,7 @@ async fn websocket_connect_persists_a_restore_time_trim_before_going_live_inner(
         .await
         .expect("bind local WebSocket gateway");
     let gateway_addr = gateway_listener.local_addr().expect("gateway address");
-    let gateway_server = clawcrew_spawn::spawn!(async move {
+    let gateway_server = galleon_spawn::spawn!(async move {
         axum::serve(gateway_listener, gateway_app)
             .await
             .expect("local WebSocket gateway serves");
@@ -557,7 +557,7 @@ async fn idle_chat_route_pings_before_and_preserves_the_first_client_message() {
         .await
         .expect("test listener");
     let address = listener.local_addr().expect("test listener address");
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("test gateway server");

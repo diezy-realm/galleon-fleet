@@ -833,7 +833,7 @@ mod tests {
         };
         let (event_tx, mut event_rx) = tokio::sync::mpsc::channel(2);
         let cancel_after_chunk = cancellation.clone();
-        let observed_chunk = clawcrew_spawn::spawn!(async move {
+        let observed_chunk = galleon_spawn::spawn!(async move {
             let event = event_rx.recv().await;
             cancel_after_chunk.cancel();
             event
@@ -1479,7 +1479,7 @@ mod tests {
         let provider = LiveMarkerTimingProvider;
         let (event_tx, mut event_rx) = tokio::sync::mpsc::channel::<TurnEvent>(16);
 
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             consume_provider_streaming_response(
                 &provider,
                 &[ChatMessage::user("go")],

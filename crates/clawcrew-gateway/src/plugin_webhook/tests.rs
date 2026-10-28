@@ -63,7 +63,7 @@ async fn plugin_webhook_router_delivers_exact_request() {
     let registry_lease = registry.start_generation();
     assert!(registry_lease.replace(HashMap::from([("fixture".to_string(), sink)])));
     let (seen, observed) = tokio::sync::oneshot::channel();
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         let request = receiver.recv().await.expect("route forwards request");
         let _ = seen.send((request.headers.clone(), request.body.clone()));
         let _ = request.reply.send(Ok(WebhookOutcome::Ack));
@@ -98,7 +98,7 @@ async fn plugin_webhook_router_keeps_all_diagnostics_private() {
     let (sink, mut receiver) = tokio::sync::mpsc::channel(3);
     let registry_lease = registry.start_generation();
     assert!(registry_lease.replace(HashMap::from([("fixture".to_string(), sink)])));
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         while let Some(request) = receiver.recv().await {
             let rejection = match request.body.as_slice() {
                 b"auth" => WebhookReject::Unauthorized(
@@ -151,7 +151,7 @@ async fn plugin_webhook_router_timeout_cancels_the_worker_request() {
     let registry_lease = registry.start_generation();
     assert!(registry_lease.replace(HashMap::from([("fixture".to_string(), sink)])));
     let (cancelled, observed) = tokio::sync::oneshot::channel();
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         let request = receiver.recv().await.expect("route forwards request");
         request.cancellation.cancelled().await;
         let _ = cancelled.send(());
@@ -270,7 +270,7 @@ async fn plugin_webhook_router_uses_the_canonical_client_key_policy() {
     let (sink, receiver) = tokio::sync::mpsc::channel(4);
     let registry_lease = registry.start_generation();
     assert!(registry_lease.replace(HashMap::from([("fixture".to_string(), sink)])));
-    clawcrew_spawn::spawn!(acknowledge(receiver));
+    galleon_spawn::spawn!(acknowledge(receiver));
     let app = plugin_webhook_test_router(state, registry);
 
     let first = app
@@ -314,7 +314,7 @@ async fn plugin_webhook_router_uses_the_canonical_client_key_policy() {
     let (trusted_sink, trusted_receiver) = tokio::sync::mpsc::channel(4);
     let trusted_registry_lease = trusted_registry.start_generation();
     assert!(trusted_registry_lease.replace(HashMap::from([("fixture".to_string(), trusted_sink)])));
-    clawcrew_spawn::spawn!(acknowledge(trusted_receiver));
+    galleon_spawn::spawn!(acknowledge(trusted_receiver));
     let trusted = plugin_webhook_test_router(trusted_state, trusted_registry);
     for forwarded in ["198.51.100.1", "198.51.100.2"] {
         let response = trusted
@@ -351,7 +351,7 @@ async fn plugin_webhook_routes_preserve_authoritative_request_metadata() {
     let (sink, mut receiver) = tokio::sync::mpsc::channel(2);
     assert!(lease.replace(HashMap::from([("fixture".to_string(), sink)])));
     let app = plugin_webhook_test_router(admin_paircode_state(&tmp, false, false), registry);
-    let worker = clawcrew_spawn::spawn!(async move {
+    let worker = galleon_spawn::spawn!(async move {
         for method in ["GET", "POST"] {
             let request = receiver
                 .recv()
@@ -443,7 +443,7 @@ async fn plugin_webhook_response_limit_counts_utf8_bytes_at_the_gateway() {
         "λ".repeat(MAX_WEBHOOK_RESPONSE_BODY_BYTES / 2 + 1),
     ];
     let responses = bodies.clone();
-    let worker = clawcrew_spawn::spawn!(async move {
+    let worker = galleon_spawn::spawn!(async move {
         for body in responses {
             let request = receiver.recv().await.expect("request arrives");
             request

@@ -1,5 +1,5 @@
 [package]
-name = "clawcrew-spawn"
+name = "galleon-spawn"
 rust-version.workspace = true
 version.workspace = true
 edition = "2024"
@@ -10,7 +10,7 @@ homepage.workspace = true
 publish = true
 
 [dependencies]
-# clawcrew-spawn IS the sanctioned interface against tokio::spawn for the
+# galleon-spawn IS the sanctioned interface against tokio::spawn for the
 # workspace. It sits one rung above clawcrew-log so the spawn macro can
 # emit lifecycle records (Spawn / Complete) through the same record!
 # pipeline that every other observed call site uses. Attribution rides

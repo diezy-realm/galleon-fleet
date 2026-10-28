@@ -3271,7 +3271,7 @@ impl ModelProvider for AnthropicModelProvider {
             "stream: spawning detached Anthropic SSE parser task"
         );
 
-        let parser_handle = ::clawcrew_spawn::spawn!(async move {
+        let parser_handle = ::galleon_spawn::spawn!(async move {
             let mut req = client
                 .post(&url)
                 .header("anthropic-version", "2023-06-01")

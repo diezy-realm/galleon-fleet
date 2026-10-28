@@ -27,7 +27,7 @@
 //! client at the daemon).
 //!
 //! `zerorelay` is a standalone networking app (not daemon-path code), so bare
-//! `tokio::spawn` is the right primitive here; the `clawcrew_spawn::spawn!` rule
+//! `tokio::spawn` is the right primitive here; the `galleon_spawn::spawn!` rule
 //! is for in-daemon tasks. Mirrors the `apps/zerocode` exemption.
 #![allow(clippy::disallowed_methods)]
 

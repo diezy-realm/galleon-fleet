@@ -62,14 +62,14 @@ async fn handle_socket(socket: WebSocket, state: AppState, default_agent: Option
     let (output_tx, mut output_rx) = mpsc::channel::<String>(256);
 
     let server_task = if let Some(runner) = state.acp_runner.clone() {
-        Some(clawcrew_spawn::spawn!(async move {
+        Some(galleon_spawn::spawn!(async move {
             runner.run_session(input_rx, output_tx, default_agent).await;
         }))
     } else {
         None
     };
 
-    let output_task = clawcrew_spawn::spawn!(async move {
+    let output_task = galleon_spawn::spawn!(async move {
         while let Some(line) = output_rx.recv().await {
             if sender.send(Message::Text(line.into())).await.is_err() {
                 break;
@@ -299,7 +299,7 @@ mod tests {
         let app = axum::Router::new()
             .route("/acp", axum::routing::get(handle_ws_acp))
             .with_state(state);
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("serve test acp endpoint");

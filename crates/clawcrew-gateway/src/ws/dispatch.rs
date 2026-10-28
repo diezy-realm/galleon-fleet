@@ -837,7 +837,7 @@ pub(crate) async fn process_chat_message(
                     let memory_config = state.config.read().memory.clone();
                     let user_msg = content.to_string();
                     let assistant_resp = outcome.response.clone();
-                    clawcrew_spawn::spawn!(async move {
+                    galleon_spawn::spawn!(async move {
                         if let Err(e) = galleon_memory::consolidation::consolidate_turn(
                             model_provider.as_ref(),
                             &model,

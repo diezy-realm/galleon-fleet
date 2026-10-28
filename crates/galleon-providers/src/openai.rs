@@ -1391,7 +1391,7 @@ impl ModelProvider for OpenAiResponsesModelProvider {
         let alias = ::clawcrew_log::debug_enabled().then(|| self.alias.clone());
 
         let (tx, rx) = tokio::sync::mpsc::channel::<StreamResult<StreamEvent>>(100);
-        let handle = ::clawcrew_spawn::spawn!(async move {
+        let handle = ::galleon_spawn::spawn!(async move {
             let (instructions, input) = build_responses_input(&messages_owned);
             let instructions = if instructions.is_empty() {
                 None
@@ -1495,7 +1495,7 @@ mod tests {
             .await
             .expect("bind Responses SSE test server");
         let addr = listener.local_addr().expect("Responses SSE test address");
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("serve Responses SSE test");
@@ -1552,7 +1552,7 @@ mod tests {
         );
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server_handle = clawcrew_spawn::spawn!(async move {
+        let server_handle = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
         let provider = OpenAiResponsesModelProvider::builder("test")
@@ -1617,7 +1617,7 @@ mod tests {
         let proxy_app = Router::new()
             .fallback(proxy_response)
             .with_state(Arc::clone(&proxy_hits));
-        let proxy_server = clawcrew_spawn::spawn!(async move {
+        let proxy_server = galleon_spawn::spawn!(async move {
             axum::serve(proxy_listener, proxy_app).await.unwrap();
         });
 
@@ -1627,7 +1627,7 @@ mod tests {
         let direct_app = Router::new()
             .route("/responses", post(direct_response))
             .with_state(Arc::clone(&direct_hits));
-        let direct_server = clawcrew_spawn::spawn!(async move {
+        let direct_server = galleon_spawn::spawn!(async move {
             axum::serve(direct_listener, direct_app).await.unwrap();
         });
 
@@ -2918,7 +2918,7 @@ mod tests {
         let addr = listener
             .local_addr()
             .expect("stalled Responses test server address");
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             let (_socket, _) = listener
                 .accept()
                 .await

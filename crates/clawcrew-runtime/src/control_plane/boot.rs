@@ -76,7 +76,7 @@ impl ControlPlaneRecoveryOwner {
         // (not `&self`, which the macro would otherwise hold across the 'static boundary).
         let store = Arc::clone(&self.handle.store);
         let boot_id = self.handle.boot_id.clone();
-        clawcrew_spawn::spawn!(reaper::reaper_loop(
+        galleon_spawn::spawn!(reaper::reaper_loop(
             store,
             boot_id,
             max_runtime_secs,

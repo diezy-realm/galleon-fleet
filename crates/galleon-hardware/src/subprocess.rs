@@ -425,7 +425,7 @@ where
 
 fn spawn_background_reaper(mut child: Child) -> JoinHandle<()> {
     let pid = child.id();
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         if let Err(error) = child.wait().await {
             ::clawcrew_log::record!(
                 WARN,
@@ -462,7 +462,7 @@ fn spawn_output_readers(
     stderr: ChildStderr,
 ) -> (oneshot::Receiver<Result<String, String>>, OutputReaderTasks) {
     let (first_line_tx, first_line_rx) = oneshot::channel();
-    let stdout_task = clawcrew_spawn::spawn!(async move {
+    let stdout_task = galleon_spawn::spawn!(async move {
         let mut stdout = BufReader::new(stdout);
         let mut line = String::new();
         match stdout.read_line(&mut line).await {
@@ -480,7 +480,7 @@ fn spawn_output_readers(
         }
     });
 
-    let stderr_task = clawcrew_spawn::spawn!(async move {
+    let stderr_task = galleon_spawn::spawn!(async move {
         let mut stderr = stderr;
         let mut captured = Vec::with_capacity(STDERR_CAPTURE_BYTES);
         let mut buffer = [0u8; 8 * 1024];
@@ -887,7 +887,7 @@ mod tests {
         let tool = SubprocessTool::new(m, script_path)
             .with_timeouts(Duration::from_secs(5), Duration::from_secs(1));
         let execution =
-            clawcrew_spawn::spawn!(async move { tool.execute(serde_json::json!({})).await });
+            galleon_spawn::spawn!(async move { tool.execute(serde_json::json!({})).await });
         let pid = wait_for_pid_file(&pid_path).await;
         let result = execution
             .await
@@ -922,7 +922,7 @@ mod tests {
         let tool = SubprocessTool::new(make_manifest("blocked_stdin_tool", vec![]), script_path)
             .with_timeouts(Duration::from_secs(5), Duration::from_secs(1));
 
-        let execution = clawcrew_spawn::spawn!(async move {
+        let execution = galleon_spawn::spawn!(async move {
             tool.execute(serde_json::json!({"payload": "x".repeat(1024 * 1024)}))
                 .await
         });
@@ -960,11 +960,11 @@ mod tests {
         let stderr_marker = CancellationMarker(Arc::clone(&stderr_cancelled));
 
         let readers = OutputReaderTasks {
-            stdout_task: clawcrew_spawn::spawn!(async move {
+            stdout_task: galleon_spawn::spawn!(async move {
                 let _marker = stdout_marker;
                 std::future::pending::<std::io::Result<()>>().await
             }),
-            stderr_task: clawcrew_spawn::spawn!(async move {
+            stderr_task: galleon_spawn::spawn!(async move {
                 let _marker = stderr_marker;
                 std::future::pending::<std::io::Result<Vec<u8>>>().await
             }),
@@ -1001,7 +1001,7 @@ mod tests {
         assert_eq!(retained_error.to_string(), "completed reader I/O error");
 
         let pending_task =
-            clawcrew_spawn::spawn!(async { std::future::pending::<std::io::Result<()>>().await });
+            galleon_spawn::spawn!(async { std::future::pending::<std::io::Result<()>>().await });
         pending_task.abort();
         let cancelled = pending_task.await;
 
@@ -1012,8 +1012,8 @@ mod tests {
     #[tokio::test]
     async fn reader_finish_does_not_repoll_completed_handle_after_peer_timeout() {
         let readers = OutputReaderTasks {
-            stdout_task: clawcrew_spawn::spawn!(async { Ok(()) }),
-            stderr_task: clawcrew_spawn::spawn!(async {
+            stdout_task: galleon_spawn::spawn!(async { Ok(()) }),
+            stderr_task: galleon_spawn::spawn!(async {
                 std::future::pending::<std::io::Result<Vec<u8>>>().await
             }),
         };

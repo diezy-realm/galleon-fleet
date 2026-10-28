@@ -1427,7 +1427,7 @@ mod tests {
         let port = listener.local_addr().unwrap().port();
         let (tx, rx) = mpsc::channel(16);
         let bot_id = bot_user_id.to_string();
-        let jh = clawcrew_spawn::spawn!(async move {
+        let jh = galleon_spawn::spawn!(async move {
             ch.listen_with_listener(listener, bot_id, tx).await.ok();
         });
         // Give the server a moment to begin accepting connections.
@@ -2960,7 +2960,7 @@ mod tests {
         let (tx, _rx) = tokio::sync::mpsc::channel(1);
         let sender_icon = Arc::clone(&ch.sender_icon);
 
-        let abort = clawcrew_spawn::spawn!(async move {
+        let abort = galleon_spawn::spawn!(async move {
             ch.listen(tx).await.ok();
         })
         .abort_handle();

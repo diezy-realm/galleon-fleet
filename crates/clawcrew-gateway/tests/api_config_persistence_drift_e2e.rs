@@ -101,7 +101,7 @@ async fn test_api_config_real_fs_mutation_atomic_persistence_and_swap() {
         .expect("bind ephemeral TCP listener");
     let local_addr = listener.local_addr().expect("local socket address");
     let app = build_gateway_router(state.clone());
-    let _server = clawcrew_spawn::spawn!(async move {
+    let _server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("axum gateway serve");
@@ -247,7 +247,7 @@ async fn test_api_config_external_modification_live_drift_detection() {
         .expect("bind ephemeral TCP listener");
     let local_addr = listener.local_addr().expect("local socket address");
     let app = build_gateway_router(state.clone());
-    let _server = clawcrew_spawn::spawn!(async move {
+    let _server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("axum gateway serve");

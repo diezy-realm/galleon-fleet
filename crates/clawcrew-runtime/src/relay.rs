@@ -355,7 +355,7 @@ pub async fn run_relay_bridge(cfg: RelayBridgeConfig, cancel: CancellationToken)
     let mut link = {
         let c = cfg.clone();
         let lc = link_cancel.clone();
-        clawcrew_spawn::spawn!(async move { serve_link(c, lc, None).await })
+        galleon_spawn::spawn!(async move { serve_link(c, lc, None).await })
     };
 
     loop {
@@ -373,7 +373,7 @@ pub async fn run_relay_bridge(cfg: RelayBridgeConfig, cancel: CancellationToken)
             let mut c = cfg.clone();
             c.node_id = new_id.clone();
             let lc = new_cancel.clone();
-            clawcrew_spawn::spawn!(async move { serve_link(c, lc, Some(registered_tx)).await })
+            galleon_spawn::spawn!(async move { serve_link(c, lc, Some(registered_tx)).await })
         };
 
         match wait_for_new_link_registration(registered_rx, &cancel).await {
@@ -679,7 +679,7 @@ async fn serve_established(
     let (sink, mut stream) = ws.split();
     let writer = {
         let link_dead = link_dead.clone();
-        clawcrew_spawn::spawn!(relay_writer(from_tasks, sink, link_dead))
+        galleon_spawn::spawn!(relay_writer(from_tasks, sink, link_dead))
     };
 
     // Keepalive watchdog: ping below NAT timeout, declare dead on silence.
@@ -687,7 +687,7 @@ async fn serve_established(
         let to_relay = to_relay.clone();
         let last_seen = last_seen.clone();
         let link_dead = link_dead.clone();
-        clawcrew_spawn::spawn!(keepalive_watchdog(to_relay, last_seen, link_dead));
+        galleon_spawn::spawn!(keepalive_watchdog(to_relay, last_seen, link_dead));
     }
 
     // Per-node OPEN handshake-rate cap (A6). Single-threaded reader loop, so a
@@ -768,7 +768,7 @@ async fn serve_established(
                                     // peer as relay-routed.
                                     let bridge_ports =
                                         is_enroll.then(|| cfg.enroll_bridge_ports.clone()).flatten();
-                                    clawcrew_spawn::spawn!(async move {
+                                    galleon_spawn::spawn!(async move {
                                         bridge_conn(
                                             conn_id, &local, to_relay, rx, conn_cancel, conns,
                                             bridge_ports,
@@ -1542,7 +1542,7 @@ mod control_frame_tests {
 
 #[cfg(test)]
 // Test code, not daemon-path: bare `tokio::spawn` is fine here (the
-// `clawcrew_spawn::spawn!` attribution rule is for production daemon tasks).
+// `galleon_spawn::spawn!` attribution rule is for production daemon tasks).
 #[allow(clippy::disallowed_methods)]
 mod link_liveness_tests {
     use super::*;
@@ -1742,7 +1742,7 @@ mod link_liveness_tests {
 
 #[cfg(test)]
 // Test code, not daemon-path: bare `tokio::spawn` is fine here (the
-// `clawcrew_spawn::spawn!` attribution rule is for production daemon tasks).
+// `galleon_spawn::spawn!` attribution rule is for production daemon tasks).
 #[allow(clippy::disallowed_methods)]
 mod conn_cancellation_tests {
     use super::*;
@@ -1947,7 +1947,7 @@ mod conn_cancellation_tests {
 
 #[cfg(test)]
 // Test code, not daemon-path: bare `tokio::spawn` is fine here (the
-// `clawcrew_spawn::spawn!` attribution rule is for production daemon tasks).
+// `galleon_spawn::spawn!` attribution rule is for production daemon tasks).
 #[allow(clippy::disallowed_methods)]
 mod local_dial_tests {
     use super::*;
@@ -2087,7 +2087,7 @@ mod local_dial_tests {
 
 #[cfg(test)]
 // Test code, not daemon-path: bare `tokio::spawn` is fine here (the
-// `clawcrew_spawn::spawn!` attribution rule is for production daemon tasks).
+// `galleon_spawn::spawn!` attribution rule is for production daemon tasks).
 #[allow(clippy::disallowed_methods)]
 mod bridge_classification_race_tests {
     use super::*;

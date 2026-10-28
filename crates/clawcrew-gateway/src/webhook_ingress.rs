@@ -541,7 +541,7 @@ pub(crate) async fn dispatch_verified_webhook(
                 let memory_key = ctx.memory_key;
                 #[cfg(test)]
                 let suppress_reply_send = ctx.suppress_reply_send;
-                clawcrew_spawn::spawn!(async move {
+                galleon_spawn::spawn!(async move {
                     process_verified_message(
                         &state,
                         spec,

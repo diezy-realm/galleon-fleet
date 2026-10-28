@@ -1061,8 +1061,8 @@ async fn supervise_launchd_child(
         .context("daemon stderr pipe unavailable")?;
     let stdout_sink = writers.stdout.clone();
     let stderr_sink = writers.stderr.clone();
-    let stdout_task = clawcrew_spawn::spawn!(drain_launchd_pipe(stdout, stdout_sink));
-    let stderr_task = clawcrew_spawn::spawn!(drain_launchd_pipe(stderr, stderr_sink));
+    let stdout_task = galleon_spawn::spawn!(drain_launchd_pipe(stdout, stdout_sink));
+    let stderr_task = galleon_spawn::spawn!(drain_launchd_pipe(stderr, stderr_sink));
 
     #[cfg(any(target_os = "macos", all(test, unix)))]
     let outcome = wait_for_service_child(&mut child, &mut signals).await;
@@ -1242,9 +1242,9 @@ async fn supervise_desktop_child(
         let stdout_sink = writers.stdout.clone();
         let stderr_sink = writers.stderr.clone();
         let stdout_task =
-            clawcrew_spawn::spawn!(drain_service_pipe(stdout, stdout_sink, "desktop"));
+            galleon_spawn::spawn!(drain_service_pipe(stdout, stdout_sink, "desktop"));
         let stderr_task =
-            clawcrew_spawn::spawn!(drain_service_pipe(stderr, stderr_sink, "desktop"));
+            galleon_spawn::spawn!(drain_service_pipe(stderr, stderr_sink, "desktop"));
         if first_generation {
             emit_desktop_handshake("READY", None);
             first_generation = false;

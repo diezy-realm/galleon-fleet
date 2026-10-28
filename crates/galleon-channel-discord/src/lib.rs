@@ -2249,7 +2249,7 @@ impl Channel for DiscordChannel {
         // is assembled in the select! loop where `sequence` lives.
         let (hb_tx, mut hb_rx) = tokio::sync::mpsc::channel::<()>(1);
         let hb_interval = heartbeat_interval;
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             let mut interval = tokio::time::interval(std::time::Duration::from_millis(hb_interval));
             loop {
                 interval.tick().await;
@@ -2413,7 +2413,7 @@ impl Channel for DiscordChannel {
                                     let workspace_dir = self.workspace_dir.clone();
                                     let slash_command_scope = self.slash_command_scope;
                                     let guild_ids = self.guild_ids.clone();
-                                    clawcrew_spawn::spawn!(async move {
+                                    galleon_spawn::spawn!(async move {
                                         let specs = match resolver {
                                             Some(resolve) => {
                                                 match tokio::task::spawn_blocking(move || resolve()).await {
@@ -2598,7 +2598,7 @@ impl Channel for DiscordChannel {
                                     let tx = tx.clone();
                                     let resolver = self.slash_command_resolver.clone();
 
-                                    clawcrew_spawn::spawn!(async move {
+                                    galleon_spawn::spawn!(async move {
                                         if command == "ask" && prompt.is_empty() {
                                             let msg = i18n::get_required_cli_string(
                                                 "channel-discord-interaction-malformed",
@@ -2791,7 +2791,7 @@ impl Channel for DiscordChannel {
                                     let alias = self.alias.clone();
                                     let tx = tx.clone();
 
-                                    clawcrew_spawn::spawn!(async move {
+                                    galleon_spawn::spawn!(async move {
                                         if !allowlist::is_user_allowed(
                                             &peers,
                                             &user_id,
@@ -3189,7 +3189,7 @@ impl Channel for DiscordChannel {
                                     let resolver = self.slash_command_resolver.clone();
                                     let thread_channels = self.thread_channels.clone();
 
-                                    clawcrew_spawn::spawn!(async move {
+                                    galleon_spawn::spawn!(async move {
                                         let thread_parent = discord_thread_parent_cached(
                                             &thread_channels,
                                             &interaction_channel,
@@ -3479,7 +3479,7 @@ impl Channel for DiscordChannel {
                         let reaction_channel_id = channel_id.clone();
                         let reaction_message_id = message_id.to_string();
                         let reaction_emoji = random_discord_ack_reaction().to_string();
-                        clawcrew_spawn::spawn!(async move {
+                        galleon_spawn::spawn!(async move {
                             if let Err(err) = reaction_channel
                                 .add_reaction(
                                     &reaction_channel_id,
@@ -3566,7 +3566,7 @@ impl Channel for DiscordChannel {
         let token = self.bot_token.clone();
         let channel_id = recipient.to_string();
 
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             let url = format!("https://discord.com/api/v10/channels/{channel_id}/typing");
             loop {
                 let _ = client

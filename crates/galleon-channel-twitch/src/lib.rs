@@ -77,7 +77,7 @@ impl Channel for TwitchChannel {
     async fn listen(&self, tx: mpsc::Sender<ChannelMessage>) -> Result<()> {
         let (inner_tx, mut inner_rx) = mpsc::channel::<ChannelMessage>(FORWARD_BUFFER);
         let inner = self.inner.clone();
-        let listen_task = clawcrew_spawn::spawn!(async move { inner.listen(inner_tx).await });
+        let listen_task = galleon_spawn::spawn!(async move { inner.listen(inner_tx).await });
 
         // Drain inner_rx, rewrite the channel field, forward to outer tx.
         while let Some(mut msg) = inner_rx.recv().await {

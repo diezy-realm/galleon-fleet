@@ -437,7 +437,7 @@ where
 {
     let output = Arc::new(std::sync::Mutex::new(DrainOutput::default()));
     let shared = Arc::clone(&output);
-    let task = clawcrew_spawn::spawn!(async move {
+    let task = galleon_spawn::spawn!(async move {
         drain_capped_into(reader, cap, shared).await;
     });
     DrainHandle { task, output }

@@ -1467,7 +1467,7 @@ impl ConversationLaneRegistry {
         lanes.insert(key.to_string(), tx.clone());
         let registry = Arc::clone(self);
         let lane_key = key.to_string();
-        clawcrew_spawn::spawn!(registry.run_lane(lane_key, rx));
+        galleon_spawn::spawn!(registry.run_lane(lane_key, rx));
 
         // Re-send after the lane exists. A runner cannot retire while this
         // lock is held, so the only way this fails is a runtime already
@@ -1504,7 +1504,7 @@ impl ConversationLaneRegistry {
             // `next_slot`, instead of dying with its registration stuck in the
             // registry and `wait_drained` hanging on shutdown.
             let registry = Arc::clone(&self);
-            let worker = clawcrew_spawn::spawn!(registry.process_turn(turn));
+            let worker = galleon_spawn::spawn!(registry.process_turn(turn));
             log_worker_join_result(worker.await);
         }
     }
@@ -1661,7 +1661,7 @@ fn send_conversation_busy(
         let reply_target = msg.reply_target.clone();
         let thread_ts = msg.thread_ts.clone();
         let tracked_task = busy_notice_tasks.track();
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             let _notice_permit = notice_permit;
             send_notice_with_timeout(
                 channel,
@@ -1796,13 +1796,13 @@ fn spawn_inbound_routing(
     slot: InboundSlot,
 ) {
     let tracked_task = tracker.track();
-    let worker = clawcrew_spawn::spawn!(route_inbound_slot(
+    let worker = galleon_spawn::spawn!(route_inbound_slot(
         lanes,
         busy_notice_budget,
         busy_notice_tasks,
         slot
     ));
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         log_worker_join_result(worker.await);
         drop(tracked_task);
     });
@@ -1864,7 +1864,7 @@ fn spawn_debounce_forwarder(
     let (slot_tx, slot_rx) = tokio::sync::oneshot::channel();
     let (updates_tx, mut updates_rx) = tokio::sync::mpsc::unbounded_channel();
 
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         let mut pending = first;
         // Admission permits of every follow-up retained in this bucket. They
         // are held until the bucket resolves either way — delivery (the
@@ -7254,7 +7254,7 @@ fn spawn_supervised_listener_with_health_interval(
         _ => ch.name().to_string(),
     };
     let span = clawcrew_log::attribution_span!(&*ch);
-    clawcrew_spawn::spawn!(
+    galleon_spawn::spawn!(
         async move {
             let component = format!("channel:{composite}");
             let mut backoff = initial_backoff_secs.max(1);
@@ -7403,7 +7403,7 @@ fn spawn_scoped_typing_task(
 ) -> tokio::task::JoinHandle<()> {
     let stop_signal = cancellation_token;
     let refresh_interval = Duration::from_secs(CHANNEL_TYPING_REFRESH_INTERVAL_SECS);
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         let mut interval = tokio::time::interval(refresh_interval);
         interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
@@ -7478,7 +7478,7 @@ fn spawn_matrix_single_message_typing_task(
     refresh_interval: Duration,
     cancellation: CancellationToken,
 ) -> tokio::task::JoinHandle<()> {
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         let mut interval = tokio::time::interval(refresh_interval);
         interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
         interval.tick().await;
@@ -8475,7 +8475,7 @@ async fn run_matrix_single_message_draft_updater(
                 let draft_id = draft_id.clone();
                 let flush_tx = flush_tx.clone();
                 flush_in_flight = true;
-                clawcrew_spawn::spawn!(async move {
+                galleon_spawn::spawn!(async move {
                     let result = channel
                         .update_typed_draft_progress_batch(&reply_target, &draft_id, &batch)
                         .await
@@ -8895,7 +8895,7 @@ async fn process_channel_message_body(
             let sender = msg.sender.clone();
             let channel_label = channel.name().to_string();
             let span = ::clawcrew_log::attribution_span!(&*channel);
-            Some(clawcrew_spawn::spawn!(
+            Some(galleon_spawn::spawn!(
             ::clawcrew_log::scope!(
                 category: "channel",
                 agent_alias: agent_alias.as_str(),
@@ -9721,7 +9721,7 @@ async fn process_channel_message_body(
                 let stream_draft_lines = matrix_stream_draft_lines(ctx.as_ref(), &msg);
                 let matrix_config = Arc::clone(&ctx.prompt_config);
                 let matrix_alias = msg.channel_alias.clone().unwrap_or_default();
-                Some(clawcrew_spawn::spawn!(async move {
+                Some(galleon_spawn::spawn!(async move {
                     run_matrix_single_message_draft_updater(
                         rx,
                         channel,
@@ -9749,7 +9749,7 @@ async fn process_channel_message_body(
                     .iter()
                     .map(|tool| tool.name().to_ascii_lowercase())
                     .collect();
-                Some(clawcrew_spawn::spawn!(async move {
+                Some(galleon_spawn::spawn!(async move {
                     run_draft_updater(
                         channel,
                         reply_target,
@@ -9829,11 +9829,11 @@ async fn process_channel_message_body(
         let notify_reply_target = msg.reply_target.clone();
         let notify_thread_root = followup_thread_id(&msg);
         let notify_task = if msg.channel == "cli" || !ctx.show_tool_calls || is_partial_draft {
-            Some(clawcrew_spawn::spawn!(async move {
+            Some(galleon_spawn::spawn!(async move {
                 while notify_rx.recv().await.is_some() {}
             }))
         } else {
-            Some(clawcrew_spawn::spawn!(async move {
+            Some(galleon_spawn::spawn!(async move {
                 let thread_ts = notify_thread_root;
                 while let Some(text) = notify_rx.recv().await {
                     if let Some(ref ch) = notify_channel {
@@ -10272,7 +10272,7 @@ async fn process_channel_message_body(
                 let temperature = ctx.temperature;
                 let user_msg = msg.content.clone();
                 let assistant_resp = history_response.clone();
-                clawcrew_spawn::spawn!(async move {
+                galleon_spawn::spawn!(async move {
                     if let Err(e) = memory_strategy
                         .consolidate_turn(
                             &user_msg,
@@ -11369,7 +11369,7 @@ async fn run_message_dispatch_loop(
                     Ok(reply_permit) => {
                         let send_msg = stop_reply_message(&msg, reply);
                         let tracked_task = notice_tasks.track();
-                        clawcrew_spawn::spawn!(async move {
+                        galleon_spawn::spawn!(async move {
                             let _reply_permit = reply_permit;
                             send_notice_with_timeout(channel, send_msg, "stop_ack").await;
                             drop(tracked_task);

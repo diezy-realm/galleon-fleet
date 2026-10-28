@@ -51,7 +51,7 @@
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
         let client = reqwest::Client::new();
@@ -197,7 +197,7 @@
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
         let provider = make_model_provider("custom", &format!("http://{addr}"), Some("test-key"));
@@ -304,7 +304,7 @@
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
         let mut builder = OpenAiCompatibleModelProvider::builder("test")
@@ -502,7 +502,7 @@
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
         let mut builder = OpenAiCompatibleModelProvider::builder("test")
@@ -1542,7 +1542,7 @@
             );
             let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
             let addr = listener.local_addr().unwrap();
-            let server = ::clawcrew_spawn::spawn!(async move {
+            let server = ::galleon_spawn::spawn!(async move {
                 axum::serve(listener, app).await.unwrap();
             });
             (addr, bodies, server)
@@ -1573,7 +1573,7 @@
         );
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
 
@@ -1959,7 +1959,7 @@
         );
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
 
@@ -2217,7 +2217,7 @@
             .await
             .expect("bind SSE test server");
         let addr = listener.local_addr().expect("SSE test server address");
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("serve SSE test");
         });
         let response = reqwest::Client::new()
@@ -2929,7 +2929,7 @@
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
         (format!("http://{addr}"), log, server)
@@ -3452,7 +3452,7 @@
         );
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
         let provider = make_model_provider("test", &format!("http://{addr}"), Some("key"));
@@ -4514,7 +4514,7 @@
             });
             let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
             let addr = listener.local_addr().unwrap();
-            let server = ::clawcrew_spawn::spawn!(async move {
+            let server = ::galleon_spawn::spawn!(async move {
                 axum::serve(listener, app).await.unwrap();
             });
             let provider = OpenAiCompatibleModelProvider::builder("test")
@@ -4560,7 +4560,7 @@
         });
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
         let provider = OpenAiCompatibleModelProvider::builder("test")
@@ -6740,7 +6740,7 @@
         // fires while the streaming client waits for response headers.
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             let (_socket, _) = listener.accept().await.unwrap();
             futures_util::future::pending::<()>().await;
         });
@@ -6826,7 +6826,7 @@
         );
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
         // A 1 s read-idle bound gives the header exchange and first chunk a
@@ -7230,7 +7230,7 @@
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server_handle = ::clawcrew_spawn::spawn!(async move {
+        let server_handle = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
 
@@ -7310,7 +7310,7 @@
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server_handle = ::clawcrew_spawn::spawn!(async move {
+        let server_handle = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
 
@@ -7410,7 +7410,7 @@
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
 

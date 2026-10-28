@@ -98,7 +98,7 @@ pub(crate) fn spawn_request_loop(
     data_dir: PathBuf,
     cancel: CancellationToken,
 ) {
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         if let Err(error) = request_loop(server, data_dir, cancel).await {
             ::clawcrew_log::record!(
                 WARN,
@@ -300,7 +300,7 @@ mod tests {
         let cancel = CancellationToken::new();
         let loop_data_dir = data_dir.path().to_path_buf();
         let loop_cancel = cancel.clone();
-        let loop_handle = clawcrew_spawn::spawn!(request_loop(server, loop_data_dir, loop_cancel));
+        let loop_handle = galleon_spawn::spawn!(request_loop(server, loop_data_dir, loop_cancel));
 
         let generated = request_new_paircode(data_dir.path(), Duration::from_secs(2))
             .await

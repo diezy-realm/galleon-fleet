@@ -10,7 +10,7 @@ mod tests {
 
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             let (mut socket, _) = listener.accept().await.unwrap();
             let mut request = [0_u8; 1024];
             let _ = socket.read(&mut request).await.unwrap();
@@ -1820,7 +1820,7 @@ mod tests {
         let mut server = WebSocketStream::from_raw_socket(server_io, Role::Server, None).await;
         let (mut write, mut read) = client.split();
 
-        let server_task = clawcrew_spawn::spawn!(async move {
+        let server_task = galleon_spawn::spawn!(async move {
             let first = server
                 .next()
                 .await
@@ -1873,7 +1873,7 @@ mod tests {
         let mut server = WebSocketStream::from_raw_socket(server_io, Role::Server, None).await;
         let (mut write, mut read) = client.split();
 
-        let server_task = clawcrew_spawn::spawn!(async move {
+        let server_task = galleon_spawn::spawn!(async move {
             server
                 .next()
                 .await
@@ -1910,7 +1910,7 @@ mod tests {
         let mut server = WebSocketStream::from_raw_socket(server_io, Role::Server, None).await;
         let (mut write, mut read) = client.split();
 
-        let server_task = clawcrew_spawn::spawn!(async move {
+        let server_task = galleon_spawn::spawn!(async move {
             server
                 .next()
                 .await
@@ -1942,7 +1942,7 @@ mod tests {
         let mut server = WebSocketStream::from_raw_socket(server_io, Role::Server, None).await;
         let (mut write, mut read) = client.split();
 
-        let server_task = clawcrew_spawn::spawn!(async move {
+        let server_task = galleon_spawn::spawn!(async move {
             server
                 .next()
                 .await
@@ -1980,7 +1980,7 @@ mod tests {
         let mut server = WebSocketStream::from_raw_socket(server_io, Role::Server, None).await;
         let (mut write, mut read) = client.split();
 
-        let server_task = clawcrew_spawn::spawn!(async move {
+        let server_task = galleon_spawn::spawn!(async move {
             server
                 .next()
                 .await

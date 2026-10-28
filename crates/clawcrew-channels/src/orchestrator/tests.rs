@@ -1184,7 +1184,7 @@ async fn matrix_single_message_progress_coalesces_slow_flush() {
         delay: Duration::from_millis(150),
     });
     let (tx, rx) = tokio::sync::mpsc::channel(64);
-    let updater = clawcrew_spawn::spawn!(run_matrix_single_message_draft_updater(
+    let updater = galleon_spawn::spawn!(run_matrix_single_message_draft_updater(
         rx,
         channel,
         "room".to_string(),
@@ -1852,7 +1852,7 @@ async fn receive_webhook_test_message(
     let port = listener.local_addr().unwrap().port();
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
     let listener_webhook = Arc::clone(&webhook);
-    let task = clawcrew_spawn::spawn!(async move {
+    let task = galleon_spawn::spawn!(async move {
         listener_webhook
             .listen_with_listener(listener, tx)
             .await
@@ -7255,7 +7255,7 @@ impl clawcrew_api::sop::SopFanInDispatcher for MockSopDispatcher {
             *self.run_status.lock().unwrap_or_else(|e| e.into_inner()) =
                 Some(clawcrew_api::sop::SopRunStatus::Running);
             let status_arc = Arc::clone(&self.run_status);
-            clawcrew_spawn::spawn!(async move {
+            galleon_spawn::spawn!(async move {
                 tokio::task::yield_now().await;
                 tokio::time::sleep(Duration::from_millis(15)).await;
                 *status_arc.lock().unwrap_or_else(|e| e.into_inner()) =
@@ -11577,7 +11577,7 @@ async fn message_dispatch_serializes_slack_root_and_thread_followup() {
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let loop_task = clawcrew_spawn::spawn!(run_message_dispatch_loop(
+    let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
         2
@@ -11713,7 +11713,7 @@ async fn message_dispatch_thread_stop_reports_a_folded_followup() {
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let loop_task = clawcrew_spawn::spawn!(run_message_dispatch_loop(
+    let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
         2
@@ -11850,7 +11850,7 @@ async fn message_dispatch_thread_stop_cancels_followup_not_root_of_same_history(
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let loop_task = clawcrew_spawn::spawn!(run_message_dispatch_loop(
+    let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
         2
@@ -12010,7 +12010,7 @@ async fn message_dispatch_slack_top_level_stop_retires_pending_payload_of_thread
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let loop_task = clawcrew_spawn::spawn!(run_message_dispatch_loop(
+    let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
         2
@@ -12143,7 +12143,7 @@ async fn message_dispatch_stop_keeps_a_live_bucket_of_another_scope_on_the_same_
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let loop_task = clawcrew_spawn::spawn!(run_message_dispatch_loop(
+    let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
         2
@@ -12307,7 +12307,7 @@ async fn message_dispatch_slack_thread_stop_preserves_a_debouncing_root_bucket()
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let loop_task = clawcrew_spawn::spawn!(run_message_dispatch_loop(
+    let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
         2
@@ -12433,7 +12433,7 @@ async fn message_dispatch_runtime_command_retires_the_bucket_it_superseded() {
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let loop_task = clawcrew_spawn::spawn!(run_message_dispatch_loop(
+    let loop_task = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(runtime_ctx),
         2
@@ -12739,7 +12739,7 @@ async fn message_dispatch_interrupts_in_flight_telegram_request_and_preserves_co
     });
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(clawcrew_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "alice".to_string(),
@@ -12891,7 +12891,7 @@ async fn passive_stop_command_does_not_cancel_another_participants_turn() {
     });
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(clawcrew_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "alice".to_string(),
@@ -13040,7 +13040,7 @@ async fn active_batch_is_not_swallowed_by_later_passive_chatter() {
     });
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(clawcrew_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "alice".to_string(),
@@ -13186,7 +13186,7 @@ async fn message_dispatch_interrupts_in_flight_slack_request_and_preserves_conte
     });
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(clawcrew_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "U123".to_string(),
@@ -13377,7 +13377,7 @@ async fn message_dispatch_preserves_interrupt_on_new_message_policy_per_whatsapp
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
     let send_provider = Arc::clone(&provider_impl);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(clawcrew_api::channel::ChannelMessage {
             id: "msg-1".to_string(),
             sender: "15555550123".to_string(),
@@ -13599,7 +13599,7 @@ async fn message_dispatch_interrupt_scope_is_same_sender_same_chat() {
     });
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(clawcrew_api::channel::ChannelMessage {
             id: "msg-a".to_string(),
             sender: "alice".to_string(),
@@ -14105,7 +14105,7 @@ async fn approval_wait_pauses_typing_and_only_approval_resumes_it() {
             Arc::clone(&channel),
             Arc::clone(&typing),
         ));
-        let approval_task = clawcrew_spawn::spawn!(async move {
+        let approval_task = galleon_spawn::spawn!(async move {
             wrapped
                 .request_approval_attributed(
                     "approval-chat",
@@ -15738,7 +15738,7 @@ async fn shared_session_concurrent_turns_persist_deterministic_order() {
     assert_eq!(history_key, conversation_history_key(&bob));
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(alice).await.unwrap();
         // Bob arrives while Alice's model call is still in flight.
         tokio::time::sleep(Duration::from_millis(30)).await;
@@ -15874,7 +15874,7 @@ async fn shared_session_new_message_interrupts_only_same_sender() {
     });
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(shared_topic_message("alice", "m1", "alice first"))
             .await
             .unwrap();
@@ -15933,7 +15933,7 @@ async fn shared_session_stop_cancels_only_own_senders_task() {
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
     let sent_probe = Arc::clone(&channel_impl);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(shared_topic_message("alice", "m1", "please think slowly"))
             .await
             .unwrap();
@@ -16025,7 +16025,7 @@ async fn shared_session_queued_turn_holds_no_execution_permit() {
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(alice).await.unwrap();
         tx.send(bob).await.unwrap();
         // By now both budget slots would be spoken for if a queued turn
@@ -16072,7 +16072,7 @@ async fn shared_session_stop_cancels_a_queued_turn_before_it_starts() {
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(shared_topic_message("alice", "m1", "slow one"))
             .await
             .unwrap();
@@ -16137,7 +16137,7 @@ async fn shared_session_stop_cancels_active_turn_despite_queued_follow_up() {
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(shared_topic_message("alice", "m1", "active slow turn"))
             .await
             .unwrap();
@@ -16248,7 +16248,7 @@ async fn shared_session_full_backlog_refuses_excess_messages() {
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
     let release_gate = Arc::clone(&gate);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         for i in 0..flood {
             tx.send(shared_topic_message(
                 "alice",
@@ -16319,7 +16319,7 @@ async fn distinct_conversation_flood_respects_global_pending_limit() {
 
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
     let release_gate = Arc::clone(&gate);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         for i in 0..flood {
             let mut message = shared_topic_message(
                 &format!("sender-{i}"),
@@ -16404,7 +16404,7 @@ async fn debounced_flood_cannot_grow_retained_content_past_aggregate_budget() {
     let flood = GLOBAL_PENDING_TURN_LIMIT + 5;
 
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         // The whole flood lands inside one open bucket: virtual time
         // cannot advance while the sender and the dispatch loop stay
         // runnable, so no window expiry can interleave with the flood.
@@ -16608,7 +16608,7 @@ async fn stop_flood_keeps_reply_tasks_bounded() {
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         for i in 0..(MAX_CONCURRENT_STOP_REPLIES * 4) {
             tx.send(shared_topic_message("alice", &format!("s{i}"), "/stop"))
                 .await
@@ -16726,7 +16726,7 @@ async fn shared_session_new_resets_the_whole_conversation() {
     let history_key = conversation_history_key(&shared_topic_message("alice", "m0", ""));
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(shared_topic_message("alice", "m1", "context before reset"))
             .await
             .unwrap();
@@ -16809,7 +16809,7 @@ async fn shared_session_debounce_extension_keeps_receive_order() {
     let history_key = conversation_history_key(&alice_first);
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(alice_first).await.unwrap();
         // Bob opens a later bucket…
         tokio::time::sleep(Duration::from_millis(10)).await;
@@ -17004,7 +17004,7 @@ async fn debounced_messages_preserve_all_attachments() {
     }];
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(m1).await.unwrap();
         tokio::time::sleep(Duration::from_millis(10)).await;
         tx.send(m2).await.unwrap();
@@ -17064,7 +17064,7 @@ async fn debounced_messages_without_attachments_succeed_normally() {
     let m2 = shared_topic_message("alice", "m2", "text 2");
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(m1).await.unwrap();
         tokio::time::sleep(Duration::from_millis(10)).await;
         tx.send(m2).await.unwrap();
@@ -17110,7 +17110,7 @@ async fn debounced_bucket_rejects_when_combined_attachments_exceed_cap() {
 
     // 5 messages, each with 3 attachments = 15 total (each individual message <= 10).
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(16);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         for i in 0..5 {
             let mut msg = shared_topic_message("alice", &format!("m{i}"), &format!("part {i}"));
             msg.attachments = (0..3)
@@ -17212,7 +17212,7 @@ async fn shared_session_stop_is_a_debounce_boundary() {
     let first = shared_topic_message("alice", "m1", "cancelled before stop");
     let history_key = conversation_history_key(&first);
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(first).await.unwrap();
         tokio::time::sleep(Duration::from_millis(20)).await;
         tx.send(shared_topic_message("alice", "s1", "/stop"))
@@ -17286,7 +17286,7 @@ async fn shared_session_sequential_debounce_buckets_both_run() {
     let history_key = conversation_history_key(&first);
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(first).await.unwrap();
         // Well past the debounce window: the first bucket has fired and
         // its turn is running when the second message arrives.
@@ -17459,7 +17459,7 @@ async fn converged_reroutes_admit_in_hook_completion_order() {
     let merged_key = conversation_history_key(&shared_topic_message("alice", "m0", ""));
 
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(alice).await.unwrap();
         tokio::time::sleep(Duration::from_millis(10)).await;
         tx.send(bob).await.unwrap();
@@ -17526,7 +17526,7 @@ async fn same_conversation_reroutes_preserve_receive_order() {
     let merged_key = conversation_history_key(&shared_topic_message("alice", "m0", ""));
 
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(alice).await.unwrap();
         tokio::time::sleep(Duration::from_millis(10)).await;
         tx.send(bob).await.unwrap();
@@ -17587,7 +17587,7 @@ async fn native_turn_does_not_wait_for_unresolved_earlier_reroute() {
     let merged_key = conversation_history_key(&bob);
 
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(alice).await.unwrap();
         tokio::time::sleep(Duration::from_millis(10)).await;
         tx.send(bob).await.unwrap();
@@ -17648,7 +17648,7 @@ async fn rerouted_turn_does_not_wait_for_unrelated_unresolved_reroute() {
     bob.thread_ts = Some("22".into());
 
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(alice).await.unwrap();
         tokio::time::sleep(Duration::from_millis(10)).await;
         tx.send(bob).await.unwrap();
@@ -17920,7 +17920,7 @@ async fn interrupted_chain_waits_for_canceled_middle_turns_predecessor() {
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
-    let dispatch = clawcrew_spawn::spawn!(run_message_dispatch_loop(
+    let dispatch = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(Arc::clone(&ctx)),
         4
@@ -18028,7 +18028,7 @@ async fn interrupted_chain_waits_when_middle_turn_dies_before_its_lane() {
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
-    let dispatch = clawcrew_spawn::spawn!(run_message_dispatch_loop(
+    let dispatch = galleon_spawn::spawn!(run_message_dispatch_loop(
         rx,
         AgentRouter::single(Arc::clone(&ctx)),
         4
@@ -18121,7 +18121,7 @@ async fn slow_hook_in_one_conversation_does_not_block_another() {
     independent.thread_ts = Some("22".into());
 
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(slow).await.unwrap();
         tokio::time::sleep(Duration::from_millis(10)).await;
         tx.send(independent).await.unwrap();
@@ -18185,7 +18185,7 @@ async fn open_debounce_bucket_does_not_block_another_conversation() {
     let probe = Arc::clone(&channel_impl);
     let answered_while_bucket_open = Arc::new(AtomicBool::new(false));
     let answered_probe = Arc::clone(&answered_while_bucket_open);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         let started = tokio::time::Instant::now();
         tx.send(opener).await.unwrap();
         tokio::time::sleep(Duration::from_millis(100)).await;
@@ -18285,7 +18285,7 @@ async fn shared_session_panicked_turn_releases_registration_and_completion() {
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
     let sent_probe = Arc::clone(&channel_impl);
     let panic_probe = Arc::clone(&panicked);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(shared_topic_message("alice", "m1", "panic this turn"))
             .await
             .unwrap();
@@ -18385,7 +18385,7 @@ async fn shared_session_hook_rerouted_turns_share_one_lane() {
     );
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         tx.send(alice).await.unwrap();
         // Bob's message arrives while Alice's model call is in flight.
         tokio::time::sleep(Duration::from_millis(30)).await;
@@ -18460,7 +18460,7 @@ async fn hook_rerouted_full_destination_sends_busy_notice() {
 
     let (tx, rx) = tokio::sync::mpsc::channel::<ChannelMessage>(8);
     let release_gate = Arc::clone(&gate);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         for i in 0..flood {
             let mut message = shared_topic_message(
                 &format!("sender-{i}"),
@@ -20685,7 +20685,7 @@ async fn conversation_lane_cancelled_while_waiting_for_previous_turn_settles_mod
         pending_work,
     });
     let lanes = ConversationLaneRegistry::new(Arc::new(tokio::sync::Semaphore::new(1)));
-    let worker = clawcrew_spawn::spawn!(Arc::clone(&lanes).process_turn(turn));
+    let worker = galleon_spawn::spawn!(Arc::clone(&lanes).process_turn(turn));
 
     // A newer message interrupts this turn while its predecessor is still
     // pending; only then does the predecessor finish.
@@ -21064,7 +21064,7 @@ async fn telegram_model_picker_username_change_updates_only_current_sender_sessi
     let navigation_channel = Arc::clone(&telegram);
     let navigation_tx = tx.clone();
     let navigation_listener =
-        clawcrew_spawn::spawn!(async move { navigation_channel.listen(navigation_tx).await });
+        galleon_spawn::spawn!(async move { navigation_channel.listen(navigation_tx).await });
     wait_for_request(&server, "editMessageText").await;
     wait_for_request(&server, "answerCallbackQuery").await;
     navigation_listener.abort();
@@ -21088,7 +21088,7 @@ async fn telegram_model_picker_username_change_updates_only_current_sender_sessi
     .await;
     let selection_channel = Arc::clone(&telegram);
     let selection_listener =
-        clawcrew_spawn::spawn!(async move { selection_channel.listen(tx).await });
+        galleon_spawn::spawn!(async move { selection_channel.listen(tx).await });
     let queued = tokio::time::timeout(Duration::from_secs(2), rx.recv())
         .await
         .expect("Telegram selection callback must reach the runtime queue")
@@ -28231,7 +28231,7 @@ async fn message_dispatch_different_threads_do_not_cancel_each_other() {
     });
 
     let (tx, rx) = tokio::sync::mpsc::channel::<clawcrew_api::channel::ChannelMessage>(8);
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         // Two messages from same sender but in different Slack threads —
         // they must NOT cancel each other.
         tx.send(clawcrew_api::channel::ChannelMessage {

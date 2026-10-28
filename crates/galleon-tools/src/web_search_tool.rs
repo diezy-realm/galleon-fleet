@@ -3976,7 +3976,7 @@ mod tests {
 
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             let (mut stream, _) = listener.accept().await.unwrap();
             let mut request = Vec::new();
             while !request.windows(4).any(|window| window == b"\r\n\r\n") {
@@ -4239,7 +4239,7 @@ mod tests {
         let addr = listener.local_addr().unwrap();
         let (release_tx, release_rx) = tokio::sync::oneshot::channel::<()>();
 
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             let (mut stream, _) = listener.accept().await.unwrap();
             let mut request = Vec::new();
             while !request.windows(4).any(|window| window == b"\r\n\r\n") {
@@ -4940,7 +4940,7 @@ mod tests {
 
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             let (mut stream, _) = listener.accept().await.expect("accept");
             let mut head = Vec::new();
             while !head.windows(4).any(|window| window == b"\r\n\r\n") {
@@ -5848,7 +5848,7 @@ mod tests {
         let mut handles = Vec::new();
         for _ in 0..3 {
             let throttle = throttle.clone();
-            handles.push(clawcrew_spawn::spawn!(async move {
+            handles.push(galleon_spawn::spawn!(async move {
                 throttle.acquire(gap).await;
                 started.elapsed()
             }));

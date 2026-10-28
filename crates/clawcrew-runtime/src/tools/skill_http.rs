@@ -414,7 +414,7 @@ mod tests {
             .await
             .expect("bind local redirect server");
         let address = listener.local_addr().expect("local redirect address");
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             let (mut stream, _) = listener.accept().await.expect("accept request");
             let mut request = Vec::new();
             while !request.windows(4).any(|window| window == b"\r\n\r\n") {

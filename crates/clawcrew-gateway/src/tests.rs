@@ -1100,7 +1100,7 @@ async fn run_gateway_starts_with_zero_agents() {
         "regression assumes default Config has no agents",
     );
 
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         run_gateway(
             "127.0.0.1",
             0,
@@ -1168,7 +1168,7 @@ async fn run_gateway_starts_with_unresolved_agent_risk_profile() {
     };
     config.agents.insert("fake123".to_string(), agent);
 
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         run_gateway(
             "127.0.0.1",
             0,
@@ -1222,7 +1222,7 @@ async fn run_gateway_starts_with_mismatched_provider_api_key() {
         },
     );
 
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         run_gateway(
             "127.0.0.1",
             0,
@@ -1287,7 +1287,7 @@ async fn daemon_startup_gateway_reports_ready_and_uses_external_shutdown_sender(
         let _ = ready_tx.send(Some(addr));
     });
 
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         run_gateway(
             "127.0.0.1",
             port,
@@ -2253,7 +2253,7 @@ async fn spawn_chat_completion_fixture_sequence(
     let address = listener
         .local_addr()
         .expect("local chat-completions fixture address");
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve local chat-completions fixture");
@@ -2349,7 +2349,7 @@ async fn spawn_burst_hanging_chat_completion_fixture() -> ChatCompletionFixture 
     let address = listener
         .local_addr()
         .expect("burst chat-completions fixture address");
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve burst chat-completions fixture");
@@ -2399,7 +2399,7 @@ async fn spawn_hanging_chat_completion_fixture() -> ChatCompletionFixture {
     let address = listener
         .local_addr()
         .expect("hanging chat-completions fixture address");
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve hanging chat-completions fixture");
@@ -2423,7 +2423,7 @@ async fn spawn_test_ws_gateway(state: AppState) -> (SocketAddr, tokio::task::Joi
     let address = listener
         .local_addr()
         .expect("gateway WebSocket listener address");
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve gateway WebSocket listener");
@@ -3011,7 +3011,7 @@ async fn webhook_sse_abort_cancels_turn_via_shared_registry() {
     }));
 
     let state_for_task = state.clone();
-    let task = clawcrew_spawn::spawn!(async move {
+    let task = galleon_spawn::spawn!(async move {
         handle_webhook(
             State(state_for_task.clone()),
             test_connect_info(),

@@ -4051,7 +4051,7 @@ impl Agent {
             .expect("CLI channel factory not registered — call register_cli_channel_fn at startup")(
         );
 
-        let listen_handle = clawcrew_spawn::spawn!(async move {
+        let listen_handle = galleon_spawn::spawn!(async move {
             let _ = clawcrew_api::channel::Channel::listen(&*cli, tx).await;
         });
 

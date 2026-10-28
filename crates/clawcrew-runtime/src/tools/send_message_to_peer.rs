@@ -193,14 +193,14 @@ impl Tool for SendMessageToPeerTool {
             let body = message.clone();
             // Build the recipient's cost-tracking context from `&cfg` before
             // `cfg` moves into `process_message_shared` below — a detached
-            // `clawcrew_spawn::spawn!` task does not inherit the caller's
+            // `galleon_spawn::spawn!` task does not inherit the caller's
             // task-locals, so the recipient's turn would otherwise run with
             // no cost context and its spend would go unrecorded.
             let cost_ctx = tool_loop_cost_tracking_context_for_agent(&cfg, &recipient_alias);
             let turn_usage = cost_ctx
                 .as_ref()
                 .map(|_| Arc::new(Mutex::new(TurnUsage::default())));
-            clawcrew_spawn::spawn!(async move {
+            galleon_spawn::spawn!(async move {
                 // Keep the large turn future out of the nested cost-scope wrappers.
                 let turn = Box::pin(crate::agent::loop_::process_message_shared(
                     cfg,
@@ -738,7 +738,7 @@ mod tests {
         let app = Router::new()
             .route("/v1/chat/completions", post(capture_chat))
             .with_state(request_count.clone());
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("mock provider server should run");
@@ -826,7 +826,7 @@ mod tests {
         let tracker = CostTracker::get_or_init_global(config.cost.clone(), &config.data_dir)
             .expect("execute() must have resolved a process-global cost tracker for an enabled cost config");
 
-        // The recipient's turn runs inside a detached `clawcrew_spawn::spawn!`
+        // The recipient's turn runs inside a detached `galleon_spawn::spawn!`
         // task that `execute()` does not join. Poll for its completion with a
         // bounded, sleep-free yield loop, never a fixed sleep.
         let mut recipient_summary = None;

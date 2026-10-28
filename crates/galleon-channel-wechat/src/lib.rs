@@ -3603,7 +3603,7 @@ impl Channel for WeChatChannel {
         let url = self.api_url("sendtyping");
         let user_id = recipient.to_string();
 
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             loop {
                 let body = serde_json::json!({
                     "ilink_user_id": &user_id,
@@ -3777,7 +3777,7 @@ mod tests {
 
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             let (mut stream, _) = listener.accept().await.unwrap();
             let mut request = [0_u8; 4096];
             let _ = stream.read(&mut request).await.unwrap();
@@ -4983,7 +4983,7 @@ mod tests {
         let channel = Arc::new(channel);
         let (tx, mut rx) = tokio::sync::mpsc::channel(2);
         let listen_channel = channel.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_channel.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_channel.listen(tx).await });
 
         let delivered = tokio::time::timeout(Duration::from_secs(10), rx.recv())
             .await
@@ -5082,7 +5082,7 @@ mod tests {
         let channel = Arc::new(channel);
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
         let listen_channel = channel.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_channel.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_channel.listen(tx).await });
 
         tokio::time::timeout(Duration::from_secs(10), async {
             while *channel.cursor.lock() != "cursor_after_batch" {
@@ -5193,7 +5193,7 @@ mod tests {
         let channel = Arc::new(channel);
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
         let listen_channel = channel.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_channel.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_channel.listen(tx).await });
 
         tokio::time::timeout(Duration::from_secs(10), async {
             loop {
@@ -5378,7 +5378,7 @@ mod tests {
         let channel = Arc::new(channel);
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
         let listen_channel = channel.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_channel.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_channel.listen(tx).await });
 
         let delivered = tokio::time::timeout(Duration::from_secs(10), rx.recv())
             .await
@@ -5475,7 +5475,7 @@ mod tests {
         let channel = Arc::new(channel);
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
         let listen_channel = channel.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_channel.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_channel.listen(tx).await });
 
         tokio::time::timeout(Duration::from_secs(10), async {
             while *channel.cursor.lock() != "cursor_after_batch" {
@@ -5592,7 +5592,7 @@ mod tests {
         let channel = Arc::new(channel);
         let (tx, mut rx) = tokio::sync::mpsc::channel(2);
         let listen_channel = channel.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_channel.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_channel.listen(tx).await });
 
         tokio::time::timeout(Duration::from_secs(10), async {
             loop {
@@ -5749,7 +5749,7 @@ mod tests {
         let channel = Arc::new(channel);
         let (tx, mut rx) = tokio::sync::mpsc::channel(2);
         let listen_channel = channel.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_channel.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_channel.listen(tx).await });
 
         tokio::time::timeout(Duration::from_secs(10), async {
             while sendmessage_context_tokens(&mock_server).await.len() != 1 {
@@ -5905,7 +5905,7 @@ mod tests {
         let channel = Arc::new(channel);
         let (tx, mut rx) = tokio::sync::mpsc::channel(2);
         let listen_channel = channel.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_channel.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_channel.listen(tx).await });
 
         tokio::time::timeout(Duration::from_secs(10), async {
             loop {
@@ -6124,7 +6124,7 @@ mod tests {
 
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
         let listen_ch = ch.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
         let first = tokio::time::timeout(Duration::from_secs(5), rx.recv())
             .await
@@ -6211,7 +6211,7 @@ mod tests {
 
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
         let listen_ch = ch.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
         let first = tokio::time::timeout(Duration::from_secs(5), rx.recv())
             .await
@@ -6347,7 +6347,7 @@ mod tests {
 
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
         let listen_ch = ch.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
         // The first pass hits the 503 and holds the batch, so nothing is
         // delivered yet — in particular the bare "hello" text must NOT be
@@ -6526,7 +6526,7 @@ mod tests {
 
         let (tx, mut rx) = tokio::sync::mpsc::channel(8);
         let listen_ch = ch.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
         // Delivery must not be wedged: the text arrives promptly, well
         // inside the first backoff step, instead of being held.
@@ -6650,7 +6650,7 @@ mod tests {
 
         let (tx, mut rx) = tokio::sync::mpsc::channel(8);
         let listen_ch = ch.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
         let msg = tokio::time::timeout(Duration::from_secs(10), rx.recv())
             .await
@@ -6785,7 +6785,7 @@ mod tests {
 
         let (tx, mut rx) = tokio::sync::mpsc::channel(8);
         let listen_ch = ch.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
         let held = tokio::time::timeout(Duration::from_secs(3), rx.recv()).await;
         assert!(
@@ -6839,7 +6839,7 @@ mod tests {
 
         let (tx2, mut rx2) = tokio::sync::mpsc::channel(8);
         let restart_ch = restarted.clone();
-        let handle2 = clawcrew_spawn::spawn!(async move { restart_ch.listen(tx2).await });
+        let handle2 = galleon_spawn::spawn!(async move { restart_ch.listen(tx2).await });
 
         let msg = tokio::time::timeout(Duration::from_secs(20), rx2.recv())
             .await
@@ -6974,7 +6974,7 @@ mod tests {
 
         let (tx, mut rx) = tokio::sync::mpsc::channel(4);
         let listen_ch = ch.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
         // While the batch is held by B's 503, NOTHING is delivered — not
         // even A, whose own preparation succeeded. Publishing A here would
@@ -7093,7 +7093,7 @@ mod tests {
 
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
         let listen_ch = ch.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
         let first = tokio::time::timeout(Duration::from_secs(5), rx.recv())
             .await
@@ -7179,7 +7179,7 @@ mod tests {
 
         let (tx, mut rx) = tokio::sync::mpsc::channel(1);
         let listen_ch = ch.clone();
-        let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+        let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
         // A held batch must not deliver anything: the message carries an
         // attachment that never arrives, so enqueueing its bare text would

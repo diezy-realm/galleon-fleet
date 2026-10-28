@@ -1034,7 +1034,7 @@ mod tests {
             }));
             let body = payload.to_string();
             assert_eq!(body.len() > MAX_OIDC_RESPONSE_BYTES, oversized);
-            let peer = ::clawcrew_spawn::spawn!(async move {
+            let peer = ::galleon_spawn::spawn!(async move {
                 tokio::time::timeout(
                     Duration::from_secs(5),
                     serve_bounded_response(listener, body, framing),

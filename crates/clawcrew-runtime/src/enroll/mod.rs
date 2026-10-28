@@ -386,7 +386,7 @@ pub async fn serve_on(
                 } else {
                     PeerClass::Direct
                 };
-                clawcrew_spawn::spawn!(async move {
+                galleon_spawn::spawn!(async move {
                     let _permit = permit;
                     // This server holds ONE ledger for the daemon's lifetime,
                     // so it never gets an open-time sweep after startup. Any
@@ -1504,7 +1504,7 @@ mod tests {
         let server_c = server.clone();
         let cancel_c = cancel.clone();
         let srv =
-            clawcrew_spawn::spawn!(async move { serve_on(listener, server_c, cancel_c).await });
+            galleon_spawn::spawn!(async move { serve_on(listener, server_c, cancel_c).await });
 
         // Client trusts the test CA (server-auth only) and dials "localhost"
         // (the server cert SAN) at the loopback address.

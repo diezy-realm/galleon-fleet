@@ -394,7 +394,7 @@ impl Tool for EscalateToHumanTool {
 
             let listen_channel = Arc::clone(&channel);
             let listen_handle =
-                clawcrew_spawn::spawn!(async move { listen_channel.listen(tx).await });
+                galleon_spawn::spawn!(async move { listen_channel.listen(tx).await });
 
             let response = tokio::time::timeout(timeout, rx.recv()).await;
             listen_handle.abort();

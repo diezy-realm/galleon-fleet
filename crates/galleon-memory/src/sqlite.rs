@@ -4835,7 +4835,7 @@ mod tests {
         let mut handles = Vec::new();
         for i in 0..10 {
             let mem = std::sync::Arc::clone(&mem);
-            handles.push(clawcrew_spawn::spawn!(async move {
+            handles.push(galleon_spawn::spawn!(async move {
                 mem.store(
                     &format!("concurrent_key_{i}"),
                     &format!("value_{i}"),
@@ -4873,7 +4873,7 @@ mod tests {
         // Concurrent reads
         for _ in 0..5 {
             let mem = std::sync::Arc::clone(&mem);
-            handles.push(clawcrew_spawn::spawn!(async move {
+            handles.push(galleon_spawn::spawn!(async move {
                 let _ = mem.get("shared_key").await.unwrap();
             }));
         }
@@ -4881,7 +4881,7 @@ mod tests {
         // Concurrent writes
         for i in 0..5 {
             let mem = std::sync::Arc::clone(&mem);
-            handles.push(clawcrew_spawn::spawn!(async move {
+            handles.push(galleon_spawn::spawn!(async move {
                 mem.store(
                     &format!("key_{i}"),
                     &format!("val_{i}"),

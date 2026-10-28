@@ -283,7 +283,7 @@ async fn channel_component_runs_through_host_ingress() {
     });
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
-    let listener = clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { channel.listen(tx).await });
     let message = tokio::time::timeout(Duration::from_secs(5), rx.recv())
         .await
         .expect("fixture message arrives before timeout")
@@ -325,7 +325,7 @@ async fn poll_ingress_applies_the_host_sender_policy_before_delivery() {
     inbound.enqueue(message("allowed-1", "allowed"));
 
     let (tx, mut receiver) = tokio::sync::mpsc::channel(2);
-    let listener = clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { channel.listen(tx).await });
     let delivered = tokio::time::timeout(Duration::from_secs(5), receiver.recv())
         .await
         .expect("authorized poll message arrives")
@@ -349,7 +349,7 @@ async fn channel_webhook_component_authenticates_parses_and_host_stamps() {
     let (sink, receiver) = tokio::sync::mpsc::channel(4);
     channel.set_webhook_receiver(receiver);
     let (tx, mut inbound) = tokio::sync::mpsc::channel(2);
-    let listener = clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { channel.listen(tx).await });
 
     let (unauthorized, unauthorized_outcome) = fixture_webhook(
         br#"{"id":"bad","sender":"tester","reply_target":"room","content":"ignored"}"#,
@@ -407,7 +407,7 @@ async fn cancelled_webhook_drops_disposable_parser_and_later_request_recovers() 
     let (sink, receiver) = tokio::sync::mpsc::channel(4);
     channel.set_webhook_receiver(receiver);
     let (tx, mut inbound) = tokio::sync::mpsc::channel(2);
-    let listener = clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { channel.listen(tx).await });
 
     let cancellation = clawcrew_api::webhook::WebhookCancellation::new();
     let (spinning, spinning_outcome) =
@@ -457,7 +457,7 @@ async fn host_config_failure_is_unavailable_and_a_later_webhook_recovers() {
     let (sink, receiver) = tokio::sync::mpsc::channel(2);
     channel.set_webhook_receiver(receiver);
     let (tx, mut inbound) = tokio::sync::mpsc::channel(1);
-    let listener = clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { channel.listen(tx).await });
 
     config
         .write()
@@ -505,7 +505,7 @@ async fn webhook_sender_policy_runs_before_idempotency_reservation() {
     let (sink, receiver) = tokio::sync::mpsc::channel(2);
     channel.set_webhook_receiver(receiver);
     let (tx, mut inbound) = tokio::sync::mpsc::channel(1);
-    let listener = clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { channel.listen(tx).await });
     let begin_calls = Arc::new(AtomicUsize::new(0));
     let observed_calls = Arc::clone(&begin_calls);
     let idempotency = WebhookIdempotency::new(
@@ -548,7 +548,7 @@ async fn typed_webhook_replies_bypass_message_policy_and_bound_utf8_output() {
     let (sink, receiver) = tokio::sync::mpsc::channel(2);
     channel.set_webhook_receiver(receiver);
     let (tx, mut inbound) = tokio::sync::mpsc::channel(1);
-    let listener = clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { channel.listen(tx).await });
     let idempotency = WebhookIdempotency::new(
         |_| panic!("challenge must not reserve a message ID"),
         |_| panic!("challenge must not commit a message ID"),
@@ -704,7 +704,7 @@ async fn warm_channel_resolves_one_rotated_config_revision_at_point_of_use() {
 async fn channel_listener_stops_when_receiver_closes() {
     let channel = channel("closed").await;
     let (tx, rx) = tokio::sync::mpsc::channel(1);
-    let listener = clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { channel.listen(tx).await });
 
     drop(rx);
     tokio::time::timeout(Duration::from_secs(1), listener)
@@ -752,7 +752,7 @@ async fn externally_cancelled_channel_call_discards_store_and_recreates() {
     // A spinning send is in flight; external cancellation (task abort) must drop
     // the in-flight guest call and discard its store rather than resuming it.
     let cancelled_channel = Arc::clone(&channel);
-    let call = ::clawcrew_spawn::spawn!(async move {
+    let call = ::galleon_spawn::spawn!(async move {
         cancelled_channel
             .send(&outbound("spin until cancelled", "room"))
             .await
@@ -868,7 +868,7 @@ async fn interrupted_poll_preserves_backlog_but_not_the_dequeued_message() {
     inbound.enqueue(queue_message("kept-2", "second kept"));
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(2);
-    let listener = ::clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+    let listener = ::galleon_spawn::spawn!(async move { channel.listen(tx).await });
 
     let first = tokio::time::timeout(Duration::from_secs(10), rx.recv())
         .await

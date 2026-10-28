@@ -199,7 +199,7 @@ async fn configured_channel_reaches_real_guest_and_shared_listener_contract() {
     // goes away, which is the contract the shared supervisor relies on.
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
     let listener_channel = Arc::clone(&channel);
-    let listener = clawcrew_spawn::spawn!(async move { listener_channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { listener_channel.listen(tx).await });
     let sink = registry
         .get("fixture")
         .expect("validated guest route is published atomically");

@@ -65,7 +65,7 @@ impl Drop for PendingApprovalGuard {
         // the decision itself: a reply arriving inside that window still finds a
         // receiver whose sender was dropped with this future, so it cannot be
         // reported as an accepted decision.
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             PENDING_APPROVALS.lock().await.remove(&token);
         });
     }
@@ -3083,7 +3083,7 @@ mod tests {
     async fn cancelled_request_leaves_no_live_token() {
         let token = "cancel";
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             // A send that succeeds, then a wait long enough that the abort
             // below lands while the lifecycle is parked on the receiver.
             run_approval_lifecycle("cancel".to_string(), 300, || async { Ok(()) }).await
@@ -3118,7 +3118,7 @@ mod tests {
         // Hold the map lock so the helper cannot get past its first await.
         let held = PENDING_APPROVALS.lock().await;
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             let mut guard = guard;
             remove_pending_and_disarm("lockct", &mut guard).await;
         });
@@ -3172,7 +3172,7 @@ mod tests {
     async fn an_operator_reply_is_attributed_to_the_operator() {
         let token = "opappr";
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             run_approval_lifecycle("opappr".to_string(), 300, || async { Ok(()) }).await
         });
 
@@ -3222,7 +3222,7 @@ mod tests {
     async fn a_resolved_approval_does_not_delete_a_later_registration() {
         let token = "reuse1";
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             run_approval_lifecycle("reuse1".to_string(), 300, || async { Ok(()) }).await
         });
         wait_until_registered(token).await;
@@ -3259,7 +3259,7 @@ mod tests {
     async fn a_dropped_sender_is_attributed_unreachable() {
         let token = "unrch";
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             run_approval_lifecycle("unrch".to_string(), 300, || async { Ok(()) }).await
         });
 

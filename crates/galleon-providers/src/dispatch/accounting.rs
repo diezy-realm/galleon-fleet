@@ -884,7 +884,7 @@ mod tests {
                     .expect("scoped first poll creates a lease")
             })
             .await;
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             let _lease = lease;
             futures_util::future::pending::<()>().await;
         });

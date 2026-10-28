@@ -1257,7 +1257,7 @@ impl Channel for MattermostChannel {
             None => (recipient.to_string(), None),
         };
 
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             let url = format!("{base_url}/api/v4/users/me/typing");
             loop {
                 let mut body = serde_json::json!({ "channel_id": channel_id });

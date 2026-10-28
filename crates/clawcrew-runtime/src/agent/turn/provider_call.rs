@@ -1444,7 +1444,7 @@ mod streaming_fallback_tests {
                 .await
                 .expect("bind compatible test server");
             let addr = listener.local_addr().expect("read compatible test address");
-            let server = ::clawcrew_spawn::spawn!(async move {
+            let server = ::galleon_spawn::spawn!(async move {
                 axum::serve(listener, app)
                     .await
                     .expect("serve compatible test response");
@@ -1719,7 +1719,7 @@ mod streaming_fallback_tests {
         let pacing = PacingConfig::default();
         let cancellation = tokio_util::sync::CancellationToken::new();
         let cancel_after_retry = cancellation.clone();
-        let _cancel = clawcrew_spawn::spawn!(async move {
+        let _cancel = galleon_spawn::spawn!(async move {
             tokio::time::sleep(Duration::from_millis(20)).await;
             cancel_after_retry.cancel();
         });

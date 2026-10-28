@@ -681,7 +681,7 @@ impl SystemGateway for SystemGatewayService {
         let model_provider = self.model_provider.clone();
         let config = self.config.clone();
 
-        ::clawcrew_spawn::spawn!(async move {
+        ::galleon_spawn::spawn!(async move {
             let agent_alias = req
                 .agent_alias
                 .as_deref()

@@ -161,13 +161,13 @@ async fn main() -> Result<()> {
     let pty_state = state.clone();
 
     let bind_for_http = bind_addr.clone();
-    let http_handle = clawcrew_spawn::spawn!(async move {
+    let http_handle = galleon_spawn::spawn!(async move {
         if let Err(e) = run_http_server(http_state, bind_for_http).await {
             eprintln!("http server crashed: {}", e);
         }
     });
 
-    let pty_handle = clawcrew_spawn::spawn!(async move {
+    let pty_handle = galleon_spawn::spawn!(async move {
         if let Err(e) = run_pty_loop(port, pty_state).await {
             eprintln!("pty loop crashed: {}", e);
         }

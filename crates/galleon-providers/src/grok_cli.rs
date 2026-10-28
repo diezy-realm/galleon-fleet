@@ -362,7 +362,7 @@ struct StderrDrain {
 
 impl StderrDrain {
     fn start(mut stderr: ChildStderr) -> Self {
-        let task = ::clawcrew_spawn::spawn!(async move {
+        let task = ::galleon_spawn::spawn!(async move {
             let mut summary = StderrSummary::default();
             let mut chunk = [0_u8; 8192];
             loop {
@@ -2060,7 +2060,7 @@ printf '%s\n' "$!" > descendant.pid
 sleep 30
 "#;
             let model_provider = fake_provider(&temp, body, 60);
-            let task = ::clawcrew_spawn::spawn!(async move {
+            let task = ::galleon_spawn::spawn!(async move {
                 model_provider.invoke_acp("hello", "default").await
             });
             let leader = wait_for_pid(&temp.path().join("leader.pid")).await;
@@ -2100,7 +2100,7 @@ sleep 30
             let model_provider = fake_provider(&temp, body, 1);
             let leader_path = temp.path().join("leader.pid");
             let descendant_path = temp.path().join("descendant.pid");
-            let task = ::clawcrew_spawn::spawn!(async move {
+            let task = ::galleon_spawn::spawn!(async move {
                 model_provider.invoke_acp("hello", "default").await
             });
             let leader = wait_for_pid(&leader_path).await;

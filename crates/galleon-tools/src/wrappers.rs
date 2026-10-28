@@ -352,7 +352,7 @@ mod tests {
             sec.clone(),
         );
         let first_call =
-            clawcrew_spawn::spawn!(async move { first.execute(serde_json::json!({})).await });
+            galleon_spawn::spawn!(async move { first.execute(serde_json::json!({})).await });
         entered.notified().await;
 
         let (second_inner, second_calls) = CountingTool::new();
@@ -563,7 +563,7 @@ mod tests {
             },
             sec.clone(),
         );
-        let call = clawcrew_spawn::spawn!(async move { tool.execute(serde_json::json!({})).await });
+        let call = galleon_spawn::spawn!(async move { tool.execute(serde_json::json!({})).await });
         entered.notified().await;
         call.abort();
         assert!(call.await.unwrap_err().is_cancelled());
@@ -608,7 +608,7 @@ mod tests {
             ..SecurityPolicy::default()
         });
         let tool = RateLimitedTool::new(PanickingTool, sec.clone());
-        let call = clawcrew_spawn::spawn!(async move { tool.execute(serde_json::json!({})).await });
+        let call = galleon_spawn::spawn!(async move { tool.execute(serde_json::json!({})).await });
         assert!(call.await.unwrap_err().is_panic());
 
         let (inner, calls) = CountingTool::new();

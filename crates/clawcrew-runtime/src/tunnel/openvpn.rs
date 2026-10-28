@@ -130,7 +130,7 @@ impl Tunnel for OpenVpnTunnel {
 
         // Drain stderr in background to prevent OS pipe buffer from filling and
         // blocking the openvpn process.
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             while let Ok(Some(line)) = reader.next_line().await {
                 ::clawcrew_log::record!(
                     TRACE,

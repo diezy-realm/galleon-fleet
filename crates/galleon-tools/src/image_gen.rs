@@ -547,7 +547,7 @@ mod tests {
         let addr = listener.local_addr().unwrap();
         let (release_tx, release_rx) = tokio::sync::oneshot::channel();
 
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             let (mut stream, _) = listener.accept().await.unwrap();
             stream
                 .write_all(
@@ -685,7 +685,7 @@ mod tests {
         let proxy_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let proxy_addr = proxy_listener.local_addr().unwrap();
 
-        let direct_task = clawcrew_spawn::spawn!(async move {
+        let direct_task = galleon_spawn::spawn!(async move {
             let (mut stream, _) = direct_listener.accept().await.unwrap();
             let mut request = [0_u8; 1024];
             let _ = stream.read(&mut request).await.unwrap();
@@ -696,7 +696,7 @@ mod tests {
                 .await
                 .unwrap();
         });
-        let proxy_task = clawcrew_spawn::spawn!(async move {
+        let proxy_task = galleon_spawn::spawn!(async move {
             let (mut stream, _) = proxy_listener.accept().await.unwrap();
             let mut request = [0_u8; 1024];
             let _ = stream.read(&mut request).await.unwrap();
@@ -798,7 +798,7 @@ mod tests {
     async fn fal_client_does_not_follow_redirects() {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             let (mut stream, _) = listener.accept().await.unwrap();
             let mut request = [0_u8; 1024];
             let _ = stream.read(&mut request).await.unwrap();

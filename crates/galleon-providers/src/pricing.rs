@@ -176,7 +176,7 @@ pub fn spawn_refresher(config: Arc<RwLock<Config>>) {
         return; // already running
     }
 
-    ::clawcrew_spawn::spawn!(async {
+    ::galleon_spawn::spawn!(async {
         loop {
             // Re-resolve the handle (re-bound across daemon reloads), then
             // clone the config under the lock and build/poll without holding

@@ -427,7 +427,7 @@ mod tests {
 
         let job_id = job.id.clone();
         let run =
-            clawcrew_spawn::spawn!(async move { tool.execute(json!({ "job_id": job_id })).await });
+            galleon_spawn::spawn!(async move { tool.execute(json!({ "job_id": job_id })).await });
         tokio::time::timeout(Duration::from_secs(5), started.notified())
             .await
             .expect("manual run should start after claiming the job");

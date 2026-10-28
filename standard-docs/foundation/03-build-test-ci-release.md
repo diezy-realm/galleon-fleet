@@ -34,7 +34,7 @@ Akselerasi: `sccache` + `rust-lld` (`.cargo/config.toml`), nextest (`.config/nex
 
 ## 3. Pagar kualitas yang ada
 
-- `clippy.toml`: larang `tokio::spawn` langsung (pakai `clawcrew_spawn::spawn!`), macro logging langsung (pakai `record!`), `anyhow!` polos.
+- `clippy.toml`: larang `tokio::spawn` langsung (pakai `galleon_spawn::spawn!`), macro logging langsung (pakai `record!`), `anyhow!` polos.
 - `deny.toml`: tolak vulnerability, yanked, registry/git tak dikenal, wildcard, lisensi tak disetujui, versi duplikat (skip bertanggal).
 - `panic = "abort"` di release; `release_workflow.rs` menguji workflow rilis.
 - i18n: teks CLI via Fluent (`cli_fluent_coverage`).

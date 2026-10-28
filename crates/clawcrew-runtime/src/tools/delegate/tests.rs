@@ -1993,7 +1993,7 @@
         let uri = format!("http://{}", listener.local_addr().unwrap());
         let requests = Arc::new(std::sync::atomic::AtomicUsize::new(0));
         let request_count = Arc::clone(&requests);
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             let (mut socket, _) = listener.accept().await.unwrap();
             let _request = read_http_request(&mut socket).await;
             request_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -2016,7 +2016,7 @@
         let uri = format!("http://{}", listener.local_addr().unwrap());
         let requests = Arc::new(std::sync::atomic::AtomicUsize::new(0));
         let request_count = Arc::clone(&requests);
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             let (mut first_socket, _) = listener.accept().await.unwrap();
             let _request = read_http_request(&mut first_socket).await;
             request_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -2048,7 +2048,7 @@
         let uri = format!("http://{}", listener.local_addr().unwrap());
         let requests = Arc::new(std::sync::atomic::AtomicUsize::new(0));
         let request_count = Arc::clone(&requests);
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             let (mut socket, _) = listener.accept().await.unwrap();
             let _request = read_http_request(&mut socket).await;
             request_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -2077,7 +2077,7 @@
         let request_count = Arc::clone(&requests);
         let request_bodies = Arc::new(std::sync::Mutex::new(Vec::new()));
         let captured_bodies = Arc::clone(&request_bodies);
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             let responses = [
                 serde_json::json!({
                     "choices": [{"message": {"content": "<tool_call>{\"name\":\"echo_tool\",\"arguments\":{\"value\":\"fallback\"}}</tool_call>"}}]
@@ -2109,7 +2109,7 @@
         let uri = format!("http://{}", listener.local_addr().unwrap());
         let requests = Arc::new(std::sync::atomic::AtomicUsize::new(0));
         let request_count = Arc::clone(&requests);
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             let (mut socket, _) = listener.accept().await.unwrap();
             let _request = read_http_request(&mut socket).await;
             request_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -2149,7 +2149,7 @@
             }),
         ];
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             for response in responses {
                 let (mut socket, _) = listener.accept().await.unwrap();
                 let _request = read_http_request(&mut socket).await;
@@ -2179,7 +2179,7 @@
             })
             .collect();
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             for response in responses {
                 let (mut socket, _) = listener.accept().await.unwrap();
                 let _request = read_http_request(&mut socket).await;
@@ -3686,7 +3686,7 @@
         let seen = TOOL_LOOP_SESSION_KEY
             .scope(Some("channel_session".to_string()), async {
                 let session_key = current_tool_loop_session_key();
-                clawcrew_spawn::spawn!(async move {
+                galleon_spawn::spawn!(async move {
                     scope_delegate_session_key(session_key, async {
                         current_tool_loop_session_key()
                     })
@@ -7181,7 +7181,7 @@
         let captured = Arc::new(std::sync::Mutex::new(Vec::new()));
         let captured_clone = Arc::clone(&captured);
         let scripted: Vec<serde_json::Value> = responses.to_vec();
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             let mut served = 0;
             loop {
                 let Ok((mut socket, _)) = listener.accept().await else {

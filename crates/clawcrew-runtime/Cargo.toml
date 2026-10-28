@@ -11,7 +11,7 @@ publish = true
 
 [dependencies]
 clawcrew-api.workspace = true
-clawcrew-spawn.workspace = true
+galleon-spawn.workspace = true
 galleon-infra = { workspace = true, features = ["schema-export"] }
 clawcrew-config.workspace = true
 # RF-B: i18n body moved to galleon-i18n; runtime re-exports it as `i18n`.

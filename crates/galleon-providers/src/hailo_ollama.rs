@@ -1152,7 +1152,7 @@ impl HailoOllamaModelProvider {
         let provider = self.clone();
         let model = model.to_string();
         let worker_gate = gate.clone();
-        let worker = clawcrew_spawn::spawn!(async move {
+        let worker = galleon_spawn::spawn!(async move {
             let _permit = permit;
             let mut in_flight = InFlightGuard::new(worker_gate);
             let result = provider
@@ -1637,7 +1637,7 @@ mod tests {
             OllamaTuning::default(),
         )
         .expect("valid isolated Hailo URL");
-        let worker = clawcrew_spawn::spawn!(async move {
+        let worker = galleon_spawn::spawn!(async move {
             panic!("synthetic request worker panic");
         });
         let join_error = worker.await.expect_err("synthetic worker must panic");
@@ -1669,7 +1669,7 @@ mod tests {
             .await
             .expect("test gate remains open");
         let worker_gate = gate.clone();
-        let worker = clawcrew_spawn::spawn!(async move {
+        let worker = galleon_spawn::spawn!(async move {
             let _permit = permit;
             let _guard = InFlightGuard::new(worker_gate);
             panic!("synthetic Hailo worker panic");

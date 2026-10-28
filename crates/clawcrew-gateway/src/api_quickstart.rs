@@ -187,7 +187,7 @@ fn signal_daemon_reload(state: &AppState) -> bool {
         .pending_reload
         .store(false, std::sync::atomic::Ordering::Relaxed);
     let started = std::time::Instant::now();
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         tokio::time::sleep(std::time::Duration::from_millis(200)).await;
         let _ = shutdown_tx.send(true);
         let _ = reload_tx.send(true);

@@ -400,7 +400,7 @@ data: {\"type\":\"message_start\",\"message\":{\"id\":\"m\",\"type\":\"message\"
         });
         let (tx, _rx) = tokio::sync::mpsc::channel::<StreamResult<StreamEvent>>(64);
 
-        let handle = ::clawcrew_spawn::spawn!(async move {
+        let handle = ::galleon_spawn::spawn!(async move {
             AnthropicModelProvider::parse_anthropic_sse_from_reader(
                 reader,
                 &tx,
@@ -453,7 +453,7 @@ data: {\"type\":\"message_start\",\"message\":{\"id\":\"m\",\"type\":\"message\"
             .await
             .expect("bind Anthropic SSE test server");
         let addr = listener.local_addr().expect("Anthropic SSE test address");
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("serve Anthropic SSE test");
@@ -1209,7 +1209,7 @@ data: {\"type\":\"message_stop\"}\n\n";
 
             let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
             let addr = listener.local_addr().unwrap();
-            let server = clawcrew_spawn::spawn!(async move {
+            let server = galleon_spawn::spawn!(async move {
                 axum::serve(listener, app).await.unwrap();
             });
 
@@ -1859,7 +1859,7 @@ data: {\"type\":\"message_stop\"}\n\n";
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server_handle = clawcrew_spawn::spawn!(async move {
+        let server_handle = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
 
@@ -2590,7 +2590,7 @@ data: {\"type\":\"message_stop\"}\n\n";
             .expect("bind test server");
         let addr = listener.local_addr().expect("test server addr");
         let app = Router::new().route("/v1/messages", post(slow_messages));
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("serve test server");
         });
 
@@ -2665,7 +2665,7 @@ data: {\"type\":\"message_stop\"}\n\n";
 
         let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let addr = listener.local_addr().expect("local addr");
-        let server_handle = clawcrew_spawn::spawn!(async move {
+        let server_handle = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("serve");
         });
 
@@ -4899,7 +4899,7 @@ data: {\"type\":\"message_stop\"}\n\n";
         );
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
         (addr, handle)
@@ -4923,7 +4923,7 @@ data: {\"type\":\"message_stop\"}\n\n";
         );
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
         (addr, handle)
@@ -5026,7 +5026,7 @@ data: {\"type\":\"message_stop\"}\n\n";
         );
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
         (addr, captured, handle)
@@ -6379,7 +6379,7 @@ data: {\"type\":\"message_stop\"}\n\n";
             .await
             .expect("bind Anthropic SSE test server");
         let addr = listener.local_addr().expect("Anthropic SSE test address");
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("serve Anthropic SSE test");

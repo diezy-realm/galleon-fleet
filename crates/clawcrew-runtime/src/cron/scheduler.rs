@@ -2332,7 +2332,7 @@ mod tests {
         );
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
 

@@ -78,7 +78,7 @@ mod tests {
             .map(|chunk| chunk.to_vec())
             .collect::<Vec<_>>();
 
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             let (mut stream, _) = listener.accept().await.unwrap();
             let mut request = Vec::new();
             while !request.windows(4).any(|window| window == b"\r\n\r\n") {

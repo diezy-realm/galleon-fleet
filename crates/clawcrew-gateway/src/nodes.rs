@@ -308,7 +308,7 @@ async fn handle_node_socket(socket: WebSocket, registry: Arc<NodeRegistry>) {
     let pending_clone = Arc::clone(&pending);
 
     // Task to forward invocations to the node via WebSocket
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         while let Some(invocation) = invoke_rx.recv().await {
             let msg = GatewayMessage::Invoke {
                 call_id: invocation.call_id.clone(),

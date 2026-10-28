@@ -9298,7 +9298,7 @@ fn gate_security_posture(
         );
     }
     let config_path = config.config_path.display().to_string();
-    let handle = ::clawcrew_spawn::spawn!(async move {
+    let handle = ::galleon_spawn::spawn!(async move {
         let mut ticker = tokio::time::interval(std::time::Duration::from_secs(30));
         loop {
             ticker.tick().await;
@@ -9497,7 +9497,7 @@ fn spawn_sop_maintenance(
     let cron_cache = audit
         .as_ref()
         .map(|_| clawcrew_runtime::sop::dispatch::SopCronCache::from_engine(&engine));
-    Some(::clawcrew_spawn::spawn!(async move {
+    Some(::galleon_spawn::spawn!(async move {
         let mut ticker = tokio::time::interval(std::time::Duration::from_secs(interval_secs));
         ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
         let mut last_cron_check = chrono::Utc::now();

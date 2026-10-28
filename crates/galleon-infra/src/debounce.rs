@@ -122,7 +122,7 @@ impl MessageDebouncer {
             let (tx, rx) = tokio::sync::oneshot::channel();
             entry.result_tx = Some(tx);
 
-            entry.timer_handle = clawcrew_spawn::spawn!(async move {
+            entry.timer_handle = galleon_spawn::spawn!(async move {
                 tokio::time::sleep(window).await;
                 fire_debounced(&entries_ref, &key).await;
             });
@@ -133,7 +133,7 @@ impl MessageDebouncer {
 
             let key_clone = key.clone();
             let entries_spawn = Arc::clone(&self.entries);
-            let handle = clawcrew_spawn::spawn!(async move {
+            let handle = galleon_spawn::spawn!(async move {
                 tokio::time::sleep(window).await;
                 fire_debounced(&entries_spawn, &key_clone).await;
             });

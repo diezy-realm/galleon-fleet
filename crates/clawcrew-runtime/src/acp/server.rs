@@ -442,12 +442,12 @@ impl AcpServer {
                 );
                 anyhow::Error::msg("ACP server writer already started")
             })?;
-        clawcrew_spawn::spawn!(writer_task(writer_rx));
+        galleon_spawn::spawn!(writer_task(writer_rx));
 
         // Spawn session reaper
         let sessions = Arc::clone(&self.sessions);
         let timeout = Duration::from_secs(self.acp_config.session_timeout_secs);
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             let mut interval = tokio::time::interval(Duration::from_secs(60));
             loop {
                 interval.tick().await;
@@ -586,7 +586,7 @@ impl AcpServer {
                     return;
                 }
                 let server = Arc::clone(self);
-                ::clawcrew_spawn::spawn!(async move {
+                ::galleon_spawn::spawn!(async move {
                     server.handle_request(request).await;
                 });
             }
@@ -1885,7 +1885,7 @@ impl AcpServer {
         let session_id_for_task = session_id.clone();
         let persist_store = self.store.clone();
         let persist_session_id = session_id.clone();
-        let turn_handle = clawcrew_spawn::spawn!(async move {
+        let turn_handle = galleon_spawn::spawn!(async move {
             let mut session = session_arc.lock().await;
             let (turn_alias, turn_provider, turn_model) = session.agent.attribution_fields();
             let history_trim_generation_before_turn = session.agent.history_trim_generation();
@@ -4361,7 +4361,7 @@ mod tests {
         let (mut client, server_stdin) = tokio::io::duplex(4096);
         let reader = Arc::clone(&server);
         let reader_task =
-            clawcrew_spawn::spawn!(async move { reader.serve_reader(server_stdin).await });
+            galleon_spawn::spawn!(async move { reader.serve_reader(server_stdin).await });
 
         client
             .write_all(b"{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{}}\n")
@@ -7783,7 +7783,7 @@ mod tests {
         // First turn: park it in the provider, then cancel it mid-turn.
         let prompt_server = Arc::clone(&server);
         let prompt_sid = session_id.clone();
-        let prompt = clawcrew_spawn::spawn!(async move {
+        let prompt = galleon_spawn::spawn!(async move {
             prompt_server
                 .handle_session_prompt(
                     &serde_json::json!({ "sessionId": prompt_sid, "prompt": "first prompt" }),
@@ -9095,7 +9095,7 @@ mod tests {
 
         let prompt_server = StdArc::clone(&server);
         let prompt_sid = s1.clone();
-        let prompt = clawcrew_spawn::spawn!(async move {
+        let prompt = galleon_spawn::spawn!(async move {
             prompt_server
                 .handle_session_prompt(
                     &serde_json::json!({ "sessionId": prompt_sid, "prompt": "hi" }),
@@ -9356,7 +9356,7 @@ mod tests {
 
         let prompt_server = Arc::clone(&server);
         let prompt_sid = session_id.clone();
-        let prompt = clawcrew_spawn::spawn!(async move {
+        let prompt = galleon_spawn::spawn!(async move {
             prompt_server
                 .handle_session_prompt(
                     &serde_json::json!({ "sessionId": prompt_sid, "prompt": "hi" }),
@@ -9495,7 +9495,7 @@ mod tests {
         // Prompt is parked in the provider, holding the session lock + the gate.
         let prompt_server = Arc::clone(&server);
         let prompt_sid = session_id.clone();
-        let prompt = clawcrew_spawn::spawn!(async move {
+        let prompt = galleon_spawn::spawn!(async move {
             prompt_server
                 .handle_session_prompt(
                     &serde_json::json!({ "sessionId": prompt_sid, "prompt": "hi" }),
@@ -9510,7 +9510,7 @@ mod tests {
         // parked here; nothing has cancelled it yet.)
         let load_server = Arc::clone(&server);
         let load_sid = session_id.clone();
-        let mut load = clawcrew_spawn::spawn!(async move {
+        let mut load = galleon_spawn::spawn!(async move {
             load_server
                 .handle_session_load(&serde_json::json!({ "sessionId": load_sid }))
                 .await
@@ -9630,7 +9630,7 @@ mod tests {
 
         let prompt_server = StdArc::clone(&server);
         let prompt_sid = session_id.clone();
-        let prompt = clawcrew_spawn::spawn!(async move {
+        let prompt = galleon_spawn::spawn!(async move {
             prompt_server
                 .handle_session_prompt(
                     &serde_json::json!({ "sessionId": prompt_sid, "prompt": "hi" }),
@@ -9657,7 +9657,7 @@ mod tests {
         // the token and then parks on the gate the prompt holds.
         let close_server = StdArc::clone(&server);
         let close_sid = session_id.clone();
-        let close = clawcrew_spawn::spawn!(async move {
+        let close = galleon_spawn::spawn!(async move {
             close_server
                 .handle_session_close(&serde_json::json!({ "sessionId": close_sid }))
                 .await
@@ -9749,7 +9749,7 @@ mod tests {
 
         let prompt_server = StdArc::clone(&server);
         let prompt_sid = session_id.clone();
-        let prompt = clawcrew_spawn::spawn!(async move {
+        let prompt = galleon_spawn::spawn!(async move {
             prompt_server
                 .handle_session_prompt(
                     &serde_json::json!({ "sessionId": prompt_sid, "prompt": "hi" }),
@@ -9769,7 +9769,7 @@ mod tests {
 
         let stop_server = StdArc::clone(&server);
         let stop_sid = session_id.clone();
-        let stop = clawcrew_spawn::spawn!(async move {
+        let stop = galleon_spawn::spawn!(async move {
             stop_server
                 .handle_session_stop(&serde_json::json!({ "sessionId": stop_sid }))
                 .await

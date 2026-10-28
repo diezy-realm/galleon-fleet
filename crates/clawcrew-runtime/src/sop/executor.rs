@@ -234,7 +234,7 @@ pub fn spawn_headless_run_driver(
     audit: Option<Arc<SopAuditLogger>>,
     first_action: SopRunAction,
 ) {
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         drive_headless_run(config, engine, audit, first_action).await;
     });
 }

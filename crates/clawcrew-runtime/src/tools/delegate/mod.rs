@@ -2588,7 +2588,7 @@ impl DelegateTool {
         let __zc_delegate_alias = agent_name_owned.clone();
         let ambient_task_id = task_id.clone();
 
-        clawcrew_spawn::spawn!(
+        galleon_spawn::spawn!(
             TOOL_LOOP_THREAD_ID.scope(
                 parent_thread_id,
                 DELEGATE_TASK_ID.scope(ambient_task_id, scope_delegate_session_key(parent_session_key, async move {
@@ -2853,7 +2853,7 @@ impl DelegateTool {
             let task_control_plane = Arc::clone(&self.task_control_plane);
             let __zc_delegate_alias = agent_name.clone();
 
-            handles.push(clawcrew_spawn::spawn!(
+            handles.push(galleon_spawn::spawn!(
                 async move {
                     let inner = DelegateTool {
                         agents,

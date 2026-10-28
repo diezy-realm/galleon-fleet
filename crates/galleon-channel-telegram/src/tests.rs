@@ -955,7 +955,7 @@ async fn stop_typing_clears_handle() {
     // Manually insert a dummy handle
     {
         let mut guard = ch.typing_handle.lock();
-        *guard = Some(clawcrew_spawn::spawn!(async {
+        *guard = Some(galleon_spawn::spawn!(async {
             tokio::time::sleep(Duration::from_secs(60)).await;
         }));
     }
@@ -980,7 +980,7 @@ async fn start_typing_replaces_previous_handle() {
     // Insert a dummy handle first
     {
         let mut guard = ch.typing_handle.lock();
-        *guard = Some(clawcrew_spawn::spawn!(async {
+        *guard = Some(galleon_spawn::spawn!(async {
             tokio::time::sleep(Duration::from_secs(60)).await;
         }));
     }
@@ -9216,7 +9216,7 @@ async fn listen_retries_transient_download_failure_at_same_offset_then_advances(
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -9281,7 +9281,7 @@ async fn listen_mid_batch_receiver_drop_never_advances_past_delivered() {
     .with_mock_api_base(mock_server.uri());
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
-    let handle = clawcrew_spawn::spawn!(async move { ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { ch.listen(tx).await });
 
     let first = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -9352,7 +9352,7 @@ async fn listen_permanent_skip_advances_past_unauthorized_update() {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -9445,7 +9445,7 @@ async fn listen_ordered_batch_recovers_after_extended_transient_failure() {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     let first_message = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -9560,7 +9560,7 @@ async fn assert_listen_skips_unauthorized_update(
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -9654,7 +9654,7 @@ async fn listen_restart_probe_queued_update_survives_transient_failure_until_del
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -9793,7 +9793,7 @@ async fn listen_callback_approval_ack_uses_fluent_catalogue() {
 
     let (tx, _rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     // A callback is terminal for inbound processing, so the offset must
     // advance past the whole batch; waiting on that also guarantees every
@@ -10153,7 +10153,7 @@ async fn listen_permanently_rejected_file_id_does_not_block_later_updates() {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     // The update behind the permanently rejected one must arrive.
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
@@ -10231,7 +10231,7 @@ async fn listen_stalled_drop_notice_does_not_block_later_updates() {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     // The update behind the stalled notice must still arrive.
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
@@ -10304,7 +10304,7 @@ async fn listen_transient_file_failure_still_holds_the_offset() {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     // The update is retried, not skipped, and eventually delivered.
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
@@ -10390,7 +10390,7 @@ async fn listen_bodyless_408_holds_the_offset_and_later_recovers() {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listen_ch = ch.clone();
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     // The update must survive the 408s and arrive after recovery.
     let msg = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
@@ -10775,7 +10775,7 @@ async fn listen_routes_captioned_bind_on_oversized_document_without_download() {
     );
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
     let listen_ch = Arc::clone(&ch);
-    let handle = clawcrew_spawn::spawn!(async move { listen_ch.listen(tx).await });
+    let handle = galleon_spawn::spawn!(async move { listen_ch.listen(tx).await });
 
     telegram_expect_main_loop_offset(
         &mock_server,
@@ -11139,7 +11139,7 @@ async fn media_group_listener_retains_video_context_before_photos_across_polls()
     );
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listener_channel = Arc::clone(&channel);
-    let listener = clawcrew_spawn::spawn!(async move { listener_channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { listener_channel.listen(tx).await });
 
     let album = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -11351,7 +11351,7 @@ async fn media_group_trailing_saturated_by_page_boundary_waits_for_next_page() {
     );
     let (tx, mut rx) = tokio::sync::mpsc::channel(128);
     let listener_channel = Arc::clone(&channel);
-    let listener = clawcrew_spawn::spawn!(async move { listener_channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { listener_channel.listen(tx).await });
 
     // 1. Intermediate messages (3..=98) dispatch immediately, while the
     // albums wait for their settlement delays.
@@ -11616,7 +11616,7 @@ async fn media_group_holds_across_saturated_page_ending_in_an_ordinary_update() 
     );
     let (tx, mut rx) = tokio::sync::mpsc::channel(128);
     let listener_channel = Arc::clone(&channel);
-    let listener = clawcrew_spawn::spawn!(async move { listener_channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { listener_channel.listen(tx).await });
 
     // 1. The ordinary updates on the page dispatch immediately, including
     // the one at the page boundary, while both albums wait to settle.
@@ -11796,7 +11796,7 @@ async fn media_group_stays_pending_when_a_later_unsupported_member_follows_an_or
     );
     let (tx, mut rx) = tokio::sync::mpsc::channel(4);
     let listener_channel = Arc::clone(&channel);
-    let listener = clawcrew_spawn::spawn!(async move { listener_channel.listen(tx).await });
+    let listener = galleon_spawn::spawn!(async move { listener_channel.listen(tx).await });
 
     let first = tokio::time::timeout(LISTEN_HANG_GUARD, rx.recv())
         .await
@@ -14357,7 +14357,7 @@ async fn listener_rejects_known_approval_callbacks_from_wrong_user_or_chat() {
     );
     let (message_tx, mut message_rx) = tokio::sync::mpsc::channel(1);
     let listener = channel.clone();
-    let listener_task = clawcrew_spawn::spawn!(async move { listener.listen(message_tx).await });
+    let listener_task = galleon_spawn::spawn!(async move { listener.listen(message_tx).await });
 
     tokio::time::timeout(std::time::Duration::from_secs(2), async {
         loop {
@@ -14983,7 +14983,7 @@ async fn callback_wins_claim_and_runtime_honors_operator_response() {
     };
     let waiter = {
         let ch = Arc::clone(&ch);
-        clawcrew_spawn::spawn!(
+        galleon_spawn::spawn!(
             async move { ch.request_approval_attributed("12345", &request).await }
         )
     };

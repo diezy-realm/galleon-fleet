@@ -411,7 +411,7 @@ async fn safety_net_streaming_event_sequence_for_tool_turn() {
     );
 
     let (tx, mut rx) = mpsc::channel(256);
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         agent
             .turn_streamed_with_steering_state("seq", tx, None, None)
             .await
@@ -1543,7 +1543,7 @@ async fn safety_net_midbatch_cancel_emits_events_for_completed_tools() {
         ],
     );
     let (tx, mut rx) = mpsc::channel(256);
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         agent
             .turn_streamed_with_steering_state("cancel-events", tx, Some(token), None)
             .await
@@ -1654,7 +1654,7 @@ async fn safety_net_cancel_after_streamed_output_persists_partial() {
     let cancel = token.clone();
 
     let (tx, mut rx) = mpsc::channel(256);
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         agent
             .turn_streamed_with_steering_state("stream then cancel", tx, Some(token), None)
             .await
@@ -1729,7 +1729,7 @@ async fn safety_net_stream_error_persists_only_forwarded_text() {
     };
     let mut agent = build_agent(Box::new(provider), vec![]);
     let (tx, mut rx) = mpsc::channel(256);
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         agent
             .turn_streamed_with_steering_state("stream then die", tx, None, None)
             .await
@@ -2357,7 +2357,7 @@ async fn safety_net_pretool_narration_chunk_precedes_tool_call_events() {
     );
 
     let (tx, mut rx) = mpsc::channel(256);
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         agent
             .turn_streamed_with_steering_state("narrate then act", tx, None, None)
             .await
@@ -2438,7 +2438,7 @@ async fn safety_net_live_streamed_tool_turn_does_not_duplicate_narration_chunk()
     );
 
     let (tx, mut rx) = mpsc::channel(256);
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         agent
             .turn_streamed_with_steering_state("stream narrate then act", tx, None, None)
             .await
@@ -2506,7 +2506,7 @@ async fn safety_net_guard_held_narration_suffix_reaches_event_consumer_live_befo
     );
 
     let (tx, mut rx) = mpsc::channel(256);
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         agent
             .turn_streamed_with_steering_state("guard-held suffix", tx, None, None)
             .await
@@ -2597,7 +2597,7 @@ async fn safety_net_protocol_suppressed_tool_turn_emits_no_narration_chunk() {
     );
 
     let (tx, mut rx) = mpsc::channel(256);
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         agent
             .turn_streamed_with_steering_state("suppressed envelope", tx, None, None)
             .await
@@ -2756,7 +2756,7 @@ async fn safety_net_terminal_malformed_fallback_reaches_event_consumer_after_too
     );
 
     let (tx, mut rx) = mpsc::channel(256);
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         agent
             .turn_streamed_with_steering_state("narrate then break", tx, None, None)
             .await
@@ -2835,7 +2835,7 @@ async fn safety_net_text_parsed_tool_call_emits_no_narration_chunk() {
     );
 
     let (tx, mut rx) = mpsc::channel(256);
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         agent
             .turn_streamed_with_steering_state("markup tool call", tx, None, None)
             .await
@@ -2986,7 +2986,7 @@ async fn usage_event_coherent_tuple_vision_route() {
         let prompt = format!("Analyze this image: [IMAGE:{}]", img_path.display());
         let (tx, mut rx) = mpsc::channel::<TurnEvent>(256);
         let mut capture_agent = agent;
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             TOOL_LOOP_COST_TRACKING_CONTEXT
                 .scope(
                     Some(cost_ctx.clone()),
@@ -3552,7 +3552,7 @@ async fn usage_event_emitted_even_without_usage_data() {
     let (tx, mut rx) = mpsc::channel::<TurnEvent>(256);
     let prompt = "hello".to_string();
     let mut agent = agent;
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         crate::agent::cost::TOOL_LOOP_COST_TRACKING_CONTEXT
             .scope(
                 Some(cost_ctx),
@@ -3637,7 +3637,7 @@ async fn usage_identity_updates_on_subsequent_calls_without_usage() {
     let (tx, mut rx) = mpsc::channel::<TurnEvent>(256);
     let prompt = "hello".to_string();
     let mut agent = agent;
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         crate::agent::cost::TOOL_LOOP_COST_TRACKING_CONTEXT
             .scope(
                 Some(cost_ctx),
@@ -3760,7 +3760,7 @@ async fn usage_identity_crosses_provider_boundary_without_usage() {
     let (tx, mut rx) = mpsc::channel::<TurnEvent>(256);
     let prompt = "hello".to_string();
     let mut agent = agent;
-    let handle = clawcrew_spawn::spawn!(async move {
+    let handle = galleon_spawn::spawn!(async move {
         crate::agent::cost::TOOL_LOOP_COST_TRACKING_CONTEXT
             .scope(
                 Some(cost_ctx),

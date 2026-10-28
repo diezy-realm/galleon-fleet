@@ -565,7 +565,7 @@ vision = false
         let app = Router::new()
             .route("/v1/chat/completions", post(capture_model))
             .with_state(model_tx);
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("test provider serves");

@@ -79,7 +79,7 @@ async fn test_gateway_ephemeral_tcp_binding_and_http_endpoints_lifecycle() {
     assert_ne!(local_addr.port(), 0, "ephemeral port must be allocated");
 
     let app = build_gateway_router(state.clone());
-    let server_handle = clawcrew_spawn::spawn!(async move {
+    let server_handle = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("axum gateway serve");
@@ -184,7 +184,7 @@ async fn test_gateway_websocket_handshake_ping_pong_and_stream_lifecycle() {
         .expect("bind ephemeral TCP listener");
     let local_addr = listener.local_addr().expect("local socket address");
     let app = build_gateway_router(state.clone());
-    let server_handle = clawcrew_spawn::spawn!(async move {
+    let server_handle = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("axum gateway serve");
@@ -319,7 +319,7 @@ async fn test_run_gateway_supervision_and_readiness_lifecycle() {
         reload_tx,
     };
 
-    let server_task = clawcrew_spawn::spawn!(async move {
+    let server_task = galleon_spawn::spawn!(async move {
         clawcrew_gateway::run_gateway(
             "127.0.0.1",
             0,

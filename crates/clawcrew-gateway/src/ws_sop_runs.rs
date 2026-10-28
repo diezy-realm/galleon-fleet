@@ -109,7 +109,7 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
         return;
     };
 
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         loop {
             match rx.recv().await {
                 Ok(run) => {

@@ -2111,7 +2111,7 @@ mod tests {
             );
             let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
             let addr = listener.local_addr().unwrap();
-            let server = ::clawcrew_spawn::spawn!(async move {
+            let server = ::galleon_spawn::spawn!(async move {
                 axum::serve(listener, app).await.unwrap();
             });
             let provider = apply_compat_options(
@@ -2171,7 +2171,7 @@ mod tests {
             );
             let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
             let addr = listener.local_addr().unwrap();
-            let server = ::clawcrew_spawn::spawn!(async move {
+            let server = ::galleon_spawn::spawn!(async move {
                 axum::serve(listener, app).await.unwrap();
             });
             let provider = AnthropicModelProviderConfig::default()
@@ -2576,7 +2576,7 @@ mod tests {
             .await
             .expect("bind public catalog fixture");
         let addr = listener.local_addr().expect("read fixture address");
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("serve public catalog fixture");
@@ -2738,7 +2738,7 @@ mod tests {
             .expect("bind test server");
         let addr = listener.local_addr().expect("test server addr");
         let app = Router::new().route("/chat/completions", post(slow_chat_completion));
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("serve test server");
         });
 
@@ -2816,7 +2816,7 @@ mod tests {
                 post(capture_chat_request),
             )
             .with_state(capture.clone());
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("serve test server");
         });
 
@@ -3016,7 +3016,7 @@ mod tests {
             .expect("bind test server");
         let addr = listener.local_addr().expect("test server addr");
         let app = Router::new().route("/v1/responses", post(slow_responses));
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("serve test server");
         });
 
@@ -3099,7 +3099,7 @@ mod tests {
         let app = Router::new()
             .route("/v1/responses", post(capture_headers))
             .with_state(Arc::clone(&captured));
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("serve test server");
         });
 
@@ -3341,7 +3341,7 @@ mod tests {
         let app = Router::new()
             .route("/zen/v1/responses", post(capture_path))
             .with_state(capture.clone());
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("serve test server");
         });
 

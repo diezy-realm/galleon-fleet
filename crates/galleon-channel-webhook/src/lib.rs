@@ -867,7 +867,7 @@ mod tests {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let port = listener.local_addr().unwrap().port();
         let (tx, rx) = tokio::sync::mpsc::channel(16);
-        let jh = clawcrew_spawn::spawn!(async move {
+        let jh = galleon_spawn::spawn!(async move {
             ch.listen_with_listener(listener, tx).await.ok();
         });
         // Give the server a moment to begin accepting connections.

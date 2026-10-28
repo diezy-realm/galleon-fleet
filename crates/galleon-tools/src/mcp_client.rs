@@ -524,7 +524,7 @@ impl McpServer {
         operation: String,
     ) -> tokio::task::JoinHandle<Result<()>> {
         let server = self.clone();
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             let result = server.reestablish(observed_epoch).await;
             if let Err(error) = &result {
                 ::clawcrew_log::record!(
@@ -1805,7 +1805,7 @@ mod tests {
         let server = server_with_transport("pre-write", transport, 5);
         let call_server = server.clone();
         let call =
-            clawcrew_spawn::spawn!(async move { call_server.call_tool("test", json!({})).await });
+            galleon_spawn::spawn!(async move { call_server.call_tool("test", json!({})).await });
         entered.notified().await;
         call.abort();
         assert!(
@@ -1898,7 +1898,7 @@ mod tests {
 
         let call_server = server.clone();
         let call =
-            clawcrew_spawn::spawn!(
+            galleon_spawn::spawn!(
                 async move { call_server.call_tool("side_effect", json!({})).await }
             );
         handshake_entered.notified().await;
@@ -2127,7 +2127,7 @@ mod tests {
 
         // First call writes, marks outcome-unknown, then hangs; cancel it.
         let first_server = server.clone();
-        let first = clawcrew_spawn::spawn!(async move {
+        let first = galleon_spawn::spawn!(async move {
             first_server.call_tool("side_effect", json!({})).await
         });
         first_entered.notified().await;
@@ -2204,7 +2204,7 @@ mod tests {
         let server = server_with_serialized_transport("failing", transport, 5);
 
         let first_server = server.clone();
-        let first = clawcrew_spawn::spawn!(async move {
+        let first = galleon_spawn::spawn!(async move {
             first_server.call_tool("side_effect", json!({})).await
         });
         first_entered.notified().await;
@@ -2667,11 +2667,11 @@ done
         .expect("connect");
         let first_server = server.clone();
         let first =
-            clawcrew_spawn::spawn!(async move { first_server.call_tool("A", json!({})).await });
+            galleon_spawn::spawn!(async move { first_server.call_tool("A", json!({})).await });
         assert_eq!(read_fifo(&first_received).await.trim(), "ready");
         let second_server = server.clone();
         let second =
-            clawcrew_spawn::spawn!(async move { second_server.call_tool("B", json!({})).await });
+            galleon_spawn::spawn!(async move { second_server.call_tool("B", json!({})).await });
 
         let (first_result, second_result) = tokio::time::timeout(Duration::from_secs(5), async {
             tokio::join!(first, second)
@@ -2749,7 +2749,7 @@ done
         .expect("connect");
         let call_server = server.clone();
         let call =
-            clawcrew_spawn::spawn!(
+            galleon_spawn::spawn!(
                 async move { call_server.call_tool("side_effect", json!({})).await }
             );
         assert_eq!(read_fifo(&effect_ready).await.trim(), "ready");
@@ -2848,7 +2848,7 @@ done
         // stdin boundary but before newline/flush completes. `state` remains
         // locked and the request outcome is unknown.
         let first_server = server.clone();
-        let first = clawcrew_spawn::spawn!(async move {
+        let first = galleon_spawn::spawn!(async move {
             first_server.call_tool("side_effect", json!({})).await
         });
         timeout(Duration::from_secs(3), hook.wait_for_payload_pause())
@@ -2859,7 +2859,7 @@ done
         // transport, where it is queued on the same stdio state lock.
         let second_server = server.clone();
         let second =
-            clawcrew_spawn::spawn!(
+            galleon_spawn::spawn!(
                 async move { second_server.call_tool("probe", json!({})).await }
             );
         timeout(Duration::from_secs(3), hook.wait_for_attempts(2))

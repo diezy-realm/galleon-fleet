@@ -1103,7 +1103,7 @@ pub(crate) async fn handle_gmail_push_webhook(
         };
 
     let channel = Arc::clone(gmail_push);
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         if let Err(e) = channel.handle_notification(&envelope).await {
             ::clawcrew_log::record!(
                 ERROR,

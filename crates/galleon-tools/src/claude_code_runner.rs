@@ -304,7 +304,7 @@ impl Tool for ClaudeCodeRunnerTool {
         let ttl = self.config.session_ttl;
         let cleanup_session = session_name.clone();
         let tmux_binary = self.tmux_binary.clone();
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             tokio::time::sleep(std::time::Duration::from_secs(ttl)).await;
             let _ = cleanup_expired_session(&tmux_binary, &cleanup_session).await;
         });

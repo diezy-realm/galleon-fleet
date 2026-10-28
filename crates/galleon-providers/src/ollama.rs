@@ -1202,7 +1202,7 @@ mod tests {
             .await
             .expect("test listener should bind");
         let addr = listener.local_addr().expect("listener should have address");
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("test server should run");

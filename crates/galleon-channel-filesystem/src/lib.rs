@@ -923,7 +923,7 @@ mod tests {
         );
 
         let (tx, rx) = mpsc::channel(1);
-        let listener = ::clawcrew_spawn::spawn!(async move { channel.listen(tx).await });
+        let listener = ::galleon_spawn::spawn!(async move { channel.listen(tx).await });
 
         // Close the supervisor side while the watcher is completely idle.
         drop(rx);

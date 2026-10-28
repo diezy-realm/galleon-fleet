@@ -3446,7 +3446,7 @@ mod tests {
         let app = Router::new()
             .route("/v1/chat/completions", post(capture_chat_request))
             .with_state(capture.clone());
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("serve test server");
         });
 
@@ -3912,7 +3912,7 @@ mod tests {
             let app = Router::new()
                 .route("/chat/completions", post(capture_chat_request))
                 .with_state(capture.clone());
-            let server = ::clawcrew_spawn::spawn!(async move {
+            let server = ::galleon_spawn::spawn!(async move {
                 axum::serve(listener, app).await.expect("serve test server");
             });
 
@@ -4077,7 +4077,7 @@ mod tests {
         let app = Router::new()
             .route("/v1/chat/completions", post(capture_chat_request))
             .with_state(capture.clone());
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("serve test server");
         });
 
@@ -4130,7 +4130,7 @@ mod tests {
         let app = Router::new()
             .route("/v1/models", get(capture_models_request))
             .with_state(capture.clone());
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("serve test server");
         });
 
@@ -5787,7 +5787,7 @@ mod tests {
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        let server = ::clawcrew_spawn::spawn!(async move {
+        let server = ::galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
 
@@ -6150,7 +6150,7 @@ mod context_window_discovery_tests {
         let app = Router::new()
             .route("/models", get(handler))
             .with_state(capture);
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("serve test catalog");

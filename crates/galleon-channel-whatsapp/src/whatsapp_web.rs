@@ -107,7 +107,7 @@ impl Drop for PendingApprovalGuard {
         // before any realistic reply, and a reply that beats it still finds a
         // dead receiver and cannot be reported as accepted.
         let registration_id = self.registration_id;
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             remove_pending_approval_if_matches(&token, registration_id).await;
         });
     }
@@ -2755,7 +2755,7 @@ impl Channel for WhatsAppWebChannel {
                 let client_clone = client.clone();
                 let to_clone = to.clone();
                 let recipient = message.recipient.clone();
-                clawcrew_spawn::spawn!(async move {
+                galleon_spawn::spawn!(async move {
                     // Wait 10 seconds — long enough for the agent to finish its
                     // full tool chain and send the final answer.
                     tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
@@ -6920,7 +6920,7 @@ mod tests {
         let token = registration.token.clone();
         assert!(PENDING_APPROVALS.lock().await.contains_key(&token));
 
-        let request = clawcrew_spawn::spawn!(async move {
+        let request = galleon_spawn::spawn!(async move {
             let _registration = registration;
             std::future::pending::<()>().await;
         });

@@ -620,7 +620,7 @@ mod tests {
 
         let pairing = {
             let shared = Arc::clone(&shared);
-            clawcrew_spawn::spawn!(async move {
+            galleon_spawn::spawn!(async move {
                 persist_external_peer(Some(&shared), "whatsapp", "admin", "+15551234567", exact)
                     .await
             })
@@ -833,7 +833,7 @@ mod tests {
 
         let pairing = {
             let shared = Arc::clone(&shared);
-            clawcrew_spawn::spawn!(async move {
+            galleon_spawn::spawn!(async move {
                 persist_external_peer(Some(&shared), "whatsapp", "admin", "+15551234567", exact)
                     .await
             })

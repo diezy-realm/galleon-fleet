@@ -180,7 +180,7 @@ fn process_token() -> &'static str {
 ///
 /// This reads a `tokio` task-local, which **does not** cross `tokio::spawn`.
 /// The streaming provider paths build their requests inside
-/// `clawcrew_spawn::spawn!`, whose macro propagates only the tracing span, so
+/// `galleon_spawn::spawn!`, whose macro propagates only the tracing span, so
 /// calling this from inside a spawned task would silently fall back to
 /// the process-stable fallback and lose per-conversation affinity. Resolve the
 /// value before the spawn and move it in.
@@ -331,7 +331,7 @@ mod tests {
     #[tokio::test]
     async fn conversation_scope_does_not_survive_a_spawn() {
         // Guards the call-site contract in `session_token`'s docs. If a change
-        // ever moves resolution inside `clawcrew_spawn::spawn!`, the streaming
+        // ever moves resolution inside `galleon_spawn::spawn!`, the streaming
         // paths silently stop distinguishing conversations rather than
         // failing, so assert the mechanism that makes that happen.
         async fn token_in_scope<F, Fut>(f: F) -> String
@@ -351,7 +351,7 @@ mod tests {
         let inside_spawn = token_in_scope(|| async {
             // The production streaming paths spawn through this same macro, so
             // assert against it rather than a bare `tokio::spawn`.
-            ::clawcrew_spawn::spawn!(async {
+            ::galleon_spawn::spawn!(async {
                 session_token("https://opencode.ai/zen/v1").expect("token")
             })
             .await
@@ -408,7 +408,7 @@ mod tests {
                 .await
                 .expect("bind");
             let addr = listener.local_addr().expect("local addr");
-            let _server = ::clawcrew_spawn::spawn!(async move {
+            let _server = ::galleon_spawn::spawn!(async move {
                 axum::serve(listener, app).await.expect("serve");
             });
             addr

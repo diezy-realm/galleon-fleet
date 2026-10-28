@@ -1098,7 +1098,7 @@ fn echo_daemon_ready_to_terminal<W: std::io::Write>(
 }
 
 fn spawn_state_writer(config: Config) -> JoinHandle<()> {
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         let path = state_file_path(&config);
         if let Some(parent) = path.parent() {
             let _ = tokio::fs::create_dir_all(parent).await;
@@ -1219,7 +1219,7 @@ where
     F: FnMut() -> Fut + Send + 'static,
     Fut: Future<Output = Result<()>> + Send + 'static,
 {
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         let mut backoff = initial_backoff_secs.max(1);
         let max_backoff = max_backoff_secs.max(backoff);
 
@@ -1797,7 +1797,7 @@ async fn run_heartbeat_worker(config: Config) -> Result<()> {
         let dm_metrics = Arc::clone(&metrics);
         let dm_config = config.clone();
         let dm_delivery = delivery.clone();
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             let check_interval = Duration::from_secs(60);
             let timeout = chrono::Duration::minutes(i64::from(deadman_timeout));
             loop {
@@ -2547,7 +2547,7 @@ mod tests {
     async fn connection_drain_completes_once_the_last_connection_task_ends() {
         let count = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(1));
         let releaser = std::sync::Arc::clone(&count);
-        let release = clawcrew_spawn::spawn!(async move {
+        let release = galleon_spawn::spawn!(async move {
             tokio::time::sleep(Duration::from_millis(200)).await;
             releaser.store(0, std::sync::atomic::Ordering::Relaxed);
         });
@@ -2831,7 +2831,7 @@ mod tests {
             StartupReadinessAttempt::socket(Some(readiness_tx));
         let actual_addr = "127.0.0.1:42617".parse().unwrap();
 
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             tokio::time::sleep(Duration::from_millis(40)).await;
             socket_reporter.unwrap().report_ready();
             tokio::time::sleep(Duration::from_millis(40)).await;
@@ -2890,7 +2890,7 @@ mod tests {
     async fn readiness_attempt_clears_gateway_state_when_task_is_aborted() {
         let (readiness_tx, mut readiness_rx) =
             tokio::sync::watch::channel(StartupReadiness::default());
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             let (attempt, reporter) = StartupReadinessAttempt::gateway(Some(readiness_tx));
             let _attempt = attempt;
             reporter
@@ -2927,7 +2927,7 @@ mod tests {
         let ready_reported_by_task = ready_reported.clone();
         let release_return = std::sync::Arc::new(tokio::sync::Notify::new());
         let release_return_in_task = release_return.clone();
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             let (attempt, reporter) = StartupReadinessAttempt::gateway(Some(readiness_tx));
             let _attempt = attempt;
             reporter
@@ -2959,7 +2959,7 @@ mod tests {
         let ready_reported_by_task = ready_reported.clone();
         let release_panic = std::sync::Arc::new(tokio::sync::Notify::new());
         let release_panic_in_task = release_panic.clone();
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             let (attempt, reporter) = StartupReadinessAttempt::socket(Some(readiness_tx));
             let _attempt = attempt;
             reporter.unwrap().report_ready();
@@ -3681,7 +3681,7 @@ mod tests {
 
         let (_reload_tx, reload_rx) = tokio::sync::watch::channel(false);
         let count = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
-        let handle = clawcrew_spawn::spawn!(wait_for_exit_signal(reload_rx, false, count));
+        let handle = galleon_spawn::spawn!(wait_for_exit_signal(reload_rx, false, count));
 
         // Give the signal handler time to register
         tokio::time::sleep(Duration::from_millis(50)).await;
@@ -3705,7 +3705,7 @@ mod tests {
 
         let (reload_tx, reload_rx) = tokio::sync::watch::channel(false);
         let count = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
-        let handle = clawcrew_spawn::spawn!(wait_for_exit_signal(reload_rx, false, count));
+        let handle = galleon_spawn::spawn!(wait_for_exit_signal(reload_rx, false, count));
         tokio::time::sleep(Duration::from_millis(50)).await;
         reload_tx.send(true).expect("send reload");
 
@@ -3957,7 +3957,7 @@ mod tests {
 
                 client_count.store(1, Ordering::SeqCst);
                 let client_count_for_drop = client_count.clone();
-                clawcrew_spawn::spawn!(async move {
+                galleon_spawn::spawn!(async move {
                     tokio::time::sleep(Duration::from_millis(1500)).await;
                     client_count_for_drop.store(0, Ordering::SeqCst);
                 });
@@ -4127,7 +4127,7 @@ mod tests {
 
         let (_reload_tx, reload_rx) = tokio::sync::watch::channel(false);
         let count = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
-        let handle = clawcrew_spawn::spawn!(wait_for_exit_signal(reload_rx, true, count));
+        let handle = galleon_spawn::spawn!(wait_for_exit_signal(reload_rx, true, count));
 
         // No clients ever connect — should NOT shut down.
         let result = timeout(Duration::from_millis(500), handle).await;
@@ -4145,7 +4145,7 @@ mod tests {
         let (_reload_tx, reload_rx) = tokio::sync::watch::channel(false);
         let count = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
         let count2 = count.clone();
-        let handle = clawcrew_spawn::spawn!(wait_for_exit_signal(reload_rx, true, count2));
+        let handle = galleon_spawn::spawn!(wait_for_exit_signal(reload_rx, true, count2));
 
         // Simulate client connect then disconnect.
         count.store(1, Ordering::Relaxed);
@@ -4169,7 +4169,7 @@ mod tests {
         let (_reload_tx, reload_rx) = tokio::sync::watch::channel(false);
         let count = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
         let count2 = count.clone();
-        let mut handle = clawcrew_spawn::spawn!(wait_for_exit_signal(reload_rx, true, count2));
+        let mut handle = galleon_spawn::spawn!(wait_for_exit_signal(reload_rx, true, count2));
 
         // Client connects, disconnects.
         count.store(1, Ordering::Relaxed);
@@ -4233,7 +4233,7 @@ mod tests {
             .expect("bind mock listener");
         let port = listener.local_addr().expect("mock local addr").port();
         let (release_tx, release_rx) = tokio::sync::oneshot::channel::<()>();
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             if let Ok((mut stream, _)) = listener.accept().await {
                 let mut buf = [0_u8; 1024];
                 let _ = stream.read(&mut buf).await;

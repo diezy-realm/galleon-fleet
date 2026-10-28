@@ -1,4 +1,4 @@
-//! `clawcrew-spawn` — the sanctioned interface against `tokio::spawn` for
+//! `galleon-spawn` — the sanctioned interface against `tokio::spawn` for
 //! the ClawCrew workspace.
 
 #![forbid(unsafe_code)]

@@ -1551,7 +1551,7 @@ impl Channel for QQChannel {
         let effective_interval = hb_interval.saturating_add(grace_ms);
 
         let (hb_tx, mut hb_rx) = tokio::sync::mpsc::channel::<()>(1);
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             let mut interval =
                 tokio::time::interval(std::time::Duration::from_millis(effective_interval));
             loop {
@@ -1950,7 +1950,7 @@ mod tests {
 
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             let (mut socket, _) = listener.accept().await.unwrap();
             let mut request = [0_u8; 1024];
             let _ = socket.read(&mut request).await.unwrap();

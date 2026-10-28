@@ -242,7 +242,7 @@ async fn handle_canvas_socket(socket: WebSocket, state: AppState, canvas_id: Str
 
     // Spawn a task that forwards broadcast updates to the WebSocket
     let canvas_id_clone = canvas_id.clone();
-    let send_task = clawcrew_spawn::spawn!(async move {
+    let send_task = galleon_spawn::spawn!(async move {
         loop {
             match rx.recv().await {
                 Ok(frame) => {

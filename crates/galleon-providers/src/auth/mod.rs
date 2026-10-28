@@ -1981,7 +1981,7 @@ mod tests {
             .await
             .expect("bind token server");
         let addr = listener.local_addr().expect("token server addr");
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("serve token server");
@@ -2025,7 +2025,7 @@ mod tests {
             .await
             .expect("bind token server");
         let addr = listener.local_addr().expect("token server addr");
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("serve token server");

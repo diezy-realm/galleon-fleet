@@ -148,7 +148,7 @@ async fn server(
         .expect("bind fixture server");
     let address = listener.local_addr().expect("fixture server address");
     let (accepted_tx, accepted_rx) = oneshot::channel();
-    let task = ::clawcrew_spawn::spawn!(async move {
+    let task = ::galleon_spawn::spawn!(async move {
         let (mut stream, _) = listener.accept().await.expect("accept fixture request");
         let mut request = [0_u8; 4096];
         let _ = stream.read(&mut request).await;

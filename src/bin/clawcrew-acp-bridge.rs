@@ -44,7 +44,7 @@ async fn run() -> Result<()> {
         .with_context(|| format!("failed to connect to {}", bridge_target.url))?;
     let (mut ws_write, mut ws_read) = ws_stream.split();
 
-    let stdin_to_ws = clawcrew_spawn::spawn!(async move {
+    let stdin_to_ws = galleon_spawn::spawn!(async move {
         let stdin = io::stdin();
         let mut lines = BufReader::new(stdin).lines();
 
@@ -61,7 +61,7 @@ async fn run() -> Result<()> {
             .context("failed to close websocket")
     });
 
-    let ws_to_stdout = clawcrew_spawn::spawn!(async move {
+    let ws_to_stdout = galleon_spawn::spawn!(async move {
         let mut stdout = io::stdout();
 
         while let Some(message) = ws_read.next().await {

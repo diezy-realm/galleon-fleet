@@ -931,7 +931,7 @@ impl ModelProvider for OpenRouterModelProvider {
 
         let (tx, rx) = tokio::sync::mpsc::channel::<StreamResult<StreamEvent>>(100);
 
-        let handle = ::clawcrew_spawn::spawn!(async move {
+        let handle = ::galleon_spawn::spawn!(async move {
             let response = match client
                 .post(endpoint_url)
                 .header("Authorization", format!("Bearer {credential}"))
@@ -1271,7 +1271,7 @@ data: [DONE]
         let addr = listener
             .local_addr()
             .expect("OpenRouter streaming test address");
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app)
                 .await
                 .expect("serve OpenRouter streaming test");
@@ -1337,7 +1337,7 @@ data: [DONE]
         let addr = listener
             .local_addr()
             .expect("OpenRouter idle-timeout test address");
-        let server = clawcrew_spawn::spawn!(async move {
+        let server = galleon_spawn::spawn!(async move {
             let (mut socket, _) = listener
                 .accept()
                 .await
@@ -2511,7 +2511,7 @@ data: [DONE]
         let finished = Arc::new(AtomicBool::new(false));
         let finished_clone = Arc::clone(&finished);
 
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             tokio::time::sleep(Duration::from_secs(30)).await;
             finished_clone.store(true, Ordering::SeqCst);
         });

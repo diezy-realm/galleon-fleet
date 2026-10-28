@@ -5031,7 +5031,7 @@ mod active_route_context_tests {
             .expect("bind vision provider");
         let addr = listener.local_addr().expect("vision provider address");
         let app = Router::new().route("/v1/chat/completions", post(vision_reply));
-        let _server = clawcrew_spawn::spawn!(async move {
+        let _server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("vision serves");
         });
 

@@ -672,7 +672,7 @@ mod tests {
 
         // Spawn the request; capture the outbound id, then dispatch a
         // matching "selected" response so the await resolves.
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             ch.request_choice("Confirm?", &choices, Duration::from_secs(5))
                 .await
         });
@@ -710,7 +710,7 @@ mod tests {
 
         let choices = vec!["Yes".to_string(), "No".to_string()];
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             ch.request_choice("Confirm?", &choices, Duration::from_secs(5))
                 .await
         });
@@ -771,7 +771,7 @@ mod tests {
 
         let choices = vec!["Alpha".to_string(), "Beta".to_string()];
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             ch.request_choice("Pick one", &choices, Duration::from_secs(5))
                 .await
         });
@@ -823,7 +823,7 @@ mod tests {
 
         let choices = vec!["First".to_string(), "Second".to_string()];
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             ch.request_choice("Confirm?", &choices, Duration::from_secs(5))
                 .await
         });
@@ -860,7 +860,7 @@ mod tests {
         );
 
         let choices = vec!["A".to_string(), "B".to_string()];
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             ch.request_choice("Q?", &choices, Duration::from_secs(5))
                 .await
         });
@@ -889,7 +889,7 @@ mod tests {
         );
 
         let choices = vec!["A".to_string(), "B".to_string()];
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             ch.request_choice("Q?", &choices, Duration::from_secs(5))
                 .await
         });
@@ -918,7 +918,7 @@ mod tests {
         );
 
         let choices = vec!["A".to_string(), "B".to_string()];
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             ch.request_choice("Q?", &choices, Duration::from_secs(5))
                 .await
         });
@@ -1002,7 +1002,7 @@ mod tests {
             position: None,
         };
 
-        let task = clawcrew_spawn::spawn!(async move { ch.request_approval("", &request).await });
+        let task = galleon_spawn::spawn!(async move { ch.request_approval("", &request).await });
 
         let line = rx.recv().await.unwrap();
         let req: serde_json::Value = serde_json::from_str(&line).unwrap();
@@ -1054,7 +1054,7 @@ mod tests {
             position: None,
         };
 
-        let task = clawcrew_spawn::spawn!(async move { ch.request_approval("", &request).await });
+        let task = galleon_spawn::spawn!(async move { ch.request_approval("", &request).await });
         let line = rx.recv().await.unwrap();
         let req: serde_json::Value = serde_json::from_str(&line).unwrap();
         let id = req["id"].as_str().unwrap().to_string();
@@ -1084,7 +1084,7 @@ mod tests {
             raw_arguments: None,
             position: None,
         };
-        let task = clawcrew_spawn::spawn!(async move { ch.request_approval("", &request).await });
+        let task = galleon_spawn::spawn!(async move { ch.request_approval("", &request).await });
         let line = rx.recv().await.unwrap();
         let req: serde_json::Value = serde_json::from_str(&line).unwrap();
         let id = req["id"].as_str().unwrap().to_string();
@@ -1121,7 +1121,7 @@ mod tests {
             position: None,
         };
 
-        let task = clawcrew_spawn::spawn!(async move { ch.request_approval("", &request).await });
+        let task = galleon_spawn::spawn!(async move { ch.request_approval("", &request).await });
         let line = rx.recv().await.unwrap();
         let req: serde_json::Value = serde_json::from_str(&line).unwrap();
 
@@ -1197,7 +1197,7 @@ mod tests {
             position: None,
         };
 
-        let task = clawcrew_spawn::spawn!(async move { ch.request_approval("", &request).await });
+        let task = galleon_spawn::spawn!(async move { ch.request_approval("", &request).await });
 
         let line = rx.recv().await.unwrap();
         let req: serde_json::Value = serde_json::from_str(&line).unwrap();
@@ -1246,7 +1246,7 @@ mod tests {
             position: None,
         };
 
-        let task = clawcrew_spawn::spawn!(async move { ch.request_approval("", &request).await });
+        let task = galleon_spawn::spawn!(async move { ch.request_approval("", &request).await });
 
         let line = rx.recv().await.unwrap();
         let req: serde_json::Value = serde_json::from_str(&line).unwrap();
@@ -1285,7 +1285,7 @@ mod tests {
             position: None,
         };
 
-        let task = clawcrew_spawn::spawn!(async move { ch.request_approval("", &request).await });
+        let task = galleon_spawn::spawn!(async move { ch.request_approval("", &request).await });
 
         let line = rx.recv().await.unwrap();
         let req: serde_json::Value = serde_json::from_str(&line).unwrap();
@@ -1328,7 +1328,7 @@ mod tests {
             position: None,
         };
 
-        let task = clawcrew_spawn::spawn!(async move { ch.request_approval("", &request).await });
+        let task = galleon_spawn::spawn!(async move { ch.request_approval("", &request).await });
 
         let line = rx.recv().await.unwrap();
         let req: serde_json::Value = serde_json::from_str(&line).unwrap();
@@ -1424,7 +1424,7 @@ mod tests {
 
         let choices = vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()];
 
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             ch.request_multi_choice("Pick colors", &choices, 1, 2, Duration::from_secs(5))
                 .await
         });
@@ -1509,7 +1509,7 @@ mod tests {
         );
 
         let choices = vec!["A".to_string(), "B".to_string()];
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             ch.request_multi_choice("Q?", &choices, 1, 2, Duration::from_secs(5))
                 .await
         });
@@ -1538,7 +1538,7 @@ mod tests {
         );
 
         let choices = vec!["A".to_string(), "B".to_string()];
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             ch.request_multi_choice("Q?", &choices, 1, 2, Duration::from_secs(5))
                 .await
         });
@@ -1567,7 +1567,7 @@ mod tests {
         );
 
         let choices = vec!["A".to_string(), "B".to_string()];
-        let task = clawcrew_spawn::spawn!(async move {
+        let task = galleon_spawn::spawn!(async move {
             ch.request_multi_choice("Q?", &choices, 1, 2, Duration::from_secs(5))
                 .await
         });

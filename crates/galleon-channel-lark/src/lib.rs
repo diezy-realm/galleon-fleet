@@ -1111,7 +1111,7 @@ async fn handle_lark_http_event(
         // ack target; parse_event_payload_async already filtered
         // out unauthorized senders and non-text payloads.
         let reaction_reply_target = messages[0].reply_target.clone();
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             if let Err(e) = <LarkChannel as Channel>::add_reaction(
                 &reaction_channel,
                 &reaction_reply_target,
@@ -1798,7 +1798,7 @@ impl LarkChannel {
                         let reaction_channel = self.clone();
                         let reaction_message_id = lark_msg.message_id.clone();
                         let reaction_reply_target = lark_msg.chat_id.clone();
-                        clawcrew_spawn::spawn!(async move {
+                        galleon_spawn::spawn!(async move {
                             if let Err(e) = <LarkChannel as Channel>::add_reaction(
                                 &reaction_channel,
                                 &reaction_reply_target,

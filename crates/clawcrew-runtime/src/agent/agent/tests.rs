@@ -3820,7 +3820,7 @@
 
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let mock_addr = listener.local_addr().unwrap();
-        let server_handle = clawcrew_spawn::spawn!(async move {
+        let server_handle = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.unwrap();
         });
 
@@ -7999,7 +7999,7 @@
 
         let (event_tx, mut event_rx) = tokio::sync::mpsc::channel::<TurnEvent>(64);
         let (steering_tx, mut steering_rx) = tokio::sync::mpsc::channel::<String>(4);
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             agent
                 .turn_streamed_with_steering_state("first", event_tx, None, Some(&mut steering_rx))
                 .await
@@ -8127,7 +8127,7 @@
 
         let (event_tx, mut event_rx) = tokio::sync::mpsc::channel::<TurnEvent>(64);
         let (steering_tx, mut steering_rx) = tokio::sync::mpsc::channel::<String>(4);
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             agent
                 .turn_streamed_with_steering_state("first", event_tx, None, Some(&mut steering_rx))
                 .await
@@ -8199,7 +8199,7 @@
             .expect("agent builder should succeed with valid config");
 
         let (event_tx, _event_rx) = tokio::sync::mpsc::channel::<TurnEvent>(64);
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             agent
                 .turn_streamed_with_steering_state("first", event_tx, None, None)
                 .await
@@ -8266,7 +8266,7 @@
             .expect("agent builder should succeed with valid config");
 
         let (event_tx, mut event_rx) = tokio::sync::mpsc::channel::<TurnEvent>(64);
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             agent
                 .turn_streamed_with_steering_state("first", event_tx, None, None)
                 .await
@@ -8342,7 +8342,7 @@
         let (event_tx, _event_rx) = tokio::sync::mpsc::channel::<TurnEvent>(64);
         let cancel_token = tokio_util::sync::CancellationToken::new();
         let cancel_for_task = cancel_token.clone();
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             agent
                 .turn_streamed_with_steering_state("first", event_tx, Some(cancel_for_task), None)
                 .await
@@ -8572,7 +8572,7 @@
         let cancel_token = tokio_util::sync::CancellationToken::new();
         let cancel_for_task = cancel_token.clone();
 
-        let canceller = clawcrew_spawn::spawn!(async move {
+        let canceller = galleon_spawn::spawn!(async move {
             while let Some(event) = event_rx.recv().await {
                 if matches!(event, TurnEvent::Chunk { ref delta } if delta == "draft") {
                     cancel_for_task.cancel();
@@ -9377,7 +9377,7 @@
         let (event_tx, mut event_rx) = tokio::sync::mpsc::channel::<TurnEvent>(64);
         let cancel_token = tokio_util::sync::CancellationToken::new();
         let cancel_for_task = cancel_token.clone();
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             agent
                 .turn_streamed_with_steering_state(
                     "use echo",
@@ -10021,7 +10021,7 @@
             .expect("bind vision provider");
         let addr = listener.local_addr().expect("vision provider address");
         let app = Router::new().route("/v1/chat/completions", post(vision_reply));
-        let _server = clawcrew_spawn::spawn!(async move {
+        let _server = galleon_spawn::spawn!(async move {
             axum::serve(listener, app).await.expect("vision serves");
         });
 

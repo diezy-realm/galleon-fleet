@@ -342,13 +342,13 @@ mod tests {
         let bridge_a = Arc::clone(&bridge);
         let bridge_b = Arc::clone(&bridge);
         let (ra, rb) = tokio::join!(
-            clawcrew_spawn::spawn!(async move {
+            galleon_spawn::spawn!(async move {
                 bridge_a
                     .request_approval_attributed("user-A", &req())
                     .await
                     .unwrap()
             }),
-            clawcrew_spawn::spawn!(async move {
+            galleon_spawn::spawn!(async move {
                 bridge_b
                     .request_approval_attributed("user-B", &req())
                     .await

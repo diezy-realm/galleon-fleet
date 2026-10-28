@@ -13,7 +13,7 @@ publish = true
 clawcrew-log.workspace = true
 clawcrew-api.workspace = true
 clawcrew-config.workspace = true
-clawcrew-spawn.workspace = true
+galleon-spawn.workspace = true
 galleon-tools.workspace = true
 
 anyhow = "1.0"

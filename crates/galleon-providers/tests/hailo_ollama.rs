@@ -327,7 +327,7 @@ async fn native_hailo_chat_requests_connection_close() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat_headers))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -364,7 +364,7 @@ async fn standard_ollama_chat_does_not_force_connection_close() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat_headers))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Ollama server");
@@ -398,7 +398,7 @@ async fn native_hailo_normalizes_messages_and_reports_honest_capabilities() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -508,7 +508,7 @@ async fn native_hailo_chat_does_not_follow_redirects() {
     let b_app = Router::new()
         .route("/api/chat", post(count_and_capture_headers))
         .with_state((b_requests.clone(), b_headers.clone()));
-    let b_server = clawcrew_spawn::spawn!(async move {
+    let b_server = galleon_spawn::spawn!(async move {
         axum::serve(b_listener, b_app)
             .await
             .expect("serve fake Hailo endpoint B");
@@ -525,7 +525,7 @@ async fn native_hailo_chat_does_not_follow_redirects() {
     let a_app = Router::new()
         .route("/api/chat", post(redirect_chat_to))
         .with_state(redirect_target);
-    let a_server = clawcrew_spawn::spawn!(async move {
+    let a_server = galleon_spawn::spawn!(async move {
         axum::serve(a_listener, a_app)
             .await
             .expect("serve fake Hailo endpoint A");
@@ -573,7 +573,7 @@ async fn native_hailo_catalog_does_not_follow_redirects() {
     let b_app = Router::new()
         .route("/api/tags", get(count_tags_requests))
         .with_state(b_requests.clone());
-    let b_server = clawcrew_spawn::spawn!(async move {
+    let b_server = galleon_spawn::spawn!(async move {
         axum::serve(b_listener, b_app)
             .await
             .expect("serve fake Hailo endpoint B");
@@ -588,7 +588,7 @@ async fn native_hailo_catalog_does_not_follow_redirects() {
     let a_app = Router::new()
         .route("/api/tags", get(redirect_tags_to))
         .with_state(redirect_target);
-    let a_server = clawcrew_spawn::spawn!(async move {
+    let a_server = galleon_spawn::spawn!(async move {
         axum::serve(a_listener, a_app)
             .await
             .expect("serve fake Hailo endpoint A");
@@ -625,7 +625,7 @@ async fn native_hailo_redirect_cannot_bypass_a_different_aliass_endpoint_gate() 
     let b_app = Router::new()
         .route("/api/chat", post(count_chat_requests))
         .with_state(b_requests.clone());
-    let b_server = clawcrew_spawn::spawn!(async move {
+    let b_server = galleon_spawn::spawn!(async move {
         axum::serve(b_listener, b_app)
             .await
             .expect("serve fake Hailo endpoint B");
@@ -640,7 +640,7 @@ async fn native_hailo_redirect_cannot_bypass_a_different_aliass_endpoint_gate() 
     let a_app = Router::new()
         .route("/api/chat", post(redirect_chat_to))
         .with_state(redirect_target);
-    let a_server = clawcrew_spawn::spawn!(async move {
+    let a_server = galleon_spawn::spawn!(async move {
         axum::serve(a_listener, a_app)
             .await
             .expect("serve fake Hailo endpoint A");
@@ -678,7 +678,7 @@ async fn native_hailo_preserves_model_ids_ending_in_cloud() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -708,7 +708,7 @@ async fn native_hailo_rejects_call_level_thinking_before_http() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -745,7 +745,7 @@ async fn native_hailo_rejects_incomplete_non_streaming_response() {
         .expect("bind fake Hailo server");
     let addr = listener.local_addr().expect("fake Hailo address");
     let app = Router::new().route("/api/chat", post(incomplete_chat));
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -787,7 +787,7 @@ async fn native_hailo_error_logs_use_stable_messages_and_structured_payload_attr
         .await
         .expect("bind non-2xx Hailo server");
     let addr = listener.local_addr().expect("non-2xx Hailo address");
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(
             listener,
             Router::new().route("/api/chat", post(chat_internal_server_error)),
@@ -817,7 +817,7 @@ async fn native_hailo_error_logs_use_stable_messages_and_structured_payload_attr
         .await
         .expect("bind malformed Hailo server");
     let addr = listener.local_addr().expect("malformed Hailo address");
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(
             listener,
             Router::new().route("/api/chat", post(malformed_success_chat)),
@@ -870,7 +870,7 @@ async fn native_hailo_error_diagnostics_redact_configured_auth_header_values() {
     let addr = listener
         .local_addr()
         .expect("reflected-error Hailo address");
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(
             listener,
             Router::new().route("/api/chat", post(reflected_sensitive_server_error)),
@@ -909,7 +909,7 @@ async fn native_hailo_error_diagnostics_redact_configured_auth_header_values() {
     let addr = listener
         .local_addr()
         .expect("reflected-malformed Hailo address");
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(
             listener,
             Router::new().route("/api/chat", post(reflected_sensitive_malformed_success)),
@@ -952,7 +952,7 @@ async fn native_hailo_rejects_response_without_done_marker() {
         .expect("bind fake Hailo server");
     let addr = listener.local_addr().expect("fake Hailo address");
     let app = Router::new().route("/api/chat", post(missing_done_chat));
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -985,7 +985,7 @@ async fn native_hailo_quarantines_malformed_success_response() {
         .expect("bind fake Hailo server");
     let addr = listener.local_addr().expect("fake Hailo address");
     let app = Router::new().route("/api/chat", post(malformed_success_chat));
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1018,7 +1018,7 @@ async fn native_hailo_accepts_nonempty_reasoning_when_content_is_empty() {
         .expect("bind fake Hailo server");
     let addr = listener.local_addr().expect("fake Hailo address");
     let app = Router::new().route("/api/chat", post(reasoning_only_chat));
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1039,7 +1039,7 @@ async fn native_hailo_prefers_content_over_reasoning() {
         .expect("bind fake Hailo server");
     let addr = listener.local_addr().expect("fake Hailo address");
     let app = Router::new().route("/api/chat", post(content_and_reasoning_chat));
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1060,7 +1060,7 @@ async fn native_hailo_rejects_empty_completed_response() {
         .expect("bind fake Hailo server");
     let addr = listener.local_addr().expect("fake Hailo address");
     let app = Router::new().route("/api/chat", post(empty_chat));
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1082,7 +1082,7 @@ async fn native_hailo_preserves_usage_for_empty_completed_chat_response() {
         .expect("bind fake Hailo server");
     let addr = listener.local_addr().expect("fake Hailo address");
     let app = Router::new().route("/api/chat", post(empty_chat));
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1118,7 +1118,7 @@ async fn native_hailo_uses_context_window_for_local_history_budget_only() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1175,7 +1175,7 @@ async fn native_hailo_emits_ascii_only_json_for_wire_compatibility() {
     let app = Router::new()
         .route("/api/chat", post(capture_raw_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1232,7 +1232,7 @@ async fn native_hailo_preserves_literal_backslashes_through_prompt_parser() {
     let app = Router::new()
         .route("/api/chat", post(emulate_native_hailo_prompt_parser))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1266,7 +1266,7 @@ async fn native_hailo_preserves_prompt_escape_units_without_truncation() {
     let app = Router::new()
         .route("/api/chat", post(emulate_native_hailo_prompt_parser))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1297,7 +1297,7 @@ async fn standard_ollama_keeps_default_non_ascii_json_serialization() {
     let app = Router::new()
         .route("/api/chat", post(capture_raw_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Ollama server");
@@ -1352,7 +1352,7 @@ async fn native_hailo_omits_temperature_when_caller_does_not_set_it() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1396,7 +1396,7 @@ async fn native_hailo_rejects_native_tool_payloads_before_http() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1442,7 +1442,7 @@ async fn native_hailo_preserves_fitting_tool_protocol_and_user_text() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1493,7 +1493,7 @@ async fn native_hailo_preserves_large_prompt_guided_tool_protocol() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1557,7 +1557,7 @@ async fn native_hailo_bounds_history_and_preserves_latest_user_tail() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1662,7 +1662,7 @@ async fn native_hailo_fold_preserves_complete_system_and_user_content() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1702,7 +1702,7 @@ async fn native_hailo_preserves_tool_history_as_plain_messages() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1758,7 +1758,7 @@ async fn native_hailo_fails_closed_when_latest_tool_turn_exceeds_context_budget(
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1815,7 +1815,7 @@ async fn native_hailo_fails_closed_when_folded_system_exceeds_context_budget() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1864,7 +1864,7 @@ async fn native_hailo_preserves_latest_tool_turn_without_message_cap() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1915,7 +1915,7 @@ async fn native_hailo_preserves_complete_tool_history_without_message_cap() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -1981,7 +1981,7 @@ async fn native_hailo_lists_only_models_from_api_tags() {
         .await
         .expect("bind fake Hailo server");
     let addr = listener.local_addr().expect("fake Hailo address");
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, Router::new().route("/api/tags", get(tags)))
             .await
             .expect("serve fake Hailo server");
@@ -2007,7 +2007,7 @@ async fn failed_catalog_does_not_quarantine_hailo_chat_endpoint() {
         .route("/api/tags", get(catalog_internal_server_error))
         .route("/api/chat", post(count_chat_requests))
         .with_state(chat_requests.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -2037,7 +2037,7 @@ async fn native_hailo_rejects_history_without_a_user_anchor() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -2075,7 +2075,7 @@ async fn native_hailo_accounts_for_merge_separators_in_context_budget() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app).await.unwrap();
     });
 
@@ -2119,7 +2119,7 @@ async fn native_hailo_preserves_prompt_tool_rounds_without_message_cap() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app).await.unwrap();
     });
     let provider = HailoOllamaModelProvider::new(
@@ -2161,7 +2161,7 @@ async fn native_hailo_rejects_prompt_tool_rounds_over_context_budget() {
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app).await.unwrap();
     });
     let provider = HailoOllamaModelProvider::new(
@@ -2212,7 +2212,7 @@ async fn native_hailo_preserves_non_success_status_and_error() {
         .await
         .expect("bind fake Hailo server");
     let addr = listener.local_addr().expect("fake Hailo address");
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(
             listener,
             Router::new().route("/api/chat", post(missing_model)),
@@ -2277,7 +2277,7 @@ async fn native_hailo_generation_is_single_flight() {
     let app = Router::new()
         .route("/api/chat", post(slow_chat))
         .with_state(state.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -2308,7 +2308,7 @@ async fn independent_hailo_providers_share_normalized_endpoint_gate() {
     let app = Router::new()
         .route("/api/chat", post(slow_chat))
         .with_state(state.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -2337,7 +2337,7 @@ async fn typed_hailo_factory_keeps_context_tokens_off_the_wire_and_applies_timeo
     let app = Router::new()
         .route("/api/chat", post(capture_chat))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -2402,7 +2402,7 @@ async fn typed_hailo_factory_applies_auth_and_headers_to_chat_and_catalog() {
         .route("/api/chat", post(capture_chat_headers))
         .route("/api/tags", get(capture_tags_headers))
         .with_state(capture.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app).await.unwrap();
     });
     let provider = hailo_provider_from_public_factory(
@@ -2665,7 +2665,7 @@ async fn native_hailo_allows_default_system_prompt_media_documentation() {
     let app = Router::new()
         .route("/api/chat", post(count_chat_requests))
         .with_state(requests.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -2706,7 +2706,7 @@ async fn native_hailo_rejects_image_inputs_instead_of_dropping_them() {
     let app = Router::new()
         .route("/api/chat", post(count_chat_requests))
         .with_state(requests.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -2739,7 +2739,7 @@ async fn native_hailo_rejects_unloadable_image_markers_before_http() {
     let app = Router::new()
         .route("/api/chat", post(count_chat_requests))
         .with_state(requests.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -2775,7 +2775,7 @@ async fn native_hailo_rejects_parser_preserved_image_marker_residue_before_http(
     let app = Router::new()
         .route("/api/chat", post(count_chat_requests))
         .with_state(requests.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -2810,7 +2810,7 @@ async fn native_hailo_rejects_image_marker_residue_in_tool_result_history_before
     let app = Router::new()
         .route("/api/chat", post(count_chat_requests))
         .with_state(requests.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -2858,7 +2858,7 @@ async fn cancellation_resistant_chat(State(state): State<CancellationState>) -> 
 
     let (done_tx, done_rx) = tokio::sync::oneshot::channel();
     let backend_state = state.clone();
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         tokio::time::sleep(std::time::Duration::from_millis(150)).await;
         backend_state.active.fetch_sub(1, Ordering::SeqCst);
         let _ = done_tx.send(());
@@ -2885,7 +2885,7 @@ async fn cancelled_hailo_request_holds_slot_until_backend_finishes() {
     let app = Router::new()
         .route("/api/chat", post(cancellation_resistant_chat))
         .with_state(state.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -2893,7 +2893,7 @@ async fn cancelled_hailo_request_holds_slot_until_backend_finishes() {
 
     let provider = Arc::new(hailo_provider(&format!("http://{addr}")));
     let first_provider = provider.clone();
-    let first = clawcrew_spawn::spawn!(async move {
+    let first = galleon_spawn::spawn!(async move {
         first_provider
             .simple_chat("first", "qwen3:1.7b", Some(0.2))
             .await
@@ -2921,7 +2921,7 @@ async fn timeout_surviving_chat(State(state): State<ConcurrencyState>) -> Json<V
 
     let (done_tx, done_rx) = tokio::sync::oneshot::channel();
     let backend_state = state.clone();
-    clawcrew_spawn::spawn!(async move {
+    galleon_spawn::spawn!(async move {
         tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
         backend_state.active.fetch_sub(1, Ordering::SeqCst);
         let _ = done_tx.send(());
@@ -2947,7 +2947,7 @@ async fn timed_out_hailo_request_quarantines_provider_without_overlap() {
     let app = Router::new()
         .route("/api/chat", post(timeout_surviving_chat))
         .with_state(state.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -3004,7 +3004,7 @@ async fn post_connect_transport_failure_quarantines_endpoint() {
         .expect("bind reset server");
     let addr = listener.local_addr().expect("reset server address");
     let endpoint = format!("http://{addr}");
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         let (mut stream, _) = listener.accept().await.expect("accept Hailo request");
         let mut request_prefix = [0_u8; 1024];
         let _ = stream.read(&mut request_prefix).await;
@@ -3100,7 +3100,7 @@ async fn native_hailo_queue_wait_is_bounded() {
     let app = Router::new()
         .route("/api/chat", post(long_hailo_chat))
         .with_state(state.clone());
-    let server = clawcrew_spawn::spawn!(async move {
+    let server = galleon_spawn::spawn!(async move {
         axum::serve(listener, app)
             .await
             .expect("serve fake Hailo server");
@@ -3111,7 +3111,7 @@ async fn native_hailo_queue_wait_is_bounded() {
         1,
     ));
     let first_provider = provider.clone();
-    let first = clawcrew_spawn::spawn!(async move {
+    let first = galleon_spawn::spawn!(async move {
         first_provider
             .simple_chat("first", "qwen3:1.7b", Some(0.2))
             .await

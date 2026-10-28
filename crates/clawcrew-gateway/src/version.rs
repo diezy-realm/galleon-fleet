@@ -472,7 +472,7 @@ pub async fn handle_version_upgrade(
     } else {
         RestartAction::None
     };
-    ::clawcrew_spawn::spawn!(run_upgrade(progress, req.version, action));
+    ::galleon_spawn::spawn!(run_upgrade(progress, req.version, action));
 
     (
         StatusCode::ACCEPTED,
@@ -687,11 +687,11 @@ async fn run_upgrade(
     let mut pumps = Vec::new();
     if let Some(out) = child.stdout.take() {
         let p = progress.clone();
-        pumps.push(::clawcrew_spawn::spawn!(pump_lines(out, p)));
+        pumps.push(::galleon_spawn::spawn!(pump_lines(out, p)));
     }
     if let Some(err) = child.stderr.take() {
         let p = progress.clone();
-        pumps.push(::clawcrew_spawn::spawn!(pump_lines(err, p)));
+        pumps.push(::galleon_spawn::spawn!(pump_lines(err, p)));
     }
 
     let status = match tokio::time::timeout(UPGRADE_TIMEOUT, child.wait()).await {

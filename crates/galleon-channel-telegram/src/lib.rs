@@ -3858,7 +3858,7 @@ impl TelegramChannel {
         let emoji = random_telegram_ack_reaction().to_string();
         let body = build_telegram_ack_reaction_request(&chat_id, message_id, &emoji);
 
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             let response = match client.post(&url).json(&body).send().await {
                 Ok(resp) => resp,
                 Err(err) => {
@@ -4210,7 +4210,7 @@ impl TelegramChannel {
             let text = content.to_string();
             let recipient = recipient.to_string();
             let proxy_url = self.proxy_url.clone();
-            clawcrew_spawn::spawn!(async move {
+            galleon_spawn::spawn!(async move {
                 let is_config_voice_peer = voice_peer_resolver().contains(&recipient);
                 if !is_config_voice_peer && let Ok(mut vc) = voice_chats.lock() {
                     vc.remove(&recipient);
@@ -4264,7 +4264,7 @@ impl TelegramChannel {
         let pending = self.pending_voice.clone();
         let recipient = recipient.to_string();
         let proxy_url = self.proxy_url.clone();
-        clawcrew_spawn::spawn!(async move {
+        galleon_spawn::spawn!(async move {
             // Wait 10 seconds — long enough for the agent to finish its
             // full tool chain and send the final answer.
             tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
@@ -8717,7 +8717,7 @@ Ensure only one `clawcrew` process is using this bot token."
         let url = self.api_url("sendChatAction");
         let chat_id = recipient.to_string();
 
-        let handle = clawcrew_spawn::spawn!(async move {
+        let handle = galleon_spawn::spawn!(async move {
             loop {
                 let body = serde_json::json!({
                     "chat_id": &chat_id,

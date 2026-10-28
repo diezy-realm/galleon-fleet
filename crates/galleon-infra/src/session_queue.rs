@@ -215,7 +215,7 @@ mod tests {
 
         // Queue one more (pending=2, will block waiting for permit)
         let queue_clone = queue.clone();
-        let handle = clawcrew_spawn::spawn!(async move { queue_clone.acquire("s1").await });
+        let handle = galleon_spawn::spawn!(async move { queue_clone.acquire("s1").await });
 
         // Give the spawned task time to register
         tokio::time::sleep(Duration::from_millis(50)).await;
@@ -263,13 +263,13 @@ mod tests {
         }));
 
         let acquire_queue = queue.clone();
-        let acquire = clawcrew_spawn::spawn!(async move { acquire_queue.acquire("s1").await });
+        let acquire = galleon_spawn::spawn!(async move { acquire_queue.acquire("s1").await });
         tokio::task::spawn_blocking(move || selected.wait())
             .await
             .unwrap();
 
         let evict_queue = queue.clone();
-        let mut eviction = clawcrew_spawn::spawn!(async move { evict_queue.evict_idle().await });
+        let mut eviction = galleon_spawn::spawn!(async move { evict_queue.evict_idle().await });
         assert!(
             tokio::time::timeout(Duration::from_millis(50), &mut eviction)
                 .await
@@ -294,7 +294,7 @@ mod tests {
         let guard = queue.acquire("s1").await.unwrap();
 
         let waiter_queue = queue.clone();
-        let waiter = clawcrew_spawn::spawn!(async move { waiter_queue.acquire("s1").await });
+        let waiter = galleon_spawn::spawn!(async move { waiter_queue.acquire("s1").await });
         while queue.queue_depth("s1").await < 2 {
             tokio::task::yield_now().await;
         }
