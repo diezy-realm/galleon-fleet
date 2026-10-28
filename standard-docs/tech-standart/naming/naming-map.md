@@ -96,5 +96,5 @@ Tidak ada alias/fallback nama lama. Satu-satunya jembatan: migrasi data pengguna
 | Org GHCR | `diezy-realm`, produk `galleon-fleet` | Owner; `git remote` = `diezy-realm/galleon-fleet` |
 | `sop-graph` & `eval` | **Tetap; hanya rename → `galleon-sop-graph`, `galleon-eval`** | lihat di bawah |
 
-**Fakta `clawcrew-sop-graph`:** 442 LOC, tipe proyeksi serde murni; satu-satunya pemakai kode = `runtime/src/sop/graph.rs` (+ fitur `schema-export` runtime). Tidak dipakai `apps/zerocode` (deskripsi crate usang). Ikut nasib modul `sop` di R-00 (bila SOP pindah ke Go, tipe wire ini menjadi kontrak/proto, bukan hilang).
+**Fakta `galleon-sop-graph`:** 442 LOC, tipe proyeksi serde murni; satu-satunya pemakai kode = `runtime/src/sop/graph.rs` (+ fitur `schema-export` runtime). Tidak dipakai `apps/zerocode` (deskripsi crate usang). Ikut nasib modul `sop` di R-00 (bila SOP pindah ke Go, tipe wire ini menjadi kontrak/proto, bukan hilang).
 **Fakta `clawcrew-eval`:** 2.470 LOC, dipakai CLI root (`src/commands/eval.rs`, `src/main.rs`) dan `tests/support/trace.rs`; `runner.rs` membangun `clawcrew_runtime::agent::agent::Agent` untuk replay deterministik trace LLM. **Ketergantungan keras pada otak agent Rust** → bila `agent` pindah ke Go (R-00), harness harus diarahkan ulang ke Go (replay lewat `StartTurn` + mock `ExecuteTurn`). Bukan alasan menghapus; jadi sub-tiket R-37.

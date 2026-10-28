@@ -549,7 +549,7 @@ pub async fn handle_sop_delete(
 #[derive(serde::Deserialize)]
 pub struct WireDraftRequest {
     pub sop: Sop,
-    pub edit: clawcrew_sop_graph::WireEdit,
+    pub edit: galleon_sop_graph::WireEdit,
 }
 
 pub async fn handle_sop_wire_draft(
@@ -625,7 +625,7 @@ pub async fn handle_sop_graph_legend(
     if let Err(e) = require_auth(&state, &headers) {
         return e.into_response();
     }
-    Json(clawcrew_sop_graph::GraphLegend::canonical()).into_response()
+    Json(galleon_sop_graph::GraphLegend::canonical()).into_response()
 }
 
 #[cfg(test)]

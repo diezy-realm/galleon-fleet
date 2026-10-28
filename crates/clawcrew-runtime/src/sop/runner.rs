@@ -650,7 +650,7 @@ impl SopRunner for RuntimeSopRunner {
     fn wire_draft(&self, sop: &Sop, edit: &serde_json::Value) -> anyhow::Result<serde_json::Value> {
         let val = serde_json::to_value(sop)?;
         let mut rt_sop: super::types::Sop = serde_json::from_value(val)?;
-        let wire_edit: clawcrew_sop_graph::WireEdit = serde_json::from_value(edit.clone())?;
+        let wire_edit: galleon_sop_graph::WireEdit = serde_json::from_value(edit.clone())?;
         super::apply_wire(&mut rt_sop, &wire_edit).map_err(|e| anyhow::anyhow!("{e}"))?;
         let config = self.config.read();
         let agent = config.agents.keys().min().cloned().unwrap_or_default();

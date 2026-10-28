@@ -1,5 +1,5 @@
 [package]
-name = "clawcrew-sop-graph"
+name = "galleon-sop-graph"
 rust-version.workspace = true
 version.workspace = true
 edition.workspace = true

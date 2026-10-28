@@ -24,7 +24,7 @@ clawcrew-log.workspace = true
 clawcrew-providers.workspace = true
 clawcrew-memory.workspace = true
 clawcrew-tools.workspace = true
-clawcrew-sop-graph.workspace = true
+galleon-sop-graph.workspace = true
 clawcrew-plugins = { workspace = true, optional = true }
 clawcrew-tool-call-parser.workspace = true
 anyhow = "1.0"
@@ -102,7 +102,7 @@ default = ["observability-prometheus", "schema-export"]
 observability-prometheus = ["dep:prometheus"]
 observability-otel = ["dep:opentelemetry", "dep:opentelemetry_sdk", "dep:opentelemetry-otlp"]
 sandbox-landlock = ["dep:landlock"]
-schema-export = ["dep:schemars", "clawcrew-config/schema-export", "clawcrew-sop-graph/schema-export", "galleon-i18n/schema-export"]
+schema-export = ["dep:schemars", "clawcrew-config/schema-export", "galleon-sop-graph/schema-export", "galleon-i18n/schema-export"]
 
 
 browser-native = []

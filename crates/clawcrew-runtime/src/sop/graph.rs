@@ -14,11 +14,11 @@ use super::types::{Sop, SopStep};
 
 pub type ToolSpecs = HashMap<String, ToolSpec>;
 
-// Graph wire shape lives in the leaf crate `clawcrew-sop-graph` so the
+// Graph wire shape lives in the leaf crate `galleon-sop-graph` so the
 // runtime projection, the gateway JSON Schema, and the zerocode TUI all read
 // one definition. Re-exported here so the projection logic below and every
 // downstream `crate::sop::graph::GraphPin` path keep working unchanged.
-pub use clawcrew_sop_graph::{
+pub use galleon_sop_graph::{
     FlowRole, GraphDiagnostic, GraphLayout, GraphLegend, GraphNode, GraphPin, GraphSeverity,
     GraphWire, LayoutGeometry, LegendEntry, NodeKind, NodePosition, NodeRunState, PinClass,
     SopGraph, TRIGGER_NODE_BASE,
@@ -267,7 +267,7 @@ fn binding_matches_output(path: &str, pin_name: &str) -> bool {
 }
 
 /// Projection constructors for the shared `SopGraph` type. `SopGraph` lives
-/// in `clawcrew-sop-graph`, so the build logic that needs the runtime's
+/// in `galleon-sop-graph`, so the build logic that needs the runtime's
 /// `Sop`/`ToolSpec` hangs off this extension trait instead of an inherent
 /// impl. Call sites keep using `SopGraph::from_sop(..)` with the trait in
 /// scope.

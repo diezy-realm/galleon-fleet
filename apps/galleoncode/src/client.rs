@@ -3660,7 +3660,7 @@ impl SopStepKind {
 
 // SOP graph wire types. zerocode is an RPC-only surface: it deserializes these
 // off `sops/graph` rather than linking the backend crate that produces them.
-// The shape here MUST match `clawcrew-sop-graph`'s serde projection byte for
+// The shape here MUST match `galleon-sop-graph`'s serde projection byte for
 // byte (field names, snake_case renames, defaults) or RPC decoding drifts.
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
