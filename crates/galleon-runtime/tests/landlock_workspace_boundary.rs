@@ -9,8 +9,8 @@
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use clawcrew_runtime::security::landlock::LandlockSandbox;
-use clawcrew_runtime::security::traits::Sandbox;
+use galleon_runtime::security::landlock::LandlockSandbox;
+use galleon_runtime::security::traits::Sandbox;
 
 /// Query the Landlock ABI version via the documented kernel API:
 /// `landlock_create_ruleset(NULL, 0, LANDLOCK_CREATE_RULESET_VERSION)`.

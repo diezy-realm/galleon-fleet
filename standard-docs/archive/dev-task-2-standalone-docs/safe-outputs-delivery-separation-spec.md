@@ -5,8 +5,8 @@
 **Area**: Sprint 3 — Area D: Execution Model  
 **Referensi**:
 - `standard-docs/decisions/finalize/dev-task-2/sprint-3-sop-constraint-and-raci.md`
-- `crates/clawcrew-runtime/src/sop/types.rs`
-- `crates/clawcrew-runtime/src/sop/engine/mod.rs`
+- `crates/galleon-runtime/src/sop/types.rs`
+- `crates/galleon-runtime/src/sop/engine/mod.rs`
 - GitHub Actions Workspace (`gh-aw`) Safe-Outputs Pattern
 
 ---

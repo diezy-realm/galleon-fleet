@@ -110,7 +110,7 @@ async fn scheduled_run_does_not_leak_conversation_memory_into_provider_request()
     config.memory.min_relevance_score = 0.0;
 
     let prompt = "Any reminders to surface today? Pull anything relevant from memory.".to_string();
-    let run_result = clawcrew_runtime::agent::run(
+    let run_result = galleon_runtime::agent::run(
         config,
         "default",
         Some(prompt),
@@ -122,7 +122,7 @@ async fn scheduled_run_does_not_leak_conversation_memory_into_provider_request()
         None,
         None,
         galleon_api::ingress::TurnOrigin::Daemon,
-        clawcrew_runtime::agent::loop_::AgentRunOverrides::default(),
+        galleon_runtime::agent::loop_::AgentRunOverrides::default(),
     )
     .await;
     let (success, output) = match run_result {

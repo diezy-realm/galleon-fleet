@@ -16,7 +16,7 @@ pub struct ToolIoCapture {
 /// Capture redacted tool input.
 ///
 /// `redacted` is the input string AFTER the runtime has scanned it for
-/// credential leaks (using `clawcrew_runtime::security::LeakDetector`).
+/// credential leaks (using `galleon_runtime::security::LeakDetector`).
 /// This function only handles truncation + denylist enforcement.
 ///
 /// Returns `None` when policy/denylist says to skip capture entirely.

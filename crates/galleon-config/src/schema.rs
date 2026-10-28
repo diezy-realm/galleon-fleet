@@ -4870,7 +4870,7 @@ impl Config {
     /// model_provider runtime options via explicit `<type>.<alias>`
     /// resolution — there is no concept of a "first" or "default"
     /// provider. The matching split logic lives in
-    /// `crates/clawcrew-runtime/src/tools/delegate.rs::resolve_brain` for
+    /// `crates/galleon-runtime/src/tools/delegate.rs::resolve_brain` for
     /// the delegation path; this helper exposes the same contract for the
     /// channel-server startup path.
     #[must_use]
@@ -13577,7 +13577,7 @@ impl RiskProfileConfig {
     /// Synthesize a [`SandboxConfig`] from this profile's flattened sandbox
     /// fields. Sandbox config is stored flat on the profile; callsites that
     /// still want a `SandboxConfig` instance (sandbox detection in
-    /// `clawcrew-runtime::security::detect`) can call this helper.
+    /// `galleon-runtime::security::detect`) can call this helper.
     #[must_use]
     pub fn sandbox_config(&self) -> SandboxConfig {
         let backend = self
@@ -20993,12 +20993,12 @@ pub fn ftl_locale_dir(locale: &str) -> Result<PathBuf> {
 pub const FTL_CATALOGS: &[(&str, &str, &str)] = &[
     (
         "cli",
-        "crates/clawcrew-runtime/locales/{locale}/cli.ftl",
+        "crates/galleon-runtime/locales/{locale}/cli.ftl",
         "cli.ftl",
     ),
     (
         "tools",
-        "crates/clawcrew-runtime/locales/{locale}/tools.ftl",
+        "crates/galleon-runtime/locales/{locale}/tools.ftl",
         "tools.ftl",
     ),
     (
@@ -21657,7 +21657,7 @@ pub fn peer_deny_names(entry: &str, user: &str, match_fn: &impl Fn(&str, &str) -
 /// Lives here rather than beside the channel allowlist because
 /// `channel_external_peers` produces the encoding, and consumers outside
 /// `galleon-channels` have to decode it the same way. The plugin ingress in
-/// `clawcrew-runtime` is one: `galleon-channels` depends on `clawcrew-runtime`,
+/// `galleon-runtime` is one: `galleon-channels` depends on `galleon-runtime`,
 /// so it cannot reach back for the helper, and a second implementation of deny
 /// precedence on an authorization surface is the drift this codec exists to
 /// prevent.

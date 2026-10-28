@@ -8930,7 +8930,7 @@ audit = "should-be-a-table-not-a-string"
         // alias with a type-corrupt `bot_token` (not merely missing - see
         // the scenario where a missing bot_token must survive salvage instead of
         // being dropped) must be pruned (not fatal) and its path recorded on
-        // `degraded_sections` so downstream diagnostics (clawcrew-runtime's
+        // `degraded_sections` so downstream diagnostics (galleon-runtime's
         // check_degraded_sections) can name it.
         let _env_guard = env_override_lock().await;
         let temp_home =

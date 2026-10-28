@@ -74,12 +74,12 @@ pub struct GatewayStatus {
 pub fn build_report(config: &Config, agent_alias: &str) -> Result<SecurityStatusReport> {
     let resolved = resolve_agent_context(config, agent_alias)?;
     let sandbox_config = sandbox_config_from_policy(&resolved.policy);
-    let sandbox_extra_roots = clawcrew_runtime::security::SandboxExtraRoots {
+    let sandbox_extra_roots = galleon_runtime::security::SandboxExtraRoots {
         read_write: resolved.policy.allowed_roots.clone(),
         read_only: resolved.policy.allowed_roots_read_only.clone(),
         write_only: resolved.policy.allowed_roots_write_only.clone(),
     };
-    let sandbox = clawcrew_runtime::security::sandbox_posture(
+    let sandbox = galleon_runtime::security::sandbox_posture(
         &sandbox_config,
         config.runtime.kind,
         Some(&resolved.policy.workspace_dir),

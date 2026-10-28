@@ -12,8 +12,8 @@ use tokio::sync::{Mutex, MutexGuard};
 use galleon_api::tool::Tool;
 use galleon_config::platform::DockerRuntime;
 use galleon_config::schema::{Config, RuntimeKind};
-use clawcrew_runtime::security::{AutonomyLevel, SecurityPolicy, sandbox_posture};
-use clawcrew_runtime::tools::shell_tool_for_runtime;
+use galleon_runtime::security::{AutonomyLevel, SecurityPolicy, sandbox_posture};
+use galleon_runtime::tools::shell_tool_for_runtime;
 
 static ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
 
@@ -113,7 +113,7 @@ sandbox_backend = "docker"
         &risk_profile.sandbox_config(),
         config.runtime.kind,
         Some(install.path()),
-        &clawcrew_runtime::security::SandboxExtraRoots::default(),
+        &galleon_runtime::security::SandboxExtraRoots::default(),
     );
     assert_eq!(
         posture.active_backend, "docker-runtime",

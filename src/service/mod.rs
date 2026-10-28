@@ -1,4 +1,4 @@
-pub use clawcrew_runtime::service::*;
+pub use galleon_runtime::service::*;
 
 use crate::config::Config;
 use anyhow::Result;

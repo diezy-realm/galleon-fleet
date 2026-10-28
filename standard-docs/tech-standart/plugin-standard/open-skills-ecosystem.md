@@ -2,7 +2,7 @@
 
 **Status:** Normative Specification  
 **Domain:** Agent Plugins & Skill Loading Architecture  
-**Reference:** BL-03, `crates/clawcrew-runtime/src/skills/mod.rs`  
+**Reference:** BL-03, `crates/galleon-runtime/src/skills/mod.rs`  
 
 ---
 
@@ -61,5 +61,5 @@ Petunjuk langsung yang diinjeksikan ke agent runtime saat skill diaktifkan...
 ## 3. Pencegahan Duplikasi SSOT
 
 - **Resolusi Deterministik:** Parser selalu menyelesaikan skill berdasarkan prioritas lapis (Workspace > Global > Registry).
-- **In-Memory Caching:** Hasil audit resolusi disimpan di `clawcrew-runtime::skills::cache` untuk mencegah stat file redundant.
+- **In-Memory Caching:** Hasil audit resolusi disimpan di `galleon-runtime::skills::cache` untuk mencegah stat file redundant.
 - **Audit Logging:** Setiap kali sebuah skill di-drop karena invalid manifest atau shadow override, pesan tercatat di structured log.

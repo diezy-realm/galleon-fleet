@@ -10,7 +10,7 @@ use tempfile::TempDir;
 use tokio::sync::Mutex as AsyncMutex;
 use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
 use galleon_memory::{Memory, MemoryCategory, SqliteMemory};
-use clawcrew_runtime::agent::loop_::AgentRunOverrides;
+use galleon_runtime::agent::loop_::AgentRunOverrides;
 
 // Present ONLY in the planted memory entry: if it surfaces in a provider
 // request body, recall injected it. A memory-free run must never surface it.
@@ -108,7 +108,7 @@ async fn run_cron_once(config: Config, overrides: AgentRunOverrides) -> Vec<Stri
     }
 
     let prompt = "Any reminders to surface today? Pull anything relevant from memory.".to_string();
-    let _ = clawcrew_runtime::agent::run(
+    let _ = galleon_runtime::agent::run(
         config,
         "default",
         Some(prompt),

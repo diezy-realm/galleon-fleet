@@ -4,7 +4,7 @@
 //! each party (daemon and client) and pipes the *inner* client<->daemon mTLS
 //! bytes between them without ever decrypting them. This crate is the single
 //! shared definition of that outer protocol, consumed by `apps/zerorelay`, the
-//! daemon-side bridge in `clawcrew-runtime`, and the client in `apps/zerocode`.
+//! daemon-side bridge in `galleon-runtime`, and the client in `apps/zerocode`.
 //!
 //! # Two message kinds on the wire
 //!

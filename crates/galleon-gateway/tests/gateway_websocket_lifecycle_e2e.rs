@@ -172,7 +172,7 @@ async fn test_gateway_ephemeral_tcp_binding_and_http_endpoints_lifecycle() {
 
 #[tokio::test]
 async fn test_gateway_websocket_handshake_ping_pong_and_stream_lifecycle() {
-    clawcrew_runtime::install_agent_runner();
+    galleon_runtime::install_agent_runner();
 
     let tmp = tempfile::TempDir::new().expect("tempdir");
     let config = create_test_config(&tmp);

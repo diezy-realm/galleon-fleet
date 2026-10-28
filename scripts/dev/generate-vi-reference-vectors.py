@@ -5,7 +5,7 @@ The expected values in the fixture are produced by the reference at commit
 356c29635f1c44df7de02edb58699ca9f29bece6, not by ClawCrew. Regenerate with:
 
     python3 scripts/dev/generate-vi-reference-vectors.py /path/to/verifiable-intent \
-        > crates/clawcrew-runtime/tests/fixtures/vi-reference-vectors.json
+        > crates/galleon-runtime/tests/fixtures/vi-reference-vectors.json
 
 Every field except `sd_jwt.serialized` is deterministic and re-running must produce a
 byte-identical file. ECDSA draws a random nonce, so the signed SD-JWT differs on each

@@ -15,8 +15,8 @@
 use landlock::{AccessFs, PathBeneath, PathFd, Ruleset, RulesetAttr, RulesetCreatedAttr};
 use std::path::Path;
 use std::process::Command;
-use clawcrew_runtime::security::landlock::LandlockSandbox;
-use clawcrew_runtime::security::traits::Sandbox;
+use galleon_runtime::security::landlock::LandlockSandbox;
+use galleon_runtime::security::traits::Sandbox;
 
 /// `E2BIG` on Linux (errno 7) — returned by `landlock_restrict_self(2)` when
 /// `LANDLOCK_MAX_NUM_LAYERS` (16) is exceeded. Defined inline because `libc`

@@ -16,7 +16,7 @@ use galleon_memory::NoneMemory;
 #[cfg(feature = "gateway")]
 use galleon_providers::ModelProvider;
 #[cfg(feature = "gateway")]
-use clawcrew_runtime::security::PairingGuard;
+use galleon_runtime::security::PairingGuard;
 #[cfg(feature = "gateway")]
 use parking_lot::RwLock;
 #[cfg(feature = "gateway")]
@@ -72,7 +72,7 @@ fn test_state(config: Config) -> AppState {
         temperature: None,
         mem: memory.clone(),
         memory_strategy: Arc::new(
-            clawcrew_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
+            galleon_runtime::agent::memory_strategy::DefaultMemoryStrategy::with_config(
                 memory,
                 galleon_config::schema::MemoryConfig::default(),
                 std::path::PathBuf::new(),
@@ -105,7 +105,7 @@ fn test_state(config: Config) -> AppState {
         nextcloud_talk_webhook_secret: HashMap::new(),
         #[cfg(feature = "channel-email")]
         gmail_push: None,
-        observer: Arc::new(clawcrew_runtime::observability::NoopObserver),
+        observer: Arc::new(galleon_runtime::observability::NoopObserver),
         tools_registry: Arc::new(Vec::new()),
         tools_registry_by_agent: Arc::new(HashMap::new()),
         cost_tracker: None,
@@ -121,7 +121,7 @@ fn test_state(config: Config) -> AppState {
         session_queue: Arc::new(gateway::session_queue::SessionActorQueue::new(8, 30, 600)),
         device_registry: None,
         pending_pairings: None,
-        canvas_store: clawcrew_runtime::tools::CanvasStore::new(),
+        canvas_store: galleon_runtime::tools::CanvasStore::new(),
         #[cfg(feature = "webauthn")]
         webauthn: None,
         cancel_tokens: Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),

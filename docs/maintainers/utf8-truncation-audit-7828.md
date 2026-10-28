@@ -45,7 +45,7 @@ inline blocks flagged separately and not treated as must-fix):
 | D | `.get(..N)`, `.split_at(...)` | 11 |
 
 Crates in scope (runtime-reachable text per #7828): `galleon-channels`,
-`galleon-tools`, `galleon-providers`, `clawcrew-runtime`, `galleon-gateway`,
+`galleon-tools`, `galleon-providers`, `galleon-runtime`, `galleon-gateway`,
 `galleon-memory`, `apps/zerocode`, and the root `src/` binary.
 
 High-risk surfaces reviewed explicitly: channel message chunking/cards
@@ -61,14 +61,14 @@ and CLI stdin capping.
 
 `str::floor_char_boundary` / `str::ceil_char_boundary` are **stable** on the
 repo toolchain (verified: a standalone `--edition 2024` probe compiles and runs;
-`crates/clawcrew-runtime/src/tools/skill_manage.rs:254`,
+`crates/galleon-runtime/src/tools/skill_manage.rs:254`,
 `skills/testing.rs:319`, and `skills/review.rs:265` already call the std method
 `s.floor_char_boundary(n)` with no local trait import). The three crate-local
 reimplementations —
 
 - `crates/galleon-channels/src/util.rs:13`
 - `crates/galleon-tools/src/util_helpers.rs:10`
-- `crates/clawcrew-runtime/src/agent/history.rs:32`
+- `crates/galleon-runtime/src/agent/history.rs:32`
 
 — plus the several inlined `while !s.is_char_boundary(end) { end -= 1 }`
 walk-back loops are now functionally redundant with std. Consolidation is
@@ -112,7 +112,7 @@ one of these shapes or is byte/ASCII data):
 - **Helper consolidation onto std `floor_char_boundary`.** With
   `str::floor_char_boundary` stable, the three crate-local copies and the
   inlined walk-back loops are redundant. Collapsing them touches
-  `galleon-channels`, `galleon-tools`, and `clawcrew-runtime` public/`pub(crate)`
+  `galleon-channels`, `galleon-tools`, and `galleon-runtime` public/`pub(crate)`
   surfaces and every call site — a multi-crate refactor whose risk/benefit does
   not fit #7828's "narrow audit, no API changes" mandate (compare the excision
   log's deferral of cross-crate consolidation as "risky on a release branch").

@@ -12,8 +12,8 @@ pub mod session_sqlite {
 
 use crate::config::Config;
 use anyhow::Result;
-use clawcrew_runtime::i18n::get_required_cli_string;
-use clawcrew_runtime::i18n::get_required_cli_string_with_args;
+use galleon_runtime::i18n::get_required_cli_string;
+use galleon_runtime::i18n::get_required_cli_string_with_args;
 
 pub async fn handle_command(command: crate::ChannelCommands, config: &Config) -> Result<()> {
     match command {

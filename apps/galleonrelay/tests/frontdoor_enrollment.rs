@@ -4,7 +4,7 @@
 //! two JSON POSTs to the relay, so this drives exactly the bytes the page sends
 //! and asserts on exactly the bytes it would receive. What sits behind those
 //! POSTs is real - a real `RelayServer` with the frontdoor enabled, a real
-//! daemon bridge splicing DATA frames into a real `clawcrew_runtime::enroll`
+//! daemon bridge splicing DATA frames into a real `galleon_runtime::enroll`
 //! endpoint, which consumes a real pairing code and issues a real certificate
 //! from a real CA.
 //!
@@ -101,7 +101,7 @@ struct Daemon {
     addr: std::net::SocketAddr,
     ca_cert_pem: String,
     pairing_code: String,
-    ledger: Arc<clawcrew_runtime::security::cert_ledger::CertLedger>,
+    ledger: Arc<galleon_runtime::security::cert_ledger::CertLedger>,
     _cancel: tokio_util::sync::CancellationToken,
 }
 
@@ -116,7 +116,7 @@ async fn start_daemon_enrollment() -> Daemon {
     let acceptor = TlsAcceptor::from(Arc::new(server_config_from_pem(&leaf_pem, &leaf_key_pem)));
 
     let ledger = Arc::new(
-        clawcrew_runtime::security::cert_ledger::CertLedger::open_in_memory(None).unwrap(),
+        galleon_runtime::security::cert_ledger::CertLedger::open_in_memory(None).unwrap(),
     );
     let pairing = Arc::new(galleon_config::pairing::PairingGuard::new(
         true,
@@ -127,7 +127,7 @@ async fn start_daemon_enrollment() -> Daemon {
 
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
-    let server = Arc::new(clawcrew_runtime::enroll::EnrollServer {
+    let server = Arc::new(galleon_runtime::enroll::EnrollServer {
         bind_addr: addr,
         acceptor,
         ca_cert_pem: ca_cert_pem.clone(),
@@ -137,17 +137,17 @@ async fn start_daemon_enrollment() -> Daemon {
         pairing_code_policy: Arc::new(galleon_config::pairing::PairingCodePolicy::default),
         static_client_pins_configured: false,
         allow_unpaired_until: None,
-        relay_profile: clawcrew_runtime::enroll::RelayProfile {
+        relay_profile: galleon_runtime::enroll::RelayProfile {
             relay_url: "relay.test:9000".into(),
             node_id: "test-node".into(),
             relay_cert_pin: String::new(),
         },
         bridge_ports: None,
-        relay_attempt_bucket: clawcrew_runtime::enroll::RelayAttemptBucket::default(),
+        relay_attempt_bucket: galleon_runtime::enroll::RelayAttemptBucket::default(),
         paircode_admin_data_dir: None,
     });
     let cancel = tokio_util::sync::CancellationToken::new();
-    tokio::spawn(clawcrew_runtime::enroll::serve_on(
+    tokio::spawn(galleon_runtime::enroll::serve_on(
         listener,
         server,
         cancel.clone(),
@@ -527,7 +527,7 @@ async fn browser_enrollment_issues_a_real_certificate_through_the_relay() {
     assert_eq!(entry.device_id, device_id);
     assert_eq!(
         daemon.ledger.status_of(&fingerprint).unwrap(),
-        Some(clawcrew_runtime::security::cert_ledger::CertStatus::Active),
+        Some(galleon_runtime::security::cert_ledger::CertStatus::Active),
         "a delivered enrollment must leave an active ledger row"
     );
 }

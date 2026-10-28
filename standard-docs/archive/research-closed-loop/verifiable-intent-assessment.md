@@ -1,6 +1,6 @@
 # Penilaian `verifiable_intent` — Relevansi untuk Pengembangan Galleon
 
-> Status: Final (2026-10-04). Dibuat agar pengetahuan dari modul `clawcrew-runtime/src/verifiable_intent` tidak hilang ketika kodenya dihapus (R-38). Kode dipulihkan dari tag `archive/pre-galleon` bila dibutuhkan.
+> Status: Final (2026-10-04). Dibuat agar pengetahuan dari modul `galleon-runtime/src/verifiable_intent` tidak hilang ketika kodenya dihapus (R-38). Kode dipulihkan dari tag `archive/pre-galleon` bila dibutuhkan.
 
 ## 1. Apa yang sebenarnya diimplementasikan (fakta kode)
 

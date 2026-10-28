@@ -24,7 +24,7 @@ Aturan: `clawcrew-X` → `galleon-X`. Crate yang sudah `galleon-*` tetap. Urutan
 | `galleon-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | `galleon-api` `-infra` `-log` `-macros` `-tls` `-dist` `-spawn` `-commands` `-hardware` | rename langsung |
 | `galleon-config` `-memory` `-providers` `-tools` `-tool-call-parser` `-routing` `-eval` `-sop-graph` | `galleon-*` | `sop-graph` & `eval` menunggu hasil R-00 (mungkin dihapus/dipindah) |
 | `galleon-channels` | `galleon-channels` | lalu dipecah per channel (R-15) menjadi `galleon-channel-<nama>` |
-| `clawcrew-runtime` | `galleon-runtime` | **rename ditunda sampai R-00/R-16** (isi akan menyusut/dipindah) |
+| `galleon-runtime` | `galleon-runtime` | **rename ditunda sampai R-00/R-16** (isi akan menyusut/dipindah) |
 | `galleon-gateway` | `galleon-gateway` | setelah R-14 |
 | `galleon-plugins` | `galleon-plugins` | |
 | `galleon-relay-proto` | `galleon-relay-proto` | ikut `galleonrelay` |
@@ -97,4 +97,4 @@ Tidak ada alias/fallback nama lama. Satu-satunya jembatan: migrasi data pengguna
 | `sop-graph` & `eval` | **Tetap; hanya rename → `galleon-sop-graph`, `galleon-eval`** | lihat di bawah |
 
 **Fakta `galleon-sop-graph`:** 442 LOC, tipe proyeksi serde murni; satu-satunya pemakai kode = `runtime/src/sop/graph.rs` (+ fitur `schema-export` runtime). Tidak dipakai `apps/zerocode` (deskripsi crate usang). Ikut nasib modul `sop` di R-00 (bila SOP pindah ke Go, tipe wire ini menjadi kontrak/proto, bukan hilang).
-**Fakta `galleon-eval`:** 2.470 LOC, dipakai CLI root (`src/commands/eval.rs`, `src/main.rs`) dan `tests/support/trace.rs`; `runner.rs` membangun `clawcrew_runtime::agent::agent::Agent` untuk replay deterministik trace LLM. **Ketergantungan keras pada otak agent Rust** → bila `agent` pindah ke Go (R-00), harness harus diarahkan ulang ke Go (replay lewat `StartTurn` + mock `ExecuteTurn`). Bukan alasan menghapus; jadi sub-tiket R-37.
+**Fakta `galleon-eval`:** 2.470 LOC, dipakai CLI root (`src/commands/eval.rs`, `src/main.rs`) dan `tests/support/trace.rs`; `runner.rs` membangun `galleon_runtime::agent::agent::Agent` untuk replay deterministik trace LLM. **Ketergantungan keras pada otak agent Rust** → bila `agent` pindah ke Go (R-00), harness harus diarahkan ulang ke Go (replay lewat `StartTurn` + mock `ExecuteTurn`). Bukan alasan menghapus; jadi sub-tiket R-37.

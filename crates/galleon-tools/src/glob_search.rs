@@ -59,7 +59,7 @@ impl Tool for GlobSearchTool {
 
         // Rate limiting and path-allowlist checks are applied by the
         // RateLimitedTool + PathGuardedTool wrappers at registration time
-        // (see clawcrew-runtime::tools::mod).
+        // (see galleon-runtime::tools::mod).
 
         // Security: reject absolute paths unless under an explicit allowed root.
         if (pattern.starts_with('/') || pattern.starts_with('\\'))

@@ -187,8 +187,8 @@ async fn peer_group_routes_messages_only_within_resolved_peer_set() {
     use galleon_config::multi_agent::{AgentAlias, PeerGroupConfig, PeerUsername};
     use galleon_config::providers::ChannelRef;
     use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
-    use clawcrew_runtime::peers::resolve_peer_set;
-    use clawcrew_runtime::tools::SendMessageToPeerTool;
+    use galleon_runtime::peers::resolve_peer_set;
+    use galleon_runtime::tools::SendMessageToPeerTool;
 
     let mut cfg = Config::default();
     cfg.risk_profiles
@@ -230,7 +230,7 @@ async fn peer_group_routes_messages_only_within_resolved_peer_set() {
     let gamma_peers = resolve_peer_set(&cfg, "gamma");
     assert_eq!(
         gamma_peers,
-        clawcrew_runtime::peers::ResolvedPeers::default(),
+        galleon_runtime::peers::ResolvedPeers::default(),
         "gamma is on no peer group; resolved set is empty"
     );
 
@@ -283,8 +283,8 @@ async fn peer_group_dotted_channel_refs_remain_alias_scoped_for_dispatch() {
     use galleon_config::multi_agent::{AgentAlias, PeerGroupConfig};
     use galleon_config::providers::ChannelRef;
     use galleon_config::schema::{AliasedAgentConfig, Config, RiskProfileConfig};
-    use clawcrew_runtime::peers::resolve_peer_set;
-    use clawcrew_runtime::tools::SendMessageToPeerTool;
+    use galleon_runtime::peers::resolve_peer_set;
+    use galleon_runtime::tools::SendMessageToPeerTool;
 
     let mut cfg = Config::default();
     cfg.risk_profiles

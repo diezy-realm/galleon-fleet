@@ -5,7 +5,7 @@
 //! `galleon-channels` crate. Two couplings every channel needs — the allowlist
 //! policy and the text-reply approval prompt — are provided here so a feature
 //! crate does not have to reimplement them or reach back into
-//! `galleon-channels` internals. Neither helper drags `clawcrew-runtime`:
+//! `galleon-channels` internals. Neither helper drags `galleon-runtime`:
 //! `galleon-config` depends only on api/log/infra/macros, and the approval
 //! helper here is the i18n-free half.
 //!
@@ -25,7 +25,7 @@
 //! [`approval::build_yesno_prompt`] are the parts of the upstream
 //! `galleon-channels::util` approval helper that depend only on
 //! `galleon-api`. The upstream prompt localizes its heading/labels through
-//! `clawcrew_runtime::i18n`; porting that would drag the runtime, so the prompt
+//! `galleon_runtime::i18n`; porting that would drag the runtime, so the prompt
 //! here is plain English of the IDENTICAL wire shape (`<token> yes|no|always`),
 //! and the reply parser is shared verbatim. Localization stays the documented
 //! ceiling (`APPROVAL_I18N_CEILING`) — the one part of seam #2 that cannot
@@ -230,7 +230,7 @@ pub mod approval {
     /// [`parse_approval_reply`] expects.
     ///
     /// APPROVAL_I18N_CEILING: the upstream prompt localizes heading/labels via
-    /// `clawcrew_runtime::i18n`. Porting the Fluent catalogue would drag the
+    /// `galleon_runtime::i18n`. Porting the Fluent catalogue would drag the
     /// runtime, so this stays plain English. `token`/`tool_name`/`args` are the
     /// protocol-exact values echoed verbatim — never localized — so the ceiling
     /// cannot desync the prompt from the parser.

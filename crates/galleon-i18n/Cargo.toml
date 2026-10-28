@@ -4,16 +4,16 @@ rust-version.workspace = true
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Fluent-based i18n (tool descriptions + CLI strings) extracted from clawcrew-runtime (RF-B) so channels/gateway localize without the runtime crate."
+description = "Fluent-based i18n (tool descriptions + CLI strings) extracted from galleon-runtime (RF-B) so channels/gateway localize without the runtime crate."
 repository.workspace = true
 homepage.workspace = true
 publish = true
 
 [dependencies]
-# RF-B: the body moved verbatim from clawcrew-runtime::i18n. Its real deps are
+# RF-B: the body moved verbatim from galleon-runtime::i18n. Its real deps are
 # the Fluent engine, config (for ftl_locale_dir disk-override resolution + the
 # config.toml locale read) and the structured-log macro — all light, and
-# galleon-config/galleon-log do NOT pull clawcrew-runtime, which is the whole
+# galleon-config/galleon-log do NOT pull galleon-runtime, which is the whole
 # point of the extraction.
 galleon-config.workspace = true
 galleon-log.workspace = true

@@ -20,8 +20,8 @@
 
 use std::path::Path;
 use std::process::Command;
-use clawcrew_runtime::security::landlock::LandlockSandbox;
-use clawcrew_runtime::security::traits::Sandbox;
+use galleon_runtime::security::landlock::LandlockSandbox;
+use galleon_runtime::security::traits::Sandbox;
 
 /// Files glibc's resolver consults during `getaddrinfo`. Which of these exist
 /// varies by distro and by resolver stack, so the test probes rather than

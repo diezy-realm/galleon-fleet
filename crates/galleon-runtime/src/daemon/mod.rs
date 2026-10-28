@@ -4549,12 +4549,12 @@ mod tests {
     //
     //    Ignored by default: it spawns a real npx subprocess and
     //    needs node + npx on PATH. Run explicitly with:
-    //      cargo test -p clawcrew-runtime --lib \
+    //      cargo test -p galleon-runtime --lib \
     //        heartbeat_mcp_registry_reuses_one_stdio_child_across_ticks \
     //        -- --ignored
     #[cfg(unix)]
     #[tokio::test]
-    #[ignore = "spawns a real stdio MCP server via npx @modelcontextprotocol/server-filesystem; needs node/npx on PATH so it does not run in normal CI. Run: cargo test -p clawcrew-runtime --lib heartbeat_mcp_registry_reuses_one_stdio_child_across_ticks -- --ignored"]
+    #[ignore = "spawns a real stdio MCP server via npx @modelcontextprotocol/server-filesystem; needs node/npx on PATH so it does not run in normal CI. Run: cargo test -p galleon-runtime --lib heartbeat_mcp_registry_reuses_one_stdio_child_across_ticks -- --ignored"]
     async fn heartbeat_mcp_registry_reuses_one_stdio_child_across_ticks() {
         use galleon_config::schema::{AliasedAgentConfig, McpBundleConfig, McpServerConfig};
         use std::sync::Arc;
@@ -5470,7 +5470,7 @@ mod tests {
     /// Unix-only: the fixture symlinks to a checked-in stdio MCP server
     /// script and invokes `kill`. The test is gated under `#[cfg(unix)]`
     /// so the repository's Windows `cargo test --no-run` target for
-    /// `clawcrew-runtime` stays green.
+    /// `galleon-runtime` stays green.
     #[cfg(unix)]
     #[tokio::test(flavor = "multi_thread")]
     async fn heartbeat_worker_reconnects_after_stdio_child_exits() {

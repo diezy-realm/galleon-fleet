@@ -5,7 +5,7 @@ pub use galleon_hardware::*;
 use crate::config::Config;
 use anyhow::Result;
 #[allow(unused_imports)]
-use clawcrew_runtime::i18n::get_required_cli_string;
+use galleon_runtime::i18n::get_required_cli_string;
 
 pub fn handle_command(cmd: crate::HardwareCommands, _config: &Config) -> Result<()> {
     #[cfg(not(feature = "hardware"))]

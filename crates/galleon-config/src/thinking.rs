@@ -1,6 +1,6 @@
 //! Thinking/Reasoning Level Control (PR-34 / R-13).
 //!
-//! Extracted from `clawcrew-runtime::agent::thinking` so channel crates and
+//! Extracted from `galleon-runtime::agent::thinking` so channel crates and
 //! config-driven surfaces can resolve reasoning parameters without linking
 //! to the runtime monolith.
 

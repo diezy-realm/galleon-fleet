@@ -11,7 +11,7 @@
 //! * **Allowlist policy.** [`is_author_allowed`](BlueskyChannel::is_author_allowed)
 //!   calls [`galleon_channel_core::allowlist::is_identity_allowed_by`], the
 //!   same `galleon_config::schema` peer-policy SSOT upstream uses — reused, not
-//!   reimplemented, and WITHOUT dragging `clawcrew-runtime`. Handle and DID are
+//!   reimplemented, and WITHOUT dragging `galleon-runtime`. Handle and DID are
 //!   judged together against one snapshot of the peer list.
 //!
 //! ## Documented ceilings (ponytail: cut corners with a known upgrade path)

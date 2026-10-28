@@ -11,7 +11,7 @@ while IFS= read -r path; do
         scripts/ci/parallel_runtime_test_*.sh)
             scope=all
             ;;
-        crates/clawcrew-runtime/*)
+        crates/galleon-runtime/*)
             scope=all
             ;;
         crates/galleon-channels/*)

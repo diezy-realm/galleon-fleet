@@ -69,8 +69,8 @@ allowed = {"galleon-api", "galleon_api"}
 # Keep the exception narrow even when a dependency is renamed or target-gated.
 assert find_offending({"dependencies": {"galleon-api": {"workspace": True}}}) == []
 assert find_offending({"dependencies": {"galleon_api": {"workspace": True}}}) == []
-assert find_offending({"dependencies": {"clawcrew-runtime": {"workspace": True}}}) == [
-    "clawcrew-runtime"
+assert find_offending({"dependencies": {"galleon-runtime": {"workspace": True}}}) == [
+    "galleon-runtime"
 ]
 assert find_offending(
     {"target": {"cfg(unix)": {"dependencies": {"backend": {"package": "galleon-config"}}}}}

@@ -1445,7 +1445,7 @@ impl Tool for BrowserTool {
         }
 
         // Rate limiting is applied by the RateLimitedTool wrapper at
-        // registration time (see clawcrew-runtime::tools::mod).
+        // registration time (see galleon-runtime::tools::mod).
 
         let backend = match self.resolve_backend().await {
             Ok(selected) => selected,

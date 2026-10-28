@@ -39,7 +39,7 @@ fn parse_arguments_value(raw: Option<&serde_json::Value>) -> serde_json::Value {
 /// stripped from final response text. This is the single source of truth for
 /// the marker vocabulary, shared by the non-streaming
 /// [`strip_trailing_terminal_markers`] helper and the streaming state machine
-/// (`clawcrew-runtime`'s `StreamTerminalMarkerStripper`) so a vocabulary or
+/// (`galleon-runtime`'s `StreamTerminalMarkerStripper`) so a vocabulary or
 /// matching-rule change cannot drift one path.
 ///
 /// Order matters: longer spellings must precede shorter ones so a suffix check
@@ -5220,7 +5220,7 @@ Let me check the result."#;
     // ═══════════════════════════════════════════════════════════════════════
 
     // ═══════════════════════════════════════════════════════════════════════
-    // Additional parser internals tests (moved from clawcrew-runtime to keep
+    // Additional parser internals tests (moved from galleon-runtime to keep
     // functions crate-private per Beta-tier API stability policy)
     // ═══════════════════════════════════════════════════════════════════════
 

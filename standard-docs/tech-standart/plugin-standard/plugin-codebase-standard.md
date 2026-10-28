@@ -70,7 +70,7 @@ crates/galleon-channel-<name>/
 ```
 
 Aturan tambahan:
-- **Dilarang** mengimpor `clawcrew-runtime` atau `galleon-channels` (arah dependency; dikunci CI). Kebutuhan runtime lewat trait di crate kontrak/`galleon-channel-core`.
+- **Dilarang** mengimpor `galleon-runtime` atau `galleon-channels` (arah dependency; dikunci CI). Kebutuhan runtime lewat trait di crate kontrak/`galleon-channel-core`.
 - Registrasi mandiri (self-register) via `galleon-channel-core`; `galleon-channels` hanya meng-*aggregate* di balik Cargo feature `channel-<name>`.
 - Feature flag di bin/`galleon-channels`: `channel-<name>`; masuk `default-channels` **hanya** jika Tier A.
 - Platform-spesifik dengan `#[cfg(target_os = "...")]` dan target `compile_error!`/stub yang jelas; tidak ada kode mati.

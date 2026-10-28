@@ -8,8 +8,8 @@ Format: site, decision (deleted / kept / kept-with-narrow), reason.
 
 Two failing onboard tests on the branch — fail with the excision pass applied AND reproduce on the pre-excision commit. The wizard's quick-mode prompts for the per-channel `excluded-tools` field, but neither test provides an answer for that prompt:
 
-- `crates/clawcrew-runtime/src/onboard/mod.rs::onboard::tests::channels_telegram_selection_writes_entry` (line 2138)
-- `crates/clawcrew-runtime/src/onboard/mod.rs::onboard::tests::channels_mochat_selection_persists_url_and_token` (line 2174)
+- `crates/galleon-runtime/src/onboard/mod.rs::onboard::tests::channels_telegram_selection_writes_entry` (line 2138)
+- `crates/galleon-runtime/src/onboard/mod.rs::onboard::tests::channels_mochat_selection_persists_url_and_token` (line 2174)
 
 Failure: `quick mode: no answer or default provided for prompt "excluded-tools"`.
 
@@ -26,12 +26,12 @@ Out of scope for the excision pass; the right fix is either (a) extend `QuickUi`
 
 - `crates/galleon-tools/src/google_workspace.rs:28` `rate_limit_per_minute: u32` — kept. Field is dead in production but constructor is invoked by ~14 legitimate tests of other tool methods. Removing would force test signature edits with no test-semantic gain.
 - `crates/galleon-providers/src/azure_openai.rs:14,16` `resource_name`, `deployment_name` — kept. Constructor is called from many tests (4-arg `new()`); a couple of tests assert on these fields specifically (lines 576-577) but most just construct. Removing forces test edits across the file.
-- `crates/clawcrew-runtime/src/agent/agent.rs:49` `allowed_tools: Option<Vec<String>>` — kept. Identically-named field exists in `crates/galleon-gateway/src/api.rs:82` and `crates/clawcrew-runtime/src/cron/types.rs:152,190`; verifying full disconnection is a multi-crate trace, deferred.
-- `crates/clawcrew-runtime/src/security/audit.rs:225` `buffer: Mutex<Vec<AuditEvent>>` — kept. Buffered batch-flush could be a half-wired feature; flushing a Mutex<Vec> as part of audit chain is load-bearing in a way that needs a deeper trace before deletion.
+- `crates/galleon-runtime/src/agent/agent.rs:49` `allowed_tools: Option<Vec<String>>` — kept. Identically-named field exists in `crates/galleon-gateway/src/api.rs:82` and `crates/galleon-runtime/src/cron/types.rs:152,190`; verifying full disconnection is a multi-crate trace, deferred.
+- `crates/galleon-runtime/src/security/audit.rs:225` `buffer: Mutex<Vec<AuditEvent>>` — kept. Buffered batch-flush could be a half-wired feature; flushing a Mutex<Vec> as part of audit chain is load-bearing in a way that needs a deeper trace before deletion.
 - `src/service/mod.rs:6`, `src/integrations/mod.rs:7`, `src/hardware/mod.rs:8`, `src/skills/mod.rs:23` — kept. The `handle_command` dispatchers are wired only on certain feature combinations; the `#[allow(dead_code)]` is a wrong-shape suppression but converting to `#[cfg(feature = "X")]` requires per-crate feature audit.
 - `crates/galleon-tools/src/browser.rs:66,68,70,2006` — kept. Fields/fns gated to the `browser-native` feature; the suppression marks the cfg-off path, which is a legitimate (if ugly) pattern.
 - `crates/galleon-plugins/src/host.rs:25` `verification: VerificationResult` — kept. Plugin trust audit field; deletion needs a security/trust review.
-- `tests/integration/channel_matrix.rs:19`, `crates/clawcrew-runtime/src/agent/tests.rs:63`, `crates/clawcrew-runtime/src/sop/engine.rs:1002` — kept. Test file / `#[cfg(test)]` block content; user directive: don't touch tests.
+- `tests/integration/channel_matrix.rs:19`, `crates/galleon-runtime/src/agent/tests.rs:63`, `crates/galleon-runtime/src/sop/engine.rs:1002` — kept. Test file / `#[cfg(test)]` block content; user directive: don't touch tests.
 - `crates/galleon-channels/src/lark.rs:179` `event_id`, `crates/galleon-channels/src/bluesky.rs:48,62`, `crates/galleon-channels/src/reddit.rs:45` — kept. Deserializer struct fields. Serde reads and discards them; deletion would force a separate "manually skip in serde" change.
 - `crates/galleon-providers/src/bedrock.rs:532,555,571` — kept. Same shape as the lark/bluesky case (response-deserialize fields).
 
@@ -57,7 +57,7 @@ Three `#[serde(alias = ...)]` annotations in `crates/galleon-config/src/schema.r
 
 Investigated for collapse but **kept**:
 
-- The function `channels()` has 4 real callers (`crates/galleon-gateway/src/api.rs:113,859`, `crates/clawcrew-runtime/src/daemon/mod.rs:1055`, `crates/clawcrew-runtime/src/integrations/registry.rs:82,194`).
+- The function `channels()` has 4 real callers (`crates/galleon-gateway/src/api.rs:113,859`, `crates/galleon-runtime/src/daemon/mod.rs:1055`, `crates/galleon-runtime/src/integrations/registry.rs:82,194`).
 - `channels_except_webhook` has exactly one caller: `channels()` itself.
 - Collapsing into a Configurable-derive emit would net ~−80 lines of schema for ~+40 of macro work, but requires the macro to handle `#[cfg(feature = "channel-nostr")]` / `#[cfg(feature = "voice-wake")]` cfg-gated fields. That's risky on a release branch.
 - Inlining `channels_except_webhook` into `channels()` is net-zero and only removes one level of indirection.

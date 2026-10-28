@@ -993,7 +993,7 @@ enabled = true
         // Guard that salvage still prunes genuine garbage: a `bot_token`
         // with the wrong type (int instead of string) is a real type error,
         // not merely a missing field, and must still be dropped with the
-        // exact path recorded so `doctor` can name it (see clawcrew-runtime's
+        // exact path recorded so `doctor` can name it (see galleon-runtime's
         // check_degraded_sections).
         let raw = r#"
 schema_version = 3

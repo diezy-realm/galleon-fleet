@@ -1,8 +1,8 @@
-pub use clawcrew_runtime::cron::*;
+pub use galleon_runtime::cron::*;
 
 use crate::config::Config;
 use anyhow::{Result, bail};
-use clawcrew_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
+use galleon_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
 
 /// Bail with a clear error if the named agent isn't configured.
 fn require_configured_agent(config: &Config, agent_alias: &str) -> Result<()> {

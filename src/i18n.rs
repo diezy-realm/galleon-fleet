@@ -1,1 +1,1 @@
-pub use clawcrew_runtime::i18n::*;
+pub use galleon_runtime::i18n::*;

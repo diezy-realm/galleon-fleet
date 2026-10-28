@@ -5,7 +5,7 @@ use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
 
 #[cfg(feature = "agent-runtime")]
-use clawcrew_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
+use galleon_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
 
 fn update_already_current_message(version: &str) -> String {
     #[cfg(feature = "agent-runtime")]

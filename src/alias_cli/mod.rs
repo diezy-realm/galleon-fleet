@@ -15,7 +15,7 @@ use galleon_config::schema::Config;
 fn mt(key: &str, fallback: &str) -> String {
     #[cfg(feature = "agent-runtime")]
     {
-        clawcrew_runtime::i18n::get_required_cli_string(key)
+        galleon_runtime::i18n::get_required_cli_string(key)
     }
     #[cfg(not(feature = "agent-runtime"))]
     {
@@ -28,7 +28,7 @@ fn mt(key: &str, fallback: &str) -> String {
 fn mta(key: &str, args: &[(&str, &str)], fallback: &str) -> String {
     #[cfg(feature = "agent-runtime")]
     {
-        clawcrew_runtime::i18n::get_required_cli_string_with_args(key, args)
+        galleon_runtime::i18n::get_required_cli_string_with_args(key, args)
     }
     #[cfg(not(feature = "agent-runtime"))]
     {

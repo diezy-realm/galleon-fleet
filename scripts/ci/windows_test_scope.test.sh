@@ -13,7 +13,7 @@ mkdir -p "$repo_root/crates/galleon-channels" \
     "$repo_root/crates/galleon-api" \
     "$repo_root/crates/galleon-config" \
     "$repo_root/crates/galleon-plugins" \
-    "$repo_root/crates/clawcrew-runtime" \
+    "$repo_root/crates/galleon-runtime" \
     "$repo_root/crates/galleon-gateway" \
     "$repo_root/crates/galleon-providers" \
     "$repo_root/crates/galleon-plugins/tests/fixtures/channel-fixture" \
@@ -27,7 +27,7 @@ cat > "$metadata_file" <<EOF
     {"id": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4", "name": "galleon-channels", "manifest_path": "crates/galleon-channels/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4", "name": "galleon-config", "manifest_path": "crates/galleon-config/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "name": "galleon-plugins", "manifest_path": "crates/galleon-plugins/Cargo.toml"},
-    {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "name": "clawcrew-runtime", "manifest_path": "crates/clawcrew-runtime/Cargo.toml"},
+    {"id": "path+file://${repo_root}/crates/galleon-runtime#galleon-runtime 0.8.4", "name": "galleon-runtime", "manifest_path": "crates/galleon-runtime/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4", "name": "galleon-gateway", "manifest_path": "crates/galleon-gateway/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4", "name": "galleon-providers", "manifest_path": "crates/galleon-providers/Cargo.toml"},
     {"id": "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "name": "clawcrew-channel-plugin-fixture", "manifest_path": "crates/galleon-plugins/tests/fixtures/channel-fixture/Cargo.toml"},
@@ -39,7 +39,7 @@ cat > "$metadata_file" <<EOF
     "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4",
     "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4",
     "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4",
-    "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4",
+    "path+file://${repo_root}/crates/galleon-runtime#galleon-runtime 0.8.4",
     "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4",
     "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4",
     "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0",
@@ -47,12 +47,12 @@ cat > "$metadata_file" <<EOF
   ],
   "resolve": {
     "nodes": [
-      {"id": "path+file://${repo_root}#clawcrew 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-api#galleon-api 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4"}]},
+      {"id": "path+file://${repo_root}#clawcrew 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-api#galleon-api 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}, {"pkg": "path+file://${repo_root}/crates/galleon-runtime#galleon-runtime 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/galleon-api#galleon-api 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-channels#galleon-channels 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-config#galleon-config 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-plugins#galleon-plugins 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-api#galleon-api 0.8.4"}]},
-      {"id": "path+file://${repo_root}/crates/clawcrew-runtime#clawcrew-runtime 0.8.4", "deps": []},
+      {"id": "path+file://${repo_root}/crates/galleon-runtime#galleon-runtime 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-gateway#galleon-gateway 0.8.4", "deps": [{"pkg": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4"}]},
       {"id": "path+file://${repo_root}/crates/galleon-providers#galleon-providers 0.8.4", "deps": []},
       {"id": "path+file://${repo_root}/crates/galleon-plugins/tests/fixtures/channel-fixture#clawcrew-channel-plugin-fixture 0.1.0", "deps": []},
@@ -146,8 +146,8 @@ assert_selection "package build script" scoped '["clawcrew","galleon-channels"]'
 printf '%s\n' 'build.rs' > "$paths_file"
 assert_selection "root build script" full '[]' '' "$paths_file"
 
-printf '%s\n' 'crates/clawcrew-runtime/locales/en/cli.ftl' > "$paths_file"
-assert_selection "plugin-host package locale resource" scoped '["clawcrew","clawcrew-runtime"]' '' "$paths_file" true
+printf '%s\n' 'crates/galleon-runtime/locales/en/cli.ftl' > "$paths_file"
+assert_selection "plugin-host package locale resource" scoped '["clawcrew","galleon-runtime"]' '' "$paths_file" true
 
 printf '%s\n' 'locales/en/cli.ftl' > "$paths_file"
 assert_selection "root package locale resource" full '[]' '' "$paths_file"
@@ -161,15 +161,15 @@ assert_selection "unclassified member Rust path" full '[]' '' "$paths_file" fals
 printf '%s\n' 'crates/galleon-channels/assets/generated.bin' > "$paths_file"
 assert_selection "unclassified member asset" full '[]' '' "$paths_file" false 'crates/galleon-channels/assets/generated.bin'
 
-printf '%s\n' 'crates/galleon-channels/src/lib.rs' 'crates/clawcrew-runtime/assets/generated.bin' > "$paths_file"
-assert_selection "unclassified plugin-host path with scoped path" full '[]' '' "$paths_file" true 'crates/clawcrew-runtime/assets/generated.bin'
+printf '%s\n' 'crates/galleon-channels/src/lib.rs' 'crates/galleon-runtime/assets/generated.bin' > "$paths_file"
+assert_selection "unclassified plugin-host path with scoped path" full '[]' '' "$paths_file" true 'crates/galleon-runtime/assets/generated.bin'
 
 printf '%s\n' 'crates/galleon-plugins/tests/fixtures/channel-fixture/src/lib.rs' > "$paths_file"
 assert_selection "dynamically consumed plugin fixture" full '[]' 'Dynamically consumed plugin test fixtures require the full suite.' "$paths_file" true
 
 for plugin_path in \
     'crates/galleon-plugins/src/lib.rs' \
-    'crates/clawcrew-runtime/src/lib.rs' \
+    'crates/galleon-runtime/src/lib.rs' \
     'crates/galleon-config/src/lib.rs' \
     'tests/plugin_channel_runtime_e2e.rs' \
     'Cargo.toml' \
@@ -371,8 +371,8 @@ plugin_condition = 'if [[ "$NEEDS_PLUGIN_HOST" == "true" ]]; then'
 plugin_components_command = 'cargo nextest run --locked --no-fail-fast \\\n              -p galleon-plugins'
 plugin_root_command = 'cargo nextest run --locked --no-fail-fast \\\n              --features plugins-wasm-cranelift \\\n              --test plugin_channel_runtime_e2e'
 plugin_lib_command = "cargo nextest run --locked --no-fail-fast \\\n              -p galleon-plugins \\\n              --no-default-features \\\n              --features plugins-wasm-cranelift \\\n              --lib"
-plugin_runtime_config_command = "cargo nextest run --locked --no-fail-fast \\\n              -p clawcrew-runtime \\\n              --features plugins-wasm-cranelift \\\n              --lib \\\n              live_agent_plugin_tool_observes_config_reload_after_construction"
-plugin_runtime_admission_command = "cargo nextest run --locked --no-fail-fast \\\n              -p clawcrew-runtime \\\n              --features plugins-wasm-cranelift \\\n              --lib \\\n              plugin_runtime::"
+plugin_runtime_config_command = "cargo nextest run --locked --no-fail-fast \\\n              -p galleon-runtime \\\n              --features plugins-wasm-cranelift \\\n              --lib \\\n              live_agent_plugin_tool_observes_config_reload_after_construction"
+plugin_runtime_admission_command = "cargo nextest run --locked --no-fail-fast \\\n              -p galleon-runtime \\\n              --features plugins-wasm-cranelift \\\n              --lib \\\n              plugin_runtime::"
 assert "bash scripts/ci/windows_test_scope.test.sh" in scope_job
 metadata_fallback = 'if ! cargo metadata --locked --format-version 1 > "$metadata_file"; then'
 assert metadata_fallback in scope_job

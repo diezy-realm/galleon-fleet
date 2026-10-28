@@ -62,7 +62,7 @@
 3. Go crew orchestrator (engine/src/crew/services.go)
    ↓ builds turn context (messages, tools, memory)
    ↓ gRPC call → Rust SystemGatewayService.ExecuteTurn (ADR 0001)
-4. Rust turn executor (crates/clawcrew-runtime/src/agent/turn.rs)
+4. Rust turn executor (crates/galleon-runtime/src/agent/turn.rs)
    ↓ calls galleon-providers (OpenAI/Gemini/Bedrock/Anthropic)
    ↓ streams tokens back to Go
 5. Go receives completion
@@ -107,7 +107,7 @@
 See `docs/book/src/architecture/crates.md` (archived KiroCrew upstream) for detailed dependency graph. Key abstractions:
 
 - `galleon-gateway`: gRPC server, vault, secret management
-- `clawcrew-runtime`: Agent turn execution, tool dispatch, message streaming
+- `galleon-runtime`: Agent turn execution, tool dispatch, message streaming
 - `galleon-providers`: LLM vendor APIs (OpenAI, Gemini, Bedrock, Anthropic) — **SSOT (ADR 0001)**
 - `clawcrew-channel-*`: Channel plugins (Discord, Telegram, Slack, etc.)
 - `clawcrew-tools-*`: Native tool implementations (filesystem, shell, network)
@@ -162,7 +162,7 @@ engine/
 
 ## Plugin Architecture
 
-**WASI Components** (Rust `clawcrew-runtime/plugin/`):
+**WASI Components** (Rust `galleon-runtime/plugin/`):
 - Tools, channels, and memory plugins as `.wasm` modules
 - Sandboxed execution (WASI preview2, no host filesystem access by default)
 - Discovery: `~/.config/galleon/plugins/` at runtime

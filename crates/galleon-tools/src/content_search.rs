@@ -191,7 +191,7 @@ impl Tool for ContentSearchTool {
 
         // Rate limiting and path-allowlist checks are applied by the
         // RateLimitedTool + PathGuardedTool wrappers at registration time
-        // (see clawcrew-runtime::tools::mod).
+        // (see galleon-runtime::tools::mod).
 
         // Path-shape checks only; the allowlist gate is
         // `SecurityPolicy::is_resolved_path_readable` after canonicalize

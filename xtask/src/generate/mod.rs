@@ -54,7 +54,7 @@ fn registry() -> Vec<Surface> {
         },
         Surface {
             name: "runtime-locales",
-            file: "crates/clawcrew-runtime/src/generated_locales.rs",
+            file: "crates/galleon-runtime/src/generated_locales.rs",
             render: runtime_locales::render_file,
         },
         Surface {

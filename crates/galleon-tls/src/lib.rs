@@ -1,6 +1,6 @@
 //! Shared TLS and mutual TLS (mTLS) construction for ClawCrew.
 //!
-//! This crate sits below both `clawcrew-runtime` and `galleon-gateway` so the
+//! This crate sits below both `galleon-runtime` and `galleon-gateway` so the
 //! same rustls server-config / client-certificate-verifier / certificate-pinning
 //! logic can be reused without an upward dependency. It is parameterized by the
 //! neutral [`ServerConfigParams`] / [`ClientAuthParams`] types rather than any

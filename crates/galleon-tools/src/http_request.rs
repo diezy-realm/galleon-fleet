@@ -599,7 +599,7 @@ impl Tool for HttpRequestTool {
         }
 
         // Rate limiting is applied by the RateLimitedTool wrapper at
-        // registration time (see clawcrew-runtime::tools::mod).
+        // registration time (see galleon-runtime::tools::mod).
 
         let proxy_config = galleon_config::schema::runtime_proxy_config();
         if proxy_conflicts_with_dns_pinning(&proxy_config) {

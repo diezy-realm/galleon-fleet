@@ -16,7 +16,7 @@ Di workspace multi-crate besar (seperti ClawCrew dengan 25+ crates), menjalankan
      ```bash
      cargo check -p <crate-name>
      ```
-     *Contoh: `cargo check -p clawcrew-runtime` atau `cargo check -p galleon-config` (waktu: 1–2 detik).*
+     *Contoh: `cargo check -p galleon-runtime` atau `cargo check -p galleon-config` (waktu: 1–2 detik).*
 2. **Targeted Clippy**:
    * Jalankan clippy per-crate:
      ```bash

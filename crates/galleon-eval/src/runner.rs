@@ -6,8 +6,8 @@ use std::sync::Arc;
 use galleon_api::model_provider::ModelProvider;
 use galleon_config::schema::MemoryConfig;
 use galleon_memory::{Memory, create_memory};
-use clawcrew_runtime::agent::agent::Agent;
-use clawcrew_runtime::agent::dispatcher::NativeToolDispatcher;
+use galleon_runtime::agent::agent::Agent;
+use galleon_runtime::agent::dispatcher::NativeToolDispatcher;
 use serde::{Deserialize, Serialize};
 
 use crate::Mode;
@@ -106,16 +106,16 @@ impl MockGoEngineTurnClient {
         let eval_config = galleon_config::schema::Config::default();
         let eval_security = Arc::new(galleon_config::policy::SecurityPolicy::default());
         let eval_registry =
-            clawcrew_runtime::tools::scoped::ScopedToolRegistry::assemble(
-                clawcrew_runtime::tools::scoped::ScopedAssembly {
+            galleon_runtime::tools::scoped::ScopedToolRegistry::assemble(
+                galleon_runtime::tools::scoped::ScopedAssembly {
                     config: &eval_config,
                     agent_alias: "eval",
                     security: &eval_security,
-                    built: clawcrew_runtime::tools::AllToolsResult::from_prebuilt_tools(
+                    built: galleon_runtime::tools::AllToolsResult::from_prebuilt_tools(
                         default_tools(),
                     ),
                     skills: &[],
-                    runtime: Arc::new(clawcrew_runtime::platform::NativeRuntime::new()),
+                    runtime: Arc::new(galleon_runtime::platform::NativeRuntime::new()),
                     caller_allowed: None,
                     connect_mcp: false,
                     connect_peripherals: false,

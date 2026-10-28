@@ -193,7 +193,7 @@ async fn debounced_bucket_rejects_when_combined_attachments_exceed_cap() {
 
 ## C. Redaksi & Scrub Tool I/O (independen, file berbeda, bisa paralel penuh dengan A/B)
 
-- [x] **BL-37 Tahap 1 (P1, HIGH — bug wiring, bukan desain, PRIORITASKAN)** Sambungkan `capture_tool_input`/`capture_tool_output` yang sudah dirancang benar tapi NOL dipanggil produksi. Ganti `call_arguments`/`r.output` mentah di `tool_execution.rs:166-262`. File: `crates/clawcrew-runtime/src/agent/tool_execution.rs`. Status: COMPLETED (31 tests pass termasuk `tool_io_capture_redacts_and_truncates_in_debug_log`).
+- [x] **BL-37 Tahap 1 (P1, HIGH — bug wiring, bukan desain, PRIORITASKAN)** Sambungkan `capture_tool_input`/`capture_tool_output` yang sudah dirancang benar tapi NOL dipanggil produksi. Ganti `call_arguments`/`r.output` mentah di `tool_execution.rs:166-262`. File: `crates/galleon-runtime/src/agent/tool_execution.rs`. Status: COMPLETED (31 tests pass termasuk `tool_io_capture_redacts_and_truncates_in_debug_log`).
 
 #### Detail Eksekusi — BL-37 Tahap 1
 
@@ -201,12 +201,12 @@ async fn debounced_bucket_rejects_when_combined_attachments_exceed_cap() {
 
 **Koreksi baris:** Baris persis di `tool_execution.rs` tempat raw value ditulis ke log (padanan dari klaim dokumen `166-262`) adalah **baris ~259** (`"input": call_arguments` di dalam `::galleon_log::record!(DEBUG, ...)`, fungsi `execute_one_tool`) — nomor baris SUDAH BERGESER dari dokumen lama, verifikasi ulang nomor persis saat eksekusi (`grep -n '"input": call_arguments'`) karena file terus berubah.
 
-**Signature `capture_tool_input`/`capture_tool_output` butuh `redacted: &str`** — ARTINYA caller WAJIB men-scrub/leak-scan INPUT terlebih dahulu SEBELUM memanggil fungsi ini (dokumentasi fungsi sendiri: *"the input string AFTER the runtime has scanned it for credential leaks (using `clawcrew_runtime::security::LeakDetector`)"*). Ini urutan 2 langkah: (1) leak-scan via `LeakDetector` (`crates/clawcrew-runtime/src/security/` — cari exact path, kemungkinan dekat `landlock.rs`/`seatbelt.rs` di modul `security`), (2) `capture_tool_input(policy, tool, redacted)` untuk truncation+denylist.
+**Signature `capture_tool_input`/`capture_tool_output` butuh `redacted: &str`** — ARTINYA caller WAJIB men-scrub/leak-scan INPUT terlebih dahulu SEBELUM memanggil fungsi ini (dokumentasi fungsi sendiri: *"the input string AFTER the runtime has scanned it for credential leaks (using `galleon_runtime::security::LeakDetector`)"*). Ini urutan 2 langkah: (1) leak-scan via `LeakDetector` (`crates/galleon-runtime/src/security/` — cari exact path, kemungkinan dekat `landlock.rs`/`seatbelt.rs` di modul `security`), (2) `capture_tool_input(policy, tool, redacted)` untuk truncation+denylist.
 
 **File & simbol spesifik:**
 - Baca: `crates/galleon-log/src/tool_io.rs` (sudah dibaca penuh sesi ini) — `ToolIoCapture { text, original_bytes, truncated }`, `ResolvedPolicy`, `ToolIoPolicy::{Off,Full,Redacted}`.
-- Cari: `crates/clawcrew-runtime/src/security/` untuk `LeakDetector` exact path dan signature method scan-nya (BELUM diverifikasi sesi ini — WAJIB sebagai langkah pertama tim eksekusi).
-- Ubah: `crates/clawcrew-runtime/src/agent/tool_execution.rs` baris ~259 (titik `"input": call_arguments`) dan titik serupa untuk output (grep `r.output`/`result.output` di sekitar baris ini untuk titik kedua).
+- Cari: `crates/galleon-runtime/src/security/` untuk `LeakDetector` exact path dan signature method scan-nya (BELUM diverifikasi sesi ini — WAJIB sebagai langkah pertama tim eksekusi).
+- Ubah: `crates/galleon-runtime/src/agent/tool_execution.rs` baris ~259 (titik `"input": call_arguments`) dan titik serupa untuk output (grep `r.output`/`result.output` di sekitar baris ini untuk titik kedua).
 
 **Spesifikasi API (pola integrasi):**
 ```rust
@@ -277,7 +277,7 @@ let captured_input = galleon_log::capture_tool_input(&resolved_policy, call_name
 **Verifikasi:** `scrub_credentials` SUDAH diimport di `tool_execution.rs:16` (`use super::loop_::{..., scrub_credentials};`) dan SUDAH dipakai minimal 1 titik: baris ~96 (`result: Some(scrub_credentials(&reason))` — di cabang "Unknown tool" error path). **Ini KOREKSI terhadap dokumen**: `scrub_credentials` BUKAN nol dipakai — sudah dipakai di jalur ERROR, tapi (sesuai klaim dokumen) kemungkinan BELUM dipakai konsisten di jalur SUCCESS/semua `record!` call lain di file ini. Perlu inventarisasi SEMUA titik `record!`/`ObserverEvent` di `tool_execution.rs` yang membawa data mentah (`full_args`, hasil tool, dll.) dan cek mana yang SUDAH vs BELUM di-scrub.
 
 **Langkah pengerjaan:**
-1. `grep -n "record!\|ObserverEvent::" crates/clawcrew-runtime/src/agent/tool_execution.rs` — list SEMUA titik emit log/observer event.
+1. `grep -n "record!\|ObserverEvent::" crates/galleon-runtime/src/agent/tool_execution.rs` — list SEMUA titik emit log/observer event.
 2. Untuk tiap titik, cek apakah data yang dibawa (`full_args`, `result`, `output`) sudah lewat `scrub_credentials` — baris 96 sudah benar (contoh pola yang ditiru), titik lain (termasuk baris ~259 yang jadi fokus BL-37 Tahap 1 — KOORDINASIKAN dua tiket ini, mereka menyentuh titik yang SAMA) kemungkinan belum.
 3. Tambahkan `scrub_credentials(...)` di setiap titik yang belum, konsisten pola baris 96.
 
@@ -321,7 +321,7 @@ fn restrict_log_file_acl(path: &Path) -> std::io::Result<()> {
 |---|---|---|---|
 | A (BL-52) | `galleon-infra/src/debounce.rs`, `galleon-channels/src/orchestrator/mod.rs` | Backend-Rust | **Tunggu BL-14 (Sprint 0) merge dulu** |
 | B (BL-53/54/55) | `galleon-api/src/media.rs`, Front App entry point per-channel, Core agregasi | Backend-Rust + Frontend (per-channel) | BL-55 tunggu BL-52 merge |
-| C (BL-37/38/39) | `clawcrew-runtime/src/agent/tool_execution.rs`, `galleon-config/src/schema.rs`, `galleon-log/src/*` | Backend-Rust (crew berbeda dari A/B, file tidak beririsan) | Bisa paralel penuh dengan A/B |
+| C (BL-37/38/39) | `galleon-runtime/src/agent/tool_execution.rs`, `galleon-config/src/schema.rs`, `galleon-log/src/*` | Backend-Rust (crew berbeda dari A/B, file tidak beririsan) | Bisa paralel penuh dengan A/B |
 
 ## Keluaran Sprint
 

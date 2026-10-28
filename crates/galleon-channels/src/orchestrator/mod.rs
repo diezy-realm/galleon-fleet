@@ -650,7 +650,7 @@ pub fn render_receipts_block(receipts: &[String]) -> Option<String> {
 }
 
 /// Standard turn runner that drives model provider and executes tool calls,
-/// without depending on `clawcrew-runtime`.
+/// without depending on `galleon-runtime`.
 #[derive(Debug, Default, Clone)]
 pub struct StandardChannelTurnRunner;
 

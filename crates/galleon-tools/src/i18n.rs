@@ -9,7 +9,7 @@ static TOOL_FTL_SOURCES: OnceLock<ToolFtlSources> = OnceLock::new();
 static LOCALE: OnceLock<String> = OnceLock::new();
 
 /// English tool strings, embedded here rather than pulled from
-/// `clawcrew-runtime` so the dependency direction (runtime -> tools) stays
+/// `galleon-runtime` so the dependency direction (runtime -> tools) stays
 /// intact. The file is mirrored from the canonical runtime catalogue by
 /// `cargo generate installers tools-en-ftl`; CI fails on drift. Reading the
 /// runtime copy directly would reach outside this crate, and `cargo package`
@@ -194,7 +194,7 @@ fn detect_locale() -> String {
 }
 
 /// Auto-detect locale from the OS when config sets none. Same as
-/// `clawcrew-runtime`'s `i18n::detect_locale`: `sys-locale` is
+/// `galleon-runtime`'s `i18n::detect_locale`: `sys-locale` is
 /// cross-platform — on Unix it checks `LANGUAGE` > `LC_ALL` > `LC_MESSAGES` >
 /// `LANG`, and on Windows/macOS it queries the OS directly.
 fn locale_from_system() -> Option<String> {

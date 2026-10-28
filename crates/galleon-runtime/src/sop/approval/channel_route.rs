@@ -7,7 +7,7 @@
 //! a Discord ops channel where a maintainer approves it through the normal HTTP/WS/
 //! tool surfaces (which already route back through the broker + chokepoint).
 //!
-//! Layering: this lives in `clawcrew-runtime` because it needs only
+//! Layering: this lives in `galleon-runtime` because it needs only
 //! [`galleon_api::channel::Channel`] (a runtime dependency already), never the
 //! `galleon-channels` implementations. The DAEMON builds the concrete channel map
 //! (via `galleon_channels::orchestrator::build_channel_map`) and injects it here, so

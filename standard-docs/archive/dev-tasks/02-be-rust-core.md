@@ -7,7 +7,7 @@ Prinsip: **verifikasi per modul (R-00 §4) wajib sebelum modul runtime dipindah/
 
 - [x] **BR-A1 · R-01 · PR-10 (P1, S) `[workspace.lints]`:** [Selesai PR-10] Dikonfigurasi `[workspace.lints.clippy]` (`unwrap_used = "warn"`, `expect_used = "warn"`) dan `[workspace.lints.rust]` (`unsafe_code = "warn"`) di root `Cargo.toml`; `[lints] workspace = true` diaktifkan.
 - [x] **BR-A2 · R-03 · PR-10 (P1, S) Gerbang ukuran file/crate** di `tests/architecture/`: [Selesai PR-10] Diimplementasikan `module_size_limits.rs` mengunci batas 5.000 (source) / 10.000 (test) dengan daftar ratchet exceptions bertanggal 2026-10-04.
-- [x] **BR-A3 · R-04 · PR-10 (P1, S) Gerbang arah dependensi** (`cargo metadata`): [Selesai PR-10] Diimplementasikan `dependency_direction.rs` mengunci `galleon-api` sebagai leaf crate dan melarang `galleon-plugins` serta channel crates mengimpor `clawcrew-runtime`.
+- [x] **BR-A3 · R-04 · PR-10 (P1, S) Gerbang arah dependensi** (`cargo metadata`): [Selesai PR-10] Diimplementasikan `dependency_direction.rs` mengunci `galleon-api` sebagai leaf crate dan melarang `galleon-plugins` serta channel crates mengimpor `galleon-runtime`.
 - [x] **BR-A4 · R-06 · PR-10 (P2, S) Baseline waktu build/test:** [Selesai PR-10] Diukur dan dicatat di `foundation/03`: cold workspace check (7m 02s), warm check (3.78s), gate checks (< 1s).
 - [ ] **BR-A5 · R-02 · PR-30 (P1, M, berseri per crate) Burn-down `unwrap/expect` produksi** (±400 hit; `gateway`, `channels`, `runtime`). Dep: BR-A1.
 - [ ] **BR-A6 · R-05 · PR-20 (P2, S) Selaraskan `rust-conventions.md`** (MSRV, jumlah crate).
@@ -23,16 +23,16 @@ Prinsip: **verifikasi per modul (R-00 §4) wajib sebelum modul runtime dipindah/
 
 ## C. Dekoplasi Crate (pecah kode besar)
 
-- [x] **BR-C1 · R-10 · PR-31 (P1, M) Selesaikan ekstraksi `i18n`:** [Selesai PR-31] Dependensi `galleon-i18n` ditambahkan langsung ke `crates/galleon-channels/Cargo.toml` dan seluruh 87 referensi `clawcrew_runtime::i18n` di channels di-repoint ke `galleon_i18n`, diverifikasi lolos `cargo check -p galleon-channels` dan uji arsitektur dependency direction.
+- [x] **BR-C1 · R-10 · PR-31 (P1, M) Selesaikan ekstraksi `i18n`:** [Selesai PR-31] Dependensi `galleon-i18n` ditambahkan langsung ke `crates/galleon-channels/Cargo.toml` dan seluruh 87 referensi `galleon_runtime::i18n` di channels di-repoint ke `galleon_i18n`, diverifikasi lolos `cargo check -p galleon-channels` dan uji arsitektur dependency direction.
 - [x] **BR-C2 · R-11 · PR-32 (P1, L) Ekstrak `security::scrub`:** [Selesai PR-32] Diekstrak ke crate `galleon-security-scrub`; 36 pemanggilan di `galleon-channels` dan 2 di `galleon-gateway` di-repoint ke `galleon_security_scrub::scrub`; unit tests (37 test) dan gate arsitektur lolos.
 - [x] **BR-C3 · R-12 · PR-33 (P1, L) tools-scoped / memory_strategy / hooks / sop::types → trait di `galleon-api`.** [Selesai PR-33] Trait/tipe kanonikal didefinisikan: `ToolRegistry` dan `ScopedToolRegistry` di `galleon_api::tool`, `NoopMemoryStrategy` di `galleon_api::memory_traits`, `DefaultMemoryStrategy` di `galleon-memory`, `ChannelHookRunner` di `galleon_api::hook`, dan model kanonikal `sop.rs` di `galleon-api`. Runtime mengadaptasi trait-trait ini dan memverifikasi kompatibilitas tipe.
-- [x] **BR-C4 · R-13 · PR-34 (P1, L) `channels` tidak bergantung ke `runtime`:** [Selesai PR-34, commit 8b846bc36] Dependensi `clawcrew-runtime` dicabut penuh dari `galleon-channels` (Cargo.toml); trait `ChannelTurnRunner`/`ChannelTurnContext` di `galleon-api` mengabstraksi eksekusi turn; seluruh 1.704 unit tests channels & clippy lolos; aturan R-04 (`crate_dependency_direction_strictly_enforced`) terkunci rapat. Dep: BR-C1..C3.
+- [x] **BR-C4 · R-13 · PR-34 (P1, L) `channels` tidak bergantung ke `runtime`:** [Selesai PR-34, commit 8b846bc36] Dependensi `galleon-runtime` dicabut penuh dari `galleon-channels` (Cargo.toml); trait `ChannelTurnRunner`/`ChannelTurnContext` di `galleon-api` mengabstraksi eksekusi turn; seluruh 1.704 unit tests channels & clippy lolos; aturan R-04 (`crate_dependency_direction_strictly_enforced`) terkunci rapat. Dep: BR-C1..C3.
 - [ ] **BR-C5 · R-14 · PR-61 (P1, L) ⚑ `gateway` tidak bergantung ke `runtime`** (426 ref → 0). Dep: BR-D1 (cron). Terkait keputusan 08 §C.
 - [ ] **BR-C6 · R-15 · PR-63 (P2, XL, berseri) Pecah `channels` (198k LOC)** → `galleon-channel-<nama>` (sudah: core, imessage, signal, bluesky). Dep: BR-C4.
 - [ ] **BR-C7 · R-17 · PR-60 (P2, M) Pecah file terbesar** yang tetap di Rust.
 - [ ] **BR-C8 · R-18 · PR-97 (P3, M) Audit `tools`/`config`/`providers`** — tanpa pemecahan spekulatif.
 
-## D. Ramping `clawcrew-runtime` (286k LOC) — Strangler ke Go
+## D. Ramping `galleon-runtime` (286k LOC) — Strangler ke Go
 
 - [ ] **BR-D1 · R-16 · PR-60 (P2, XL, berseri) ⚑ Ramping runtime per modul** (urutan R-00 §3). Syarat tiap modul: parity Go + eval hijau.
 - [ ] **BR-D2 · R-37 · PR-56 (P2, M) Retarget `galleon-eval`** ke jalur Go; pertahankan fixture trace. Dep: BG-D1.

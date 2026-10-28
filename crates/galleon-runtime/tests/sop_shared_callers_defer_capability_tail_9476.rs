@@ -18,12 +18,12 @@ use std::path::{Path, PathBuf};
 /// Files that own a shared, concurrently-reachable transport into the broker.
 /// None of these may call the inline resolver.
 const SHARED_TRANSPORT_CALL_SITES: &[&str] = &[
-    "crates/clawcrew-runtime/src/sop/runner.rs",
-    "crates/clawcrew-runtime/src/tools/sop_approve.rs",
+    "crates/galleon-runtime/src/sop/runner.rs",
+    "crates/galleon-runtime/src/tools/sop_approve.rs",
 ];
 
 fn workspace_root() -> PathBuf {
-    // CARGO_MANIFEST_DIR = <root>/crates/clawcrew-runtime
+    // CARGO_MANIFEST_DIR = <root>/crates/galleon-runtime
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(Path::parent)

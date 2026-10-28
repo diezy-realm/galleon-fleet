@@ -238,7 +238,7 @@ pub fn run_cmd(cmd: &mut Command) -> anyhow::Result<()> {
 
 pub fn fluent_catalog_roots_named(root: &Path) -> Vec<(&'static str, PathBuf)> {
     vec![
-        ("runtime", root.join("crates/clawcrew-runtime/locales")),
+        ("runtime", root.join("crates/galleon-runtime/locales")),
         ("zerocode", root.join("apps/galleoncode/locales")),
     ]
 }
@@ -271,7 +271,7 @@ pub fn fluent_catalog_roots(root: &Path) -> Vec<PathBuf> {
 }
 
 pub fn fluent_locales_dir(root: &Path) -> PathBuf {
-    root.join("crates/clawcrew-runtime/locales")
+    root.join("crates/galleon-runtime/locales")
 }
 
 /// Locale codes present in a single catalogue root (its `<locale>/` subdirs).

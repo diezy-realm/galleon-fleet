@@ -133,7 +133,7 @@ impl FileEditTool {
 
         // Rate limiting and path-allowlist checks are applied by the
         // RateLimitedTool + PathGuardedTool wrappers at registration time
-        // (see clawcrew-runtime::tools::mod).
+        // (see galleon-runtime::tools::mod).
 
         let full_path = self.security.resolve_tool_path(path);
 
@@ -312,7 +312,7 @@ mod tests {
     }
 
     /// Wraps `FileEditTool` with the production `PathGuardedTool` + `RateLimitedTool`
-    /// stack, mirroring the registration in `clawcrew-runtime::tools::mod`. Use this
+    /// stack, mirroring the registration in `galleon-runtime::tools::mod`. Use this
     /// in tests that exercise path-allowlist or rate-limit behavior.
     fn wrapped_tool(workspace: std::path::PathBuf) -> Box<dyn Tool> {
         let security = Arc::new(SecurityPolicy {

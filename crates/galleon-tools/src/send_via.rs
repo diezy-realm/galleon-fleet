@@ -10,7 +10,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-/// Per-tool channel-map handle — matches `clawcrew_runtime::tools::PerToolChannelHandle`.
+/// Per-tool channel-map handle — matches `galleon_runtime::tools::PerToolChannelHandle`.
 pub type PerToolChannelHandle = Arc<parking_lot::RwLock<HashMap<String, Arc<dyn Channel>>>>;
 
 /// Bundle of late-bound channel-map handles owned by an Agent. Cloning is

@@ -61,7 +61,7 @@ const negatives = [
   ['cli', 'crates/galleon-memory/src/cli.rs'],
   ['hardware', 'src/peripherals/driver.rs'],
   ['hardware', 'crates/galleon-api/src/channel.rs'],
-  ['hardware', 'crates/clawcrew-runtime/src/agent/history.rs'],
+  ['hardware', 'crates/galleon-runtime/src/agent/history.rs'],
   ['hardware', 'docs/book/src/hardware/subsystem.md'],
 ];
 

@@ -53,7 +53,7 @@ The v0.8.0 branch grows the repo by **+17,660 lines total**, of which:
 | area                       | master logic | branch logic | Δ      |
 |----------------------------|--------------|--------------|--------|
 | galleon-config            | 12,980       | 17,377       | **+4,397** |
-| clawcrew-runtime           | 38,480       | 39,373       | +893   |
+| galleon-runtime           | 38,480       | 39,373       | +893   |
 | web                        | 20,742       | 21,518       | +776   |
 | galleon-macros            | 912          | 1,581        | +669   |
 | galleon-memory            | 5,789        | 6,856        | +1,067 |
@@ -76,7 +76,7 @@ The v0.8.0 branch grows the repo by **+17,660 lines total**, of which:
 |----------------------------|--------------|--------------|--------|
 | galleon-channels          | 24,825       | 27,392       | +2,567 |
 | galleon-config            | 9,673        | 11,562       | +1,889 |
-| clawcrew-runtime           | 30,665       | 31,493       | +828   |
+| galleon-runtime           | 30,665       | 31,493       | +828   |
 | galleon-memory            | 4,217        | 4,801        | +584   |
 | tests (workspace)          | 8,275        | 8,162        | −113   |
 | galleon-providers         | 12,140       | 10,838       | **−1,302** |

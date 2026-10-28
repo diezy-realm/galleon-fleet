@@ -2,7 +2,7 @@
 //! client -> (outer TLS + WS + `conn_id` mux) relay -> real daemon bridge ->
 //! daemon WSS mTLS listener, with the inner mutual TLS completing end to end.
 //!
-//! Drives the REAL [`clawcrew_runtime::relay::run_relay_bridge`] (signed Ed25519
+//! Drives the REAL [`galleon_runtime::relay::run_relay_bridge`] (signed Ed25519
 //! registration, keepalive, loopback bridging) against the REAL
 //! [`zerorelay::RelayServer`] (outer TLS, signed admission, multiplexer) and a
 //! WSS (TLS + WebSocket) mTLS listener built from the runtime's own
@@ -165,10 +165,10 @@ async fn zerocode_to_relay_to_daemon_full_path() {
     );
 
     // The REAL daemon-side bridge: signed Ed25519 registration over outer TLS.
-    let signing_key = clawcrew_runtime::relay::ensure_signing_key(dir.path()).unwrap();
+    let signing_key = galleon_runtime::relay::ensure_signing_key(dir.path()).unwrap();
     let cancel = CancellationToken::new();
-    tokio::spawn(clawcrew_runtime::relay::run_relay_bridge(
-        clawcrew_runtime::relay::RelayBridgeConfig {
+    tokio::spawn(galleon_runtime::relay::run_relay_bridge(
+        galleon_runtime::relay::RelayBridgeConfig {
             relay_addr: relay_addr.to_string(),
             relay_host: "localhost".into(),
             node_id: "relay-device".into(),
@@ -249,25 +249,25 @@ async fn enrollment_post_round_trips_through_relay_route() {
     let enroll_listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let enroll_addr = enroll_listener.local_addr().unwrap();
     let enroll_cancel = CancellationToken::new();
-    let enroll_server = Arc::new(clawcrew_runtime::enroll::EnrollServer {
+    let enroll_server = Arc::new(galleon_runtime::enroll::EnrollServer {
         bind_addr: enroll_addr,
         acceptor: enroll_acceptor,
         ca_cert_pem: std::fs::read_to_string(&mats.ca_cert_path).unwrap(),
         ca_key_pem: zeroize::Zeroizing::new(std::fs::read_to_string(&mats.ca_key_path).unwrap()),
         ledger: Arc::new(
-            clawcrew_runtime::security::cert_ledger::CertLedger::open_in_memory(None).unwrap(),
+            galleon_runtime::security::cert_ledger::CertLedger::open_in_memory(None).unwrap(),
         ),
         pairing: Arc::new(pairing),
         pairing_code_policy: Arc::new(galleon_config::pairing::PairingCodePolicy::default),
         static_client_pins_configured: false,
         allow_unpaired_until: None,
-        relay_profile: clawcrew_runtime::enroll::RelayProfile::default(),
+        relay_profile: galleon_runtime::enroll::RelayProfile::default(),
         bridge_ports: None,
-        relay_attempt_bucket: clawcrew_runtime::enroll::RelayAttemptBucket::default(),
+        relay_attempt_bucket: galleon_runtime::enroll::RelayAttemptBucket::default(),
         paircode_admin_data_dir: None,
     });
     let enroll_ledger = enroll_server.ledger.clone();
-    let enroll_task = tokio::spawn(clawcrew_runtime::enroll::serve_on(
+    let enroll_task = tokio::spawn(galleon_runtime::enroll::serve_on(
         enroll_listener,
         enroll_server,
         enroll_cancel.clone(),
@@ -284,10 +284,10 @@ async fn enrollment_post_round_trips_through_relay_route() {
 
     // The bridge has only the enrollment target for this test; a normal WSS route
     // is not needed to prove certless bootstrap over the narrow route.
-    let signing_key = clawcrew_runtime::relay::ensure_signing_key(dir.path()).unwrap();
+    let signing_key = galleon_runtime::relay::ensure_signing_key(dir.path()).unwrap();
     let bridge_cancel = CancellationToken::new();
-    tokio::spawn(clawcrew_runtime::relay::run_relay_bridge(
-        clawcrew_runtime::relay::RelayBridgeConfig {
+    tokio::spawn(galleon_runtime::relay::run_relay_bridge(
+        galleon_runtime::relay::RelayBridgeConfig {
             relay_addr: relay_addr.to_string(),
             relay_host: "localhost".into(),
             node_id: "relay-device".into(),

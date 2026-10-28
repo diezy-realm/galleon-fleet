@@ -673,7 +673,7 @@ mod wasm_cranelift_e2e {
             .validate()
             .expect("the activation declaration is valid operator config");
         let channels =
-            clawcrew_runtime::plugin_runtime::configured_plugin_channels(Arc::new(config), None)
+            galleon_runtime::plugin_runtime::configured_plugin_channels(Arc::new(config), None)
                 .await;
         assert_eq!(
             channels.len(),

@@ -23,7 +23,7 @@
 
 | # | Asumsi | Alasan |
 |---|---|---|
-| A1 | CLI Galleon (binary root `clawcrew` dan/atau `apps/zerocode`) menjadi **klien tipis ke Go :9090**, bukan menjalankan otak agent sendiri | Memenuhi ODR-03 (satu otak). Kini `clawcrew-runtime` (286k LOC) memuat agent loop, SOP, subagents, cron — tumpang tindih dengan Go |
+| A1 | CLI Galleon (binary root `clawcrew` dan/atau `apps/zerocode`) menjadi **klien tipis ke Go :9090**, bukan menjalankan otak agent sendiri | Memenuhi ODR-03 (satu otak). Kini `galleon-runtime` (286k LOC) memuat agent loop, SOP, subagents, cron — tumpang tindih dengan Go |
 | A2 | "Plugin tambahan" WeChat/QQ = channel opsional di luar instalasi default. Mekanisme (feature-crate Tier B vs WASI Tier C) ditentukan batas teknis, bukan label | WeChat/QQ butuh protokol native kompleks → kemungkinan Tier B; WASI v0 belum punya outbound HTTP |
 | A3 | REST `api_*` gateway Rust yang melayani dashboard lama tidak lagi menjadi permukaan produk; yang wajib hanya gRPC `SystemGatewayService` | Dashboard lama sudah diganti; UI bicara ke Go :9090 |
 | A4 | Nginx = reverse proxy + TLS di depan Go :9090 (+WS), tanpa logika bisnis | Sejalan ODR-06 dan zero backend logic di UI |

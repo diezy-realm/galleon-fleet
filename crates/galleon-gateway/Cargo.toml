@@ -20,7 +20,7 @@ galleon-log.workspace = true
 galleon-memory.workspace = true
 galleon-providers.workspace = true
 galleon-channels = { workspace = true, default-features = false }
-clawcrew-runtime.workspace = true
+galleon-runtime.workspace = true
 galleon-sop-graph = { workspace = true, features = ["schema-export"] }
 galleon-tools.workspace = true
 galleon-hardware.workspace = true
@@ -106,7 +106,7 @@ rcgen = "0.13"
 tempfile = "3.26"
 # Enables the runtime's deterministic clock seam for production-shaped cache
 # fixtures; this feature is dev-only and is not part of the shipped gateway.
-clawcrew-runtime = { workspace = true, features = ["test-util"] }
+galleon-runtime = { workspace = true, features = ["test-util"] }
 tokio = { version = "1.50", features = ["rt-multi-thread", "macros", "test-util"] }
 # Real WebSocket client used to drive the `/acp` route end-to-end in
 # acp::tests (front-door proof for the gateway ACP surface). A plain
@@ -129,7 +129,7 @@ default = ["schema-export", "a2a"]
 a2a = []
 plugins-wasm = ["dep:galleon-plugins"]
 webauthn = ["galleon-config/webauthn"]
-observability-prometheus = ["clawcrew-runtime/observability-prometheus"]
+observability-prometheus = ["galleon-runtime/observability-prometheus"]
 channel-acp-server = ["galleon-channels/channel-acp-server"]
 channel-email = ["galleon-channels/channel-email"]
 channel-linq = ["galleon-channels/channel-linq"]
@@ -143,5 +143,5 @@ gateway-voice-duplex = []
 # JSON Schema body and the serde-side schemars derives transitively. Defaults
 # on; turning it off omits OPTIONS schema bodies (returns a small placeholder)
 # and saves a bit of build time. Mirrors galleon-config's `schema-export`.
-schema-export = ["galleon-config/schema-export", "clawcrew-runtime/schema-export", "dep:schemars"]
+schema-export = ["galleon-config/schema-export", "galleon-runtime/schema-export", "dep:schemars"]
 embedded-web = ["dep:include_dir"]

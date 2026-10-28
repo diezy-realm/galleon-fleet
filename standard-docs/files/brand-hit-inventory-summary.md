@@ -24,7 +24,7 @@
 | Komponen | Jumlah File | Total Kemunculan | Kategori Utama |
 |---|---|---|---|
 | `crates/galleon-channels` | 79 | 9,123 | `rename` / `delete` |
-| `crates/clawcrew-runtime` | 245 | 8,868 | `rename` / `delete` |
+| `crates/galleon-runtime` | 245 | 8,868 | `rename` / `delete` |
 | `docs` | 238 | 3,836 | `rename` / `delete` |
 | `crates/galleon-providers` | 44 | 2,223 | `rename` / `delete` |
 | `crates/galleon-tools` | 88 | 2,101 | `rename` / `delete` |

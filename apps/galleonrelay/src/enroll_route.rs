@@ -6,7 +6,7 @@
 //! only for the browser frontdoor.
 //!
 //! A browser cannot speak the daemon's enrollment protocol. That endpoint is TLS
-//! (`crates/clawcrew-runtime/src/enroll/mod.rs` accepts every connection through
+//! (`crates/galleon-runtime/src/enroll/mod.rs` accepts every connection through
 //! `TlsAcceptor::accept`), and the daemon-side relay bridge splices DATA frames
 //! into it as raw bytes, so what travels the tunnel for native enrollment is a
 //! TLS record stream. Producing that stream in a page means shipping a TLS

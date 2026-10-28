@@ -15,7 +15,7 @@ exclude = ["tests/regression_suite.rs"]
 
 [dependencies]
 galleon-api.workspace = true
-clawcrew-runtime.workspace = true
+galleon-runtime.workspace = true
 galleon-config.workspace = true
 galleon-memory.workspace = true
 anyhow = "1.0"

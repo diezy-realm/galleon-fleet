@@ -930,7 +930,7 @@ impl McpRegistry {
     ///
     /// Test-only: gated behind the `test-helpers` feature so it is NOT
     /// available in production builds. Downstream test suites (e.g.
-    /// `clawcrew-runtime::daemon`) enable the feature via their
+    /// `galleon-runtime::daemon`) enable the feature via their
     /// `[dev-dependencies]` declaration and use this helper to build an
     /// `Arc<McpRegistry>` whose `server_count() == n` without spawning a
     /// real stdio child, so unit tests can exercise

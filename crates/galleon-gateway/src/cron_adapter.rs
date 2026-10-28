@@ -1,4 +1,4 @@
-//! Gateway cron adapter: fully decoupled from `clawcrew-runtime`.
+//! Gateway cron adapter: fully decoupled from `galleon-runtime`.
 //!
 //! Uses leaf crates `galleon-infra`, `galleon-config`, and `galleon-api`
 //! for all cron state persistence, validation, and execution.

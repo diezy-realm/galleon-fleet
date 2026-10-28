@@ -261,7 +261,7 @@ pub struct SopFanInResult {
 /// Untrusted fan-in dispatcher for channels and transports.
 ///
 /// Decouples channel adapters (AMQP, Filesystem, MQTT, etc.) from the
-/// concrete `SopEngine` and `SopAuditLogger` implementation in `clawcrew-runtime`.
+/// concrete `SopEngine` and `SopAuditLogger` implementation in `galleon-runtime`.
 #[async_trait::async_trait]
 pub trait SopFanInDispatcher: Send + Sync {
     /// Dispatch an untrusted event from an external source.

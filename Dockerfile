@@ -163,7 +163,7 @@ COPY tools/fill-translations/ tools/fill-translations/
 # dashboard theme registry under web/src/contexts, so that path must be present.
 COPY apps/galleoncode/ apps/galleoncode/
 COPY web/src/ web/src/
-# locales.toml lives at repo root and is embedded by clawcrew-runtime via
+# locales.toml lives at repo root and is embedded by galleon-runtime via
 # include_str!("../../../locales.toml"); the real build needs it present.
 COPY locales.toml .
 COPY *.rs .

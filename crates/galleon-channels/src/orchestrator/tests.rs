@@ -400,7 +400,7 @@ fn load_cached_model_preview_reads_from_data_dir_not_install_root() {
     // temp roots, so `config_path.parent()` (the old install-root-derived
     // path) cannot accidentally coincide with `data_dir`. This proves the
     // reader follows the canonical data directory, matching the writer
-    // in `clawcrew-runtime::doctor::persist_model_cache`.
+    // in `galleon-runtime::doctor::persist_model_cache`.
     let config_root = TempDir::new().unwrap();
     let data_root = TempDir::new().unwrap();
     let agent_workspace = TempDir::new().unwrap();
@@ -437,7 +437,7 @@ fn load_cached_model_preview_reads_from_data_dir_not_install_root() {
 fn refresh_then_model_preview_joins_the_real_writer_and_reader() {
     // Joins the two production halves of the refresh-to-preview contract
     // directly, rather than exercising each in isolation: the actual
-    // `clawcrew-runtime::doctor::persist_model_cache` writer (what
+    // `galleon-runtime::doctor::persist_model_cache` writer (what
     // `clawcrew models refresh` calls), then this crate's actual
     // `load_cached_model_preview` reader (what `/model` calls) — for an
     // undotted provider ref (canonicalized to `openrouter.default` on both
@@ -7814,7 +7814,7 @@ async fn process_channel_message_executes_tool_calls_instead_of_sending_raw_json
 /// turn's pre-tool narration must reach Telegram *before* the tool-approval
 /// inline keyboard. The narration rides the async delta queue into the
 /// draft updater while `request_approval` goes to the channel directly; the
-/// approval gate's flush barrier (clawcrew-runtime `turn/approval_gate.rs`)
+/// approval gate's flush barrier (galleon-runtime `turn/approval_gate.rs`)
 /// makes the gate wait until the updater consumed and flushed the
 /// narration, so the `sendMessage` order on the wire is narration then
 /// approval prompt.
@@ -23325,8 +23325,8 @@ fn compiled_channel_families_have_listener_registration_or_explicit_runtime_owne
         .split_once("\npub async fn deliver_announcement(")
         .expect("async assembly boundary must remain identifiable")
         .0;
-    let mqtt_owner = include_str!("../../../clawcrew-runtime/src/daemon/registry.rs");
-    let acp_owner = include_str!("../../../clawcrew-runtime/src/acp/server.rs");
+    let mqtt_owner = include_str!("../../../galleon-runtime/src/daemon/registry.rs");
+    let acp_owner = include_str!("../../../galleon-runtime/src/acp/server.rs");
     let cli_owner = include_str!("../../../../src/main.rs");
 
     for (_, type_keys, compiled) in crate::listing::channel_compile_specs_for_tests() {
@@ -23396,7 +23396,7 @@ fn compiled_channel_families_have_listener_registration_or_explicit_runtime_owne
                 .is_some_and(|block| block.contains("self.serve_reader(tokio::io::stdin()).await?"))
                     && source_segment_between(cli_owner, "Commands::Acp {\n", "Commands::Gateway {")
                         .is_some_and(|block| {
-                            block.contains("clawcrew_runtime::acp::AcpServer::new")
+                            block.contains("galleon_runtime::acp::AcpServer::new")
                                 && block.contains(".run().await")
                         })
             }

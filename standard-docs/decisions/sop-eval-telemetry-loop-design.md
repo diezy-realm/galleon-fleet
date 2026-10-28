@@ -9,7 +9,7 @@ context: >
   Koreksi Achmad (2026-10-05) atas desain awal: (1) hierarki eksekusi Lead/Principle/Quartermaster
   yang menjalankan, Owner hanya cek kesesuaian; (2) mode ADVISORY bukan blocking, mencegah
   false-positive "dikira bug"; (3) scope SOP yang benar = struktur SopRun/SopStep di SOP ENGINE
-  GALLEON (crates/clawcrew-runtime/src/sop/), BUKAN dokumen markdown -- divalidasi lewat skenario
+  GALLEON (crates/galleon-runtime/src/sop/), BUKAN dokumen markdown -- divalidasi lewat skenario
   kerja Lead/Principle/Backend squad KiroCrew sebagai test-case nyata.
 ---
 
@@ -19,11 +19,11 @@ context: >
 
 **`galleon-eval`** (`crates/galleon-eval/src/`): harness evaluation matang — mode `Replay` (deterministik, scripted LLM response, zero-cost) dan `Live`, dengan `grader.rs`, `report.rs` (`CaseReport`/`SuiteReport`), CLI command `eval` sudah terhubung ke binary utama (`src/commands/eval.rs`).
 
-**`clawcrew-runtime/src/sop/metrics.rs`**: `MetricCounters`/`RunSnapshot` sudah menghitung metrik SOP end-to-end — runs completed/failed/cancelled, steps executed/failed/skipped, human approvals, windowed aggregation (ring buffer 1000 run, ~90 hari).
+**`galleon-runtime/src/sop/metrics.rs`**: `MetricCounters`/`RunSnapshot` sudah menghitung metrik SOP end-to-end — runs completed/failed/cancelled, steps executed/failed/skipped, human approvals, windowed aggregation (ring buffer 1000 run, ~90 hari).
 
 **Gap konkret (terverifikasi grep, bukan asumsi)**: `galleon-eval` nol dipanggil di `.github/workflows/`; `SopCounters` nol disurfaceкan ke `galleon-gateway/src/`. Infrastruktur ADA, tidak tersambung.
 
-**Koreksi penting soal struktur SOP**: `SopRun`/`SopStep`/`SopExecutionMode` (`crates/clawcrew-runtime/src/sop/types.rs`) adalah struktur GENERIK (priority, execution mode Auto/Supervised/StepByStep/PriorityBased/Deterministic). `ApprovalPrincipal` (`sop/approval/principal.rs`) hanya mencatat WHO/transport sebuah approval gate diselesaikan (Agent/Cli/Ws/Http/System/Channel) — **TIDAK ADA konsep native "role Lead/Principle/Quartermaster"** di SOP engine. Jadi validasi lewat skenario squad berarti MEMODELKAN flow kerja nyata sebagai `SopRun` konkret, bukan mencari fitur role yang sudah ada.
+**Koreksi penting soal struktur SOP**: `SopRun`/`SopStep`/`SopExecutionMode` (`crates/galleon-runtime/src/sop/types.rs`) adalah struktur GENERIK (priority, execution mode Auto/Supervised/StepByStep/PriorityBased/Deterministic). `ApprovalPrincipal` (`sop/approval/principal.rs`) hanya mencatat WHO/transport sebuah approval gate diselesaikan (Agent/Cli/Ws/Http/System/Channel) — **TIDAK ADA konsep native "role Lead/Principle/Quartermaster"** di SOP engine. Jadi validasi lewat skenario squad berarti MEMODELKAN flow kerja nyata sebagai `SopRun` konkret, bukan mencari fitur role yang sudah ada.
 
 ## 2. Desain Loop (3 Koreksi Diterapkan)
 
@@ -74,6 +74,6 @@ Eval case TIDAK dibuat dari dokumen `.md` manapun. Eval case dibuat sebagai **`S
 ## Sumber
 
 - `crates/galleon-eval/src/{lib,runner,case,grader,report}.rs`, `src/commands/eval.rs`.
-- `crates/clawcrew-runtime/src/sop/{types,metrics,approval/principal}.rs`.
+- `crates/galleon-runtime/src/sop/{types,metrics,approval/principal}.rs`.
 - Verifikasi grep: `.github/workflows/` (nol `galleon-eval`), `galleon-gateway/src/` (nol `SopCounters`).
 - `research/agentic-ai-fundamentals-and-lifecycle-phase.md` §6 — kerangka maturity model yang memotivasi loop ini.

@@ -16,10 +16,10 @@ check() {
 }
 
 check false pull_request docs/README.md crates/galleon-config/src/policy.rs web/src/main.ts
-for path in crates/clawcrew-runtime/src/control_plane/authority.rs \
-    crates/clawcrew-runtime/src/control_plane/task_registry.rs \
-    crates/clawcrew-runtime/src/lib.rs Cargo.lock Cargo.toml \
-    crates/clawcrew-runtime/Cargo.toml crates/clawcrew-runtime/build.rs \
+for path in crates/galleon-runtime/src/control_plane/authority.rs \
+    crates/galleon-runtime/src/control_plane/task_registry.rs \
+    crates/galleon-runtime/src/lib.rs Cargo.lock Cargo.toml \
+    crates/galleon-runtime/Cargo.toml crates/galleon-runtime/build.rs \
     rust-toolchain.toml .cargo/config.toml .github/actions/rust-cache/action.yml \
     .github/workflows/ci.yml scripts/ci/windows_recovery_change_filter.sh \
     scripts/ci/windows_recovery_change_filter.test.sh; do

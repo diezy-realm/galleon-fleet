@@ -57,7 +57,7 @@ pub async fn load_peripheral_tools(
 }
 
 /// Channel map factory type — builds `channel_key → Arc<dyn Channel>` map.
-/// Injected by the binary so `clawcrew-runtime` doesn't depend on
+/// Injected by the binary so `galleon-runtime` doesn't depend on
 /// `galleon-channels`.
 type ChannelMapFn = Box<
     dyn Fn()

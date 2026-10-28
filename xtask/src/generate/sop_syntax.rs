@@ -7,7 +7,7 @@
 
 use anyhow::{Context, ensure};
 use std::path::PathBuf;
-use clawcrew_runtime::sop::{SOP_STEP_SYNTAX_CATALOG, condition::ConditionOp};
+use galleon_runtime::sop::{SOP_STEP_SYNTAX_CATALOG, condition::ConditionOp};
 
 const SYNTAX_FILE: &str = "docs/book/src/sop/syntax.md";
 const PARSER_ZONE: &str = "sop-parser-behavior";

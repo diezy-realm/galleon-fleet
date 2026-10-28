@@ -492,14 +492,14 @@ path = "{trigger_path}"
     state.config.write().sop = sop_config.clone();
     let data_dir = state.config.read().data_dir.clone();
     let install_root = state.config.read().install_root_dir();
-    let (engine, audit) = clawcrew_runtime::build_sop_engine(
+    let (engine, audit) = galleon_runtime::build_sop_engine(
         sop_config,
         &data_dir,
         &install_root,
         Arc::clone(&state.mem),
         Default::default(),
     );
-    state.sop_runner = Some(Arc::new(clawcrew_runtime::RuntimeSopRunner::new(
+    state.sop_runner = Some(Arc::new(galleon_runtime::RuntimeSopRunner::new(
         Some(engine),
         Some(audit),
         Arc::clone(&state.config),
@@ -552,14 +552,14 @@ path = "{trigger_path}"
     state.config.write().sop = sop_config.clone();
     let data_dir = state.config.read().data_dir.clone();
     let install_root = state.config.read().install_root_dir();
-    let (engine, audit) = clawcrew_runtime::build_sop_engine(
+    let (engine, audit) = galleon_runtime::build_sop_engine(
         sop_config,
         &data_dir,
         &install_root,
         Arc::clone(&state.mem),
         Default::default(),
     );
-    state.sop_runner = Some(Arc::new(clawcrew_runtime::RuntimeSopRunner::new(
+    state.sop_runner = Some(Arc::new(galleon_runtime::RuntimeSopRunner::new(
         Some(engine),
         Some(audit),
         Arc::clone(&state.config),

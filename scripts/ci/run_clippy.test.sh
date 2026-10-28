@@ -17,7 +17,7 @@ cat > "${mock_dir}/bin/cargo" <<'EOF'
 printf '%s\n' "$@" > "$CLAWCREW_CLIPPY_TEST_ARGS"
 printf '%s\n' \
     'Downloaded demo-crate v1.0.0' \
-    'Compiling clawcrew-runtime v0.8.5 (/workspace/clawcrew/crates/clawcrew-runtime)' \
+    'Compiling galleon-runtime v0.8.5 (/workspace/clawcrew/crates/galleon-runtime)' \
     'Compiling serde v1.0.0'
 exit "${CLAWCREW_CLIPPY_TEST_STATUS:-0}"
 EOF

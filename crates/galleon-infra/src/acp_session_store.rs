@@ -28,8 +28,8 @@ impl ToolEventKind {
 }
 
 /// Canonical breadcrumb text, duplicated from
-/// `clawcrew_runtime::agent::history::HISTORY_TRIM_BREADCRUMB_CANONICAL`.
-/// This crate sits below `clawcrew-runtime` in the dependency graph and
+/// `galleon_runtime::agent::history::HISTORY_TRIM_BREADCRUMB_CANONICAL`.
+/// This crate sits below `galleon-runtime` in the dependency graph and
 /// cannot import it; used only for one-time legacy-row migration below.
 /// Keep in sync with the runtime constant.
 const HISTORY_TRIM_BREADCRUMB_CANONICAL: &str = "[earlier turns omitted to fit the context window]";
@@ -54,7 +54,7 @@ pub struct AcpSessionData {
     /// no recorded value (`NULL`); for that one-time legacy case only, it is
     /// inferred from the first non-system message's text, matching the
     /// interactive-session JSONL migration contract (see
-    /// `clawcrew_runtime::agent::history::load_interactive_session_history_with_crumb`).
+    /// `galleon_runtime::agent::history::load_interactive_session_history_with_crumb`).
     pub trim_breadcrumb: bool,
 }
 
@@ -331,7 +331,7 @@ impl AcpSessionStore {
     /// column stops being `NULL` and later restores read the recorded fact
     /// instead of re-inferring it from message text on every load. This
     /// mirrors the JSONL interactive-session migration in
-    /// `clawcrew_runtime::agent::history::load_interactive_session_history_with_crumb`,
+    /// `galleon_runtime::agent::history::load_interactive_session_history_with_crumb`,
     /// restricted to the locale-independent canonical string because this
     /// crate sits below the runtime i18n layer.
     fn infer_legacy_trim_breadcrumb(messages: &[ConversationMessage]) -> bool {

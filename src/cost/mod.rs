@@ -1,2 +1,2 @@
 #[allow(unused_imports)]
-pub use clawcrew_runtime::cost::*;
+pub use galleon_runtime::cost::*;

@@ -305,7 +305,7 @@ mod tests {
 
     /// Wraps `ImageInfoTool` with the production `PathGuardedTool` +
     /// `RateLimitedTool` stack, mirroring the registration in
-    /// `clawcrew-runtime::tools::mod`.  Use this in tests that exercise
+    /// `galleon-runtime::tools::mod`.  Use this in tests that exercise
     /// path-allowlist or rate-limit behavior.
     fn wrapped_tool(workspace: std::path::PathBuf) -> Box<dyn Tool> {
         let security = workspace_security(workspace);

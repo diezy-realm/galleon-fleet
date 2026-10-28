@@ -1209,7 +1209,7 @@ See all available features:
   fi
 
   # ── Apps (standalone binaries under apps/<dir>) ──────────────────
-  # Apps connect to clawcrew-runtime's RPC server, so they need the
+  # Apps connect to galleon-runtime's RPC server, so they need the
   # agent-runtime feature. Without it there's no daemon — skip apps.
   discover_apps
 

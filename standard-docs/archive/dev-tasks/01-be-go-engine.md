@@ -28,7 +28,7 @@ Konvensi: `tech-stack/go-conventions.md`. Gerbang: GW-2 (+GW-4/8 untuk keamanan)
 - [x] **BG-C4a · G-22 (sebagian) · T-2.1/T-2.2 Endpoint `/api/network/qrcode` & `/api/system/metrics` di Go** (`fleet/delivery.go`, `ReadMemStats`).
 - [ ] **BG-C4b · G-22 · PR-46 (P1, M) Metrik OS nyata** (CPU/mem/proses host) via Rust `process_stats`, bukan hanya metrik proses Go.
 
-## D. Orkestrasi — Otak Agent di Go (strangler dari `clawcrew-runtime`, `R-00`)
+## D. Orkestrasi — Otak Agent di Go (strangler dari `galleon-runtime`, `R-00`)
 
 - [ ] **BG-D1 · G-30 · PR-47 (P1, L) Agent loop/turn:** tool-call loop, kompaksi, batas iterasi di atas `ExecuteTurn` Rust. *Acceptance:* paritas dengan `eval` replay.
 - [ ] **BG-D2 · G-31 · PR-48 (P1, L) SOP engine** + approval gate. Dep: BG-D1.

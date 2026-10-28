@@ -42,7 +42,7 @@ Dokumen ini adalah katalog kanonikal skills yang terpasang dan tersedia di repos
 
 ## 4. Mekanisme Loading & Cache
 
-Runtime `clawcrew-runtime::skills` memuat skill melalui:
+Runtime `galleon-runtime::skills` memuat skill melalui:
 1. **Workspace Scope:** `.gemini/skills/` dan direct repository workspace skills.
 2. **Global User Scope:** `~/.kiro/crew/skills/` atau `~/.clawcrew/skills/`.
-3. **In-Memory Cache:** `clawcrew-runtime::skills::cache` meng-cache manifest yang telah diparsing untuk menghindari I/O disk berulang selama sesi agent aktif.
+3. **In-Memory Cache:** `galleon-runtime::skills::cache` meng-cache manifest yang telah diparsing untuk menghindari I/O disk berulang selama sesi agent aktif.

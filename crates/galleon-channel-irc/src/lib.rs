@@ -7,7 +7,7 @@
 //!
 //! * **Allowlist policy.** Peer-policy allowlist checks call
 //!   [`galleon_channel_core::allowlist::is_user_allowed`] using the SSOT
-//!   peer-policy from `galleon_config::schema` without pulling `clawcrew-runtime`.
+//!   peer-policy from `galleon_config::schema` without pulling `galleon-runtime`.
 
 use async_trait::async_trait;
 use portable_atomic::{AtomicU64, Ordering};

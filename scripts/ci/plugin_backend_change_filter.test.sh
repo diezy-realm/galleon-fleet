@@ -29,11 +29,11 @@ expect "plugin crate tests" "true" \
 # feature-gated live-config regression that protects the Agent
 # constructor's live_config forwarding.
 expect "runtime agent constructor" "true" \
-    "crates/clawcrew-runtime/src/agent/agent.rs"
+    "crates/galleon-runtime/src/agent/agent.rs"
 expect "runtime live-config regression" "true" \
-    "crates/clawcrew-runtime/src/agent/plugin_live_config.rs"
+    "crates/galleon-runtime/src/agent/plugin_live_config.rs"
 expect "runtime elsewhere" "true" \
-    "crates/clawcrew-runtime/src/tools/mod.rs"
+    "crates/galleon-runtime/src/tools/mod.rs"
 
 # Config-only changes must run the backend job: galleon-config owns the
 # operator-facing plugin config surface that galleon-plugins compiles
@@ -48,7 +48,7 @@ expect "mixed unrelated then config" "true" \
 
 # The root-package channel activation e2e must run the backend job. It is the
 # only piece of this job's coverage that lives outside a crate directory,
-# because it drives clawcrew-runtime from the root `clawcrew` package.
+# because it drives galleon-runtime from the root `clawcrew` package.
 expect "root channel activation e2e" "true" \
     "tests/plugin_channel_runtime_e2e.rs"
 expect "mixed unrelated then activation e2e" "true" \
@@ -65,7 +65,7 @@ expect "the filter fixture" "true" \
     "scripts/ci/plugin_backend_change_filter.test.sh"
 expect "mixed unrelated then runtime" "true" \
     "docs/book/src/plugins/typed-config.md" \
-    "crates/clawcrew-runtime/src/agent/agent.rs"
+    "crates/galleon-runtime/src/agent/agent.rs"
 
 # Unrelated changes must keep the job skipped.
 expect "docs-only changes" "false" \

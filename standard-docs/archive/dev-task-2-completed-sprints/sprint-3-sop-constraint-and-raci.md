@@ -13,9 +13,9 @@ depends_on: none (additive, risiko regresi rendah)
 
 #### Detail Eksekusi — BL-06
 
-**Verifikasi:** `crates/clawcrew-runtime/src/sop/types.rs:311` — `struct SopStep` sudah punya ~15 field (`number`, `title`, `body`, `suggested_tools`, `requires_confirmation`, `kind`, `schema`, `scope`, `routing`, `on_failure`, `mode`, `calls`, `pos`, `agent`, `capability`, `capability_input`, `policy`, `gate_prompt`, dll.) — **TIDAK ADA field Do's/Don'ts** di struct ini saat ini (dibaca penuh baris 300-390). Konfirmasi: tiket ini genuinely menambah field baru, bukan memperbaiki yang sudah ada.
+**Verifikasi:** `crates/galleon-runtime/src/sop/types.rs:311` — `struct SopStep` sudah punya ~15 field (`number`, `title`, `body`, `suggested_tools`, `requires_confirmation`, `kind`, `schema`, `scope`, `routing`, `on_failure`, `mode`, `calls`, `pos`, `agent`, `capability`, `capability_input`, `policy`, `gate_prompt`, dll.) — **TIDAK ADA field Do's/Don'ts** di struct ini saat ini (dibaca penuh baris 300-390). Konfirmasi: tiket ini genuinely menambah field baru, bukan memperbaiki yang sudah ada.
 
-**File & simbol spesifik:** Ubah `crates/clawcrew-runtime/src/sop/types.rs`, `struct SopStep` (baris 311).
+**File & simbol spesifik:** Ubah `crates/galleon-runtime/src/sop/types.rs`, `struct SopStep` (baris 311).
 
 **Spesifikasi API:**
 ```rust
@@ -41,7 +41,7 @@ Pola `#[serde(default, skip_serializing_if = "Vec::is_empty")]` — IKUTI PERSIS
 ```
 
 **Langkah pengerjaan:**
-1. Baca parser SOP.md (file yang mem-parsing markdown ke `SopStep` — kemungkinan di `crates/clawcrew-runtime/src/sop/parser.rs` atau sejenis, PERLU DICARI, belum diverifikasi sesi ini) untuk pola bullet existing (`- do:`/`- dont:` konsisten `- edit:`/`- prompt:` yang sudah dipakai `gate_prompt`).
+1. Baca parser SOP.md (file yang mem-parsing markdown ke `SopStep` — kemungkinan di `crates/galleon-runtime/src/sop/parser.rs` atau sejenis, PERLU DICARI, belum diverifikasi sesi ini) untuk pola bullet existing (`- do:`/`- dont:` konsisten `- edit:`/`- prompt:` yang sudah dipakai `gate_prompt`).
 2. Tambah field `dos`/`donts` ke `SopStep`.
 3. Update parser untuk mengenali bullet `- do:`/`- dont:`.
 4. **Perluas contoh role WAJIB mencakup minimal 1 non-engineering** — saat menulis dokumentasi/contoh SOP untuk tiket ini, sertakan contoh Marketing (Copywriter/Content Creator role) bukan hanya Backend/Frontend/QA.
@@ -59,7 +59,7 @@ Pola `#[serde(default, skip_serializing_if = "Vec::is_empty")]` — IKUTI PERSIS
 
 #### Detail Eksekusi — BL-07
 
-**Verifikasi:** `crates/clawcrew-runtime/src/sop/types.rs:458` — `struct Sop` punya field `name`, `description`, `version`, `priority`, `execution_mode`, `triggers`, `steps`, `cooldown_secs`, `max_concurrent`, `location`, `deterministic`, `admission_policy`, dll. — **TIDAK ADA field RACI** (Responsible/Accountable/Consulted/Informed) saat ini.
+**Verifikasi:** `crates/galleon-runtime/src/sop/types.rs:458` — `struct Sop` punya field `name`, `description`, `version`, `priority`, `execution_mode`, `triggers`, `steps`, `cooldown_secs`, `max_concurrent`, `location`, `deterministic`, `admission_policy`, dll. — **TIDAK ADA field RACI** (Responsible/Accountable/Consulted/Informed) saat ini.
 
 **Spesifikasi API:**
 ```rust
@@ -132,7 +132,7 @@ pub struct RaciAssignment {
 
 #### Detail Eksekusi — BL-57
 
-**File & simbol spesifik:** Ubah `crates/clawcrew-runtime/src/sop/types.rs` — tambah struct baru DI DEKAT `struct Sop` (baris 458) dan `struct SopStep` (baris 311), ikuti pola `#[derive(Debug, Clone, Serialize, Deserialize)] #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]` yang konsisten di SETIAP struct lain di file ini.
+**File & simbol spesifik:** Ubah `crates/galleon-runtime/src/sop/types.rs` — tambah struct baru DI DEKAT `struct Sop` (baris 458) dan `struct SopStep` (baris 311), ikuti pola `#[derive(Debug, Clone, Serialize, Deserialize)] #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]` yang konsisten di SETIAP struct lain di file ini.
 
 **Spesifikasi API:**
 ```rust
@@ -172,7 +172,7 @@ Tambah ke `Sop` struct: `#[serde(default, skip_serializing_if = "Vec::is_empty")
 
 #### Detail Eksekusi — BL-58
 
-**TIDAK DIVERIFIKASI sesi ini** — `HookResult::Cancel` dan infrastruktur hook `preToolUse` disebut dokumen tapi lokasi file persis belum dicari (kemungkinan `crates/clawcrew-runtime/src/hooks/` sesuai tabel File Ownership). **Langkah pertama WAJIB:** baca `crates/clawcrew-runtime/src/hooks/` penuh untuk signature `preToolUse` hook dan `HookResult::Cancel` variant persis sebelum menulis enforcement logic.
+**TIDAK DIVERIFIKASI sesi ini** — `HookResult::Cancel` dan infrastruktur hook `preToolUse` disebut dokumen tapi lokasi file persis belum dicari (kemungkinan `crates/galleon-runtime/src/hooks/` sesuai tabel File Ownership). **Langkah pertama WAJIB:** baca `crates/galleon-runtime/src/hooks/` penuh untuk signature `preToolUse` hook dan `HookResult::Cancel` variant persis sebelum menulis enforcement logic.
 
 **Spesifikasi API (pola, verifikasi signature persis saat eksekusi):**
 ```rust
@@ -290,8 +290,8 @@ fn enforce_role_restriction(
 
 | Area | File | Penulis |
 |---|---|---|
-| A | `crates/clawcrew-runtime/src/sop/types.rs` (field baru), `engine/src/mission/` (Quest Go) | Backend-Rust + Backend-Go |
-| B | `crates/clawcrew-runtime/src/sop/{types.rs,constraint.rs}` (baru), `crates/clawcrew-runtime/src/hooks/` (reuse existing) | Backend-Rust — **serialkan A dan B pada `sop/types.rs` kalau bersinggungan** |
+| A | `crates/galleon-runtime/src/sop/types.rs` (field baru), `engine/src/mission/` (Quest Go) | Backend-Rust + Backend-Go |
+| B | `crates/galleon-runtime/src/sop/{types.rs,constraint.rs}` (baru), `crates/galleon-runtime/src/hooks/` (reuse existing) | Backend-Rust — **serialkan A dan B pada `sop/types.rs` kalau bersinggungan** |
 | C | `crates/galleon-eval/`, `.github/workflows/` (check baru, non-blocking), `galleon-gateway/src/` (endpoint metrics baru) | Backend-Rust + Platform/DevOps |
 | D | `crates/galleon-config/src/policy.rs` (baca, verifikasi BL-13), `standard-docs/decisions/` (design-spec baru BL-12) | squad-lead (evaluasi/dokumentasi dulu, bukan kode) |
 

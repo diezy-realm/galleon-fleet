@@ -1,6 +1,6 @@
 //! Credential scrubbing and leak detection utilities (PR-32 / R-11 / BR-C2).
 //!
-//! Extracted from `clawcrew-runtime::security` so that channel crates and
+//! Extracted from `galleon-runtime::security` so that channel crates and
 //! gateway services can perform credential scrubbing without linking to the
 //! runtime monolith.
 

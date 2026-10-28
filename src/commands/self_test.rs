@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use std::path::Path;
-use clawcrew_runtime::i18n::get_required_cli_string_with_args;
+use galleon_runtime::i18n::get_required_cli_string_with_args;
 
 /// Result of a single diagnostic check.
 pub struct CheckResult {
@@ -298,23 +298,23 @@ fn check_web_dist_dir(config: &crate::config::Config) -> CheckResult {
     match config.gateway.web_dist_dir.as_deref() {
         None => CheckResult::pass(
             name,
-            clawcrew_runtime::i18n::get_required_cli_string(
+            galleon_runtime::i18n::get_required_cli_string(
                 "cli-self-test-web-dist-dir-pass-unset",
             ),
         ),
         Some(value) => match web_dist_dir_expansion_reason_key(value) {
             None => CheckResult::pass(
                 name,
-                clawcrew_runtime::i18n::get_required_cli_string_with_args(
+                galleon_runtime::i18n::get_required_cli_string_with_args(
                     "cli-self-test-web-dist-dir-pass-literal",
                     &[("path", value)],
                 ),
             ),
             Some(reason_key) => {
-                let reason = clawcrew_runtime::i18n::get_required_cli_string(reason_key);
+                let reason = galleon_runtime::i18n::get_required_cli_string(reason_key);
                 CheckResult::fail(
                     name,
-                    clawcrew_runtime::i18n::get_required_cli_string_with_args(
+                    galleon_runtime::i18n::get_required_cli_string_with_args(
                         "cli-self-test-web-dist-dir-fail-expansion",
                         &[("path", value), ("reason", reason.as_str())],
                     ),
@@ -333,7 +333,7 @@ fn web_dist_dir_check_name() -> &'static str {
     static CACHED: OnceLock<&'static str> = OnceLock::new();
     CACHED.get_or_init(|| {
         let resolved =
-            clawcrew_runtime::i18n::get_required_cli_string("cli-self-test-web-dist-dir-name");
+            galleon_runtime::i18n::get_required_cli_string("cli-self-test-web-dist-dir-name");
         Box::leak(resolved.into_boxed_str())
     })
 }
@@ -631,15 +631,15 @@ fi
         assert!(!result.passed, "tilde path must fail the check");
 
         let expected_reason =
-            clawcrew_runtime::i18n::get_required_cli_string("cli-web-dist-dir-reason-tilde");
-        let expected_detail = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+            galleon_runtime::i18n::get_required_cli_string("cli-web-dist-dir-reason-tilde");
+        let expected_detail = galleon_runtime::i18n::get_required_cli_string_with_args(
             "cli-self-test-web-dist-dir-fail-expansion",
             &[("path", "~/web-dist"), ("reason", expected_reason.as_str())],
         );
         assert_eq!(result.detail, expected_detail);
 
         let expected_name =
-            clawcrew_runtime::i18n::get_required_cli_string("cli-self-test-web-dist-dir-name");
+            galleon_runtime::i18n::get_required_cli_string("cli-self-test-web-dist-dir-name");
         assert_eq!(result.name, expected_name.as_str());
     }
 
@@ -651,7 +651,7 @@ fi
         let result = super::check_web_dist_dir(&config);
         assert!(result.passed);
 
-        let expected_detail = clawcrew_runtime::i18n::get_required_cli_string_with_args(
+        let expected_detail = galleon_runtime::i18n::get_required_cli_string_with_args(
             "cli-self-test-web-dist-dir-pass-literal",
             &[("path", "/srv/clawcrew/web-dist")],
         );
@@ -664,7 +664,7 @@ fi
         let result = super::check_web_dist_dir(&config);
         assert!(result.passed);
 
-        let expected_detail = clawcrew_runtime::i18n::get_required_cli_string(
+        let expected_detail = galleon_runtime::i18n::get_required_cli_string(
             "cli-self-test-web-dist-dir-pass-unset",
         );
         assert_eq!(result.detail, expected_detail);

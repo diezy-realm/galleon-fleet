@@ -12,7 +12,7 @@
 ```
 crates/
 ├── galleon-gateway/         # gRPC server, vault, secret management
-├── clawcrew-runtime/         # Agent turn execution, tool dispatch
+├── galleon-runtime/         # Agent turn execution, tool dispatch
 ├── galleon-providers/       # LLM vendor APIs (SSOT ADR 0001)
 ├── clawcrew-channel-*/       # Channel plugins (Discord, Telegram, etc.)
 ├── clawcrew-tools-*/         # Native tools (filesystem, shell, network)
@@ -24,7 +24,7 @@ crates/
 [workspace]
 members = [
     "crates/galleon-gateway",
-    "crates/clawcrew-runtime",
+    "crates/galleon-runtime",
     "crates/galleon-providers",
     "crates/clawcrew-channel-*",
     "crates/galleon-tools-*",
@@ -61,7 +61,7 @@ serde = { version = "1.0", features = ["derive"] }
 ```rust
 pub struct Gateway {
     vault: Arc<Vault>,
-    runtime: Arc<Runtime>, // clawcrew-runtime
+    runtime: Arc<Runtime>, // galleon-runtime
 }
 
 pub trait VaultService {
@@ -73,7 +73,7 @@ pub trait VaultService {
 **Dependencies:**
 ```toml
 [dependencies]
-clawcrew-runtime.workspace = true
+galleon-runtime.workspace = true
 galleon-providers.workspace = true
 tonic.workspace = true
 tokio.workspace = true
@@ -81,7 +81,7 @@ tokio.workspace = true
 
 ---
 
-### Runtime Crate (`clawcrew-runtime`)
+### Runtime Crate (`galleon-runtime`)
 
 **Owns:**
 - Agent turn execution (`execute_turn`)
@@ -150,7 +150,7 @@ impl ProviderDispatch {
 reqwest = { version = "0.12", features = ["json", "stream"] }
 tokio.workspace = true
 serde.workspace = true
-# NO dependency on clawcrew-runtime (providers = leaf crate)
+# NO dependency on galleon-runtime (providers = leaf crate)
 ```
 
 **Convention:** Providers crate is **leaf** (no internal crate deps), runtime calls it.
@@ -530,7 +530,7 @@ mod tests {
 
 ```rust
 // tests/integration_test.rs
-use clawcrew_runtime::execute_turn;
+use galleon_runtime::execute_turn;
 
 #[tokio::test]
 async fn test_turn_execution_e2e() {

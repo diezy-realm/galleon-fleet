@@ -4,7 +4,7 @@ pub use galleon_hardware::peripherals::*;
 
 use crate::config::{Config, PeripheralBoardConfig};
 use anyhow::Result;
-use clawcrew_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
+use galleon_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
 
 pub async fn handle_command(cmd: crate::PeripheralCommands, config: &Config) -> Result<()> {
     match cmd {

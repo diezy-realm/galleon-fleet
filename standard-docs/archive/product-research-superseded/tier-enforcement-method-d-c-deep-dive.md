@@ -96,7 +96,7 @@ Prinsip produk: data, memori, artifact milik user dan portabel. Maka kuota **mem
 
 ### 4.5 Rust
 
-Tidak ada kuota Ship/Squad di Rust (data organisasi ada di Go). Jangan membuat salinan kuota di Rust (SSOT). Catatan nama: `ClientSessionQuota` di `crates/clawcrew-runtime/src/rpc/wss.rs:184` adalah admission koneksi WSS, tidak berhubungan dengan tier; beri nama berbeda agar tidak tertukar.
+Tidak ada kuota Ship/Squad di Rust (data organisasi ada di Go). Jangan membuat salinan kuota di Rust (SSOT). Catatan nama: `ClientSessionQuota` di `crates/galleon-runtime/src/rpc/wss.rs:184` adalah admission koneksi WSS, tidak berhubungan dengan tier; beri nama berbeda agar tidak tertukar.
 
 ## 5. Lapisan C (UX)
 

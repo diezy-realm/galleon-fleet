@@ -1,8 +1,8 @@
 #[allow(unused_imports)]
-pub use clawcrew_runtime::sop::*;
+pub use galleon_runtime::sop::*;
 
 use anyhow::Result;
-use clawcrew_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
+use galleon_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
 
 pub fn handle_command(command: crate::SopCommands, config: &crate::config::Config) -> Result<()> {
     // SOP definitions resolve against the install root, so the documented
@@ -450,7 +450,7 @@ type = "manual"
             max_concurrent: 1,
             location: None,
             deterministic: false,
-            admission_policy: clawcrew_runtime::sop::types::SopAdmissionPolicy::Parallel,
+            admission_policy: galleon_runtime::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
             raci: None,
@@ -487,7 +487,7 @@ type = "manual"
             max_concurrent: 1,
             location: None,
             deterministic: false,
-            admission_policy: clawcrew_runtime::sop::types::SopAdmissionPolicy::Parallel,
+            admission_policy: galleon_runtime::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
             raci: None,

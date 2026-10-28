@@ -40,7 +40,7 @@ galleon-api = { workspace = true }
 galleon-config = { workspace = true }
 galleon-hardware = { workspace = true }
 galleon-providers = { workspace = true }
-clawcrew-runtime = { workspace = true, features = ["schema-export"] }
+galleon-runtime = { workspace = true, features = ["schema-export"] }
 galleon-gateway = { workspace = true, features = ["schema-export"] }
 galleoncode = { workspace = true }
 

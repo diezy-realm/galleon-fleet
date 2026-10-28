@@ -7,7 +7,7 @@
 //! 1. A provider verifies ONE credential and emits an [`AuthenticatedIdentity`]
 //!    — provenance, subject, actor kind, verified claims, expiry/revalidation
 //!    metadata. Providers never emit grants.
-//! 2. The shared resolver (in `clawcrew-runtime`) maps that identity to a
+//! 2. The shared resolver (in `galleon-runtime`) maps that identity to a
 //!    canonical [`PrincipalId`] and the currently-configured permission
 //!    profiles. Claims are mapping *inputs*, never runtime grants.
 //! 3. Dispatch/gateway/storage surfaces consume the resolved [`Principal`]

@@ -14,7 +14,7 @@
 //! # What is and is not covered
 //!
 //! **Covered.** The shared Quickstart apply core
-//! (`clawcrew_runtime::quickstart::apply_with_surface`) driven with a
+//! (`galleon_runtime::quickstart::apply_with_surface`) driven with a
 //! hand-built [`BuilderSubmission`] into a hermetic temp install root; the
 //! persisted `config.toml`; and — in
 //! [`first_run_config_loads_through_the_real_binary`] — the real
@@ -72,7 +72,7 @@ use galleon_config::presets::{
 };
 use galleon_config::schema::{Config, DEFAULT_WEBHOOK_CHANNEL_PORT};
 use galleon_config::secrets::SecretStore;
-use clawcrew_runtime::quickstart::{self, FieldSection, Surface};
+use galleon_runtime::quickstart::{self, FieldSection, Surface};
 use tempfile::TempDir;
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -714,7 +714,7 @@ async fn first_run_doctor_agrees_the_channel_is_configured() {
     ))
     .await;
 
-    let report = clawcrew_runtime::doctor::diagnose(&run.reloaded_with_paths());
+    let report = galleon_runtime::doctor::diagnose(&run.reloaded_with_paths());
     let config_items: Vec<&str> = report
         .iter()
         .filter(|item| item.category == "config")
@@ -1045,7 +1045,7 @@ async fn guard_doctor_reports_an_enabled_channel_with_no_credential() {
             .insert("bot_token".into(), toml::Value::String(String::new()));
     });
 
-    let report = clawcrew_runtime::doctor::diagnose(&run.reloaded_with_paths());
+    let report = galleon_runtime::doctor::diagnose(&run.reloaded_with_paths());
     let config_items: Vec<&str> = report
         .iter()
         .filter(|item| item.category == "config")

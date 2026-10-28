@@ -17,8 +17,8 @@ const SCAN_ROOTS: &[&str] = &[
     "src",
     "crates/galleon-gateway/src",
     "crates/galleon-providers/src/auth",
-    "crates/clawcrew-runtime/src/approval",
-    "crates/clawcrew-runtime/src/integrations",
+    "crates/galleon-runtime/src/approval",
+    "crates/galleon-runtime/src/integrations",
 ];
 const LEGACY_ALLOWLIST: &str = include_str!("cli_fluent_legacy_allowlist.tsv");
 
@@ -49,7 +49,7 @@ fn user_facing_strings_route_through_fluent() {
         problems.is_empty(),
         "Bare user-facing string literal baseline changed. User-facing text must \
          come from the owning localization boundary, not a literal. Root CLI text \
-         uses a `cli-*` Fluent key via `clawcrew_runtime::i18n`; other presentation \
+         uses a `cli-*` Fluent key via `galleon_runtime::i18n`; other presentation \
          boundaries must use their documented adapter. Wrap new text in that \
          boundary, or exempt a deliberate line with `// i18n-exempt: <reason>`. \
          Existing debt is count-sensitive: remove stale baseline \

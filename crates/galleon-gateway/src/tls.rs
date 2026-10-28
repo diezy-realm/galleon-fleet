@@ -4,7 +4,7 @@
 //! [`GatewayTlsConfig`] onto the transport-neutral
 //! [`galleon_tls::ServerConfigParams`] and delegates construction. The reusable
 //! verifier / certificate-pinning / PEM-loading logic lives in `galleon-tls` so
-//! it can also be consumed by `clawcrew-runtime` without an upward dependency on
+//! it can also be consumed by `galleon-runtime` without an upward dependency on
 //! the gateway.
 
 use anyhow::Result;

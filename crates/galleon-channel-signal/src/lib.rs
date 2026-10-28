@@ -21,7 +21,7 @@
 //!    generation, reply parsing and the prompt wire shape come from
 //!    [`galleon_channel_core::approval`]. The prompt text is plain English of
 //!    the IDENTICAL wire shape (`<token> yes|no|always`); localizing it needs
-//!    `clawcrew_runtime::i18n`, so **i18n stays the documented ceiling**
+//!    `galleon_runtime::i18n`, so **i18n stays the documented ceiling**
 //!    (`APPROVAL_I18N_CEILING` in core) — not closable without the runtime.
 //!
 //! One coupling remains fully a local simplification:

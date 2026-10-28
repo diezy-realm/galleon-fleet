@@ -22,7 +22,7 @@ esac
 
 case "$scope" in
     all)
-        crates=(clawcrew-runtime galleon-channels)
+        crates=(galleon-runtime galleon-channels)
         ;;
     channels)
         crates=(galleon-channels)

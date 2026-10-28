@@ -14,7 +14,7 @@ publish = true
 # lives in `clawcrew_config::schema` (peer_policy_admits & co.), and
 # `galleon-channels::allowlist` is a thin wrapper over it. This crate re-exports
 # that real policy rather than reimplementing security-critical precedence rules.
-# `galleon-config` does NOT depend on clawcrew-runtime (its deps are
+# `galleon-config` does NOT depend on galleon-runtime (its deps are
 # api/log/infra/macros), so sharing it keeps channel feature-crates off the
 # heavy runtime — the constraint the split exists to hold.
 galleon-config.workspace = true

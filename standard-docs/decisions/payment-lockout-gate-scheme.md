@@ -21,7 +21,7 @@ Achmad: *"saya takut ada agent yang dibuat untuk transaksi... buat skema untuk m
 2. **Treasury sudah invariant read-only secara desain** (`engine/src/treasury/interfaces.go`): *"Treasury REPORTS cost, it never deducts. No internal credit balance debited... Budget caps gate actions via approval, they do not spend a balance."* — ini F1, sudah berlaku, tidak perlu diubah.
 3. **Product definition §5 sudah eksplisit**: *"aksi berdampak tinggi (write/publish/merge/deploy/delete/**bayar**, ubah Fleet Code, lampaui budget) wajib persetujuan; default read-only."* — prinsip "bayar wajib approval" SUDAH ada secara normatif. Yang BELUM ada: mekanisme teknis bernama, dapat dimatikan-total secara eksplisit (bukan sekadar "approval per kejadian"), dan ter-tes.
 4. **Modul `verifiable_intent`** (diaudit sesi riset sebelumnya) adalah fondasi *otorisasi kriptografis* untuk delegated commerce (standar industri AP2/FIDO) — tapi itu jawaban untuk "bagaimana agent membayar DENGAN AMAN kalau diizinkan". Yang Achmad minta sekarang adalah kebalikannya: **bagaimana memastikan agent TIDAK BISA membayar SAMA SEKALI, sampai dibuka sadar oleh Owner.**
-5. **Pola kill-switch yang relevan sudah ada dan matang**: `crates/clawcrew-runtime/src/security/estop.rs` — `EstopManager` dengan `EstopLevel::{KillAll, NetworkKill, DomainBlock, ToolFreeze}`, fail-closed default, state persisten di disk (atomic write, permission 0o600 Unix), resume opsional di-gate OTP. **Test yang sudah ada bahkan mencontohkan domain finansial** (`*.chase.com`, `*.paypal.com` dipakai sebagai contoh `DomainBlock`/`ToolFreeze` di unit test). Ini pola yang TEPAT untuk dicontoh, bukan dibangun dari nol.
+5. **Pola kill-switch yang relevan sudah ada dan matang**: `crates/galleon-runtime/src/security/estop.rs` — `EstopManager` dengan `EstopLevel::{KillAll, NetworkKill, DomainBlock, ToolFreeze}`, fail-closed default, state persisten di disk (atomic write, permission 0o600 Unix), resume opsional di-gate OTP. **Test yang sudah ada bahkan mencontohkan domain finansial** (`*.chase.com`, `*.paypal.com` dipakai sebagai contoh `DomainBlock`/`ToolFreeze` di unit test). Ini pola yang TEPAT untuk dicontoh, bukan dibangun dari nol.
 6. **Bukti insiden nyata, bukan hipotetis (riset industri, 2026-10-05 — lihat `research/payment-lockout-gate-industry-research.md`)**: Guardio Labs (Agustus 2025) membuktikan Perplexity Comet — agentic browser produk mainstream — menyelesaikan checkout kartu kredit di toko palsu **tanpa meminta konfirmasi manusia sama sekali**, dan juga tereksploitasi lewat prompt-injection via CAPTCHA palsu. Ini bukan skenario rekaan: ini mode kegagalan yang SUDAH terjadi pada agentic browser nyata, dipicu dua vektor yang sama relevan untuk Galleon (fake-site/SEO-poisoning + prompt injection). Memvalidasi §2: *"approval per-kejadian saja tidak cukup"* — Comet bahkan tidak sempat sampai tahap approval, memperkuat alasan gate ini harus menolak LEBIH AWAL dari approval normal, di titik eksekusi tool.
 
 ## 2. Prinsip Desain
@@ -146,7 +146,7 @@ pub struct ToolManifest {
 }
 ```
 
-Tool registry (titik registrasi tool, `clawcrew-runtime/src/tools/mod.rs`) menolak registrasi tool yang namanya/deskripsinya cocok heuristik finansial (`pay`, `transfer`, `charge`, `wallet`, `crypto`, dst — daftar kata kunci di `galleon-config`) TANPA `payment_category` terisi — **fail-closed di waktu registrasi**, bukan hanya di waktu eksekusi. Ini mencegah tool pembayaran baru "lolos" gate hanya karena developer lupa mengisi metadata.
+Tool registry (titik registrasi tool, `galleon-runtime/src/tools/mod.rs`) menolak registrasi tool yang namanya/deskripsinya cocok heuristik finansial (`pay`, `transfer`, `charge`, `wallet`, `crypto`, dst — daftar kata kunci di `galleon-config`) TANPA `payment_category` terisi — **fail-closed di waktu registrasi**, bukan hanya di waktu eksekusi. Ini mencegah tool pembayaran baru "lolos" gate hanya karena developer lupa mengisi metadata.
 
 ### 3.4 Perubahan Mode — Siapa yang Bisa Membuka
 
@@ -191,8 +191,8 @@ Kekhawatiran Achmad **valid dan tepat waktu** — justru karena belum ada satu p
 ## Sumber
 
 - `engine/src/treasury/interfaces.go` — invariant F1, Treasury read-only.
-- `crates/clawcrew-runtime/src/security/estop.rs` — pola kill-switch yang dicontoh (`EstopManager`, fail-closed, OTP-gated resume, test dengan domain finansial `*.chase.com`/`*.paypal.com`).
-- `crates/clawcrew-runtime/src/security/playbook.rs` — pola `requires_approval: bool` existing untuk aksi berdampak tinggi.
+- `crates/galleon-runtime/src/security/estop.rs` — pola kill-switch yang dicontoh (`EstopManager`, fail-closed, OTP-gated resume, test dengan domain finansial `*.chase.com`/`*.paypal.com`).
+- `crates/galleon-runtime/src/security/playbook.rs` — pola `requires_approval: bool` existing untuk aksi berdampak tinggi.
 - `crates/galleon-tools/src/node_capabilities.rs` — pola `RiskLevel`/`NodeCapabilityDef` yang dicontoh untuk `ToolManifest.payment_category`.
 - `standard-docs/product/galleon-product-definition.md` §5 — "aksi berdampak tinggi... bayar... wajib persetujuan; default read-only."
 - `standard-docs/archive/research-closed-loop/verifiable-intent-assessment.md` — konteks AP2/FIDO/G-37, hubungan dengan skema ini.

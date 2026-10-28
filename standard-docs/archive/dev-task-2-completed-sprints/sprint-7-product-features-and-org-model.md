@@ -160,7 +160,7 @@ impl PaymentLockManager {
 
 #### Detail Eksekusi — BL-42
 
-**Koreksi lokasi:** `ToolManifest` struct ditemukan di `crates/galleon-hardware/src/manifest.rs` — lokasi TAK TERDUGA (hardware crate, bukan `clawcrew-runtime`/`galleon-tools` generik). **PERLU VERIFIKASI:** apakah `ToolManifest` di `galleon-hardware` ini genuinely struct yang dimaksud dokumen untuk SEMUA tool (termasuk tool non-hardware), atau ada `ToolManifest` LAIN yang lebih generik di crate berbeda yang belum ditemukan grep sesi ini. **Langkah pertama WAJIB:** baca `galleon-hardware/src/manifest.rs` penuh untuk konteks (kenapa `ToolManifest` di crate hardware), dan `search_symbols` ulang untuk `ToolManifest` dengan cakupan lebih luas sebelum menambah field.
+**Koreksi lokasi:** `ToolManifest` struct ditemukan di `crates/galleon-hardware/src/manifest.rs` — lokasi TAK TERDUGA (hardware crate, bukan `galleon-runtime`/`galleon-tools` generik). **PERLU VERIFIKASI:** apakah `ToolManifest` di `galleon-hardware` ini genuinely struct yang dimaksud dokumen untuk SEMUA tool (termasuk tool non-hardware), atau ada `ToolManifest` LAIN yang lebih generik di crate berbeda yang belum ditemukan grep sesi ini. **Langkah pertama WAJIB:** baca `galleon-hardware/src/manifest.rs` penuh untuk konteks (kenapa `ToolManifest` di crate hardware), dan `search_symbols` ulang untuk `ToolManifest` dengan cakupan lebih luas sebelum menambah field.
 
 **Langkah pengerjaan:**
 1. Verifikasi lokasi struct persis (langkah di atas).
@@ -197,7 +197,7 @@ impl PaymentLockManager {
 ## D. Toolbox Parity — KiroCrew vs Galleon (dari `toolbox-parity-backlog.md`, audit 2026-10-05)
 
 > `BL-73` (Quest-loop), `BL-78` (Optimize prompt), dan `BL-79` (Smart rekomendasi top-bar, baru) **TIDAK dimasukkan sebagai tiket `[ ]` aktif di sini** — ketiganya tetap EXPLORATORY di `backlog/toolbox-parity-backlog.md`, menunggu keputusan Owner, sesuai §Catatan Non-Negosiasi poin 4. Dicatat sebagai REFERENSI saja supaya tim tahu metodenya sudah dipertajam (2026-10-05) tanpa disalahartikan sudah siap eksekusi:
-> - **BL-78**: metode sekarang "spawn sub-agent Prompt Engineer sebelum turn utama" (bukan rewrite sederhana), hasil editable tidak auto-send, kemungkinan reuse infrastruktur delegasi `clawcrew-runtime/src/subagent/mod.rs` (BL-05, §C di atas). Lihat `research/toolbox-parity-audit.md` §Penajaman Metode untuk detail flow lengkap.
+> - **BL-78**: metode sekarang "spawn sub-agent Prompt Engineer sebelum turn utama" (bukan rewrite sederhana), hasil editable tidak auto-send, kemungkinan reuse infrastruktur delegasi `galleon-runtime/src/subagent/mod.rs` (BL-05, §C di atas). Lihat `research/toolbox-parity-audit.md` §Penajaman Metode untuk detail flow lengkap.
 > - **BL-79 (baru)**: top-bar "smart rekomendasi" — post-response tarik kesimpulan + array maks 5 pertanyaan lanjutan (hybrid instruksi-prompt + hard-cap), klik item → teks masuk composer (editable), klik item ke-2+ → gabung separator `", "`. Satu pertanyaan terbuka tersisa: siapa menjalankan tarik-kesimpulan (LLM utama vs sub-agent terpisah) — keputusan ini mempengaruhi apakah BL-78 dan BL-79 berbagi SATU mekanisme delegasi atau dua mekanisme terpisah.
 
 - [x] **BL-74 (LOW-MEDIUM, PALING MURAH, kerjakan duluan)** Hapus context-window placeholder hardcoded (`EngineRoomView.tsx:335` — teks statis "8,192 tokens... 68%" tidak terhubung sesi nyata) — ganti data real atau hapus.

@@ -14,7 +14,7 @@ publish = true
 # reqwest with serde record/notification types, so it carries the HTTP + serde
 # + chrono deps upstream `galleon-channels` uses for this channel. Seam #1
 # (allowlist peer-policy) comes from `galleon-channel-core`, which shares the
-# real `clawcrew_config` peer-policy SSOT WITHOUT dragging clawcrew-runtime.
+# real `clawcrew_config` peer-policy SSOT WITHOUT dragging galleon-runtime.
 # The remaining ceilings are env-proxy client + structured logging (both need
 # galleon-config/galleon-log) — documented in lib.rs.
 galleon-channel-core.workspace = true

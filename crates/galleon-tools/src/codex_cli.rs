@@ -89,7 +89,7 @@ impl Tool for CodexCliTool {
 
     async fn execute(&self, args: serde_json::Value) -> anyhow::Result<ToolResult> {
         // Rate limiting is applied by the RateLimitedTool wrapper at
-        // registration time (see clawcrew-runtime::tools::mod).
+        // registration time (see galleon-runtime::tools::mod).
 
         // The production wrapper owns accounting; the adapter owns authorization.
         if let Err(error) = self

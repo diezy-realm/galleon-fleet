@@ -2488,7 +2488,7 @@ impl RpcClient {
     //
     // Thin wire mirror of the gateway's `/api/quickstart/*` HTTP routes.
     // Same shapes both ways; the daemon-side handlers live in the gateway
-    // and call into `clawcrew_runtime::quickstart::{validate_only,apply}_with_surface`.
+    // and call into `galleon_runtime::quickstart::{validate_only,apply}_with_surface`.
 
     pub async fn quickstart_state(&self) -> Result<QuickstartStateResult> {
         self.call(method::QUICKSTART_STATE, serde_json::json!({}))
@@ -3465,7 +3465,7 @@ mod skill_frontmatter_tests {
 // shape here; the integration drift test enforces equality across
 // surfaces, so divergence is a CI failure rather than a silent bug.
 
-/// Mirror of `clawcrew_runtime::quickstart::Surface` (`snake_case` on the wire).
+/// Mirror of `galleon_runtime::quickstart::Surface` (`snake_case` on the wire).
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum QuickstartSurface {
@@ -3475,7 +3475,7 @@ pub enum QuickstartSurface {
     Test,
 }
 
-/// Mirror of `clawcrew_runtime::quickstart::QuickstartStep`.
+/// Mirror of `galleon_runtime::quickstart::QuickstartStep`.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum QuickstartStep {
@@ -3488,7 +3488,7 @@ pub enum QuickstartStep {
     Agent,
 }
 
-/// Mirror of `clawcrew_runtime::quickstart::QuickstartError`.
+/// Mirror of `galleon_runtime::quickstart::QuickstartError`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub struct QuickstartError {
@@ -3497,7 +3497,7 @@ pub struct QuickstartError {
     pub message: String,
 }
 
-/// Mirror of `clawcrew_runtime::quickstart::AppliedAgent`.
+/// Mirror of `galleon_runtime::quickstart::AppliedAgent`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub struct AppliedAgent {
@@ -3509,7 +3509,7 @@ pub struct AppliedAgent {
     pub memory_backend: String,
 }
 
-/// Mirror of `clawcrew_runtime::quickstart::FieldSection`.
+/// Mirror of `galleon_runtime::quickstart::FieldSection`.
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum QuickstartFieldSection {
@@ -3531,7 +3531,7 @@ pub enum QuickstartFieldKind {
     Object,
 }
 
-/// Mirror of `clawcrew_runtime::quickstart::FieldDescriptor`.
+/// Mirror of `galleon_runtime::quickstart::FieldDescriptor`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct QuickstartFieldDescriptor {
@@ -3551,7 +3551,7 @@ pub struct QuickstartFieldsResult {
     pub fields: Vec<QuickstartFieldDescriptor>,
 }
 
-/// Mirror of `clawcrew_runtime::quickstart::QuickstartState`.
+/// Mirror of `galleon_runtime::quickstart::QuickstartState`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct QuickstartStateResult {
@@ -4797,7 +4797,7 @@ mod sop_method_tests {
     }
 
     /// Wire fixture mirrored by `sop::graph` serialization tests in
-    /// clawcrew-runtime. If this shape drifts, fix both sides together.
+    /// galleon-runtime. If this shape drifts, fix both sides together.
     fn graph_fixture() -> serde_json::Value {
         json!({
             "nodes": [

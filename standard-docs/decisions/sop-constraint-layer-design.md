@@ -59,7 +59,7 @@ Tiga paper terbaru yang LANGSUNG relevan untuk Galleon (organisasi AI agent, buk
 
 ### Layer 1 — Flow (yang SUDAH ada, TIDAK diubah)
 
-`SopStep`/`SopRun`/`StepRouting` di `crates/clawcrew-runtime/src/sop/types.rs` — DAG/urutan step, siapa EKSEKUSI apa (`SopStep.agent`), kapan (`SopTrigger`), gimana (`SopExecutionMode`). **Ini layer yang sudah matang, cocok untuk "siapa harus melakukan apa secara positif" — JANGAN diubah atau dipaksa menangkap larangan.**
+`SopStep`/`SopRun`/`StepRouting` di `crates/galleon-runtime/src/sop/types.rs` — DAG/urutan step, siapa EKSEKUSI apa (`SopStep.agent`), kapan (`SopTrigger`), gimana (`SopExecutionMode`). **Ini layer yang sudah matang, cocok untuk "siapa harus melakukan apa secara positif" — JANGAN diubah atau dipaksa menangkap larangan.**
 
 ### Layer 2 — Constraint (BARU, terpisah, menjawab "Lead tidak boleh coding")
 
@@ -121,7 +121,7 @@ Kalau model yang berperan sebagai "Lead" mencoba memanggil tool `file_write` di 
 
 1. **Jangan desain ulang Layer 1** (`SopStep`/flow) — sudah matang dan benar untuk tugasnya.
 2. **Tambah `SopConstraint` sebagai layer terpisah** di `Sop` struct — scope awal: `RoleRestriction` dan `DistinctPerformer` (dua pola paling umum dari contoh Anda dan riset SoD), tunda `RequiredOccurrence` (cardinality) sampai ada kasus nyata yang butuh.
-3. **Enforcement lewat hook `preToolUse`** yang sudah ada infrastrukturnya (`crates/clawcrew-runtime/src/hooks/`, `HookResult::Cancel`) — SOP engine mendaftarkan hook dinamis per-run yang mengecek `SopConstraint` sebelum tool dieksekusi.
+3. **Enforcement lewat hook `preToolUse`** yang sudah ada infrastrukturnya (`crates/galleon-runtime/src/hooks/`, `HookResult::Cancel`) — SOP engine mendaftarkan hook dinamis per-run yang mengecek `SopConstraint` sebelum tool dieksekusi.
 4. **Generic lintas departemen**: `ToolKind`/`role: String` bebas, sama seperti `CrewMember.Role` di Go — tidak hardcode ke istilah engineering.
 
 ## Sumber

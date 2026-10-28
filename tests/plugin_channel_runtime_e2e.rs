@@ -171,7 +171,7 @@ async fn configured_channel_reaches_real_guest_and_shared_listener_contract() {
 
     let registry = Arc::new(PluginWebhookRegistry::new());
     let webhook_generation = registry.start_generation();
-    let channels = clawcrew_runtime::plugin_runtime::configured_plugin_channels_with_webhooks(
+    let channels = galleon_runtime::plugin_runtime::configured_plugin_channels_with_webhooks(
         Arc::new(config),
         None,
         Some(&webhook_generation),
@@ -269,7 +269,7 @@ async fn a_channel_whose_guest_rejects_its_config_is_not_activated() {
     let config = activation_config(&plugins, "operations", "9");
 
     let channels =
-        clawcrew_runtime::plugin_runtime::configured_plugin_channels(Arc::new(config), None).await;
+        galleon_runtime::plugin_runtime::configured_plugin_channels(Arc::new(config), None).await;
 
     assert!(
         channels.is_empty(),
@@ -322,7 +322,7 @@ async fn duplicate_guest_routes_reject_every_claimant_before_registry_mutation()
 
     let registry = Arc::new(PluginWebhookRegistry::new());
     let webhook_generation = registry.start_generation();
-    let channels = clawcrew_runtime::plugin_runtime::configured_plugin_channels_with_webhooks(
+    let channels = galleon_runtime::plugin_runtime::configured_plugin_channels_with_webhooks(
         Arc::new(config),
         None,
         Some(&webhook_generation),
@@ -348,7 +348,7 @@ async fn a_channel_without_an_enabled_owner_is_not_activated() {
     config.agents.get_mut("operator").unwrap().enabled = false;
 
     let channels =
-        clawcrew_runtime::plugin_runtime::configured_plugin_channels(Arc::new(config), None).await;
+        galleon_runtime::plugin_runtime::configured_plugin_channels(Arc::new(config), None).await;
 
     assert!(
         channels.is_empty(),

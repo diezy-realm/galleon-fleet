@@ -1,10 +1,10 @@
 #[allow(unused_imports)]
-pub use clawcrew_runtime::skills::*;
+pub use galleon_runtime::skills::*;
 
 use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
-use clawcrew_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
-use clawcrew_runtime::skills::{ScaffoldOptions, SkillFrontmatter, SkillsService};
+use galleon_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
+use galleon_runtime::skills::{ScaffoldOptions, SkillFrontmatter, SkillsService};
 
 /// Resolve a `cli-*` Fluent key for skill-bundle CLI output. Under `agent-runtime`
 /// (default + what CI/release build) this routes through Fluent; without it the
@@ -13,7 +13,7 @@ use clawcrew_runtime::skills::{ScaffoldOptions, SkillFrontmatter, SkillsService}
 fn mt(key: &str, fallback: &str) -> String {
     #[cfg(feature = "agent-runtime")]
     {
-        clawcrew_runtime::i18n::get_required_cli_string(key)
+        galleon_runtime::i18n::get_required_cli_string(key)
     }
     #[cfg(not(feature = "agent-runtime"))]
     {
@@ -26,7 +26,7 @@ fn mt(key: &str, fallback: &str) -> String {
 fn mta(key: &str, args: &[(&str, &str)], fallback: &str) -> String {
     #[cfg(feature = "agent-runtime")]
     {
-        clawcrew_runtime::i18n::get_required_cli_string_with_args(key, args)
+        galleon_runtime::i18n::get_required_cli_string_with_args(key, args)
     }
     #[cfg(not(feature = "agent-runtime"))]
     {
@@ -36,19 +36,19 @@ fn mta(key: &str, args: &[(&str, &str)], fallback: &str) -> String {
 
 pub mod creator {
     #[allow(unused_imports)]
-    pub use clawcrew_runtime::skills::creator::*;
+    pub use galleon_runtime::skills::creator::*;
 }
 pub mod audit {
     #[allow(unused_imports)]
-    pub use clawcrew_runtime::skills::audit::*;
+    pub use galleon_runtime::skills::audit::*;
 }
 pub mod skill_tool {
     #[allow(unused_imports)]
-    pub use clawcrew_runtime::skills::skill_tool::*;
+    pub use galleon_runtime::skills::skill_tool::*;
 }
 pub mod skill_http {
     #[allow(unused_imports)]
-    pub use clawcrew_runtime::skills::skill_http::*;
+    pub use galleon_runtime::skills::skill_http::*;
 }
 
 // The lib target sees this as dead; only the bin target calls it from main.rs.
@@ -400,7 +400,7 @@ pub async fn handle_command(
                     .resolve_ref(&name, Some(b))
                     .map_err(anyhow::Error::msg)?;
                 service
-                    .remove_skill(&target, clawcrew_runtime::skills::RemoveMode::Archive)
+                    .remove_skill(&target, galleon_runtime::skills::RemoveMode::Archive)
                     .map_err(anyhow::Error::msg)?;
                 println!(
                     "{}",
@@ -423,7 +423,7 @@ pub async fn handle_command(
                             .resolve_ref(&name, Some(alias))
                             .map_err(anyhow::Error::msg)?;
                         service
-                            .remove_skill(&target, clawcrew_runtime::skills::RemoveMode::Archive)
+                            .remove_skill(&target, galleon_runtime::skills::RemoveMode::Archive)
                             .map_err(anyhow::Error::msg)?;
                         println!(
                             "{}",
@@ -782,7 +782,7 @@ fn handle_add(
 
     println!(
         "{}",
-        clawcrew_runtime::i18n::get_required_cli_string_with_args(
+        galleon_runtime::i18n::get_required_cli_string_with_args(
             "cli-skills-add-scaffolded",
             &[
                 ("target", &target.to_string()),
@@ -793,7 +793,7 @@ fn handle_add(
 
     if edit {
         open_in_editor(
-            &skill_dir.join(clawcrew_runtime::skills::constants::SKILL_MANIFEST_FILENAME),
+            &skill_dir.join(galleon_runtime::skills::constants::SKILL_MANIFEST_FILENAME),
         )?;
     }
     Ok(())
@@ -828,7 +828,7 @@ fn handle_edit(
         Some(rel) => summary.directory.join(rel),
         None => summary
             .directory
-            .join(clawcrew_runtime::skills::constants::SKILL_MANIFEST_FILENAME),
+            .join(galleon_runtime::skills::constants::SKILL_MANIFEST_FILENAME),
     };
     if !path.exists() {
         anyhow::bail!("file not found: {}", path.display());
@@ -1097,7 +1097,7 @@ fn print_bundle_include_exclude(include: &[String], exclude: &[String]) {
     if !include.is_empty() {
         println!(
             "  {}",
-            clawcrew_runtime::i18n::get_required_cli_string_with_args(
+            galleon_runtime::i18n::get_required_cli_string_with_args(
                 "cli-skills-bundle-include",
                 &[("values", &include.join(", "))],
             )
@@ -1106,7 +1106,7 @@ fn print_bundle_include_exclude(include: &[String], exclude: &[String]) {
     if !exclude.is_empty() {
         println!(
             "  {}",
-            clawcrew_runtime::i18n::get_required_cli_string_with_args(
+            galleon_runtime::i18n::get_required_cli_string_with_args(
                 "cli-skills-bundle-exclude",
                 &[("values", &exclude.join(", "))],
             )
@@ -1121,13 +1121,13 @@ fn handle_bundle_list(config: &crate::config::Config) -> Result<()> {
     if bundles.is_empty() {
         println!(
             "{}",
-            clawcrew_runtime::i18n::get_required_cli_string("cli-skills-bundle-list-empty")
+            galleon_runtime::i18n::get_required_cli_string("cli-skills-bundle-list-empty")
         );
         return Ok(());
     }
     println!(
         "{}",
-        clawcrew_runtime::i18n::get_required_cli_string_with_args(
+        galleon_runtime::i18n::get_required_cli_string_with_args(
             "cli-skills-bundle-list-header",
             &[("count", &bundles.len().to_string())],
         )
@@ -1135,7 +1135,7 @@ fn handle_bundle_list(config: &crate::config::Config) -> Result<()> {
     for b in &bundles {
         println!(
             "  {}",
-            clawcrew_runtime::i18n::get_required_cli_string_with_args(
+            galleon_runtime::i18n::get_required_cli_string_with_args(
                 "cli-skills-bundle-entry",
                 &[
                     ("alias", &b.alias),
@@ -1168,7 +1168,7 @@ fn handle_bundle_show(config: &crate::config::Config, alias: String) -> Result<(
 
     println!(
         "{}",
-        clawcrew_runtime::i18n::get_required_cli_string_with_args(
+        galleon_runtime::i18n::get_required_cli_string_with_args(
             "cli-skills-bundle-entry",
             &[
                 ("alias", &bundle.alias),
@@ -1182,12 +1182,12 @@ fn handle_bundle_show(config: &crate::config::Config, alias: String) -> Result<(
     if skills.is_empty() {
         println!(
             "  {}",
-            clawcrew_runtime::i18n::get_required_cli_string("cli-skills-bundle-show-no-skills")
+            galleon_runtime::i18n::get_required_cli_string("cli-skills-bundle-show-no-skills")
         );
     } else {
         println!(
             "  {}",
-            clawcrew_runtime::i18n::get_required_cli_string_with_args(
+            galleon_runtime::i18n::get_required_cli_string_with_args(
                 "cli-skills-bundle-show-skills-header",
                 &[("count", &skills.len().to_string())],
             )
@@ -1195,7 +1195,7 @@ fn handle_bundle_show(config: &crate::config::Config, alias: String) -> Result<(
         for s in &skills {
             println!(
                 "    {}",
-                clawcrew_runtime::i18n::get_required_cli_string_with_args(
+                galleon_runtime::i18n::get_required_cli_string_with_args(
                     "cli-skills-bundle-show-skill",
                     &[
                         ("name", s.r#ref.name()),
@@ -1300,7 +1300,7 @@ mod install_location_tests {
     /// locale-independent argument value as the resolution signal.
     #[test]
     fn install_error_strings_resolve_through_fluent() {
-        use clawcrew_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
+        use galleon_runtime::i18n::{get_required_cli_string, get_required_cli_string_with_args};
         let audit = get_required_cli_string("cli-skills-audit-failed");
         assert!(
             !audit.starts_with('{') && audit.contains("audit"),

@@ -1,5 +1,5 @@
 #[allow(unused_imports)]
-pub use clawcrew_runtime::heartbeat::*;
+pub use galleon_runtime::heartbeat::*;
 
 #[cfg(test)]
 mod tests {

@@ -1532,7 +1532,7 @@
     #[test]
     #[cfg(feature = "agent-runtime")]
     fn cli_quickstart_uses_advertised_local_provider_runtime_default() {
-        let providers = vec![clawcrew_runtime::quickstart::QuickstartTypeOption {
+        let providers = vec![galleon_runtime::quickstart::QuickstartTypeOption {
             kind: "lmstudio".into(),
             display_name: "LM Studio".into(),
             local: true,
@@ -1548,7 +1548,7 @@
     #[test]
     #[cfg(feature = "agent-runtime")]
     fn cli_quickstart_uses_advertised_remote_provider_runtime_default() {
-        let providers = vec![clawcrew_runtime::quickstart::QuickstartTypeOption {
+        let providers = vec![galleon_runtime::quickstart::QuickstartTypeOption {
             kind: "anthropic".into(),
             display_name: "Anthropic".into(),
             local: false,
@@ -1564,7 +1564,7 @@
     #[test]
     #[cfg(feature = "agent-runtime")]
     fn cli_quickstart_uses_state_fallback_when_provider_has_no_override() {
-        let providers = vec![clawcrew_runtime::quickstart::QuickstartTypeOption {
+        let providers = vec![galleon_runtime::quickstart::QuickstartTypeOption {
             kind: "ollama".into(),
             display_name: "Ollama".into(),
             local: true,
@@ -1970,7 +1970,7 @@
     #[test]
     #[cfg(feature = "agent-runtime")]
     fn issue_client_cert_rename_failure_leaves_an_undelivered_row_that_reconciles_away() {
-        use clawcrew_runtime::security::cert_ledger::{CertLedger, CertStatus, revoked_list_path};
+        use galleon_runtime::security::cert_ledger::{CertLedger, CertStatus, revoked_list_path};
         let dir = tempfile::tempdir().expect("tempdir");
         let out = tempfile::tempdir().expect("out tempdir");
         let config = Config {
@@ -2094,7 +2094,7 @@
     #[test]
     #[cfg(feature = "agent-runtime")]
     fn revoke_client_cert_handler_materializes_the_revoked_file() {
-        use clawcrew_runtime::security::cert_ledger::{
+        use galleon_runtime::security::cert_ledger::{
             CertLedger, CertStatus, IssuanceActor, LedgerEntry, revoked_list_path,
         };
         let dir = tempfile::tempdir().expect("tempdir");
@@ -3211,7 +3211,7 @@
         use std::sync::{Arc, Mutex};
         use galleon_config::schema::{MemoryConfig, SopConfig};
         use galleon_memory::traits::Memory;
-        use clawcrew_runtime::sop::{
+        use galleon_runtime::sop::{
             Sop, SopEngine, SopExecutionMode, SopPriority, SopStep, SopStepKind, SopTrigger,
         };
 
@@ -3239,7 +3239,7 @@
             max_concurrent: 2,
             location: None,
             deterministic: false,
-            admission_policy: clawcrew_runtime::sop::types::SopAdmissionPolicy::Parallel,
+            admission_policy: galleon_runtime::sop::types::SopAdmissionPolicy::Parallel,
             max_pending_approvals: 0,
             agent: None,
             raci: None,
@@ -3254,8 +3254,8 @@
         };
         let memory: Arc<dyn Memory> =
             Arc::from(galleon_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
-        let audit = Arc::new(clawcrew_runtime::sop::SopAuditLogger::new(memory));
-        let cache = clawcrew_runtime::sop::dispatch::SopCronCache::from_engine(&engine);
+        let audit = Arc::new(galleon_runtime::sop::SopAuditLogger::new(memory));
+        let cache = galleon_runtime::sop::dispatch::SopCronCache::from_engine(&engine);
 
         let mut last_cron_check = chrono::Utc::now() - chrono::Duration::minutes(2);
         let report =

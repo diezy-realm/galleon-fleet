@@ -15,12 +15,12 @@ invalid_schema_json="${fixture_dir}/invalid-schema.json"
 
 cat > "$clean_json" <<'JSON'
 {"crate_name":"clawcrew","dependencies":[]}
-{"crate_name":"clawcrew-runtime","dependencies":[]}
+{"crate_name":"galleon-runtime","dependencies":[]}
 JSON
 
 cat > "$outdated_json" <<'JSON'
 {"crate_name":"clawcrew","dependencies":[{"name":"serde","project":"1.0.0","compat":"1.0.1","latest":"1.1.0","kind":"Normal","platform":null}]}
-{"crate_name":"clawcrew-runtime","dependencies":[]}
+{"crate_name":"galleon-runtime","dependencies":[]}
 JSON
 
 : > "$empty_json"

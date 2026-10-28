@@ -3211,7 +3211,7 @@ fn warn_if_systemd_user_linger_disabled() {
 }
 
 // Plain `#[cfg(test)]` is intentional: these pure renderer tests have no
-// integration dependencies and should run in every clawcrew-runtime test build.
+// integration dependencies and should run in every galleon-runtime test build.
 #[cfg(test)]
 mod macos_plist_tests {
     use super::*;

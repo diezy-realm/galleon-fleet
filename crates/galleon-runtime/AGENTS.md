@@ -1,4 +1,4 @@
-# clawcrew-runtime — Transitional Holding Crate
+# galleon-runtime — Transitional Holding Crate
 
 This crate is a **temporary holding area**, not a permanent home. It contains 126K LOC of subsystems extracted from the original monolith that have not yet been decomposed into their final crate structure.
 

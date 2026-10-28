@@ -215,7 +215,7 @@ fn render_config_fields(arg: &str) -> anyhow::Result<String> {
 }
 
 fn sop_trigger_variants() -> anyhow::Result<(serde_json::Value, Vec<(String, serde_json::Value)>)> {
-    let schema = schemars::schema_for!(clawcrew_runtime::sop::types::SopTrigger);
+    let schema = schemars::schema_for!(galleon_runtime::sop::types::SopTrigger);
     let root = schema.to_value();
     let defs = root
         .get("$defs")

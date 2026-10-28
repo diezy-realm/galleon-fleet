@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use serde::Deserialize;
 use galleon_config::schema::ChannelsConfig;
-use clawcrew_runtime::tools::default_tools;
+use galleon_runtime::tools::default_tools;
 
 const SNIPPET_DIR: &str = "docs/book/src/_snippets";
 const PARITY_FILE: &str = "docs/book/feature-matrix-parity.toml";

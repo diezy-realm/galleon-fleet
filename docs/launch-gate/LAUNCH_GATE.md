@@ -12,7 +12,7 @@ Prerequisites: All code compiles without errors or warnings.
 
 ### Rust Build Verification (Refactoring RF-A: 3 crates)
 - [ ] `cargo check -p clawcrew-orchestrator` passes (RF-A1: module extraction)
-- [ ] `cargo check -p clawcrew-runtime` passes (RF-A2: core types)
+- [ ] `cargo check -p galleon-runtime` passes (RF-A2: core types)
 - [ ] `cargo check -p galleon-gateway` passes (RF-A3: gRPC gateway)
 - [ ] All Rust tests compile with `cargo test --no-run -p <crate>` (no execution yet)
 - [ ] No clippy warnings: `cargo clippy --all -- -D warnings`

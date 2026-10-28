@@ -166,7 +166,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
   1. **File & simbol spesifik:**
      - `/crates/galleon-gateway/src/api.rs`, `ws.rs`, `gateway.rs`, `api_pairing.rs`
      - `/crates/galleon-channels/src/`
-     - `/crates/clawcrew-runtime/src/security/prompt_guard.rs`
+     - `/crates/galleon-runtime/src/security/prompt_guard.rs`
   2. **Spesifikasi API:**
      - Bersihkan `unwrap()` & `expect()` di kode produksi
      - Tangani mutex lock poison secara graceful (`unwrap_or_else(PoisonError::into_inner)`)
@@ -175,7 +175,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
   3. **Hasil Audit & Burn-down Aktual:**
      - `galleon-gateway`: **0** prod unwrap/expect (target <50 tercapai)
      - `galleon-channels`: **27** prod unwrap/expect (target <50 tercapai)
-     - `clawcrew-runtime`: **194** prod unwrap/expect (target <200 tercapai)
+     - `galleon-runtime`: **194** prod unwrap/expect (target <200 tercapai)
   4. **Acceptance criteria testable:**
      - [x] Workspace lint policy di `Cargo.toml`: `unwrap_used` dan `expect_used` aktif
      - [x] Burn-down count lolos semua batas: gateway 0 (<50), channels 27 (<50), runtime 194 (<200)
@@ -226,8 +226,8 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 - [x] **R-88 (eks-BL-45a, P1, MEDIUM, PRIORITAS — murah)** Ukur korelasi trim-history vs cache-miss sebelum mitigasi apa pun. Logging-only, menjawab apakah R-89 layak dengan data nyata.
   #### Detail Eksekusi -- R-88
   1. **File & simbol spesifik:**
-     - `/crates/clawcrew-runtime/src/agent/history_trim.rs` - structured log `trim_history` dengan token counters
-     - `/crates/clawcrew-runtime/src/agent/cost.rs` - cost & token accounting
+     - `/crates/galleon-runtime/src/agent/history_trim.rs` - structured log `trim_history` dengan token counters
+     - `/crates/galleon-runtime/src/agent/cost.rs` - cost & token accounting
   2. **Acceptance criteria testable:**
      - [x] Log `trim_history` dengan field `trimmed`, `tokens_before`, `tokens_after`, `dropped_turns` tercatat via `galleon_log::record!`
      - [x] Log `cache_hit` dan `cache_miss` tercatat pada runtime metrics
@@ -236,7 +236,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 - [x] **R-89 (eks-BL-45b, KONDISIONAL)** Align titik potong trim dengan rolling cache-breakpoint.
   #### Detail Eksekusi -- R-89
   1. **File & simbol spesifik:**
-     - `/crates/clawcrew-runtime/src/agent/history_trim.rs` - `dynamic_trim_budget` helper
+     - `/crates/galleon-runtime/src/agent/history_trim.rs` - `dynamic_trim_budget` helper
   2. **Acceptance criteria testable:**
      - [x] Dynamic threshold logic `dynamic_trim_budget(base, hit_rate)` tersedia dan teruji
      - [x] Evaluasi deterministik tanpa regresi performa
@@ -245,7 +245,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 - [x] **R-90 (eks-BL-46, LOW-MEDIUM)** Surface cache hit-rate ke dashboard/CLI operator.
   #### Detail Eksekusi -- R-90
   1. **File & simbol spesifik:**
-     - `/crates/clawcrew-runtime/src/observability/prometheus.rs` - metric `clawcrew_cache_hit_rate`
+     - `/crates/galleon-runtime/src/observability/prometheus.rs` - metric `clawcrew_cache_hit_rate`
   2. **Acceptance criteria testable:**
      - [x] Metric gauge `clawcrew_cache_hit_rate` terdaftar di Prometheus registry
      - [x] Gauge ter-update real-time pada event `CacheHit` dan `CacheMiss`
@@ -322,8 +322,8 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 - [x] **R-93 (eks-BL-49, MEDIUM-HIGH)** Aktifkan Knowledge Library untuk `standard-docs/` — setelah R-92 untuk koherensi (tidak hard-block).
   #### Detail Eksekusi -- R-93
   1. **File & simbol spesifik:**
-     - `/crates/clawcrew-runtime/src/skills/mod.rs` - skills loading & resolver
-     - `/crates/clawcrew-runtime/src/skills/cache.rs` - in-memory manifest cache
+     - `/crates/galleon-runtime/src/skills/mod.rs` - skills loading & resolver
+     - `/crates/galleon-runtime/src/skills/cache.rs` - in-memory manifest cache
      - `/standard-docs/tech-standart/skills-index.md` (baru) - katalog kanonikal skills
   2. **Acceptance criteria testable:**
      - [x] Katalog skill kanonikal terbit di `standard-docs/tech-standart/skills-index.md`
@@ -490,10 +490,10 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
   9. **JANGAN DIUBAH:** Existing `inMemoryVectorStore` behavior - hanya ganti destination
   10. **ASUMSI:** `galleon-memory` crate public API cukup untuk learned rule storage; no breaking changes di Rust Memory trait
 
-- [x] **BL-03 (LOW, dokumentasi murni, bisa paralel kapan saja)** Dokumentasikan ekosistem `open-skills` yang sudah matang (`crates/clawcrew-runtime/src/skills/mod.rs`, 3-lapis loading workspace→global→plugin WASM) — risiko duplikasi SSOT kalau tim lain menganggap belum ada. Tulis `standard-docs/tech-standart/plugin-standard/open-skills-ecosystem.md`.
+- [x] **BL-03 (LOW, dokumentasi murni, bisa paralel kapan saja)** Dokumentasikan ekosistem `open-skills` yang sudah matang (`crates/galleon-runtime/src/skills/mod.rs`, 3-lapis loading workspace→global→plugin WASM) — risiko duplikasi SSOT kalau tim lain menganggap belum ada. Tulis `standard-docs/tech-standart/plugin-standard/open-skills-ecosystem.md`.
   #### Detail Eksekusi -- BL-03
   1. **File & simbol spesifik:**
-     - `/crates/clawcrew-runtime/src/skills/mod.rs` - reference implementation
+     - `/crates/galleon-runtime/src/skills/mod.rs` - reference implementation
      - `/standard-docs/tech-standart/plugin-standard/open-skills-ecosystem.md` (baru)
   2. **Acceptance criteria testable:**
      - [x] Dokumentasi kanonikal tersedia di `standard-docs/tech-standart/plugin-standard/open-skills-ecosystem.md`
@@ -518,7 +518,7 @@ depends_on: BG-B1/BG-B2 (sudah selesai, lihat dev-tasks/01)
 |---|---|---|
 | A | `engine/pkg/store/postgres/`, `engine/pkg/store/vector/` (baru) | Backend-Go |
 | B | `crates/clawcrew-{gateway,channels,runtime}/src/**` (per-crate berseri, JANGAN paralel di crate yang sama) | Backend-Rust |
-| C | `crates/clawcrew-runtime/src/agent/{history_trim,loop_}/mod.rs` (verified paths) | Backend-Rust |
+| C | `crates/galleon-runtime/src/agent/{history_trim,loop_}/mod.rs` (verified paths) | Backend-Rust |
 | D | `crates/galleon-memory/src/knowledge_graph.rs`, `galleon-api/src/knowledge.rs` | Backend-Rust |
 | E | `proto/agent_service.proto`, `crates/galleon-gateway/src/grpc_system_gateway.rs`, `engine/src/memory/{proposal,store,wire}.go`, `standard-docs/tech-standart/plugin-standard/` (BL-03) | Backend-Go + Backend-Rust (BL-01 serial: proto dulu) |
 

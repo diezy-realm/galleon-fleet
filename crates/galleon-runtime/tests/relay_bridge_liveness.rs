@@ -500,8 +500,8 @@ fn bridge_config_with_targets(
     signing_key: Vec<u8>,
     local_wss_addr: String,
     local_enroll_addr: String,
-) -> clawcrew_runtime::relay::RelayBridgeConfig {
-    clawcrew_runtime::relay::RelayBridgeConfig {
+) -> galleon_runtime::relay::RelayBridgeConfig {
+    galleon_runtime::relay::RelayBridgeConfig {
         local_wss_addr,
         local_enroll_addr: Some(local_enroll_addr),
         // Tight enough that the reader's capacity and rate refusals are both
@@ -516,8 +516,8 @@ fn bridge_config(
     relay_addr: SocketAddr,
     data_dir: &std::path::Path,
     signing_key: Vec<u8>,
-) -> clawcrew_runtime::relay::RelayBridgeConfig {
-    clawcrew_runtime::relay::RelayBridgeConfig {
+) -> galleon_runtime::relay::RelayBridgeConfig {
+    galleon_runtime::relay::RelayBridgeConfig {
         relay_addr: relay_addr.to_string(),
         relay_host: "localhost".into(),
         node_id: "relay-device".into(),
@@ -597,10 +597,10 @@ async fn assert_setup_is_bounded_and_retries(behavior: RelayBehavior) {
     let _ = rustls::crypto::ring::default_provider().install_default();
     let mut relay = spawn_stub_relay(behavior).await;
     let dir = tempfile::tempdir().unwrap();
-    let signing_key = clawcrew_runtime::relay::ensure_signing_key(dir.path()).unwrap();
+    let signing_key = galleon_runtime::relay::ensure_signing_key(dir.path()).unwrap();
     let cancel = CancellationToken::new();
 
-    let bridge = tokio::spawn(clawcrew_runtime::relay::run_relay_bridge(
+    let bridge = tokio::spawn(galleon_runtime::relay::run_relay_bridge(
         bridge_config(relay.addr, dir.path(), signing_key),
         cancel.clone(),
     ));
@@ -655,10 +655,10 @@ async fn assert_cancellation_during_setup_returns_promptly(behavior: RelayBehavi
     let _ = rustls::crypto::ring::default_provider().install_default();
     let mut relay = spawn_stub_relay(behavior).await;
     let dir = tempfile::tempdir().unwrap();
-    let signing_key = clawcrew_runtime::relay::ensure_signing_key(dir.path()).unwrap();
+    let signing_key = galleon_runtime::relay::ensure_signing_key(dir.path()).unwrap();
     let cancel = CancellationToken::new();
 
-    let bridge = tokio::spawn(clawcrew_runtime::relay::run_relay_bridge(
+    let bridge = tokio::spawn(galleon_runtime::relay::run_relay_bridge(
         bridge_config(relay.addr, dir.path(), signing_key),
         cancel.clone(),
     ));
@@ -711,10 +711,10 @@ async fn a_saturated_link_still_serves_sibling_routes_and_stays_tearable() {
 
     let mut relay = spawn_stub_relay(RelayBehavior::SaturateThenOpenSibling).await;
     let dir = tempfile::tempdir().unwrap();
-    let signing_key = clawcrew_runtime::relay::ensure_signing_key(dir.path()).unwrap();
+    let signing_key = galleon_runtime::relay::ensure_signing_key(dir.path()).unwrap();
     let cancel = CancellationToken::new();
 
-    let bridge = tokio::spawn(clawcrew_runtime::relay::run_relay_bridge(
+    let bridge = tokio::spawn(galleon_runtime::relay::run_relay_bridge(
         bridge_config_with_targets(
             relay.addr,
             dir.path(),
@@ -754,10 +754,10 @@ async fn an_established_relay_that_stops_reading_is_declared_dead_and_reconnecte
     let _ = rustls::crypto::ring::default_provider().install_default();
     let mut relay = spawn_stub_relay(RelayBehavior::WedgeAfterRegistration).await;
     let dir = tempfile::tempdir().unwrap();
-    let signing_key = clawcrew_runtime::relay::ensure_signing_key(dir.path()).unwrap();
+    let signing_key = galleon_runtime::relay::ensure_signing_key(dir.path()).unwrap();
     let cancel = CancellationToken::new();
 
-    let bridge = tokio::spawn(clawcrew_runtime::relay::run_relay_bridge(
+    let bridge = tokio::spawn(galleon_runtime::relay::run_relay_bridge(
         bridge_config(relay.addr, dir.path(), signing_key),
         cancel.clone(),
     ));

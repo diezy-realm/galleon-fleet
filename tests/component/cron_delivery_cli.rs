@@ -16,7 +16,7 @@ use std::path::Path;
 use std::process::{Command, Output};
 
 use galleon_config::schema::Config;
-use clawcrew_runtime::cron;
+use galleon_runtime::cron;
 
 /// `locale = "en"` is pinned so stdout assertions do not depend on the
 /// environment; `config_dir_locale_regression.rs` shows config drives locale.
