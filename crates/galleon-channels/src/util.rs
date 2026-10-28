@@ -92,7 +92,7 @@ pub(crate) async fn spawn_raw_http_response(
     (format!("http://{address}"), server)
 }
 
-pub const BLOCK_KIT_PREFIX: &str = "__CLAWCREW_BLOCK_KIT__";
+pub const BLOCK_KIT_PREFIX: &str = "__GALLEON_BLOCK_KIT__";
 
 pub fn strip_tool_call_tags(message: &str) -> String {
     const TOOL_CALL_OPEN_TAGS: [&str; 7] = [

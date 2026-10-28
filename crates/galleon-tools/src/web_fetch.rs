@@ -1504,7 +1504,7 @@ mod tests {
 
     #[tokio::test]
     async fn standard_fetch_decodes_gzip_brotli_and_deflate() {
-        let payload = "CLAWCREW_DECOMPRESSED_OK ".repeat(8);
+        let payload = "GALLEON_DECOMPRESSED_OK ".repeat(8);
         let bytes = payload.as_bytes();
         for (encoding, body) in [
             ("gzip", gzip_bytes(bytes)),
@@ -1539,7 +1539,7 @@ mod tests {
         // `build_redirect_guarded_client`: the mock answers only a request that
         // carries the exact Accept-Encoding value, so a decoded body here proves
         // the production wiring end to end.
-        let payload = "CLAWCREW_PRODUCTION_PATH_OK";
+        let payload = "GALLEON_PRODUCTION_PATH_OK";
         let server = MockServer::start().await;
         let addr = server.address();
         Mock::given(method("GET"))

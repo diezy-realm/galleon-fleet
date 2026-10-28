@@ -98,9 +98,9 @@ sandbox_backend = "docker"
     )
     .expect("write config fixture");
 
-    let _config_dir = EnvGuard::set("CLAWCREW_CONFIG_DIR", install.path());
-    let _data_dir = EnvGuard::remove("CLAWCREW_DATA_DIR");
-    let _legacy_workspace = EnvGuard::remove("CLAWCREW_WORKSPACE");
+    let _config_dir = EnvGuard::set("GALLEON_CONFIG_DIR", install.path());
+    let _data_dir = EnvGuard::remove("GALLEON_DATA_DIR");
+    let _legacy_workspace = EnvGuard::remove("GALLEON_WORKSPACE");
 
     let config = Config::load_or_init().await.expect("load config fixture");
     assert_eq!(config.runtime.kind, RuntimeKind::Docker);

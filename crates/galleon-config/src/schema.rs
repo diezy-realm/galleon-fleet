@@ -86,13 +86,13 @@ struct RuntimeProxyCachedClient {
 
 /// Top-level ClawCrew configuration, loaded from `config.toml`.
 ///
-/// Resolution order: `CLAWCREW_CONFIG_DIR` env → `CLAWCREW_WORKSPACE` env → `~/.clawcrew/config.toml`.
+/// Resolution order: `GALLEON_CONFIG_DIR` env → `GALLEON_WORKSPACE` env → `~/.clawcrew/config.toml`.
 #[derive(Debug, Clone, Serialize, Deserialize, Configurable)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
 pub struct Config {
     /// Shared instance data directory (databases, hygiene state, cost
-    /// records, daemon state files). Computed from `CLAWCREW_CONFIG_DIR`
-    /// / `CLAWCREW_DATA_DIR` / `CLAWCREW_WORKSPACE` (deprecated) at
+    /// records, daemon state files). Computed from `GALLEON_CONFIG_DIR`
+    /// / `GALLEON_DATA_DIR` / `GALLEON_WORKSPACE` (deprecated) at
     /// load time, not serialized. Per-agent identity + markdown lives
     /// at `agent_workspace_dir(&alias)`, not here.
     #[serde(skip)]
@@ -100,7 +100,7 @@ pub struct Config {
     /// Path to config.toml - computed from home, not serialized
     #[serde(skip)]
     pub config_path: PathBuf,
-    /// Dotted prop-paths overridden by `CLAWCREW_*` env vars at load time.
+    /// Dotted prop-paths overridden by `GALLEON_*` env vars at load time.
     /// Populated by `apply_env_overrides`; consulted by `save()` to mask the
     /// env-injected values back to disk-or-default before encryption, and by
     /// `prop_is_env_overridden` for O(1) display-layer lookup (config list,
@@ -5464,7 +5464,7 @@ pub struct TranscriptionConfig {
     pub enabled: bool,
     /// API key used for transcription requests (Groq transcription provider).
     ///
-    /// Use the schema-mirror env grammar (`CLAWCREW_transcription__api_key=...`)
+    /// Use the schema-mirror env grammar (`GALLEON_transcription__api_key=...`)
     /// for runtime env injection. Legacy `GROQ_API_KEY` constructor fallback was
     /// removed in v0.8.0.
     #[serde(default)]
@@ -12231,7 +12231,7 @@ impl Default for PostgresStorageConfig {
 /// Qdrant vector database backend (`[storage.qdrant.<alias>]`).
 ///
 /// URL, collection, and API key are typed config values. Use schema-mirror env
-/// overrides such as `CLAWCREW_storage__qdrant__<alias>__url=...` for runtime
+/// overrides such as `GALLEON_storage__qdrant__<alias>__url=...` for runtime
 /// env injection.
 #[derive(Debug, Clone, Serialize, Deserialize, Configurable)]
 #[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
@@ -12239,13 +12239,13 @@ impl Default for PostgresStorageConfig {
 #[serde(default)]
 pub struct QdrantStorageConfig {
     /// Qdrant server URL (e.g. `"http://localhost:6333"`).
-    /// Use `CLAWCREW_storage__qdrant__<alias>__url=...` for env injection.
+    /// Use `GALLEON_storage__qdrant__<alias>__url=...` for env injection.
     pub url: Option<String>,
     /// Collection name for storing memories.
-    /// Use `CLAWCREW_storage__qdrant__<alias>__collection=...` for env injection.
+    /// Use `GALLEON_storage__qdrant__<alias>__collection=...` for env injection.
     pub collection: String,
     /// API key for Qdrant Cloud or secured instances.
-    /// Use `CLAWCREW_storage__qdrant__<alias>__api_key=...` for env injection.
+    /// Use `GALLEON_storage__qdrant__<alias>__api_key=...` for env injection.
     #[secret]
     #[credential_class = "encrypted_secret"]
     #[cfg_attr(feature = "schema-export", schemars(extend("x-secret" = true)))]
@@ -16690,7 +16690,7 @@ pub struct SlackConfig {
     pub enabled: bool,
     /// Slack bot OAuth token (xoxb-...). Optional in config: when unset or
     /// empty it is resolved at channel construction from
-    /// `CLAWCREW_SLACK_BOT_TOKEN`, then `SLACK_BOT_TOKEN`. `#[serde(default)]`
+    /// `GALLEON_SLACK_BOT_TOKEN`, then `SLACK_BOT_TOKEN`. `#[serde(default)]`
     /// so a config that omits it still deserializes - the env fallback then
     /// supplies it - instead of failing with `missing field 'bot_token'`.
     ///
@@ -16700,7 +16700,7 @@ pub struct SlackConfig {
     #[cfg_attr(feature = "schema-export", schemars(extend("x-secret" = true)))]
     pub bot_token: Option<String>,
     /// Slack app-level token for Socket Mode (xapp-...). When unset or empty,
-    /// resolved at channel construction from `CLAWCREW_SLACK_APP_TOKEN`, then
+    /// resolved at channel construction from `GALLEON_SLACK_APP_TOKEN`, then
     /// `SLACK_APP_TOKEN`. `#[serde(default)]` makes omission explicit (an
     /// `Option` field is already omittable, but this keeps it consistent with
     /// `bot_token`).
@@ -16825,7 +16825,7 @@ impl SlackConfig {
     }
 
     /// Resolve the effective Slack bot token: the configured `bot_token` when
-    /// set and non-empty, else the `CLAWCREW_SLACK_BOT_TOKEN` env var, else
+    /// set and non-empty, else the `GALLEON_SLACK_BOT_TOKEN` env var, else
     /// `SLACK_BOT_TOKEN`. Returns `None` when none is available. Resolving here
     /// (rather than writing the env value back into the config struct) keeps an
     /// env-supplied secret out of any config that might later be persisted to
@@ -16835,7 +16835,7 @@ impl SlackConfig {
     }
 
     /// Resolve the effective Slack app-level (Socket Mode) token: configured
-    /// `app_token` when set and non-empty, else `CLAWCREW_SLACK_APP_TOKEN`,
+    /// `app_token` when set and non-empty, else `GALLEON_SLACK_APP_TOKEN`,
     /// else `SLACK_APP_TOKEN`. Returns `None` when none is available.
     pub fn resolved_app_token(&self) -> Option<String> {
         resolve_slack_token(self.app_token.as_deref(), "APP")
@@ -16843,7 +16843,7 @@ impl SlackConfig {
 }
 
 /// Shared token resolution for [`SlackConfig`]: a non-empty configured value
-/// wins; otherwise the `CLAWCREW_SLACK_<KIND>_TOKEN` env var takes precedence
+/// wins; otherwise the `GALLEON_SLACK_<KIND>_TOKEN` env var takes precedence
 /// over the conventional `SLACK_<KIND>_TOKEN`. Blank values (config or env) are
 /// treated as absent. `kind` is `"BOT"` or `"APP"`.
 fn resolve_slack_token(configured: Option<&str>, kind: &str) -> Option<String> {
@@ -16854,7 +16854,7 @@ fn resolve_slack_token(configured: Option<&str>, kind: &str) -> Option<String> {
         }
     }
     for var in [
-        format!("CLAWCREW_SLACK_{kind}_TOKEN"),
+        format!("GALLEON_SLACK_{kind}_TOKEN"),
         format!("SLACK_{kind}_TOKEN"),
     ] {
         if let Ok(value) = std::env::var(&var) {
@@ -17718,7 +17718,7 @@ pub struct WhatsAppConfig {
     pub verify_token: Option<String>,
     /// App secret from Meta Business Suite (for webhook signature verification)
     /// Can also be set with the alias-qualified generic environment override:
-    /// `CLAWCREW_channels__whatsapp__<alias>__app_secret`.
+    /// `GALLEON_channels__whatsapp__<alias>__app_secret`.
     /// Only used in Cloud API mode.
     ///
     /// Required to receive webhooks. Inbound requests are signature-verified,
@@ -17981,7 +17981,7 @@ pub struct NextcloudTalkConfig {
     /// signing outbound bot-API requests. When it is unset, inbound webhooks
     /// are rejected and no outbound request is sent (fail closed).
     ///
-    /// Can also be set via `CLAWCREW_NEXTCLOUD_TALK_WEBHOOK_SECRET`.
+    /// Can also be set via `GALLEON_NEXTCLOUD_TALK_WEBHOOK_SECRET`.
     #[serde(default)]
     #[secret]
     #[tab(Connection)]
@@ -20833,22 +20833,29 @@ impl Default for SecurityOpsConfig {
 impl Default for Config {
     fn default() -> Self {
         // `default_config_dir()` is the canonical resolution for "where does
-        // an unspecified config live": it honors `CLAWCREW_CONFIG_DIR`, then
+        // an unspecified config live": it honors `GALLEON_CONFIG_DIR`, then
         // a `HOME` env override, before falling back to `UserDirs`. Calling
         // it here, instead of duplicating a `UserDirs`-only computation,
         // means a `Config::default()` constructed under an isolated test or
         // deployment never resolves to the real machine's `~/.clawcrew`, and
         // so cannot become a save target pointing at an operator's populated
         // config.toml.
-        let clawcrew_dir = default_config_dir().unwrap_or_else(|_| {
+        let galleon_dir = default_config_dir().unwrap_or_else(|_| {
             let home =
                 UserDirs::new().map_or_else(|| PathBuf::from("."), |u| u.home_dir().to_path_buf());
-            home.join(".clawcrew")
+            #[cfg(windows)]
+            {
+                home.join("AppData").join("Roaming").join("galleon")
+            }
+            #[cfg(not(windows))]
+            {
+                home.join(".config").join("galleon")
+            }
         });
 
         Self {
-            data_dir: clawcrew_dir.join("data"),
-            config_path: clawcrew_dir.join("config.toml"),
+            data_dir: galleon_dir.join("data"),
+            config_path: galleon_dir.join("config.toml"),
             env_overridden_paths: std::collections::HashSet::new(),
             pre_override_snapshots: std::collections::HashMap::new(),
             onepassword_reference_snapshots: std::collections::HashMap::new(),
@@ -20956,29 +20963,47 @@ fn default_config_and_data_dirs() -> Result<(PathBuf, PathBuf)> {
 }
 
 fn default_config_dir() -> Result<PathBuf> {
-    if let Ok(custom) = std::env::var("CLAWCREW_CONFIG_DIR") {
+    if let Ok(custom) = std::env::var("GALLEON_CONFIG_DIR") {
         let custom = custom.trim();
         if !custom.is_empty() {
             return Ok(expand_tilde_path(custom));
         }
     }
 
+    #[cfg(windows)]
+    {
+        if let Ok(appdata) = std::env::var("APPDATA") {
+            let appdata = appdata.trim();
+            if !appdata.is_empty() {
+                return Ok(PathBuf::from(appdata).join("galleon"));
+            }
+        }
+    }
+
     if let Ok(home) = std::env::var("HOME")
         && !home.is_empty()
     {
-        return Ok(PathBuf::from(home).join(".clawcrew"));
+        return Ok(PathBuf::from(home).join(".config").join("galleon"));
     }
 
     let home = UserDirs::new()
         .map(|u| u.home_dir().to_path_buf())
         .context("Could not find home directory")?;
-    Ok(home.join(".clawcrew"))
+
+    #[cfg(windows)]
+    {
+        Ok(home.join("AppData").join("Roaming").join("galleon"))
+    }
+    #[cfg(not(windows))]
+    {
+        Ok(home.join(".config").join("galleon"))
+    }
 }
 
 /// Canonical on-disk directory for a locale's runtime/zerocode FTL catalogues:
 /// `<config_dir>/data/ftl/<locale>/`. This is where `clawcrew locales fetch`
 /// writes downloaded translations and where the runtime i18n loader reads them.
-/// `<config_dir>` honors `CLAWCREW_CONFIG_DIR` and otherwise defaults to
+/// `<config_dir>` honors `GALLEON_CONFIG_DIR` and otherwise defaults to
 /// `~/.clawcrew`. The zerocode binary mirrors this path inline (it carries no
 /// `clawcrew-*` dependency).
 pub fn ftl_locale_dir(locale: &str) -> Result<PathBuf> {
@@ -21024,7 +21049,7 @@ pub const FTL_CATALOGS: &[(&str, &str, &str)] = &[
 fn default_path_under_config_dir(relative: &str) -> String {
     match default_config_dir() {
         Ok(dir) => dir.join(relative).to_string_lossy().into_owned(),
-        Err(_) => format!("~/.clawcrew/{relative}"),
+        Err(_) => format!("~/.config/galleon/{relative}"),
     }
 }
 
@@ -21034,20 +21059,15 @@ pub fn resolve_config_dir_for_data(data_dir: &Path) -> (PathBuf, PathBuf) {
         return (data_config_dir.clone(), data_config_dir.join("data"));
     }
 
-    let legacy_config_dir = data_dir.parent().map(|parent| parent.join(".clawcrew"));
-    if let Some(legacy_dir) = legacy_config_dir {
-        if legacy_dir.join("config.toml").exists() {
-            return (legacy_dir, data_config_dir);
+    if let Some(parent) = data_dir.parent() {
+        if parent.join("config.toml").exists() {
+            return (parent.to_path_buf(), data_config_dir);
         }
 
-        // Accept either the new "data" suffix or the legacy "workspace"
-        // suffix; the V2->V3 filesystem migration renames the on-disk
-        // dir but operator-set env-var paths from before the rename
-        // still resolve correctly.
         if data_dir.file_name().is_some_and(|name| {
             name == std::ffi::OsStr::new("data") || name == std::ffi::OsStr::new("workspace")
         }) {
-            return (legacy_dir, data_config_dir);
+            return (parent.to_path_buf(), data_config_dir);
         }
     }
 
@@ -21085,7 +21105,7 @@ pub async fn classify_runtime_config_kind(config_path: &Path) -> RuntimeConfigKi
 /// Resolve the current runtime config/data directories.
 ///
 /// This mirrors the same precedence used by `Config::load_or_init()`:
-/// `CLAWCREW_CONFIG_DIR` > `CLAWCREW_DATA_DIR` > `CLAWCREW_WORKSPACE`
+/// `GALLEON_CONFIG_DIR` > `GALLEON_DATA_DIR` > `GALLEON_WORKSPACE`
 /// (deprecated) > defaults.
 pub async fn resolve_runtime_dirs() -> Result<(PathBuf, PathBuf)> {
     let (default_clawcrew_dir, default_data_dir) = default_config_and_data_dirs()?;
@@ -21106,9 +21126,9 @@ enum ConfigResolutionSource {
 impl ConfigResolutionSource {
     const fn as_str(self) -> &'static str {
         match self {
-            Self::EnvConfigDir => "CLAWCREW_CONFIG_DIR",
-            Self::EnvDataDir => "CLAWCREW_DATA_DIR",
-            Self::EnvWorkspaceLegacy => "CLAWCREW_WORKSPACE",
+            Self::EnvConfigDir => "GALLEON_CONFIG_DIR",
+            Self::EnvDataDir => "GALLEON_DATA_DIR",
+            Self::EnvWorkspaceLegacy => "GALLEON_WORKSPACE",
             Self::DefaultConfigDir => "default",
             Self::HomebrewConfigDir => "homebrew",
         }
@@ -21201,7 +21221,7 @@ async fn try_resolve_macos_homebrew_config_dir(exe: &Path) -> Option<PathBuf> {
             if *cellar == std::ffi::OsStr::new("Cellar")
                 && *formula == std::ffi::OsStr::new("clawcrew")
                 && *bin == std::ffi::OsStr::new("bin")
-                && *exe_name == std::ffi::OsStr::new("clawcrew") =>
+                && *exe_name == std::ffi::OsStr::new("galleon") =>
         {
             prefix.iter().collect::<PathBuf>()
         }
@@ -21209,7 +21229,7 @@ async fn try_resolve_macos_homebrew_config_dir(exe: &Path) -> Option<PathBuf> {
             if *opt == std::ffi::OsStr::new("opt")
                 && *formula == std::ffi::OsStr::new("clawcrew")
                 && *bin == std::ffi::OsStr::new("bin")
-                && *exe_name == std::ffi::OsStr::new("clawcrew") =>
+                && *exe_name == std::ffi::OsStr::new("galleon") =>
         {
             let prefix = prefix.iter().collect::<PathBuf>();
             if !prefix.as_os_str().is_empty()
@@ -21224,7 +21244,7 @@ async fn try_resolve_macos_homebrew_config_dir(exe: &Path) -> Option<PathBuf> {
         }
         [prefix @ .., bin, exe_name]
             if *bin == std::ffi::OsStr::new("bin")
-                && *exe_name == std::ffi::OsStr::new("clawcrew") =>
+                && *exe_name == std::ffi::OsStr::new("galleon") =>
         {
             let prefix = prefix.iter().collect::<PathBuf>();
             if !prefix.as_os_str().is_empty()
@@ -21239,20 +21259,20 @@ async fn try_resolve_macos_homebrew_config_dir(exe: &Path) -> Option<PathBuf> {
         }
         _ => return None,
     };
-    Some(prefix.join("var").join("clawcrew"))
+    Some(prefix.join("var").join("galleon"))
 }
 
 async fn resolve_runtime_config_dirs(
     default_clawcrew_dir: &Path,
     default_data_dir: &Path,
 ) -> Result<(PathBuf, PathBuf, ConfigResolutionSource)> {
-    if let Ok(custom_config_dir) = std::env::var("CLAWCREW_CONFIG_DIR") {
+    if let Ok(custom_config_dir) = std::env::var("GALLEON_CONFIG_DIR") {
         let custom_config_dir = custom_config_dir.trim();
         if !custom_config_dir.is_empty() {
-            // If the operator ALSO set CLAWCREW_DATA_DIR or
-            // CLAWCREW_WORKSPACE, CONFIG_DIR wins; surface the
+            // If the operator ALSO set GALLEON_DATA_DIR or
+            // GALLEON_WORKSPACE, CONFIG_DIR wins; surface the
             // collision so they know which one took effect.
-            if std::env::var("CLAWCREW_DATA_DIR")
+            if std::env::var("GALLEON_DATA_DIR")
                 .ok()
                 .filter(|v| !v.trim().is_empty())
                 .is_some()
@@ -21261,12 +21281,12 @@ async fn resolve_runtime_config_dirs(
                     WARN,
                     ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_outcome(::galleon_log::EventOutcome::Unknown),
-                    "CLAWCREW_CONFIG_DIR is set; CLAWCREW_DATA_DIR is ignored \
+                    "GALLEON_CONFIG_DIR is set; GALLEON_DATA_DIR is ignored \
                      (CONFIG_DIR pins both the config directory and the data \
                      directory under it)."
                 );
             }
-            if std::env::var("CLAWCREW_WORKSPACE")
+            if std::env::var("GALLEON_WORKSPACE")
                 .ok()
                 .filter(|v| !v.is_empty())
                 .is_some()
@@ -21275,9 +21295,9 @@ async fn resolve_runtime_config_dirs(
                     WARN,
                     ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                         .with_outcome(::galleon_log::EventOutcome::Unknown),
-                    "CLAWCREW_CONFIG_DIR is set; CLAWCREW_WORKSPACE (deprecated) \
-                     is ignored. CLAWCREW_WORKSPACE will be removed in a future \
-                     release; switch any remaining references to CLAWCREW_DATA_DIR."
+                    "GALLEON_CONFIG_DIR is set; GALLEON_WORKSPACE (deprecated) \
+                     is ignored. GALLEON_WORKSPACE will be removed in a future \
+                     release; switch any remaining references to GALLEON_DATA_DIR."
                 );
             }
             let clawcrew_dir = expand_tilde_path(custom_config_dir);
@@ -21289,10 +21309,10 @@ async fn resolve_runtime_config_dirs(
         }
     }
 
-    if let Ok(custom_data) = std::env::var("CLAWCREW_DATA_DIR")
+    if let Ok(custom_data) = std::env::var("GALLEON_DATA_DIR")
         && !custom_data.trim().is_empty()
     {
-        if std::env::var("CLAWCREW_WORKSPACE")
+        if std::env::var("GALLEON_WORKSPACE")
             .ok()
             .filter(|v| !v.is_empty())
             .is_some()
@@ -21301,9 +21321,9 @@ async fn resolve_runtime_config_dirs(
                 WARN,
                 ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_outcome(::galleon_log::EventOutcome::Unknown),
-                "CLAWCREW_DATA_DIR and CLAWCREW_WORKSPACE are both set; \
-                 CLAWCREW_WORKSPACE (deprecated) is ignored. \
-                 CLAWCREW_WORKSPACE will be removed in a future release."
+                "GALLEON_DATA_DIR and GALLEON_WORKSPACE are both set; \
+                 GALLEON_WORKSPACE (deprecated) is ignored. \
+                 GALLEON_WORKSPACE will be removed in a future release."
             );
         }
         let expanded = expand_tilde_path(&custom_data);
@@ -21311,15 +21331,15 @@ async fn resolve_runtime_config_dirs(
         return Ok((clawcrew_dir, data_dir, ConfigResolutionSource::EnvDataDir));
     }
 
-    if let Ok(custom_workspace) = std::env::var("CLAWCREW_WORKSPACE")
+    if let Ok(custom_workspace) = std::env::var("GALLEON_WORKSPACE")
         && !custom_workspace.is_empty()
     {
         ::galleon_log::record!(
             WARN,
             ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                 .with_outcome(::galleon_log::EventOutcome::Unknown),
-            "CLAWCREW_WORKSPACE is deprecated; use CLAWCREW_DATA_DIR instead. \
-             CLAWCREW_WORKSPACE will be removed in a future release."
+            "GALLEON_WORKSPACE is deprecated; use GALLEON_DATA_DIR instead. \
+             GALLEON_WORKSPACE will be removed in a future release."
         );
         let expanded = expand_tilde_path(&custom_workspace);
         let (clawcrew_dir, data_dir) = resolve_config_dir_for_data(&expanded);
@@ -21351,7 +21371,7 @@ async fn resolve_runtime_config_dirs(
 fn config_dir_creation_error(path: &Path) -> String {
     format!(
         "Failed to create config directory: {}. If running as an OpenRC service, \
-         ensure this path is writable by user 'clawcrew'.",
+         ensure this path is writable by user 'galleon'.",
         path.display()
     )
 }
@@ -22173,7 +22193,7 @@ impl Config {
         )
     }
 
-    /// Returns `true` if `path` was populated by a `CLAWCREW_*` env-var
+    /// Returns `true` if `path` was populated by a `GALLEON_*` env-var
     /// override at load time. O(1) HashSet lookup; safe to call per row in
     /// list-rendering paths (`config list`, dashboard, quickstart).
     pub fn prop_is_env_overridden(&self, path: &str) -> bool {
@@ -22181,13 +22201,31 @@ impl Config {
     }
 
     pub async fn load_or_init() -> Result<Self> {
+        // First boot migration: automatically migrate ~/.clawcrew to ~/.config/galleon if needed
+        if std::env::var("GALLEON_CONFIG_DIR").is_err() {
+            if let (Some(legacy), Ok(canonical)) = (
+                crate::config_migration::default_legacy_config_dir(),
+                default_config_dir(),
+            ) {
+                if let Err(e) = crate::config_migration::migrate_config_directory(&legacy, &canonical) {
+                    ::galleon_log::record!(
+                        WARN,
+                        ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
+                            .with_outcome(::galleon_log::EventOutcome::Unknown)
+                            .with_attrs(::serde_json::json!({ "error": format!("{e}") })),
+                        "[system] legacy config migration failed; continuing"
+                    );
+                }
+            }
+        }
+
         let (default_clawcrew_dir, default_workspace_dir) = default_config_and_data_dirs()?;
 
         // Resolve env overrides FIRST so the migration runs against
         // the install root the operator actually uses. Running the
         // migration against `default_clawcrew_dir` would silently skip
-        // any install reached via `CLAWCREW_CONFIG_DIR` or
-        // `CLAWCREW_WORKSPACE`.
+        // any install reached via `GALLEON_CONFIG_DIR` or
+        // `GALLEON_WORKSPACE`.
         let (clawcrew_dir, _legacy_workspace_dir, resolution_source) =
             resolve_runtime_config_dirs(&default_clawcrew_dir, &default_workspace_dir).await?;
 
@@ -22518,7 +22556,7 @@ impl Config {
             .await
             .context("Config secret decryption task failed")??;
 
-            // Apply CLAWCREW_<lowercase_path> env-var overrides. Hard-errors
+            // Apply GALLEON_<lowercase_path> env-var overrides. Hard-errors
             // on any unresolvable path — no silent ignores. Tracks overridden
             // paths and per-path pre-override snapshots so save() can mask
             // env-injected values back to the original on-disk state.
@@ -24254,7 +24292,7 @@ impl Config {
                 && !has_ollama_cloud_credential(entry.api_key.as_deref())
             {
                 anyhow::bail!(
-                    "providers.models.ollama.{alias}.model uses ':cloud', but no API key is configured. Set api_key on [providers.models.ollama.{alias}] (or via the schema-mirror grammar: CLAWCREW_providers__models__ollama__{alias}__api_key=<value>)."
+                    "providers.models.ollama.{alias}.model uses ':cloud', but no API key is configured. Set api_key on [providers.models.ollama.{alias}] (or via the schema-mirror grammar: GALLEON_providers__models__ollama__{alias}__api_key=<value>)."
                 );
             }
         }
@@ -25455,7 +25493,7 @@ impl Config {
         let store = crate::secrets::SecretStore::new(clawcrew_dir, self.secrets.encrypt);
 
         // Restore env-overridden paths to their pre-override snapshots before
-        // encryption, so values supplied via `CLAWCREW_*` env vars never reach
+        // encryption, so values supplied via `GALLEON_*` env vars never reach
         // disk. Snapshots were captured at apply time from the post-decrypt
         // in-memory state, so secrets carry the original plaintext that
         // `encrypt_secrets()` will re-encrypt to fresh ciphertext that

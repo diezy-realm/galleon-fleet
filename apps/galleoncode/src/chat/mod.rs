@@ -1638,7 +1638,7 @@ impl Chat {
         // TodoWrite display is a ZeroCode UI concern owned by
         // `zerocode-config.toml` — the daemon holds no TodoWrite display schema
         // — so read it from the local config file (honoring `--config-dir` /
-        // `CLAWCREW_CONFIG_DIR`), not over RPC. A fresh pane has no prior
+        // `GALLEON_CONFIG_DIR`), not over RPC. A fresh pane has no prior
         // tracker, so a load failure falls back to the built-in defaults.
         let todo_settings =
             Self::resolve_todo_settings(crate::todo_tracker::TodoTrackerSettings::default());

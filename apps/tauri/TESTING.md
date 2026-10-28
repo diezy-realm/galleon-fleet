@@ -37,7 +37,7 @@ On launch:
 > `503 "no daemon supervisor — running as standalone gateway"`, so the new agent
 > won't go live until the process is restarted. The daemon hot-reloads instead.
 
-The desktop supervisor writes combined daemon stdout and stderr to `<config-dir>/logs/clawcrew-desktop-daemon.log`, where `<config-dir>` follows canonical config resolution precedence: `CLAWCREW_CONFIG_DIR`, then `CLAWCREW_DATA_DIR`, then deprecated `CLAWCREW_WORKSPACE`, then Homebrew/default resolution. The capture is capped at 8 MiB and retains the newest tail when the cap is crossed.
+The desktop supervisor writes combined daemon stdout and stderr to `<config-dir>/logs/clawcrew-desktop-daemon.log`, where `<config-dir>` follows canonical config resolution precedence: `GALLEON_CONFIG_DIR`, then `GALLEON_DATA_DIR`, then deprecated `GALLEON_WORKSPACE`, then Homebrew/default resolution. The capture is capped at 8 MiB and retains the newest tail when the cap is crossed.
 
 ## Self-contained build (bundled kernel)
 
@@ -56,7 +56,7 @@ scripts/desktop/prepare-kernel.sh --target universal-apple-darwin --features emb
 cd apps/tauri && cargo tauri build --config tauri.bundled.conf.json
 ```
 
-`CLAWCREW_KERNEL_PATH` can reuse a prebuilt single-target kernel, but that
+`GALLEON_KERNEL_PATH` can reuse a prebuilt single-target kernel, but that
 binary must already have been built with `--features embedded-web`; the staging
 script cannot add embedded assets to an existing executable.
 

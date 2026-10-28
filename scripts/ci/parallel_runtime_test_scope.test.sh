@@ -76,7 +76,7 @@ trap 'rm -rf "$mock_dir"' EXIT
 
 cat > "${mock_dir}/cargo" <<'EOF'
 #!/usr/bin/env bash
-printf '%s\n' "$*" >> "$CLAWCREW_PARALLEL_TEST_CARGO_LOG"
+printf '%s\n' "$*" >> "$GALLEON_PARALLEL_TEST_CARGO_LOG"
 EOF
 chmod +x "${mock_dir}/cargo"
 
@@ -96,9 +96,9 @@ expect_cargo_log() {
 }
 
 PATH="${mock_dir}:$PATH" \
-    CLAWCREW_PARALLEL_TEST_CARGO_LOG="$cargo_log" \
-    CLAWCREW_PARALLEL_TEST_RUNS=1 \
-    CLAWCREW_PARALLEL_TEST_SCOPE=channels \
+    GALLEON_PARALLEL_TEST_CARGO_LOG="$cargo_log" \
+    GALLEON_PARALLEL_TEST_RUNS=1 \
+    GALLEON_PARALLEL_TEST_SCOPE=channels \
     bash "$gate" >/dev/null
 
 expect_cargo_log "channels scope" \
@@ -106,8 +106,8 @@ expect_cargo_log "channels scope" \
 
 : > "$cargo_log"
 PATH="${mock_dir}:$PATH" \
-    CLAWCREW_PARALLEL_TEST_CARGO_LOG="$cargo_log" \
-    CLAWCREW_PARALLEL_TEST_RUNS=1 \
+    GALLEON_PARALLEL_TEST_CARGO_LOG="$cargo_log" \
+    GALLEON_PARALLEL_TEST_RUNS=1 \
     bash "$gate" >/dev/null
 
 expect_cargo_log "default scope" \
@@ -116,9 +116,9 @@ expect_cargo_log "default scope" \
 
 : > "$cargo_log"
 PATH="${mock_dir}:$PATH" \
-    CLAWCREW_PARALLEL_TEST_CARGO_LOG="$cargo_log" \
-    CLAWCREW_PARALLEL_TEST_RUNS=1 \
-    CLAWCREW_PARALLEL_TEST_SCOPE='' \
+    GALLEON_PARALLEL_TEST_CARGO_LOG="$cargo_log" \
+    GALLEON_PARALLEL_TEST_RUNS=1 \
+    GALLEON_PARALLEL_TEST_SCOPE='' \
     bash "$gate" >/dev/null
 
 expect_cargo_log "empty scope" \
@@ -128,9 +128,9 @@ expect_cargo_log "empty scope" \
 : > "$cargo_log"
 set +e
 PATH="${mock_dir}:$PATH" \
-    CLAWCREW_PARALLEL_TEST_CARGO_LOG="$cargo_log" \
-    CLAWCREW_PARALLEL_TEST_RUNS=1 \
-    CLAWCREW_PARALLEL_TEST_SCOPE=unsupported \
+    GALLEON_PARALLEL_TEST_CARGO_LOG="$cargo_log" \
+    GALLEON_PARALLEL_TEST_RUNS=1 \
+    GALLEON_PARALLEL_TEST_SCOPE=unsupported \
     bash "$gate" >/dev/null 2>&1
 status=$?
 set -e

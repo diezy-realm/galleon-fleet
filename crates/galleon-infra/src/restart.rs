@@ -25,8 +25,8 @@ static RESPAWN_REQUESTED: AtomicBool = AtomicBool::new(false);
 static DESKTOP_RESTART_REQUESTED: AtomicBool = AtomicBool::new(false);
 static LAUNCH: OnceLock<LaunchCommand> = OnceLock::new();
 
-pub const DESKTOP_SUPERVISED_ENV: &str = "CLAWCREW_DESKTOP_SUPERVISED";
-pub const DESKTOP_RESTART_MARKER_ENV: &str = "CLAWCREW_DESKTOP_RESTART_MARKER";
+pub const DESKTOP_SUPERVISED_ENV: &str = "GALLEON_DESKTOP_SUPERVISED";
+pub const DESKTOP_RESTART_MARKER_ENV: &str = "GALLEON_DESKTOP_RESTART_MARKER";
 pub const DESKTOP_RESTART_EXIT_CODE: i32 = 75;
 
 #[derive(Clone)]

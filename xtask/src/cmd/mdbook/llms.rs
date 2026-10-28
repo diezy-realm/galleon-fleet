@@ -28,7 +28,7 @@ use std::path::{Path, PathBuf};
 
 /// Environment variable carrying the absolute URL prefix for every page link
 /// (for example `https://docs.clawcrew.com/v0.8.5/en/`). Set by `build.rs`.
-pub const BASE_URL_ENV: &str = "CLAWCREW_DOCS_LLMS_BASE_URL";
+pub const BASE_URL_ENV: &str = "GALLEON_DOCS_LLMS_BASE_URL";
 
 /// Public host for the docs site; the versioned prefix is appended per build.
 pub const DOCS_ORIGIN: &str = "https://docs.clawcrew.com";

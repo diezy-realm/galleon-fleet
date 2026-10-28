@@ -14015,7 +14015,7 @@ Let me check the result."#;
                     "--nocapture",
                 ])
                 .env(
-                    "CLAWCREW_TEST_SINGLE_SHOT_INTERACTIVE",
+                    "GALLEON_TEST_SINGLE_SHOT_INTERACTIVE",
                     if interactive { "1" } else { "0" },
                 )
                 .output()
@@ -14138,7 +14138,7 @@ Let me check the result."#;
             },
         );
 
-        let interactive = std::env::var("CLAWCREW_TEST_SINGLE_SHOT_INTERACTIVE")
+        let interactive = std::env::var("GALLEON_TEST_SINGLE_SHOT_INTERACTIVE")
             .expect("interactive mode env")
             == "1";
         let response = super::run(

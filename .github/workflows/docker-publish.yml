@@ -97,7 +97,7 @@ jobs:
           # native amd64 builder), Containerfile tags stay amd64-only.
           platforms: ${{ matrix.platforms }}
           build-args: |
-            CLAWCREW_CARGO_FLAGS=${{ matrix.flags }}
+            GALLEON_CARGO_FLAGS=${{ matrix.flags }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ matrix.pinned_tag }}
             ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ matrix.floating_tag }}

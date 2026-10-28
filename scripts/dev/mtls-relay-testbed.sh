@@ -200,7 +200,7 @@ ok "relay listening (pid $RELAY_PID)"
 
 # --- 4. start the daemon -----------------------------------------------------
 say "starting daemon (auto-generates CA, binds WSS, registers with relay)"
-CLAWCREW_CONFIG_DIR="$TB" "$CLAWCREW" daemon > "$TB/daemon.log" 2>&1 &
+GALLEON_CONFIG_DIR="$TB" "$CLAWCREW" daemon > "$TB/daemon.log" 2>&1 &
 DAEMON_PID=$!
 for _ in $(seq 1 80); do
   [ -f "$CA" ] && ss -ltn 2>/dev/null | grep -q ":$WSS_PORT" && break
@@ -213,7 +213,7 @@ ok "daemon up (pid $DAEMON_PID), CA at $CA, WSS on :$WSS_PORT"
 
 # --- 5. issue a client certificate -------------------------------------------
 say "issuing a client certificate from the daemon CA"
-CLAWCREW_CONFIG_DIR="$TB" "$CLAWCREW" security issue-client-cert \
+GALLEON_CONFIG_DIR="$TB" "$CLAWCREW" security issue-client-cert \
   --name zerocode --out-dir "$CLIENT_DIR" --force > "$TB/issue.log" 2>&1 \
   || { cat "$TB/issue.log" >&2; die "issue-client-cert failed"; }
 [ -f "$CLIENT_CRT" ] && [ -f "$CLIENT_KEY" ] || die "client cert/key not written to $CLIENT_DIR"
@@ -277,7 +277,7 @@ ENROLL_DIR="$TB/enrolled"
 # connect (here, via the cached relay whose self-signed outer cert this fresh
 # client does not yet trust) is irrelevant to validating ENROLLMENT itself, so we
 # ignore the exit code and assert the cert was cached, then verify it below.
-printf '%s\ny\n' "$CODE" | CLAWCREW_CONFIG_DIR="$ENROLL_DIR" "$ZEROCODE" \
+printf '%s\ny\n' "$CODE" | GALLEON_CONFIG_DIR="$ENROLL_DIR" "$ZEROCODE" \
   --enroll --enroll-host 127.0.0.1 --enroll-port "$ENROLL_PORT" \
   --config-dir "$ENROLL_DIR" > "$TB/enroll.log" 2>&1 || true
 ENR_CRT="$ENROLL_DIR/tls/client.crt"; ENR_KEY="$ENROLL_DIR/tls/client.key"
@@ -296,7 +296,7 @@ say "self-check F: un-migrated (certless) client is told to enroll"
 UNMIG_DIR="$TB/unmigrated"
 mkdir -p "$UNMIG_DIR"
 set +e
-out="$(CLAWCREW_CONFIG_DIR="$UNMIG_DIR" "$ZEROCODE" \
+out="$(GALLEON_CONFIG_DIR="$UNMIG_DIR" "$ZEROCODE" \
   --connect "wss://127.0.0.1:$WSS_PORT" --config-dir "$UNMIG_DIR" </dev/null 2>&1)"
 rc=$?
 set -e

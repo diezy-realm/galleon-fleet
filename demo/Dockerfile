@@ -64,8 +64,8 @@ COPY --from=builder /tmp/esp32_sim /usr/local/bin/esp32_sim
 RUN mkdir -p /app/data/config /app/data/workspace
 COPY demo/clawcrew.toml.example /app/data/config/config.toml
 
-ENV CLAWCREW_CONFIG_DIR=/app/data/config \
-    CLAWCREW_WORKSPACE=/app/data/workspace \
+ENV GALLEON_CONFIG_DIR=/app/data/config \
+    GALLEON_WORKSPACE=/app/data/workspace \
     RUST_LOG=clawcrew=info,galleon_hardware=info,esp32_sim=info
 
 EXPOSE 8080

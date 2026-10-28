@@ -49,7 +49,7 @@ zc-error-daemon-version-mismatch = Version mismatch: zerocode is { $client_versi
 zc-error-daemon-initialize-timeout = zerocode connected to the daemon, but initialization did not finish within { $seconds }s. Restart the daemon and try again.
 zc-error-spawned-daemon-startup = zerocode started an ephemeral daemon, but it failed to become ready: { $details }
 zc-daemon-wait-notice = zerocode: waiting for daemon at { $path } (up to { $seconds }s)…
-zc-error-daemon-not-ready-timeout = daemon did not become ready within { $seconds }s (socket: { $path }); if the socket path is long, set CLAWCREW_SOCKET to a shorter path or use a shorter --config-dir
+zc-error-daemon-not-ready-timeout = daemon did not become ready within { $seconds }s (socket: { $path }); if the socket path is long, set GALLEON_SOCKET to a shorter path or use a shorter --config-dir
 
 zc-zerocode-tab-theme = Theme
 zc-zerocode-tab-agent-theme = Agent Themes

@@ -184,7 +184,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry,sharing=locked \
 
     # Release build — clawcrew (daemon)
     # >>> generated:container-standard by `cargo generate installers` - do not edit <<<
-    CLAWCREW_FEATURES="acp-bridge,agent-runtime,channel-acp-server,channel-discord,channel-email,channel-filesystem,channel-git,channel-lark,channel-matrix,channel-telegram,channel-webhook,gateway,observability-prometheus,schema-export,whatsapp-web"
+    GALLEON_FEATURES="acp-bridge,agent-runtime,channel-acp-server,channel-discord,channel-email,channel-filesystem,channel-git,channel-lark,channel-matrix,channel-telegram,channel-webhook,gateway,observability-prometheus,schema-export,whatsapp-web"
 # >>> end generated:container-standard <<<
     CARGO_TARGET_DIR=/target \
     cargo build \
@@ -192,7 +192,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry,sharing=locked \
         --release \
         --target "$TARGET" \
         --no-default-features \
-        --features "${CLAWCREW_FEATURES}" \
+        --features "${GALLEON_FEATURES}" \
         -p galleon-fleet
 
     # Release build — zerocode (TUI config manager)
@@ -223,9 +223,9 @@ COPY --from=build /rootfs/ /
 COPY --from=build --chown=65534:65534 /rootfs/clawcrew-data /clawcrew-data
 COPY --from=docker.io/stagex/core-ca-certificates@sha256:7773dae6630aa3bdcc82cfec6c9265c0c501aaf0af67cc73631b09e1cff1b094 / /
 
-ENV CLAWCREW_DATA_DIR=/clawcrew-data/data
+ENV GALLEON_DATA_DIR=/clawcrew-data/data
 ENV HOME=/clawcrew-data
-ENV CLAWCREW_gateway__port=42617
+ENV GALLEON_gateway__port=42617
 
 WORKDIR /clawcrew-data
 USER 65534:65534
@@ -271,7 +271,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry,sharing=locked \
 
     # Release build — clawcrew (all channels)
     # >>> generated:container-fat by `cargo generate installers` - do not edit <<<
-    CLAWCREW_FEATURES="acp-bridge,agent-runtime,browser-native,channel-acp-server,channel-amqp,channel-bluesky,channel-clawdtalk,channel-dingtalk,channel-discord,channel-email,channel-feishu,channel-filesystem,channel-git,channel-imessage,channel-irc,channel-lark,channel-line,channel-linq,channel-matrix,channel-mattermost,channel-mochat,channel-mqtt,channel-nextcloud,channel-nostr,channel-notion,channel-qq,channel-reddit,channel-signal,channel-slack,channel-telegram,channel-twitch,channel-twitter,channel-voice-call,channel-webhook,channel-wechat,channel-wecom,channel-wecom-ws,channel-whatsapp-cloud,dev-sim,gateway,hardware,memory-postgres,observability-otel,observability-prometheus,peripheral-rpi,plugins-wasm,plugins-wasm-cranelift,plugins-wasm-pulley,plugins-wasm-runtime-only,probe,provider-gitea,provider-github,sandbox-bubblewrap,sandbox-landlock,schema-export,webauthn,whatsapp-web"
+    GALLEON_FEATURES="acp-bridge,agent-runtime,browser-native,channel-acp-server,channel-amqp,channel-bluesky,channel-clawdtalk,channel-dingtalk,channel-discord,channel-email,channel-feishu,channel-filesystem,channel-git,channel-imessage,channel-irc,channel-lark,channel-line,channel-linq,channel-matrix,channel-mattermost,channel-mochat,channel-mqtt,channel-nextcloud,channel-nostr,channel-notion,channel-qq,channel-reddit,channel-signal,channel-slack,channel-telegram,channel-twitch,channel-twitter,channel-voice-call,channel-webhook,channel-wechat,channel-wecom,channel-wecom-ws,channel-whatsapp-cloud,dev-sim,gateway,hardware,memory-postgres,observability-otel,observability-prometheus,peripheral-rpi,plugins-wasm,plugins-wasm-cranelift,plugins-wasm-pulley,plugins-wasm-runtime-only,probe,provider-gitea,provider-github,sandbox-bubblewrap,sandbox-landlock,schema-export,webauthn,whatsapp-web"
 # >>> end generated:container-fat <<<
     CARGO_TARGET_DIR=/target \
     cargo build \
@@ -279,7 +279,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry,sharing=locked \
         --release \
         --target "$TARGET" \
         --no-default-features \
-        --features "${CLAWCREW_FEATURES}" \
+        --features "${GALLEON_FEATURES}" \
         -p galleon-fleet
 
     # Release build — zerocode (TUI config manager)
@@ -310,9 +310,9 @@ COPY --from=build-fat /rootfs/ /
 COPY --from=build-fat --chown=65534:65534 /rootfs/clawcrew-data /clawcrew-data
 COPY --from=docker.io/stagex/core-ca-certificates@sha256:7773dae6630aa3bdcc82cfec6c9265c0c501aaf0af67cc73631b09e1cff1b094 / /
 
-ENV CLAWCREW_DATA_DIR=/clawcrew-data/data
+ENV GALLEON_DATA_DIR=/clawcrew-data/data
 ENV HOME=/clawcrew-data
-ENV CLAWCREW_gateway__port=42617
+ENV GALLEON_gateway__port=42617
 
 WORKDIR /clawcrew-data
 USER 65534:65534

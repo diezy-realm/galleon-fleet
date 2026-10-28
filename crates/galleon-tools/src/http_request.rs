@@ -1112,7 +1112,7 @@ api_token = "Bearer from-disk"
             &config_path,
             r#"
 [http_request.secrets]
-api_token = "${CLAWCREW_TEST_HTTP_REQUEST_SECRET}"
+api_token = "${GALLEON_TEST_HTTP_REQUEST_SECRET}"
 "#,
         )
         .unwrap();
@@ -1120,7 +1120,7 @@ api_token = "${CLAWCREW_TEST_HTTP_REQUEST_SECRET}"
 
         assert_eq!(
             tool.resolve_auth_secret_with_env("api_token", |name| {
-                assert_eq!(name, "CLAWCREW_TEST_HTTP_REQUEST_SECRET");
+                assert_eq!(name, "GALLEON_TEST_HTTP_REQUEST_SECRET");
                 Ok("Bearer from-env".to_string())
             })
             .unwrap(),
@@ -1136,21 +1136,21 @@ api_token = "${CLAWCREW_TEST_HTTP_REQUEST_SECRET}"
             &config_path,
             r#"
 [http_request.secrets]
-api_token = "${CLAWCREW_TEST_HTTP_REQUEST_MISSING_SECRET}"
+api_token = "${GALLEON_TEST_HTTP_REQUEST_MISSING_SECRET}"
 "#,
         )
         .unwrap();
         let tool = test_tool_with_auth_config(config_path, false);
         let err = tool
             .resolve_auth_secret_with_env("api_token", |name| {
-                assert_eq!(name, "CLAWCREW_TEST_HTTP_REQUEST_MISSING_SECRET");
+                assert_eq!(name, "GALLEON_TEST_HTTP_REQUEST_MISSING_SECRET");
                 Err(std::env::VarError::NotPresent)
             })
             .unwrap_err()
             .to_string();
 
         assert!(
-            err.contains("CLAWCREW_TEST_HTTP_REQUEST_MISSING_SECRET"),
+            err.contains("GALLEON_TEST_HTTP_REQUEST_MISSING_SECRET"),
             "missing env-backed secret should name the missing variable: {err}"
         );
     }
@@ -1217,7 +1217,7 @@ api_token = "{encrypted}"
         let config_path = tmp.path().join("config.toml");
         let store = galleon_config::secrets::SecretStore::new(tmp.path(), true);
         let encrypted = store
-            .encrypt("${CLAWCREW_TEST_HTTP_REQUEST_ENCRYPTED_SECRET}")
+            .encrypt("${GALLEON_TEST_HTTP_REQUEST_ENCRYPTED_SECRET}")
             .unwrap();
         std::fs::write(
             &config_path,
@@ -1233,7 +1233,7 @@ api_token = "{encrypted}"
 
         assert_eq!(
             tool.resolve_auth_secret_with_env("api_token", |name| {
-                assert_eq!(name, "CLAWCREW_TEST_HTTP_REQUEST_ENCRYPTED_SECRET");
+                assert_eq!(name, "GALLEON_TEST_HTTP_REQUEST_ENCRYPTED_SECRET");
                 Ok("Bearer encrypted-env".to_string())
             })
             .unwrap(),

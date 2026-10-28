@@ -26,7 +26,7 @@
       "program": "${workspaceFolder}/target/debug/clawcrew",
       "args": ["gateway"],
       "cwd": "${workspaceFolder}",
-      "env": { "CLAWCREW_REQUIRE_PAIRING": "false" },
+      "env": { "GALLEON_REQUIRE_PAIRING": "false" },
       "preLaunchTask": "Build: Debug"
     },
     {

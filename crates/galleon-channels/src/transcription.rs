@@ -146,7 +146,7 @@ impl GroqProvider {
             .map(ToOwned::to_owned)
             .context(
                 "Missing transcription API key: set `[transcription].api_key` (or via the \
-                 schema-mirror grammar `CLAWCREW_transcription__api_key=...`).",
+                 schema-mirror grammar `GALLEON_transcription__api_key=...`).",
             )?;
 
         Ok(Self {

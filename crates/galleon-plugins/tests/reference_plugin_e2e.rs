@@ -1,6 +1,6 @@
 //! End-to-end: drive an in-tree tool component exactly as the daemon does,
 //! against a throwaway config dir. The test seeds a disposable
-//! `CLAWCREW_CONFIG_DIR` with the README's install layout, loads the real
+//! `GALLEON_CONFIG_DIR` with the README's install layout, loads the real
 //! `Config`, discovers the plugin through the real `PluginHost`, keys the
 //! plugin's own config section by the real instance key, materializes it
 //! against the manifest's `config_schema`, and executes the component through
@@ -184,7 +184,7 @@ async fn reference_plugin_end_to_end_from_throwaway_config() {
             "--exact",
             "reference_plugin_from_config_subprocess",
         ])
-        .env("CLAWCREW_CONFIG_DIR", tmp.path())
+        .env("GALLEON_CONFIG_DIR", tmp.path())
         .status()
         .await
         .expect("run isolated reference plugin test");
@@ -192,7 +192,7 @@ async fn reference_plugin_end_to_end_from_throwaway_config() {
 }
 
 #[tokio::test]
-#[ignore = "subprocess helper with an isolated CLAWCREW_CONFIG_DIR"]
+#[ignore = "subprocess helper with an isolated GALLEON_CONFIG_DIR"]
 async fn reference_plugin_from_config_subprocess() {
     let config = Config::load_or_init().await.expect("load throwaway config");
 

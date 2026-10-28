@@ -39,9 +39,9 @@ COPY bin/${TARGETARCH}/web/dist /usr/share/clawcrewlabs/web/dist
 COPY --chown=65534:65534 clawcrew-data/ /clawcrew-data/
 
 ENV LANG=C.UTF-8
-ENV CLAWCREW_DATA_DIR=/clawcrew-data/data
+ENV GALLEON_DATA_DIR=/clawcrew-data/data
 ENV HOME=/clawcrew-data
-ENV CLAWCREW_GATEWAY_PORT=42617
+ENV GALLEON_GATEWAY_PORT=42617
 
 WORKDIR /clawcrew-data
 USER 65534:65534

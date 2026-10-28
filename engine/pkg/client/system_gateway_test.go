@@ -38,7 +38,7 @@ func TestSystemGatewayClient_GetDecryptedSecret(t *testing.T) {
 	mockSrv := &testVaultGatewayServer{
 		secrets: map[string]string{
 			"OPENAI_API_KEY":     "sk-test-secret-12345",
-			"CLAWCREW_SIGN_KEY": "super-secure-token",
+			"GALLEON_SIGN_KEY": "super-secure-token",
 		},
 	}
 	pb.RegisterSystemGatewayServer(grpcServer, mockSrv)

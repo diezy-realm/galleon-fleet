@@ -43,7 +43,7 @@ REPLACEMENTS = [
     (re.compile(r"github\.com/diezy-labs/claw-crew/engine", re.IGNORECASE), "github.com/diezy-realm/galleon-fleet/engine"),
 
     # 2. Environment Variables
-    (re.compile(r"\bCLAWCREW_"), "GALLEON_"),
+    (re.compile(r"\bGALLEON_"), "GALLEON_"),
     (re.compile(r"\bZEROCODE_"), "GALLEONCODE_"),
     (re.compile(r"\bZERORELAY_"), "GALLEONRELAY_"),
 

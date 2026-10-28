@@ -758,7 +758,7 @@ impl App {
         }
         // Surface the active config directory so the user can tell which
         // on-disk state the displayed values came from when running with
-        // --config-dir, $CLAWCREW_CONFIG_DIR, or a daemon backed by a
+        // --config-dir, $GALLEON_CONFIG_DIR, or a daemon backed by a
         // different config source.
         spans.push(Span::styled("   ", theme::dim_style()));
         spans.push(Span::styled(

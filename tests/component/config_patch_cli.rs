@@ -141,7 +141,7 @@ fn test_state(config: Config) -> AppState {
 fn run_cli_patch_output(config_dir: &std::path::Path, patch_doc: &[u8]) -> Output {
     let bin = env!("CARGO_BIN_EXE_galleon");
     Command::new(bin)
-        .env("CLAWCREW_CONFIG_DIR", config_dir)
+        .env("GALLEON_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")
         .args(["config", "patch", "--json", "-"])
         .stdin(Stdio::piped())
@@ -167,7 +167,7 @@ fn run_cli_patch_output(config_dir: &std::path::Path, patch_doc: &[u8]) -> Outpu
 fn run_cli_patch_output_human(config_dir: &std::path::Path, patch_doc: &[u8]) -> Output {
     let bin = env!("CARGO_BIN_EXE_galleon");
     Command::new(bin)
-        .env("CLAWCREW_CONFIG_DIR", config_dir)
+        .env("GALLEON_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")
         .args(["config", "patch", "-"])
         .stdin(Stdio::piped())
@@ -791,7 +791,7 @@ fn config_patch_replace_on_dotted_resource_id_does_not_plant_phantom_sibling() {
 fn run_cli_init(config_dir: &std::path::Path, section: &str) -> serde_json::Value {
     let bin = env!("CARGO_BIN_EXE_galleon");
     let output = Command::new(bin)
-        .env("CLAWCREW_CONFIG_DIR", config_dir)
+        .env("GALLEON_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")
         .args(["config", "init", section, "--json"])
         .stdout(Stdio::piped())
@@ -810,7 +810,7 @@ fn run_cli_init(config_dir: &std::path::Path, section: &str) -> serde_json::Valu
 fn run_cli_get(config_dir: &std::path::Path, path: &str) -> serde_json::Value {
     let bin = env!("CARGO_BIN_EXE_galleon");
     let output = Command::new(bin)
-        .env("CLAWCREW_CONFIG_DIR", config_dir)
+        .env("GALLEON_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")
         .args(["config", "get", path, "--json"])
         .stdout(Stdio::piped())
@@ -830,7 +830,7 @@ fn run_cli_get(config_dir: &std::path::Path, path: &str) -> serde_json::Value {
 fn run_cli_set(config_dir: &std::path::Path, path: &str, value: &str) {
     let bin = env!("CARGO_BIN_EXE_galleon");
     let output = Command::new(bin)
-        .env("CLAWCREW_CONFIG_DIR", config_dir)
+        .env("GALLEON_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")
         .args(["config", "set", "--no-interactive", path, value])
         .stdout(Stdio::piped())

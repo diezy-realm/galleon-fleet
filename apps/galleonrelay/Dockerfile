@@ -18,14 +18,14 @@
 # FINGERPRINT (sha256 hex), plus an optional shared-secret gate via --relay-token.
 
 # >>> generated:base-arg-rust-slim from dev/ci/container-base-images.toml by `cargo generate installers` - do not edit <<<
-ARG CLAWCREW_BASE_RUST_SLIM=rust:1.98-slim@sha256:17d1ba895198f9934c6314ec5346a0d5115372f3243390c3d731e242f35c2f27
+ARG GALLEON_BASE_RUST_SLIM=rust:1.98-slim@sha256:17d1ba895198f9934c6314ec5346a0d5115372f3243390c3d731e242f35c2f27
 # >>> end generated:base-arg-rust-slim <<<
 # >>> generated:base-arg-distroless from dev/ci/container-base-images.toml by `cargo generate installers` - do not edit <<<
-ARG CLAWCREW_BASE_DISTROLESS=gcr.io/distroless/cc-debian13:nonroot@sha256:c31ff9abcb1910f3ab25c7957bdaf0bfe12a01eb546e8df2282f1c8f682b606c
+ARG GALLEON_BASE_DISTROLESS=gcr.io/distroless/cc-debian13:nonroot@sha256:c31ff9abcb1910f3ab25c7957bdaf0bfe12a01eb546e8df2282f1c8f682b606c
 # >>> end generated:base-arg-distroless <<<
 
 # --- Stage 1: build only the relay binary ---
-FROM ${CLAWCREW_BASE_RUST_SLIM} AS builder
+FROM ${GALLEON_BASE_RUST_SLIM} AS builder
 WORKDIR /app
 COPY . .
 RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/registry,sharing=locked \
@@ -40,7 +40,7 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/regist
 RUN mkdir -p /seed/data && chown -R 65532:65532 /seed/data
 
 # --- Stage 2: minimal distroless runtime (no shell) ---
-FROM ${CLAWCREW_BASE_DISTROLESS} AS runtime
+FROM ${GALLEON_BASE_DISTROLESS} AS runtime
 COPY --from=builder /usr/local/bin/galleonrelay /usr/local/bin/galleonrelay
 # /data must exist in the image owned by nonroot (65532) or a fresh named
 # volume mounts root-owned and self-provisioning fails with

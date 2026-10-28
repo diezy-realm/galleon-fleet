@@ -2855,8 +2855,8 @@ enum SecurityCommands {
 
 /// Issue a WSS client certificate signed by the daemon's per-daemon mTLS CA.
 /// CA private-key at-rest protection sourced from the environment (decision:
-/// opt-in passphrase, 0600 floor; threat A4). `CLAWCREW_CA_PASSPHRASE` (or a file
-/// referenced by `CLAWCREW_CA_PASSPHRASE_FILE`) enables scrypt + XChaCha20-Poly1305
+/// opt-in passphrase, 0600 floor; threat A4). `GALLEON_CA_PASSPHRASE` (or a file
+/// referenced by `GALLEON_CA_PASSPHRASE_FILE`) enables scrypt + XChaCha20-Poly1305
 /// encryption of the CA key at rest; unset keeps the plaintext-0600 default so
 /// zero-config and headless bring-up are unaffected. The daemon sources it
 /// identically at CA generation (the WSS path) and at every CA read (enrollment
@@ -3829,7 +3829,7 @@ fn main() -> Result<()> {
         // therefore its worker threads) is constructed.
         #[allow(unsafe_code)]
         unsafe {
-            std::env::set_var("CLAWCREW_CONFIG_DIR", config_dir)
+            std::env::set_var("GALLEON_CONFIG_DIR", config_dir)
         };
     }
 
@@ -4048,21 +4048,18 @@ fn parse_exec_program(exec: &str) -> Option<String> {
 /// supported non-AppImage executable, so discovery cannot select a lookalike
 /// such as `clawcrew-helper` or `clawcrew-evil`.
 #[cfg(all(feature = "agent-runtime", target_os = "linux"))]
-const CLAWCREW_DESKTOP_BIN: &str = "clawcrew-desktop";
+const GALLEON_DESKTOP_BIN: &str = "galleon-desktop";
 
-/// True when a desktop entry's resolved `Exec` program is a supported ClawCrew
-/// executable: either the exact published binary `clawcrew-desktop`, or a
-/// ClawCrew AppImage in the published `ClawCrew-*.AppImage` form. It is bound to
-/// those forms — not to any `clawcrew*` basename — so a deliberate ClawCrew
-/// `Name` cannot be paired with a lookalike (`clawcrew-helper`, `clawcrew-evil`)
-/// to preempt the real app.
+/// True when a desktop entry's resolved `Exec` program is a supported Galleon
+/// executable: either the exact published binary `galleon-desktop`, or a
+/// Galleon AppImage in the published `Galleon-*.AppImage` form.
 #[cfg(all(feature = "agent-runtime", target_os = "linux"))]
 fn is_clawcrew_program(program: &str) -> bool {
     let Some(name) = Path::new(program).file_name().and_then(|n| n.to_str()) else {
         return false;
     };
     let lower = name.to_ascii_lowercase();
-    lower == CLAWCREW_DESKTOP_BIN || is_clawcrew_appimage_name(name)
+    lower == GALLEON_DESKTOP_BIN || lower == "clawcrew-desktop" || is_clawcrew_appimage_name(name)
 }
 
 /// True when a bare file name is a supported ClawCrew AppImage in the published

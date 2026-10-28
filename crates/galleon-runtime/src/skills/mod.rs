@@ -42,13 +42,13 @@ pub use service::{
 pub(crate) use suggestions::render_missing_skill_install_suggestion;
 
 const OPEN_SKILLS_REPO_URL: &str = "https://github.com/besoeasy/open-skills";
-const OPEN_SKILLS_SYNC_MARKER: &str = ".clawcrew-open-skills-sync";
+const OPEN_SKILLS_SYNC_MARKER: &str = ".galleon-open-skills-sync";
 const OPEN_SKILLS_SYNC_INTERVAL_SECS: u64 = 60 * 60 * 24 * 7;
 
 // ─── Skills registry (clawcrew-skills) ────────────────────────────────────────
 const SKILLS_REGISTRY_REPO_URL: &str = "https://github.com/clawcrew-labs/clawcrew-skills";
 const SKILLS_REGISTRY_DIR_NAME: &str = "skills-registry";
-const SKILLS_REGISTRY_SYNC_MARKER: &str = ".clawcrew-skills-registry-sync";
+const SKILLS_REGISTRY_SYNC_MARKER: &str = ".galleon-skills-registry-sync";
 const SKILLS_REGISTRY_SYNC_INTERVAL_SECS: u64 = 60 * 60 * 24;
 
 // ─── Extra (user-configured) registries ──────────────────────────────────────
@@ -900,7 +900,7 @@ fn open_skills_enabled_from_sources(
                 WARN,
                 ::galleon_log::Event::new(module_path!(), ::galleon_log::Action::Note)
                     .with_outcome(::galleon_log::EventOutcome::Unknown),
-                "Ignoring invalid CLAWCREW_OPEN_SKILLS_ENABLED (valid: 1|0|true|false|yes|no|on|off)"
+                "Ignoring invalid GALLEON_OPEN_SKILLS_ENABLED (valid: 1|0|true|false|yes|no|on|off)"
             );
         }
     }
@@ -909,7 +909,7 @@ fn open_skills_enabled_from_sources(
 }
 
 fn open_skills_enabled(config_open_skills_enabled: Option<bool>) -> bool {
-    let env_override = std::env::var("CLAWCREW_OPEN_SKILLS_ENABLED").ok();
+    let env_override = std::env::var("GALLEON_OPEN_SKILLS_ENABLED").ok();
     open_skills_enabled_from_sources(config_open_skills_enabled, env_override.as_deref())
 }
 
@@ -937,7 +937,7 @@ fn resolve_open_skills_dir_from_sources(
 }
 
 fn resolve_open_skills_dir(config_open_skills_dir: Option<&str>) -> Option<PathBuf> {
-    let env_dir = std::env::var("CLAWCREW_OPEN_SKILLS_DIR").ok();
+    let env_dir = std::env::var("GALLEON_OPEN_SKILLS_DIR").ok();
     let home_dir = UserDirs::new().map(|dirs| dirs.home_dir().to_path_buf());
     resolve_open_skills_dir_from_sources(
         env_dir.as_deref(),

@@ -44,7 +44,7 @@ fn run_path_clawcrew(path: &OsString, config_dir: &Path) -> Output {
     Command::new("sh")
         .args(["-c", "clawcrew config migrate --json"])
         .env("PATH", path)
-        .env("CLAWCREW_CONFIG_DIR", config_dir)
+        .env("GALLEON_CONFIG_DIR", config_dir)
         .output()
         .expect("run PATH clawcrew fixture through sh")
 }
@@ -55,7 +55,7 @@ fn run_path_clawcrew(path: &OsString, config_dir: &Path) -> Output {
         .args(["/D", "/S", "/C", "clawcrew config migrate --json"])
         .env("PATH", path)
         .env("PATHEXT", ".COM;.EXE;.BAT;.CMD")
-        .env("CLAWCREW_CONFIG_DIR", config_dir)
+        .env("GALLEON_CONFIG_DIR", config_dir)
         .output()
         .expect("run PATH clawcrew fixture through cmd.exe")
 }

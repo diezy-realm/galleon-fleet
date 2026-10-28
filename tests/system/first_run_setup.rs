@@ -413,22 +413,22 @@ fn submission(agent: &str, channels: Vec<SelectorChoice<ChannelQuickStart>>) -> 
 
 /// Run the real `clawcrew` binary against a first-run install root.
 ///
-/// Every `CLAWCREW_*` variable inherited from the developer's shell is stripped
-/// from the child before `CLAWCREW_CONFIG_DIR` is set, so an operator env var
-/// (the `CLAWCREW_*` config-override grammar included) cannot leak into the
+/// Every `GALLEON_*` variable inherited from the developer's shell is stripped
+/// from the child before `GALLEON_CONFIG_DIR` is set, so an operator env var
+/// (the `GALLEON_*` config-override grammar included) cannot leak into the
 /// result. The parent's environment is only read, never mutated, so this stays
 /// safe under parallel test execution — which is exactly why the loader is
 /// exercised in a child process rather than in-process.
 fn run_clawcrew(install_root: &Path, args: &[&str]) -> std::process::Output {
     let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_galleon"));
     for (key, _) in std::env::vars_os() {
-        if key.to_string_lossy().starts_with("CLAWCREW_") {
+        if key.to_string_lossy().starts_with("GALLEON_") {
             command.env_remove(&key);
         }
     }
     command
         .args(args)
-        .env("CLAWCREW_CONFIG_DIR", install_root)
+        .env("GALLEON_CONFIG_DIR", install_root)
         .output()
         .expect("failed to spawn the clawcrew binary")
 }

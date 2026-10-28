@@ -13325,9 +13325,9 @@ fn register_bot_commands_sends_independently_pinned_french_payload() {
             "--ignored",
             "--nocapture",
         ])
-        .env("CLAWCREW_CONFIG_DIR", config_dir.path())
-        .env_remove("CLAWCREW_DATA_DIR")
-        .env_remove("CLAWCREW_WORKSPACE");
+        .env("GALLEON_CONFIG_DIR", config_dir.path())
+        .env_remove("GALLEON_DATA_DIR")
+        .env_remove("GALLEON_WORKSPACE");
     let output = command
         .output()
         .expect("French command-menu child test should start");

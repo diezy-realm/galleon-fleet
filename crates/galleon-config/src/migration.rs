@@ -141,7 +141,7 @@ pub fn generate(target_version: u32, opts: &GenerateOptions<'_>) -> Result<Strin
     if opts.encrypt_secrets {
         let store_dir = opts.secret_store_dir.context(
             "--encrypt requires a secret-store directory \
-             (typically the resolved CLAWCREW_CONFIG_DIR)",
+             (typically the resolved GALLEON_CONFIG_DIR)",
         )?;
         let store = crate::secrets::SecretStore::new(store_dir, true);
         encrypt_secret_strings(&mut value, &store)

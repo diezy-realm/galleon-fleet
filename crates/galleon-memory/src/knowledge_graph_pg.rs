@@ -519,8 +519,8 @@ mod tests {
     }
 
     fn postgres_test_url() -> String {
-        std::env::var("CLAWCREW_TEST_POSTGRES_URL")
-            .expect("set CLAWCREW_TEST_POSTGRES_URL to run ignored PostgreSQL tests")
+        std::env::var("GALLEON_TEST_POSTGRES_URL")
+            .expect("set GALLEON_TEST_POSTGRES_URL to run ignored PostgreSQL tests")
     }
 
     fn postgres_graph(database_url: &str, schema: &str) -> PgKnowledgeGraph {
@@ -529,7 +529,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "requires CLAWCREW_TEST_POSTGRES_URL"]
+    #[ignore = "requires GALLEON_TEST_POSTGRES_URL"]
     fn postgres_similarity_ranks_before_limit_with_stable_ties() {
         let database_url = postgres_test_url();
         let schema = TestSchema::create(&database_url, "rank");
@@ -563,7 +563,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "requires CLAWCREW_TEST_POSTGRES_URL"]
+    #[ignore = "requires GALLEON_TEST_POSTGRES_URL"]
     fn postgres_subgraph_is_cycle_safe_unique_and_depth_bounded() {
         let database_url = postgres_test_url();
         let schema = TestSchema::create(&database_url, "walk");

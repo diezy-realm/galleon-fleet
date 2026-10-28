@@ -1338,7 +1338,7 @@ temperature = 0.3
     )
     .unwrap();
 
-    let env_name = "CLAWCREW_providers__models__openrouter__agent_demo__api_key";
+    let env_name = "GALLEON_providers__models__openrouter__agent_demo__api_key";
     // SAFETY: this test owns this specific env-var key and restores it
     // before returning. The value is synthetic and not a real credential.
     unsafe { std::env::set_var(env_name, "sk-or-v1-test-channel-reload") };
@@ -25614,18 +25614,18 @@ async fn non_retryable_listener_error_does_not_stop_other_listener_health() {
 fn maybe_restart_daemon_systemd_args_regression() {
     assert_eq!(
         SYSTEMD_STATUS_ARGS,
-        ["--user", "is-active", "clawcrew.service"]
+        ["--user", "is-active", "galleon.service"]
     );
     assert_eq!(
         SYSTEMD_RESTART_ARGS,
-        ["--user", "restart", "clawcrew.service"]
+        ["--user", "restart", "galleon.service"]
     );
 }
 
 #[test]
 fn maybe_restart_daemon_openrc_args_regression() {
-    assert_eq!(OPENRC_STATUS_ARGS, ["clawcrew", "status"]);
-    assert_eq!(OPENRC_RESTART_ARGS, ["clawcrew", "restart"]);
+    assert_eq!(OPENRC_STATUS_ARGS, ["galleon", "status"]);
+    assert_eq!(OPENRC_RESTART_ARGS, ["galleon", "restart"]);
 }
 
 #[test]

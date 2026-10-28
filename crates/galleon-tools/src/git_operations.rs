@@ -2205,7 +2205,7 @@ mod tests {
             let mut replacement = std::process::Command::new(program);
             replacement
                 .args(args)
-                .env("CLAWCREW_GIT_BOUNDARY_MARKER", &self.marker)
+                .env("GALLEON_GIT_BOUNDARY_MARKER", &self.marker)
                 .env("GIT_CONFIG_GLOBAL", "/must-not-survive-boundary");
             *command = replacement;
             Ok(())
@@ -2765,7 +2765,7 @@ mod tests {
         let hook = repository.path().join(".git/hooks/post-checkout");
         std::fs::write(
             &hook,
-            "#!/bin/sh\nprintf '%s|%s|%s|%s' \"$GIT_TERMINAL_PROMPT\" \"$GIT_PAGER\" \"${GIT_CONFIG_GLOBAL-unset}\" \"$PWD\" > \"$CLAWCREW_GIT_BOUNDARY_MARKER\"\n",
+            "#!/bin/sh\nprintf '%s|%s|%s|%s' \"$GIT_TERMINAL_PROMPT\" \"$GIT_PAGER\" \"${GIT_CONFIG_GLOBAL-unset}\" \"$PWD\" > \"$GALLEON_GIT_BOUNDARY_MARKER\"\n",
         )
         .unwrap();
         let mut permissions = std::fs::metadata(&hook).unwrap().permissions();

@@ -10,7 +10,7 @@ use galleon_config::schema::OtpConfig;
 
 const OTP_SECRET_FILE: &str = "otp-secret";
 const OTP_DIGITS: u32 = 6;
-const OTP_ISSUER: &str = "ClawCrew";
+const OTP_ISSUER: &str = "Galleon";
 
 #[derive(Debug)]
 pub struct OtpValidator {

@@ -2235,9 +2235,9 @@ fn model_picker_overlay_open_states_report_open() {
 struct ConfigDirGuard(Option<String>);
 impl ConfigDirGuard {
     fn set(dir: &std::path::Path) -> Self {
-        let prev = std::env::var("CLAWCREW_CONFIG_DIR").ok();
+        let prev = std::env::var("GALLEON_CONFIG_DIR").ok();
         // SAFETY: these tests serialize on `config_dir_test_lock()`.
-        unsafe { std::env::set_var("CLAWCREW_CONFIG_DIR", dir) };
+        unsafe { std::env::set_var("GALLEON_CONFIG_DIR", dir) };
         Self(prev)
     }
 }
@@ -2245,8 +2245,8 @@ impl Drop for ConfigDirGuard {
     fn drop(&mut self) {
         // SAFETY: these tests serialize on `config_dir_test_lock()`.
         match &self.0 {
-            Some(v) => unsafe { std::env::set_var("CLAWCREW_CONFIG_DIR", v) },
-            None => unsafe { std::env::remove_var("CLAWCREW_CONFIG_DIR") },
+            Some(v) => unsafe { std::env::set_var("GALLEON_CONFIG_DIR", v) },
+            None => unsafe { std::env::remove_var("GALLEON_CONFIG_DIR") },
         }
     }
 }

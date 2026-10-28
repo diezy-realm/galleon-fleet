@@ -297,7 +297,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "may flash attached hardware"]
     async fn execute_with_confirm_true_does_not_panic_when_explicitly_opted_in() {
-        const HARDWARE_TEST_OPT_IN: &str = "CLAWCREW_RUN_PICO_HARDWARE_TESTS";
+        const HARDWARE_TEST_OPT_IN: &str = "GALLEON_RUN_PICO_HARDWARE_TESTS";
 
         assert_eq!(
             std::env::var(HARDWARE_TEST_OPT_IN).as_deref(),

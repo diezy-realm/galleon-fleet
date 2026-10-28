@@ -336,7 +336,7 @@ fn normalized_env_locale(raw: &str) -> Option<String> {
 }
 
 fn read_config_table() -> Option<toml::Table> {
-    if let Ok(custom) = std::env::var("CLAWCREW_CONFIG_DIR") {
+    if let Ok(custom) = std::env::var("GALLEON_CONFIG_DIR") {
         let trimmed = custom.trim();
         if !trimmed.is_empty() {
             let path = std::path::PathBuf::from(trimmed).join("config.toml");
@@ -348,8 +348,7 @@ fn read_config_table() -> Option<toml::Table> {
 
     let mut candidates: Vec<std::path::PathBuf> = Vec::new();
     if let Some(base) = directories::BaseDirs::new() {
-        candidates.push(base.home_dir().join(".clawcrew/config.toml"));
-        candidates.push(base.config_dir().join("clawcrew/config.toml"));
+        candidates.push(base.config_dir().join("galleon/config.toml"));
     }
     for path in &candidates {
         if let Ok(contents) = std::fs::read_to_string(path) {

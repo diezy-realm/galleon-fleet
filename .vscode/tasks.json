@@ -245,7 +245,7 @@
       ],
       "options": {
         "env": {
-          "CLAWCREW_REQUIRE_PAIRING": "false"
+          "GALLEON_REQUIRE_PAIRING": "false"
         }
       },
       "dependsOn": [

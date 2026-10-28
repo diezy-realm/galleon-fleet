@@ -11,7 +11,7 @@ run_case() {
   local cfgdir="$TMPROOT/$label"
   mkdir -p "$cfgdir"
   echo "─── $label ───"
-  env CLAWCREW_CONFIG_DIR="$cfgdir" "$BIN" quickstart "$@"
+  env GALLEON_CONFIG_DIR="$cfgdir" "$BIN" quickstart "$@"
   echo
   echo "→ resulting config.toml:"
   cat "$cfgdir/config.toml" 2>/dev/null || echo "(no config written)"

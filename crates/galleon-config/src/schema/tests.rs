@@ -7705,7 +7705,7 @@ automation_enabled = true
     async fn env_override_lock() -> MutexGuard<'static, ()> {
         // Delegate to the crate-shared lock so env-mutating tests in this
         // module serialize against `env_overrides::tests` too. Without
-        // this, tests across the two modules race on `CLAWCREW_*` vars.
+        // this, tests across the two modules race on `GALLEON_*` vars.
         crate::env_overrides::env_test_lock().await
     }
 
@@ -7744,8 +7744,8 @@ automation_enabled = true
     async fn slack_resolved_bot_token_falls_back_to_env() {
         let _env_guard = env_override_lock().await;
         let prev_bot = std::env::var("SLACK_BOT_TOKEN").ok();
-        let prev_zc = std::env::var("CLAWCREW_SLACK_BOT_TOKEN").ok();
-        set_or_clear_env("CLAWCREW_SLACK_BOT_TOKEN", None);
+        let prev_zc = std::env::var("GALLEON_SLACK_BOT_TOKEN").ok();
+        set_or_clear_env("GALLEON_SLACK_BOT_TOKEN", None);
         set_or_clear_env("SLACK_BOT_TOKEN", Some("xoxb-from-env"));
 
         let cfg = SlackConfig {
@@ -7755,16 +7755,16 @@ automation_enabled = true
         assert_eq!(cfg.resolved_bot_token().as_deref(), Some("xoxb-from-env"));
 
         set_or_clear_env("SLACK_BOT_TOKEN", prev_bot.as_deref());
-        set_or_clear_env("CLAWCREW_SLACK_BOT_TOKEN", prev_zc.as_deref());
+        set_or_clear_env("GALLEON_SLACK_BOT_TOKEN", prev_zc.as_deref());
     }
 
     #[test]
     async fn slack_resolved_bot_token_prefers_clawcrew_prefix() {
         let _env_guard = env_override_lock().await;
         let prev_bot = std::env::var("SLACK_BOT_TOKEN").ok();
-        let prev_zc = std::env::var("CLAWCREW_SLACK_BOT_TOKEN").ok();
+        let prev_zc = std::env::var("GALLEON_SLACK_BOT_TOKEN").ok();
         set_or_clear_env("SLACK_BOT_TOKEN", Some("xoxb-generic"));
-        set_or_clear_env("CLAWCREW_SLACK_BOT_TOKEN", Some("xoxb-clawcrew"));
+        set_or_clear_env("GALLEON_SLACK_BOT_TOKEN", Some("xoxb-clawcrew"));
 
         let cfg = SlackConfig {
             bot_token: None,
@@ -7773,7 +7773,7 @@ automation_enabled = true
         assert_eq!(cfg.resolved_bot_token().as_deref(), Some("xoxb-clawcrew"));
 
         set_or_clear_env("SLACK_BOT_TOKEN", prev_bot.as_deref());
-        set_or_clear_env("CLAWCREW_SLACK_BOT_TOKEN", prev_zc.as_deref());
+        set_or_clear_env("GALLEON_SLACK_BOT_TOKEN", prev_zc.as_deref());
     }
 
     #[test]
@@ -8002,7 +8002,7 @@ model = "primary-model"
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
 
         let mut config = Config {
             data_dir: workspace_dir,
@@ -8040,7 +8040,7 @@ model = "primary-model"
         );
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         if let Some(home) = original_home {
             // SAFETY: test-only, single-threaded test runner.
             unsafe { std::env::set_var("HOME", home) };
@@ -8052,9 +8052,9 @@ model = "primary-model"
     }
 
     /// `Config::default()` previously computed its `config_path`/`data_dir`
-    /// from `UserDirs::home_dir()` directly, ignoring `CLAWCREW_CONFIG_DIR`
+    /// from `UserDirs::home_dir()` directly, ignoring `GALLEON_CONFIG_DIR`
     /// entirely -- unlike every other path-resolution entry point in this
-    /// file. A `Config::default()` built under a `CLAWCREW_CONFIG_DIR`-isolated
+    /// file. A `Config::default()` built under a `GALLEON_CONFIG_DIR`-isolated
     /// test or deployment therefore still resolved to the real machine's
     /// `~/.clawcrew`.
     #[test]
@@ -8062,7 +8062,7 @@ model = "primary-model"
         let _env_guard = env_override_lock().await;
         let custom_dir =
             std::env::temp_dir().join(format!("clawcrew_test_custom_{}", uuid::Uuid::new_v4()));
-        let _config_guard = EnvValueGuard::set("CLAWCREW_CONFIG_DIR", &custom_dir);
+        let _config_guard = EnvValueGuard::set("GALLEON_CONFIG_DIR", &custom_dir);
 
         let config = Config::default();
 
@@ -8089,7 +8089,7 @@ model = "primary-model"
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
 
         let mut config = Config {
             data_dir: workspace_dir,
@@ -8104,7 +8104,7 @@ model = "primary-model"
             .unwrap();
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         if let Some(home) = original_home {
             // SAFETY: test-only, single-threaded test runner.
             unsafe { std::env::set_var("HOME", home) };
@@ -8278,13 +8278,13 @@ wire_api = "ws"
         let workspace_dir = default_config_dir.join("profile-a");
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
         let (config_dir, resolved_workspace_dir, source) =
             resolve_runtime_config_dirs(&default_config_dir, &default_workspace_dir)
                 .await
                 .unwrap();
 
-        // CLAWCREW_WORKSPACE is the deprecated alias for CLAWCREW_DATA_DIR.
+        // GALLEON_WORKSPACE is the deprecated alias for GALLEON_DATA_DIR.
         // Resolution treats the path as the config root and derives the data
         // sub-dir from it; the source label reflects the deprecated entry.
         assert_eq!(source, ConfigResolutionSource::EnvWorkspaceLegacy);
@@ -8292,7 +8292,7 @@ wire_api = "ws"
         assert_eq!(resolved_workspace_dir, workspace_dir.join("data"));
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         let _ = fs::remove_dir_all(default_config_dir).await;
     }
 
@@ -8306,9 +8306,9 @@ wire_api = "ws"
         fs::create_dir_all(&default_config_dir).await.unwrap();
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_CONFIG_DIR", &explicit_config_dir) };
+        unsafe { std::env::set_var("GALLEON_CONFIG_DIR", &explicit_config_dir) };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
 
         let (config_dir, resolved_workspace_dir, source) =
             resolve_runtime_config_dirs(&default_config_dir, &default_workspace_dir)
@@ -8320,7 +8320,7 @@ wire_api = "ws"
         assert_eq!(resolved_workspace_dir, explicit_config_dir.join("data"));
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_CONFIG_DIR") };
+        unsafe { std::env::remove_var("GALLEON_CONFIG_DIR") };
         let _ = fs::remove_dir_all(default_config_dir).await;
     }
 
@@ -8331,7 +8331,7 @@ wire_api = "ws"
         let default_workspace_dir = default_config_dir.join("workspace");
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         let (config_dir, resolved_workspace_dir, source) =
             resolve_runtime_config_dirs(&default_config_dir, &default_workspace_dir)
                 .await
@@ -8361,15 +8361,15 @@ wire_api = "ws"
         let _home_guard = EnvValueGuard::set("HOME", &fake_home);
         #[cfg(not(unix))]
         let _home_guard = EnvValueGuard::remove("HOME");
-        let _data_guard = EnvValueGuard::remove("CLAWCREW_DATA_DIR");
-        let _workspace_guard = EnvValueGuard::remove("CLAWCREW_WORKSPACE");
+        let _data_guard = EnvValueGuard::remove("GALLEON_DATA_DIR");
+        let _workspace_guard = EnvValueGuard::remove("GALLEON_WORKSPACE");
 
         assert_eq!(
             classify_runtime_config_kind(&fake_home.join(".clawcrew").join("config.toml")).await,
             RuntimeConfigKind::Default
         );
 
-        let _config_guard = EnvValueGuard::set("CLAWCREW_CONFIG_DIR", &explicit_config_dir);
+        let _config_guard = EnvValueGuard::set("GALLEON_CONFIG_DIR", &explicit_config_dir);
         assert_eq!(
             classify_runtime_config_kind(&explicit_config_dir.join("config.toml")).await,
             RuntimeConfigKind::Custom
@@ -8454,17 +8454,17 @@ wire_api = "ws"
         let _env_guard = env_override_lock().await;
         let custom_dir = std::env::temp_dir().join("clawcrew-test-profile");
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_CONFIG_DIR", &custom_dir) };
+        unsafe { std::env::set_var("GALLEON_CONFIG_DIR", &custom_dir) };
 
         let result = default_path_under_config_dir("knowledge.db");
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_CONFIG_DIR") };
+        unsafe { std::env::remove_var("GALLEON_CONFIG_DIR") };
 
         assert_eq!(
             result,
             custom_dir.join("knowledge.db").to_string_lossy().as_ref(),
-            "expected path under CLAWCREW_CONFIG_DIR, got: {result}"
+            "expected path under GALLEON_CONFIG_DIR, got: {result}"
         );
     }
 
@@ -8472,7 +8472,7 @@ wire_api = "ws"
     async fn load_or_init_seeds_runtime_proxy_from_config_file() {
         let _env_guard = env_override_lock().await;
         let config_dir = TempDir::new().unwrap();
-        let _config_dir_guard = EnvValueGuard::set("CLAWCREW_CONFIG_DIR", config_dir.path());
+        let _config_dir_guard = EnvValueGuard::set("GALLEON_CONFIG_DIR", config_dir.path());
         fs::write(
             config_dir.path().join("config.toml"),
             r#"
@@ -8511,7 +8511,7 @@ scope = "clawcrew"
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
 
         let config = Box::pin(Config::load_or_init()).await.unwrap();
 
@@ -8529,7 +8529,7 @@ scope = "clawcrew"
         );
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         if let Some(home) = original_home {
             // SAFETY: test-only, single-threaded test runner.
             unsafe { std::env::set_var("HOME", home) };
@@ -8553,12 +8553,12 @@ scope = "clawcrew"
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
 
         let config = Box::pin(Config::load_or_init()).await.unwrap();
 
         // V3: `config.data_dir` lives at `<install>/data/`. The
-        // CLAWCREW_WORKSPACE env var (deprecated alias) resolved to the
+        // GALLEON_WORKSPACE env var (deprecated alias) resolved to the
         // legacy config layout where the install root is the parent of
         // the env-var path; data sits at `<install>/data/`.
         assert_eq!(config.data_dir, legacy_config_dir.join("data"));
@@ -8566,7 +8566,7 @@ scope = "clawcrew"
         assert!(config.config_path.exists());
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         if let Some(home) = original_home {
             // SAFETY: test-only, single-threaded test runner.
             unsafe { std::env::set_var("HOME", home) };
@@ -8600,13 +8600,13 @@ default_model = "legacy-model"
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
 
         let config = Box::pin(Config::load_or_init()).await.unwrap();
 
         // V3: `config.data_dir` resolves to `<install>/data/` under
         // the install root (the directory holding the existing
-        // `config.toml`), regardless of the CLAWCREW_WORKSPACE
+        // `config.toml`), regardless of the GALLEON_WORKSPACE
         // (deprecated) override.
         assert_eq!(config.data_dir, legacy_config_dir.join("data"));
         assert_eq!(config.config_path, legacy_config_path);
@@ -8620,7 +8620,7 @@ default_model = "legacy-model"
         );
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         if let Some(home) = original_home {
             // SAFETY: test-only, single-threaded test runner.
             unsafe { std::env::set_var("HOME", home) };
@@ -8645,7 +8645,7 @@ default_model = "legacy-model"
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
 
         let mut config = Config {
             config_path: config_path.clone(),
@@ -8715,7 +8715,7 @@ default_model = "persisted-profile"
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
 
         let mut rx = capture_log_events();
 
@@ -8725,8 +8725,8 @@ default_model = "persisted-profile"
 
         // V3: shared databases live at `<install>/data/`, per-agent
         // identity at `<install>/agents/<alias>/workspace/`. The
-        // CLAWCREW_WORKSPACE env var (deprecated alias for
-        // CLAWCREW_DATA_DIR) pinned the install root, so data_dir is
+        // GALLEON_WORKSPACE env var (deprecated alias for
+        // GALLEON_DATA_DIR) pinned the install root, so data_dir is
         // `<install>/data/` derived from the resolved root.
         assert_eq!(config.data_dir, workspace_dir.join("data"));
         assert_eq!(config.config_path, config_path);
@@ -8743,7 +8743,7 @@ default_model = "persisted-profile"
         assert!(!logs.contains("\"initialized\":false"), "{logs}");
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         if let Some(home) = original_home {
             // SAFETY: test-only, single-threaded test runner.
             unsafe { std::env::set_var("HOME", home) };
@@ -8761,8 +8761,8 @@ default_model = "persisted-profile"
         let temp_home =
             std::env::temp_dir().join(format!("clawcrew_test_home_{}", uuid::Uuid::new_v4()));
         let _home_guard = EnvValueGuard::set("HOME", &temp_home);
-        let _config_guard = EnvValueGuard::remove("CLAWCREW_CONFIG_DIR");
-        let _data_guard = EnvValueGuard::remove("CLAWCREW_DATA_DIR");
+        let _config_guard = EnvValueGuard::remove("GALLEON_CONFIG_DIR");
+        let _data_guard = EnvValueGuard::remove("GALLEON_DATA_DIR");
 
         let cases = [
             (
@@ -8791,7 +8791,7 @@ api_token = "legacy-placeholder-token"
             let install = temp_home.join(case);
             fs::create_dir_all(&install).await.unwrap();
             fs::write(install.join("config.toml"), raw).await.unwrap();
-            let _workspace_guard = EnvValueGuard::set("CLAWCREW_WORKSPACE", &install);
+            let _workspace_guard = EnvValueGuard::set("GALLEON_WORKSPACE", &install);
             let mut rx = capture_log_events();
 
             let config = Box::pin(Config::load_or_init()).await.unwrap();
@@ -8847,9 +8847,9 @@ shared_secret = "retired-node-transport-sentinel"
         .unwrap();
 
         let _home_guard = EnvValueGuard::set("HOME", &temp_home);
-        let _workspace_guard = EnvValueGuard::set("CLAWCREW_WORKSPACE", &install);
-        let _config_guard = EnvValueGuard::remove("CLAWCREW_CONFIG_DIR");
-        let _data_guard = EnvValueGuard::remove("CLAWCREW_DATA_DIR");
+        let _workspace_guard = EnvValueGuard::set("GALLEON_WORKSPACE", &install);
+        let _config_guard = EnvValueGuard::remove("GALLEON_CONFIG_DIR");
+        let _data_guard = EnvValueGuard::remove("GALLEON_DATA_DIR");
         let mut rx = capture_log_events();
 
         let config = Box::pin(Config::load_or_init()).await.unwrap();
@@ -8900,7 +8900,7 @@ audit = "should-be-a-table-not-a-string"
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
 
         let config = Box::pin(Config::load_or_init()).await.unwrap();
 
@@ -8911,7 +8911,7 @@ audit = "should-be-a-table-not-a-string"
         );
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         if let Some(home) = original_home {
             // SAFETY: test-only, single-threaded test runner.
             unsafe { std::env::set_var("HOME", home) };
@@ -8955,7 +8955,7 @@ bot_token = 42
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
 
         let config = Box::pin(Config::load_or_init()).await.unwrap();
 
@@ -8970,7 +8970,7 @@ bot_token = 42
         );
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         if let Some(home) = original_home {
             // SAFETY: test-only, single-threaded test runner.
             unsafe { std::env::set_var("HOME", home) };
@@ -9009,7 +9009,7 @@ enabled = false
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
 
         let config = Box::pin(Config::load_or_init()).await.unwrap();
 
@@ -9025,7 +9025,7 @@ enabled = false
         );
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         if let Some(home) = original_home {
             // SAFETY: test-only, single-threaded test runner.
             unsafe { std::env::set_var("HOME", home) };
@@ -9085,7 +9085,7 @@ name = "weather-tool"
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
 
         let config = Box::pin(Config::load_or_init()).await.unwrap();
 
@@ -9096,7 +9096,7 @@ name = "weather-tool"
         );
 
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         if let Some(home) = original_home {
             // SAFETY: test-only, single-threaded test runner.
             unsafe { std::env::set_var("HOME", home) };
@@ -9157,7 +9157,7 @@ runtime_profile = "default"
         // SAFETY: test-only, guarded by env_override_lock.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, guarded by env_override_lock.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
 
         let config = Box::pin(Config::load_or_init()).await.unwrap();
 
@@ -9181,7 +9181,7 @@ runtime_profile = "default"
         );
 
         // SAFETY: test-only, guarded by env_override_lock.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         if let Some(home) = original_home {
             // SAFETY: test-only, guarded by env_override_lock.
             unsafe { std::env::set_var("HOME", home) };
@@ -9240,7 +9240,7 @@ runtime_profile = "default"
         // SAFETY: test-only, guarded by env_override_lock.
         unsafe { std::env::set_var("HOME", &temp_home) };
         // SAFETY: test-only, guarded by env_override_lock.
-        unsafe { std::env::set_var("CLAWCREW_WORKSPACE", &workspace_dir) };
+        unsafe { std::env::set_var("GALLEON_WORKSPACE", &workspace_dir) };
 
         let config = Box::pin(Config::load_or_init()).await.unwrap();
 
@@ -9259,7 +9259,7 @@ runtime_profile = "default"
         );
 
         // SAFETY: test-only, guarded by env_override_lock.
-        unsafe { std::env::remove_var("CLAWCREW_WORKSPACE") };
+        unsafe { std::env::remove_var("GALLEON_WORKSPACE") };
         if let Some(home) = original_home {
             // SAFETY: test-only, guarded by env_override_lock.
             unsafe { std::env::set_var("HOME", home) };
@@ -14033,11 +14033,11 @@ stream_tool_arguments = [
     async fn apply_env_overrides_rejects_schema_version() {
         let _env_guard = env_override_lock().await;
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var("CLAWCREW_schema_version", "99") };
+        unsafe { std::env::set_var("GALLEON_schema_version", "99") };
         let mut config = Config::default();
         let result = crate::env_overrides::apply_env_overrides(&mut config);
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::remove_var("CLAWCREW_schema_version") };
+        unsafe { std::env::remove_var("GALLEON_schema_version") };
 
         let err = result.expect_err("schema_version override must be rejected");
         let msg = format!("{err:#}");
@@ -14207,7 +14207,7 @@ stream_tool_arguments = [
     async fn env_override_save_cycle_preserves_on_disk_secret() {
         // Regression bar for the data-loss bug identified in PR
         // review: an operator with a real on-disk credential who sets a
-        // `CLAWCREW_*` env override for the same path and triggers any
+        // `GALLEON_*` env override for the same path and triggers any
         // save (dashboard auto-save, CLI `config set` for an unrelated
         // field, Quickstart finalizer) must NOT corrupt the disk file.
         //
@@ -14262,7 +14262,7 @@ stream_tool_arguments = [
         // Simulate `apply_env_overrides` having injected a different value
         // for the same path — this is the state `Config::load_or_init`
         // leaves the in-memory config in when an operator boots with
-        // `CLAWCREW_providers__models__anthropic__default__api_key=...`
+        // `GALLEON_providers__models__anthropic__default__api_key=...`
         // set in the environment.
         let env_value = "sk-ant-from-env-DIFFERENT";
         reloaded.env_overridden_paths = std::collections::HashSet::from([api_key_path.to_string()]);
@@ -14333,8 +14333,8 @@ exit 65
             _ => bin_dir.display().to_string(),
         };
         let _path_guard = EnvValueGuard::set("PATH", path);
-        let _config_guard = EnvValueGuard::set("CLAWCREW_CONFIG_DIR", dir.path());
-        let _workspace_guard = EnvValueGuard::remove("CLAWCREW_WORKSPACE");
+        let _config_guard = EnvValueGuard::set("GALLEON_CONFIG_DIR", dir.path());
+        let _workspace_guard = EnvValueGuard::remove("GALLEON_WORKSPACE");
 
         let config_path = dir.path().join("config.toml");
         std::fs::write(
@@ -14402,8 +14402,8 @@ exit 65
             _ => bin_dir.display().to_string(),
         };
         let _path_guard = EnvValueGuard::set("PATH", path);
-        let _config_guard = EnvValueGuard::set("CLAWCREW_CONFIG_DIR", dir.path());
-        let _workspace_guard = EnvValueGuard::remove("CLAWCREW_WORKSPACE");
+        let _config_guard = EnvValueGuard::set("GALLEON_CONFIG_DIR", dir.path());
+        let _workspace_guard = EnvValueGuard::remove("GALLEON_WORKSPACE");
 
         let config_path = dir.path().join("config.toml");
         std::fs::write(
@@ -14462,8 +14462,8 @@ printf '%s\n' 'sk-proj-from-onepassword'
             _ => bin_dir.display().to_string(),
         };
         let _path_guard = EnvValueGuard::set("PATH", path);
-        let _config_guard = EnvValueGuard::set("CLAWCREW_CONFIG_DIR", dir.path());
-        let _workspace_guard = EnvValueGuard::remove("CLAWCREW_WORKSPACE");
+        let _config_guard = EnvValueGuard::set("GALLEON_CONFIG_DIR", dir.path());
+        let _workspace_guard = EnvValueGuard::remove("GALLEON_WORKSPACE");
 
         let config_path = dir.path().join("config.toml");
         std::fs::write(

@@ -856,8 +856,8 @@ mod tests {
     use super::*;
 
     fn postgres_test_url() -> String {
-        std::env::var("CLAWCREW_TEST_POSTGRES_URL")
-            .expect("set CLAWCREW_TEST_POSTGRES_URL to run ignored PostgreSQL tests")
+        std::env::var("GALLEON_TEST_POSTGRES_URL")
+            .expect("set GALLEON_TEST_POSTGRES_URL to run ignored PostgreSQL tests")
     }
 
     #[test]
@@ -1028,10 +1028,10 @@ mod tests {
     /// keyword-only fallback, while the pre-fix code panics before that
     /// fallback is reached.
     #[test]
-    #[ignore = "requires CLAWCREW_TEST_POSTGRES_URL"]
+    #[ignore = "requires GALLEON_TEST_POSTGRES_URL"]
     fn postgres_new_with_pgvector_enabled_from_tokio_runtime_does_not_panic() {
-        let database_url = std::env::var("CLAWCREW_TEST_POSTGRES_URL")
-            .expect("set CLAWCREW_TEST_POSTGRES_URL to run ignored PostgreSQL tests");
+        let database_url = std::env::var("GALLEON_TEST_POSTGRES_URL")
+            .expect("set GALLEON_TEST_POSTGRES_URL to run ignored PostgreSQL tests");
         let schema = TestSchema::create(&database_url, "vec");
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .worker_threads(2)
@@ -1058,7 +1058,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "requires CLAWCREW_TEST_POSTGRES_URL"]
+    #[ignore = "requires GALLEON_TEST_POSTGRES_URL"]
     fn postgres_backend_round_trip_uses_isolated_schema() {
         let database_url = postgres_test_url();
         let schema = TestSchema::create(&database_url, "round_trip");

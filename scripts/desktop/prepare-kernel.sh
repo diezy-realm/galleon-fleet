@@ -20,7 +20,7 @@ set -euo pipefail
 #       --features embedded-web
 #
 # Environment:
-#   CLAWCREW_KERNEL_PATH   Reuse an existing kernel binary instead of building
+#   GALLEON_KERNEL_PATH   Reuse an existing kernel binary instead of building
 #                          (single-target only; ignored for universal). Requested
 #                          features must already be present in that binary.
 #   CARGO_PROFILE          Cargo profile to build (default: release).
@@ -71,10 +71,10 @@ build_kernel() {
   local triple="$1"
   local exe=""
   [[ "$triple" == *windows* ]] && exe=".exe"
-  if [[ -n "${CLAWCREW_KERNEL_PATH:-}" ]]; then
-    echo "prepare-kernel: using prebuilt kernel: $CLAWCREW_KERNEL_PATH" >&2
-    check_arch "$CLAWCREW_KERNEL_PATH" "$triple"
-    echo "$CLAWCREW_KERNEL_PATH"
+  if [[ -n "${GALLEON_KERNEL_PATH:-}" ]]; then
+    echo "prepare-kernel: using prebuilt kernel: $GALLEON_KERNEL_PATH" >&2
+    check_arch "$GALLEON_KERNEL_PATH" "$triple"
+    echo "$GALLEON_KERNEL_PATH"
     return
   fi
   if [[ -n "$FEATURES" ]]; then
@@ -110,7 +110,7 @@ mkdir -p "$OUT_DIR"
 if [[ "$TARGET" == "universal-apple-darwin" ]]; then
   # Tauri's universal build expects binaries/clawcrew-universal-apple-darwin.
   # A single prebuilt kernel can't serve both slices — always build per-arch.
-  CLAWCREW_KERNEL_PATH=""
+  GALLEON_KERNEL_PATH=""
   ARM_SRC="$(build_kernel aarch64-apple-darwin)"
   X86_SRC="$(build_kernel x86_64-apple-darwin)"
   place_stripped "$ARM_SRC" "$OUT_DIR/clawcrew-aarch64-apple-darwin"

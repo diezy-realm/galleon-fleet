@@ -1102,7 +1102,7 @@ fn configure_ephemeral_daemon_command(
         .arg(config_dir)
         // The TUI waits on this exact endpoint, so the child must bind it
         // instead of independently deriving a potentially different path.
-        .env("CLAWCREW_SOCKET", socket);
+        .env("GALLEON_SOCKET", socket);
 }
 
 pub(crate) struct SpawnedDaemon {
@@ -1962,11 +1962,11 @@ mod connection_tests {
 
     #[test]
     fn ephemeral_daemon_command_sets_selected_socket() {
-        let mut cmd = std::process::Command::new("clawcrew");
+        let mut cmd = std::process::Command::new("galleon");
         configure_ephemeral_daemon_command(
             &mut cmd,
             std::path::Path::new("/tmp/galleon-config"),
-            std::path::Path::new("/tmp/clawcrew.sock"),
+            std::path::Path::new("/tmp/galleon.sock"),
         );
 
         assert_eq!(
@@ -1982,9 +1982,9 @@ mod connection_tests {
         );
         assert_eq!(
             cmd.get_envs()
-                .find(|(name, _)| *name == OsStr::new("CLAWCREW_SOCKET"))
+                .find(|(name, _)| *name == OsStr::new("GALLEON_SOCKET"))
                 .and_then(|(_, value)| value),
-            Some(OsStr::new("/tmp/clawcrew.sock"))
+            Some(OsStr::new("/tmp/galleon.sock"))
         );
     }
 

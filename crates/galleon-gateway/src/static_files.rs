@@ -33,7 +33,7 @@ pub async fn handle_static(State(state): State<AppState>, uri: Uri) -> Response 
 }
 
 /// SPA fallback: serve index.html for any non-API, non-static GET request.
-/// Injects `window.__CLAWCREW_BASE__` so the frontend knows the path prefix.
+/// Injects `window.__GALLEON_BASE__` so the frontend knows the path prefix.
 pub async fn handle_spa_fallback(State(state): State<AppState>, uri: Uri) -> Response {
     if let Some(path) = api_fallback_path(uri.path(), &state.path_prefix) {
         let body = serde_json::json!({
@@ -65,7 +65,7 @@ pub async fn handle_spa_fallback(State(state): State<AppState>, uri: Uri) -> Res
         let pfx = &state.path_prefix;
         // JSON-encode the prefix to safely embed in a <script> block
         let json_pfx = serde_json::to_string(pfx).unwrap_or_else(|_| "\"\"".to_string());
-        let script = format!("<script>window.__CLAWCREW_BASE__={json_pfx};</script>");
+        let script = format!("<script>window.__GALLEON_BASE__={json_pfx};</script>");
         // Rewrite absolute /_app/ references so the browser requests {prefix}/_app/...
         html.replace("/_app/", &format!("{pfx}/_app/"))
             .replace("<head>", &format!("<head>{script}"))

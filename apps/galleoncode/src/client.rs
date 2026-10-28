@@ -163,10 +163,10 @@ pub mod method {
 // ── Socket path resolution ───────────────────────────────────────
 
 /// Resolve the daemon's local IPC endpoint path.
-/// CLI flag > `$CLAWCREW_SOCKET` > `<config_dir>/data/daemon.sock` on Unix
-/// or a `\\.\pipe\clawcrew-<hash>` derived name on Windows.
+/// CLI flag > `$GALLEON_SOCKET` > `<config_dir>/data/daemon.sock` on Unix
+/// or a `\\.\pipe\galleon-<hash>` derived name on Windows.
 pub fn resolve_socket_path(config_dir: &Path) -> Result<PathBuf> {
-    if let Ok(p) = std::env::var("CLAWCREW_SOCKET") {
+    if let Ok(p) = std::env::var("GALLEON_SOCKET") {
         let p = p.trim();
         if !p.is_empty() {
             return Ok(PathBuf::from(p));
@@ -184,18 +184,18 @@ pub fn resolve_socket_path(config_dir: &Path) -> Result<PathBuf> {
         let mut hasher = DefaultHasher::new();
         data_dir.hash(&mut hasher);
         Ok(PathBuf::from(format!(
-            r"\\.\pipe\clawcrew-{:x}",
+            r"\\.\pipe\galleon-{:x}",
             hasher.finish()
         )))
     }
 }
 
-/// Resolve config dir: CLI flag > `$CLAWCREW_CONFIG_DIR` > home directory.
+/// Resolve config dir: CLI flag > `$GALLEON_CONFIG_DIR` > home directory.
 pub fn resolve_config_dir(cli_override: Option<&Path>) -> Result<PathBuf> {
     if let Some(dir) = cli_override {
         return Ok(dir.to_path_buf());
     }
-    if let Ok(d) = std::env::var("CLAWCREW_CONFIG_DIR") {
+    if let Ok(d) = std::env::var("GALLEON_CONFIG_DIR") {
         let d = d.trim();
         if !d.is_empty() {
             return Ok(PathBuf::from(d));
@@ -204,12 +204,18 @@ pub fn resolve_config_dir(cli_override: Option<&Path>) -> Result<PathBuf> {
     #[cfg(unix)]
     {
         let home = std::env::var("HOME").context("HOME not set")?;
-        Ok(PathBuf::from(home).join(".clawcrew"))
+        Ok(PathBuf::from(home).join(".config").join("galleon"))
     }
     #[cfg(windows)]
     {
+        if let Ok(appdata) = std::env::var("APPDATA") {
+            let appdata = appdata.trim();
+            if !appdata.is_empty() {
+                return Ok(PathBuf::from(appdata).join("galleon"));
+            }
+        }
         let profile = std::env::var("USERPROFILE").context("USERPROFILE not set")?;
-        Ok(PathBuf::from(profile).join(".clawcrew"))
+        Ok(PathBuf::from(profile).join("AppData").join("Roaming").join("galleon"))
     }
 }
 

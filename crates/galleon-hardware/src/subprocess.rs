@@ -720,7 +720,7 @@ mod tests {
     #[test]
     fn plugin_command_environment_is_allowlisted() {
         let mut command = Command::new("unused-test-binary");
-        command.env("CLAWCREW_SUBPROCESS_TEST_SECRET", "must-not-survive");
+        command.env("GALLEON_SUBPROCESS_TEST_SECRET", "must-not-survive");
         configure_plugin_environment(&mut command);
 
         let explicit_environment: Vec<String> = command
@@ -738,7 +738,7 @@ mod tests {
         assert!(
             !explicit_environment
                 .iter()
-                .any(|key| { key.eq_ignore_ascii_case("CLAWCREW_SUBPROCESS_TEST_SECRET") })
+                .any(|key| { key.eq_ignore_ascii_case("GALLEON_SUBPROCESS_TEST_SECRET") })
         );
     }
 

@@ -268,11 +268,11 @@ pub fn field_table(
         } else {
             format!("clawcrew config set {full_path} <value>")
         };
-        // Env-var override form: `CLAWCREW_` + dotted path with `.` -> `__`,
+        // Env-var override form: `GALLEON_` + dotted path with `.` -> `__`,
         // lowercase tail (config-tree override). Mirrors the runtime resolver in
         // `crate::env_overrides`, so the rendered example and the value the
         // runtime accepts cannot disagree.
-        let env_var = format!("CLAWCREW_{}", full_path.replace('.', "__"));
+        let env_var = format!("GALLEON_{}", full_path.replace('.', "__"));
         let full_desc = description(resolved).unwrap_or_default();
 
         let _ = write!(

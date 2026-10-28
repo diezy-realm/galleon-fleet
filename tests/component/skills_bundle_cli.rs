@@ -3,7 +3,7 @@ use std::process::{Command, Output};
 fn run_clawcrew(config_dir: &std::path::Path, args: &[&str]) -> Output {
     let bin = env!("CARGO_BIN_EXE_galleon");
     Command::new(bin)
-        .env("CLAWCREW_CONFIG_DIR", config_dir)
+        .env("GALLEON_CONFIG_DIR", config_dir)
         .env("RUST_LOG", "off")
         .args(args)
         .output()

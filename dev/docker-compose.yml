@@ -20,7 +20,7 @@ services:
     container_name: clawcrew-dev
     restart: unless-stopped
     environment:
-      - CLAWCREW_GATEWAY_PORT=42617
+      - GALLEON_GATEWAY_PORT=42617
       - SANDBOX_HOST=clawcrew-sandbox
     secrets:
       - source: clawcrew_env
@@ -33,7 +33,7 @@ services:
           . /run/secrets/clawcrew_env
           set +a
         fi
-        exec clawcrew gateway start --port "${CLAWCREW_GATEWAY_PORT:-42617}" --host "[::]"
+        exec clawcrew gateway start --port "${GALLEON_GATEWAY_PORT:-42617}" --host "[::]"
     volumes:
       # Mount single config file (avoids shadowing other files in .clawcrew)
       - ../target/.clawcrew/config.toml:/clawcrew-data/.clawcrew/config.toml
