@@ -9,7 +9,7 @@
 //! from a real CA.
 //!
 //! The point of using the real endpoint rather than a stub is that a stub can
-//! agree with a wrong implementation. The CSR must satisfy `clawcrew_tls`'s
+//! agree with a wrong implementation. The CSR must satisfy `galleon_tls`'s
 //! issuer, the pinned TLS leg must satisfy rustls against the daemon's actual
 //! certificate, and the pairing code must satisfy the daemon's actual guard.
 #![allow(clippy::disallowed_methods)]
@@ -108,11 +108,11 @@ struct Daemon {
 /// Start the REAL daemon enrollment endpoint on loopback.
 async fn start_daemon_enrollment() -> Daemon {
     let _ = rustls::crypto::ring::default_provider().install_default();
-    let (ca_cert_pem, ca_key_pem) = clawcrew_tls::testing::gen_ca();
+    let (ca_cert_pem, ca_key_pem) = galleon_tls::testing::gen_ca();
     // The enrollment leaf must carry the name the relay-routed client verifies
     // against on the pinned leg (`127.0.0.1`).
     let (leaf_pem, leaf_key_pem) =
-        clawcrew_tls::testing::gen_server_cert(&ca_cert_pem, &ca_key_pem, &["127.0.0.1".into()]);
+        galleon_tls::testing::gen_server_cert(&ca_cert_pem, &ca_key_pem, &["127.0.0.1".into()]);
     let acceptor = TlsAcceptor::from(Arc::new(server_config_from_pem(&leaf_pem, &leaf_key_pem)));
 
     let ledger = Arc::new(
@@ -166,9 +166,9 @@ async fn start_daemon_enrollment() -> Daemon {
 async fn start_relay_with_frontdoor() -> std::net::SocketAddr {
     let _ = rustls::crypto::ring::default_provider().install_default();
     let dir = tempfile::tempdir().unwrap();
-    let mats = clawcrew_tls::ensure_server_materials(dir.path(), &[]).unwrap();
-    let certs = clawcrew_tls::load_certs(mats.server_cert_path.to_str().unwrap()).unwrap();
-    let key = clawcrew_tls::load_private_key(mats.server_key_path.to_str().unwrap()).unwrap();
+    let mats = galleon_tls::ensure_server_materials(dir.path(), &[]).unwrap();
+    let certs = galleon_tls::load_certs(mats.server_cert_path.to_str().unwrap()).unwrap();
+    let key = galleon_tls::load_private_key(mats.server_key_path.to_str().unwrap()).unwrap();
     let server_cfg = rustls::ServerConfig::builder_with_provider(Arc::new(
         rustls::crypto::ring::default_provider(),
     ))
@@ -462,9 +462,9 @@ async fn browser_enrollment_issues_a_real_certificate_through_the_relay() {
         .next()
         .unwrap()
         .unwrap();
-    let expected_sas = clawcrew_tls::enrollment_sas(
+    let expected_sas = galleon_tls::enrollment_sas(
         &daemon.pairing_code,
-        &clawcrew_tls::cert_sha256_fingerprint(ca_der.as_ref()),
+        &galleon_tls::cert_sha256_fingerprint(ca_der.as_ref()),
     );
     assert!(
         expected_sas.len() == 9 && expected_sas.contains('-'),
@@ -473,7 +473,7 @@ async fn browser_enrollment_issues_a_real_certificate_through_the_relay() {
 
     // Step 2: the operator confirmed the SAS; the browser sends its CSR. The key
     // is generated client-side and never leaves - only the CSR is transmitted.
-    let (csr_pem, _key_pem) = clawcrew_tls::testing::gen_client_csr("clawcrew-browser");
+    let (csr_pem, _key_pem) = galleon_tls::testing::gen_client_csr("clawcrew-browser");
     let (status, body) = frontdoor_request(
         relay,
         "POST",
@@ -518,7 +518,7 @@ async fn browser_enrollment_issues_a_real_certificate_through_the_relay() {
         .next()
         .unwrap()
         .unwrap();
-    let fingerprint = clawcrew_tls::cert_sha256_fingerprint(cert_der.as_ref());
+    let fingerprint = galleon_tls::cert_sha256_fingerprint(cert_der.as_ref());
     let entry = daemon
         .ledger
         .lookup_by_fingerprint(&fingerprint)
@@ -550,7 +550,7 @@ async fn a_bad_pairing_code_is_refused_with_the_daemon_status() {
     let trust: serde_json::Value = serde_json::from_str(&body).unwrap();
     let ca_chain_pem = trust["ca_chain_pem"].as_str().unwrap().to_string();
 
-    let (csr_pem, _key) = clawcrew_tls::testing::gen_client_csr("clawcrew-browser");
+    let (csr_pem, _key) = galleon_tls::testing::gen_client_csr("clawcrew-browser");
     let (status, body) = frontdoor_request(
         relay,
         "POST",
@@ -585,10 +585,10 @@ async fn the_enroll_post_refuses_a_ca_the_daemon_cannot_prove() {
     register_bridge_daemon(relay, "browser-node", daemon.addr).await;
 
     // A perfectly valid CA - just not this daemon's.
-    let (other_ca_pem, _other_key) = clawcrew_tls::testing::gen_ca();
+    let (other_ca_pem, _other_key) = galleon_tls::testing::gen_ca();
     assert_ne!(other_ca_pem, daemon.ca_cert_pem);
 
-    let (csr_pem, _key) = clawcrew_tls::testing::gen_client_csr("clawcrew-browser");
+    let (csr_pem, _key) = galleon_tls::testing::gen_client_csr("clawcrew-browser");
     let (status, body) = frontdoor_request(
         relay,
         "POST",
@@ -620,7 +620,7 @@ async fn the_enroll_post_refuses_a_ca_the_daemon_cannot_prove() {
     .await;
     assert_eq!(status, 200);
     let trust: serde_json::Value = serde_json::from_str(&body).unwrap();
-    let (csr_pem, _key) = clawcrew_tls::testing::gen_client_csr("clawcrew-browser");
+    let (csr_pem, _key) = galleon_tls::testing::gen_client_csr("clawcrew-browser");
     let (status, body) = frontdoor_request(
         relay,
         "POST",
@@ -653,10 +653,10 @@ async fn the_enroll_post_refuses_a_ca_the_daemon_cannot_prove() {
 #[tokio::test]
 async fn a_daemon_that_swaps_the_ca_in_its_response_is_refused() {
     let _ = rustls::crypto::ring::default_provider().install_default();
-    let (ca_cert_pem, ca_key_pem) = clawcrew_tls::testing::gen_ca();
-    let (other_ca_pem, _other_key) = clawcrew_tls::testing::gen_ca();
+    let (ca_cert_pem, ca_key_pem) = galleon_tls::testing::gen_ca();
+    let (other_ca_pem, _other_key) = galleon_tls::testing::gen_ca();
     let (leaf_pem, leaf_key_pem) =
-        clawcrew_tls::testing::gen_server_cert(&ca_cert_pem, &ca_key_pem, &["127.0.0.1".into()]);
+        galleon_tls::testing::gen_server_cert(&ca_cert_pem, &ca_key_pem, &["127.0.0.1".into()]);
     let acceptor = TlsAcceptor::from(Arc::new(server_config_from_pem(&leaf_pem, &leaf_key_pem)));
 
     // A stub endpoint: correct identity, dishonest body.
@@ -727,7 +727,7 @@ async fn a_daemon_that_swaps_the_ca_in_its_response_is_refused() {
     let trust: serde_json::Value = serde_json::from_str(&body).unwrap();
     assert_eq!(trust["ca_chain_pem"].as_str().unwrap(), ca_cert_pem);
 
-    let (csr_pem, _key) = clawcrew_tls::testing::gen_client_csr("clawcrew-browser");
+    let (csr_pem, _key) = galleon_tls::testing::gen_client_csr("clawcrew-browser");
     let (status, body) = frontdoor_request(
         relay,
         "POST",
@@ -792,9 +792,9 @@ async fn the_frontdoor_serves_the_page_and_not_the_deleted_tls_routes() {
 async fn a_disabled_frontdoor_serves_nothing() {
     let _ = rustls::crypto::ring::default_provider().install_default();
     let dir = tempfile::tempdir().unwrap();
-    let mats = clawcrew_tls::ensure_server_materials(dir.path(), &[]).unwrap();
-    let certs = clawcrew_tls::load_certs(mats.server_cert_path.to_str().unwrap()).unwrap();
-    let key = clawcrew_tls::load_private_key(mats.server_key_path.to_str().unwrap()).unwrap();
+    let mats = galleon_tls::ensure_server_materials(dir.path(), &[]).unwrap();
+    let certs = galleon_tls::load_certs(mats.server_cert_path.to_str().unwrap()).unwrap();
+    let key = galleon_tls::load_private_key(mats.server_key_path.to_str().unwrap()).unwrap();
     let server_cfg = rustls::ServerConfig::builder_with_provider(Arc::new(
         rustls::crypto::ring::default_provider(),
     ))

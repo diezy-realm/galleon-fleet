@@ -80,9 +80,9 @@ async fn start_relay(cfg: RelayConfig) -> std::net::SocketAddr {
 async fn start_relay_handle(cfg: RelayConfig) -> (std::net::SocketAddr, RelayServer) {
     let _ = rustls::crypto::ring::default_provider().install_default();
     let dir = tempfile::tempdir().unwrap();
-    let mats = clawcrew_tls::ensure_server_materials(dir.path(), &[]).unwrap();
-    let certs = clawcrew_tls::load_certs(mats.server_cert_path.to_str().unwrap()).unwrap();
-    let key = clawcrew_tls::load_private_key(mats.server_key_path.to_str().unwrap()).unwrap();
+    let mats = galleon_tls::ensure_server_materials(dir.path(), &[]).unwrap();
+    let certs = galleon_tls::load_certs(mats.server_cert_path.to_str().unwrap()).unwrap();
+    let key = galleon_tls::load_private_key(mats.server_key_path.to_str().unwrap()).unwrap();
     let server_cfg = rustls::ServerConfig::builder_with_provider(Arc::new(
         rustls::crypto::ring::default_provider(),
     ))

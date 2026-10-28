@@ -1,25 +1,25 @@
 //! TLS and mutual TLS (mTLS) support for the gateway server.
 //!
-//! Thin adapter over the shared [`clawcrew_tls`] crate: it maps the gateway's
+//! Thin adapter over the shared [`galleon_tls`] crate: it maps the gateway's
 //! [`GatewayTlsConfig`] onto the transport-neutral
-//! [`clawcrew_tls::ServerConfigParams`] and delegates construction. The reusable
-//! verifier / certificate-pinning / PEM-loading logic lives in `clawcrew-tls` so
+//! [`galleon_tls::ServerConfigParams`] and delegates construction. The reusable
+//! verifier / certificate-pinning / PEM-loading logic lives in `galleon-tls` so
 //! it can also be consumed by `clawcrew-runtime` without an upward dependency on
 //! the gateway.
 
 use anyhow::Result;
 use tokio_rustls::TlsAcceptor;
 use clawcrew_config::schema::GatewayTlsConfig;
-use clawcrew_tls::{ClientAuthParams, ServerConfigParams};
+use galleon_tls::{ClientAuthParams, ServerConfigParams};
 
 /// Build a [`TlsAcceptor`] from the gateway TLS configuration.
 pub fn build_tls_acceptor(config: &GatewayTlsConfig) -> Result<TlsAcceptor> {
-    clawcrew_tls::build_tls_acceptor(&to_params(config))
+    galleon_tls::build_tls_acceptor(&to_params(config))
 }
 
 /// Build a [`rustls::ServerConfig`] from the gateway TLS configuration.
 pub fn build_server_config(config: &GatewayTlsConfig) -> Result<rustls::ServerConfig> {
-    clawcrew_tls::build_server_config(&to_params(config))
+    galleon_tls::build_server_config(&to_params(config))
 }
 
 /// Map the gateway TLS config onto the transport-neutral params.

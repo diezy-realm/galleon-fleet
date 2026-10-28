@@ -107,8 +107,8 @@ async fn zerocode_to_relay_to_daemon_full_path() {
 
     // Daemon mTLS materials + an issued client cert (the inner session).
     let dir = tempfile::tempdir().unwrap();
-    let mats = clawcrew_tls::ensure_server_materials(dir.path(), &[]).unwrap();
-    let acceptor: TlsAcceptor = clawcrew_tls::build_mtls_acceptor(
+    let mats = galleon_tls::ensure_server_materials(dir.path(), &[]).unwrap();
+    let acceptor: TlsAcceptor = galleon_tls::build_mtls_acceptor(
         mats.server_cert_path.to_str().unwrap(),
         mats.server_key_path.to_str().unwrap(),
         mats.ca_cert_path.to_str().unwrap(),
@@ -119,11 +119,11 @@ async fn zerocode_to_relay_to_daemon_full_path() {
 
     let ca_pem = std::fs::read_to_string(&mats.ca_cert_path).unwrap();
     let ca_key_pem = std::fs::read_to_string(&mats.ca_key_path).unwrap();
-    let issued = clawcrew_tls::issue_client_cert(&ca_pem, &ca_key_pem, "relay-device").unwrap();
+    let issued = galleon_tls::issue_client_cert(&ca_pem, &ca_key_pem, "relay-device").unwrap();
     let cert_f = write_temp(&issued.cert_pem);
     let key_f = write_temp(&issued.key_pem);
-    let client_chain = clawcrew_tls::load_certs(cert_f.path().to_str().unwrap()).unwrap();
-    let client_key = clawcrew_tls::load_private_key(key_f.path().to_str().unwrap()).unwrap();
+    let client_chain = galleon_tls::load_certs(cert_f.path().to_str().unwrap()).unwrap();
+    let client_key = galleon_tls::load_private_key(key_f.path().to_str().unwrap()).unwrap();
 
     // Daemon WSS listener (TLS + WebSocket echo): the real remote-plane stack the
     // bridge forwards to over loopback.
@@ -233,8 +233,8 @@ async fn enrollment_post_round_trips_through_relay_route() {
     let _ = rustls::crypto::ring::default_provider().install_default();
 
     let dir = tempfile::tempdir().unwrap();
-    let mats = clawcrew_tls::ensure_server_materials(dir.path(), &[]).unwrap();
-    let enroll_acceptor = clawcrew_tls::build_tls_acceptor(&clawcrew_tls::ServerConfigParams {
+    let mats = galleon_tls::ensure_server_materials(dir.path(), &[]).unwrap();
+    let enroll_acceptor = galleon_tls::build_tls_acceptor(&galleon_tls::ServerConfigParams {
         cert_path: mats.server_cert_path.to_string_lossy().into_owned(),
         key_path: mats.server_key_path.to_string_lossy().into_owned(),
         client_auth: None,
@@ -326,7 +326,7 @@ async fn enrollment_post_round_trips_through_relay_route() {
     let server_name = rustls::pki_types::ServerName::try_from("127.0.0.1").unwrap();
     let mut tls = connector.connect(server_name, client_io).await.unwrap();
 
-    let (csr, _key) = clawcrew_tls::testing::gen_client_csr("ignored-by-daemon");
+    let (csr, _key) = galleon_tls::testing::gen_client_csr("ignored-by-daemon");
     let body = serde_json::json!({ "pairing_code": pairing_code, "csr_pem": csr }).to_string();
     let request = format!(
         "POST /enroll HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",

@@ -205,8 +205,8 @@ fn handle_request(server: &EnrollServer, request: PaircodeRequest) -> PaircodeRe
 }
 
 fn sas_for_code(ca_cert_pem: &str, code: &str) -> Result<String> {
-    let fingerprint = clawcrew_tls::single_cert_pem_sha256_fingerprint(ca_cert_pem)?;
-    Ok(clawcrew_tls::enrollment_sas(code, &fingerprint))
+    let fingerprint = galleon_tls::single_cert_pem_sha256_fingerprint(ca_cert_pem)?;
+    Ok(galleon_tls::enrollment_sas(code, &fingerprint))
 }
 
 fn requests_dir(data_dir: &Path) -> PathBuf {
@@ -253,15 +253,15 @@ mod tests {
     use crate::security::cert_ledger::CertLedger;
 
     fn test_server(pairing: PairingGuard) -> Arc<EnrollServer> {
-        let (ca_cert, ca_key) = clawcrew_tls::testing::gen_ca();
+        let (ca_cert, ca_key) = galleon_tls::testing::gen_ca();
         let (srv_cert, srv_key) =
-            clawcrew_tls::testing::gen_server_cert(&ca_cert, &ca_key, &["localhost".into()]);
+            galleon_tls::testing::gen_server_cert(&ca_cert, &ca_key, &["localhost".into()]);
         let dir = tempfile::tempdir().unwrap();
         let cert_path = dir.path().join("server.crt");
         let key_path = dir.path().join("server.key");
         std::fs::write(&cert_path, &srv_cert).unwrap();
         std::fs::write(&key_path, &srv_key).unwrap();
-        let acceptor = clawcrew_tls::build_tls_acceptor(&clawcrew_tls::ServerConfigParams {
+        let acceptor = galleon_tls::build_tls_acceptor(&galleon_tls::ServerConfigParams {
             cert_path: cert_path.to_string_lossy().into_owned(),
             key_path: key_path.to_string_lossy().into_owned(),
             client_auth: None,

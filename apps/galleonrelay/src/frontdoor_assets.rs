@@ -15,10 +15,10 @@
 //! and no more:
 //!
 //! * a P-256 keypair and a PKCS#10 CSR, because the daemon issues against a CSR
-//!   and verifies its self-signature (`clawcrew_tls::sign_csr`). Generating this
+//!   and verifies its self-signature (`galleon_tls::sign_csr`). Generating this
 //!   in the browser is what keeps the private key out of the relay's hands.
 //! * SHA-256 for the short-auth-string, whose derivation must match
-//!   `clawcrew_tls::enrollment_sas` byte for byte.
+//!   `galleon_tls::enrollment_sas` byte for byte.
 //!
 //! Both run on `crypto.subtle` - the browser's own audited primitives. The only
 //! hand-written encoding is DER assembly for one fixed structure: no protocol
@@ -195,7 +195,7 @@ pub(crate) const APP_JS: &str = r##"(function () {
     return `-----BEGIN ${label}-----\n${lines.join('\n')}\n-----END ${label}-----\n`;
   }
 
-  // Must match clawcrew_tls::enrollment_sas byte for byte: the operator is
+  // Must match galleon_tls::enrollment_sas byte for byte: the operator is
   // comparing this string against the one the daemon printed.
   async function enrollmentSas(pairingCode, caFingerprintHex) {
     const enc = new TextEncoder();
@@ -581,8 +581,8 @@ process.stdout.write(JSON.stringify(material));
             "the page must keep a usable private key"
         );
 
-        let (ca_cert_pem, ca_key_pem) = clawcrew_tls::testing::gen_ca();
-        let issued = clawcrew_tls::sign_csr(&ca_cert_pem, &ca_key_pem, "device-1", csr_pem)
+        let (ca_cert_pem, ca_key_pem) = galleon_tls::testing::gen_ca();
+        let issued = galleon_tls::sign_csr(&ca_cert_pem, &ca_key_pem, "device-1", csr_pem)
             .expect("the daemon issuer must accept the page's CSR");
         assert!(issued.cert_pem.contains("BEGIN CERTIFICATE"));
     }
@@ -591,7 +591,7 @@ process.stdout.write(JSON.stringify(material));
     /// operator's comparison is meaningless.
     #[test]
     fn the_page_sas_matches_the_daemon_value() {
-        let (ca_cert_pem, _key) = clawcrew_tls::testing::gen_ca();
+        let (ca_cert_pem, _key) = galleon_tls::testing::gen_ca();
         let pairing_code = "482913";
         let driver = format!(
             r#"
@@ -610,7 +610,7 @@ process.stdout.write(JSON.stringify({{ fingerprint, sas }}));
         };
 
         let expected_fingerprint =
-            clawcrew_tls::single_cert_pem_sha256_fingerprint(&ca_cert_pem).expect("fingerprint");
+            galleon_tls::single_cert_pem_sha256_fingerprint(&ca_cert_pem).expect("fingerprint");
         assert_eq!(
             result["fingerprint"].as_str().unwrap(),
             expected_fingerprint,
@@ -618,7 +618,7 @@ process.stdout.write(JSON.stringify({{ fingerprint, sas }}));
         );
         assert_eq!(
             result["sas"].as_str().unwrap(),
-            clawcrew_tls::enrollment_sas(pairing_code, &expected_fingerprint),
+            galleon_tls::enrollment_sas(pairing_code, &expected_fingerprint),
             "the page's SAS must match the daemon console value"
         );
     }
@@ -713,7 +713,7 @@ const __nextTick = () => new Promise((r) => setImmediate(r));
     /// open, clicks Stop mid-flight, then lets the enrollment succeed.
     #[test]
     fn stop_after_submit_does_not_falsely_claim_nothing_was_sent() {
-        let (ca_pem, _key) = clawcrew_tls::testing::gen_ca();
+        let (ca_pem, _key) = galleon_tls::testing::gen_ca();
         let ca_json = serde_json::to_string(&ca_pem).expect("ca as a JS string literal");
         // `replace` rather than `format!` so the driver's own `{}`/`${}` need no
         // brace escaping.
@@ -816,7 +816,7 @@ process.stdout.write(JSON.stringify({
     /// be spent and point at a fresh pairing code.
     #[test]
     fn stop_after_failed_submit_reports_the_code_may_be_spent() {
-        let (ca_pem, _key) = clawcrew_tls::testing::gen_ca();
+        let (ca_pem, _key) = galleon_tls::testing::gen_ca();
         let ca_json = serde_json::to_string(&ca_pem).expect("ca as a JS string literal");
         let driver = DRIVER_STOP_AFTER_FAILURE.replace("__CA_PEM_JSON__", &ca_json);
 

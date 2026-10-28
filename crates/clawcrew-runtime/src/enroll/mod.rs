@@ -7,12 +7,12 @@
 //!
 //! 1. The client opens provisional server-auth TLS only to fetch the daemon CA.
 //! 2. The operator confirms that CA out of band via the pairing short-auth-string
-//!    [`clawcrew_tls::enrollment_sas`], then the client reconnects pinned to that
+//!    [`galleon_tls::enrollment_sas`], then the client reconnects pinned to that
 //!    confirmed CA.
 //! 3. Only after that trust step does the client submit a pairing code + CSR. The CA
 //!    reads ONLY the CSR public key (the private key never leaves the device) and
 //!    signs a `clientAuth`-only leaf bound to a daemon-minted device id
-//!    ([`clawcrew_tls::sign_csr`]).
+//!    ([`galleon_tls::sign_csr`]).
 //! 4. The daemon records the issuance in its ledger + audit trail and returns the
 //!    signed cert + CA chain + the relay profile, so the client can immediately open
 //!    the mutually authenticated RPC plane (directly or via the relay).
@@ -284,7 +284,7 @@ impl EnrollServer {
 
         // 3. Sign the CSR. sign_csr reads ONLY the CSR public key and stamps the
         //    daemon's clientAuth-only profile, so CSR-supplied fields are ignored.
-        let issued = clawcrew_tls::sign_csr(
+        let issued = galleon_tls::sign_csr(
             &self.ca_cert_pem,
             &self.ca_key_pem,
             &device_id,
@@ -784,16 +784,16 @@ mod tests {
         deadline: Option<chrono::DateTime<chrono::Utc>>,
         ledger: Arc<CertLedger>,
     ) -> EnrollServer {
-        let (ca_cert, ca_key) = clawcrew_tls::testing::gen_ca();
+        let (ca_cert, ca_key) = galleon_tls::testing::gen_ca();
         // A throwaway server-auth acceptor (not exercised by process()).
         let (srv_cert, srv_key) =
-            clawcrew_tls::testing::gen_server_cert(&ca_cert, &ca_key, &["localhost".into()]);
+            galleon_tls::testing::gen_server_cert(&ca_cert, &ca_key, &["localhost".into()]);
         let dir = tempfile::tempdir().unwrap();
         let cert_path = dir.path().join("s.crt");
         let key_path = dir.path().join("s.key");
         std::fs::write(&cert_path, &srv_cert).unwrap();
         std::fs::write(&key_path, &srv_key).unwrap();
-        let acceptor = clawcrew_tls::build_tls_acceptor(&clawcrew_tls::ServerConfigParams {
+        let acceptor = galleon_tls::build_tls_acceptor(&galleon_tls::ServerConfigParams {
             cert_path: cert_path.to_string_lossy().into_owned(),
             key_path: key_path.to_string_lossy().into_owned(),
             client_auth: None,
@@ -832,7 +832,7 @@ mod tests {
         // peer; none must trip a per-peer lockout that would return 5xx-flavoured
         // "retry in Ns" and freeze the class.
         for _ in 0..12 {
-            let (csr, _k) = clawcrew_tls::testing::gen_client_csr("x");
+            let (csr, _k) = galleon_tls::testing::gen_client_csr("x");
             let req = EnrollRequest {
                 pairing_code: "000000".into(),
                 csr_pem: csr,
@@ -852,7 +852,7 @@ mod tests {
 
         // A DIFFERENT relay client with the CORRECT code still enrolls. Under
         // per-peer lockout it would be frozen out by the attacker's failures.
-        let (csr, _k) = clawcrew_tls::testing::gen_client_csr("honest");
+        let (csr, _k) = galleon_tls::testing::gen_client_csr("honest");
         let req = EnrollRequest {
             pairing_code: good,
             csr_pem: csr,
@@ -871,7 +871,7 @@ mod tests {
         let code = pairing.pairing_code().unwrap();
         let server = test_server(pairing, None);
         // A CSR requesting an attacker CN; the daemon must mint its own device id.
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("attacker-wants-this");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("attacker-wants-this");
         let req = EnrollRequest {
             pairing_code: code,
             csr_pem: csr,
@@ -907,7 +907,7 @@ mod tests {
         let pairing = PairingGuard::new(true, &[], PairingCodePolicy::default());
         let code = pairing.pairing_code().unwrap();
         let server = test_server_with_ledger(pairing, None, ledger);
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("dev");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("dev");
         let req = EnrollRequest {
             pairing_code: code,
             csr_pem: csr,
@@ -958,7 +958,7 @@ mod tests {
         let pairing = PairingGuard::new(true, &[], PairingCodePolicy::default());
         let code = pairing.pairing_code().unwrap();
         let server = test_server_with_ledger(pairing, None, ledger);
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("dev");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("dev");
         let req = EnrollRequest {
             pairing_code: code,
             csr_pem: csr,
@@ -995,7 +995,7 @@ mod tests {
         // The retry is the one that completes, and it issues exactly one cert.
         server.ledger.reattach_issued_certs_for_test().unwrap();
         let code = server.pairing.pairing_code().unwrap();
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("dev");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("dev");
         let resp = server
             .process(
                 &EnrollRequest {
@@ -1038,7 +1038,7 @@ mod tests {
         let pairing = PairingGuard::new(true, &[], PairingCodePolicy::default());
         let code = pairing.pairing_code().unwrap();
         let server = test_server_with_ledger(pairing, None, ledger);
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("dev");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("dev");
 
         // Let the attempt write land, then fail the completion write.
         audit.fail_writes_after_for_test(1);
@@ -1069,7 +1069,7 @@ mod tests {
         // a real client would, and must end with ONE active credential.
         audit.clear_write_failure_for_test();
         let code = server.pairing.pairing_code().unwrap();
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("dev");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("dev");
         let resp = server
             .process(
                 &EnrollRequest {
@@ -1193,7 +1193,7 @@ mod tests {
         let pairing = PairingGuard::new(true, &[], PairingCodePolicy::default());
         let code = pairing.pairing_code().unwrap();
         let server = test_server_with_ledger(pairing, None, ledger);
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("dev");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("dev");
         let resp = server
             .process(
                 &EnrollRequest {
@@ -1249,7 +1249,7 @@ mod tests {
             "an undelivered enrollment must be reconciled to revoked"
         );
         let crl = crate::security::cert_ledger::revoked_list_path(dir.path());
-        let set = clawcrew_tls::load_revoked_fingerprints(&crl).unwrap();
+        let set = galleon_tls::load_revoked_fingerprints(&crl).unwrap();
         assert!(
             set.contains(&fingerprint.to_ascii_lowercase()),
             "the reconciled revocation must reach the verifier's CRL file"
@@ -1278,7 +1278,7 @@ mod tests {
 
         // The revocation is in the file the verifier actually reads...
         let custom = dir.path().join(custom_name);
-        let set = clawcrew_tls::load_revoked_fingerprints(&custom)
+        let set = galleon_tls::load_revoked_fingerprints(&custom)
             .expect("the configured CRL must exist");
         assert!(
             set.contains(&ghost.to_ascii_lowercase()),
@@ -1344,7 +1344,7 @@ mod tests {
             "enrollment activity must reconcile an earlier undelivered issuance"
         );
         let crl = crate::security::cert_ledger::revoked_list_path(dir.path());
-        let set = clawcrew_tls::load_revoked_fingerprints(&crl).unwrap();
+        let set = galleon_tls::load_revoked_fingerprints(&crl).unwrap();
         assert!(
             set.contains(&ghost.to_ascii_lowercase()),
             "the verifier's CRL must carry it while the daemon keeps running"
@@ -1397,7 +1397,7 @@ mod tests {
         let code = pairing.pairing_code().unwrap();
         let mut server = test_server(pairing, None);
         server.static_client_pins_configured = true;
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("dev");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("dev");
         let req = EnrollRequest {
             pairing_code: code.clone(),
             csr_pem: csr,
@@ -1438,7 +1438,7 @@ mod tests {
             "CSR rejection must leave the one-time code retryable"
         );
 
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("dev");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("dev");
         let good = EnrollRequest {
             pairing_code: code,
             csr_pem: csr,
@@ -1457,7 +1457,7 @@ mod tests {
         let _ = rustls::crypto::ring::default_provider().install_default();
         let pairing = PairingGuard::new(true, &[], PairingCodePolicy::default());
         let server = test_server(pairing, None);
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("dev");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("dev");
         let bad = EnrollRequest {
             pairing_code: "000000".to_string(),
             csr_pem: csr,
@@ -1475,7 +1475,7 @@ mod tests {
         let _ = rustls::crypto::ring::default_provider().install_default();
         let pairing = PairingGuard::new(true, &[], PairingCodePolicy::default());
         let server = test_server(pairing, None);
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("dev");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("dev");
         let req = EnrollRequest {
             pairing_code: String::new(),
             csr_pem: csr,
@@ -1510,7 +1510,7 @@ mod tests {
         // (the server cert SAN) at the loopback address.
         let ca_file = tempfile::NamedTempFile::new().unwrap();
         std::fs::write(ca_file.path(), &ca_pem).unwrap();
-        let ca_ders = clawcrew_tls::load_certs(&ca_file.path().to_string_lossy()).unwrap();
+        let ca_ders = galleon_tls::load_certs(&ca_file.path().to_string_lossy()).unwrap();
         let mut roots = rustls::RootCertStore::empty();
         for c in ca_ders {
             roots.add(c).unwrap();
@@ -1538,7 +1538,7 @@ mod tests {
         let name = rustls::pki_types::ServerName::try_from("localhost").unwrap();
         let mut tls = connector.connect(name, tcp).await.unwrap();
 
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("ignored-by-daemon");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("ignored-by-daemon");
         let body = serde_json::json!({ "pairing_code": code, "csr_pem": csr }).to_string();
         let req = format!(
             "POST /enroll HTTP/1.1\r\nHost: localhost\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
@@ -1573,7 +1573,7 @@ mod tests {
         let pairing = PairingGuard::new(true, &[], PairingCodePolicy::default());
         let future = chrono::Utc::now() + chrono::Duration::minutes(10);
         let server = test_server(pairing, Some(future));
-        let (csr, _key) = clawcrew_tls::testing::gen_client_csr("dev");
+        let (csr, _key) = galleon_tls::testing::gen_client_csr("dev");
         let req = EnrollRequest {
             pairing_code: String::new(),
             csr_pem: csr,

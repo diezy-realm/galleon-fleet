@@ -1267,7 +1267,7 @@ fn relay_client_config(
     outer_key: Option<&str>,
 ) -> Result<(
     Arc<rustls::ClientConfig>,
-    Option<Arc<clawcrew_tls::RelayPinVerifier>>,
+    Option<Arc<galleon_tls::RelayPinVerifier>>,
 )> {
     let builder = rustls::ClientConfig::builder_with_provider(Arc::new(
         rustls::crypto::ring::default_provider(),
@@ -1285,12 +1285,12 @@ fn relay_client_config(
         )
     } else if let Some(ca) = ca_path {
         let mut roots = rustls::RootCertStore::empty();
-        for cert in clawcrew_tls::load_certs(ca)? {
+        for cert in galleon_tls::load_certs(ca)? {
             roots.add(cert).context("adding relay CA to root store")?;
         }
         (builder.with_root_certificates(roots), None)
     } else if let Some(pin) = pin.filter(|p| !p.is_empty()) {
-        let v = Arc::new(clawcrew_tls::RelayPinVerifier::pinned(pin.to_string()));
+        let v = Arc::new(galleon_tls::RelayPinVerifier::pinned(pin.to_string()));
         (
             builder
                 .dangerous()
@@ -1298,7 +1298,7 @@ fn relay_client_config(
             Some(v),
         )
     } else if tofu {
-        let v = Arc::new(clawcrew_tls::RelayPinVerifier::tofu());
+        let v = Arc::new(galleon_tls::RelayPinVerifier::tofu());
         (
             builder
                 .dangerous()
@@ -1316,8 +1316,8 @@ fn relay_client_config(
     // separate and unaffected.
     let config = match (outer_cert, outer_key) {
         (Some(cert), Some(key)) => {
-            let chain = clawcrew_tls::load_certs(cert)?;
-            let key = clawcrew_tls::load_private_key(key)?;
+            let chain = galleon_tls::load_certs(cert)?;
+            let key = galleon_tls::load_private_key(key)?;
             verified
                 .with_client_auth_cert(chain, key)
                 .context("loading the relay outer client cert/key")?

@@ -711,7 +711,7 @@ impl RelayServer {
                             .1
                             .peer_certificates()
                             .and_then(|c| c.first())
-                            .and_then(|c| clawcrew_tls::client_cert_node_id(c.as_ref()))
+                            .and_then(|c| galleon_tls::client_cert_node_id(c.as_ref()))
                     } else {
                         None
                     };

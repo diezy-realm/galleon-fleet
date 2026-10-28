@@ -2232,7 +2232,7 @@ mod tests {
             "the revoked fingerprint is materialized"
         );
         // The verifier sees it as revoked, the other does not.
-        let set = clawcrew_tls::load_revoked_fingerprints(&crl).unwrap();
+        let set = galleon_tls::load_revoked_fingerprints(&crl).unwrap();
         assert!(set.contains("fpa")); // load normalizes to lowercase
         assert!(!set.contains("fpb"));
     }
@@ -2254,7 +2254,7 @@ mod tests {
         assert!(led.mark_revoked("fpA", "operator").unwrap());
 
         // The configured file - the one the verifier reads - carries the revocation.
-        let set = clawcrew_tls::load_revoked_fingerprints(&custom).unwrap();
+        let set = galleon_tls::load_revoked_fingerprints(&custom).unwrap();
         assert!(
             set.contains("fpa"),
             "revocation must land in the configured CRL path"
@@ -2747,7 +2747,7 @@ mod tests {
         // It reached the file the WSS verifier actually reads.
         let crl = std::fs::read_to_string(revoked_list_path(dir.path())).unwrap();
         assert_eq!(crl.trim(), "fpGhost");
-        let set = clawcrew_tls::load_revoked_fingerprints(&revoked_list_path(dir.path())).unwrap();
+        let set = galleon_tls::load_revoked_fingerprints(&revoked_list_path(dir.path())).unwrap();
         assert!(
             set.contains("fpghost"),
             "the verifier must see the revocation"
@@ -2932,7 +2932,7 @@ mod tests {
             "fpDoomed",
             "a committed revocation must never be overwritten by an older snapshot"
         );
-        let set = clawcrew_tls::load_revoked_fingerprints(&crl).unwrap();
+        let set = galleon_tls::load_revoked_fingerprints(&crl).unwrap();
         assert!(set.contains("fpdoomed"), "the verifier must enforce it");
         assert!(revoker.is_revoked("fpDoomed").unwrap());
         // SQLite and the file agree, which is the invariant that was at risk.
@@ -3168,7 +3168,7 @@ mod tests {
         // If the renewal did publish, it must be revoked in SQLite AND in the
         // file the verifier reads - not merely absent from list_active.
         let crl = revoked_list_path(dir.path());
-        let enforced = clawcrew_tls::load_revoked_fingerprints(&crl).unwrap();
+        let enforced = galleon_tls::load_revoked_fingerprints(&crl).unwrap();
         assert!(enforced.contains("fpold"), "the old cert must be enforced");
         if let Some(status) = reader.status_of("fpNew").unwrap() {
             assert_eq!(
@@ -3207,7 +3207,7 @@ mod tests {
         assert_eq!(led.status_of("fpOld").unwrap(), Some(CertStatus::Revoked));
         assert_eq!(led.status_of("fpNew").unwrap(), Some(CertStatus::Revoked));
         let enforced =
-            clawcrew_tls::load_revoked_fingerprints(&revoked_list_path(dir.path())).unwrap();
+            galleon_tls::load_revoked_fingerprints(&revoked_list_path(dir.path())).unwrap();
         assert!(enforced.contains("fpold") && enforced.contains("fpnew"));
 
         // Every revoked certificate is audited individually, with the operator

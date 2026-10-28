@@ -1800,7 +1800,6 @@ dependencies = [
  "clawcrew-providers",
  "clawcrew-runtime",
  "clawcrew-spawn",
- "clawcrew-tls",
  "clawcrew-tools",
  "directories",
  "futures-util",
@@ -1808,6 +1807,7 @@ dependencies = [
  "galleon-routing",
  "galleon-security-scrub",
  "galleon-sop-graph",
+ "galleon-tls",
  "hex",
  "hmac 0.12.1",
  "http 1.5.0",
@@ -2078,7 +2078,6 @@ dependencies = [
  "clawcrew-plugins",
  "clawcrew-providers",
  "clawcrew-spawn",
- "clawcrew-tls",
  "clawcrew-tool-call-parser",
  "clawcrew-tools",
  "console",
@@ -2093,6 +2092,7 @@ dependencies = [
  "galleon-relay-proto",
  "galleon-security-scrub",
  "galleon-sop-graph",
+ "galleon-tls",
  "galleonrelay",
  "glob",
  "hex",
@@ -2147,29 +2147,6 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "clawcrew-tls"
-version = "0.8.5"
-dependencies = [
- "anyhow",
- "chacha20poly1305",
- "clawcrew-log",
- "filetime",
- "getrandom 0.2.17",
- "hex",
- "rcgen",
- "rustls",
- "rustls-pemfile",
- "scrypt",
- "serde_json",
- "sha2 0.10.9",
- "tempfile",
- "time",
- "tokio-rustls",
- "x509-parser 0.16.0",
- "zeroize",
 ]
 
 [[package]]
@@ -4937,7 +4914,6 @@ dependencies = [
  "clawcrew-providers",
  "clawcrew-runtime",
  "clawcrew-spawn",
- "clawcrew-tls",
  "clawcrew-tool-call-parser",
  "clawcrew-tools",
  "console",
@@ -4947,6 +4923,7 @@ dependencies = [
  "directories",
  "flate2",
  "futures-util",
+ "galleon-tls",
  "hex",
  "hmac 0.12.1",
  "libc",
@@ -5039,6 +5016,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "galleon-tls"
+version = "0.8.5"
+dependencies = [
+ "anyhow",
+ "chacha20poly1305",
+ "clawcrew-log",
+ "filetime",
+ "getrandom 0.2.17",
+ "hex",
+ "rcgen",
+ "rustls",
+ "rustls-pemfile",
+ "scrypt",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "time",
+ "tokio-rustls",
+ "x509-parser 0.16.0",
+ "zeroize",
+]
+
+[[package]]
 name = "galleoncode"
 version = "0.8.5"
 dependencies = [
@@ -5086,9 +5086,9 @@ dependencies = [
  "clap",
  "clawcrew-config",
  "clawcrew-runtime",
- "clawcrew-tls",
  "futures-util",
  "galleon-relay-proto",
+ "galleon-tls",
  "hex",
  "ring",
  "rustls",

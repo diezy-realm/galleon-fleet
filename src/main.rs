@@ -2864,8 +2864,8 @@ enum SecurityCommands {
 /// identically at CA generation (the WSS path) and at every CA read (enrollment
 /// + this CLI), so the on-disk form always matches.
 #[cfg(feature = "agent-runtime")]
-fn ca_key_protection_from_env() -> clawcrew_tls::CaKeyProtection {
-    clawcrew_tls::CaKeyProtection::from_env()
+fn ca_key_protection_from_env() -> galleon_tls::CaKeyProtection {
+    galleon_tls::CaKeyProtection::from_env()
 }
 
 /// Resolve the WSS mTLS policy without conflating the auto-CA and BYO-CA modes.
@@ -3007,8 +3007,8 @@ fn issue_wss_client_cert(
     let ca_cert_pem = std::fs::read_to_string(&ca_cert)?;
     // Read the CA key honoring any at-rest passphrase, so an encrypted CA still
     // signs from the CLI (the key never leaves this process).
-    let ca_key_pem = clawcrew_tls::load_ca_key_pem(&ca_key, &ca_key_protection_from_env())?;
-    let issued = clawcrew_tls::issue_client_cert(&ca_cert_pem, &ca_key_pem, name)?;
+    let ca_key_pem = galleon_tls::load_ca_key_pem(&ca_key, &ca_key_protection_from_env())?;
+    let issued = galleon_tls::issue_client_cert(&ca_cert_pem, &ca_key_pem, name)?;
 
     // Directory 0700, private key written 0600 atomically (no world-readable window).
     if let Some(parent) = key_path.parent() {
@@ -3021,7 +3021,7 @@ fn issue_wss_client_cert(
     }
     std::fs::write(&cert_tmp_path, issued.cert_pem.as_bytes())
         .with_context(|| format!("write staged certificate {}", cert_tmp_path.display()))?;
-    if let Err(e) = clawcrew_tls::certgen::write_private_pem(&key_tmp_path, &issued.key_pem) {
+    if let Err(e) = galleon_tls::certgen::write_private_pem(&key_tmp_path, &issued.key_pem) {
         let _ = std::fs::remove_file(&cert_tmp_path);
         return Err(e)
             .with_context(|| format!("write staged private key {}", key_tmp_path.display()));
@@ -3039,7 +3039,7 @@ fn issue_wss_client_cert(
         CertLedger, CertStatus, IssuanceActor, LedgerEntry,
     };
     let ledger_result = (|| -> Result<(CertLedger, String)> {
-        let fingerprint = clawcrew_tls::single_cert_pem_sha256_fingerprint(&issued.cert_pem)
+        let fingerprint = galleon_tls::single_cert_pem_sha256_fingerprint(&issued.cert_pem)
             .context("parse staged issued certificate")?;
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -3136,7 +3136,7 @@ fn issue_wss_client_cert(
                 dest.display()
             )
         })?;
-        clawcrew_tls::certgen::write_private_pem(&dest.join("client.key"), &issued.key_pem)
+        galleon_tls::certgen::write_private_pem(&dest.join("client.key"), &issued.key_pem)
             .with_context(|| {
                 format!(
                     "write client.key into {}; the primary credentials were issued but \
@@ -5552,7 +5552,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             tls_dir.join("ca.crt").exists() && tls_dir.join("ca.key").exists();
                         let protection = ca_key_protection_from_env();
                         let server_sans = wss_server_sans(&wss_cfg);
-                        let mats = clawcrew_tls::ensure_server_materials_protected(
+                        let mats = galleon_tls::ensure_server_materials_protected(
                             &tls_dir,
                             &server_sans,
                             &protection,
@@ -5572,17 +5572,17 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                         );
                         let ca_cert_pem = std::fs::read_to_string(&mats.ca_cert_path)?;
                         let ca_key_pem =
-                            clawcrew_tls::load_ca_key_pem(&mats.ca_key_path, &protection)?;
+                            galleon_tls::load_ca_key_pem(&mats.ca_key_path, &protection)?;
                         let ca_fingerprint = {
                             let ders =
-                                clawcrew_tls::load_certs(&mats.ca_cert_path.to_string_lossy())?;
-                            clawcrew_tls::cert_sha256_fingerprint(ders[0].as_ref())
+                                galleon_tls::load_certs(&mats.ca_cert_path.to_string_lossy())?;
+                            galleon_tls::cert_sha256_fingerprint(ders[0].as_ref())
                         };
 
                         // Server-authentication-only TLS (no client cert; this is
                         // the bootstrap surface, explicitly not the mTLS plane).
                         let acceptor =
-                            clawcrew_tls::build_tls_acceptor(&clawcrew_tls::ServerConfigParams {
+                            galleon_tls::build_tls_acceptor(&galleon_tls::ServerConfigParams {
                                 cert_path: mats.server_cert_path.to_string_lossy().into_owned(),
                                 key_path: mats.server_key_path.to_string_lossy().into_owned(),
                                 client_auth: None,
@@ -5603,7 +5603,7 @@ async fn async_main_inner(command: clap::Command) -> Result<()> {
                             startup_pairing_code_policy,
                         ));
                         if let Some(code) = pairing.pairing_code() {
-                            let sas = clawcrew_tls::enrollment_sas(&code, &ca_fingerprint);
+                            let sas = galleon_tls::enrollment_sas(&code, &ca_fingerprint);
                             let enroll_bind = enroll_cfg.bind.to_string();
                             let enroll_port = enroll_cfg.port.to_string();
                             println!();

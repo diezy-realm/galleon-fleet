@@ -1890,7 +1890,7 @@
             ..Default::default()
         };
         let tls_dir = config.data_dir.join("tls");
-        clawcrew_tls::ensure_server_materials(&tls_dir, &[]).expect("daemon TLS materials");
+        galleon_tls::ensure_server_materials(&tls_dir, &[]).expect("daemon TLS materials");
         std::fs::create_dir(tls_dir.join("ledger.db")).expect("poison ledger path");
 
         let err = issue_wss_client_cert(
@@ -1940,7 +1940,7 @@
             data_dir: dir.path().to_path_buf(),
             ..Default::default()
         };
-        clawcrew_tls::ensure_server_materials(&config.data_dir.join("tls"), &[])
+        galleon_tls::ensure_server_materials(&config.data_dir.join("tls"), &[])
             .expect("daemon TLS materials");
 
         // Obstruct the drop-in ca.crt with a non-empty directory so the copy
@@ -1977,7 +1977,7 @@
             data_dir: dir.path().to_path_buf(),
             ..Default::default()
         };
-        clawcrew_tls::ensure_server_materials(&config.data_dir.join("tls"), &[])
+        galleon_tls::ensure_server_materials(&config.data_dir.join("tls"), &[])
             .expect("daemon TLS materials");
 
         // Make the publication rename fail the way a real filesystem does:

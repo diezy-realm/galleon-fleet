@@ -7940,7 +7940,7 @@ impl Default for GatewayClientAuthConfig {
 ///
 /// This mirrors [`GatewayClientAuthConfig`]; the two are distinct structs only
 /// because the `Configurable` derive binds the section prefix into the type. The
-/// verification logic itself is single-sourced in the `clawcrew-tls` crate.
+/// verification logic itself is single-sourced in the `galleon-tls` crate.
 ///
 /// Unlike the gateway's variant there is no `require_client_cert` knob: the
 /// remote WSS plane is *always* mutually authenticated (there is no

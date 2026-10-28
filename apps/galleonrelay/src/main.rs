@@ -615,7 +615,7 @@ fn build_outer_client_verifier(
                     "[admission].outer_client_auth = {mode} requires [admission].outer_client_ca"
                 ))
             })?;
-            let verifier = clawcrew_tls::build_client_verifier(&clawcrew_tls::ClientAuthParams {
+            let verifier = galleon_tls::build_client_verifier(&galleon_tls::ClientAuthParams {
                 ca_cert_path: ca,
                 require_client_cert: mode == "required",
                 pinned_certs: vec![],
@@ -654,7 +654,7 @@ fn build_tls_acceptor(
 }
 
 /// Self-provision the relay's outer TLS cert (CA + server leaf with SANs) on first
-/// run, reusing the daemon's `clawcrew-tls` machinery so no openssl is needed.
+/// run, reusing the daemon's `galleon-tls` machinery so no openssl is needed.
 /// Reused on later runs. Prints the CA path daemons/clients should trust.
 fn provision_tls_acceptor(
     tls_dir: Option<&str>,
@@ -668,7 +668,7 @@ fn provision_tls_acceptor(
             sans.push(s.clone());
         }
     }
-    let mats = clawcrew_tls::ensure_server_materials(&dir, &sans)
+    let mats = galleon_tls::ensure_server_materials(&dir, &sans)
         .with_context(|| format!("self-provisioning relay TLS in {}", dir.display()))?;
     let acceptor = build_tls_acceptor(
         &mats.server_cert_path.to_string_lossy(),

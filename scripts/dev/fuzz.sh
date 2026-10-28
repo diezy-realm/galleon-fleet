@@ -43,6 +43,6 @@ run_crate() {
 }
 
 run_crate crates/galleon-relay-proto control_from_json decode_data
-run_crate crates/clawcrew-tls sign_csr client_cert_node_id
+run_crate crates/galleon-tls sign_csr client_cert_node_id
 
 echo "fuzz smoke complete"

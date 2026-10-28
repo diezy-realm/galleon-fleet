@@ -17,7 +17,7 @@ clawcrew-config.workspace = true
 # RF-B: i18n body moved to galleon-i18n; runtime re-exports it as `i18n`.
 galleon-i18n.workspace = true
 galleon-security-scrub.workspace = true
-clawcrew-tls.workspace = true
+galleon-tls.workspace = true
 galleon-relay-proto.workspace = true
 galleon-commands.workspace = true
 clawcrew-log.workspace = true
@@ -128,7 +128,7 @@ axum = { version = "0.8", default-features = false, features = ["http1", "json",
 rcgen = "0.13"
 rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
 # Enable the shared cert/CSR test fixtures for the enrollment + relay tests.
-clawcrew-tls = { workspace = true, features = ["testing"] }
+galleon-tls = { workspace = true, features = ["testing"] }
 galleonrelay = { workspace = true }
 futures-util = "0.3"
 tempfile = "3.26"

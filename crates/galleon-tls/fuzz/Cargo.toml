@@ -17,7 +17,7 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 # `testing` exposes gen_ca() so the sign_csr target has a fixed real CA to sign
 # against (we fuzz the CSR bytes, not the CA).
-clawcrew-tls = { path = "..", features = ["testing"] }
+galleon-tls = { path = "..", features = ["testing"] }
 
 [[bin]]
 name = "sign_csr"
