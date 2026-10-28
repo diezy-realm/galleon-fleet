@@ -54,7 +54,7 @@ ARG TARGETARCH
 ARG GALLEON_CARGO_FLAGS="--no-default-features --features acp-bridge,agent-runtime,channel-acp-server,channel-discord,channel-email,channel-filesystem,channel-git,channel-lark,channel-matrix,channel-telegram,channel-webhook,gateway,observability-prometheus,schema-export,whatsapp-web"
 # >>> end generated:docker-features-arg <<<
 
-# Install build dependencies. g++ is required by inkjet (zerocode's syntax
+# Install build dependencies. g++ is required by inkjet (galleoncode's syntax
 # highlighter) to compile its tree-sitter grammars; the slim base ships cc but
 # not a C++ compiler. For arm64 cross-builds, also install the aarch64 GNU
 # cross toolchain (C and C++, for cc-crate-built C/C++ deps such as inkjet's
@@ -147,9 +147,9 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/regist
       export RUST_TARGET=x86_64-unknown-linux-gnu; \
     fi && \
     if [ -n "$GALLEON_CARGO_FLAGS" ]; then \
-      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode $GALLEON_CARGO_FLAGS; \
+      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p galleoncode $GALLEON_CARGO_FLAGS; \
     else \
-      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode; \
+      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p galleoncode; \
     fi
 RUN rm -rf src benches crates xtask tools/fill-translations
 
@@ -168,7 +168,7 @@ COPY web/src/ web/src/
 COPY locales.toml .
 COPY *.rs .
 RUN touch src/main.rs apps/galleoncode/src/main.rs
-# Bust the stubbed workspace crates so the real sources rebuild. zerocode is
+# Bust the stubbed workspace crates so the real sources rebuild. galleoncode is
 # purged from BOTH the target tree and the host tree (target/release/): with
 # --target, build scripts compile in the host tree, so its real build.rs (which
 # generates theme_presets.rs into OUT_DIR) must replace the no-op stub compiled
@@ -195,20 +195,21 @@ RUN --mount=type=cache,id=clawcrew-cargo-registry,target=/usr/local/cargo/regist
            target/"$RUST_TARGET"/release/deps/xtask-* \
            target/"$RUST_TARGET"/release/.fingerprint/fill-translations-* \
            target/"$RUST_TARGET"/release/deps/fill_translations-* \
-           target/"$RUST_TARGET"/release/.fingerprint/zerocode-* \
-           target/"$RUST_TARGET"/release/deps/zerocode-* \
-           target/"$RUST_TARGET"/release/incremental/zerocode-* \
-           target/"$RUST_TARGET"/release/build/zerocode-* \
-           target/release/.fingerprint/zerocode-* \
-           target/release/build/zerocode-* && \
+           target/"$RUST_TARGET"/release/.fingerprint/galleoncode-* \
+           target/"$RUST_TARGET"/release/deps/galleoncode-* \
+           target/"$RUST_TARGET"/release/incremental/galleoncode-* \
+           target/"$RUST_TARGET"/release/build/galleoncode-* \
+           target/release/.fingerprint/galleoncode-* \
+           target/release/build/galleoncode-* && \
     if [ -n "$GALLEON_CARGO_FLAGS" ]; then \
-      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode $GALLEON_CARGO_FLAGS; \
+      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p galleoncode $GALLEON_CARGO_FLAGS; \
     else \
-      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p zerocode; \
+      cargo build --release --locked --target "$RUST_TARGET" -p galleon-fleet -p galleoncode; \
     fi && \
     cp target/"$RUST_TARGET"/release/galleon /app/galleon && \
     cp /app/galleon /app/clawcrew && \
-    cp target/"$RUST_TARGET"/release/zerocode /app/zerocode && \
+    cp target/"$RUST_TARGET"/release/galleoncode /app/galleoncode && \
+    cp /app/galleoncode /app/zerocode && \
     "$STRIP" /app/galleon /app/clawcrew /app/zerocode
 RUN for b in galleon zerocode; do \
       size=$(stat -c%s "/app/$b") && \
